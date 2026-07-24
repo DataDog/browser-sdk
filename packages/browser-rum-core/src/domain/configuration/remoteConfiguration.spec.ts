@@ -1,5 +1,13 @@
 import { ONE_MINUTE } from '@datadog/js-core/time'
-import { DefaultPrivacyLevel, display, setCookie, deleteCookie, createContextManager } from '@datadog/browser-core'
+import {
+  DefaultPrivacyLevel,
+  display,
+  setCookie,
+  deleteCookie,
+  createContextManager,
+  buildCacheKey,
+  CACHE_VERSION,
+} from '@datadog/browser-core'
 import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../test'
@@ -13,7 +21,6 @@ import {
   fetchRemoteConfiguration,
   getRemoteConfiguration,
 } from './remoteConfiguration'
-import { buildCacheKey, CACHE_VERSION } from './remoteConfigurationCache'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',
@@ -793,13 +800,13 @@ describe('remoteConfiguration', () => {
   describe('buildEndpoint', () => {
     it('should return the remote configuration endpoint', () => {
       const remoteConfigurationId = '0e008b1b-8600-4709-9d1d-f4edcfdf5587'
-      expect(buildEndpoint({ site: INTAKE_SITE_US1, remoteConfigurationId } as RumInitConfiguration)).toEqual(
+      expect(buildEndpoint({ site: INTAKE_SITE_US1, remoteConfigurationId })).toEqual(
         `https://sdk-configuration.browser-intake-datadoghq.com/v1/${remoteConfigurationId}.json`
       )
     })
 
     it('should return the remote configuration proxy', () => {
-      expect(buildEndpoint({ remoteConfigurationProxy: '/config' } as RumInitConfiguration)).toEqual('/config')
+      expect(buildEndpoint({ remoteConfigurationProxy: '/config' })).toEqual('/config')
     })
   })
 

@@ -1,24 +1,23 @@
 import { timeStampNow } from '@datadog/js-core/time'
-import { tryJsonParse } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { RemoteConfiguration } from './remoteConfiguration'
+import { tryJsonParse } from '../../tools/utils/objectUtils'
 
 export const CACHE_VERSION = 2
 export const CACHE_KEY_PREFIX = 'dd_rc_'
 
-interface CachedRemoteConfiguration {
+interface CachedRemoteConfiguration<T> {
   version: number
-  config: RemoteConfiguration
+  config: T
   fetchedAt: TimeStamp
 }
 
 export type CacheReadStatus = 'hit' | 'miss' | 'error'
 
-export type CacheReadResult =
+export type CacheReadResult<T> =
   | {
       status: Exclude<CacheReadStatus, 'hit'>
     }
-  | { status: Extract<CacheReadStatus, 'hit'>; config: RemoteConfiguration }
+  | { status: Extract<CacheReadStatus, 'hit'>; config: T }
 
 export const CACHE_STATUS_TO_METRIC_MAP: Record<CacheReadStatus, 'success' | 'missing' | 'failure'> = {
   hit: 'success',
@@ -30,7 +29,7 @@ export function buildCacheKey(remoteConfigurationId: string): string {
   return `${CACHE_KEY_PREFIX}${remoteConfigurationId}`
 }
 
-function isValidCacheEntry(value: unknown): value is CachedRemoteConfiguration {
+function isValidCacheEntry(value: unknown): value is CachedRemoteConfiguration<unknown> {
   if (typeof value !== 'object' || value === null) {
     return false
   }
@@ -41,11 +40,11 @@ function isValidCacheEntry(value: unknown): value is CachedRemoteConfiguration {
   return hasVersion && hasConfig
 }
 
-export function createConfigurationCache({ remoteConfigurationId }: { remoteConfigurationId: string }) {
+export function createConfigurationCache<T>({ remoteConfigurationId }: { remoteConfigurationId: string }) {
   const key = buildCacheKey(remoteConfigurationId)
 
   return {
-    read(): CacheReadResult {
+    read(): CacheReadResult<T> {
       let raw: string | null
 
       try {
@@ -71,7 +70,7 @@ export function createConfigurationCache({ remoteConfigurationId }: { remoteConf
         return { status: 'error' }
       }
 
-      return { status: 'hit', config: parsed.config }
+      return { status: 'hit', config: parsed.config as T }
     },
     remove() {
       try {
@@ -80,8 +79,8 @@ export function createConfigurationCache({ remoteConfigurationId }: { remoteConf
         // Ignore
       }
     },
-    write(config: RemoteConfiguration) {
-      const entry: CachedRemoteConfiguration = {
+    write(config: T) {
+      const entry: CachedRemoteConfiguration<T> = {
         version: CACHE_VERSION,
         config,
         fetchedAt: timeStampNow(),

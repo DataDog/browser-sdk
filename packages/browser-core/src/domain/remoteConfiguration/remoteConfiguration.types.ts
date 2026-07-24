@@ -47,6 +47,23 @@ export interface RumSdkConfig {
     sampleRate?: number
   }
   /**
+   * Logs feature Remote Configuration properties
+   */
+  logs?: {
+    /**
+     * Whether to forward console.error calls as Datadog log events
+     */
+    forwardErrorsToLogs?: boolean
+    /**
+     * Console methods to forward as Datadog log events
+     */
+    forwardConsoleLogs?: 'all' | ('log' | 'debug' | 'info' | 'warn' | 'error')[]
+    /**
+     * Reporting API types to forward as Datadog log events
+     */
+    forwardReports?: 'all' | ('intervention' | 'deprecation' | 'csp_violation')[]
+  }
+  /**
    * RUM feature Remote Configuration properties
    */
   rum?: {

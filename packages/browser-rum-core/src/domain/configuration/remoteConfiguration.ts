@@ -1,4 +1,11 @@
-import type { createContextManager, Context } from '@datadog/browser-core'
+import type {
+  createContextManager,
+  Context,
+  FetchRemoteConfigurationResult,
+  RemoteConfiguration,
+  DynamicOption,
+  ContextItem,
+} from '@datadog/browser-core'
 import {
   display,
   mapValues,
@@ -6,19 +13,20 @@ import {
   addTelemetryMetrics,
   TelemetryMetrics,
   monitorError,
-  fetch,
+  fetchRemoteConfiguration as fetchRemoteConfigurationCore,
+  buildEndpoint,
+  getRemoteConfigurationId,
+  CACHE_STATUS_TO_METRIC_MAP,
+  createConfigurationCache,
 } from '@datadog/browser-core'
+export { buildEndpoint, getRemoteConfigurationId }
 import { isIndexableObject } from '@datadog/js-core/util'
-import { buildEndpointUrl } from '@datadog/js-core/transport'
 import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
-import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
-import { CACHE_STATUS_TO_METRIC_MAP, createConfigurationCache } from './remoteConfigurationCache'
 
-export type RemoteConfiguration = RumSdkConfig
+export type { RemoteConfiguration }
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
-const REMOTE_CONFIGURATION_VERSION = 'v1'
 const SUPPORTED_RUM_FIELDS: Array<keyof RumInitConfiguration> = [
   'applicationId',
   'service',
@@ -295,55 +303,22 @@ function extractValue(extractor: SerializedRegex, candidate: string) {
   return extractRegexMatch(candidate, resolvedExtractor)
 }
 
-type FetchRemoteConfigurationResult = { ok: true; value: RemoteConfiguration } | { ok: false; error: Error }
-
 export async function fetchRemoteConfiguration(
   configuration: RumInitConfiguration
 ): Promise<FetchRemoteConfigurationResult> {
-  let response: Response | undefined
-  try {
-    response = await fetch(buildEndpoint(configuration))
-  } catch {
-    response = undefined
+  const result = await fetchRemoteConfigurationCore(configuration)
+  if (!result.ok) {
+    return result
   }
-  if (!response?.ok) {
-    return {
-      ok: false,
-      error: new Error('Error fetching the remote configuration.'),
-    }
+  if (result.value.rum || result.value.profiling) {
+    return result
   }
-  const remoteConfiguration: RemoteConfiguration = await response.json()
-  if (remoteConfiguration.rum || remoteConfiguration.profiling) {
-    return {
-      ok: true,
-      value: remoteConfiguration,
-    }
-  }
-  return {
-    ok: false,
-    error: new Error('No remote configuration for RUM.'),
-  }
-}
-
-export function getRemoteConfigurationId(configuration: RumInitConfiguration): string | undefined {
-  return configuration.remoteConfiguration?.id ?? configuration.remoteConfigurationId
-}
-
-export function buildEndpoint(configuration: RumInitConfiguration) {
-  if (configuration.remoteConfigurationProxy) {
-    return configuration.remoteConfigurationProxy
-  }
-  const id = getRemoteConfigurationId(configuration)!
-  return buildEndpointUrl({
-    site: configuration.site,
-    path: `/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(id)}.json`,
-    subdomain: 'sdk-configuration',
-  })
+  return { ok: false, error: new Error('No remote configuration for RUM.') }
 }
 
 function doBackgroundCacheSync(
   initConfiguration: RumInitConfiguration,
-  cache: ReturnType<typeof createConfigurationCache>,
+  cache: ReturnType<typeof createConfigurationCache<RemoteConfiguration>>,
   metrics: ReturnType<typeof initMetrics>
 ) {
   fetchRemoteConfiguration(initConfiguration)
@@ -367,7 +342,7 @@ export function getRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   supportedContextManagers: SupportedContextManagers
 ): RumInitConfiguration | undefined {
-  const configurationCache = createConfigurationCache({
+  const configurationCache = createConfigurationCache<RemoteConfiguration>({
     remoteConfigurationId: getRemoteConfigurationId(initConfiguration)!,
   })
   const metrics = initMetrics()

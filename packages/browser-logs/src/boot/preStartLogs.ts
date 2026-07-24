@@ -22,11 +22,13 @@ import {
   mockable,
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
+  getRemoteConfigurationId,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
+import { fetchAndApplyLogsRemoteConfiguration, getLogsRemoteConfiguration } from '../domain/remoteConfiguration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
@@ -71,7 +73,40 @@ export function createPreStartStrategy(
     }
 
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedConfiguration, sessionManager, hooks)
+
+    let configurationToUse = cachedConfiguration
+
+    if (getRemoteConfigurationId(cachedInitConfiguration)) {
+      const isSyncLoading =
+        !!cachedInitConfiguration.remoteConfigurationId || !!cachedInitConfiguration.remoteConfiguration?.sync
+
+      if (isSyncLoading) {
+        void fetchAndApplyLogsRemoteConfiguration(cachedInitConfiguration)
+          .then((resolvedInitConfig) => {
+            if (resolvedInitConfig) {
+              const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
+              if (resolvedLogsConfig) {
+                const startLogsResult = doStartLogs(resolvedLogsConfig, sessionManager!, hooks)
+                bufferApiCalls.subscribe((callback) => callback(startLogsResult))
+                bufferApiCalls.unbuffer()
+              }
+            }
+          })
+          .catch(monitorError)
+        return
+      }
+
+      const resolvedInitConfig = getLogsRemoteConfiguration(cachedInitConfiguration)
+      if (!resolvedInitConfig) {
+        return
+      }
+      const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
+      if (resolvedLogsConfig) {
+        configurationToUse = resolvedLogsConfig
+      }
+    }
+
+    const startLogsResult = doStartLogs(configurationToUse, sessionManager, hooks)
 
     bufferApiCalls.subscribe((callback) => callback(startLogsResult))
     bufferApiCalls.unbuffer()
