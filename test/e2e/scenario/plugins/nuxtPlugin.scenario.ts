@@ -3,13 +3,13 @@ import { createTest } from '../../lib/framework'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
 
 const nuxtApps = [
-  { nuxtVersion: 'v4' as const, description: 'Nuxt v4 and Vue Router v5' },
-  { nuxtVersion: 'v3' as const, description: 'Nuxt v3 and Vue Router v4' },
+  { routerVersion: 'v5' as const, description: 'Vue Router v5' },
+  { routerVersion: 'v4' as const, description: 'Vue Router v4' },
 ]
 
-const nuxtPluginApps = nuxtApps.map(({ nuxtVersion, description }) => ({
-  name: `with ${description}`,
-  loadApp: (b: ReturnType<typeof createTest>) => b.withNuxtApp(nuxtVersion),
+const nuxtPluginApps = nuxtApps.map(({ routerVersion, description }) => ({
+  name: `with Nuxt ${description}`,
+  loadApp: (b: ReturnType<typeof createTest>) => b.withNuxtApp(routerVersion),
   viewPrefix: '',
 }))
 
@@ -28,11 +28,11 @@ runBasePluginRouterTests(
 )
 
 test.describe('plugin: nuxt router', () => {
-  for (const { nuxtVersion, description } of nuxtApps) {
+  for (const { routerVersion, description } of nuxtApps) {
     test.describe(`with ${description}`, () => {
       createTest('should create a new view when the hash changes')
         .withRum()
-        .withNuxtApp(nuxtVersion)
+        .withNuxtApp(routerVersion)
         .run(async ({ page, flushEvents, intakeRegistry }) => {
           await page.click('text=Go to User 42')
           await page.waitForURL('**/user/42?admin=true')
@@ -59,12 +59,12 @@ test.describe('plugin: nuxt router', () => {
 })
 
 test.describe('plugin: nuxt error', () => {
-  for (const { nuxtVersion, description } of nuxtApps) {
+  for (const { routerVersion, description } of nuxtApps) {
     test.describe(`with ${description}`, () => {
       createTest('should report client-side error')
         .withBasePath('/error-test')
         .withRum()
-        .withNuxtApp(nuxtVersion)
+        .withNuxtApp(routerVersion)
         .run(async ({ page, flushEvents, intakeRegistry }) => {
           await page.click('[data-testid="trigger-error"]')
 
@@ -84,7 +84,7 @@ test.describe('plugin: nuxt error', () => {
       createTest('should capture startup errors via app:error without duplicates')
         .withBasePath('/startup-error')
         .withRum()
-        .withNuxtApp(nuxtVersion)
+        .withNuxtApp(routerVersion)
         .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
           await page.waitForLoadState('networkidle')
 
@@ -104,7 +104,7 @@ test.describe('plugin: nuxt error', () => {
       createTest('should not render the 500 Internal Server Error page for non-fatal client errors after hydration')
         .withBasePath('/error-test')
         .withRum()
-        .withNuxtApp(nuxtVersion)
+        .withNuxtApp(routerVersion)
         .run(async ({ page, flushEvents, intakeRegistry }) => {
           // Wait for hydration (app:suspense:resolve) to complete: only the initial render is
           // allowed to trigger the full-page error.

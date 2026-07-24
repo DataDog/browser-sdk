@@ -44,7 +44,7 @@ const APPS: AppConfig[] = [
 
   // Vue Router apps
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
-  { name: 'nuxt-v3-app', builderFn: buildNuxtV3App, deps: ['nuxt-app'] },
+  { name: 'nuxt-vue-router-v4-app', builderFn: buildNuxtVueRouterV4App, deps: ['nuxt-app'] },
 
   // browser extensions
   { name: 'base-extension' },
@@ -238,11 +238,12 @@ async function buildVueRouterV4App() {
   })
 }
 
-async function buildNuxtV3App() {
-  await buildGeneratedApp('nuxt-app', 'nuxt-v3-app', async (appPath) => {
+async function buildNuxtVueRouterV4App() {
+  await buildGeneratedApp('nuxt-app', 'nuxt-vue-router-v4-app', async (appPath) => {
     await modifyPackageJson(appPath, (packageJson) => {
-      packageJson.name = 'nuxt-v3-app'
+      packageJson.name = 'nuxt-vue-router-v4-app'
       packageJson.dependencies.nuxt = '3.21.6'
+      packageJson.dependencies['vue-router'] = '4.6.4'
     })
   })
 }

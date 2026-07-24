@@ -19,7 +19,7 @@ Start by setting up [Datadog RUM][1] in your Nuxt application.
 
 After configuration, add the [RUM-Nuxt plugin][2] to the Browser SDK.
 
-This integration requires **Nuxt v3 or v4**, **Vue v3.5+**, and **Vue Router v4 or v5**.
+This integration requires **Nuxt v3 or v4**, **Vue v3.5+**, and **Vue Router v4+**.
 
 ## Basic usage
 

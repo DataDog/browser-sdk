@@ -19,7 +19,7 @@ import type { BrowserConfiguration } from '../../../browsers.conf'
 import {
   NEXTJS_APP_ROUTER_PORT,
   NUXT_APP_PORT,
-  NUXT_V3_APP_PORT,
+  NUXT_VUE_ROUTER_V4_APP_PORT,
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
@@ -215,9 +215,9 @@ class TestBuilder {
     return this
   }
 
-  withNuxtApp(nuxtVersion: 'v3' | 'v4' = 'v4') {
+  withNuxtApp(routerVersion: 'v4' | 'v5' = 'v5') {
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      baseUrl.port = nuxtVersion === 'v3' ? NUXT_V3_APP_PORT : NUXT_APP_PORT
+      baseUrl.port = routerVersion === 'v4' ? NUXT_VUE_ROUTER_V4_APP_PORT : NUXT_APP_PORT
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
       }

@@ -51,7 +51,7 @@ export default defineConfig(
       'test/apps/vue-router-app',
       'test/apps/vue-router-v4-app',
       'test/apps/nuxt-app',
-      'test/apps/nuxt-v3-app',
+      'test/apps/nuxt-vue-router-v4-app',
       'test/apps/sf-lwc-app/force-app/main/default/staticresources/*.js',
       'test/apps/sf-experience-app/force-app/main/default/staticresources/*.js',
       'sandbox',
