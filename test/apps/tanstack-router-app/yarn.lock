@@ -63,18 +63,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-router@npm:1.170.17":
-  version: 1.170.17
-  resolution: "@tanstack/react-router@npm:1.170.17"
+"@tanstack/react-router@npm:1.170.18":
+  version: 1.170.18
+  resolution: "@tanstack/react-router@npm:1.170.18"
   dependencies:
     "@tanstack/history": "npm:1.162.0"
     "@tanstack/react-store": "npm:^0.9.3"
-    "@tanstack/router-core": "npm:1.171.14"
+    "@tanstack/router-core": "npm:1.171.15"
     isbot: "npm:^5.1.22"
   peerDependencies:
     react: ">=18.0.0 || >=19.0.0"
     react-dom: ">=18.0.0 || >=19.0.0"
-  checksum: 10c0/4d5ddcce92ee273c6aa07b61bc66c281d221123a870a605d8632cbee30749eb75717d19c1d1c6a52b21917d73c902562c7d2c0a970245918200119925a04cccb
+  checksum: 10c0/f6825265d9ce626f59c93d606aa2c2770ca7fdc1ead8f99f70c6070f60f0c5fe6d0a6d607665694cf089c19d6d76c6c66c1b4102e8d27c93317f72002dd111bf
   languageName: node
   linkType: hard
 
@@ -91,15 +91,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/router-core@npm:1.171.14":
-  version: 1.171.14
-  resolution: "@tanstack/router-core@npm:1.171.14"
+"@tanstack/router-core@npm:1.171.15":
+  version: 1.171.15
+  resolution: "@tanstack/router-core@npm:1.171.15"
   dependencies:
     "@tanstack/history": "npm:1.162.0"
     cookie-es: "npm:^3.0.0"
     seroval: "npm:^1.5.4"
     seroval-plugins: "npm:^1.5.4"
-  checksum: 10c0/cda8eee02d95282e588050edbfa2125ed4724030a8c3f44eefe6fcdd4a1687234f305a1e76e8a00f291105e24290866cef231b7eebfeed756603c1c81963b1fb
+  checksum: 10c0/6134958348a422831b5894eb0eae7657754094f65fe005ad573fd2ff522c9d928edf1f6dd24fd1ee74a857b952630472a681c3e23d3fc338e8f51d17d0b55bf8
   languageName: node
   linkType: hard
 
@@ -1052,7 +1052,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "tanstack-router-app@workspace:."
   dependencies:
-    "@tanstack/react-router": "npm:1.170.17"
+    "@tanstack/react-router": "npm:1.170.18"
     react: "npm:19.2.7"
     react-dom: "npm:19.2.7"
     ts-loader: "npm:9.6.2"
