@@ -15,26 +15,28 @@ interface ShopifyInitConfiguration extends RumInitConfiguration {
  * suited to that iframe (see below). Otherwise (storefront context), forwards to `init()` as-is.
  */
 export function makeShopifyRumPublicApi(datadogRum: RumPublicApi): RumPublicApi {
-  return {
-    ...datadogRum,
-    init(initConfiguration: RumInitConfiguration | ShopifyInitConfiguration) {
-      if ('shopifyAnalytics' in initConfiguration && initConfiguration.shopifyAnalytics) {
-        const { shopifyAnalytics: analytics, ...initOptions } = initConfiguration
-        mockable(patchSandboxedIframeApis)()
-        mockable(initShopifyBindings)(datadogRum, analytics)
+  const originalInit = datadogRum.init.bind(datadogRum);
 
-        return datadogRum.init({
-          ...initOptions,
-          trackViewsManually: true, // Views are started explicitly via startView()
-          sessionReplaySampleRate: 0, // Session Replay is not usable in the Pixel sandbox iframe
-          trackUserInteractions: false, // Pixel sandbox iframe has no real DOM to interact with
-          trackResources: false, // Iframe resources are not meaningful
-          trackLongTasks: false, // PerformanceObserver tracks the empty iframe
-          sessionPersistence: 'cookie',
-        })
-      }
+  datadogRum.init = function(initConfiguration: RumInitConfiguration | ShopifyInitConfiguration) {
+    if ('shopifyAnalytics' in initConfiguration && initConfiguration.shopifyAnalytics) {
+      const { shopifyAnalytics: analytics, ...initOptions } = initConfiguration
+      mockable(patchSandboxedIframeApis)()
+      mockable(initShopifyBindings)(datadogRum, analytics)
 
-      return datadogRum.init(initConfiguration)
-    },
+      return originalInit({
+        ...initOptions,
+        trackViewsManually: true, // Views are started explicitly via startView()
+        sessionReplaySampleRate: 0, // Session Replay is not usable in the Pixel sandbox iframe
+        profilingSampleRate: 0, // Profiling is not usable in the Pixel sandbox iframe
+        trackUserInteractions: false, // Pixel sandbox iframe has no real DOM to interact with
+        trackResources: false, // Iframe resources are not meaningful
+        trackLongTasks: false, // PerformanceObserver tracks the empty iframe
+        sessionPersistence: 'cookie',
+      })
+    }
+
+    return originalInit(initConfiguration)
   }
+
+  return datadogRum;
 }
