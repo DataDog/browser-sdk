@@ -1,15 +1,16 @@
 import { Group, MultiSelect, Stack, TagsInput, TextInput } from '@mantine/core'
 import { IconSearch } from '@tabler/icons-react'
 import React from 'react'
-import { FLAG_TYPES, TYPE_LABELS } from './flagTypeConstants'
-import type { FlagCatalogView } from './useFlagCatalogView'
+import { FLAG_TYPES, FLAG_TYPE_CONFIG } from './flagTypes'
+import { useFlagsContext } from './flagsContext'
 
 // Type is a fixed set, so its options are static. There's no tags endpoint and we only load a page
 // at a time, so the Tag filter can't show every tag — instead it offers `tagSuggestions` (tags seen
 // on pages loaded so far) as autocomplete while still accepting any typed tag. Search/type/tags are
 // all applied server-side (see useFlagCatalog).
-export function FlagFilterBar({ view, tagSuggestions }: { view: FlagCatalogView; tagSuggestions: string[] }) {
-  const typeOptions = FLAG_TYPES.map((type) => ({ value: type, label: TYPE_LABELS[type] }))
+export function FlagFilterBar() {
+  const { view, tagSuggestions } = useFlagsContext()
+  const typeOptions = FLAG_TYPES.map((type) => ({ value: type, label: FLAG_TYPE_CONFIG[type].label }))
 
   return (
     <Stack gap="xs">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createLogger } from '../../../../common/logger'
-import type { CatalogFlag, FlagCatalogRequest } from './flagCatalog'
-import { fetchFlagCatalog } from './flagCatalog'
+import type { CatalogFlag, FlagCatalogRequest } from './flagsRequests'
+import { fetchFlagCatalog } from './flagsRequests'
 import { getValidAccessToken } from './oauth'
 import type { FlagAuthState } from './useFlagAuth'
 
