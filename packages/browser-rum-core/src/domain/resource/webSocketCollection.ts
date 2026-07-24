@@ -2,6 +2,7 @@ import type { Observable, WebSocketContext } from '@datadog/browser-core'
 import { generateUUID, initWebSocketObservable, sanitize } from '@datadog/browser-core'
 import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { clocksNow, elapsed } from '@datadog/js-core/time'
+import { buildUrl } from '@datadog/js-core/util'
 import { VitalType } from '../../rawRumEvent.types'
 import type { ViewHistory } from '../contexts/viewHistory'
 import type { LifeCycle } from '../lifeCycle'
@@ -9,6 +10,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { DurationVital } from '../vital/vitalCollection'
 
 export const WEBSOCKET_CONNECTING_VITAL_NAME = 'websocket-connecting'
+export const WEBSOCKET_CLOSED_VITAL_NAME = 'websocket-closed'
 
 export type WebSocketTrackingEndReason = 'close_event' | 'session_end'
 
@@ -91,15 +93,37 @@ export function trackWebSocket(
 ): WebSocketConnectionTracker {
   const webSocketRegistry = new Map<WebSocket, WebSocketConnection>()
 
+  function completeConnection(
+    webSocket: WebSocketConnection,
+    endInfo: { at: ClocksState; code?: number; reason?: string; wasClean?: boolean },
+    reason: WebSocketTrackingEndReason
+  ) {
+    const completedEvent = buildCompletedEvent(webSocket, endInfo, reason, viewHistory)
+    lifeCycle.notify(LifeCycleEventType.WEBSOCKET_COMPLETED, completedEvent)
+
+    addDurationVital({
+      id: generateUUID(),
+      name: WEBSOCKET_CLOSED_VITAL_NAME,
+      type: VitalType.DURATION,
+      startClocks: completedEvent.endClocks,
+      duration: 0 as Duration,
+      context: sanitize({
+        url: completedEvent.url,
+        connection_id: completedEvent.connectionId,
+      }),
+    })
+  }
+
   const subscription = webSocketContextObservable.subscribe((context) => {
     switch (context.state) {
       case 'connecting': {
         const connectionId = generateUUID()
         const startViewId = viewHistory.findView(context.startClocks.relative)?.id
+        const url = sanitizeWebSocketUrl(context.url)
         const webSocket: WebSocketConnection = {
           webSocket: context.instance,
           connectionId,
-          url: context.url,
+          url,
           startClocks: context.startClocks,
           startViewId,
           messagesIn: { count: 0, size: 0 },
@@ -110,15 +134,14 @@ export function trackWebSocket(
         webSocketRegistry.set(context.instance, webSocket)
 
         addDurationVital({
-          id: connectionId,
+          id: generateUUID(),
           name: WEBSOCKET_CONNECTING_VITAL_NAME,
           type: VitalType.DURATION,
           startClocks: context.startClocks,
           duration: 0 as Duration,
           context: sanitize({
-            url: context.url,
-            protocols: context.protocols,
-            startViewId,
+            url,
+            connection_id: connectionId,
           }),
         })
         return
@@ -174,10 +197,7 @@ export function trackWebSocket(
 
         webSocketRegistry.delete(context.instance)
 
-        lifeCycle.notify(
-          LifeCycleEventType.WEBSOCKET_COMPLETED,
-          buildCompletedEvent(webSocket, context, 'close_event', viewHistory)
-        )
+        completeConnection(webSocket, context, 'close_event')
 
         return
       }
@@ -189,10 +209,7 @@ export function trackWebSocket(
       const at = clocksNow()
 
       webSocketRegistry.forEach((webSocket) => {
-        lifeCycle.notify(
-          LifeCycleEventType.WEBSOCKET_COMPLETED,
-          buildCompletedEvent(webSocket, { at }, reason, viewHistory)
-        )
+        completeConnection(webSocket, { at }, reason)
       })
 
       webSocketRegistry.clear()
@@ -202,6 +219,12 @@ export function trackWebSocket(
       webSocketRegistry.clear()
     },
   }
+}
+
+function sanitizeWebSocketUrl(url: string) {
+  const sanitizedUrl = buildUrl(url)
+  sanitizedUrl.search = ''
+  return sanitizedUrl.href
 }
 
 function recordMessageTiming(webSocket: WebSocketConnection, at: ClocksState, direction: 'in' | 'out') {
