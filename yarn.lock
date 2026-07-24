@@ -701,10 +701,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/rum-events-format@DataDog/rum-events-format#commit=02a3fbe611005aec9e3530201412ac71bf34c1e4":
+"@datadog/rum-events-format@DataDog/rum-events-format#commit=e18f1d3b6a018f00061239bf14fbfb748c9538a3":
   version: 0.0.0
-  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=02a3fbe611005aec9e3530201412ac71bf34c1e4"
-  checksum: 10c0/831a49695bbe7908a2e7a95b7359ee54adaafd485eae5b3910f04c273b4953efe15ff2d4f66517bdced1c72363eebba53208bd1bd61fc35edd1977f1545dd285
+  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=e18f1d3b6a018f00061239bf14fbfb748c9538a3"
+  checksum: 10c0/b8306ceac7e936a517dc2cce03d9c6e0b8db9206433214d36eeae0d2e2e7089feec8c4f7c5f077eb4edf45d8abbbbbaa45808fc0a52b46c6f711e0d924221744
   languageName: node
   linkType: hard
 
@@ -6272,7 +6272,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "browser-sdk@workspace:."
   dependencies:
-    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=02a3fbe611005aec9e3530201412ac71bf34c1e4"
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=e18f1d3b6a018f00061239bf14fbfb748c9538a3"
     "@eslint/js": "npm:10.0.1"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@microsoft/api-extractor": "npm:7.58.9"
