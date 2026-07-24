@@ -1,5 +1,5 @@
 import { timeStampNow } from '@datadog/js-core/time'
-import type { TrackingConsentState, SessionManager, RemoteConfiguration } from '@datadog/browser-core'
+import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
   BufferedObservable,
   canUseEventBridge,
@@ -22,15 +22,13 @@ import {
   mockable,
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
-  createConfigurationCache,
-  fetchRemoteConfiguration,
   getRemoteConfigurationId,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
-import { applyLogsRemoteConfiguration } from '../domain/remoteConfiguration'
+import { fetchAndApplyLogsRemoteConfiguration, getLogsRemoteConfiguration } from '../domain/remoteConfiguration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
@@ -76,55 +74,35 @@ export function createPreStartStrategy(
 
     trackingConsentStateSubscription.unsubscribe()
 
-    const remoteConfigId = getRemoteConfigurationId(cachedInitConfiguration)
     let configurationToUse = cachedConfiguration
 
-    if (remoteConfigId) {
-      const cache = createConfigurationCache<RemoteConfiguration>({ remoteConfigurationId: remoteConfigId })
-      const cacheResult = cache.read()
-      const fetchPromise = fetchRemoteConfiguration(cachedInitConfiguration)
+    if (getRemoteConfigurationId(cachedInitConfiguration)) {
+      const isSyncLoading =
+        !!cachedInitConfiguration.remoteConfigurationId || !!cachedInitConfiguration.remoteConfiguration?.sync
 
-      if (cacheResult.status === 'hit') {
-        const resolvedInitConfig = applyLogsRemoteConfiguration(cachedInitConfiguration, cacheResult.config)
-        const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
-        if (resolvedLogsConfig) {
-          configurationToUse = resolvedLogsConfig
-        }
-        // Background sync — update the cache for the next page load
-        fetchPromise
-          .then((fetchResult) => {
-            if (fetchResult.ok) {
-              cache.write(fetchResult.value)
-            }
-          })
-          .catch(monitorError)
-      } else if (cachedInitConfiguration.remoteConfiguration?.required) {
-        fetchPromise
-          .then((fetchResult) => {
-            if (fetchResult.ok) {
-              cache.write(fetchResult.value)
-            }
-            const resolvedInitConfig = fetchResult.ok
-              ? applyLogsRemoteConfiguration(cachedInitConfiguration!, fetchResult.value)
-              : cachedInitConfiguration!
-            const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
-            if (resolvedLogsConfig) {
-              const startLogsResult = doStartLogs(resolvedLogsConfig, sessionManager!, hooks)
-              bufferApiCalls.subscribe((callback) => callback(startLogsResult))
-              bufferApiCalls.unbuffer()
+      if (isSyncLoading) {
+        void fetchAndApplyLogsRemoteConfiguration(cachedInitConfiguration)
+          .then((resolvedInitConfig) => {
+            if (resolvedInitConfig) {
+              const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
+              if (resolvedLogsConfig) {
+                const startLogsResult = doStartLogs(resolvedLogsConfig, sessionManager!, hooks)
+                bufferApiCalls.subscribe((callback) => callback(startLogsResult))
+                bufferApiCalls.unbuffer()
+              }
             }
           })
           .catch(monitorError)
         return
-      } else {
-        // Cache miss, not required — still refresh the cache for next load
-        fetchPromise
-          .then((fetchResult) => {
-            if (fetchResult.ok) {
-              cache.write(fetchResult.value)
-            }
-          })
-          .catch(monitorError)
+      }
+
+      const resolvedInitConfig = getLogsRemoteConfiguration(cachedInitConfiguration)
+      if (!resolvedInitConfig) {
+        return
+      }
+      const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
+      if (resolvedLogsConfig) {
+        configurationToUse = resolvedLogsConfig
       }
     }
 

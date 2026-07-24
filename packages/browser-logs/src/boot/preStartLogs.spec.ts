@@ -273,7 +273,7 @@ describe('preStartLogs', () => {
       )
 
       const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
-      strategy.init({ clientToken: 'xxx', remoteConfigurationId: RC_ID })
+      strategy.init({ clientToken: 'xxx', remoteConfiguration: { id: RC_ID } })
       await collectAsyncCalls(doStartLogsSpy, 1)
 
       const [configuration] = doStartLogsSpy.calls.argsFor(0)
