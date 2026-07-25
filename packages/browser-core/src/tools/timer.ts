@@ -1,9 +1,8 @@
-import type { GlobalObject } from '@datadog/js-core/util'
-import { globalObject } from '@datadog/js-core/util'
-import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
+import type { TimeoutId } from '@datadog/js-core/util'
+import { getZoneJsOriginalValue, globalObject } from '@datadog/js-core/util'
 import { monitor } from './monitor'
 
-export type TimeoutId = ReturnType<GlobalObject['setTimeout']>
+export type { TimeoutId }
 
 export function setTimeout(callback: () => void, delay?: number): TimeoutId {
   return getZoneJsOriginalValue(globalObject, 'setTimeout')(monitor(callback), delay)

@@ -1,5 +1,12 @@
-import { Observable } from '../../src/tools/observable'
-import type { FlushEvent, FlushController, FlushReason, UrgentFlushReason } from '../../src/transport'
+import { Observable } from '../src/util/observable'
+import type {
+  createFlushController,
+  FlushEvent,
+  FlushReason,
+  UrgentFlushReason,
+} from '../src/transport/flushController'
+
+type FlushController = ReturnType<typeof createFlushController>
 
 export type MockFlushController = ReturnType<typeof createMockFlushController>
 

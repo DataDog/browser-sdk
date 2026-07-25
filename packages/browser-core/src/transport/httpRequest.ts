@@ -1,103 +1,48 @@
-import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
-import type { Context } from '../tools/serialisation/context'
+import {
+  createHttpRequest as jsCoreCreateHttpRequest,
+  RECOMMENDED_REQUEST_BYTES_LIMIT,
+} from '@datadog/js-core/transport'
+import type { EndpointBuilder, Payload, HttpResponse } from '@datadog/js-core/transport'
 import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
-import { Observable } from '../tools/observable'
-import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
-import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
+
+export type { HttpRequest } from '@datadog/js-core/transport'
+export { RECOMMENDED_REQUEST_BYTES_LIMIT }
 
 /**
- * beacon payload max queue size implementation is 64kb
- * ensure that we leave room for logs, rum and potential other users
- */
-export const RECOMMENDED_REQUEST_BYTES_LIMIT = 16 * ONE_KIBI_BYTE
-
-/**
- * Use POST request without content type to:
- * - avoid CORS preflight requests
- * - allow usage of sendBeacon
+ * Creates an {@link HttpRequest} wired to the browser's fetch and sendBeacon APIs.
  *
- * multiple elements are sent separated by \n in order
- * to be parsed correctly without content type header
+ * This is the browser-core entry point for building intake HTTP requests. It injects
+ * {@link fetchStrategy} and {@link sendBeaconStrategy} into the generic js-core
+ * implementation so it can be tested without browser globals.
+ *
+ * @param endpointBuilders - Intake endpoints to target.
+ * @param reportError - Called when the send queue overflows.
+ * @param bytesLimit - Beacon size limit; defaults to {@link RECOMMENDED_REQUEST_BYTES_LIMIT}.
  */
-
-export interface HttpRequest<Body extends Payload = Payload> {
-  observable: Observable<HttpRequestEvent<Body>>
-  send(this: void, payload: Body): void
-  sendOnExit(this: void, payload: Body): void
-}
-
-export interface HttpResponse extends Context {
-  status: number
-  type?: ResponseType
-}
-
-export interface BandwidthStats {
-  ongoingByteCount: number
-  ongoingRequestCount: number
-}
-
-export type HttpRequestEvent<Body extends Payload = Payload> =
-  | {
-      // A request to send the given payload failed. (We may retry.)
-      type: 'failure'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
-  | {
-      // The given payload was discarded because the request queue is full.
-      type: 'queue-full'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
-  | {
-      // A request to send the given payload succeeded.
-      type: 'success'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
-
-export interface Payload {
-  data: string | FormData | Blob
-  bytesCount: number
-  retry?: TransportRetryInfo
-  encoding?: 'deflate'
-}
-
 export function createHttpRequest<Body extends Payload = Payload>(
   endpointBuilders: EndpointBuilder[],
   reportError: (message: string) => void,
   bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT
-): HttpRequest<Body> {
-  const observable = new Observable<HttpRequestEvent<Body>>()
-  const retryState = newRetryState<Body>()
+) {
+  return jsCoreCreateHttpRequest<Body>(
+    endpointBuilders,
+    reportError,
+    (endpointBuilder, payload, onResponse) => fetchStrategy(endpointBuilder, payload, onResponse),
+    (endpointBuilder, payload) => sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
+  )
+}
 
-  return {
-    observable,
-    send: (payload: Body) => {
-      for (const endpointBuilder of endpointBuilders) {
-        sendWithRetryStrategy(
-          payload,
-          retryState,
-          (payload, onResponse) => {
-            fetchStrategy(endpointBuilder, payload, onResponse)
-          },
-          endpointBuilder.trackType,
-          reportError,
-          observable
-        )
-      }
-    },
-    /**
-     * Since fetch keepalive behaves like regular fetch on Firefox,
-     * keep using sendBeaconStrategy on exit
-     */
-    sendOnExit: (payload: Body) => {
-      for (const endpointBuilder of endpointBuilders) {
-        sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
-      }
-    },
-  }
+export function fetchStrategy(
+  endpointBuilder: EndpointBuilder,
+  payload: Payload,
+  onResponse?: (r: HttpResponse) => void
+) {
+  const fetchUrl = endpointBuilder.build('fetch', payload)
+
+  fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
+    .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
+    .catch(monitor(() => onResponse?.({ status: 0 })))
 }
 
 function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, payload: Payload) {
@@ -106,7 +51,6 @@ function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number
     try {
       const beaconUrl = endpointBuilder.build('beacon', payload)
       const isQueued = navigator.sendBeacon(beaconUrl, payload.data)
-
       if (isQueued) {
         return
       }
@@ -125,16 +69,4 @@ function reportBeaconError(e: unknown) {
     hasReportedBeaconError = true
     monitorError(e)
   }
-}
-
-export function fetchStrategy(
-  endpointBuilder: EndpointBuilder,
-  payload: Payload,
-  onResponse?: (r: HttpResponse) => void
-) {
-  const fetchUrl = endpointBuilder.build('fetch', payload)
-
-  fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
-    .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
-    .catch(monitor(() => onResponse?.({ status: 0 })))
 }

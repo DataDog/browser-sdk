@@ -5,6 +5,23 @@
 ```ts
 
 // @public
+export interface BandwidthStats {
+    ongoingByteCount: number;
+    ongoingRequestCount: number;
+}
+
+// @public
+export interface Batch {
+    add: (message: Context) => void;
+    flushObservable: Observable<FlushEvent>;
+    forceFlush: (reason: FlushReason) => void;
+    isEmpty: boolean;
+    prepareUrgentFlushObservable: Observable<UrgentFlushReason>;
+    stop: () => void;
+    upsert: (message: Context, key: string) => void;
+}
+
+// @public
 export function buildEndpointUrl(input: BuildEndpointUrlOptions): string;
 
 // @public
@@ -17,10 +34,46 @@ export interface BuildEndpointUrlOptions {
 }
 
 // @public
+export function createBatch(input: {
+    request: HttpRequest;
+    pageMayExitObservable: Observable<PageMayExitEvent>;
+    endpoints?: EndpointBuilder[];
+    reportError: (message: string) => void;
+    warn: (message: string) => void;
+    encoder?: Encoder;
+}): Batch;
+
+// @public
 export function createEndpointBuilder(configuration: EndpointBuilderConfiguration, trackType: TrackType, extraParameters?: string[]): EndpointBuilder;
 
 // @public
+export function createHttpRequest<Body extends Payload = Payload>(endpointBuilders: EndpointBuilder[], reportError: (message: string) => void, sendStrategy: SendStrategy<Body>, sendOnExitStrategy: SendOnExitStrategy<Body>): HttpRequest<Body>;
+
+// @public
+export function createIdentityEncoder(): Encoder<string>;
+
+// @public
 export function createReplicaEndpointBuilder(input: ConfigurationWithReplica, trackType: TrackType): EndpointBuilder | undefined;
+
+// @public
+export interface Encoder<Output extends string | Uint8ArrayBuffer = string | Uint8ArrayBuffer> {
+    estimateEncodedBytesCount(data: string): number;
+    finish(callback: (result: EncoderResult<Output>) => void): void;
+    finishSync(): EncoderResult<Output> & {
+        pendingData: string;
+    };
+    isAsync: boolean;
+    isEmpty: boolean;
+    write(data: string, callback?: (additionalEncodedBytesCount: number) => void): void;
+}
+
+// @public
+export interface EncoderResult<Output extends string | Uint8ArrayBuffer = string | Uint8ArrayBuffer> {
+    encoding?: 'deflate';
+    output: Output;
+    outputBytesCount: number;
+    rawBytesCount: number;
+}
 
 // @public
 export interface EndpointBuilder {
@@ -32,6 +85,49 @@ export interface EndpointBuilder {
 export interface EndpointPayload {
     encoding?: 'deflate';
     retry?: TransportRetryInfo;
+}
+
+// @public
+export const FLUSH_DURATION_LIMIT: Duration;
+
+// @public
+export interface FlushEvent {
+    bytesCount: number;
+    messagesCount: number;
+    reason: FlushReason;
+}
+
+// @public
+export type FlushReason = UrgentFlushReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire';
+
+// @public
+export interface HttpRequest<Body extends Payload = Payload> {
+    observable: Observable<HttpRequestEvent<Body>>;
+    send(this: void, payload: Body): void;
+    sendOnExit(this: void, payload: Body): void;
+}
+
+// @public
+export type HttpRequestEvent<Body extends Payload = Payload> = {
+    type: 'failure';
+    bandwidth: BandwidthStats;
+    payload: Body;
+} | {
+    type: 'queue-full';
+    bandwidth: BandwidthStats;
+    payload: Body;
+} | {
+    type: 'success';
+    bandwidth: BandwidthStats;
+    payload: Body;
+};
+
+// @public
+export interface HttpResponse extends Context {
+    // (undocumented)
+    status: number;
+    // (undocumented)
+    type?: ResponseType;
 }
 
 // @public
@@ -56,11 +152,55 @@ export const INTAKE_URL_PARAMETERS: string[];
 export function isIntakeUrl(url: string): boolean;
 
 // @public
+export function isPageExitReason(reason: string): reason is PageExitReason;
+
+// @public
+export const MESSAGE_BYTES_LIMIT: number;
+
+// @public
+export const PageExitReason: {
+    readonly HIDDEN: "visibility_hidden";
+    readonly UNLOADING: "before_unload";
+    readonly PAGEHIDE: "page_hide";
+    readonly FROZEN: "page_frozen";
+};
+
+// @public (undocumented)
+export type PageExitReason = (typeof PageExitReason)[keyof typeof PageExitReason];
+
+// @public
+export interface PageMayExitEvent {
+    // (undocumented)
+    reason: PageExitReason;
+}
+
+// @public
+export interface Payload {
+    // (undocumented)
+    bytesCount: number;
+    // (undocumented)
+    data: string | FormData | Blob;
+    // (undocumented)
+    encoding?: 'deflate';
+    // (undocumented)
+    retry?: TransportRetryInfo;
+}
+
+// @public
 export type ProxyFn = (options: {
     path: string;
     parameters: string;
     subdomain?: string;
 }) => string;
+
+// @public
+export const RECOMMENDED_REQUEST_BYTES_LIMIT: number;
+
+// @public
+export type SendOnExitStrategy<Body extends Payload = Payload> = (endpointBuilder: EndpointBuilder, payload: Body) => void;
+
+// @public
+export type SendStrategy<Body extends Payload = Payload> = (endpointBuilder: EndpointBuilder, payload: Body, onResponse: (response: HttpResponse) => void) => void;
 
 // @public
 export type Site = 'datadoghq.com' | 'us3.datadoghq.com' | 'us5.datadoghq.com' | 'datadoghq.eu' | 'ddog-gov.com' | 'us2.ddog-gov.com' | 'ap1.datadoghq.com' | 'ap2.datadoghq.com' | (string & {});
@@ -79,6 +219,9 @@ export interface TransportRetryInfo {
 
 // @public
 export type TransportSource = 'browser' | 'flutter' | 'unity' | 'dd_debugger';
+
+// @public
+export type UrgentFlushReason = PageExitReason;
 
 // (No @packageDocumentation comment for this package)
 
