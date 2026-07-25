@@ -3,6 +3,12 @@ import type { ComponentInternalInstance, ComponentPublicInstance, App } from 'vu
 import { clocksNow } from '@datadog/js-core/time'
 import { callMonitored, createHandlingStack } from '@datadog/browser-core'
 
+/**
+ * The subset of the Nuxt app instance (as returned by `useNuxtApp()`) needed to wire up
+ * automatic error reporting.
+ *
+ * @category Main
+ */
 export interface NuxtApp {
   vueApp: App
   hook(name: 'app:error', callback: (err: unknown) => void): void

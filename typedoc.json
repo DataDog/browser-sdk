@@ -3,6 +3,7 @@
     "packages/*",
     "packages/browser-rum-react/react-router-v6",
     "packages/browser-rum-react/react-router-v7",
+    "packages/browser-rum-react/tanstack-router",
     "packages/browser-rum-vue/vue-router-v4"
   ],
   "entryPointStrategy": "packages",
@@ -25,8 +26,23 @@
   "hideGenerator": true,
   "includeHierarchySummary": true,
   "navigation": {
-    "includeCategories": true
+    "includeCategories": true,
+    "compactFolders": false
   },
+  "highlightLanguages": [
+    "bash",
+    "console",
+    "css",
+    "html",
+    "javascript",
+    "json",
+    "jsonc",
+    "json5",
+    "yaml",
+    "tsx",
+    "typescript",
+    "vue"
+  ],
   "packageOptions": {
     "excludeInternal": true,
 
