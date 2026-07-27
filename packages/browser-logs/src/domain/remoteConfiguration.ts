@@ -1,5 +1,5 @@
+import type { RemoteConfiguration } from '@datadog/browser-core'
 import {
-  type RemoteConfiguration,
   createConfigurationCache,
   display,
   fetchRemoteConfiguration,

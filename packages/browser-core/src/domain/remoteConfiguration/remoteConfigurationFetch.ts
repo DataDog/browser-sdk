@@ -31,12 +31,42 @@ export function buildEndpoint(options: RemoteConfigurationEndpointOptions): stri
   })
 }
 
-export async function fetchRemoteConfiguration(
+// Use a window-level registry so deduplication works across separate SDK bundles
+// (e.g. RUM and Logs loaded as separate CDN scripts on the same page).
+const INFLIGHT_FETCHES_KEY = '__ddRcInflight'
+
+function getInflightFetches(): Map<string, Promise<FetchRemoteConfigurationResult>> {
+  const win = window as unknown as Record<string, unknown>
+  if (!win[INFLIGHT_FETCHES_KEY]) {
+    win[INFLIGHT_FETCHES_KEY] = new Map<string, Promise<FetchRemoteConfigurationResult>>()
+  }
+  return win[INFLIGHT_FETCHES_KEY] as Map<string, Promise<FetchRemoteConfigurationResult>>
+}
+
+export function fetchRemoteConfiguration(
   options: RemoteConfigurationEndpointOptions
 ): Promise<FetchRemoteConfigurationResult> {
+  const endpoint = buildEndpoint(options)
+  const inflightFetches = getInflightFetches()
+
+  if (!inflightFetches.has(endpoint)) {
+    const win = window as unknown as Record<string, unknown>
+    const promise = doFetchRemoteConfiguration(endpoint).finally(() => {
+      inflightFetches.delete(endpoint)
+      if (inflightFetches.size === 0) {
+        delete win[INFLIGHT_FETCHES_KEY]
+      }
+    })
+    inflightFetches.set(endpoint, promise)
+  }
+
+  return inflightFetches.get(endpoint)!
+}
+
+async function doFetchRemoteConfiguration(endpoint: string): Promise<FetchRemoteConfigurationResult> {
   let response: Response | undefined
   try {
-    response = await fetch(buildEndpoint(options))
+    response = await fetch(endpoint)
   } catch {
     response = undefined
   }
