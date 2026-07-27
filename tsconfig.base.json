@@ -38,6 +38,7 @@
       "@datadog/browser-rum-react/tanstack-router": ["./packages/browser-rum-react/src/entries/tanstackRouter"],
 
       "@datadog/browser-rum-vue": ["./packages/browser-rum-vue/src/entries/main"],
+      "@datadog/browser-rum-vue/vue-router": ["./packages/browser-rum-vue/src/entries/vueRouter"],
       "@datadog/browser-rum-vue/vue-router-v4": ["./packages/browser-rum-vue/src/entries/vueRouter"],
 
       "@datadog/browser-rum-nuxt": ["./packages/browser-rum-nuxt/src/entries/main"],
