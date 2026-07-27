@@ -6,7 +6,7 @@
 
 The Datadog RUM Vue integration provides framework-specific instrumentation to help you monitor and debug Vue 3 applications. This integration adds:
 
-- **Automatic route change detection** using Vue Router v4
+- **Automatic route change detection** using Vue Router v4 or v5
 - **View name normalization** that maps dynamic route segments to their parameterized definitions (e.g. `/users/123` becomes `/users/:id`)
 - **Error reporting** through Vue's global error handler with full component stack traces
 - **Full-stack visibility** by correlating frontend performance with backend traces and logs
@@ -22,7 +22,7 @@ Start by setting up [Datadog RUM][1] in your Vue application:
 
 After configuration, the Datadog App provides instructions for integrating the [RUM-Vue plugin][2] with the Browser SDK.
 
-This integration requires **Vue v3.5+** and **Vue Router v4+** (if using router view tracking).
+This integration requires **Vue v3.5+** and **Vue Router v4 or v5** (if using router view tracking).
 
 ## Basic usage
 
@@ -76,11 +76,11 @@ datadogRum.init({
 
 ### 2. Create your router with the Datadog wrapper
 
-Replace Vue Router's `createRouter` with the one from `@datadog/browser-rum-vue/vue-router-v4`:
+Replace Vue Router's `createRouter` with the one from `@datadog/browser-rum-vue/vue-router`:
 
 ```js
 import { createWebHistory } from 'vue-router'
-import { createRouter } from '@datadog/browser-rum-vue/vue-router-v4'
+import { createRouter } from '@datadog/browser-rum-vue/vue-router'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -99,7 +99,7 @@ import { createApp } from 'vue'
 import { createWebHistory } from 'vue-router'
 import { datadogRum } from '@datadog/browser-rum'
 import { vuePlugin, addVueError } from '@datadog/browser-rum-vue'
-import { createRouter } from '@datadog/browser-rum-vue/vue-router-v4'
+import { createRouter } from '@datadog/browser-rum-vue/vue-router'
 import App from './App.vue'
 
 datadogRum.init({
@@ -123,6 +123,8 @@ app.config.errorHandler = addVueError
 app.use(router)
 app.mount('#app')
 ```
+
+The previous `@datadog/browser-rum-vue/vue-router-v4` import remains available for backward compatibility.
 
 ## Route tracking
 
