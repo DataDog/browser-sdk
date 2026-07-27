@@ -23,10 +23,13 @@ This integration supports **React v18 or v19**.
 
 ## Error Tracking
 
-To track React component rendering errors, use one of the following:
+To track React component rendering errors, choose one of the following approaches:
 
 - An `ErrorBoundary` component (see [React documentation][3]) that catches errors and reports them to Datadog.
-- A function that you can use to report errors from your own `ErrorBoundary` component.
+- The `addReactError` function from your own `ErrorBoundary` component.
+- In React 19, the `onCaughtError` option from `createRoot`.
+
+Do not report the same caught error from both an `ErrorBoundary` and `onCaughtError`, as this creates duplicate RUM error events.
 
 ### `ErrorBoundary` usage
 
@@ -68,7 +71,9 @@ class MyErrorBoundary extends React.Component {
 
 ## React 19 `createRoot` Error Handling
 
-React 19 introduced new error handling options for `createRoot` that can help capture errors more effectively. You can configure these options to work with Datadog RUM error tracking. See the [createRoot documentation](https://react.dev/reference/react-dom/client/createRoot#parameters) for more details:
+React 19 introduced new error handling options for `createRoot` that can help capture errors more effectively. You can configure these options to work with Datadog RUM error tracking. See the [createRoot documentation](https://react.dev/reference/react-dom/client/createRoot#parameters) for more details.
+
+The following example reports caught errors centrally through `onCaughtError`. Error boundaries are still needed to catch errors and render fallback UI, but they must not also call `addReactError`. If your application already uses the Datadog `ErrorBoundary`, or calls `addReactError` from a custom boundary's `componentDidCatch`, omit `onCaughtError` to avoid reporting caught errors twice.
 
 ```javascript
 import { createRoot } from 'react-dom/client'
