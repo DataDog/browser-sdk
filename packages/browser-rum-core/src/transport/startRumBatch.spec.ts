@@ -214,8 +214,8 @@ describe('computeAssembledViewDiff', () => {
 })
 
 describe('startRumBatch partial_view_updates routing', () => {
-  it('PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL should be 100', () => {
-    expect(PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL).toBe(100)
+  it('PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL should be 10', () => {
+    expect(PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL).toBe(10)
   })
 })
 
