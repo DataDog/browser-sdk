@@ -35,6 +35,7 @@ import { createActionHistory } from './actionHistory'
 import { createVitalHistory } from './vitalHistory'
 import { checkProfilingQuota } from './quotaCheck'
 import type { QuotaReason } from './quotaCheck'
+import { buildProfilerDebugIds } from './profilerDebugIds'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -304,6 +305,7 @@ export function createRumProfiler(
             vitals,
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
+            debugIds: buildProfilerDebugIds(trace.resources),
           }),
           sessionId
         )

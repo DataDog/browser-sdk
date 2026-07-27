@@ -230,6 +230,33 @@ describe('cookieAccess', () => {
           expect(spy).toHaveBeenCalledTimes(1)
         })
       })
+
+      describe('delete', () => {
+        it('should remove the cookie value', async () => {
+          const { createCookieAccess, setCookieWithCleanup } = setup()
+          await setCookieWithCleanup(COOKIE_NAME, 'value1', ONE_MINUTE)
+
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
+          await cookieAccess.delete()
+
+          expect(await cookieAccess.getAll()).toEqual([])
+        })
+
+        it('should notify the observable', async () => {
+          const { createCookieAccess, flushObservable, setCookieWithCleanup } = setup()
+          await setCookieWithCleanup(COOKIE_NAME, 'value1', ONE_MINUTE)
+
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
+          const spy = jasmine.createSpy('observer')
+          const subscription = cookieAccess.observable.subscribe(spy)
+          registerCleanupTask(() => subscription.unsubscribe())
+
+          await cookieAccess.delete()
+          await flushObservable(spy)
+
+          expect(spy).toHaveBeenCalledTimes(1)
+        })
+      })
     })
   }
 
@@ -238,6 +265,7 @@ describe('cookieAccess', () => {
       const access: CookieAccess = {
         getAll: jasmine.createSpy('getAll').and.returnValue(Promise.resolve(['test'])),
         getAllAndSet: jasmine.createSpy('getAllAndSet').and.returnValue(Promise.resolve()),
+        delete: jasmine.createSpy('delete').and.returnValue(Promise.resolve()),
         observable: null as any,
       }
       const factory = jasmine.createSpy('factory').and.returnValue(access)
@@ -252,6 +280,7 @@ describe('cookieAccess', () => {
       const access: CookieAccess = {
         getAll: () => Promise.resolve([]),
         getAllAndSet: () => Promise.resolve(),
+        delete: () => Promise.resolve(),
         observable: null as any,
       }
 
@@ -265,6 +294,7 @@ describe('cookieAccess', () => {
       const access: CookieAccess = {
         getAll: () => Promise.resolve([]),
         getAllAndSet: () => Promise.reject(new Error('boom')),
+        delete: () => Promise.resolve(),
         observable: null as any,
       }
 
@@ -275,22 +305,17 @@ describe('cookieAccess', () => {
     })
 
     it('cleans up the test cookie after the check', async () => {
-      const calls: Array<{ value: string; expireDelay: number }> = []
+      const deleteSpy = jasmine.createSpy('delete').and.returnValue(Promise.resolve())
       const access: CookieAccess = {
         getAll: () => Promise.resolve(['test']),
-        getAllAndSet: (cb) => {
-          calls.push(cb([]))
-          return Promise.resolve()
-        },
+        getAllAndSet: () => Promise.resolve(),
+        delete: deleteSpy,
         observable: null as any,
       }
 
       await areCookiesAuthorized(() => access, COOKIE_OPTIONS)
 
-      expect(calls).toEqual([
-        { value: 'test', expireDelay: jasmine.any(Number) as unknown as number },
-        { value: '', expireDelay: 0 },
-      ])
+      expect(deleteSpy).toHaveBeenCalled()
     })
 
     it('works with the real createDocumentCookieAccess', async () => {

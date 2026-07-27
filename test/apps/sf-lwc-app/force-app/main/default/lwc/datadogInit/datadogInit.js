@@ -1,6 +1,6 @@
 import { LightningElement, wire } from 'lwc'
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation'
-import datadogRumSlim from '@salesforce/resourceUrl/datadog_rum_slim'
+import datadogRum from '@salesforce/resourceUrl/datadog_rum_salesforce'
 import { loadScript } from 'lightning/platformResourceLoader'
 
 let datadogInitialization
@@ -49,7 +49,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   }
 
   loadDatadogRum() {
-    return loadScript(this, datadogRumSlim).then(() => {
+    return loadScript(this, datadogRum).then(() => {
       window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)
       window.DD_RUM.init({ ...defaultInitConfiguration, ...window.RUM_CONFIGURATION })
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
