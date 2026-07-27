@@ -1,5 +1,13 @@
 {
-  "entryPoints": ["packages/*", "packages/browser-rum-react/react-router", "packages/browser-rum-vue/vue-router"],
+  "entryPoints": [
+    "packages/*",
+    "packages/browser-rum-react/react-router",
+    "packages/browser-rum-react/react-router-v6",
+    "packages/browser-rum-react/react-router-v7",
+    "packages/browser-rum-react/react-router-v8",
+    "packages/browser-rum-vue/vue-router",
+    "packages/browser-rum-vue/vue-router-v4"
+  ],
   "entryPointStrategy": "packages",
   "includeVersion": true,
   "exclude": [
