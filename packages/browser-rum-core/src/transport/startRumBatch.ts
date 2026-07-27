@@ -10,7 +10,7 @@ import type { RumViewEvent, RumViewUpdateEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { diffMerge } from '../domain/view/viewDiff'
 
-export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 100
+export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 10
 
 export type AssembledViewDiff = Omit<RumViewUpdateEvent, 'view' | '_dd'> & {
   view: Partial<RumViewEvent['view']> & { id: string; url: string }
