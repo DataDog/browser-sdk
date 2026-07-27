@@ -168,7 +168,7 @@ async function buildApp(appName: string) {
 
 function buildSalesforceApp(appName: string) {
   const sourceBundle = 'packages/browser-rum-slim/bundle/datadog-rum-salesforce.js'
-  const targetBundle = `test/apps/${appName}/force-app/main/default/staticresources/datadog_rum_slim.js`
+  const targetBundle = `test/apps/${appName}/force-app/main/default/staticresources/datadog_rum_salesforce.js`
 
   printLog(`Building app at test/apps/${appName}...`)
   fs.copyFileSync(sourceBundle, targetBundle)
