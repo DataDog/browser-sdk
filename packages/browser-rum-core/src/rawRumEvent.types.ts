@@ -117,7 +117,11 @@ export interface RawRumErrorEvent {
     message: string
     handling?: ErrorHandling
     causes?: RawErrorCause[]
-    source_type: 'browser'
+    source_type: 'browser' | 'browser+wasm'
+    wasm_modules?: Array<{
+      url: string
+      build_id: string
+    }>
     csp?: Csp
   }
   view?: {

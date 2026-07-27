@@ -78,3 +78,5 @@ export { createHooks } from './domain/hooks'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'
 export type { TransportPayload } from './transport/formDataTransport'
 export { createFormDataTransport } from './transport/formDataTransport'
+
+export { startWasmModuleTracking } from './domain/wasmModules/wasmModuleTracking'

@@ -26,6 +26,7 @@ import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
+import { startWasmModuleTracking } from '../domain/wasmModules/wasmModuleTracking'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
 import { startRumBatch } from '../transport/startRumBatch'
@@ -222,6 +223,13 @@ export function startRumEventCollection(
 
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
+
+  // Intercept WebAssembly module loads to capture build_id. errorCollection
+  // reads it to set source_type='browser+wasm' and error.build_id.
+  // Must start before any wasm load — RUM is initialised before the page's
+  // wasm fetch in typical setups.
+  const stopWasmModuleTracking = startWasmModuleTracking()
+  cleanupTasks.push(stopWasmModuleTracking)
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
 
