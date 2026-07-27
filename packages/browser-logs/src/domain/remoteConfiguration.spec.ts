@@ -1,5 +1,5 @@
-import { CACHE_VERSION, buildCacheKey } from '@datadog/browser-core'
-import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
+import { CACHE_VERSION, buildCacheKey, display } from '@datadog/browser-core'
+import { interceptRequests } from '@datadog/browser-core/test'
 import type { LogsInitConfiguration } from './configuration'
 import {
   applyLogsRemoteConfiguration,
@@ -114,10 +114,12 @@ describe('fetchAndApplyLogsRemoteConfiguration', () => {
     expect(result!.forwardErrorsToLogs).toBeFalse()
   })
 
-  it('returns undefined when the fetch fails', async () => {
+  it('returns undefined and displays an error when the fetch fails', async () => {
+    spyOn(display, 'error')
     interceptor.withFetch(() => Promise.resolve({ ok: false, status: 500 }))
 
     const result = await fetchAndApplyLogsRemoteConfiguration(DEFAULT_LOGS_INIT)
     expect(result).toBeUndefined()
+    expect(display.error).toHaveBeenCalled()
   })
 })

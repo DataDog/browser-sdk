@@ -50,4 +50,28 @@ describe('fetchRemoteConfiguration', () => {
     expect(result.ok).toBeFalse()
     expect((result as { ok: false; error: Error }).error).toBeInstanceOf(Error)
   })
+
+  it('removes the window registry entry after all fetches settle', async () => {
+    const config = { rum: { applicationId: 'abc', sessionSampleRate: 50 } }
+    interceptor.withFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve(config) }))
+
+    await fetchRemoteConfiguration(options)
+
+    expect((window as unknown as Record<string, unknown>).__ddRcInflight).toBeUndefined()
+  })
+
+  it('deduplicates concurrent calls for the same endpoint', async () => {
+    let fetchCount = 0
+    const config = { rum: { applicationId: 'abc', sessionSampleRate: 50 } }
+    interceptor.withFetch(() => {
+      fetchCount++
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(config) })
+    })
+
+    const [result1, result2] = await Promise.all([fetchRemoteConfiguration(options), fetchRemoteConfiguration(options)])
+
+    expect(fetchCount).toBe(1)
+    expect(result1).toEqual({ ok: true, value: config })
+    expect(result2).toEqual({ ok: true, value: config })
+  })
 })
