@@ -8,8 +8,8 @@
  * import { datadogRum } from '@datadog/browser-rum'
  * import { reactPlugin } from '@datadog/browser-rum-react'
  *
- * // ⚠️ Use "createBrowserRouter" from `@datadog/browser-rum-react/react-router-v8` instead of `react-router`
- * import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v8'
+ * // ⚠️ Use "createBrowserRouter" from `@datadog/browser-rum-react/react-router` instead of `react-router`
+ * import { createBrowserRouter } from '@datadog/browser-rum-react/react-router'
  *
  * datadogRum.init({
  *   applicationId: '<DATADOG_APPLICATION_ID>',

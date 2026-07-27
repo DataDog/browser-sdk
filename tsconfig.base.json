@@ -31,6 +31,7 @@
 
       "@datadog/browser-rum-react": ["./packages/browser-rum-react/src/entries/main"],
       "@datadog/browser-rum-react/internal": ["./packages/browser-rum-react/src/entries/internal"],
+      "@datadog/browser-rum-react/react-router": ["./packages/browser-rum-react/src/entries/reactRouterV8"],
       "@datadog/browser-rum-react/react-router-v6": ["./packages/browser-rum-react/src/entries/reactRouterV6"],
       "@datadog/browser-rum-react/react-router-v7": ["./packages/browser-rum-react/src/entries/reactRouterV7"],
       "@datadog/browser-rum-react/react-router-v8": ["./packages/browser-rum-react/src/entries/reactRouterV8"],
