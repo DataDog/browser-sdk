@@ -67,14 +67,23 @@ export function createPreStartStrategy(
   const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
+  function doInit(initConfig: LogsInitConfiguration) {
+    const configuration = validateAndBuildLogsConfiguration(initConfig)
+    if (!configuration) {
+      return
+    }
+    addTelemetryConfiguration(serializeLogsConfiguration(initConfig))
+    const startLogsResult = doStartLogs(configuration, sessionManager!, hooks)
+    bufferApiCalls.subscribe((callback) => callback(startLogsResult))
+    bufferApiCalls.unbuffer()
+  }
+
   function tryStartLogs() {
     if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager) {
       return
     }
 
     trackingConsentStateSubscription.unsubscribe()
-
-    let configurationToUse = cachedConfiguration
 
     const hasRemoteConfiguration = getRemoteConfigurationId(cachedInitConfiguration)
 
@@ -86,12 +95,7 @@ export function createPreStartStrategy(
         void fetchAndApplyLogsRemoteConfiguration(cachedInitConfiguration)
           .then((resolvedInitConfig) => {
             if (resolvedInitConfig) {
-              const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
-              if (resolvedLogsConfig) {
-                const startLogsResult = doStartLogs(resolvedLogsConfig, sessionManager!, hooks)
-                bufferApiCalls.subscribe((callback) => callback(startLogsResult))
-                bufferApiCalls.unbuffer()
-              }
+              doInit(resolvedInitConfig)
             }
           })
           .catch(monitorError)
@@ -102,16 +106,10 @@ export function createPreStartStrategy(
       if (!resolvedInitConfig) {
         return
       }
-      const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
-      if (resolvedLogsConfig) {
-        configurationToUse = resolvedLogsConfig
-      }
+      doInit(resolvedInitConfig)
+    } else {
+      doInit(cachedInitConfiguration)
     }
-
-    const startLogsResult = doStartLogs(configurationToUse, sessionManager, hooks)
-
-    bufferApiCalls.subscribe((callback) => callback(startLogsResult))
-    bufferApiCalls.unbuffer()
   }
 
   return {
@@ -159,7 +157,6 @@ export function createPreStartStrategy(
             }
             sessionManager = newSessionManager
             startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
-            addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
             tryStartLogs()
           })
           .catch(monitorError)
