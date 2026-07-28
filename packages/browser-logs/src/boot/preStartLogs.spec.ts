@@ -10,6 +10,7 @@ import {
   replaceMockableWithSpy,
   createStartSessionManagerMock,
   registerCleanupTask,
+  interceptRequests,
 } from '@datadog/browser-core/test'
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
@@ -258,6 +259,10 @@ describe('preStartLogs', () => {
 
   describe('remote configuration', () => {
     const RC_ID = 'test-rc-id'
+
+    beforeEach(() => {
+      interceptRequests().withFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }))
+    })
 
     it('applies cached remote config overrides before starting', async () => {
       localStorage.setItem(
