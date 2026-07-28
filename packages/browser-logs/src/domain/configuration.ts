@@ -74,14 +74,18 @@ export interface LogsInitConfiguration extends InitConfiguration {
   forwardReports?: RawReportType[] | 'all' | undefined
 
   /**
-   * The ID of the remote configuration to apply. Use this for the non-blocking cache-and-reload path.
+   * The ID of the remote configuration to apply. Triggers synchronous loading — the SDK waits for
+   * the fetch to complete before starting. Use `remoteConfiguration: { id }` for the non-blocking
+   * cache-and-reload path instead.
    *
    * @category Remote Configuration
    */
   remoteConfigurationId?: string | undefined
 
   /**
-   * Remote configuration options.
+   * Remote configuration options. Use `{ id }` for the non-blocking cache-and-reload path (the SDK
+   * starts immediately using a cached value and refreshes in the background). Use `{ id, sync: true }`
+   * to block startup on a live fetch.
    *
    * @category Remote Configuration
    */

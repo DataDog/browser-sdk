@@ -1,4 +1,5 @@
 import { buildEndpointUrl } from '@datadog/js-core/transport'
+import { globalObject } from '@datadog/js-core/util'
 import { fetch } from '../../browser/fetch'
 import type { RumSdkConfig } from './remoteConfiguration.types'
 
@@ -14,6 +15,22 @@ export interface RemoteConfigurationEndpointOptions {
 }
 
 export type FetchRemoteConfigurationResult = { ok: true; value: RemoteConfiguration } | { ok: false; error: Error }
+
+// Typed interface for the global inflight fetch registry so deduplication
+// works across separate SDK bundles (e.g. RUM and Logs loaded as separate CDN
+// scripts on the same page) and in service-worker environments where `window`
+// is not available.
+interface GlobalWithInflightFetches {
+  __ddRcInflight?: Map<string, Promise<FetchRemoteConfigurationResult>>
+}
+
+function getInflightFetches(): Map<string, Promise<FetchRemoteConfigurationResult>> {
+  const global = globalObject as GlobalWithInflightFetches
+  if (!global.__ddRcInflight) {
+    global.__ddRcInflight = new Map()
+  }
+  return global.__ddRcInflight
+}
 
 export function getRemoteConfigurationId(options: RemoteConfigurationEndpointOptions): string | undefined {
   return options.remoteConfiguration?.id ?? options.remoteConfigurationId
@@ -31,18 +48,6 @@ export function buildEndpoint(options: RemoteConfigurationEndpointOptions): stri
   })
 }
 
-// Use a window-level registry so deduplication works across separate SDK bundles
-// (e.g. RUM and Logs loaded as separate CDN scripts on the same page).
-const INFLIGHT_FETCHES_KEY = '__ddRcInflight'
-
-function getInflightFetches(): Map<string, Promise<FetchRemoteConfigurationResult>> {
-  const win = window as unknown as Record<string, unknown>
-  if (!win[INFLIGHT_FETCHES_KEY]) {
-    win[INFLIGHT_FETCHES_KEY] = new Map<string, Promise<FetchRemoteConfigurationResult>>()
-  }
-  return win[INFLIGHT_FETCHES_KEY] as Map<string, Promise<FetchRemoteConfigurationResult>>
-}
-
 export function fetchRemoteConfiguration(
   options: RemoteConfigurationEndpointOptions
 ): Promise<FetchRemoteConfigurationResult> {
@@ -50,11 +55,10 @@ export function fetchRemoteConfiguration(
   const inflightFetches = getInflightFetches()
 
   if (!inflightFetches.has(endpoint)) {
-    const win = window as unknown as Record<string, unknown>
     const promise = doFetchRemoteConfiguration(endpoint).finally(() => {
       inflightFetches.delete(endpoint)
       if (inflightFetches.size === 0) {
-        delete win[INFLIGHT_FETCHES_KEY]
+        delete (globalObject as GlobalWithInflightFetches).__ddRcInflight
       }
     })
     inflightFetches.set(endpoint, promise)

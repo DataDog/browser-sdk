@@ -9,6 +9,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
@@ -258,10 +259,6 @@ describe('preStartLogs', () => {
   describe('remote configuration', () => {
     const RC_ID = 'test-rc-id'
 
-    afterEach(() => {
-      localStorage.removeItem(buildCacheKey(RC_ID))
-    })
-
     it('applies cached remote config overrides before starting', async () => {
       localStorage.setItem(
         buildCacheKey(RC_ID),
@@ -271,6 +268,7 @@ describe('preStartLogs', () => {
           fetchedAt: Date.now(),
         })
       )
+      registerCleanupTask(() => localStorage.removeItem(buildCacheKey(RC_ID)))
 
       const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
       strategy.init({ clientToken: 'xxx', remoteConfiguration: { id: RC_ID } })

@@ -1,5 +1,5 @@
 import { CACHE_VERSION, buildCacheKey, display } from '@datadog/browser-core'
-import { interceptRequests } from '@datadog/browser-core/test'
+import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 import type { LogsInitConfiguration } from './configuration'
 import {
   applyLogsRemoteConfiguration,
@@ -62,8 +62,9 @@ describe('getLogsRemoteConfiguration', () => {
     remoteConfiguration: { id: RC_ID },
   }
 
-  afterEach(() => {
-    localStorage.removeItem(buildCacheKey(RC_ID))
+  beforeEach(() => {
+    // Prevent background sync from firing real network requests
+    interceptRequests()
   })
 
   it('returns the initConfiguration with remote overrides applied on cache hit', () => {
@@ -75,6 +76,7 @@ describe('getLogsRemoteConfiguration', () => {
         fetchedAt: Date.now(),
       })
     )
+    registerCleanupTask(() => localStorage.removeItem(buildCacheKey(RC_ID)))
 
     const result = getLogsRemoteConfiguration(initConfiguration)
     expect(result!.forwardErrorsToLogs).toBeFalse()

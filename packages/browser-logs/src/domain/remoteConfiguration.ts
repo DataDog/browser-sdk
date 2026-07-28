@@ -43,7 +43,9 @@ export function getLogsRemoteConfiguration(
   // Background sync — update the cache for the next page load
   fetchRemoteConfiguration(initConfiguration)
     .then((fetchResult) => {
-      if (fetchResult.ok) {
+      if (!fetchResult.ok) {
+        display.error(fetchResult.error)
+      } else {
         cache.write(fetchResult.value)
       }
     })
