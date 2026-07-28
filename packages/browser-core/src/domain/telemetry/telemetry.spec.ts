@@ -35,9 +35,10 @@ import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 function startAndSpyTelemetry(
   configuration?: Partial<Configuration>,
   {
+    sdkName,
     metricSampleRate,
     maxTelemetryEventsPerPage,
-  }: { metricSampleRate?: number; maxTelemetryEventsPerPage?: number } = {}
+  }: { sdkName?: string; metricSampleRate?: number; maxTelemetryEventsPerPage?: number } = {}
 ) {
   const observable = new Observable<TelemetryEvent & Context>()
 
@@ -53,6 +54,7 @@ function startAndSpyTelemetry(
     } as Configuration,
     hook,
     observable,
+    sdkName,
     metricSampleRate,
     maxTelemetryEventsPerPage
   )
@@ -229,6 +231,24 @@ describe('telemetry', () => {
       interfaces: ['wifi'],
       effective_type: '4g',
     })
+  })
+
+  it('should not contain a sdk name when none is provided', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry()
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect((await getTelemetryEvents())[0].telemetry.sdk_name).toBeUndefined()
+  })
+
+  it('should contain the sdk name', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry(undefined, { sdkName: 'rum-salesforce' })
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect((await getTelemetryEvents())[0].telemetry.sdk_name).toBe('rum-salesforce')
   })
 
   it('should collect pre start events', async () => {
