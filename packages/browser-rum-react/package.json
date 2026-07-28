@@ -10,6 +10,7 @@
     "esm",
     "src",
     "internal",
+    "react-router",
     "react-router-v6",
     "react-router-v7",
     "react-router-v8",

@@ -184,7 +184,7 @@ async function buildReactRouterV6App() {
 
     await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
       content
-        .replace('@datadog/browser-rum-react/react-router-v8', '@datadog/browser-rum-react/react-router-v6')
+        .replace('@datadog/browser-rum-react/react-router', '@datadog/browser-rum-react/react-router-v6')
         .replace("from 'react-router'", "from 'react-router-dom'")
         // Remove the v7-only onError prop
         .replace(
@@ -218,7 +218,7 @@ async function buildReactRouterV7App() {
     )
 
     await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
-      content.replace('@datadog/browser-rum-react/react-router-v8', '@datadog/browser-rum-react/react-router-v7')
+      content.replace('@datadog/browser-rum-react/react-router', '@datadog/browser-rum-react/react-router-v7')
     )
 
     await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
