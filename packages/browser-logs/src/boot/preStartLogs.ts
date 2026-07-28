@@ -22,6 +22,7 @@ import {
   mockable,
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
+  isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -99,8 +100,8 @@ export function createPreStartStrategy(
         return
       }
 
-      const configuration = validateAndBuildLogsConfiguration(initConfiguration, errorStack)
-      if (!configuration) {
+      const configuration = validateAndBuildLogsConfiguration(initConfiguration)
+      if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
         return
       }
 

@@ -19,7 +19,7 @@ import {
   startSessionManager,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
-import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import type { LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { Strategy } from './logsPublicApi'
@@ -101,7 +101,7 @@ describe('preStartLogs', () => {
       })
 
       it('init should accept empty client token', async () => {
-        const hybridInitConfiguration: HybridInitConfiguration = {}
+        const hybridInitConfiguration: Omit<LogsInitConfiguration, 'clientToken'> = {}
         strategy.init(hybridInitConfiguration as LogsInitConfiguration)
 
         await collectAsyncCalls(doStartLogsSpy, 1)

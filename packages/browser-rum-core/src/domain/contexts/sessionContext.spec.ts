@@ -1,49 +1,43 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
 import { DISCARDED, createHook } from '@datadog/js-core/assembly'
-import type { SessionManagerMock } from '@datadog/browser-core/test'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration, noopRecorderApi } from '../../../test'
-import type { AssembleHook, AssembleHookParams, DefaultRumEventAttributes } from '../hooks'
+import type { AssembleHookParams, DefaultRumEventAttributes } from '../hooks'
 import { SessionType, startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
 
 describe('session context', () => {
-  let hook: AssembleHook
-  let viewHistory: ViewHistory
-  let sessionManager: SessionManagerMock
   const fakeView = {
     id: '1',
     startClocks: clocksNow(),
     sessionIsActive: false,
   }
-  let isRecordingSpy: jasmine.Spy
-  let getReplayStatsSpy: jasmine.Spy
-  let findViewSpy: jasmine.Spy
   const fakeStats = {
     segments_count: 4,
     records_count: 10,
     segments_total_raw_size: 1000,
   }
 
-  let configuration: ReturnType<typeof mockRumConfiguration>
-
-  beforeEach(() => {
-    viewHistory = { findView: () => undefined } as ViewHistory
-    hook = createHook()
-    sessionManager = createSessionManagerMock()
+  function setup(configOverride: Parameters<typeof mockRumConfiguration>[0] = {}) {
+    const hook = createHook<AssembleHookParams, DefaultRumEventAttributes>()
+    const viewHistory = { findView: () => undefined } as ViewHistory
+    const sessionManager = createSessionManagerMock()
     sessionManager.setId('00000000-0000-0000-0000-000000000123')
-    const recorderApi = noopRecorderApi
+    const recorderApi = { ...noopRecorderApi }
 
-    isRecordingSpy = spyOn(recorderApi, 'isRecording')
-    getReplayStatsSpy = spyOn(recorderApi, 'getReplayStats')
-    findViewSpy = spyOn(viewHistory, 'findView').and.returnValue(fakeView)
+    const isRecordingSpy = spyOn(recorderApi, 'isRecording')
+    const getReplayStatsSpy = spyOn(recorderApi, 'getReplayStats')
+    const findViewSpy = spyOn(viewHistory, 'findView').and.returnValue(fakeView)
 
-    configuration = mockRumConfiguration({ sessionReplaySampleRate: 100 })
+    const configuration = mockRumConfiguration({ sessionReplaySampleRate: 100, ...configOverride })
     startSessionContext(hook, configuration, sessionManager, recorderApi, viewHistory)
-  })
+
+    return { hook, isRecordingSpy, getReplayStatsSpy, findViewSpy, sessionManager }
+  }
 
   it('should set id and type', () => {
+    const { hook, isRecordingSpy } = setup()
     isRecordingSpy.and.returnValue(true)
 
     const defaultRumEventAttributes = hook.trigger({
@@ -61,6 +55,8 @@ describe('session context', () => {
   })
 
   it('should set hasReplay when recording has started (isRecording) on events', () => {
+    const { hook, isRecordingSpy, getReplayStatsSpy } = setup()
+
     isRecordingSpy.and.returnValue(true)
     const eventWithHasReplay = hook.trigger({
       eventType: 'action',
@@ -80,6 +76,8 @@ describe('session context', () => {
   })
 
   it('should set hasReplay when there are Replay stats on view events', () => {
+    const { hook, getReplayStatsSpy, isRecordingSpy } = setup()
+
     getReplayStatsSpy.and.returnValue(fakeStats)
     const eventWithHasReplay = hook.trigger({
       eventType: 'view',
@@ -99,11 +97,14 @@ describe('session context', () => {
   })
 
   it('should set session.is_active when the session is active', () => {
+    const { hook, findViewSpy } = setup()
+
     findViewSpy.and.returnValue({ ...fakeView, sessionIsActive: true })
     const eventWithActiveSession = hook.trigger({
       eventType: 'view',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
+
     findViewSpy.and.returnValue({ ...fakeView, sessionIsActive: false })
     const eventWithoutActiveSession = hook.trigger({
       eventType: 'view',
@@ -115,14 +116,14 @@ describe('session context', () => {
   })
 
   it('should set sampled_for_replay', () => {
-    configuration.sessionReplaySampleRate = 100
-    const eventSampleForReplay = hook.trigger({
+    const { hook: hookSampled } = setup({ sessionReplaySampleRate: 100 })
+    const eventSampleForReplay = hookSampled.trigger({
       eventType: 'view',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
 
-    configuration.sessionReplaySampleRate = 0
-    const eventSampledOutForReplay = hook.trigger({
+    const { hook: hookNotSampled } = setup({ sessionReplaySampleRate: 0 })
+    const eventSampledOutForReplay = hookNotSampled.trigger({
       eventType: 'view',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
@@ -132,6 +133,7 @@ describe('session context', () => {
   })
 
   it('should discard the event if no session', () => {
+    const { hook, sessionManager } = setup()
     sessionManager.setNotTracked()
     const defaultRumEventAttributes = hook.trigger({
       eventType: 'view',
@@ -142,6 +144,7 @@ describe('session context', () => {
   })
 
   it('should discard the event if no view', () => {
+    const { hook, findViewSpy } = setup()
     findViewSpy.and.returnValue(undefined)
     const defaultRumEventAttributes = hook.trigger({
       eventType: 'view',
