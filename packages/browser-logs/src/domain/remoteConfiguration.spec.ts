@@ -63,8 +63,11 @@ describe('getLogsRemoteConfiguration', () => {
   }
 
   beforeEach(() => {
-    // Prevent background sync from firing real network requests
-    interceptRequests()
+    // Mock background sync fetch to fail so cache.write is never called and
+    // the localStorage state stays predictable across tests.
+    spyOn(display, 'error')
+    interceptRequests().withFetch(() => Promise.resolve({ ok: false, status: 404 }))
+    registerCleanupTask(() => localStorage.removeItem(buildCacheKey(RC_ID)))
   })
 
   it('returns the initConfiguration with remote overrides applied on cache hit', () => {
@@ -76,7 +79,6 @@ describe('getLogsRemoteConfiguration', () => {
         fetchedAt: Date.now(),
       })
     )
-    registerCleanupTask(() => localStorage.removeItem(buildCacheKey(RC_ID)))
 
     const result = getLogsRemoteConfiguration(initConfiguration)
     expect(result!.forwardErrorsToLogs).toBeFalse()
