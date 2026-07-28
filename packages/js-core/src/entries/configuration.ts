@@ -318,9 +318,10 @@ function validateArrayField(field: FieldDef, value: unknown, display: Display): 
   if (value === undefined || value === null) {
     return undefined
   }
-  // 'all' shorthand: expand to the full set of enum values
+  // 'all' shorthand: expand to the full set of enum values. Clone so mutating the
+  // returned configuration can't mutate the schema-owned array-form `values`.
   if (field.type === 'enum' && field.allowAll && value === 'all') {
-    return getEnumValues(field.values)
+    return getEnumValues(field.values).slice()
   }
   // Normalize a single value to a singleton array for convenience
   const items = Array.isArray(value) ? value : [value]

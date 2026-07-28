@@ -108,6 +108,13 @@ describe('validateAndBuildConfiguration', () => {
       const second = validateAndBuildConfiguration({}, schema, display)!
       expect(second.level).toEqual([])
     })
+
+    it('does not leak the schema-owned array-form values when expanding "all"', () => {
+      const first = validateAndBuildConfiguration({ level: 'all' }, schema, display)!
+      first.level.push('a')
+      const second = validateAndBuildConfiguration({ level: 'all' }, schema, display)!
+      expect(second.level).toEqual(['a', 'b', 'c'])
+    })
   })
 
   describe('enum fields (array form)', () => {
