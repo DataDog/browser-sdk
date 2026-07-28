@@ -394,6 +394,19 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('betaTrackWebSockets', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaTrackWebSockets).toBeFalse()
+    })
+
+    it('is true when the option is enabled', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaTrackWebSockets: true })!
+          .betaTrackWebSockets
+      ).toBeTrue()
+    })
+  })
+
   describe('trackResourceHeaders', () => {
     describe('disabled', () => {
       it('defaults to empty array', () => {
@@ -817,6 +830,7 @@ describe('serializeRumConfiguration', () => {
       propagateTraceBaggage: true,
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
+      betaTrackWebSockets: false,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -873,6 +887,7 @@ describe('serializeRumConfiguration', () => {
       profiling_sample_rate: 42,
       track_resource_headers: 'default_headers',
       beta_enable_view_updates: true,
+      beta_track_web_sockets: false,
     })
   })
 })

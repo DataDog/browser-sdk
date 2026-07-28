@@ -353,6 +353,18 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Beta
    */
   betaEnableViewUpdates?: boolean | undefined
+
+  /**
+   * Enables collection of WebSocket resource events.
+   *
+   * Warning: enabling this option introduces WebSocket resource events to the `beforeSend` hook.
+   * Their domain context is WebSocket-specific and does not contain the XHR, Fetch, or performance
+   * entry fields available on regular resource events. Narrow the context using the existing
+   * `isManual` and `isWebSocket` discriminants before accessing those fields.
+   *
+   * @category Beta
+   */
+  betaTrackWebSockets?: boolean | undefined
 }
 
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
@@ -402,6 +414,7 @@ export const RUM_SCHEMA = {
   trackLongTasks: { type: 'boolean', default: true, strict: false },
   trackViewsManually: { type: 'boolean', default: false, strict: false },
   betaEnableViewUpdates: { type: 'boolean', default: false },
+  betaTrackWebSockets: { type: 'boolean', default: false, strict: false },
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
   startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },
@@ -686,6 +699,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
     beta_enable_view_updates: configuration.betaEnableViewUpdates,
+    beta_track_web_sockets: configuration.betaTrackWebSockets,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
