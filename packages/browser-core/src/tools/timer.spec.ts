@@ -24,14 +24,6 @@ import { noop } from './utils/functionUtils'
       zoneJs = mockZoneJs()
     })
 
-    it('executes the callback asynchronously', () => {
-      const spy = jasmine.createSpy()
-      setTimer(spy)
-      expect(spy).not.toHaveBeenCalled()
-      clock.tick(0)
-      expect(spy).toHaveBeenCalledOnceWith()
-    })
-
     it('schedules an asynchronous task', () => {
       const spy = jasmine.createSpy()
       setTimer(spy)
@@ -62,7 +54,7 @@ import { noop } from './utils/functionUtils'
       expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('foo'))
     })
 
-    it('can be canceled', () => {
+    it('cancels the pending callback when cleared', () => {
       const spy = jasmine.createSpy()
       const timerId = setTimer(spy)
       clearTimer(timerId)

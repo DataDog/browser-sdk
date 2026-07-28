@@ -1,4 +1,4 @@
-import { generateUUID } from '../../../tools/utils/stringUtils'
+import { generateUUID } from '@datadog/js-core/util'
 import { Observable } from '../../../tools/observable'
 import { addEventListener } from '../../../browser/addEventListener'
 import { SessionPersistence } from '../sessionConstants'

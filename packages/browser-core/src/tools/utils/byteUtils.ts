@@ -1,6 +1,3 @@
-export const ONE_KIBI_BYTE = 1024
-export const ONE_MEBI_BYTE = 1024 * ONE_KIBI_BYTE
-
 // eslint-disable-next-line no-control-regex
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
 

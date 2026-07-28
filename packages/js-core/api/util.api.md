@@ -8,6 +8,14 @@
 export function buildUrl(url: string, base?: string): URL;
 
 // @public
+function clearInterval_2(timeoutId: TimeoutId | undefined): void;
+export { clearInterval_2 as clearInterval }
+
+// @public
+function clearTimeout_2(timeoutId: TimeoutId | undefined): void;
+export { clearTimeout_2 as clearTimeout }
+
+// @public
 export function combine<A, B>(a: A, b: B): Combined<A, B>;
 
 // @public (undocumented)
@@ -120,6 +128,9 @@ export interface Display {
 }
 
 // @public
+export function generateUUID(placeholder?: string): string;
+
+// @public
 export function getDebugMode(): boolean;
 
 // @public
@@ -156,6 +167,9 @@ export function isValidUrl(url: string): boolean;
 export const isWorkerEnvironment: boolean;
 
 // @public
+export function jsonStringify(value: unknown, replacer?: Array<string | number>, space?: string | number): string | undefined;
+
+// @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
 // @public
@@ -180,6 +194,12 @@ export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 
 
 // @public
 export function normalizeUrl(url: string): string;
+
+// @public
+export const ONE_KIBI_BYTE = 1024;
+
+// @public
+export const ONE_MEBI_BYTE: number;
 
 // @public
 export const originalConsoleMethods: Display;
@@ -249,6 +269,26 @@ export interface SampleBufferFullEvent extends Event {
 
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
+
+// @public
+function setInterval_2(callback: () => void, delay?: number): TimeoutId;
+export { setInterval_2 as setInterval }
+
+// @public
+function setTimeout_2(callback: () => void, delay?: number): TimeoutId;
+export { setTimeout_2 as setTimeout }
+
+// @public
+export function throttle<T extends (...args: any[]) => void>(fn: T, wait: number, options?: {
+    leading?: boolean;
+    trailing?: boolean;
+}): {
+    throttled: (...parameters: Parameters<T>) => void;
+    cancel: () => void;
+};
+
+// @public
+export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
 
 // (No @packageDocumentation comment for this package)
 

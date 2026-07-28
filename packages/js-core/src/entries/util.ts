@@ -26,3 +26,9 @@ export type {
   ProfilerConstructor,
 } from '../util/globalObject'
 export { normalizeUrl, isValidUrl, getPathName, buildUrl, getPristineWindow } from '../util/urlPolyfill'
+export { generateUUID } from '../util/stringUtils'
+export { jsonStringify } from '../util/jsonStringify'
+export { ONE_KIBI_BYTE, ONE_MEBI_BYTE } from '../util/byteUtils'
+export { setTimeout, clearTimeout, setInterval, clearInterval } from '../util/timer'
+export type { TimeoutId } from '../util/timer'
+export { throttle } from '../util/functionUtils'
