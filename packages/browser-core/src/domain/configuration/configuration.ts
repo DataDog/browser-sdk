@@ -300,7 +300,7 @@ export const BROWSER_CORE_SCHEMA = {
   trackSessionAcrossSubdomains: { type: 'boolean', default: false, strict: false },
 
   // Cookie/extension origin validation
-  allowedTrackingOrigins: { type: 'match-option', multiple: true },
+  allowedTrackingOrigins: { type: 'match-option', multiple: true, strict: false },
 
   // Privacy
   trackingConsent: { type: 'enum', values: TrackingConsent, default: TrackingConsent.GRANTED },

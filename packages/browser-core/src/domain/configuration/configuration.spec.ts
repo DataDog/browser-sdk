@@ -230,9 +230,16 @@ describe('BROWSER_CORE_SCHEMA', () => {
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
-    it('should display an error and fail for a non-match-option value', () => {
-      expect(validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: 42 as any })).toBeUndefined()
+    it('should display an error but keep the configuration for a non-match-option value', () => {
+      const config = validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: 42 as any })
+      expect(config).toBeDefined()
+      expect(config!.allowedTrackingOrigins).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('"allowedTrackingOrigins" must be a string, RegExp, or function')
+    })
+
+    it('should filter out an invalid entry while keeping valid ones', () => {
+      const config = validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: ['foo', 42 as any] })
+      expect(config!.allowedTrackingOrigins).toEqual(['foo'])
     })
   })
 
