@@ -4,18 +4,13 @@
 
 Instrument Salesforce Lightning Apps and Experience Cloud sites with Datadog Real User Monitoring using the Datadog RUM Salesforce bundle.
 
-This guide covers three deployment paths, plus a feature support reference:
-
-- **[Lightning Apps](#lightning-apps)**: Use a custom Lightning Web Component loaded from the Utility Bar.
-- **[Experience Cloud Head Markup](#experience-cloud-head-markup)**: Add the Datadog RUM initialization script directly to Head Markup.
-- **[Experience Cloud Theme/Layout LWC](#experience-cloud-themelayout-lwc)**: Add a custom Lightning Web Component to an Experience Builder page, shared region, or theme/layout area.
-- **[Feature Support](#salesforce-feature-support-matrix)**: Review supported features for the Datadog integration.
-
-**Note**: Use only one deployment path per Salesforce app or Experience Cloud site.
+The integration supports Lightning Apps, Experience Cloud Head Markup, and Experience Cloud components. Use only one deployment path per Salesforce app or Experience Cloud site.
 
 ## Setup
 
-You will need the following Datadog RUM values:
+### Prerequisites
+
+Before you begin, gather the following Datadog RUM values:
 
 - A Datadog RUM Application ID
 - A Datadog RUM Client Token
@@ -25,40 +20,26 @@ You can get those values in Datadog under **Digital Experience > Real User Monit
 
 You should also enable [Lightning Web Security][1] in the Salesforce org.
 
-Finally, you need the [Datadog RUM Salesforce Bundle][2]. Download it into your Salesforce project's static resources folder, for example:
+### Installation
+
+All deployment paths share the first two steps. Complete them once before configuring a deployment path.
+
+#### 1. Add Static Resource
+
+[Download the Datadog RUM Salesforce bundle][2], then register it as the `datadog_rum` static resource. For example, download it into your project's static resources directory with:
 
 ```shell
 curl -o staticresources/datadog_rum.js https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce.js
 ```
 
-Once you have these, follow one of the deployment paths below:
+<!-- xxx tabs xxx -->
+<!-- xxx tab "Project metadata" xxx -->
 
-- **[Lightning Apps](#lightning-apps)**: Use a custom Lightning Web Component loaded from the Utility Bar.
-- **[Experience Cloud Head Markup](#experience-cloud-head-markup)**: Add the Datadog RUM initialization script directly to Head Markup.
-- **[Experience Cloud Theme/Layout LWC](#experience-cloud-themelayout-lwc)**: Add a custom Lightning Web Component to an Experience Builder page, shared region, or theme/layout area.
+##### Project metadata
 
-## Lightning Apps
+Use this option when your Salesforce project is managed from source control. Commit the metadata file with the downloaded bundle.
 
-Use this path for Salesforce LWC applications.
-
-This path uses:
-
-- A Salesforce Static Resource for the Datadog Salesforce RUM bundle.
-- A CSP Trusted Site for the Datadog browser intake endpoint.
-- A custom Lightning Web Component.
-- A Utility Bar configuration with eager loading enabled.
-
-### 1. Add the static resource
-
-Copy the Datadog Salesforce RUM bundle into your Salesforce project and register it as a static resource.
-
-Suggested configuration:
-
-- Static Resource Name: `datadog_rum`
-- File location: `staticresources/datadog_rum.js`
-- Metadata location: `staticresources/datadog_rum.resource-meta.xml`
-
-XML configuration:
+`staticresources/datadog_rum.resource-meta.xml`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -68,24 +49,34 @@ XML configuration:
 </StaticResource>
 ```
 
-If you configure this through the Salesforce UI:
+<!-- xxz tab xxx -->
+<!-- xxx tab "Salesforce UI" xxx -->
+
+##### Salesforce UI
+
+Use this option when you configure the static resource directly in Salesforce Setup.
 
 1. Go to **Setup > Static Resources**.
 2. Click **New**.
 3. Set **Name** to `datadog_rum`.
-4. Upload the Salesforce RUM JavaScript bundle.
-5. Set **Cache Control** to `Public`.
-6. Save the static resource.
+4. Upload the downloaded RUM JavaScript bundle.
+5. Set **Cache Control** to **Public**, then save.
 
-### 2. Add the CSP Trusted Site
+<!-- xxz tab xxx -->
+<!-- xxz tabs xxx -->
 
-Allow Salesforce's Content Security Policy to connect to the Datadog browser intake endpoint. Without this configuration, the browser may block RUM events from being sent to Datadog.
+#### 2. Configure CSP
 
-Suggested configuration:
+Allow Salesforce to connect to the Datadog browser intake endpoint for your [Datadog site][4].
 
-- File location: `cspTrustedSites/browser_intake_datadoghq_com.cspTrustedSite-meta.xml`
+<!-- xxx tabs xxx -->
+<!-- xxx tab "Project metadata" xxx -->
 
-XML configuration:
+##### Project metadata
+
+Use this option when your Salesforce project is managed from source control.
+
+`cspTrustedSites/browser_intake_datadoghq_com.cspTrustedSite-meta.xml`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -100,7 +91,36 @@ XML configuration:
 
 For non-US1 Datadog sites, update `endpointUrl` to match the correct Datadog browser intake endpoint for your region.
 
-### 3. Create the Datadog init component
+<!-- xxz tab xxx -->
+<!-- xxx tab "Salesforce UI" xxx -->
+
+##### Salesforce UI
+
+Use this option when you configure the trusted endpoint directly in Salesforce Setup.
+
+1. Go to **Setup > Security > Trusted URLs**.
+2. Click **New Trusted URL**.
+3. Set **API Name** to `browser_intake_datadoghq_com`.
+4. Set **URL** to `https://browser-intake-datadoghq.com` for US1. For other regions, use the endpoint for your [Datadog site][4].
+5. Make sure **Active** is checked.
+6. Set **CSP Context** to **All**.
+7. Under **CSP Directives**, check **connect-src (scripts)**, then save.
+
+<!-- xxz tab xxx -->
+<!-- xxz tabs xxx -->
+
+### Configuration
+
+Choose the deployment path that matches your Salesforce app or Experience Cloud site.
+
+<!-- xxx tabs xxx -->
+<!-- xxx tab "Lightning App Utility Bar" xxx -->
+
+#### Lightning App Utility Bar
+
+Use for Salesforce Lightning Apps. This path loads a Datadog initializer LWC from the Utility Bar.
+
+##### 1. Create Init Component
 
 Create a Lightning Web Component that loads the Datadog Browser SDK and manually starts views as users navigate within the Lightning application.
 
@@ -112,9 +132,7 @@ File location: `lwc/datadogInit/datadogInit.html`
 <template></template>
 ```
 
-### 4. Add the component JavaScript
-
-File location: `lwc/datadogInit/datadogInit.js`
+Create the component JavaScript at `lwc/datadogInit/datadogInit.js`:
 
 ```javascript
 import { LightningElement, api, wire } from 'lwc'
@@ -175,8 +193,8 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
         env: this.env,
         service: this.service,
         site: this.site,
+        sessionSampleRate: 100,
         trackViewsManually: true,
-        trackEarlyRequests: true,
         trackLongTasks: true,
         trackResources: true,
         trackUserInteractions: true,
@@ -192,7 +210,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
 }
 ```
 
-### 5. Add to Utility Bar
+##### 2. Add to Utility Bar
 
 Expose the component to the Lightning Utility Bar, then add it to your app's Utility Bar with `eager` set to `true`.
 
@@ -258,223 +276,50 @@ Add the following `componentInstance` excerpt to your app's existing Utility Bar
 </componentInstance>
 ```
 
-### 6. Validate the Lightning app installation
+<!-- xxz tab xxx -->
+<!-- xxx tab "Experience Cloud Head Markup" xxx -->
 
-After deploying the component:
+#### Experience Cloud Head Markup
 
-1. Open the Lightning app.
-2. Open browser developer tools.
-3. Confirm that the Datadog static resource loads successfully.
-4. Confirm there are no CSP errors for the Datadog browser intake endpoint.
-5. Navigate between Lightning pages.
-6. In Datadog RUM Explorer, filter by the configured service and env.
-7. Confirm that view events are created when navigation occurs.
+Use when you can edit Head Markup. This is the most direct Experience Cloud setup.
 
-## Experience Cloud Head Markup
+**Relax CSP in Experience Builder**
 
-Use this path for Experience Cloud sites where you can add custom JavaScript through Head Markup. This is usually the most direct Experience Cloud approach because the SDK loads at the page level and does not rely on the Salesforce Utility Bar.
-
-This path uses:
-
-- A Salesforce Static Resource for the Datadog Salesforce RUM bundle.
-- Experience Cloud CSP configuration.
-- A Head Markup script that loads the SDK and tracks route changes.
-
-### 1. Add the static resource
-
-Copy the Datadog Salesforce RUM bundle into your Salesforce project and register it as a static resource.
-
-Suggested configuration:
-
-- Static Resource Name: `datadog_rum`
-- File location: `staticresources/datadog_rum.js`
-- Metadata location: `staticresources/datadog_rum.resource-meta.xml`
-
-XML configuration:
-
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
-  <cacheControl>Public</cacheControl>
-  <contentType>application/javascript</contentType>
-</StaticResource>
-```
-
-If you configure this through the Salesforce UI:
-
-1. Go to **Setup > Static Resources**.
-2. Click **New**.
-3. Set **Name** to `datadog_rum`.
-4. Upload the Salesforce RUM JavaScript bundle.
-5. Set **Cache Control** to `Public`.
-6. Save the static resource.
-
-### 2. Open the Experience Cloud site in Builder
-
-1. Go to **Setup > Apps > App Manager**.
-2. Search for your Experience Cloud application.
-3. Click **Manage**.
-4. When the page loads, click **Builder**.
-
-### 3. Configure CSP for the Datadog intake endpoint
-
-Allow the browser to send RUM events to Datadog. This requires two changes.
-
-#### Add a Trusted URL in Setup
-
-1. Go to **Setup > Security > Trusted URLs**.
-2. Click **New Trusted URL**.
-3. Fill in the form:
-   - **API Name:** `browser_intake_datadoghq_com`
-   - **URL:** your Datadog browser intake endpoint (see table below)
-   - **Active:** checked
-4. In **CSP Directives**, check **connect-src (scripts)**. This allows the SDK to send RUM events to Datadog.
-5. Click **Save**.
-
-#### Relax CSP in Experience Builder
-
-1. Open the site in Experience Builder.
+1. Open the site in Experience Builder from **Setup > Digital Experiences > All Sites > Builder**.
 2. Go to **Settings > Security & Privacy**.
 3. Change the security level from **Strict CSP** to **Relaxed CSP**.
 
-Use the following trusted URL configuration for US1:
+##### 1. Add Head Markup
 
-| Field    | Value                                  |
-| -------- | -------------------------------------- |
-| API Name | `browser_intake_datadoghq_com`         |
-| URL      | `https://browser-intake-datadoghq.com` |
-
-For non-US1 Datadog sites, use the intake endpoint for the correct [Datadog site][4].
-
-### 4. Add the Head Markup
-
-In Experience Builder:
-
-1. Go to **Settings > Advanced**.
-2. Open **Head Markup**.
-3. Click **Edit Head Markup**.
-4. Paste the following markup.
-5. Replace the placeholder values with your Datadog RUM configuration.
+In Experience Builder, go to **Settings > Advanced > Edit Head Markup**, paste the following script, and replace the placeholder values with your Datadog RUM configuration. Save the change, then publish the site.
 
 ```html
-<x-oasis-script hidden>
-  ;(function () {
-    var datadogScript = document.createElement('script')
-    datadogScript.src = '/sfsites/c/resource/datadog_rum'
-    datadogScript.onload = function () {
-      window.DD_RUM.onReady(function () {
-        window.DD_RUM.init({
-          applicationId: '<YOUR_DATADOG_APPLICATION_ID>',
-          clientToken: '<YOUR_DATADOG_CLIENT_TOKEN>',
-          site: '<YOUR_DATADOG_SITE>',
-          env: '<YOUR_ENV_NAME>',
-          service: '<YOUR_SERVICE_NAME>',
-          sessionSampleRate: 100,
-          trackLongTasks: true,
-          trackResources: true,
-          trackUserInteractions: true,
-        })
-      })
-    }
-    document.head.appendChild(datadogScript)
-  })()
-</x-oasis-script>
+<script src="/sfsites/c/resource/datadog_rum"></script>
+<script>
+  window.DD_RUM.onReady(function () {
+    window.DD_RUM.init({
+      applicationId: '<YOUR_DATADOG_APPLICATION_ID>',
+      clientToken: '<YOUR_DATADOG_CLIENT_TOKEN>',
+      env: '<YOUR_ENV_NAME>',
+      service: '<YOUR_SERVICE_NAME>',
+      site: '<YOUR_DATADOG_SITE>',
+      sessionSampleRate: 100,
+      trackLongTasks: true,
+      trackResources: true,
+      trackUserInteractions: true,
+    })
+  })
+</script>
 ```
 
-### 5. Publish the Experience Cloud site
+<!-- xxz tab xxx -->
+<!-- xxx tab "Experience Cloud Component" xxx -->
 
-After adding the Head Markup script:
+#### Experience Cloud Component
 
-1. Save the Head Markup configuration.
-2. Publish the Experience Cloud site.
-3. Open the published site in a new browser session.
-4. Confirm that the Datadog static resource loads.
-5. Confirm that no CSP errors appear in the browser console.
-6. Navigate between site pages.
-7. Confirm that RUM view events appear in Datadog.
+Place an initializer LWC in a shared site region.
 
-## Experience Cloud Theme/Layout LWC
-
-Use this path when you want to instrument an Experience Cloud site with a Lightning Web Component instead of Head Markup.
-
-This path is useful when:
-
-- Head Markup is unavailable.
-- You want to place the initializer in a shared region, template, page layout, or theme/layout area.
-- You want to reuse the LWC-based implementation pattern across Salesforce surfaces.
-
-Unlike Lightning Apps, Experience Cloud does not use the Utility Bar. The `datadogInit` component must be placed somewhere that loads on every page where RUM should run:
-
-- For lightweight installations, expose the component as an Experience Builder page component and place it in a shared region that appears across the site.
-- For custom LWR theme layouts, include the initializer inside your existing custom theme layout wrapper.
-
-This path uses:
-
-- A Salesforce Static Resource for the Datadog Salesforce RUM bundle.
-- Experience Cloud CSP configuration.
-- A custom Lightning Web Component exposed to Experience Builder.
-- Placement in a shared site region, page template, or theme/layout area.
-
-### 1. Add the static resource
-
-Copy the Datadog Salesforce RUM bundle into your Salesforce project and register it as a static resource.
-
-Suggested configuration:
-
-- Static Resource Name: `datadog_rum`
-- File location: `staticresources/datadog_rum.js`
-- Metadata location: `staticresources/datadog_rum.resource-meta.xml`
-
-XML configuration:
-
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
-  <cacheControl>Public</cacheControl>
-  <contentType>application/javascript</contentType>
-</StaticResource>
-```
-
-If you configure this through the Salesforce UI:
-
-1. Go to **Setup > Static Resources**.
-2. Click **New**.
-3. Set **Name** to `datadog_rum`.
-4. Upload the Salesforce RUM JavaScript bundle.
-5. Set **Cache Control** to `Public`.
-6. Save the static resource.
-
-### 2. Configure CSP for the Datadog intake endpoint
-
-Allow the browser to send RUM events to Datadog. This requires two changes.
-
-#### Add a Trusted URL in Setup
-
-1. Go to **Setup > Security > Trusted URLs**.
-2. Click **New Trusted URL**.
-3. Fill in the form:
-   - **API Name:** `browser_intake_datadoghq_com`
-   - **URL:** your Datadog browser intake endpoint (see table below)
-   - **Active:** checked
-4. In **CSP Directives**, check **connect-src (scripts)**. This allows the SDK to send RUM events to Datadog.
-5. Click **Save**.
-
-#### Relax CSP in Experience Builder
-
-1. Open the site in Experience Builder.
-2. Go to **Settings > Security & Privacy**.
-3. Change the security level from **Strict CSP** to **Relaxed CSP**.
-
-Use the following trusted URL configuration for US1:
-
-| Field    | Value                                  |
-| -------- | -------------------------------------- |
-| API Name | `browser_intake_datadoghq_com`         |
-| URL      | `https://browser-intake-datadoghq.com` |
-
-For non-US1 Datadog sites, use the intake endpoint for the correct [Datadog site][4].
-
-### 3. Create the Datadog init component
+##### 1. Create Init Component
 
 Create an LWC that loads the Datadog Browser SDK and manually starts views as users navigate within the Experience Cloud site.
 
@@ -486,9 +331,7 @@ File location: `lwc/datadogInit/datadogInit.html`
 <template></template>
 ```
 
-### 4. Add the component JavaScript
-
-File location: `lwc/datadogInit/datadogInit.js`
+Create the component JavaScript at `lwc/datadogInit/datadogInit.js`:
 
 ```javascript
 import { LightningElement, wire } from 'lwc'
@@ -543,8 +386,8 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
         env: '<YOUR_ENV_NAME>',
         service: '<YOUR_SERVICE_NAME>',
         site: '<YOUR_DATADOG_SITE>',
+        sessionSampleRate: 100,
         trackViewsManually: true,
-        trackEarlyRequests: true,
         trackLongTasks: true,
         trackResources: true,
         trackUserInteractions: true,
@@ -560,7 +403,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
 }
 ```
 
-### 5. Add to Experience Builder
+##### 2. Add to Experience Builder
 
 Expose the component to Experience Builder and place it in a shared region, page template, global header, global footer, or theme/layout area that loads on every page.
 
@@ -579,18 +422,16 @@ Expose the component to Experience Builder and place it in a shared region, page
 </LightningComponentBundle>
 ```
 
-### 6. Validate the Theme/Layout LWC installation
+<!-- xxz tab xxx -->
+<!-- xxz tabs xxx -->
 
-After publishing the site:
+### Validate the Installation
 
-1. Open the Experience Cloud site in a new browser session.
+1. Open the configured Lightning app or published Experience Cloud site in a new browser session.
 2. Open browser developer tools.
-3. Confirm that the Datadog static resource loads successfully.
-4. Confirm there are no CSP errors for the Datadog browser intake endpoint.
-5. Navigate between site pages.
-6. Confirm that RUM view events appear in Datadog.
-
-If the component is accidentally added multiple times, the global initialization guard prevents duplicate SDK initialization, but the component should still be placed only once for clarity and maintainability.
+3. Confirm that the Datadog static resource loads successfully and that no CSP errors appear for the Datadog browser intake endpoint.
+4. Navigate between pages.
+5. In Datadog RUM Explorer, filter by the configured service and env, then confirm that view events appear as you navigate.
 
 ## Salesforce Feature Support Matrix
 
@@ -633,7 +474,7 @@ Footnotes:
 
 Need help? Contact [Datadog Support][3].
 
-[1]: https://help.salesforce.com/s/articleView?id=sf.lwc_lwsec_enable.htm
+[1]: https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-enable.html
 [2]: https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce.js
 [3]: https://docs.datadoghq.com/help/
 [4]: https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site
