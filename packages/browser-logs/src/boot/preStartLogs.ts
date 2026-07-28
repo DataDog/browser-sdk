@@ -41,7 +41,8 @@ export type DoStartLogs = (
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: DoStartLogs
+  doStartLogs: DoStartLogs,
+  sdkName?: string
 ): Strategy {
   const BUFFER_LIMIT = 500
   const bufferApiCalls = new BufferedObservable<(startLogsResult: StartLogsResult) => void>(BUFFER_LIMIT, (count) => {
@@ -110,7 +111,7 @@ export function createPreStartStrategy(
 
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
-        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry)
+        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry, sdkName)
         const sessionManagerPromise = canUseEventBridge()
           ? startSessionManagerStub()
           : mockable(startSessionManager)(configuration, trackingConsentState)
