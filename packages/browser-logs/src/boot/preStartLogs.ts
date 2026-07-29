@@ -22,11 +22,13 @@ import {
   mockable,
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
+  getRemoteConfigurationId,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
+import { fetchAndApplyLogsRemoteConfiguration, getLogsRemoteConfiguration } from '../domain/remoteConfiguration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
@@ -66,16 +68,49 @@ export function createPreStartStrategy(
   const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
+  function doInit(initConfig: LogsInitConfiguration) {
+    const configuration = validateAndBuildLogsConfiguration(initConfig)
+    if (!configuration) {
+      return
+    }
+    addTelemetryConfiguration(serializeLogsConfiguration(initConfig))
+    const startLogsResult = doStartLogs(configuration, sessionManager!, hooks)
+    bufferApiCalls.subscribe((callback) => callback(startLogsResult))
+    bufferApiCalls.unbuffer()
+  }
+
   function tryStartLogs() {
     if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager) {
       return
     }
 
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedConfiguration, sessionManager, hooks)
 
-    bufferApiCalls.subscribe((callback) => callback(startLogsResult))
-    bufferApiCalls.unbuffer()
+    const hasRemoteConfiguration = getRemoteConfigurationId(cachedInitConfiguration)
+
+    if (hasRemoteConfiguration) {
+      const isSyncLoading =
+        !!cachedInitConfiguration.remoteConfigurationId || !!cachedInitConfiguration.remoteConfiguration?.sync
+
+      if (isSyncLoading) {
+        void fetchAndApplyLogsRemoteConfiguration(cachedInitConfiguration)
+          .then((resolvedInitConfig) => {
+            if (resolvedInitConfig) {
+              doInit(resolvedInitConfig)
+            }
+          })
+          .catch(monitorError)
+        return
+      }
+
+      const resolvedInitConfig = getLogsRemoteConfiguration(cachedInitConfiguration)
+      if (!resolvedInitConfig) {
+        return
+      }
+      doInit(resolvedInitConfig)
+    } else {
+      doInit(cachedInitConfiguration)
+    }
   }
 
   return {
@@ -123,7 +158,6 @@ export function createPreStartStrategy(
             }
             sessionManager = newSessionManager
             startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
-            addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
             tryStartLogs()
           })
           .catch(monitorError)
