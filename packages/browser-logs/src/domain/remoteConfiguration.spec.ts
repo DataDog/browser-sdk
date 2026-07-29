@@ -66,7 +66,7 @@ describe('getLogsRemoteConfiguration', () => {
     // Prevent background sync from firing so localStorage state stays predictable across tests
     // Return a never-resolving Promise so the background sync .then() never fires,
     // preventing display.error or cache.write from being called after test cleanup.
-    replaceMockableWithSpy(fetchRemoteConfiguration).and.returnValue(new Promise(() => {}))
+    replaceMockableWithSpy(fetchRemoteConfiguration).and.returnValue(new Promise((_resolve) => undefined))
     registerCleanupTask(() => localStorage.removeItem(buildCacheKey(RC_ID)))
   })
 

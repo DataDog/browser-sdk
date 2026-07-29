@@ -261,7 +261,7 @@ describe('preStartLogs', () => {
     const RC_ID = 'test-rc-id'
 
     beforeEach(() => {
-      replaceMockableWithSpy(fetchRemoteConfiguration).and.returnValue(new Promise(() => {}))
+      replaceMockableWithSpy(fetchRemoteConfiguration).and.returnValue(new Promise((_resolve) => undefined))
     })
 
     it('applies cached remote config overrides before starting', async () => {
