@@ -1,5 +1,5 @@
-import { CACHE_VERSION, buildCacheKey, display } from '@datadog/browser-core'
-import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
+import { CACHE_VERSION, buildCacheKey, display, fetchRemoteConfiguration } from '@datadog/browser-core'
+import { interceptRequests, registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import type { LogsInitConfiguration } from './configuration'
 import {
   applyLogsRemoteConfiguration,
@@ -63,10 +63,10 @@ describe('getLogsRemoteConfiguration', () => {
   }
 
   beforeEach(() => {
-    // Mock background sync fetch to fail so cache.write is never called and
-    // the localStorage state stays predictable across tests.
-    spyOn(display, 'error')
-    interceptRequests().withFetch(() => Promise.resolve({ ok: false, status: 404 }))
+    // Prevent background sync from firing so localStorage state stays predictable across tests
+    // Return a never-resolving Promise so the background sync .then() never fires,
+    // preventing display.error or cache.write from being called after test cleanup.
+    replaceMockableWithSpy(fetchRemoteConfiguration).and.returnValue(new Promise(() => {}))
     registerCleanupTask(() => localStorage.removeItem(buildCacheKey(RC_ID)))
   })
 

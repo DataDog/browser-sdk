@@ -4,6 +4,7 @@ import {
   display,
   fetchRemoteConfiguration,
   getRemoteConfigurationId,
+  mockable,
   monitorError,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from './configuration'
@@ -41,7 +42,7 @@ export function getLogsRemoteConfiguration(
   const cacheResult = cache.read()
 
   // Background sync — update the cache for the next page load
-  fetchRemoteConfiguration(initConfiguration)
+  mockable(fetchRemoteConfiguration)(initConfiguration)
     .then((fetchResult) => {
       if (!fetchResult.ok) {
         display.error(fetchResult.error)
