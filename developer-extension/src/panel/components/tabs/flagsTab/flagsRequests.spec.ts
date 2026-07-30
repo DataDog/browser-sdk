@@ -3,7 +3,15 @@ import { fetchFlagCatalog, fetchFlagsByKeys } from './flagsRequests'
 
 describe('flagsRequests', () => {
   describe('fetchFlagCatalog', () => {
-    const baseRequest: FlagCatalogRequest = { page: 1, pageSize: 20, search: '', typeFilter: [], tagFilter: [] }
+    const baseRequest: FlagCatalogRequest = {
+      page: 1,
+      pageSize: 20,
+      search: '',
+      typeFilter: [],
+      tagFilter: [],
+      teamFilter: [],
+      createdBy: null,
+    }
 
     function mockResponse(body: unknown) {
       return spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response(JSON.stringify(body))))
@@ -13,9 +21,11 @@ describe('flagsRequests', () => {
       const sampleFlag: CatalogFlag = {
         key: 'flag-a',
         name: 'Flag A',
+        description: 'Controls the new checkout',
         type: 'BOOLEAN',
         variants: [{ name: 'on', value: true }],
         tags: ['x'],
+        createdBy: 'user-uuid',
       }
       const sampleTotal = 42
       const spy = mockResponse({
@@ -24,10 +34,12 @@ describe('flagsRequests', () => {
             attributes: {
               key: sampleFlag.key,
               name: sampleFlag.name,
+              description: sampleFlag.description,
               value_type: sampleFlag.type,
               // The API returns variant values as strings; parseVariantValue turns them back.
               variants: sampleFlag.variants.map(({ name, value }) => ({ name, value: String(value) })),
               tags: sampleFlag.tags,
+              created_by: sampleFlag.createdBy,
             },
           },
         ],
@@ -44,6 +56,7 @@ describe('flagsRequests', () => {
       expect(url.searchParams.get('is_archived')).toBe('false')
       expect((requestInit.headers as Record<string, string>).Authorization).toBe('Bearer tok')
       expect(page.total).toBe(sampleTotal)
+      // sampleFlag round-trips including description + createdBy (from attributes.description/created_by).
       expect(page.flags).toEqual([sampleFlag])
     })
 
@@ -56,6 +69,8 @@ describe('flagsRequests', () => {
         search: 'checkout',
         typeFilter: ['BOOLEAN', 'STRING'],
         tagFilter: ['team:x', 'beta'],
+        teamFilter: [],
+        createdBy: null,
       })
 
       const [requestUrl] = spy.calls.argsFor(0) as [string, RequestInit]
@@ -63,6 +78,28 @@ describe('flagsRequests', () => {
       expect(url.searchParams.get('search')).toBe('checkout')
       expect(url.searchParams.getAll('value_type')).toEqual(['BOOLEAN', 'STRING'])
       expect(url.searchParams.getAll('tags')).toEqual(['team:x', 'beta'])
+    })
+
+    it('sends "My feature flags" as created_by and "My teams" as team:<handle> tags', async () => {
+      const spy = mockResponse({ data: [], meta: { page: { total: 0 } } })
+
+      await fetchFlagCatalog('tok', 'datad0g.com', {
+        ...baseRequest,
+        tagFilter: ['beta'],
+        teamFilter: ['alpha', 'gamma'],
+        createdBy: 'user-uuid',
+      })
+
+      const url = new URL(spy.calls.argsFor(0)[0] as string)
+      expect(url.searchParams.get('created_by')).toBe('user-uuid')
+      // Regular tags and team tags ride the same `tags` param; the server splits them by prefix.
+      expect(url.searchParams.getAll('tags')).toEqual(['beta', 'team:alpha', 'team:gamma'])
+    })
+
+    it('omits created_by when "My feature flags" is off', async () => {
+      const spy = mockResponse({ data: [], meta: { page: { total: 0 } } })
+      await fetchFlagCatalog('tok', 'datad0g.com', baseRequest)
+      expect(new URL(spy.calls.argsFor(0)[0] as string).searchParams.has('created_by')).toBe(false)
     })
 
     it('omits the search param when the term is empty', async () => {
@@ -167,13 +204,15 @@ describe('flagsRequests', () => {
       expect(flags[0].name).toBe('First')
     })
 
-    it('falls back to the key for a missing name and defaults tags/variants', async () => {
+    it('falls back to the key for a missing name and defaults description/tags/variants', async () => {
       mockResponse({ data: [{ attributes: { key: 'no-name', value_type: 'STRING' } }], meta: { page: { total: 1 } } })
 
       const { flags } = await fetchFlagCatalog('tok', 'datad0g.com', baseRequest)
       expect(flags[0].name).toBe('no-name')
+      expect(flags[0].description).toBe('')
       expect(flags[0].tags).toEqual([])
       expect(flags[0].variants).toEqual([])
+      expect(flags[0].createdBy).toBeUndefined()
     })
 
     it('tolerates a response that omits data/meta, falling total back to the page length', async () => {

@@ -1,4 +1,4 @@
-import { Alert, Anchor, Box, Button, Code, Group, Pagination, Space } from '@mantine/core'
+import { Alert, Anchor, Box, Button, Code, Group, Pagination, Space, Title } from '@mantine/core'
 import React, { useState } from 'react'
 import { TabBase } from '../../tabBase'
 import { ConnectScreen, ConnectionHeader } from './connectScreen'
@@ -53,9 +53,13 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
   return (
     <TabBase
       top={
-        // No dd-privacy-allow here: the header/filter/catalog below render customer flag names,
-        // values, and tags, which must stay masked in the extension's own Session Replay.
-        <Box px="md">
+        // No px here: the TabBase Container already insets by `md`, so the header lines up with the
+        // catalog rows below (which get their `md` from their own Box). No dd-privacy-allow either —
+        // the header/filter/catalog render customer flag names, values, and tags, which must stay
+        // masked in the extension's own Session Replay.
+        <Box>
+          <Title order={5}>Feature Flag Overrides</Title>
+          <Space h="xs" />
           <ConnectionHeader auth={auth} />
           <Space h="sm" />
           <FlagFilterBar />
@@ -107,6 +111,32 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
         )}
 
         <Space h="md" />
+        <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setAddOpen((open) => !open)}>
+          {addOpen ? '− Hide custom override' : '+ Add a custom override'}
+        </Anchor>
+        {addOpen && (
+          <>
+            <Space h="sm" />
+            <ManualOverrideForm />
+          </>
+        )}
+      </Box>
+
+      {/* Sticky footer: the apply/refresh actions stay visible without scrolling to the end of a long
+          catalog, so a user can't miss them. Scheme-aware background + top divider/shadow so it reads
+          as a layer over the scrolling content in both light and dark mode. */}
+      <Box
+        px="md"
+        py="sm"
+        style={{
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 1,
+          backgroundColor: 'var(--mantine-color-body)',
+          borderTop: '1px solid var(--mantine-color-default-border)',
+          boxShadow: '0 -4px 8px -6px rgba(0, 0, 0, 0.25)',
+        }}
+      >
         <Group justify="space-between">
           <Button
             size="xs"
@@ -128,17 +158,6 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
             Refresh Page
           </Button>
         </Group>
-
-        <Space h="md" />
-        <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setAddOpen((open) => !open)}>
-          {addOpen ? '− Hide custom override' : '+ Add a custom override'}
-        </Anchor>
-        {addOpen && (
-          <>
-            <Space h="sm" />
-            <ManualOverrideForm />
-          </>
-        )}
       </Box>
     </TabBase>
   )

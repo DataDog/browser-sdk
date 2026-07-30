@@ -1,6 +1,19 @@
-import { ActionIcon, Box, Button, Code, CopyButton, Group, Loader, Space, Text, Tooltip } from '@mantine/core'
+import {
+  ActionIcon,
+  Anchor,
+  Box,
+  Button,
+  Code,
+  CopyButton,
+  Group,
+  Loader,
+  Space,
+  Stack,
+  Text,
+  Tooltip,
+} from '@mantine/core'
 import { IconArrowBackUp, IconCopy } from '@tabler/icons-react'
-import React, { type ReactNode } from 'react'
+import React, { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { CatalogFlag } from './flagsRequests'
 import { useFlagsContext } from './flagsContext'
 import { validateOverrideValue } from './flagTypes'
@@ -29,7 +42,7 @@ export function FlagCatalogBody() {
       <Space h="xs" />
       <FlagList
         flags={bottomFlags}
-        borderColor="var(--mantine-color-gray-2)"
+        borderColor="var(--mantine-color-default-border)"
         // `bottomFlags` is the page minus overridden flags (those are pinned above). Only call it "no
         // match" when the server total is 0; otherwise this page's flags are all overridden.
         emptyMessage={
@@ -57,7 +70,7 @@ export function OverridesSection() {
         Local overrides ({overriddenFlags.length})
       </Text>
       <Space h="xs" />
-      <FlagList flags={overriddenFlags} borderColor="var(--mantine-color-violet-2)" />
+      <FlagList flags={overriddenFlags} borderColor="var(--mantine-color-violet-outline)" />
     </>
   )
 }
@@ -113,20 +126,25 @@ function FlagRow({
     <Group
       justify="space-between"
       wrap="nowrap"
-      align="center"
+      // Top-align so the variant buttons stay up beside the name/key instead of drifting to the
+      // vertical middle of a long description.
+      align="flex-start"
       px="sm"
-      py="xs"
+      py="sm"
       style={{
-        borderBottom: '1px solid var(--mantine-color-gray-1)',
-        backgroundColor: overridden ? 'var(--mantine-color-violet-0)' : undefined,
+        borderBottom: '1px solid var(--mantine-color-default-border)',
+        // Mantine's scheme-aware subtle tint (same one variant="light" uses): light violet in light
+        // mode, a muted translucent violet in dark mode — not a full saturated fill.
+        backgroundColor: overridden ? 'var(--mantine-color-violet-light)' : undefined,
       }}
     >
-      <Box style={{ minWidth: 0, flex: 1 }}>
+      <Stack gap={6} style={{ minWidth: 0, flex: 1 }}>
         <Text size="sm" fw={600} truncate>
           {flag.name}
         </Text>
         <FlagKey value={flag.key} />
-      </Box>
+        {flag.description && <FlagDescription description={flag.description} />}
+      </Stack>
       <Group gap="xs" wrap="wrap" justify="flex-end" style={{ flexShrink: 0, maxWidth: '55%' }}>
         {overridden && (
           <Tooltip label="Revert override">
@@ -169,6 +187,56 @@ function FlagRow({
   )
 }
 
+// Free-text descriptions can run long. Show a single line by default with a "Show more" toggle that
+// expands the rest inline. The toggle only appears when the one-line clamp actually hides something —
+// measured rather than guessed from length, since a short description can still wrap and a long one
+// might fit.
+function FlagDescription({ description }: { description: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const [overflowing, setOverflowing] = useState(false)
+  const textRef = useRef<HTMLParagraphElement>(null)
+
+  // Measure whether the collapsed description overflows one line, so we know to offer "Show more".
+  // Skip while expanded — the clamp is off then, so a measurement would read as "fits" and wrongly
+  // hide the toggle; `overflowing` keeps its collapsed value. The ResizeObserver re-measures when the
+  // panel width changes, so narrowing the DevTools panel surfaces a newly-clamped description's toggle.
+  useLayoutEffect(() => {
+    const el = textRef.current
+    if (!el || expanded) {
+      return
+    }
+    const measure = () => setOverflowing(el.scrollHeight > el.clientHeight)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [description, expanded])
+
+  return (
+    // Extra top margin gives the description a touch more separation from the key above it than the
+    // name↔key gap, so the row reads as "title/key" then "description".
+    <Box mt={4}>
+      <Text ref={textRef} size="xs" lineClamp={expanded ? undefined : 1}>
+        {description}
+      </Text>
+      {overflowing && (
+        // Accent color in both states so it reads as the row's action. A hair smaller than the
+        // description text and sitting right beneath it, so the two read as clearly distinct.
+        <Anchor
+          component="button"
+          type="button"
+          fz={10}
+          c="violet"
+          onClick={() => setExpanded((value) => !value)}
+          style={{ display: 'inline-block', marginTop: 0 }}
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </Anchor>
+      )}
+    </Box>
+  )
+}
+
 function FlagKey({ value }: { value: string }) {
   return (
     <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -179,6 +247,9 @@ function FlagKey({ value }: { value: string }) {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
+          // Negate the chip's own horizontal padding so the key text lines up with the flag name above.
+          paddingInline: 6,
+          marginLeft: -6,
         }}
       >
         {value}
@@ -186,7 +257,14 @@ function FlagKey({ value }: { value: string }) {
       <CopyButton value={value}>
         {({ copied, copy }) => (
           <Tooltip label={copied ? 'Copied' : 'Copy key'} withArrow>
-            <ActionIcon size="xs" variant="subtle" color="gray" onClick={copy} style={{ flexShrink: 0 }}>
+            {/* Flip to violet on copy for a moment of feedback, then back to neutral grey. */}
+            <ActionIcon
+              size="xs"
+              variant="subtle"
+              color={copied ? 'violet' : 'gray'}
+              onClick={copy}
+              style={{ flexShrink: 0 }}
+            >
               <IconCopy size={12} />
             </ActionIcon>
           </Tooltip>

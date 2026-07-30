@@ -1,5 +1,6 @@
 import { Box, Button, Group, JsonInput, SegmentedControl, Space, Stack, Switch, Text, TextInput } from '@mantine/core'
 import React, { useState } from 'react'
+import { toErrorMessage } from '../../../../common/toErrorMessage'
 import { useFlagsContext } from './flagsContext'
 import {
   FLAG_TYPES,
@@ -38,7 +39,7 @@ export function ManualOverrideForm() {
     try {
       value = parseFormValue(type, type === 'BOOLEAN' ? booleanValue : textValue)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(toErrorMessage(err))
       return
     }
     const validationError = validateOverrideValue(type, value)

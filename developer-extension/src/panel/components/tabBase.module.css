@@ -4,6 +4,11 @@
 
 .topContainer {
   margin: 0;
+  /* Sit above the scrolling content and cast a soft shadow onto it, so a long list reads as scrolling
+     *under* the header instead of looking cut off at the top edge. Applies to every tab's top bar. */
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 8px -6px rgba(0, 0, 0, 0.25);
 }
 
 .leftContainer {
