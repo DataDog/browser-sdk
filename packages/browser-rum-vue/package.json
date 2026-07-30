@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-vue",
-  "version": "7.6.1",
+  "version": "7.7.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -19,9 +19,9 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.6.1",
-    "@datadog/browser-rum-core": "7.6.1",
-    "@datadog/js-core": "0.0.7"
+    "@datadog/browser-core": "7.7.0",
+    "@datadog/browser-rum-core": "7.7.0",
+    "@datadog/js-core": "0.0.8"
   },
   "peerDependencies": {
     "vue": "^3.5.0",

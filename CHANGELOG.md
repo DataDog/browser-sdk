@@ -20,6 +20,22 @@
 
 ---
 
+## v7.7.0
+
+**Public Changes:**
+
+- ✨ Add a version-agnostic React Router entry point ([#4918](https://github.com/DataDog/browser-sdk/pull/4918))
+- ✨ Shopify Integration - implement dedicated bundle ([#4878](https://github.com/DataDog/browser-sdk/pull/4878))
+- ✨ Add a version-agnostic Vue Router entry point ([#4910](https://github.com/DataDog/browser-sdk/pull/4910))
+- ✨ Enable WebSocket resource tracking behind a beta option ([#4882](https://github.com/DataDog/browser-sdk/pull/4882))
+- 📝 [Salesforce Docs] Align with Tile docs ([#4904](https://github.com/DataDog/browser-sdk/pull/4904))
+
+**Internal Changes:**
+
+- ♻️ [js-core] Schema-driven configuration validation across browser-core, browser-logs, and browser-rum-core ([#4798](https://github.com/DataDog/browser-sdk/pull/4798))
+- 🔧 Make Salesforce test apps use rum-salesforce bundle. ([#4893](https://github.com/DataDog/browser-sdk/pull/4893))
+- 🔊 Add SDK_NAME to telemetry ([#4888](https://github.com/DataDog/browser-sdk/pull/4888))
+
 ## v7.6.1
 
 **Public Changes:**

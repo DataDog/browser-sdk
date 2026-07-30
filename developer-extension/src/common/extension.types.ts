@@ -57,4 +57,6 @@ export interface Settings {
   logsConfigurationOverride: object | null
   debugMode: boolean
   datadogMode: boolean
+  // Datadog site used for the feature-flag OAuth flow + catalog fetch.
+  flagsSite: string
 }
