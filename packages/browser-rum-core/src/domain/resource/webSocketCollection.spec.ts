@@ -36,6 +36,10 @@ describe('webSocketCollection', () => {
     })
   })
 
+  function expireSession(endClocks = relativeToClocks(clock.relative(0))) {
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
+  }
+
   function startTracking(
     viewHistory = mockViewHistory(),
     addDurationVital: (vital: DurationVital) => void = jasmine.createSpy()
@@ -498,8 +502,9 @@ describe('webSocketCollection', () => {
     it('emits a duration-0 vital at flush time on a session_end flush', () => {
       const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
       const tracker = startTracking(mockViewHistory(), addDurationVital)
+      const endClocks = relativeToClocks(clock.relative(40))
       notifyConnecting()
-      tracker.flushOpenConnections('session_end')
+      tracker.flushOpenConnections('session_end', endClocks)
 
       const connectingVital = addDurationVital.calls.argsFor(0)[0]
       const closedVital = addDurationVital.calls.argsFor(1)[0]
@@ -507,6 +512,7 @@ describe('webSocketCollection', () => {
       expect(closedVital.name).toBe(WEBSOCKET_CLOSED_VITAL_NAME)
       expect(closedVital.type).toBe(VitalType.DURATION)
       expect(closedVital.duration).toBe(0 as Duration)
+      expect(webSocketCompleteEvents[0].endClocks).toEqual(endClocks)
       expect(closedVital.startClocks).toEqual(webSocketCompleteEvents[0].endClocks)
       expect(closedVital.context).toEqual({
         url: webSocketCompleteEvents[0].url,
@@ -567,13 +573,15 @@ describe('webSocketCollection', () => {
     }
 
     it('finalizes open connections with tracking_end_reason="session_end" when the session expires', () => {
+      const endClocks = relativeToClocks(clock.relative(40))
       startCollection()
       notifyConnecting()
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(endClocks)
 
       expect(webSocketCompleteEvents.length).toBe(1)
       expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')
+      expect(webSocketCompleteEvents[0].endClocks).toEqual(endClocks)
       expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeFalse()
       expect(webSocketCompleteEvents[0].closeCode).toBeUndefined()
       expect(webSocketCompleteEvents[0].closeReason).toBeUndefined()
@@ -598,7 +606,7 @@ describe('webSocketCollection', () => {
       notifyOpen(10)
       notifyMessageOut(20, 10)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession()
 
       expect(webSocketCompleteEvents.length).toBe(1)
       expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')

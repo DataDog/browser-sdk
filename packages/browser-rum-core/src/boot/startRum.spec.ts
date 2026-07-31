@@ -1,4 +1,4 @@
-import { ONE_SECOND, toServerDuration, relativeNow } from '@datadog/js-core/time'
+import { ONE_SECOND, toServerDuration, relativeNow, relativeToClocks } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
 import type { BufferedData, SessionManager } from '@datadog/browser-core'
 import {
@@ -64,6 +64,32 @@ function startRumStub(
   }
 }
 
+describe('session expiration lifecycle', () => {
+  it('notifies session expiration with clocks captured when the session expires', () => {
+    const clock = mockClock()
+    const sessionManager = createSessionManagerMock()
+    const notifySpy = spyOn(LifeCycle.prototype, 'notify').and.callThrough()
+    const { stop } = startRum(
+      mockRumConfiguration(),
+      sessionManager,
+      noopRecorderApi,
+      noopProfilerApi,
+      undefined,
+      createIdentityEncoder,
+      new BufferedObservable<BufferedData>(100),
+      createFakeTelemetryObject(),
+      createHooks()
+    )
+    registerCleanupTask(stop)
+
+    clock.tick(123)
+    const endClocks = relativeToClocks(relativeNow())
+    sessionManager.expire()
+
+    expect(notifySpy).toHaveBeenCalledWith(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
+  })
+})
+
 describe('rum session', () => {
   let serverRumEvents: RumEvent[]
   let lifeCycle: LifeCycle
@@ -84,7 +110,7 @@ describe('rum session', () => {
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks: relativeToClocks(relativeNow()) })
     expect(serverRumEvents.length).toEqual(2)
 
     sessionManager.setId('43')

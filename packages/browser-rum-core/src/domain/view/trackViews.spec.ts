@@ -1,4 +1,4 @@
-import type { RelativeTime, Duration } from '@datadog/js-core/time'
+import type { RelativeTime, Duration, ClocksState } from '@datadog/js-core/time'
 import { timeStampNow, relativeToClocks, relativeNow } from '@datadog/js-core/time'
 import { PageExitReason, display } from '@datadog/browser-core'
 
@@ -16,6 +16,10 @@ import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
 import { isLayoutShiftSupported } from './viewMetrics/trackCumulativeLayoutShift'
+
+function expireSession(lifeCycle: LifeCycle, endClocks: ClocksState = relativeToClocks(relativeNow())) {
+  lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
+}
 
 describe('track views automatically', () => {
   const lifeCycle = new LifeCycle()
@@ -167,9 +171,17 @@ describe('view lifecycle', () => {
 
       expect(getViewEndCount()).toBe(0)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
 
       expect(getViewEndCount()).toBe(1)
+    })
+
+    it('should end the view at the session expiration clocks', () => {
+      const endClocks = relativeToClocks(clock.relative(123))
+
+      expireSession(lifeCycle, endClocks)
+
+      expect(viewTest.getViewEnd(0).endClocks).toEqual(endClocks)
     })
 
     it('should send a final view update', () => {
@@ -177,7 +189,7 @@ describe('view lifecycle', () => {
 
       expect(getViewUpdateCount()).toBe(1)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
 
       expect(getViewUpdateCount()).toBe(2)
       expect(getViewUpdate(0).sessionIsActive).toBe(true)
@@ -189,7 +201,7 @@ describe('view lifecycle', () => {
 
       expect(getViewCreateCount()).toBe(1)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
 
       expect(getViewCreateCount()).toBe(1)
     })
@@ -199,12 +211,12 @@ describe('view lifecycle', () => {
 
       expect(getViewEndCount()).toBe(0)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
 
       expect(getViewEndCount()).toBe(1)
       expect(getViewUpdateCount()).toBe(2)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
 
       expect(getViewEndCount()).toBe(1)
       expect(getViewUpdateCount()).toBe(2)
@@ -217,7 +229,7 @@ describe('view lifecycle', () => {
 
       expect(getViewCreateCount()).toBe(1)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       expect(getViewCreateCount()).toBe(2)
@@ -226,7 +238,7 @@ describe('view lifecycle', () => {
     it('should use session_renewal loading type for the new view', () => {
       const { getViewUpdate, getViewUpdateCount } = viewTest
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.SESSION_RENEWAL)
@@ -234,17 +246,17 @@ describe('view lifecycle', () => {
 
     it('should use the current view name, service and version for the new view', () => {
       const { getViewCreateCount, getViewCreate, startView } = viewTest
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       startView({ name: 'view 1', service: 'service 1', version: 'version 1' })
       startView({ name: 'view 2', service: 'service 2', version: 'version 2' })
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       startView({ name: 'view 3', service: 'service 3', version: 'version 3' })
       changeLocation('/bar')
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
       expect(getViewCreateCount()).toBe(8)
@@ -324,7 +336,7 @@ describe('view lifecycle', () => {
       const { getViewUpdateCount } = viewTest
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD) // make sure we don't have pending update
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession(lifeCycle)
 
       const previousViewUpdateCount = getViewUpdateCount()
 
@@ -769,7 +781,7 @@ describe('view custom timings', () => {
     clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
     const { getViewUpdateCount, addTiming } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession(lifeCycle)
 
     expect(getViewUpdateCount()).toBe(2)
 
@@ -829,7 +841,7 @@ describe('manual loading time', () => {
     clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
     const { getViewUpdateCount, setLoadingTime } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession(lifeCycle)
 
     const previousCount = getViewUpdateCount()
 
