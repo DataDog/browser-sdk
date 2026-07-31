@@ -1,5 +1,11 @@
 import type { ContextManager, ContextValue } from '@datadog/browser-core'
-import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
+import {
+  addExperimentalFeatures,
+  display,
+  ExperimentalFeature,
+  objectEntries,
+  TraceContextInjection,
+} from '@datadog/browser-core'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
 import { MID_HASH_UUID, MOCK_SESSION_ID, createSessionManagerMock } from '@datadog/browser-core/test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
@@ -211,6 +217,43 @@ describe('tracer', () => {
           tracestate: 'dd=s:1;o:rum',
         })
       )
+    })
+
+    it('should propagate the same 128-bit trace id with every propagator', () => {
+      addExperimentalFeatures([ExperimentalFeature.TRACE_ID_128_BIT])
+      const tracer = startTracerWithDefaults({
+        initConfiguration: {
+          allowedTracingUrls: [
+            { match: window.location.origin, propagatorTypes: ['datadog', 'tracecontext', 'b3', 'b3multi'] },
+          ],
+        },
+      })
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
+
+      const traceId = context.traceId!
+      const fullTraceId = traceId.toHexString()
+      const highTraceId = traceId.toHighHexString()!
+      expect(fullTraceId).toMatch(/^[0-9a-f]{8}00000000[0-9a-f]{16}$/)
+      expect(xhr.headers['x-datadog-trace-id']).toBe(traceId.toLowDecimalString())
+      expect(xhr.headers['x-datadog-tags']).toBe(`_dd.p.tid=${highTraceId}`)
+      expect(xhr.headers['traceparent']).toContain(`-${fullTraceId}-`)
+      expect(xhr.headers['b3'].startsWith(`${fullTraceId}-`)).toBeTrue()
+      expect(xhr.headers['X-B3-TraceId']).toBe(fullTraceId)
+    })
+
+    it('should not add x-datadog-tags without the Datadog propagator', () => {
+      addExperimentalFeatures([ExperimentalFeature.TRACE_ID_128_BIT])
+      const tracer = startTracerWithDefaults({
+        initConfiguration: {
+          allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['tracecontext'] }],
+        },
+      })
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
+
+      expect(xhr.headers['x-datadog-tags']).toBeUndefined()
+      expect(xhr.headers['traceparent']).toContain(`-${context.traceId!.toHexString()}-`)
     })
 
     it('should not add any headers', () => {
@@ -741,11 +784,13 @@ function toPlainObject(headers: Headers) {
 }
 
 function tracingHeadersFor(traceId: TraceIdentifier, spanId: SpanIdentifier, samplingPriority: '1' | '0') {
+  const highTraceId = traceId.toHighHexString()
   return {
     'x-datadog-origin': 'rum',
     'x-datadog-parent-id': spanId.toString(),
     'x-datadog-sampling-priority': samplingPriority,
-    'x-datadog-trace-id': traceId.toString(),
+    'x-datadog-trace-id': traceId.toLowDecimalString(),
+    ...(highTraceId && { 'x-datadog-tags': `_dd.p.tid=${highTraceId}` }),
     baggage: `session.id=${MOCK_SESSION_ID},user.id=1234,account.id=5678`,
   }
 }

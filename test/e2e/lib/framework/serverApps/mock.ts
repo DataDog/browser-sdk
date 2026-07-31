@@ -22,6 +22,30 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
 
   const { webSocketUrl, handleUpgrade, closeEchoWebSockets } = setupEchoWebSockets(servers.base.origin)
 
+  app.use(['/restricted-cors-headers', '/restricted-cors-headers-with-tags'], (req, res, next) => {
+    const allowedHeaders = [
+      'baggage',
+      'traceparent',
+      'tracestate',
+      'x-datadog-origin',
+      'x-datadog-parent-id',
+      'x-datadog-sampling-priority',
+      'x-datadog-trace-id',
+    ]
+    if (req.originalUrl.startsWith('/restricted-cors-headers-with-tags')) {
+      allowedHeaders.push('x-datadog-tags')
+    }
+
+    res.header('Access-Control-Allow-Origin', '*')
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+    res.header('Access-Control-Allow-Headers', allowedHeaders.join(', '))
+    if (req.method === 'OPTIONS') {
+      res.status(204).end()
+      return
+    }
+    next()
+  })
+
   app.use(cors())
   app.disable('etag') // disable automatic resource caching
 
@@ -172,6 +196,10 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
   })
 
   app.get('/headers', (req, res) => {
+    res.send(JSON.stringify(req.headers))
+  })
+
+  app.get(['/restricted-cors-headers', '/restricted-cors-headers-with-tags'], (req, res) => {
     res.send(JSON.stringify(req.headers))
   })
 

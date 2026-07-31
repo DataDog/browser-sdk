@@ -8,6 +8,8 @@ import {
   isSampled,
   canUseEventBridge,
   getEventBridge,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
@@ -150,7 +152,7 @@ function injectHeadersIfTracingAllowed(
   }
 
   context.traceSampled = traceSampled
-  context.traceId = createTraceIdentifier()
+  context.traceId = createTraceIdentifier(isExperimentalFeatureEnabled(ExperimentalFeature.TRACE_ID_128_BIT) ? 128 : 64)
   context.spanId = createSpanIdentifier()
 
   inject(
@@ -190,14 +192,18 @@ function makeTracingHeaders(
           'x-datadog-origin': 'rum',
           'x-datadog-parent-id': spanId.toString(),
           'x-datadog-sampling-priority': traceSampled ? '1' : '0',
-          'x-datadog-trace-id': traceId.toString(),
+          'x-datadog-trace-id': traceId.toLowDecimalString(),
         })
+        const highTraceId = traceId.toHighHexString()
+        if (highTraceId) {
+          tracingHeaders['x-datadog-tags'] = `_dd.p.tid=${highTraceId}`
+        }
         break
       }
       // https://www.w3.org/TR/trace-context/
       case 'tracecontext': {
         Object.assign(tracingHeaders, {
-          traceparent: `00-0000000000000000${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-0${
+          traceparent: `00-${traceId.toHexString().padStart(32, '0')}-${toPaddedHexadecimalString(spanId)}-0${
             traceSampled ? '1' : '0'
           }`,
           tracestate: `dd=s:${traceSampled ? '1' : '0'};o:rum`,
@@ -207,13 +213,13 @@ function makeTracingHeaders(
       // https://github.com/openzipkin/b3-propagation
       case 'b3': {
         Object.assign(tracingHeaders, {
-          b3: `${toPaddedHexadecimalString(traceId)}-${toPaddedHexadecimalString(spanId)}-${traceSampled ? '1' : '0'}`,
+          b3: `${traceId.toHexString()}-${toPaddedHexadecimalString(spanId)}-${traceSampled ? '1' : '0'}`,
         })
         break
       }
       case 'b3multi': {
         Object.assign(tracingHeaders, {
-          'X-B3-TraceId': toPaddedHexadecimalString(traceId),
+          'X-B3-TraceId': traceId.toHexString(),
           'X-B3-SpanId': toPaddedHexadecimalString(spanId),
           'X-B3-Sampled': traceSampled ? '1' : '0',
         })

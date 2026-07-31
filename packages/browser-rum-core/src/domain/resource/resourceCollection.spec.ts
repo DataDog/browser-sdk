@@ -1185,6 +1185,37 @@ describe('resourceCollection', () => {
       expect(privateFields.span_id).toBeDefined()
     })
 
+    it('should use a decimal trace id for a sampled request with a 64-bit trace id', () => {
+      const traceId = createTraceIdentifier()
+      setupResourceCollection()
+      notifyRequest({
+        request: {
+          traceSampled: true,
+          spanId: createSpanIdentifier(),
+          traceId,
+        },
+      })
+
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
+      expect(privateFields.trace_id).toBe(traceId.toLowDecimalString())
+    })
+
+    it('should use a full hexadecimal trace id for a sampled request with a 128-bit trace id', () => {
+      const traceId = createTraceIdentifier(128)
+      setupResourceCollection()
+      notifyRequest({
+        request: {
+          traceSampled: true,
+          spanId: createSpanIdentifier(),
+          traceId,
+        },
+      })
+
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
+      expect(privateFields.trace_id).toBe(traceId.toHexString())
+      expect(privateFields.trace_id).toMatch(/^[0-9a-f]{32}$/)
+    })
+
     it('should not be processed from not sampled completed request', () => {
       setupResourceCollection()
       notifyRequest({

@@ -14,6 +14,7 @@ import { objectHasValue } from './utils/objectUtils'
 
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
+  TRACE_ID_128_BIT = 'trace_id_128_bit',
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   TRACK_WEBSOCKETS = 'track_websockets',
 }

@@ -38,6 +38,25 @@ test.describe('tracing', () => {
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
+  createTest('trace fetch with a 128-bit trace id')
+    .withRum({
+      service: 'service',
+      allowedTracingUrls: ['LOCATION_ORIGIN'],
+      enableExperimentalFeatures: ['trace_id_128_bit'],
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const rawHeaders = await page.evaluate(() =>
+        window
+          .fetch('/headers')
+          .then((response) => response.text())
+          .catch(() => new Error('Fetch request failed!'))
+      )
+      const headers = parseHeaders(rawHeaders)
+      const fullTraceId = check128BitRequestHeaders(headers)
+      await flushEvents()
+      checkTraceAssociatedToRumEvent(intakeRegistry, fullTraceId)
+    })
+
   createTest('trace fetch with Request argument')
     .withRum({ service: 'service', allowedTracingUrls: ['LOCATION_ORIGIN'] })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -113,6 +132,66 @@ test.describe('tracing', () => {
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
+  createTest('trace a cross-origin request with a 128-bit trace id')
+    .withRum({
+      service: 'service',
+      allowedTracingUrls: [(url) => url.includes('/restricted-cors-headers-with-tags')],
+      enableExperimentalFeatures: ['trace_id_128_bit'],
+    })
+    .run(async ({ servers, intakeRegistry, sendXhr, flushEvents }) => {
+      const rawHeaders = await sendXhr(`${servers.crossOrigin.origin}/restricted-cors-headers-with-tags`)
+      const headers = parseHeaders(rawHeaders)
+      const fullTraceId = check128BitRequestHeaders(headers)
+      await flushEvents()
+      checkTraceAssociatedToRumEvent(intakeRegistry, fullTraceId)
+    })
+
+  createTest('reject a cross-origin 128-bit Datadog trace when x-datadog-tags is not allowed')
+    .withRum({
+      service: 'service',
+      allowedTracingUrls: [(url) => url.includes('/restricted-cors-headers')],
+      enableExperimentalFeatures: ['trace_id_128_bit'],
+    })
+    .run(async ({ servers, sendXhr, withBrowserLogs }) => {
+      await expect(sendXhr(`${servers.crossOrigin.origin}/restricted-cors-headers`)).rejects.toThrow()
+      withBrowserLogs((logs) => {
+        expect(logs.some((log) => log.level === 'error' && log.message.includes('x-datadog-tags'))).toBe(true)
+      })
+    })
+
+  createTest('trace a cross-origin 64-bit request with the legacy CORS allowlist')
+    .withRum({
+      service: 'service',
+      allowedTracingUrls: [(url) => url.includes('/restricted-cors-headers')],
+    })
+    .run(async ({ servers, intakeRegistry, sendXhr, flushEvents }) => {
+      const rawHeaders = await sendXhr(`${servers.crossOrigin.origin}/restricted-cors-headers`)
+      const headers = parseHeaders(rawHeaders)
+      checkRequestHeaders(headers)
+      expect(headers['x-datadog-tags']).toBeUndefined()
+      await flushEvents()
+      checkTraceAssociatedToRumEvent(intakeRegistry)
+    })
+
+  createTest('trace a cross-origin 128-bit tracecontext request without x-datadog-tags')
+    .withRum({
+      service: 'service',
+      allowedTracingUrls: [
+        { match: (url: string) => url.includes('/restricted-cors-headers'), propagatorTypes: ['tracecontext'] },
+      ],
+      enableExperimentalFeatures: ['trace_id_128_bit'],
+    })
+    .run(async ({ servers, intakeRegistry, sendXhr, flushEvents }) => {
+      const rawHeaders = await sendXhr(`${servers.crossOrigin.origin}/restricted-cors-headers`)
+      const headers = parseHeaders(rawHeaders)
+      expect(headers['x-datadog-trace-id']).toBeUndefined()
+      expect(headers['x-datadog-tags']).toBeUndefined()
+      const fullTraceId = headers['traceparent'].split('-')[1]
+      expect(fullTraceId).toMatch(/^[0-9a-f]{8}00000000[0-9a-f]{16}$/)
+      await flushEvents()
+      checkTraceAssociatedToRumEvent(intakeRegistry, fullTraceId)
+    })
+
   interface ParsedHeaders {
     [key: string]: string
   }
@@ -142,12 +221,27 @@ test.describe('tracing', () => {
     }
   }
 
-  function checkTraceAssociatedToRumEvent(intakeRegistry: IntakeRegistry) {
+  function check128BitRequestHeaders(headers: ParsedHeaders): string {
+    const fullTraceId = headers['traceparent'].split('-')[1]
+    const highTraceId = fullTraceId.slice(0, 16)
+    const lowTraceId = fullTraceId.slice(16)
+
+    expect(fullTraceId).toMatch(/^[0-9a-f]{8}00000000[0-9a-f]{16}$/)
+    expect(headers['x-datadog-tags']).toBe(`_dd.p.tid=${highTraceId}`)
+    expect(BigInt(headers['x-datadog-trace-id']).toString(16).padStart(16, '0')).toBe(lowTraceId)
+    return fullTraceId
+  }
+
+  function checkTraceAssociatedToRumEvent(intakeRegistry: IntakeRegistry, expectedTraceId?: string) {
     const requests = intakeRegistry.rumResourceEvents.filter(
       (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )
     expect(requests).toHaveLength(1)
-    expect(requests[0]._dd.trace_id).toMatch(/\d+/)
+    if (expectedTraceId) {
+      expect(requests[0]._dd.trace_id).toBe(expectedTraceId)
+    } else {
+      expect(requests[0]._dd.trace_id).toMatch(/\d+/)
+    }
     expect(requests[0]._dd.span_id).toMatch(/\d+/)
     expect(requests[0].resource.id).toBeDefined()
   }

@@ -1,3 +1,5 @@
+import { dateNow } from '@datadog/js-core/time'
+import { replaceMockable } from '@datadog/browser-core/test'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 
 describe('identifier', () => {
@@ -17,6 +19,34 @@ describe('identifier', () => {
       mockRandomValues((buffer) => buffer.fill(0xff))
       const identifier = createTraceIdentifier()
       expect(identifier.toString(16)).toEqual('ffffffffffffffff')
+    })
+
+    it('formats a 64-bit identifier explicitly', () => {
+      mockRandomValues((buffer) => (buffer[0] = 0xff))
+      const identifier = createTraceIdentifier()
+
+      expect(identifier.toLowDecimalString()).toEqual('255')
+      expect(identifier.toHexString()).toEqual('00000000000000ff')
+      expect(identifier.toHighHexString()).toBeUndefined()
+    })
+
+    it('generates and formats a 128-bit identifier', () => {
+      replaceMockable(dateNow, () => 0x12345678 * 1000)
+      mockRandomValues((buffer) => (buffer[0] = 0xff))
+      const identifier = createTraceIdentifier(128)
+
+      expect(identifier.toString()).toEqual('255')
+      expect(identifier.toLowDecimalString()).toEqual('255')
+      expect(identifier.toHighHexString()).toEqual('1234567800000000')
+      expect(identifier.toHexString()).toEqual('123456780000000000000000000000ff')
+    })
+
+    it('masks the timestamp to 32 bits', () => {
+      replaceMockable(dateNow, () => 0x112345678 * 1000)
+      const identifier = createTraceIdentifier(128)
+
+      expect(identifier.toHighHexString()).toEqual('1234567800000000')
+      expect(identifier.toHexString()).toHaveSize(32)
     })
   })
 

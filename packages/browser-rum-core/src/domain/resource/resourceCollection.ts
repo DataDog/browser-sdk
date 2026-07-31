@@ -275,14 +275,14 @@ function getResourceDomainContext(
 }
 
 function computeRequestTracingInfo(request: RequestCompleteEvent, configuration: RumConfiguration) {
-  const hasBeenTraced = request.traceSampled && request.traceId && request.spanId
-  if (!hasBeenTraced) {
+  if (!request.traceSampled || !request.traceId || !request.spanId) {
     return undefined
   }
+  const { traceId, spanId } = request
   return {
     _dd: {
-      span_id: request.spanId!.toString(),
-      trace_id: request.traceId!.toString(),
+      span_id: spanId.toString(),
+      trace_id: traceId.toHighHexString() === undefined ? traceId.toLowDecimalString() : traceId.toHexString(),
       rule_psr: configuration.rulePsr,
     },
   }
