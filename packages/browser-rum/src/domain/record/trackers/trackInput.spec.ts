@@ -127,7 +127,8 @@ describe('trackInput', () => {
   })
 
   it('masks input values according to a the default privacy level', () => {
-    scope.configuration.defaultPrivacyLevel = DefaultPrivacyLevel.MASK
+    scope = createRecordingScopeForTesting({ configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } })
+    takeFullSnapshotForTesting(scope)
     inputTracker = trackInput(document, emitRecordCallback, scope)
 
     dispatchInputEvent('foo')

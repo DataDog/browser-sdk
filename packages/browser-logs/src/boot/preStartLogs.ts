@@ -22,6 +22,7 @@ import {
   mockable,
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
+  isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -41,7 +42,8 @@ export type DoStartLogs = (
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: DoStartLogs
+  doStartLogs: DoStartLogs,
+  sdkName?: string
 ): Strategy {
   const BUFFER_LIMIT = 500
   const bufferApiCalls = new BufferedObservable<(startLogsResult: StartLogsResult) => void>(BUFFER_LIMIT, (count) => {
@@ -99,8 +101,8 @@ export function createPreStartStrategy(
         return
       }
 
-      const configuration = validateAndBuildLogsConfiguration(initConfiguration, errorStack)
-      if (!configuration) {
+      const configuration = validateAndBuildLogsConfiguration(initConfiguration)
+      if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
         return
       }
 
@@ -110,7 +112,7 @@ export function createPreStartStrategy(
 
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
-        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry)
+        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry, sdkName)
         const sessionManagerPromise = canUseEventBridge()
           ? startSessionManagerStub()
           : mockable(startSessionManager)(configuration, trackingConsentState)

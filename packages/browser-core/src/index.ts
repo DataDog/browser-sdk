@@ -1,10 +1,10 @@
 export type { Configuration, InitConfiguration } from './domain/configuration'
 export {
-  validateAndBuildConfiguration,
+  BROWSER_CORE_SCHEMA,
   DefaultPrivacyLevel,
   TraceContextInjection,
   serializeConfiguration,
-  isSampleRate,
+  isAllowedTrackingOrigins,
 } from './domain/configuration'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'

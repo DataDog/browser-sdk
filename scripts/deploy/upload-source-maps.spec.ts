@@ -131,6 +131,14 @@ describe('upload-source-maps', () => {
           command:
             'mv packages/browser-debugger/bundle/datadog-debugger.js.map packages/browser-debugger/bundle/datadog-debugger-v6.js.map',
         },
+        {
+          command:
+            'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-v6.js',
+        },
+        {
+          command:
+            'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js.map packages/browser-rum-shopify/bundle/datadog-rum-shopify-v6.js.map',
+        },
       ])
 
       // upload the source maps
@@ -153,6 +161,11 @@ describe('upload-source-maps', () => {
         {
           command:
             'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
           env,
         },
       ])
@@ -178,6 +191,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
     ])
@@ -207,6 +225,11 @@ describe('upload-source-maps', () => {
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
     ])
 
     assert.deepEqual(getOrg2SourceMapCommands(), [
@@ -228,6 +251,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net/us1/v6 --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net/us1/v6 --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
     ])
@@ -276,6 +304,14 @@ describe('upload-source-maps', () => {
         command:
           'mv packages/browser-debugger/bundle/datadog-debugger.js.map packages/browser-debugger/bundle/datadog-debugger-staging.js.map',
       },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-staging.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js.map packages/browser-rum-shopify/bundle/datadog-rum-shopify-staging.js.map',
+      },
     ])
 
     // upload the source maps
@@ -320,6 +356,16 @@ describe('upload-source-maps', () => {
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_STAGING,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
     ])
 
     assert.deepEqual(getOrg2SourceMapCommands(), [
@@ -341,6 +387,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
     ])
@@ -389,6 +440,14 @@ describe('upload-source-maps', () => {
         command:
           'mv packages/browser-debugger/bundle/datadog-debugger.js.map packages/browser-debugger/bundle/datadog-debugger-canary.js.map',
       },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-canary.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js.map packages/browser-rum-shopify/bundle/datadog-rum-shopify-canary.js.map',
+      },
     ])
 
     // upload the source maps only to datadoghq.com
@@ -413,6 +472,11 @@ describe('upload-source-maps', () => {
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
     ])
 
     assert.deepEqual(getOrg2SourceMapCommands(), [
@@ -434,6 +498,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
     ])
@@ -483,6 +552,14 @@ describe('upload-source-maps', () => {
         command:
           'mv packages/browser-debugger/bundle/datadog-debugger.js.map packages/browser-debugger/bundle/datadog-debugger-v7-canary.js.map',
       },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-v7-canary.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js.map packages/browser-rum-shopify/bundle/datadog-rum-shopify-v7-canary.js.map',
+      },
     ])
 
     // upload the source maps only to datadoghq.com (same as plain 'canary')
@@ -507,6 +584,11 @@ describe('upload-source-maps', () => {
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
     ])
 
     assert.deepEqual(getOrg2SourceMapCommands(), [
@@ -528,6 +610,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-shopify/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-shopify/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
     ])

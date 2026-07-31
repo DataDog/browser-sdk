@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   logsConfigurationOverride: null,
   debugMode: false,
   datadogMode: false,
+  flagsSite: 'datadoghq.com',
 }
 
 let settings: Settings | undefined

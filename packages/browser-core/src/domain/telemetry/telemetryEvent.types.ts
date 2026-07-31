@@ -483,6 +483,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the beta partial view updates feature is enabled
        */
       beta_enable_view_updates?: boolean
+      /**
+       * Whether the beta track WebSockets feature is enabled
+       */
+      beta_track_web_sockets?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown

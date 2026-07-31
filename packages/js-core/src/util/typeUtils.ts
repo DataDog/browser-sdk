@@ -49,3 +49,18 @@ export type RecursivePartial<T> = {
 export function isIndexableObject(value: unknown): value is Record<any, unknown> {
   return getType(value) === 'object'
 }
+
+/**
+ * Checks whether `value` is a valid percentage: a number between 0 and 100 inclusive.
+ */
+export function isPercentage(value: unknown): value is number {
+  return typeof value === 'number' && value >= 0 && value <= 100
+}
+
+/**
+ * Checks whether `value` can be used to match against a string: a string, a RegExp, or a
+ * predicate function.
+ */
+export function isMatchOption(value: unknown): value is string | RegExp | ((value: string) => boolean) {
+  return typeof value === 'string' || value instanceof RegExp || typeof value === 'function'
+}

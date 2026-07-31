@@ -10,6 +10,7 @@ import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent
 import type { DurationVitalStart } from './vital/vitalCollection'
 import type { TrackedEventData } from './eventTracker'
 import type { ActionEventData } from './action/trackManualActions'
+import type { SessionExpiredEvent } from './session/session.types'
 
 export const enum LifeCycleEventType {
   // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
@@ -93,7 +94,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.WEBSOCKET_COMPLETED]: WebSocketCompleteEvent
-  [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
+  [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: SessionExpiredEvent
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
   [LifeCycleEventTypeAsConst.PREPARE_URGENT_FLUSH]: UrgentFlushReason
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
