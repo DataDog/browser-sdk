@@ -58,7 +58,7 @@ interface WebSocketConnection {
 }
 
 export interface WebSocketConnectionTracker {
-  flushOpenConnections: (reason: WebSocketTrackingEndReason) => void
+  flushOpenConnections: (reason: WebSocketTrackingEndReason, endClocks?: ClocksState) => void
   stop: () => void
 }
 
@@ -72,8 +72,8 @@ export function startWebSocketCollection(
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once with trackingEndReason "session_end"; later events on the same
   // WebSocket instance are ignored.
-  const sessionExpiredSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-    tracker.flushOpenConnections('session_end')
+  const sessionExpiredSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, ({ endClocks }) => {
+    tracker.flushOpenConnections('session_end', endClocks)
   })
 
   return {
@@ -205,11 +205,9 @@ export function trackWebSocket(
   })
 
   return {
-    flushOpenConnections: (reason) => {
-      const at = clocksNow()
-
+    flushOpenConnections: (reason, endClocks = clocksNow()) => {
       webSocketRegistry.forEach((webSocket) => {
-        completeConnection(webSocket, { at }, reason)
+        completeConnection(webSocket, { at: endClocks }, reason)
       })
 
       webSocketRegistry.clear()
