@@ -1,15 +1,18 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
-import {
-  nextjsPlugin,
-  startNextjsView,
-  onRumInit,
-  onRumStart,
-  onRouterTransitionStart,
-  resetNextjsPlugin,
-} from './nextjsPlugin'
+import { nextjsPlugin, startNextjsView, onRumInit, onRumStart, onRouterTransitionStart, resetNextjsPlugin } from './nextjsPlugin'
 
 const INIT_CONFIGURATION = {} as RumInitConfiguration
+
+// Replicates the `__NEXT_DATA__` script tag the Pages Router injects into the page
+function addNextDataScript() {
+  const script = document.createElement('script')
+  script.id = '__NEXT_DATA__'
+  document.body.appendChild(script)
+  registerCleanupTask(() => {
+    script.remove()
+  })
+}
 
 function createPublicApi() {
   const startViewSpy = jasmine.createSpy('startView')
@@ -38,6 +41,7 @@ describe('nextjsPlugin', () => {
         name: 'nextjs',
         onInit: jasmine.any(Function),
         onRumStart: jasmine.any(Function),
+        getConfigurationTelemetry: jasmine.any(Function),
       })
     )
   })
@@ -85,6 +89,26 @@ describe('nextjsPlugin', () => {
     startNextjsView('/other')
 
     expect(startViewSpy.calls.mostRecent().args[0]).toEqual({ name: '/other', url: undefined })
+  })
+
+  it('reports app-router when no __NEXT_DATA__ script is present', () => {
+    const { plugin } = initPlugin()
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, router_type: 'app-router' })
+  })
+
+  it('reports pages-router when a __NEXT_DATA__ script is present', () => {
+    addNextDataScript()
+
+    const { plugin } = initPlugin()
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, router_type: 'pages-router' })
+  })
+
+  it('does not return a router type before onInit is called', () => {
+    const plugin = nextjsPlugin()
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, router_type: undefined })
   })
 
   describe('lifecycle subscribers', () => {
