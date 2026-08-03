@@ -1,6 +1,13 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
-import { nextjsPlugin, startNextjsView, onRumInit, onRumStart, onRouterTransitionStart, resetNextjsPlugin } from './nextjsPlugin'
+import {
+  nextjsPlugin,
+  startNextjsView,
+  onRumInit,
+  onRumStart,
+  onRouterTransitionStart,
+  resetNextjsPlugin,
+} from './nextjsPlugin'
 
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
