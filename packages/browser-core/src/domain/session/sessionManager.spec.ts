@@ -113,6 +113,7 @@ describe('startSessionManager', () => {
     it('should call setSessionState to initialize the session', async () => {
       await startSessionManagerWithDefaults()
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(fakeStrategy.setSessionState).toHaveBeenCalled()
     })
 

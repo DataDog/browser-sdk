@@ -2,8 +2,8 @@ import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog
 import type { MatchOption, TaskQueue } from '@datadog/browser-core'
 import { elapsed, relativeToClocks, toServerDuration } from '@datadog/js-core/time'
 import { createTaskQueue, display, RequestType, ResourceType } from '@datadog/browser-core'
-import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
@@ -816,7 +816,7 @@ describe('resourceCollection', () => {
       })
 
       it('should limit the number of collected headers', () => {
-        spyOn(display, 'warn')
+        const displaySpy = spyOn(display, 'warn')
         const headerNames = Array.from({ length: 101 }, (_, i) => `x-header-${i}`)
         setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(headerNames) })
 
@@ -834,6 +834,9 @@ describe('resourceCollection', () => {
 
         const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
         expect(Object.keys(event.resource.response!.headers!).length).toBe(100)
+        expect(displaySpy).toHaveBeenCalledOnceWith(
+          'Maximum number of headers (100) has been reached. Further headers are dropped.'
+        )
       })
 
       it('should only count headers that pass filtering toward the limit', () => {
@@ -862,55 +865,6 @@ describe('resourceCollection', () => {
         const collectedHeaders = event.resource.response!.headers!
         expect(Object.keys(collectedHeaders).length).toBe(100)
         expect(collectedHeaders['authorization']).toBeUndefined()
-      })
-
-      it('should not emit telemetry when the max number of headers has not been reached', async () => {
-        spyOn(display, 'warn')
-        const telemetry: MockTelemetry = startMockTelemetry()
-        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-header-0', 'x-header-1']) })
-
-        notifyRequest({
-          request: {
-            type: RequestType.FETCH,
-            response: new Response('', { headers: { 'x-header-0': 'a', 'x-header-1': 'b' } }),
-          },
-        })
-
-        expect(await telemetry.getEvents()).not.toContain(
-          jasmine.objectContaining({ message: 'Maximum number of resource headers reached' })
-        )
-      })
-
-      it('should warn and emit telemetry when the max number of headers is reached', async () => {
-        const displaySpy = spyOn(display, 'warn')
-        const telemetry: MockTelemetry = startMockTelemetry()
-        const headerNames = Array.from({ length: 110 }, (_, i) => `x-header-${i}`)
-        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(headerNames) })
-
-        const headerEntries: Record<string, string> = {}
-        for (const name of headerNames) {
-          headerEntries[name] = 'value'
-        }
-        const response = new Response('', { headers: headerEntries })
-
-        notifyRequest({
-          request: {
-            type: RequestType.FETCH,
-            response,
-          },
-        })
-
-        expect(displaySpy).toHaveBeenCalledOnceWith(
-          'Maximum number of headers (100) has been reached. Further headers are dropped.'
-        )
-        expect(await telemetry.getEvents()).toContain(
-          jasmine.objectContaining({
-            message: 'Maximum number of resource headers reached',
-            collectedHeaderCount: 100,
-            // Account for automatically added content-type header
-            totalHeaderCount: Array.from(response.headers as unknown as ArrayLike<string>).length,
-          })
-        )
       })
     })
 

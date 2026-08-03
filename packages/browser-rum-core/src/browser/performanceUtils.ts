@@ -48,6 +48,7 @@ export function computeTimingsFromDeprecatedPerformanceTiming() {
   const timing = performance.timing
 
   for (const key in timing) {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     if (isNumber(timing[key as keyof PerformanceTiming])) {
       const numberKey = key as keyof TimingsFromDeprecatedPerformanceTiming
       const timingElement = timing[numberKey] as TimeStamp

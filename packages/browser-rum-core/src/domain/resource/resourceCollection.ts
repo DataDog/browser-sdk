@@ -1,5 +1,4 @@
 import {
-  addTelemetryDebug,
   createTaskQueue,
   display,
   generateUUID,
@@ -392,12 +391,9 @@ const MAX_HEADER_VALUE_LENGTH = 128
 function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {}
   let collectedHeaderCount = 0
-  let totalHeaderCount = 0
   let hasReachedMaxHeaderCount = false
 
   headers.forEach((value, name) => {
-    totalHeaderCount++
-
     if (collectedHeaderCount >= MAX_HEADER_COUNT) {
       if (!hasReachedMaxHeaderCount) {
         display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
@@ -428,25 +424,11 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
       display.warn(
         `Header "${lowerName}" value was truncated from ${capturedValue.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
       )
-      // monitor-until: 2026-07-23
-      addTelemetryDebug('Resource header value was truncated', {
-        header_name: lowerName,
-        original_length: capturedValue.length,
-        limit: MAX_HEADER_VALUE_LENGTH,
-      })
     }
 
     result[lowerName] = safeTruncate(capturedValue, MAX_HEADER_VALUE_LENGTH)
     collectedHeaderCount++
   })
-
-  if (hasReachedMaxHeaderCount) {
-    // monitor-until: 2026-07-23
-    addTelemetryDebug('Maximum number of resource headers reached', {
-      collectedHeaderCount,
-      totalHeaderCount,
-    })
-  }
 
   return collectedHeaderCount > 0 ? result : undefined
 }
