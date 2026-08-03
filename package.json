@@ -99,7 +99,7 @@
     "tsconfig-paths-webpack-plugin": "4.2.0",
     "tsdown": "0.22.14",
     "typedoc": "0.28.20",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "typescript-eslint": "8.65.0",
     "undici": "8.9.0",
     "webpack": "5.109.0",
