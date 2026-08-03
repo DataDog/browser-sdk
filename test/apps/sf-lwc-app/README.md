@@ -11,6 +11,9 @@ This app is Lightning-only.
 - A `Product Explorer` app page with three hardcoded editable products
 - `c:datadogInit` in the utility bar, backed by the `datadog_rum_salesforce` static resource
 
+For the canonical RUM integration setup, see
+`[packages/browser-rum-slim/src/salesforce/README.md](../../../packages/browser-rum-slim/src/salesforce/README.md)`.
+
 ## Authentication
 
 The Salesforce deploy flow uses the Salesforce CLI with a JWT keypair. There is no separate manual auth step: `yarn salesforce:deploy-apps` always (re-)authenticates the `sf-lwc-ci` alias before running, since the JWT private key file used for authentication is deleted right after login and can't be reused to refresh a cached session.
@@ -55,7 +58,7 @@ yarn salesforce:get-urls --app lwc
 
 The printed URL is a direct Lightning app URL. It requires an existing browser session for the Salesforce org.
 E2E tests don't use this script: they build their own authenticated URL via the JWT/REST flow in
-`test/e2e/lib/framework/buildSalesforceLwcUrl.ts`, and inject the RUM configuration on the page as
+`test/e2e/lib/framework/buildSalesforceUrl.ts`, and inject the RUM configuration on the page as
 `window.RUM_CONFIGURATION`.
 
 ## Run E2E Tests
