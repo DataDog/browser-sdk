@@ -63,11 +63,13 @@ import { initConsoleObservable } from './consoleObservable'
 
     it('should allow multiple callers', () => {
       const notifyOtherCaller = jasmine.createSpy('notifyOtherCaller')
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       const instrumentedConsoleApi = console[api]
       const otherConsoleSubscription = initConsoleObservable([api]).subscribe(notifyOtherCaller)
 
       console[api]('foo', 'bar')
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(instrumentedConsoleApi).toEqual(console[api])
       expect(notifyLog).toHaveBeenCalledTimes(1)
       expect(notifyOtherCaller).toHaveBeenCalledTimes(1)

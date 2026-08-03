@@ -57,6 +57,7 @@ describe('requestIdleCallbackShim', () => {
 })
 
 function removeGlobalRequestIdleCallback() {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const original = window.requestIdleCallback
   ;(window as any).requestIdleCallback = undefined
   registerCleanupTask(() => {

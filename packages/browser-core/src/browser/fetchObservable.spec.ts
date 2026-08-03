@@ -17,6 +17,7 @@ describe('fetch proxy', () => {
 
   beforeEach(() => {
     mockFetchManager = mockFetch()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     originalMockFetch = window.fetch
 
     requests = []
@@ -25,6 +26,7 @@ describe('fetch proxy', () => {
         requests.push(context)
       }
     })
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     fetch = window.fetch as MockFetch
 
     registerCleanupTask(() => {
@@ -258,6 +260,7 @@ describe('fetch proxy', () => {
     it('should restore original window.fetch', () => {
       requestsTrackingSubscription.unsubscribe()
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(window.fetch).toBe(originalMockFetch)
     })
   })
@@ -278,6 +281,7 @@ describe('fetch proxy with ResponseBodyAction', () => {
         requests.push(context)
       }
     })
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     fetch = window.fetch as MockFetch
   }
 
@@ -341,6 +345,7 @@ describe('fetch proxy with ResponseBodyAction', () => {
       requestsTrackingSubscription.unsubscribe()
     })
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     fetch = window.fetch as MockFetch
     fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
