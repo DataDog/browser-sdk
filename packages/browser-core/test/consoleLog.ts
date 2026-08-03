@@ -11,6 +11,7 @@ afterEach(() => {
 export function ignoreConsoleLogs(level: 'error' | 'warn' | 'log', match: string) {
   ignoreList.push({ level, match })
 
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   if (!jasmine.isSpy(console[level])) {
     const originalLogFunction = console[level].bind(console)
 

@@ -3,6 +3,7 @@ import { createWindowOpenObservable } from './windowOpenObservable'
 
 describe('windowOpenObservable', () => {
   it('should notify observer on `window.open` call', () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     const original = window.open
     window.open = jasmine.createSpy()
     const spy = jasmine.createSpy()

@@ -44,6 +44,7 @@ describe('startBufferingData', () => {
   it('collects fetch requests', async () => {
     mockFetch()
     const { observable, stop } = startBufferingData()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     const fetch = window.fetch as MockFetch
     const collected: BufferedData[] = []
     const bufferedDataCollectedSpy = jasmine.createSpy()

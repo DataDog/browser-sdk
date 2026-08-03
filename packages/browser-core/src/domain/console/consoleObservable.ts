@@ -51,6 +51,7 @@ export function resetConsoleObservable() {
 
 function createConsoleObservable(api: ConsoleApiName) {
   return new Observable<ConsoleLog>((observable) => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     const originalConsoleApi = globalConsole[api]
 
     globalConsole[api] = (...params: unknown[]) => {
