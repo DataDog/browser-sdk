@@ -120,6 +120,9 @@ export interface Display {
 }
 
 // @public
+export const DOCS_ORIGIN = "https://docs.datadoghq.com";
+
+// @public
 export function getDebugMode(): boolean;
 
 // @public
@@ -150,6 +153,12 @@ export const globalObject: GlobalObject;
 export function isIndexableObject(value: unknown): value is Record<any, unknown>;
 
 // @public
+export function isMatchOption(value: unknown): value is string | RegExp | ((value: string) => boolean);
+
+// @public
+export function isPercentage(value: unknown): value is number;
+
+// @public
 export function isValidUrl(url: string): boolean;
 
 // @public
@@ -157,6 +166,9 @@ export const isWorkerEnvironment: boolean;
 
 // @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
+
+// @public
+export const MORE_DETAILS = "More details:";
 
 // @public
 interface Navigator_2 {

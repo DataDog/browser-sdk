@@ -20,6 +20,36 @@
 
 ---
 
+## v7.7.0
+
+**Public Changes:**
+
+- ✨ Add a version-agnostic React Router entry point ([#4918](https://github.com/DataDog/browser-sdk/pull/4918))
+- ✨ Shopify Integration - implement dedicated bundle ([#4878](https://github.com/DataDog/browser-sdk/pull/4878))
+- ✨ Add a version-agnostic Vue Router entry point ([#4910](https://github.com/DataDog/browser-sdk/pull/4910))
+- ✨ Enable WebSocket resource tracking behind a beta option ([#4882](https://github.com/DataDog/browser-sdk/pull/4882))
+- 📝 [Salesforce Docs] Align with Tile docs ([#4904](https://github.com/DataDog/browser-sdk/pull/4904))
+
+**Internal Changes:**
+
+- ♻️ [js-core] Schema-driven configuration validation across browser-core, browser-logs, and browser-rum-core ([#4798](https://github.com/DataDog/browser-sdk/pull/4798))
+- 🔧 Make Salesforce test apps use rum-salesforce bundle. ([#4893](https://github.com/DataDog/browser-sdk/pull/4893))
+- 🔊 Add SDK_NAME to telemetry ([#4888](https://github.com/DataDog/browser-sdk/pull/4888))
+
+## v7.6.1
+
+**Public Changes:**
+
+- ✨ [RUM-17395] Add debug_ids to profiler wall-time trace for sourcemap unminification ([#4897](https://github.com/DataDog/browser-sdk/pull/4897))
+- 🐛 [rum-nuxt] Fix Nuxt post-hydration error handling ([#4899](https://github.com/DataDog/browser-sdk/pull/4899))
+- 🐛 Avoid BigInt exponentiation in sampling ([#4883](https://github.com/DataDog/browser-sdk/pull/4883))
+- 📝 Add salesforce readme ([#4900](https://github.com/DataDog/browser-sdk/pull/4900))
+
+**Internal Changes:**
+
+- 👷 sign chrome-bump commits with commit-headless ([#4838](https://github.com/DataDog/browser-sdk/pull/4838))
+- ♻️ Add explicit delete method to CookieAccess ([#4887](https://github.com/DataDog/browser-sdk/pull/4887))
+
 ## v7.6.0
 
 **Public Changes:**

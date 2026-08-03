@@ -1,12 +1,6 @@
-import { getType } from '@datadog/js-core/util'
 import { display } from './display'
 
 export type MatchOption = string | RegExp | ((value: string) => boolean)
-
-export function isMatchOption(item: unknown): item is MatchOption {
-  const itemType = getType(item)
-  return itemType === 'string' || itemType === 'function' || item instanceof RegExp
-}
 
 /**
  * Returns true if value can be matched by at least one of the provided MatchOptions.

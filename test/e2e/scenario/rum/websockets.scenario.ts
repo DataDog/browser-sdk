@@ -19,8 +19,10 @@ type RumResourceEventWithWebSocket = RumResourceEvent & {
   }
 }
 
+const NANOSECONDS_PER_MILLISECOND = 1e6
+
 test.describe('rum websockets', () => {
-  createTest('collect websocket-connecting vital and websocket resource when the connection closes')
+  createTest('collect websocket vitals and websocket resource when the connection closes')
     .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -35,12 +37,17 @@ test.describe('rum websockets', () => {
       const connectingVital = intakeRegistry.rumVitalEvents.find((e) => e.vital.name === 'websocket-connecting')
       expect(connectingVital).toBeDefined()
 
+      const closedVital = intakeRegistry.rumVitalEvents.find((e) => e.vital.name === 'websocket-closed')
+      expect(closedVital).toBeDefined()
+
       const rumEvent = getLastRumResourceEventWithWebSocket(intakeRegistry.rumResourceEvents)
       expect(rumEvent).toBeDefined()
 
       const { websocket } = rumEvent!.resource
 
-      expect(websocket.connection_id).toBe(connectingVital!.vital.id)
+      expect(websocket.connection_id).toBe(connectingVital!.context!.connection_id)
+      expect(closedVital!.context!.connection_id).toBe(websocket.connection_id)
+      expect(closedVital!.date).toBe(websocket.end_time)
       expect(websocket.tracking_end_reason).toBe('close_event')
       expect(websocket.messages_out.count).toBe(1)
       expect(websocket.messages_out.size).toBe(DEFAULT_WS_OUT_MESSAGE.length)
@@ -67,7 +74,7 @@ test.describe('rum websockets', () => {
       expect(rumEvent!.resource.websocket.tracking_end_reason).toBe('close_event')
     })
 
-  createTest('websocket resource is reported with session_end when the session expires')
+  createTest('collects the websocket-closed vital when the session expires')
     .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page, browserContext }) => {
@@ -82,6 +89,21 @@ test.describe('rum websockets', () => {
         (e) => e.resource.websocket.tracking_end_reason === 'session_end'
       )
       expect(wsWithSessionEnd).toBeDefined()
+
+      const closedVital = intakeRegistry.rumVitalEvents.find((e) => e.vital.name === 'websocket-closed')
+      expect(closedVital).toBeDefined()
+      expect(closedVital!.context!.connection_id).toBe(wsWithSessionEnd!.resource.websocket.connection_id)
+      expect(closedVital!.date).toBe(wsWithSessionEnd!.resource.websocket.end_time)
+      expect(closedVital!.session.id).toBe(wsWithSessionEnd!.session.id)
+      expect(closedVital!.view.id).toBe(wsWithSessionEnd!.resource.websocket.end_view_id)
+      expect(closedVital!.view.url).toBe(wsWithSessionEnd!.view.url)
+
+      const associatedView = intakeRegistry.rumViewEvents.find((event) => event.view.id === closedVital!.view.id)
+      expect(associatedView).toBeDefined()
+
+      const viewEndTime = associatedView!.date + associatedView!.view.time_spent / NANOSECONDS_PER_MILLISECOND
+      expect(closedVital!.date).toBeLessThanOrEqual(viewEndTime)
+      expect(wsWithSessionEnd!.resource.websocket.end_time).toBeLessThanOrEqual(viewEndTime)
     })
 
   createTest(
@@ -165,6 +187,9 @@ test.describe('rum websockets', () => {
 
       const connectingVital = intakeRegistry.rumVitalEvents.find((e) => e.vital.name === 'websocket-connecting')
       expect(connectingVital).toBeUndefined()
+
+      const closedVital = intakeRegistry.rumVitalEvents.find((e) => e.vital.name === 'websocket-closed')
+      expect(closedVital).toBeUndefined()
 
       const wsResources = getWebSocketResources(intakeRegistry.rumResourceEvents)
       expect(wsResources).toHaveLength(0)

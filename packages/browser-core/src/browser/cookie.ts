@@ -6,6 +6,7 @@ import {
   findCommaSeparatedValues,
   generateUUID,
 } from '../tools/utils/stringUtils'
+import type { Configuration } from '../domain/configuration'
 
 export interface CookieOptions {
   secure?: boolean
@@ -115,4 +116,22 @@ function getCookieDefaultHostName(hostname: string, referrer: string) {
 
 export function resetGetCurrentSite() {
   getCurrentSiteCache = undefined
+}
+
+export function buildCookieOptions(configuration: Configuration): CookieOptions | undefined {
+  const cookieOptions: CookieOptions = {}
+
+  cookieOptions.secure = configuration.useSecureSessionCookie || configuration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.crossSite = configuration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.partitioned = configuration.usePartitionedCrossSiteSessionCookie
+
+  if (configuration.trackSessionAcrossSubdomains) {
+    const currentSite = getCurrentSite()
+    if (!currentSite) {
+      return
+    }
+    cookieOptions.domain = currentSite
+  }
+
+  return cookieOptions
 }

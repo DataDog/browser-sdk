@@ -70,6 +70,10 @@ describe('profiler', () => {
 
   let lifeCycle = new LifeCycle()
 
+  function expireSession() {
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks: clocksNow() })
+  }
+
   function setupProfiler(
     currentView?: ViewHistoryEntry,
     profilerConfigOverrides?: Partial<RUMProfilerConfiguration>,
@@ -766,7 +770,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Notify that the session has expired (sync - state changes immediately)
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession()
 
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
@@ -789,7 +793,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Notify that the session has expired (sync - state changes immediately)
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession()
 
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
@@ -818,7 +822,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Notify that the session has expired (sync - state changes immediately)
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession()
 
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
@@ -860,7 +864,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // First cycle: expire and renew (sync - state changes immediately)
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession()
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
@@ -872,7 +876,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Second cycle: expire and renew again (sync)
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession()
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
@@ -932,7 +936,7 @@ describe('profiler', () => {
     // Session expires while profiler is running
     // With sync state changes, the profiler state becomes 'stopped' immediately
     // while data collection continues in the background (fire-and-forget)
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession()
 
     // State is immediately 'stopped' (sync), even though data collection is async
     expect(profiler.isStopped()).toBe(true)
@@ -965,7 +969,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Session expires (sync - state changes immediately)
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession()
 
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
@@ -1006,7 +1010,7 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isRunning())
 
     // Session expires
-    testLifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    testLifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks: clocksNow() })
     expect(profiler.isStopped()).toBeTrue()
 
     // Session renews with HIGH_HASH_UUID, which is not sampled at profilingSampleRate: 50
@@ -1164,7 +1168,7 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isPaused())
 
     // Session expires while profiler is paused (sync - state changes immediately)
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expireSession()
 
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
@@ -1303,7 +1307,7 @@ describe('profiler', () => {
       profiler.start()
       await waitForBoolean(() => profiler.isRunning())
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession()
       expect(profiler.isStopped()).toBe(true)
 
       resolveQuota({ decision: 'quota_ko', reason: 'quota_exceeded' })
@@ -1365,7 +1369,7 @@ describe('profiler', () => {
       profiler.start()
       await waitForBoolean(() => profiler.isRunning())
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expireSession()
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
       await waitForBoolean(() => profiler.isRunning())
 

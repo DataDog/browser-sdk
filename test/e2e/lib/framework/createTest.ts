@@ -77,7 +77,7 @@ const WEBKIT_PLAYWRIGHT_WORKAROUND = `
 
 const salesforceLwcBundlePath = resolve(
   __dirname,
-  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
+  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_salesforce.js'
 )
 
 export function createTest(title: string) {
@@ -483,7 +483,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
         origins: [],
       })
       // Serve the local bundle from the static resource
-      await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
+      await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/, async (route) => {
         await route.fulfill({
           body: await readFile(salesforceLwcBundlePath),
           contentType: 'application/javascript',

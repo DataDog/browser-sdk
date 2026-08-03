@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { parseArgs } from 'node:util'
@@ -9,21 +9,21 @@ import { command } from './lib/command.ts'
 
 const repositoryRoot = resolve(import.meta.dirname, '..')
 const TARGET_ORG = 'sf-lwc-ci'
+const SALESFORCE_SOURCE_BUNDLE = resolve(repositoryRoot, 'packages/browser-rum-slim/bundle/datadog-rum-salesforce.js')
+const SALESFORCE_STATIC_RESOURCE = 'force-app/main/default/staticresources/datadog_rum_salesforce.js'
 
 type AppKey = 'lwc' | 'experience-cloud'
 
 const APP_KEYS: AppKey[] = ['lwc', 'experience-cloud']
 
-const APPS: Record<AppKey, { dir: string; url: string; buildBundle: boolean; siteName?: string }> = {
+const APPS: Record<AppKey, { dir: string; url: string; siteName?: string }> = {
   lwc: {
     dir: resolve(repositoryRoot, 'test/apps/sf-lwc-app'),
     url: new URL('/lightning/app/c__SF_LWC_App/page/home', getSfLwcInstanceUrl()).href,
-    buildBundle: true,
   },
   'experience-cloud': {
     dir: resolve(repositoryRoot, 'test/apps/sf-experience-app'),
     url: new URL('sfexperiencecloud/', getSalesforceSiteUrl()).href,
-    buildBundle: false,
     siteName: 'SF Experience Cloud App',
   },
 }
@@ -109,14 +109,13 @@ function authenticate(targetOrg: string, cwd: string) {
 }
 
 function deployApp(appKeys: AppKey[]) {
+  printLog('Building RUM Salesforce bundle...')
+  command`yarn workspace @datadog/browser-rum-slim build:bundle`.withLogs().run()
+
   for (const appKey of appKeys) {
-    const { dir, buildBundle, siteName } = APPS[appKey]
+    const { dir, siteName } = APPS[appKey]
 
-    if (buildBundle) {
-      printLog('Building RUM slim bundle...')
-      command`yarn workspace @datadog/browser-rum-slim build:bundle`.withLogs().run()
-    }
-
+    copySalesforceBundle(dir)
     authenticate(TARGET_ORG, dir)
     rmSync(resolve(dir, '.sf'), { recursive: true, force: true })
 
@@ -138,6 +137,12 @@ function deployApp(appKeys: AppKey[]) {
       printLog(`Salesforce site "${siteName}" published.`)
     }
   }
+}
+
+function copySalesforceBundle(appDirectory: string) {
+  const targetBundle = resolve(appDirectory, SALESFORCE_STATIC_RESOURCE)
+  printLog(`Refreshing static resource at ${targetBundle}...`)
+  copyFileSync(SALESFORCE_SOURCE_BUNDLE, targetBundle)
 }
 
 function printUrl(appKeys: AppKey[]): void {
