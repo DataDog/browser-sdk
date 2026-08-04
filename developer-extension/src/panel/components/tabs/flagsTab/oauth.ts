@@ -10,6 +10,8 @@ import { mockable } from '../../../../../../packages/browser-core/src/tools/mock
 const CLIENT_ID = '13c94d15-067d-4263-a309-be4811141419'
 const SCOPES = ['feature_flag_config_read', 'feature_flag_environment_config_read']
 const TOKENS_STORAGE_KEY = 'flagsOAuthTokens'
+// Refresh a bit before the token actually expires to avoid racing the clock on a slow request.
+const EXPIRY_SKEW_MS = 60_000
 
 export interface OAuthTokens {
   accessToken: string
@@ -90,24 +92,43 @@ async function generatePkce(): Promise<{ verifier: string; challenge: string }> 
   return { verifier, challenge: base64UrlEncode(digest) }
 }
 
-function toTokens(raw: RawTokenResponse): OAuthTokens {
+// `fallbackRefreshToken` carries the previous refresh token forward: refresh responses often omit
+// `refresh_token` when the server doesn't rotate it, and dropping it would force a full re-login on
+// the next expiry.
+function toTokens(raw: RawTokenResponse, fallbackRefreshToken?: string): OAuthTokens {
   return {
     accessToken: raw.access_token,
-    refreshToken: raw.refresh_token,
+    refreshToken: raw.refresh_token ?? fallbackRefreshToken,
     expiresAt: Date.now() + (raw.expires_in ?? 3600) * 1000,
   }
 }
 
-async function requestToken(host: string, body: URLSearchParams): Promise<OAuthTokens> {
+// Thrown by requestToken on a non-ok response. `invalidGrant` marks the RFC 6749 `invalid_grant`
+// case — the refresh token itself is dead (expired/revoked/reused) — as opposed to a transient
+// failure (5xx, rate limit) that shouldn't be treated the same way.
+class TokenRequestError extends Error {
+  constructor(
+    message: string,
+    readonly invalidGrant: boolean
+  ) {
+    super(message)
+  }
+}
+
+async function requestToken(host: string, body: URLSearchParams, fallbackRefreshToken?: string): Promise<OAuthTokens> {
   const response = await fetch(`https://${host}/oauth2/v1/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
   })
   if (!response.ok) {
-    throw new Error(`Token request failed: ${response.status} ${response.statusText}`)
+    const errorBody = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new TokenRequestError(
+      `Token request failed: ${response.status} ${response.statusText}`,
+      errorBody?.error === 'invalid_grant'
+    )
   }
-  return toTokens((await response.json()) as RawTokenResponse)
+  return toTokens((await response.json()) as RawTokenResponse, fallbackRefreshToken)
 }
 
 /**
@@ -170,6 +191,18 @@ export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
   )
 }
 
+function refreshTokens(site: string, refreshToken: string): Promise<OAuthTokens> {
+  return requestToken(
+    getFlagsApiHost(site),
+    new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+      client_id: CLIENT_ID,
+    }),
+    refreshToken
+  )
+}
+
 export async function loadStoredTokens(): Promise<OAuthTokens | null> {
   const result = await chrome.storage.session.get(TOKENS_STORAGE_KEY)
   return (result[TOKENS_STORAGE_KEY] as OAuthTokens | undefined) ?? null
@@ -189,4 +222,58 @@ export async function clearStoredTokens(): Promise<void> {
  */
 export function isTokenUsable(tokens: OAuthTokens | null): boolean {
   return !!tokens && (tokens.expiresAt > Date.now() || !!tokens.refreshToken)
+}
+
+// Shared in-flight refresh. Each catalog request triggers a getValidAccessToken call, so several can
+// run at once; the refresh token is single-use (the server rotates it), so overlapping refreshes
+// must share one request. Otherwise the loser would replay a spent token, get invalid_grant, and
+// wipe the tokens the winner just stored — disconnecting the user mid-session.
+let pendingRefresh: Promise<OAuthTokens> | null = null
+
+/**
+ * Returns a currently-valid access token, transparently refreshing if it has expired. Returns
+ * null (and clears any stored tokens) when there is no usable token — the caller should then
+ * prompt the user to reconnect.
+ */
+export async function getValidAccessToken(site: string): Promise<string | null> {
+  const tokens = await loadStoredTokens()
+  if (!tokens) {
+    return null
+  }
+  // Refresh early (skew) only when we can actually refresh. Without a refresh token, applying the
+  // skew would discard the last 60s of a still-valid token and force an unnecessary reconnect.
+  const skew = tokens.refreshToken ? EXPIRY_SKEW_MS : 0
+  if (Date.now() < tokens.expiresAt - skew) {
+    return tokens.accessToken
+  }
+  if (tokens.refreshToken) {
+    try {
+      // Coalesce concurrent refreshes into a single request (see pendingRefresh). Capture the shared
+      // promise in a local so the `finally` clearing pendingRefresh can't race the await below.
+      const refresh = (pendingRefresh ??= refreshTokens(site, tokens.refreshToken)
+        .then(async (refreshed) => {
+          await storeTokens(refreshed)
+          return refreshed
+        })
+        .finally(() => {
+          pendingRefresh = null
+        }))
+      return (await refresh).accessToken
+    } catch (err) {
+      // A dead refresh token (invalid_grant) means the session is over — drop it and reconnect.
+      if (err instanceof TokenRequestError && err.invalidGrant) {
+        await clearStoredTokens()
+        return null
+      }
+      // Transient failure (network blip, 5xx). If we were only refreshing early — still inside the
+      // skew window, so the current token hasn't actually expired — keep using it rather than
+      // failing the caller; the refresh will be retried on the next call.
+      if (Date.now() < tokens.expiresAt) {
+        return tokens.accessToken
+      }
+      throw err
+    }
+  }
+  await clearStoredTokens()
+  return null
 }
