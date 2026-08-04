@@ -1,4 +1,4 @@
-import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { parseArgs } from 'node:util'
@@ -9,12 +9,10 @@ import { command } from './lib/command.ts'
 
 const repositoryRoot = resolve(import.meta.dirname, '..')
 const TARGET_ORG = 'sf-lwc-ci'
-const SALESFORCE_SOURCE_BUNDLE = resolve(repositoryRoot, 'packages/browser-rum-slim/bundle/datadog-rum-salesforce.js')
-const SALESFORCE_STATIC_RESOURCE = 'force-app/main/default/staticresources/datadog_rum_salesforce.js'
 
-type AppKey = 'lwc' | 'experience-cloud'
+type AppKey = 'lwc' | 'experience-cloud' | 'experience-cloud-headmarkup'
 
-const APP_KEYS: AppKey[] = ['lwc', 'experience-cloud']
+const APP_KEYS: AppKey[] = ['lwc', 'experience-cloud', 'experience-cloud-headmarkup']
 
 const APPS: Record<AppKey, { dir: string; url: string; siteName?: string }> = {
   lwc: {
@@ -26,6 +24,19 @@ const APPS: Record<AppKey, { dir: string; url: string; siteName?: string }> = {
     url: new URL('sfexperiencecloud/', getSalesforceSiteUrl()).href,
     siteName: 'SF Experience Cloud App',
   },
+  'experience-cloud-headmarkup': {
+    dir: resolve(repositoryRoot, 'test/apps/sf-experience-headmarkup-app'),
+    url: new URL('sfexperienceheadmarkup/', getSalesforceSiteUrl()).href,
+    siteName: 'SF Experience Cloud Head Markup App',
+  },
+}
+
+// Name of the corresponding app in scripts/build/build-test-apps.ts, used to (re)build the app
+// (and refresh its RUM Salesforce bundle static resource) before deploying it.
+const BUILD_APP_NAME: Record<AppKey, string> = {
+  lwc: 'sf-lwc-app',
+  'experience-cloud': 'sf-experience-app',
+  'experience-cloud-headmarkup': 'sf-experience-headmarkup-app',
 }
 
 const SUPPORTED_COMMANDS = ['deploy-apps', 'get-urls']
@@ -112,10 +123,15 @@ function deployApp(appKeys: AppKey[]) {
   printLog('Building RUM Salesforce bundle...')
   command`yarn workspace @datadog/browser-rum-slim build:bundle`.withLogs().run()
 
+  printLog('Building Salesforce apps...')
+  command`yarn build:apps ${appKeys.flatMap((appKey) => ['--app', BUILD_APP_NAME[appKey]])}`
+    .withCurrentWorkingDirectory(repositoryRoot)
+    .withLogs()
+    .run()
+
   for (const appKey of appKeys) {
     const { dir, siteName } = APPS[appKey]
 
-    copySalesforceBundle(dir)
     authenticate(TARGET_ORG, dir)
     rmSync(resolve(dir, '.sf'), { recursive: true, force: true })
 
@@ -137,12 +153,6 @@ function deployApp(appKeys: AppKey[]) {
       printLog(`Salesforce site "${siteName}" published.`)
     }
   }
-}
-
-function copySalesforceBundle(appDirectory: string) {
-  const targetBundle = resolve(appDirectory, SALESFORCE_STATIC_RESOURCE)
-  printLog(`Refreshing static resource at ${targetBundle}...`)
-  copyFileSync(SALESFORCE_SOURCE_BUNDLE, targetBundle)
 }
 
 function printUrl(appKeys: AppKey[]): void {

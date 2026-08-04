@@ -63,6 +63,11 @@ const APPS: AppConfig[] = [
   // Salesforce apps
   { name: 'sf-lwc-app', builderFn: buildSalesforceApp },
   { name: 'sf-experience-app', builderFn: buildSalesforceApp },
+  {
+    name: 'sf-experience-headmarkup-app',
+    builderFn: buildExperienceHeadMarkupApp,
+    deps: ['sf-experience-app'],
+  },
 ]
 
 runMain(async () => {
@@ -172,6 +177,37 @@ function buildSalesforceApp(appName: string) {
 
   printLog(`Building app at test/apps/${appName}...`)
   fs.copyFileSync(sourceBundle, targetBundle)
+}
+
+async function buildExperienceHeadMarkupApp() {
+  await buildGeneratedSalesforceApp('sf-experience-app', 'sf-experience-headmarkup-app', async (appPath) => {
+    await modifyPackageJson(appPath, (packageJson) => {
+      packageJson.name = 'sf-experience-headmarkup-app'
+    })
+
+    // This app exercises the Experience Cloud head markup init path, so it doesn't need the
+    // static-resource-loaded init LWC used by sf-experience-app. Best-effort removal: if it's
+    // not there, there's nothing to do.
+    fs.rmSync(path.join(appPath, 'force-app/main/default/lwc/experienceDatadogInit'), {
+      recursive: true,
+      force: true,
+    })
+  })
+}
+
+async function buildGeneratedSalesforceApp(
+  baseAppName: string,
+  appName: string,
+  modifyApp: (appPath: string) => Promise<void>
+) {
+  const baseAppPath = `test/apps/${baseAppName}`
+  const appPath = `test/apps/${appName}`
+
+  fs.rmSync(appPath, { recursive: true, force: true })
+  fs.cpSync(baseAppPath, appPath, { recursive: true })
+
+  await modifyApp(appPath)
+  buildSalesforceApp(appName)
 }
 
 async function buildReactRouterV6App() {
