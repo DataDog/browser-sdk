@@ -15,7 +15,6 @@ let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
 let lastNavigationUrl: string | undefined
 let routerType: NextjsRouterType | undefined
-let nextjsVersion: string | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
@@ -27,7 +26,6 @@ export function nextjsPlugin(): NextjsPlugin {
       globalPublicApi = publicApi
       initConfiguration.trackViewsManually = true
       routerType = mockable(detectNextjsRouterType)()
-      nextjsVersion = (globalObject as NextjsGlobalObject).next?.version
 
       for (const subscriber of onRumInitSubscribers) {
         subscriber(publicApi)
@@ -42,6 +40,7 @@ export function nextjsPlugin(): NextjsPlugin {
       }
     },
     getConfigurationTelemetry() {
+      const nextjsVersion = (globalObject as NextjsGlobalObject).next?.version
       const integrations = (nextjsVersion ? [toMajorVersionIntegration('nextjs', nextjsVersion)] : []).concat(
         routerType ? [routerType] : []
       )
@@ -93,5 +92,4 @@ export function resetNextjsPlugin() {
   onRumStartSubscribers.length = 0
   lastNavigationUrl = undefined
   routerType = undefined
-  nextjsVersion = undefined
 }

@@ -119,10 +119,10 @@ describe('nextjsPlugin', () => {
     })
   })
 
-  it('does not return integrations before onInit is called', () => {
+  it('does not return the router integration before onInit is called', () => {
     const plugin = nextjsPlugin()
 
-    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, integrations: undefined })
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, integrations: ['nextjs-v16'] })
   })
 
   describe('lifecycle subscribers', () => {
