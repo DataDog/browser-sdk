@@ -94,3 +94,12 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
 export function toMajorVersionIntegration(name: string, version: string): string {
   return `${name}-v${version.split('.')[0]}`
 }
+
+/**
+ * Filters out falsy values and returns `undefined` if no integration is left, so plugins report a
+ * consistent "nothing to report" telemetry shape instead of an empty array.
+ */
+export function toIntegrations(...maybeIntegrations: Array<string | false | undefined>): string[] | undefined {
+  const integrations = maybeIntegrations.filter((integration): integration is string => !!integration)
+  return integrations.length > 0 ? integrations : undefined
+}

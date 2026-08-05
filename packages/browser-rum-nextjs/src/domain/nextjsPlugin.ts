@@ -1,5 +1,5 @@
 import { buildUrl } from '@datadog/js-core/util'
-import { globalObject, mockable, toMajorVersionIntegration } from '@datadog/browser-core'
+import { globalObject, mockable, toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart' | 'getConfigurationTelemetry'>
@@ -41,10 +41,10 @@ export function nextjsPlugin(): NextjsPlugin {
     },
     getConfigurationTelemetry() {
       const nextjsVersion = (globalObject as NextjsGlobalObject).next?.version
-      const integrations = (nextjsVersion ? [toMajorVersionIntegration('nextjs', nextjsVersion)] : []).concat(
-        routerType ? [routerType] : []
-      )
-      return { router: true, integrations: integrations.length > 0 ? integrations : undefined }
+      return {
+        router: true,
+        integrations: toIntegrations(nextjsVersion && toMajorVersionIntegration('nextjs', nextjsVersion), routerType),
+      }
     },
   } satisfies RumPlugin
 }

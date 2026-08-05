@@ -4,6 +4,7 @@ import {
   findCommaSeparatedValues,
   findAllCommaSeparatedValues,
   toMajorVersionIntegration,
+  toIntegrations,
 } from './stringUtils'
 
 describe('stringUtils', () => {
@@ -106,6 +107,19 @@ describe('stringUtils', () => {
 
     it('supports a version with no minor/patch segment', () => {
       expect(toMajorVersionIntegration('angular', '17')).toBe('angular-v17')
+    })
+  })
+
+  describe('toIntegrations', () => {
+    it('filters out falsy values', () => {
+      expect(toIntegrations('react-v18', false, undefined, 'react-router-v7')).toEqual([
+        'react-v18',
+        'react-router-v7',
+      ])
+    })
+
+    it('returns undefined when no integration is left', () => {
+      expect(toIntegrations(false, undefined)).toBeUndefined()
     })
   })
 })
