@@ -1,3 +1,4 @@
+import { version as reactVersion } from 'react'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { onRumInit, onRumStart, reactPlugin, resetReactPlugin, setReactRouterType } from './reactPlugin'
 
@@ -72,13 +73,19 @@ describe('reactPlugin', () => {
 
     setReactRouterType('react-router-v7')
 
-    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, router_type: 'react-router-v7' })
+    expect(plugin.getConfigurationTelemetry()).toEqual({
+      router: true,
+      integrations: [`react-v${reactVersion.split('.')[0]}`, 'react-router-v7'],
+    })
   })
 
-  it('does not return a router type when router tracking is disabled', () => {
+  it('does not return integrations when router tracking is disabled', () => {
     setReactRouterType('react-router-v7')
 
-    expect(reactPlugin().getConfigurationTelemetry()).toEqual({ router: false, router_type: undefined })
+    expect(reactPlugin().getConfigurationTelemetry()).toEqual({
+      router: false,
+      integrations: [`react-v${reactVersion.split('.')[0]}`],
+    })
   })
 
   it('calls onRumStart subscribers during onRumStart', () => {

@@ -1,3 +1,5 @@
+import { version as reactVersion } from 'react'
+import { toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 type ReactRouterType = 'react-router-v6' | 'react-router-v7' | 'react-router-v8' | 'tanstack-router-v1'
@@ -77,7 +79,11 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}): React
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router, router_type: configuration.router ? routerType : undefined }
+      const reactIntegration = toMajorVersionIntegration('react', reactVersion)
+      return {
+        router: !!configuration.router,
+        integrations: configuration.router && routerType ? [reactIntegration].concat(routerType) : [reactIntegration],
+      }
     },
   } satisfies RumPlugin
 }

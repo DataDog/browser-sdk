@@ -7,7 +7,7 @@ const nextjsVariants = [
   {
     name: 'nextjs app router',
     routerType: 'app' as const,
-    telemetryRouterType: 'app-router',
+    integrations: ['nextjs-v16', 'app-router'],
     viewPrefix: '',
     homeUrlPattern: /\/(\?|$)/,
     clientErrorMessage: 'Client error from error-test',
@@ -15,7 +15,7 @@ const nextjsVariants = [
   {
     name: 'nextjs pages router',
     routerType: 'pages' as const,
-    telemetryRouterType: 'pages-router',
+    integrations: ['nextjs-v16', 'pages-router'],
     viewPrefix: '/pages-router',
     homeUrlPattern: /\/pages-router(\?|$)/,
     clientErrorMessage: 'Pages Router error from NextjsErrorBoundary',
@@ -23,11 +23,11 @@ const nextjsVariants = [
 ]
 
 runBasePluginRouterTests(
-  nextjsVariants.map(({ name, routerType, telemetryRouterType, viewPrefix, homeUrlPattern }) => ({
+  nextjsVariants.map(({ name, routerType, integrations, viewPrefix, homeUrlPattern }) => ({
     name,
     loadApp: (b: ReturnType<typeof createTest>) => b.withNextjsApp(routerType),
     viewPrefix,
-    plugin: { name: 'nextjs', routerType: telemetryRouterType },
+    plugin: { name: 'nextjs', integrations },
     router: {
       homeViewName: viewPrefix || '/',
       homeUrlPattern,

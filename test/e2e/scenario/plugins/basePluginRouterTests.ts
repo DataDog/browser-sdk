@@ -16,7 +16,7 @@ interface RouterPluginTestConfig {
   viewPrefix: string
   plugin?: {
     name: string
-    routerType?: string
+    integrations?: string[]
   }
   router: RouterConfig
 }
@@ -38,7 +38,7 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
                   ({ name }) => name === plugin.name
                 )
               expect(pluginConfiguration).toEqual(expect.objectContaining({ name: plugin.name, router: true }))
-              expect(pluginConfiguration?.router_type).toBe(plugin.routerType)
+              expect(pluginConfiguration?.integrations).toEqual(plugin.integrations)
             }
           )
         }

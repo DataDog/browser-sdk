@@ -1,10 +1,13 @@
 import { buildUrl } from '@datadog/js-core/util'
-import { mockable } from '@datadog/browser-core'
+import { globalObject, mockable, toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart' | 'getConfigurationTelemetry'>
 
 type NextjsRouterType = 'app-router' | 'pages-router'
+interface NextjsGlobalObject {
+  next?: { version?: string }
+}
 type InitSubscriber = (rumPublicApi: RumPublicApi) => void
 type StartSubscriber = (addError: StartRumResult['addError']) => void
 
@@ -12,6 +15,7 @@ let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
 let lastNavigationUrl: string | undefined
 let routerType: NextjsRouterType | undefined
+let nextjsVersion: string | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
@@ -23,6 +27,7 @@ export function nextjsPlugin(): NextjsPlugin {
       globalPublicApi = publicApi
       initConfiguration.trackViewsManually = true
       routerType = mockable(detectNextjsRouterType)()
+      nextjsVersion = (globalObject as NextjsGlobalObject).next?.version
 
       for (const subscriber of onRumInitSubscribers) {
         subscriber(publicApi)
@@ -37,7 +42,10 @@ export function nextjsPlugin(): NextjsPlugin {
       }
     },
     getConfigurationTelemetry() {
-      return { router: true, router_type: routerType }
+      const integrations = (nextjsVersion ? [toMajorVersionIntegration('nextjs', nextjsVersion)] : []).concat(
+        routerType ? [routerType] : []
+      )
+      return { router: true, integrations: integrations.length > 0 ? integrations : undefined }
     },
   } satisfies RumPlugin
 }
@@ -85,4 +93,5 @@ export function resetNextjsPlugin() {
   onRumStartSubscribers.length = 0
   lastNavigationUrl = undefined
   routerType = undefined
+  nextjsVersion = undefined
 }

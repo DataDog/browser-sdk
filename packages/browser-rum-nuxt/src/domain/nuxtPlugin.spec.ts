@@ -2,6 +2,7 @@ import type { Router } from 'vue-router'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
+import type { NuxtApp } from './error/setupNuxtErrorHandling'
 import { nuxtRumPlugin, resetNuxtPlugin } from './nuxtPlugin'
 
 const PUBLIC_API = { startView: jasmine.createSpy() } as unknown as RumPublicApi
@@ -29,9 +30,19 @@ describe('nuxtRumPlugin', () => {
   })
 
   it('returns configuration telemetry', () => {
+    const nuxtApp = { versions: { nuxt: '4.2.0' } } as NuxtApp
+
+    expect(nuxtRumPlugin({ router: makeRouter(), nuxtApp }).getConfigurationTelemetry()).toEqual({
+      router: true,
+      integrations: ['nuxt-v4', 'nuxt-router'],
+      nuxt: true,
+    })
+  })
+
+  it('does not return a Nuxt version when the Nuxt app is not provided', () => {
     expect(nuxtRumPlugin({ router: makeRouter() }).getConfigurationTelemetry()).toEqual({
       router: true,
-      router_type: 'nuxt-router',
+      integrations: ['nuxt-router'],
       nuxt: true,
     })
   })

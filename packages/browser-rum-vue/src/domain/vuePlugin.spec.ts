@@ -1,3 +1,4 @@
+import { version as vueVersion } from 'vue'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { onRumInit, vuePlugin, resetVuePlugin } from './vuePlugin'
@@ -45,7 +46,14 @@ describe('vuePlugin', () => {
   it('returns configuration telemetry', () => {
     expect(vuePlugin({ router: true }).getConfigurationTelemetry()).toEqual({
       router: true,
-      router_type: 'vue-router',
+      integrations: [`vue-v${vueVersion.split('.')[0]}`, 'vue-router'],
+    })
+  })
+
+  it('returns the Vue integration when router tracking is disabled', () => {
+    expect(vuePlugin().getConfigurationTelemetry()).toEqual({
+      router: false,
+      integrations: [`vue-v${vueVersion.split('.')[0]}`],
     })
   })
 })

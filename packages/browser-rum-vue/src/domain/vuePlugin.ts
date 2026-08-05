@@ -1,3 +1,5 @@
+import { version as vueVersion } from 'vue'
+import { toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 let globalPublicApi: RumPublicApi | undefined
@@ -38,7 +40,11 @@ export function vuePlugin(configuration: VuePluginConfiguration = {}): VuePlugin
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router, router_type: configuration.router ? 'vue-router' : undefined }
+      const vueIntegration = toMajorVersionIntegration('vue', vueVersion)
+      return {
+        router: !!configuration.router,
+        integrations: configuration.router ? [vueIntegration].concat('vue-router') : [vueIntegration],
+      }
     },
   } satisfies RumPlugin
 }

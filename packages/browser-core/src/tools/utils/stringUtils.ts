@@ -87,3 +87,10 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
 
   return `${candidate.slice(0, correctedLength)}${suffix}`
 }
+
+/**
+ * Builds a telemetry integration identifier from a library name and its version, e.g. `react-v18`
+ */
+export function toMajorVersionIntegration(name: string, version: string): string {
+  return `${name}-v${version.split('.')[0]}`
+}

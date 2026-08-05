@@ -12,7 +12,7 @@ const vuePluginApps = vueApps.map(({ routerVersion, description }) => ({
   name: `with ${description}`,
   loadApp: (b: ReturnType<typeof createTest>) => b.withVueApp(routerVersion),
   viewPrefix: '',
-  plugin: { name: 'vue', routerType: 'vue-router' },
+  plugin: { name: 'vue', integrations: ['vue-v3', 'vue-router'] },
 }))
 
 runBasePluginRouterTests(

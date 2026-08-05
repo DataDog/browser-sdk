@@ -8,7 +8,7 @@ const angularBasePluginConfig = {
   name: angularAppName,
   loadApp: (b: ReturnType<typeof createTest>) => b.withApp(angularAppName),
   viewPrefix: '',
-  plugin: { name: 'angular', routerType: 'angular-router' },
+  plugin: { name: 'angular', integrations: ['angular-v15', 'angular-router'] },
 }
 
 runBasePluginRouterTests([

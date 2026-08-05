@@ -3,6 +3,7 @@ import {
   findCommaSeparatedValue,
   findCommaSeparatedValues,
   findAllCommaSeparatedValues,
+  toMajorVersionIntegration,
 } from './stringUtils'
 
 describe('stringUtils', () => {
@@ -95,6 +96,16 @@ describe('stringUtils', () => {
       expectedValues.set('foo', ['a', 'c'])
       expectedValues.set('bar', ['b'])
       expect(findAllCommaSeparatedValues('foo=a;bar=b;foo=c')).toEqual(expectedValues)
+    })
+  })
+
+  describe('toMajorVersionIntegration', () => {
+    it('builds an integration identifier from the major version', () => {
+      expect(toMajorVersionIntegration('react', '18.2.0')).toBe('react-v18')
+    })
+
+    it('supports a version with no minor/patch segment', () => {
+      expect(toMajorVersionIntegration('angular', '17')).toBe('angular-v17')
     })
   })
 })

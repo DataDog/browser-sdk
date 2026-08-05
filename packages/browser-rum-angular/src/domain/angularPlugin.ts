@@ -1,3 +1,5 @@
+import { VERSION } from '@angular/core'
+import { toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 type InitSubscriber = (configuration: AngularPluginConfiguration, rumPublicApi: RumPublicApi) => void
@@ -63,7 +65,11 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router, router_type: configuration.router ? 'angular-router' : undefined }
+      const angularIntegration = toMajorVersionIntegration('angular', VERSION.major)
+      return {
+        router: !!configuration.router,
+        integrations: configuration.router ? [angularIntegration].concat('angular-router') : [angularIntegration],
+      }
     },
   } satisfies RumPlugin
 }
