@@ -112,10 +112,7 @@ describe('stringUtils', () => {
 
   describe('toIntegrations', () => {
     it('filters out falsy values', () => {
-      expect(toIntegrations('react-v18', false, undefined, 'react-router-v7')).toEqual([
-        'react-v18',
-        'react-router-v7',
-      ])
+      expect(toIntegrations('react-v18', false, undefined, 'react-router-v7')).toEqual(['react-v18', 'react-router-v7'])
     })
 
     it('returns undefined when no integration is left', () => {
