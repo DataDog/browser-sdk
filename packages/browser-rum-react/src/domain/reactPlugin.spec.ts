@@ -1,4 +1,5 @@
 import { version as reactVersion } from 'react'
+import { toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { onRumInit, onRumStart, reactPlugin, resetReactPlugin, setReactRouterType } from './reactPlugin'
 
@@ -75,7 +76,7 @@ describe('reactPlugin', () => {
 
     expect(plugin.getConfigurationTelemetry()).toEqual({
       router: true,
-      integrations: [`react-v${reactVersion.split('.')[0]}`, 'react-router-v7'],
+      integrations: [toMajorVersionIntegration('react', reactVersion), 'react-router-v7'],
     })
   })
 
@@ -84,7 +85,7 @@ describe('reactPlugin', () => {
 
     expect(reactPlugin().getConfigurationTelemetry()).toEqual({
       router: false,
-      integrations: [`react-v${reactVersion.split('.')[0]}`],
+      integrations: [toMajorVersionIntegration('react', reactVersion)],
     })
   })
 

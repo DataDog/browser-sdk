@@ -1,4 +1,5 @@
 import { VERSION } from '@angular/core'
+import { toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { angularPlugin, onRumInit, onRumStart, resetAngularPlugin } from './angularPlugin'
@@ -76,14 +77,14 @@ describe('angularPlugin', () => {
 
     expect(plugin.getConfigurationTelemetry!()).toEqual({
       router: true,
-      integrations: [`angular-v${VERSION.major}`, 'angular-router'],
+      integrations: [toMajorVersionIntegration('angular', VERSION.major), 'angular-router'],
     })
   })
 
   it('returns the Angular integration when router tracking is disabled', () => {
     expect(angularPlugin().getConfigurationTelemetry!()).toEqual({
       router: false,
-      integrations: [`angular-v${VERSION.major}`],
+      integrations: [toMajorVersionIntegration('angular', VERSION.major)],
     })
   })
 
