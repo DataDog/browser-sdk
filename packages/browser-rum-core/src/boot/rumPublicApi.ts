@@ -588,7 +588,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * List of default headers used by the {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders} option.
    *
-   * @deprecated Use `{ includeDefaults: true }` as an entry in the `trackResourceHeaders` array instead.
+   * @deprecated You can now omit `name` from a MatchHeader entry to include default headers.
    */
   DEFAULT_TRACKED_RESOURCE_HEADERS: typeof DEFAULT_TRACKED_RESOURCE_HEADERS
 }

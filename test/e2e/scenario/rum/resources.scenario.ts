@@ -476,13 +476,10 @@ test.describe('resource headers with trackResourceHeaders', () => {
       expect(fetchEvent!.resource.response?.headers?.['cache-control']).toBeUndefined()
     })
 
-  createTest('collect default and custom headers using DEFAULT_TRACKED_RESOURCE_HEADERS pattern')
+  createTest('collect default and custom headers using optional name matcher')
     .withRum()
     .withRumInit((configuration) => {
-      configuration.trackResourceHeaders = [
-        ...window.DD_RUM!.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
-        { name: 'x-request-id' },
-      ]
+      configuration.trackResourceHeaders = [{}, { name: 'x-request-id' }]
       window.DD_RUM!.init(configuration)
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {

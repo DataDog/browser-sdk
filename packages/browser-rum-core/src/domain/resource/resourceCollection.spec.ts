@@ -749,6 +749,27 @@ describe('resourceCollection', () => {
       expect(event.resource.response!.headers!['content-type']).toBeUndefined()
     })
 
+    it('should collect default headers when name is absent', () => {
+      setupResourceCollection({ trackResourceHeaders: [{ location: 'response' }] })
+
+      notifyRequest({
+        request: {
+          type: RequestType.FETCH,
+          response: new Response('', {
+            headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache', 'X-Other': 'ignored' },
+          }),
+        },
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.response).toEqual({
+        headers: {
+          'content-type': 'text/html',
+          'cache-control': 'no-cache',
+        },
+      })
+    })
+
     describe('forbidden headers', () => {
       const forbiddenHeaders = [
         'authorization',

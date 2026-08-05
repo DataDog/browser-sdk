@@ -10,6 +10,7 @@ import {
   safeTruncate,
   setTimeout,
 } from '@datadog/browser-core'
+import type { MatchOption } from '@datadog/browser-core'
 import type { Duration } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks, toServerDuration } from '@datadog/js-core/time'
 import { combine } from '@datadog/js-core/util'
@@ -19,6 +20,7 @@ import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import type { NetworkHeaders, RawRumResourceEvent, ResourceRequest, ResourceResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { MatchHeader, RumConfiguration } from '../configuration'
+import { DEFAULT_TRACKED_RESOURCE_HEADERS } from '../configuration'
 import { startEventTracker } from '../eventTracker'
 import { extractRegexMatch } from '../extractRegexMatch'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -387,6 +389,8 @@ const FORBIDDEN_HEADER_PATTERN =
   /(token|cookie|secret|authorization|(api|secret|access|app).?key|(client|connecting|real).?ip|forwarded)/
 const MAX_HEADER_COUNT = 100
 const MAX_HEADER_VALUE_LENGTH = 128
+const defaultHeadersMatchOption: MatchOption = (headerName) =>
+  (DEFAULT_TRACKED_RESOURCE_HEADERS as readonly string[]).includes(headerName)
 
 function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {}
@@ -409,7 +413,7 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
       return
     }
 
-    const matchHeader = matchers.find((m) => matchList([m.name], lowerName))
+    const matchHeader = matchers.find((m) => matchList([m.name ?? defaultHeadersMatchOption], lowerName))
     if (!matchHeader) {
       return
     }

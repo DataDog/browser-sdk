@@ -22,31 +22,7 @@ export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'data
 
 /**
  * Default list of headers collected on resource events when {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders}
- * is set to `true`. Re-exported by the `@datadog/browser-rum` and `@datadog/browser-rum-slim` packages, and exposed on the
- * `DD_RUM` global object when the SDK is loaded via the CDN, so it can be referenced when building a custom matcher list.
- *
- * @example NPM
- * ```ts
- * import { datadogRum, DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum'
- *
- * datadogRum.init({
- *   // ...
- *   trackResourceHeaders: [
- *     ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
- *     { name: 'x-request-id' },
- *   ],
- * })
- * ```
- * @example CDN
- * ```ts
- * DD_RUM.init({
- *   // ...
- *   trackResourceHeaders: [
- *     ...DD_RUM.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
- *     { name: 'x-request-id' },
- *   ],
- * })
- * ```
+ * is set to `true`.
  */
 export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
   'cache-control',
@@ -283,11 +259,9 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * - `true`: collect {@link DEFAULT_TRACKED_RESOURCE_HEADERS} for all URLs, both directions
    * - `MatchHeader[]`: each {@link MatchHeader} targets a header name, with optional URL scope
-   * (`url`), value extraction (`extractor`), and `location`. By default, both request and
-   * response headers are captured; set `location` to `'request'` or `'response'` to restrict
-   * to one.
-   * - `{ includeDefaults: true }` (as an array entry): expands to {@link DEFAULT_TRACKED_RESOURCE_HEADERS}
-   * in place, so the defaults can be combined with custom matchers without listing them manually.
+   * (`url`), value extraction (`extractor`), and `location`. When `name` is omitted, the matcher
+   * applies to {@link DEFAULT_TRACKED_RESOURCE_HEADERS}. By default, both request and response
+   * headers are captured; set `location` to `'request'` or `'response'` to restrict to one.
    *
    * Headers whose names match a built-in sensitive-data pattern are always dropped, regardless
    * of the configured matchers. The pattern blocks headers whose names contain: `token`, `cookie`,
@@ -298,7 +272,10 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue false (disabled)
    * @example
    * // Collect default headers plus custom ones for all URLs
-   * trackResourceHeaders: [{ includeDefaults: true }, { name: 'x-request-id' }]
+   * trackResourceHeaders: [{}, { name: 'x-request-id' }]
+   * @example
+   * // Collect default headers from responses only
+   * trackResourceHeaders: [{ location: 'response' }]
    * @example
    * // URL-scoped rule: capture specific response headers only for calls to /api
    * trackResourceHeaders: [{ url: /\/api\//, name: 'cache-control', location: 'response' }]
@@ -306,7 +283,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * // Extract a partial value from a header
    * trackResourceHeaders: [{ url: /\/api\//, name: 'server-timing', extractor: /dur=(\d+)/, location: 'response' }]
    */
-  trackResourceHeaders?: boolean | Array<MatchHeader | { includeDefaults: true }> | undefined
+  trackResourceHeaders?: boolean | MatchHeader[] | undefined
 
   /**
    * Enables collection of long task events.
@@ -385,7 +362,7 @@ export interface GraphQlUrlOption {
 
 export interface MatchHeader {
   url?: MatchOption
-  name: MatchOption
+  name?: MatchOption
   extractor?: RegExp
   location?: 'request' | 'response' | 'any'
 }
@@ -588,10 +565,6 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
 
 const VALID_HEADER_LOCATIONS = ['request', 'response', 'any']
 
-function shouldIncludeDefaultHeaders(item: MatchHeader | { includeDefaults: true }): item is { includeDefaults: true } {
-  return isIndexableObject(item) && item.includeDefaults === true
-}
-
 function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfiguration): MatchHeader[] {
   const option = initConfiguration.trackResourceHeaders
 
@@ -616,12 +589,12 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
   const result: MatchHeader[] = []
 
   option.forEach((item, index) => {
-    if (shouldIncludeDefaultHeaders(item)) {
-      DEFAULT_TRACKED_RESOURCE_HEADERS.forEach((name) => result.push({ name }))
+    if (!isIndexableObject(item)) {
+      display.warn(`trackResourceHeaders[${index}] should be a MatchHeader object`)
       return
     }
-    if (!isIndexableObject(item) || !isMatchOption(item.name)) {
-      display.warn(`trackResourceHeaders[${index}] should be a MatchHeader object with a 'name' property`)
+    if (item.name !== undefined && !isMatchOption(item.name)) {
+      display.warn(`trackResourceHeaders[${index}].name should be a MatchOption`)
       return
     }
     if (item.url !== undefined && !isMatchOption(item.url)) {
@@ -632,14 +605,18 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
       display.warn(`trackResourceHeaders[${index}].extractor should be a RegExp`)
       return
     }
-    if (item.location !== undefined && !VALID_HEADER_LOCATIONS.includes(item.location)) {
+    if (
+      item.location !== undefined &&
+      (typeof item.location !== 'string' || !VALID_HEADER_LOCATIONS.includes(item.location))
+    ) {
       display.warn(`trackResourceHeaders[${index}].location should be 'request', 'response', or 'any'`)
       return
     }
 
+    const { name, ...rest } = item
     result.push({
-      ...item,
-      name: typeof item.name === 'string' ? item.name.toLowerCase() : item.name,
+      ...rest,
+      ...(name !== undefined ? { name: typeof name === 'string' ? name.toLowerCase() : name } : {}),
     })
   })
 
