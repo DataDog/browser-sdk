@@ -46,6 +46,22 @@ export const ELECTRON = {
     at I.e.fn.(anonymous function) [as index] (electron://-/file.js:10:3651)`,
 }
 
+export const CUSTOM_PROTOCOL_APP = {
+  message: 'Custom protocol error',
+  name: 'Error',
+  stack: `Error: Custom protocol error
+    at dumpExceptionError (app://renderer/file.js:41:27)
+    at HTMLButtonElement.onclick (app://renderer/file.js:107:146)
+    at I.e.fn.(anonymous function) [as index] (app://renderer/file.js:10:3651)`,
+}
+
+export const CUSTOM_PROTOCOL_SPECIAL_CHARS = {
+  message: 'Custom protocol error',
+  name: 'Error',
+  stack: `Error: Custom protocol error
+    at dumpExceptionError (my-app+v2.beta://renderer/file.js:12:5)`,
+}
+
 export const FIREFOX_3 = {
   fileName: 'http://127.0.0.1:8000/js/stacktrace.js',
   lineNumber: 44,
