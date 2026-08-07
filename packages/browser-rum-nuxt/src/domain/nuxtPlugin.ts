@@ -49,11 +49,12 @@ export function nuxtRumPlugin(configuration: NuxtPluginConfiguration): NuxtPlugi
       }
     },
     getConfigurationTelemetry() {
-      const nuxtVersion = configuration.nuxtApp?.versions?.nuxt
       return {
         router: !!configuration.router,
-        integrations: toIntegrations(nuxtVersion && toMajorVersionIntegration('nuxt', nuxtVersion), 'nuxt-router'),
-        nuxt: true,
+        integrations: toIntegrations(
+          toMajorVersionIntegration('nuxt', configuration.nuxtApp?.versions?.nuxt),
+          'nuxt-router'
+        ),
       }
     },
   } satisfies RumPlugin

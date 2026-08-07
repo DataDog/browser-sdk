@@ -35,15 +35,13 @@ describe('nuxtRumPlugin', () => {
     expect(nuxtRumPlugin({ router: makeRouter(), nuxtApp }).getConfigurationTelemetry()).toEqual({
       router: true,
       integrations: ['nuxt-v4', 'nuxt-router'],
-      nuxt: true,
     })
   })
 
   it('does not return a Nuxt version when the Nuxt app is not provided', () => {
     expect(nuxtRumPlugin({ router: makeRouter() }).getConfigurationTelemetry()).toEqual({
       router: true,
-      integrations: ['nuxt-router'],
-      nuxt: true,
+      integrations: ['nuxt', 'nuxt-router'],
     })
   })
 })

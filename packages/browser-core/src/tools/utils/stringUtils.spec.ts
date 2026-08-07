@@ -108,6 +108,11 @@ describe('stringUtils', () => {
     it('supports a version with no minor/patch segment', () => {
       expect(toMajorVersionIntegration('angular', '17')).toBe('angular-v17')
     })
+
+    it('returns the name when the version is undefined or null', () => {
+      expect(toMajorVersionIntegration('angular', undefined)).toBe('angular')
+      expect(toMajorVersionIntegration('angular', null)).toBe('angular')
+    })
   })
 
   describe('toIntegrations', () => {
