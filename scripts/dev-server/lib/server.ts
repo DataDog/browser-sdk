@@ -93,6 +93,7 @@ function createStaticSandboxApp(): express.Application {
             entry: `${packagePath}/src/entries/main.ts`,
             filename:
               packageName === 'browser-worker' ? 'worker.js' : `${packageName.replace(/^browser-/, 'datadog-')}.js`,
+            includeWorkerString: packageName === 'browser-rum',
           })
         ),
         { stats: 'minimal' }

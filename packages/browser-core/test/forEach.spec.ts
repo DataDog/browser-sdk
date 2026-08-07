@@ -13,8 +13,6 @@ import { resetTelemetry } from '../src/domain/telemetry'
 import { resetSampleDecisionCache } from '../src/domain/sampler'
 import { resetAllowUntrustedEvents } from '../src/browser/addEventListener'
 import { startLeakDetection } from './leakDetection'
-import type { BuildEnvWindow } from './buildEnv'
-;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
 ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(() => {

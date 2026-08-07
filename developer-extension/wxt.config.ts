@@ -1,5 +1,5 @@
 import { defineConfig } from 'wxt'
-import { getBuildEnvValue } from '../scripts/lib/buildEnv'
+import { getBuildEnvDefines } from '../scripts/lib/buildEnv'
 
 // eslint-disable-next-line import-x/no-default-export
 export default defineConfig({
@@ -38,8 +38,6 @@ export default defineConfig({
         generateScopedName: '[name]_[local]_[hash:base64:5]',
       },
     },
-    define: {
-      __BUILD_ENV__SDK_VERSION__: JSON.stringify(getBuildEnvValue('SDK_VERSION')),
-    },
+    define: getBuildEnvDefines({ setup: 'npm' }),
   }),
 })

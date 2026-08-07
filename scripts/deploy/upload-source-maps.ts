@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
-import { getBuildEnvValue } from '../lib/buildEnv.ts'
+import { getBuildEnvSdkVersion } from '../lib/buildEnv.ts'
 import { getTelemetryOrgApiKey, getOrg2ApiKey } from '../lib/secrets.ts'
 import { getAllDatacentersMetadata, getDatacenterMetadata } from '../lib/datacenter.ts'
 import { forEachFile } from '../lib/filesUtils.ts'
@@ -97,7 +97,7 @@ function uploadToOrg2(packageName: string, service: string, prefix: string, bund
   command`
     datadog-ci sourcemaps upload ${bundleFolder}
       --service ${service}
-      --release-version ${getBuildEnvValue('SDK_VERSION')}
+      --release-version ${getBuildEnvSdkVersion()}
       --minified-path-prefix ${org2Prefix}
       --project-path @datadog/${packageName}/
       --repository-url https://www.github.com/datadog/browser-sdk
@@ -129,7 +129,7 @@ function uploadToDatadog(
     command`
       datadog-ci sourcemaps upload ${bundleFolder}
         --service ${service}
-        --release-version ${getBuildEnvValue('SDK_VERSION')}
+        --release-version ${getBuildEnvSdkVersion()}
         --minified-path-prefix ${prefix}
         --project-path @datadog/${packageName}/
         --repository-url https://www.github.com/datadog/browser-sdk

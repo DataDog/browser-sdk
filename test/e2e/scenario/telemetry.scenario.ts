@@ -1,7 +1,21 @@
 import { test, expect } from '@playwright/test'
-import { createTest, html } from '../lib/framework'
+import { bundleSetup, createTest, html, npmSetup } from '../lib/framework'
 
 test.describe('telemetry', () => {
+  for (const { name, setup, expectedSdkSetup } of [
+    { name: 'bundle', setup: bundleSetup, expectedSdkSetup: 'cdn' },
+    { name: 'npm', setup: npmSetup, expectedSdkSetup: 'npm' },
+  ]) {
+    createTest(`reports the SDK setup for ${name}`)
+      .withSetup(setup)
+      .withRum()
+      .run(async ({ intakeRegistry, flushEvents }) => {
+        await flushEvents()
+        const event = intakeRegistry.telemetryConfigurationEvents[0]
+        expect(event.telemetry.sdk_setup).toBe(expectedSdkSetup)
+      })
+  }
+
   createTest('send errors for logs')
     .withLogs({ trackingConsent: 'granted' })
     .run(async ({ intakeRegistry, page, flushEvents }) => {
