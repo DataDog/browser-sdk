@@ -1,4 +1,4 @@
-import type { FlagType } from './flagTypeConstants'
+import { FLAG_TYPES, parseTypedString, type FlagType } from './flagTypes'
 import { getFlagsApiHost } from './oauth'
 
 export interface CatalogFlag {
@@ -46,43 +46,27 @@ interface RawFeatureFlagsResponse {
 // back to the raw string on unparseable input so one malformed variant can't blow up the mapping
 // of the entire catalog.
 function parseVariantValue(type: FlagType, rawValue: string): unknown {
-  switch (type) {
-    case 'BOOLEAN':
-      // Only the exact strings count; anything else (e.g. "True", "falsex", "") is malformed and
-      // kept raw rather than silently collapsing to false.
-      if (rawValue === 'true') {
-        return true
-      }
-      if (rawValue === 'false') {
-        return false
-      }
-      return rawValue
-    case 'INTEGER': {
-      // parseInt would accept partial/oversized input ("5abc" -> 5, unsafe integers get rounded), so
-      // require the whole string to be an integer within the safe range; otherwise keep it raw.
-      const parsed = Number(rawValue)
-      return /^[+-]?\d+$/.test(rawValue) && Number.isSafeInteger(parsed) ? parsed : rawValue
+  if (type === 'BOOLEAN') {
+    // Only the exact strings count; anything else (e.g. "True", "falsex", "") is malformed and
+    // kept raw rather than silently collapsing to false.
+    if (rawValue === 'true') {
+      return true
     }
-    case 'NUMERIC': {
-      // parseFloat accepts a numeric prefix ("5abc" -> 5) and Number("") is 0, so require a
-      // non-empty string that parses fully to a finite number; otherwise keep it raw.
-      const parsed = Number(rawValue)
-      return rawValue.trim() !== '' && Number.isFinite(parsed) ? parsed : rawValue
+    if (rawValue === 'false') {
+      return false
     }
-    case 'JSON':
-      try {
-        return JSON.parse(rawValue) as unknown
-      } catch {
-        return rawValue
-      }
-    case 'STRING':
-      return rawValue
-    default:
-      // The server returned a value_type outside the known union (which is a compile-time
-      // assumption, not a runtime guarantee) — keep the raw string rather than returning undefined,
-      // consistent with never letting one odd variant blow up the mapping.
-      return rawValue
+    return rawValue
   }
+  if (!FLAG_TYPES.includes(type)) {
+    // The server returned a value_type outside the known union (which is a compile-time
+    // assumption, not a runtime guarantee) — keep the raw string rather than passing it to
+    // parseTypedString (whose switch has no default and would return undefined), consistent with
+    // never letting one odd variant blow up the mapping.
+    return rawValue
+  }
+  // The catalog is tolerant: a variant that doesn't parse is kept as its raw string.
+  const result = parseTypedString(type, rawValue)
+  return result.ok ? result.value : rawValue
 }
 
 /**
@@ -91,11 +75,7 @@ function parseVariantValue(type: FlagType, rawValue: string): unknown {
  * total match count (`meta.page.total`) so the caller can render pagination. OAuth is the only
  * supported auth path (see oauth.ts).
  */
-export async function fetchFlagCatalog(
-  token: string,
-  site: string,
-  request: FlagCatalogRequest
-): Promise<FlagCatalogPage> {
+export function fetchFlagCatalog(token: string, site: string, request: FlagCatalogRequest): Promise<FlagCatalogPage> {
   const url = new URL(`https://${getFlagsApiHost(site)}/api/ui/ffe/feature-flags`)
   url.searchParams.set('page[limit]', String(request.pageSize))
   url.searchParams.set('page[offset]', String((request.page - 1) * request.pageSize))
@@ -112,21 +92,50 @@ export async function fetchFlagCatalog(
     url.searchParams.append('tags', tag)
   }
 
+  return fetchFlagPage(url, token, 'Failed to fetch flag catalog')
+}
+
+/**
+ * Fetches a specific set of flags by exact key, one request per key (the endpoint's `key` filter is
+ * exact and single-valued — there's no batched lookup). Used for the "Local overrides" section, which
+ * must show overridden flags even when they're not on the current catalog page. Keys with no match
+ * (deleted, or a hand-entered override for a non-existent flag) are simply absent from the result.
+ */
+export async function fetchFlagsByKeys(token: string, site: string, keys: string[]): Promise<CatalogFlag[]> {
+  const host = getFlagsApiHost(site)
+  // Settle per key rather than Promise.all: one key failing transiently (e.g. a rate limit) must not
+  // discard the flags that did resolve — otherwise the whole "Local overrides" section collapses to
+  // bare fallback rows until the key set changes. A dropped key just falls back to a minimal row in
+  // the caller. (The error label omits the key regardless — it's customer data, kept out of logs.)
+  const results = await Promise.allSettled(
+    keys.map(async (key) => {
+      const url = new URL(`https://${host}/api/ui/ffe/feature-flags`)
+      url.searchParams.set('key', key)
+      url.searchParams.set('is_archived', 'false')
+      const { flags } = await fetchFlagPage(url, token, 'Failed to fetch flag')
+      return flags
+    })
+  )
+  return results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
+}
+
+// Shared request/response handling for both fetchFlagCatalog and fetchFlagsByKeys: run the request,
+// tolerate a response that omits/mistypes `data`, and map its resources into CatalogFlag[]. `total`
+// falls back to the resource count when the server omits `meta.page.total` (e.g. a partial/legacy
+// response, or the by-key lookup which never sends pagination fields).
+async function fetchFlagPage(url: URL, token: string, errorLabel: string): Promise<FlagCatalogPage> {
   const response = await fetch(url.toString(), {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   })
   if (!response.ok) {
-    throw new Error(`Failed to fetch flag catalog: ${response.status} ${response.statusText}`)
+    throw new Error(`${errorLabel}: ${response.status} ${response.statusText}`)
   }
-
   const body = (await response.json()) as RawFeatureFlagsResponse
-  // Tolerate a response that omits/mistypes `data` rather than throwing on `.map`.
   const resources = Array.isArray(body?.data) ? body.data : []
   return {
     flags: mapResources(resources),
-    // Fall back to the page length when the server omits the total (e.g. a partial/legacy response).
     total: body?.meta?.page?.total ?? resources.length,
   }
 }

@@ -1,13 +1,13 @@
-import { Box, Group, Pagination, Space } from '@mantine/core'
-import React, { useEffect, useState } from 'react'
+import { Alert, Anchor, Box, Button, Code, Group, Pagination, Space } from '@mantine/core'
+import React, { useState } from 'react'
 import { TabBase } from '../../tabBase'
-import { useFlagCatalog } from './useFlagCatalog'
-import { useFlagCatalogView } from './useFlagCatalogView'
+import { ConnectScreen, ConnectionHeader } from './connectScreen'
+import { FlagCatalogBody, OverridesSection } from './flagCatalogList'
+import { FlagFilterBar } from './flagFilterBar'
+import { FlagsProvider, useFlagsContext } from './flagsContext'
+import { ManualOverrideForm } from './manualOverrideForm'
 import type { FlagAuthState } from './useFlagAuth'
 import { useFlagAuth } from './useFlagAuth'
-import { ConnectScreen, ConnectionHeader } from './connectScreen'
-import { FlagCatalogBody } from './flagCatalogList'
-import { FlagFilterBar } from './flagFilterBar'
 
 export function FlagsTab() {
   const auth = useFlagAuth()
@@ -21,45 +21,34 @@ export function FlagsTab() {
     )
   }
 
-  // Remount the catalog on site change so filters, pagination, and accumulated tag suggestions don't
-  // carry over from a previously-connected org — stale filters would misleadingly empty the new
-  // catalog, and stale suggestions would leak the old org's tags into autocomplete.
-  return <ConnectedCatalog key={auth.site} auth={auth} />
+  // Remount the provider on site change so filters, pagination, overrides, and accumulated tag
+  // suggestions don't carry over from a previously-connected org — stale filters would misleadingly
+  // empty the new catalog, and stale suggestions would leak the old org's tags into autocomplete.
+  return (
+    <FlagsProvider key={auth.site} auth={auth}>
+      <ConnectedFlagsTab auth={auth} />
+    </FlagsProvider>
+  )
 }
 
-function ConnectedCatalog({ auth }: { auth: FlagAuthState }) {
-  const view = useFlagCatalogView()
-  const catalog = useFlagCatalog(auth, view.request)
-  const { setPage } = view
+function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
+  const {
+    overrideStatus,
+    overrideError,
+    overrides,
+    devtoolsEnabled,
+    overriddenFlags,
+    totalPages,
+    view,
+    pendingReload,
+    writesInFlight,
+    mutationError,
+    removeAll,
+    reload,
+  } = useFlagsContext()
+  const [addOpen, setAddOpen] = useState(false)
 
-  const totalPages = Math.max(1, Math.ceil(catalog.total / view.pageSize))
-
-  // If the catalog shrinks (e.g. flags archived) so there are fewer pages than the selected one,
-  // snap back to the last page — Mantine's Pagination won't clamp an out-of-range value itself.
-  useEffect(() => {
-    if (view.page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [view.page, totalPages, setPage])
-
-  // Progressive tag suggestions: there's no tags endpoint and we only load a page at a time, so the
-  // Tag filter's autocomplete is built from the tags seen on pages loaded so far. `team:*` tags are
-  // excluded (they'd drive a separate team filter); users can still type any tag not yet seen.
-  const [tagSuggestions, setTagSuggestions] = useState<string[]>([])
-  useEffect(() => {
-    setTagSuggestions((previous) => {
-      const seen = new Set(previous)
-      for (const flag of catalog.flags) {
-        for (const tag of flag.tags) {
-          if (!tag.startsWith('team:')) {
-            seen.add(tag)
-          }
-        }
-      }
-      // Keep the same array (skip the re-render) when this page added no new tags.
-      return seen.size === previous.length ? previous : Array.from(seen).sort((a, b) => a.localeCompare(b))
-    })
-  }, [catalog.flags])
+  const overrideCount = Object.keys(overrides).length
 
   return (
     <TabBase
@@ -69,12 +58,44 @@ function ConnectedCatalog({ auth }: { auth: FlagAuthState }) {
         <Box px="md">
           <ConnectionHeader auth={auth} />
           <Space h="sm" />
-          <FlagFilterBar view={view} tagSuggestions={tagSuggestions} />
+          <FlagFilterBar />
         </Box>
       }
     >
       <Box px="md" py="sm">
-        <FlagCatalogBody catalog={catalog} flags={catalog.flags} total={catalog.total} />
+        {mutationError && (
+          <>
+            <Alert color="red" title="Failed to update overrides">
+              {mutationError}
+            </Alert>
+            <Space h="sm" />
+          </>
+        )}
+
+        {overrideStatus === 'error' && overrideError && (
+          <>
+            <Alert color="red" title="Couldn't read the page">
+              {overrideError}
+            </Alert>
+            <Space h="sm" />
+          </>
+        )}
+
+        {overrideStatus === 'ready' && !devtoolsEnabled && (
+          <>
+            <Alert color="orange" title="DatadogDevtools not detected">
+              The <Code>DatadogDevtools</Code> provider wrapper was not detected on this page. Overrides will only take
+              effect once the page composes it. You can still set overrides — they'll apply when the wrapper is in
+              place.
+            </Alert>
+            <Space h="sm" />
+          </>
+        )}
+
+        <OverridesSection />
+        {overriddenFlags.length > 0 && <Space h="md" />}
+
+        <FlagCatalogBody />
 
         {totalPages > 1 && (
           <>
@@ -82,6 +103,40 @@ function ConnectedCatalog({ auth }: { auth: FlagAuthState }) {
             <Group justify="center">
               <Pagination size="xs" color="violet" total={totalPages} value={view.page} onChange={view.setPage} />
             </Group>
+          </>
+        )}
+
+        <Space h="md" />
+        <Group justify="space-between">
+          <Button
+            size="xs"
+            variant="light"
+            color="red"
+            onClick={removeAll}
+            disabled={overrideCount === 0 || overrideStatus !== 'ready'}
+          >
+            Clear all{overrideCount > 0 ? ` (${overrideCount})` : ''}
+          </Button>
+          <Button
+            color="violet"
+            onClick={reload}
+            // Overrides are written to localStorage immediately, so this button only reloads the page
+            // to (re)apply them. Enable it whenever there are overrides to apply or a change to flush,
+            // but never while a write is still in flight (it would reload with stale state).
+            disabled={overrideStatus !== 'ready' || writesInFlight > 0 || (overrideCount === 0 && !pendingReload)}
+          >
+            Refresh Page
+          </Button>
+        </Group>
+
+        <Space h="md" />
+        <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setAddOpen((open) => !open)}>
+          {addOpen ? '− Hide custom override' : '+ Add a custom override'}
+        </Anchor>
+        {addOpen && (
+          <>
+            <Space h="sm" />
+            <ManualOverrideForm />
           </>
         )}
       </Box>

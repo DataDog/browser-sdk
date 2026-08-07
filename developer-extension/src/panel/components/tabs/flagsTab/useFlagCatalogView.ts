@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { FlagCatalogRequest } from './flagCatalog'
+import type { FlagCatalogRequest } from './flagsRequests'
 
 const CATALOG_PAGE_SIZE = 20
 // Wait out a typing burst before sending a search to the server, so we don't fire a request per
