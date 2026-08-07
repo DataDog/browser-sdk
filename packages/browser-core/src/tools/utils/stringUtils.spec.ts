@@ -3,6 +3,8 @@ import {
   findCommaSeparatedValue,
   findCommaSeparatedValues,
   findAllCommaSeparatedValues,
+  toMajorVersionIntegration,
+  toIntegrations,
 } from './stringUtils'
 
 describe('stringUtils', () => {
@@ -95,6 +97,31 @@ describe('stringUtils', () => {
       expectedValues.set('foo', ['a', 'c'])
       expectedValues.set('bar', ['b'])
       expect(findAllCommaSeparatedValues('foo=a;bar=b;foo=c')).toEqual(expectedValues)
+    })
+  })
+
+  describe('toMajorVersionIntegration', () => {
+    it('builds an integration identifier from the major version', () => {
+      expect(toMajorVersionIntegration('react', '18.2.0')).toBe('react-v18')
+    })
+
+    it('supports a version with no minor/patch segment', () => {
+      expect(toMajorVersionIntegration('angular', '17')).toBe('angular-v17')
+    })
+
+    it('returns the name when the version is undefined or null', () => {
+      expect(toMajorVersionIntegration('angular', undefined)).toBe('angular')
+      expect(toMajorVersionIntegration('angular', null)).toBe('angular')
+    })
+  })
+
+  describe('toIntegrations', () => {
+    it('filters out falsy values', () => {
+      expect(toIntegrations('react-v18', false, undefined, 'react-router-v7')).toEqual(['react-v18', 'react-router-v7'])
+    })
+
+    it('returns undefined when no integration is left', () => {
+      expect(toIntegrations(false, undefined)).toBeUndefined()
     })
   })
 })

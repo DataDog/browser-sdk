@@ -5,6 +5,7 @@ import { callMonitored, createHandlingStack } from '@datadog/browser-core'
 
 export interface NuxtApp {
   vueApp: App
+  versions?: { nuxt?: string }
   hook(name: 'app:error', callback: (err: unknown) => void): void
   hook(name: 'app:suspense:resolve', callback: () => void): void
 }
