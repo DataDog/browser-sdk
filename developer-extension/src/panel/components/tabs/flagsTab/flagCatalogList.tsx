@@ -1,18 +1,14 @@
-import { ActionIcon, Badge, Box, Code, CopyButton, Group, Loader, Space, Text, Tooltip } from '@mantine/core'
-import { IconCopy } from '@tabler/icons-react'
-import React from 'react'
-import type { CatalogFlag } from './flagCatalog'
-import type { FlagCatalogState } from './useFlagCatalog'
+import { ActionIcon, Box, Button, Code, CopyButton, Group, Loader, Space, Text, Tooltip } from '@mantine/core'
+import { IconArrowBackUp, IconCopy } from '@tabler/icons-react'
+import React, { type ReactNode } from 'react'
+import type { CatalogFlag } from './flagsRequests'
+import { useFlagsContext } from './flagsContext'
+import { validateOverrideValue } from './flagTypes'
+import { getOverride, type FlagOverride } from './inspectedPageFlags'
 
-export function FlagCatalogBody({
-  catalog,
-  flags,
-  total,
-}: {
-  catalog: FlagCatalogState
-  flags: CatalogFlag[]
-  total: number
-}) {
+export function FlagCatalogBody() {
+  const { catalog, bottomFlags } = useFlagsContext()
+
   if (catalog.loading) {
     return (
       <Group justify="center" py="xl">
@@ -28,23 +24,91 @@ export function FlagCatalogBody({
   return (
     <>
       <Text c="dimmed" size="xs">
-        {total} {total === 1 ? 'flag' : 'flags'}
+        {catalog.total} {catalog.total === 1 ? 'flag' : 'flags'}
       </Text>
       <Space h="xs" />
-      <Box style={{ border: '1px solid var(--mantine-color-gray-2)', borderRadius: 'var(--mantine-radius-sm)' }}>
-        {flags.length === 0 ? (
-          <Text c="dimmed" p="md">
-            No flags match.
-          </Text>
-        ) : (
-          flags.map((flag) => <FlagRow key={flag.key} flag={flag} />)
-        )}
-      </Box>
+      <FlagList
+        flags={bottomFlags}
+        borderColor="var(--mantine-color-gray-2)"
+        // `bottomFlags` is the page minus overridden flags (those are pinned above). Only call it "no
+        // match" when the server total is 0; otherwise this page's flags are all overridden.
+        emptyMessage={
+          catalog.total === 0 ? 'No flags match.' : 'All flags on this page are overridden — see Local overrides above.'
+        }
+      />
     </>
   )
 }
 
-function FlagRow({ flag }: { flag: CatalogFlag }) {
+/**
+ * The always-visible "Local overrides" section shown above the paginated catalog. Lists every
+ * overridden flag (regardless of which catalog page it's on), so overrides are never buried by
+ * pagination. The overridden flags' catalog data comes from the context (see useOverriddenFlags).
+ */
+export function OverridesSection() {
+  const { overriddenFlags } = useFlagsContext()
+
+  if (overriddenFlags.length === 0) {
+    return null
+  }
+  return (
+    <>
+      <Text fw={600} size="sm">
+        Local overrides ({overriddenFlags.length})
+      </Text>
+      <Space h="xs" />
+      <FlagList flags={overriddenFlags} borderColor="var(--mantine-color-violet-2)" />
+    </>
+  )
+}
+
+// Renders a bordered list of flag rows, or `emptyMessage` when there are none. Shared by the catalog
+// body and the "Local overrides" section — they differ only in border color and empty copy. Reads
+// the override state + actions from context so each row's wiring stays identical.
+function FlagList({
+  flags,
+  borderColor,
+  emptyMessage,
+}: {
+  flags: CatalogFlag[]
+  borderColor: string
+  emptyMessage?: ReactNode
+}) {
+  const { overrides, applyOverride, removeOverride } = useFlagsContext()
+  return (
+    <Box style={{ border: `1px solid ${borderColor}`, borderRadius: 'var(--mantine-radius-sm)' }}>
+      {flags.length === 0 ? (
+        <Text c="dimmed" p="md">
+          {emptyMessage}
+        </Text>
+      ) : (
+        flags.map((flag) => (
+          <FlagRow
+            key={flag.key}
+            flag={flag}
+            override={getOverride(overrides, flag.key)}
+            onSelectVariant={applyOverride}
+            onRevert={removeOverride}
+          />
+        ))
+      )}
+    </Box>
+  )
+}
+
+function FlagRow({
+  flag,
+  override,
+  onSelectVariant,
+  onRevert,
+}: {
+  flag: CatalogFlag
+  override: FlagOverride | undefined
+  onSelectVariant: (flagKey: string, override: FlagOverride) => void
+  onRevert: (flagKey: string) => void
+}) {
+  const overridden = override !== undefined
+
   return (
     <Group
       justify="space-between"
@@ -52,7 +116,10 @@ function FlagRow({ flag }: { flag: CatalogFlag }) {
       align="center"
       px="sm"
       py="xs"
-      style={{ borderBottom: '1px solid var(--mantine-color-gray-1)' }}
+      style={{
+        borderBottom: '1px solid var(--mantine-color-gray-1)',
+        backgroundColor: overridden ? 'var(--mantine-color-violet-0)' : undefined,
+      }}
     >
       <Box style={{ minWidth: 0, flex: 1 }}>
         <Text size="sm" fw={600} truncate>
@@ -61,16 +128,41 @@ function FlagRow({ flag }: { flag: CatalogFlag }) {
         <FlagKey value={flag.key} />
       </Box>
       <Group gap="xs" wrap="wrap" justify="flex-end" style={{ flexShrink: 0, maxWidth: '55%' }}>
+        {overridden && (
+          <Tooltip label="Revert override">
+            <ActionIcon variant="subtle" color="gray" size="sm" onClick={() => onRevert(flag.key)}>
+              <IconArrowBackUp size={16} />
+            </ActionIcon>
+          </Tooltip>
+        )}
         {flag.variants.length === 0 ? (
           <Text c="dimmed" size="xs">
             no variants
           </Text>
         ) : (
-          flag.variants.map((variant) => (
-            <Badge key={variant.name} variant="light" color="gray" title={formatValue(variant.value)}>
-              {variant.name}
-            </Badge>
-          ))
+          flag.variants.map((variant) => {
+            const isActive = overridden && valuesEqual(override.value, variant.value)
+            // The catalog falls back to the raw string when a variant doesn't parse as its
+            // declared type (see parseVariantValue) — writing that through would violate the
+            // same contract validateOverrideValue enforces for manual overrides. `allowNull` keeps
+            // a legitimate JSON `null` variant applyable (a raw-string type mismatch still fails).
+            const validationError = validateOverrideValue(flag.type, variant.value, { allowNull: true })
+            return (
+              <Button
+                key={variant.name}
+                size="compact-xs"
+                variant={isActive ? 'filled' : 'default'}
+                color={isActive ? 'violet' : 'gray'}
+                disabled={!!validationError}
+                onClick={() =>
+                  onSelectVariant(flag.key, { type: flag.type, value: variant.value as FlagOverride['value'] })
+                }
+                title={validationError ?? formatValue(variant.value)}
+              >
+                {variant.name}
+              </Button>
+            )
+          })
         )}
       </Group>
     </Group>
@@ -102,6 +194,10 @@ function FlagKey({ value }: { value: string }) {
       </CopyButton>
     </Group>
   )
+}
+
+function valuesEqual(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
 }
 
 function formatValue(value: unknown): string {

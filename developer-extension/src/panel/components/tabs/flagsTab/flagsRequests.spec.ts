@@ -1,7 +1,7 @@
-import type { CatalogFlag, FlagCatalogRequest } from './flagCatalog'
-import { fetchFlagCatalog } from './flagCatalog'
+import type { CatalogFlag, FlagCatalogRequest } from './flagsRequests'
+import { fetchFlagCatalog, fetchFlagsByKeys } from './flagsRequests'
 
-describe('flagCatalog', () => {
+describe('flagsRequests', () => {
   describe('fetchFlagCatalog', () => {
     const baseRequest: FlagCatalogRequest = { page: 1, pageSize: 20, search: '', typeFilter: [], tagFilter: [] }
 
@@ -197,6 +197,45 @@ describe('flagCatalog', () => {
       await expectAsync(fetchFlagCatalog('tok', 'datad0g.com', baseRequest)).toBeRejectedWithError(
         /Failed to fetch flag catalog/
       )
+    })
+  })
+
+  describe('fetchFlagsByKeys', () => {
+    it('fetches each key exactly (active-only) and returns the flags that resolve', async () => {
+      const spy = spyOn(globalThis, 'fetch').and.callFake((input) => {
+        const key = new URL(input as string).searchParams.get('key')
+        const data = key === 'missing' ? [] : [{ attributes: { key, name: `Name ${key}`, value_type: 'STRING' } }]
+        return Promise.resolve(new Response(JSON.stringify({ data })))
+      })
+
+      const flags = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a', 'missing', 'flag-b'])
+
+      expect(spy).toHaveBeenCalledTimes(3)
+      const firstUrl = new URL(spy.calls.argsFor(0)[0] as string)
+      expect(firstUrl.searchParams.get('key')).toBe('flag-a')
+      expect(firstUrl.searchParams.get('is_archived')).toBe('false')
+      expect(flags.map((flag) => flag.key)).toEqual(['flag-a', 'flag-b'])
+    })
+
+    it('makes no request and returns nothing for an empty key list', async () => {
+      const spy = spyOn(globalThis, 'fetch')
+      expect(await fetchFlagsByKeys('tok', 'datad0g.com', [])).toEqual([])
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    it('drops a key whose request fails but keeps the ones that resolve', async () => {
+      spyOn(globalThis, 'fetch').and.callFake((input) => {
+        const key = new URL(input as string).searchParams.get('key')
+        if (key === 'boom') {
+          return Promise.resolve(new Response('nope', { status: 500, statusText: 'X' }))
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [{ attributes: { key, name: `Name ${key}`, value_type: 'STRING' } }] }))
+        )
+      })
+
+      const flags = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a', 'boom', 'flag-b'])
+      expect(flags.map((flag) => flag.key)).toEqual(['flag-a', 'flag-b'])
     })
   })
 })
