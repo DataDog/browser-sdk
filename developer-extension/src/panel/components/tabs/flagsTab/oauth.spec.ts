@@ -5,18 +5,41 @@ import {
   getValidAccessToken,
   loadStoredTokens,
   loginWithOAuth,
+  revokeAndClearTokens,
   sha256,
   storeTokens,
 } from './oauth'
 
 describe('oauth', () => {
+  // In-memory chrome.storage.session so token read/write/remove work in the karma browser.
+  function mockSessionStorage() {
+    const previousChrome = (globalThis as any).chrome
+    const store: Record<string, unknown> = {}
+    ;(globalThis as any).chrome = {
+      storage: {
+        session: {
+          get: (key: string) => Promise.resolve({ [key]: store[key] }),
+          set: (items: Record<string, unknown>) => {
+            Object.assign(store, items)
+            return Promise.resolve()
+          },
+          remove: (key: string) => {
+            delete store[key]
+            return Promise.resolve()
+          },
+        },
+      },
+    }
+    registerCleanupTask(async () => {
+      await clearStoredTokens()
+      ;(globalThis as any).chrome = previousChrome
+    })
+  }
+
   describe('getFlagsApiHost', () => {
-    it('maps each site to its frontend host (US1/EU1 → app, staging → dd, regional sites as-is)', () => {
+    it('maps each site to its frontend host (US1 → app, staging → dd)', () => {
       expect(getFlagsApiHost('datadoghq.com')).toBe('app.datadoghq.com')
-      expect(getFlagsApiHost('datadoghq.eu')).toBe('app.datadoghq.eu')
       expect(getFlagsApiHost('datad0g.com')).toBe('dd.datad0g.com')
-      expect(getFlagsApiHost('us3.datadoghq.com')).toBe('us3.datadoghq.com')
-      expect(getFlagsApiHost('ddog-gov.com')).toBe('ddog-gov.com')
     })
 
     it('throws on a site that is not in the known list', () => {
@@ -36,14 +59,14 @@ describe('oauth', () => {
 
     // Stub chrome.identity so launchWebAuthFlow echoes back a redirect built from the state that
     // loginWithOAuth actually generated (so the state check passes and we exercise the domain check).
-    function mockChromeIdentity(makeRedirect: (params: { state: string }) => string) {
+    function mockChromeIdentity(makeRedirect: (params: { state: string }, url: string) => string) {
       const previousChrome = (globalThis as any).chrome
       ;(globalThis as any).chrome = {
         identity: {
           getRedirectURL: () => 'https://ext-id.chromiumapp.org/',
           launchWebAuthFlow: ({ url }: { url: string }) => {
             const state = new URL(url).searchParams.get('state')!
-            return Promise.resolve(makeRedirect({ state }))
+            return Promise.resolve(makeRedirect({ state }, url))
           },
         },
       }
@@ -70,6 +93,26 @@ describe('oauth', () => {
       expect(tokens.accessToken).toBe('tok')
     })
 
+    it('sends the prod client id for a prod site and the staging client id for staging', async () => {
+      const clientIdByHost: Record<string, string | null> = {}
+      mockChromeIdentity(({ state }, url) => {
+        const requestUrl = new URL(url)
+        clientIdByHost[requestUrl.hostname] = requestUrl.searchParams.get('client_id')
+        // Omit `domain` so the flow proceeds to the (stubbed) token exchange.
+        return `https://ext-id.chromiumapp.org/?code=abc&state=${state}`
+      })
+      // Fresh Response per call — two logins each read the token-exchange body once.
+      spyOn(globalThis, 'fetch').and.callFake(() =>
+        Promise.resolve(new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 })))
+      )
+
+      await loginWithOAuth('datadoghq.com') // US1 (prod)
+      await loginWithOAuth('datad0g.com') // staging
+
+      expect(clientIdByHost['app.datadoghq.com']).toBe('2c19b57d-118a-4f52-bcfb-709503a68290')
+      expect(clientIdByHost['dd.datad0g.com']).toBe('13c94d15-067d-4263-a309-be4811141419')
+    })
+
     it('proceeds when the redirect omits a domain', async () => {
       mockChromeIdentity(({ state }) => `https://ext-id.chromiumapp.org/?code=abc&state=${state}`)
       spyOn(globalThis, 'fetch').and.returnValue(
@@ -79,33 +122,172 @@ describe('oauth', () => {
       const tokens = await loginWithOAuth('datad0g.com')
       expect(tokens.accessToken).toBe('tok')
     })
-  })
 
-  describe('getValidAccessToken', () => {
-    beforeEach(() => {
-      // In-memory chrome.storage.session so token read/write/remove work in the karma browser.
+    it('asks for teams_read alongside the feature-flag scopes', async () => {
+      const requestedScopes: string[] = []
+      mockChromeIdentity(({ state }, url) => {
+        requestedScopes.push(new URL(url).searchParams.get('scope')!)
+        return `https://ext-id.chromiumapp.org/?code=abc&state=${state}`
+      })
+      spyOn(globalThis, 'fetch').and.returnValue(
+        Promise.resolve(new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 })))
+      )
+
+      await loginWithOAuth('datad0g.com')
+      expect(requestedScopes.length).toBe(1)
+      expect(requestedScopes[0].split(' ')).toEqual([
+        'feature_flag_config_read',
+        'feature_flag_environment_config_read',
+        'teams_read',
+      ])
+    })
+
+    // An OAuth client that hasn't been granted teams_read must still be able to sign in — losing the
+    // team filter is acceptable, losing the tab is not.
+    it('retries without the optional scopes when the client is not granted them', async () => {
+      const requestedScopes: string[] = []
+      mockChromeIdentity(({ state }, url) => {
+        const scope = new URL(url).searchParams.get('scope')!
+        requestedScopes.push(scope)
+        return scope.includes('teams_read')
+          ? `https://ext-id.chromiumapp.org/?error=invalid_scope&error_description=unauthorized+scope&state=${state}`
+          : `https://ext-id.chromiumapp.org/?code=abc&state=${state}`
+      })
+      spyOn(globalThis, 'fetch').and.returnValue(
+        Promise.resolve(new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 })))
+      )
+
+      const tokens = await loginWithOAuth('datad0g.com')
+      expect(tokens.accessToken).toBe('tok')
+      expect(requestedScopes.length).toBe(2)
+      expect(requestedScopes[1].split(' ')).toEqual([
+        'feature_flag_config_read',
+        'feature_flag_environment_config_read',
+      ])
+    })
+
+    // Some sites (e.g. prod) refuse an ungranted optional scope by failing the authorize page to load
+    // outright (Chrome: "Authorization page could not be loaded") rather than redirecting back with
+    // error=invalid_scope. That must still fall back to signing in without the optional scopes.
+    it('retries without the optional scopes when the authorize page fails to load', async () => {
+      const requestedScopes: string[] = []
       const previousChrome = (globalThis as any).chrome
-      const store: Record<string, unknown> = {}
       ;(globalThis as any).chrome = {
-        storage: {
-          session: {
-            get: (key: string) => Promise.resolve({ [key]: store[key] }),
-            set: (items: Record<string, unknown>) => {
-              Object.assign(store, items)
-              return Promise.resolve()
-            },
-            remove: (key: string) => {
-              delete store[key]
-              return Promise.resolve()
-            },
+        identity: {
+          getRedirectURL: () => 'https://ext-id.chromiumapp.org/',
+          launchWebAuthFlow: ({ url }: { url: string }) => {
+            const parsed = new URL(url)
+            requestedScopes.push(parsed.searchParams.get('scope')!)
+            return parsed.searchParams.get('scope')!.includes('teams_read')
+              ? Promise.reject(new Error('Authorization page could not be loaded.'))
+              : Promise.resolve(`https://ext-id.chromiumapp.org/?code=abc&state=${parsed.searchParams.get('state')!}`)
           },
         },
       }
-      registerCleanupTask(async () => {
-        await clearStoredTokens()
+      registerCleanupTask(() => {
         ;(globalThis as any).chrome = previousChrome
       })
+      spyOn(globalThis, 'fetch').and.returnValue(
+        Promise.resolve(new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 })))
+      )
+
+      const tokens = await loginWithOAuth('datad0g.com')
+      expect(tokens.accessToken).toBe('tok')
+      expect(requestedScopes.length).toBe(2)
+      expect(requestedScopes[1].split(' ')).toEqual([
+        'feature_flag_config_read',
+        'feature_flag_environment_config_read',
+      ])
     })
+
+    it('does not retry when the popup fails for a non-scope reason (e.g. user closed it)', async () => {
+      let attempts = 0
+      const previousChrome = (globalThis as any).chrome
+      ;(globalThis as any).chrome = {
+        identity: {
+          getRedirectURL: () => 'https://ext-id.chromiumapp.org/',
+          launchWebAuthFlow: () => {
+            attempts += 1
+            return Promise.reject(new Error('The user did not approve access.'))
+          },
+        },
+      }
+      registerCleanupTask(() => {
+        ;(globalThis as any).chrome = previousChrome
+      })
+
+      await expectAsync(loginWithOAuth('datad0g.com')).toBeRejectedWithError(/did not approve/)
+      expect(attempts).toBe(1)
+    })
+
+    it('does not retry on an authorization error other than invalid_scope', async () => {
+      let attempts = 0
+      mockChromeIdentity(({ state }) => {
+        attempts += 1
+        return `https://ext-id.chromiumapp.org/?error=access_denied&state=${state}`
+      })
+
+      await expectAsync(loginWithOAuth('datad0g.com')).toBeRejectedWithError(/access_denied/)
+      expect(attempts).toBe(1)
+    })
+  })
+
+  describe('revokeAndClearTokens', () => {
+    beforeEach(mockSessionStorage)
+
+    it('revokes the refresh token and clears local tokens', async () => {
+      await storeTokens({ accessToken: 'a1', refreshToken: 'r1', expiresAt: Date.now() + 10 * 60_000 })
+      const fetchSpy = spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response('', { status: 200 })))
+
+      expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: true })
+      expect(await loadStoredTokens()).toBeNull()
+
+      const [url, init] = fetchSpy.calls.argsFor(0) as [string, RequestInit]
+      expect(url).toBe('https://dd.datad0g.com/oauth2/v1/revoke')
+      expect((init.headers as Record<string, string>).Authorization).toBe('Bearer a1')
+      const body = new URLSearchParams(init.body as string)
+      // Revoking the refresh token cascades to the access tokens minted from it; revoking only the
+      // access token would leave the grant renewable.
+      expect(body.get('token')).toBe('r1')
+      expect(body.get('token_type_hint')).toBe('refresh_token')
+    })
+
+    it('revokes the access token when there is no refresh token', async () => {
+      await storeTokens({ accessToken: 'a1', expiresAt: Date.now() + 10 * 60_000 })
+      const fetchSpy = spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response('', { status: 200 })))
+
+      expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: true })
+      const body = new URLSearchParams((fetchSpy.calls.argsFor(0)[1] as RequestInit).body as string)
+      expect(body.get('token')).toBe('a1')
+      expect(body.get('token_type_hint')).toBe('access_token')
+    })
+
+    it('still clears local tokens when the revocation is refused', async () => {
+      await storeTokens({ accessToken: 'a1', refreshToken: 'r1', expiresAt: Date.now() + 10 * 60_000 })
+      spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response('', { status: 400 })))
+
+      expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: false })
+      expect(await loadStoredTokens()).toBeNull()
+    })
+
+    it('still clears local tokens when the network fails', async () => {
+      await storeTokens({ accessToken: 'a1', refreshToken: 'r1', expiresAt: Date.now() + 10 * 60_000 })
+      spyOn(globalThis, 'fetch').and.returnValue(Promise.reject(new TypeError('Failed to fetch')))
+
+      expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: false })
+      expect(await loadStoredTokens()).toBeNull()
+    })
+
+    it('reports success without a request when there is nothing left to revoke', async () => {
+      const fetchSpy = spyOn(globalThis, 'fetch')
+
+      expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: true })
+      expect(fetchSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('getValidAccessToken', () => {
+    beforeEach(mockSessionStorage)
 
     it('returns null when nothing is stored', async () => {
       expect(await getValidAccessToken('datad0g.com')).toBeNull()

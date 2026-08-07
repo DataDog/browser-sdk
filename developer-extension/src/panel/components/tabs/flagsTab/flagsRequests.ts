@@ -4,21 +4,35 @@ import { getFlagsApiHost } from './oauth'
 export interface CatalogFlag {
   key: string
   name: string
+  // Free-text description authored in the Datadog UI. Empty when the flag has none.
+  description: string
   type: FlagType
   // Parsed value of each variant (any JSON value); see parseVariantValue.
   variants: Array<{ name: string; value: unknown }>
   tags: string[]
+  // UUID of the user who created the flag, as returned by the API. Undefined for flags created by a
+  // service account or an integration, which don't carry a user UUID. Compared against the signed-in
+  // user's UUID to drive the "My feature flags" filter.
+  createdBy?: string
 }
 
 // Filters + pagination sent to the server so the FFE endpoint does the work — the extension never
 // loads the whole catalog. The endpoint applies all of these itself: `search` matches name/key/tags,
-// `tags` are AND-ed, `value_type` is OR-ed (see dd-source ffe-service). `page` is 1-based.
+// `tags` are AND-ed, `value_type` is OR-ed, `created_by` is an IN-list, and `team:<handle>` tags are
+// OR-ed among themselves then AND-ed with regular tags (see dd-source ffe-service). `page` is 1-based.
 export interface FlagCatalogRequest {
   page: number
   pageSize: number
   search: string
   typeFilter: string[]
   tagFilter: string[]
+  // Team handles for the "My teams" filter. Sent as `tags=team:<handle>` — the server OR-s team tags
+  // among themselves and AND-s them with the regular `tagFilter`.
+  teamFilter: string[]
+  // The signed-in user's UUID when "My feature flags" is on, else null. Sent as `created_by` so the
+  // server returns only flags this user created. Filtering here (not client-side) is required: we
+  // load one page at a time, so a client filter would only ever see the current page.
+  createdBy: string | null
 }
 
 // One page of results plus the server's total count (for pagination).
@@ -31,9 +45,11 @@ interface RawFeatureFlag {
   attributes: {
     key: string
     name?: string
+    description?: string
     value_type: FlagType
     variants?: Array<{ name: string; value: string }>
     tags?: string[]
+    created_by?: string
   }
 }
 
@@ -90,6 +106,15 @@ export function fetchFlagCatalog(token: string, site: string, request: FlagCatal
   }
   for (const tag of request.tagFilter) {
     url.searchParams.append('tags', tag)
+  }
+  // "My teams": team handles ride the same `tags` param as `team:<handle>` (the server OR-s team
+  // tags among themselves, then AND-s them with the regular tags above).
+  for (const handle of request.teamFilter) {
+    url.searchParams.append('tags', `team:${handle}`)
+  }
+  // "My feature flags": restrict to flags created by the signed-in user.
+  if (request.createdBy) {
+    url.searchParams.set('created_by', request.createdBy)
   }
 
   return fetchFlagPage(url, token, 'Failed to fetch flag catalog')
@@ -151,12 +176,14 @@ function mapResources(resources: RawFeatureFlag[]): CatalogFlag[] {
     byKey.set(attributes.key, {
       key: attributes.key,
       name: attributes.name || attributes.key,
+      description: attributes.description ?? '',
       type: attributes.value_type,
       variants: (attributes.variants ?? []).map((variant) => ({
         name: variant.name,
         value: parseVariantValue(attributes.value_type, variant.value),
       })),
       tags: attributes.tags ?? [],
+      createdBy: attributes.created_by,
     })
   }
   return Array.from(byKey.values())

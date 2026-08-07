@@ -4,6 +4,7 @@ import { getOverride, type FlagOverride, type FlagOverrides } from './inspectedP
 import type { FlagAuthState } from './useFlagAuth'
 import { useFlagCatalog, type FlagCatalogState } from './useFlagCatalog'
 import { useFlagCatalogView, type FlagCatalogView } from './useFlagCatalogView'
+import { useFlagIdentity, type FlagIdentityState } from './useFlagIdentity'
 import { useInspectedPageOverrides, type FlagPageStatus } from './useInspectedPageOverrides'
 import { useOverriddenFlags } from './useOverriddenFlags'
 
@@ -11,6 +12,8 @@ import { useOverriddenFlags } from './useOverriddenFlags'
 // tab and its components render state and invoke actions without prop-drilling.
 export interface FlagsContextValue {
   view: FlagCatalogView
+  // Signed-in user + team handles backing the "My feature flags" and "My teams" filters.
+  identity: FlagIdentityState
   catalog: FlagCatalogState
   // Inspected-page override state (see useInspectedPageOverrides).
   overrideStatus: FlagPageStatus
@@ -49,7 +52,10 @@ export function useFlagsContext(): FlagsContextValue {
  * and its components consume this via useFlagsContext and stay focused on rendering.
  */
 export function FlagsProvider({ auth, children }: { auth: FlagAuthState; children: ReactNode }) {
-  const view = useFlagCatalogView()
+  // Identity resolves first: the catalog view needs the signed-in user's UUID for the "My feature
+  // flags" (created_by) filter, and the filter bar needs the team handles for "My teams".
+  const identity = useFlagIdentity(auth)
+  const view = useFlagCatalogView(identity.userId)
   const catalog = useFlagCatalog(auth, view.request)
   const { setPage } = view
   const { status, error, overrides, devtoolsEnabled, setOverride, clearOverride, clearAll, reloadPage } =
@@ -77,6 +83,7 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
           overriddenCatalogFlags.find((flag) => flag.key === key) ?? {
             key,
             name: key,
+            description: '',
             type: overrides[key].type,
             variants: [],
             tags: [],
@@ -142,6 +149,7 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
   const value = useMemo<FlagsContextValue>(
     () => ({
       view,
+      identity,
       catalog,
       overrideStatus: status,
       overrideError: error,
@@ -161,6 +169,7 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
     }),
     [
       view,
+      identity,
       catalog,
       status,
       error,

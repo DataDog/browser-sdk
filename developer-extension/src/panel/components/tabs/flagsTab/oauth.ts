@@ -3,12 +3,25 @@
 //
 // The client is a PUBLIC client (no secret), so PKCE is the only client proof. Tokens live in
 // chrome.storage.session (cleared when the browser session ends) — never persisted to disk.
-// See FFL-2596 / the OAuth CLI client `13c94d15-067d-4263-a309-be4811141419` (staging).
+// See FFL-2596. Staging and prod use separate registered OAuth clients — see getClientId.
 
 import { mockable } from '../../../../../../packages/browser-core/src/tools/mockable'
 
-const CLIENT_ID = '13c94d15-067d-4263-a309-be4811141419'
-const SCOPES = ['feature_flag_config_read', 'feature_flag_environment_config_read']
+// Staging (datad0g.com) and prod have separate registered OAuth clients. The prod client is
+// replicated across all prod DCs, so every non-staging site shares it. Both are public PKCE clients.
+const STAGING_CLIENT_ID = '13c94d15-067d-4263-a309-be4811141419'
+const PROD_CLIENT_ID = '2c19b57d-118a-4f52-bcfb-709503a68290'
+
+function getClientId(site: string): string {
+  return site === 'datad0g.com' ? STAGING_CLIENT_ID : PROD_CLIENT_ID
+}
+// Scopes the catalog itself needs. Requested on every login.
+const REQUIRED_SCOPES = ['feature_flag_config_read', 'feature_flag_environment_config_read']
+// Scopes we'd like but can live without. `teams_read` backs the "My teams" filter: GET /api/v2/team
+// requires the teams_read permission, so without it that one filter is unavailable (see
+// flagIdentity.ts). Requested on a first attempt and dropped if the OAuth client hasn't been granted
+// them — see loginWithOAuth.
+const OPTIONAL_SCOPES = ['teams_read']
 const TOKENS_STORAGE_KEY = 'flagsOAuthTokens'
 // Refresh a bit before the token actually expires to avoid racing the clock on a slow request.
 const EXPIRY_SKEW_MS = 60_000
@@ -35,20 +48,13 @@ export interface FlagSite {
   label: string
 }
 
-// The Datadog sites the Flags tab can connect to, each paired with the frontend host that serves
-// its OAuth endpoints and FFE API. The site is chosen from this fixed list (a Select in the UI), so
-// there's no free-text host to validate against phishing — the value is always one of these. Host
-// subdomains mirror the canonical builder in browser-rum-core's getSessionReplayUrl.ts: US1 and EU1
-// get `app.`, staging gets `dd.`, and the remaining sites are already their own host.
+// The Datadog sites the Flags tab can connect to, each paired with the frontend host that serves its
+// OAuth endpoints and FFE API. Chosen from this fixed list (a Select in the UI) so there's no
+// free-text host to validate against phishing — the value is always one of these. Trimmed to US1 +
+// Staging for now; the prod OAuth client is still replicating to the other DCs, so add them back here
+// (with the same subdomain scheme — US1/EU1 `app.`, staging `dd.`, regional sites as-is) once it's live.
 export const FLAG_SITES: FlagSite[] = [
   { site: 'datadoghq.com', host: 'app.datadoghq.com', label: 'US1 (datadoghq.com)' },
-  { site: 'us3.datadoghq.com', host: 'us3.datadoghq.com', label: 'US3 (us3.datadoghq.com)' },
-  { site: 'us5.datadoghq.com', host: 'us5.datadoghq.com', label: 'US5 (us5.datadoghq.com)' },
-  { site: 'datadoghq.eu', host: 'app.datadoghq.eu', label: 'EU1 (datadoghq.eu)' },
-  { site: 'ap1.datadoghq.com', host: 'ap1.datadoghq.com', label: 'AP1 (ap1.datadoghq.com)' },
-  { site: 'ap2.datadoghq.com', host: 'ap2.datadoghq.com', label: 'AP2 (ap2.datadoghq.com)' },
-  { site: 'ddog-gov.com', host: 'ddog-gov.com', label: 'US1-FED (ddog-gov.com)' },
-  { site: 'us2.ddog-gov.com', host: 'us2.ddog-gov.com', label: 'US2-FED (us2.ddog-gov.com)' },
   { site: 'datad0g.com', host: 'dd.datad0g.com', label: 'Staging (datad0g.com)' },
 ]
 
@@ -131,11 +137,43 @@ async function requestToken(host: string, body: URLSearchParams, fallbackRefresh
   return toTokens((await response.json()) as RawTokenResponse, fallbackRefreshToken)
 }
 
+// Thrown when the authorization server rejects a requested scope via an error redirect, which is how
+// it reports that the OAuth client isn't granted one. Distinguished so loginWithOAuth can drop
+// OPTIONAL_SCOPES and retry.
+class InvalidScopeError extends Error {}
+
+// Thrown when the authorize page fails to load at all (Chrome's launchWebAuthFlow rejects with
+// "Authorization page could not be loaded"). Some sites refuse an ungranted optional scope this way
+// — rejecting the request outright rather than redirecting back with `error=invalid_scope` — so
+// loginWithOAuth treats it the same as InvalidScopeError and retries without the optional scopes.
+class AuthorizationPageLoadError extends Error {}
+
 /**
  * Runs the interactive OAuth flow: opens Datadog's login/consent screen, then exchanges the
  * returned authorization code for tokens. Returns the tokens (caller is responsible for storing).
+ *
+ * Asks for the optional scopes first and retries without them if the client isn't granted them, so
+ * that a not-yet-updated OAuth client registration costs us one optional filter rather than the
+ * ability to sign in at all. Usually the retry isn't a second prompt (an unauthorized scope is
+ * refused before any consent screen); the exception is a transient authorize-page load failure,
+ * which is indistinguishable from a scope refusal and so triggers one retry that does re-open the flow.
  */
 export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
+  try {
+    return await authorize(site, [...REQUIRED_SCOPES, ...OPTIONAL_SCOPES])
+  } catch (err) {
+    // Both signal the optional scopes aren't granted to this client: some sites redirect back with
+    // `error=invalid_scope` (InvalidScopeError), others fail the authorize page to load entirely
+    // (AuthorizationPageLoadError). Either way, retry once with only the required scopes. Any other
+    // failure (user declined, state/domain mismatch, cancellation) is final — don't retry it.
+    if (err instanceof InvalidScopeError || err instanceof AuthorizationPageLoadError) {
+      return authorize(site, REQUIRED_SCOPES)
+    }
+    throw err
+  }
+}
+
+async function authorize(site: string, scopes: string[]): Promise<OAuthTokens> {
   const host = getFlagsApiHost(site)
   const redirectUri = chrome.identity.getRedirectURL()
   const { verifier, challenge } = await generatePkce()
@@ -143,25 +181,46 @@ export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
 
   const authUrl = new URL(`https://${host}/oauth2/v1/authorize`)
   authUrl.searchParams.set('response_type', 'code')
-  authUrl.searchParams.set('client_id', CLIENT_ID)
+  authUrl.searchParams.set('client_id', getClientId(site))
   authUrl.searchParams.set('redirect_uri', redirectUri)
-  authUrl.searchParams.set('scope', SCOPES.join(' '))
+  authUrl.searchParams.set('scope', scopes.join(' '))
   authUrl.searchParams.set('code_challenge', challenge)
   authUrl.searchParams.set('code_challenge_method', 'S256')
   authUrl.searchParams.set('state', state)
 
-  const redirectResponse = await chrome.identity.launchWebAuthFlow({
-    url: authUrl.toString(),
-    interactive: true,
-  })
+  let redirectResponse: string | undefined
+  try {
+    redirectResponse = await chrome.identity.launchWebAuthFlow({
+      url: authUrl.toString(),
+      interactive: true,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    // A page-load failure (vs. e.g. the user closing the popup) is how some sites refuse an ungranted
+    // optional scope — tag it so loginWithOAuth can retry without those scopes. Other rejections pass
+    // through unchanged so they aren't retried.
+    if (message.includes('could not be loaded')) {
+      throw new AuthorizationPageLoadError(message)
+    }
+    throw err
+  }
   if (!redirectResponse) {
     throw new Error('Authorization was cancelled')
   }
 
   const returned = new URL(redirectResponse)
+  // Validate the CSRF state first — before acting on ANY other callback param, including `error`.
+  // Otherwise a forged/mismatched callback carrying `error=invalid_scope` could drive the scope-retry.
+  if (returned.searchParams.get('state') !== state) {
+    throw new Error('State mismatch — aborting for safety')
+  }
   const errorParam = returned.searchParams.get('error')
   if (errorParam) {
-    throw new Error(`Authorization failed: ${returned.searchParams.get('error_description') ?? errorParam}`)
+    const description = returned.searchParams.get('error_description') ?? errorParam
+    if (errorParam === 'invalid_scope') {
+      throw new InvalidScopeError(`Authorization failed: ${description}`)
+    }
+    throw new Error(`Authorization failed: ${description}`)
   }
   // Datadog appends `domain` to the redirect, naming the site the user actually authenticated
   // against (bare site form, e.g. "datad0g.com"). `site` is our source of truth for every host we
@@ -170,9 +229,6 @@ export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
   const returnedDomain = returned.searchParams.get('domain')
   if (returnedDomain && returnedDomain.toLowerCase() !== site) {
     throw new Error(`Authenticated against "${returnedDomain}" but "${site}" was selected — aborting login`)
-  }
-  if (returned.searchParams.get('state') !== state) {
-    throw new Error('State mismatch — aborting for safety')
   }
   const code = returned.searchParams.get('code')
   if (!code) {
@@ -185,7 +241,7 @@ export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
       grant_type: 'authorization_code',
       code,
       redirect_uri: redirectUri,
-      client_id: CLIENT_ID,
+      client_id: getClientId(site),
       code_verifier: verifier,
     })
   )
@@ -197,7 +253,7 @@ function refreshTokens(site: string, refreshToken: string): Promise<OAuthTokens>
     new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      client_id: CLIENT_ID,
+      client_id: getClientId(site),
     }),
     refreshToken
   )
@@ -214,6 +270,59 @@ export async function storeTokens(tokens: OAuthTokens): Promise<void> {
 
 export async function clearStoredTokens(): Promise<void> {
   await chrome.storage.session.remove(TOKENS_STORAGE_KEY)
+}
+
+/**
+ * Ends the connection: revokes the grant at Datadog (RFC 7009), then drops the local tokens.
+ *
+ * Clearing local storage alone would only make this extension forget the tokens — the grant itself
+ * would stay live until it expired, and any copy of the refresh token would keep working. Revoking
+ * the refresh token kills the renewable part of the grant; the short-lived access token (also dropped
+ * locally here) is left to expire on its own — RFC 7009 only *recommends*, not requires, that
+ * revoking a token invalidate related ones, so we don't rely on immediate cascade.
+ *
+ * Returns whether the revocation succeeded. Local tokens are cleared either way: a user who asked to
+ * disconnect must end up disconnected here even if Datadog can't be reached, so a failure is reported
+ * as "the grant may still be active" rather than by leaving them signed in. Only a failure to clear
+ * the local tokens rejects — that one has to reach the caller, since the panel would otherwise report
+ * a disconnection that a reopened panel would immediately contradict.
+ */
+export async function revokeAndClearTokens(site: string): Promise<{ revoked: boolean }> {
+  const revoked = await tryRevokeGrant(site)
+  await clearStoredTokens()
+  return { revoked }
+}
+
+async function tryRevokeGrant(site: string): Promise<boolean> {
+  try {
+    // The revoke endpoint authenticates the caller with a valid access token, so refresh first if the
+    // stored one has aged out. Revoke the refresh token when we have one — that kills the renewable
+    // part of the grant (revoking only the access token would leave it renewable); the access token
+    // itself is short-lived and also cleared locally.
+    const accessToken = await getValidAccessToken(site)
+    const tokens = await loadStoredTokens()
+    if (!accessToken || !tokens) {
+      // Nothing usable left to revoke — getValidAccessToken already cleared a dead session.
+      return true
+    }
+
+    const response = await fetch(`https://${getFlagsApiHost(site)}/oauth2/v1/revoke`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: new URLSearchParams({
+        token: tokens.refreshToken ?? tokens.accessToken,
+        token_type_hint: tokens.refreshToken ? 'refresh_token' : 'access_token',
+        client_id: getClientId(site),
+      }).toString(),
+    })
+    return response.ok
+  } catch {
+    // Network failure, or a refresh that couldn't complete: nothing more we can do server-side.
+    return false
+  }
 }
 
 /**
