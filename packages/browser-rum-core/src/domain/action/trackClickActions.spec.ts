@@ -561,6 +561,40 @@ describe('trackClickActions', () => {
     })
   })
 
+  // Regression: on Android WebViews, a touch scroll gesture that starts on an element is
+  // delivered to the page as pointerdown -> pointerup (the finger moves while scrolling, so
+  // the browser suppresses its own synthetic `click` event, and no `pointercancel` is fired
+  // as it would be for an in-page scroll). The SDK must not record such a gesture as a click.
+  describe('scroll gesture (touch drag)', () => {
+    it('does not create a click action when the pointer moves like a scroll (no `click`, no `pointercancel`)', () => {
+      startClickActionsTracking()
+
+      emulateScrollGesture()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+    })
+
+    it('does not create a click action even if the `scroll` event is delayed until after pointerup', () => {
+      startClickActionsTracking()
+
+      emulateScrollGesture({ scrollAfterPointerUp: true })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events).toEqual([])
+    })
+
+    it('still records a genuine tap (pointer stays within the tap tolerance)', () => {
+      startClickActionsTracking()
+
+      emulateScrollGesture({ moveBy: 2, activity: true })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Click me')
+    })
+  })
+
   function emulateClick({
     target = button,
     activity,
@@ -605,6 +639,44 @@ describe('trackClickActions', () => {
         // Since we don't collect dom mutations for this test, manually dispatch one
         domMutationObservable.notify([createMutationRecord()])
       }
+    }
+  }
+
+  // Emulates a touch scroll gesture the way an Android WebView delivers it to the page: a
+  // pointerdown, then a pointerup at a moved location, WITHOUT a `pointercancel` and (by
+  // default) WITHOUT the browser's synthetic `click` event, which it suppresses because the
+  // pointer moved. Optionally emits the `scroll` DOM event after pointerup to reproduce the
+  // "delayed scroll" variant.
+  function emulateScrollGesture({
+    moveBy = 120,
+    scrollAfterPointerUp = false,
+    activity = false,
+  }: { moveBy?: number; scrollAfterPointerUp?: boolean; activity?: boolean } = {}) {
+    const targetPosition = button.getBoundingClientRect()
+    const clientX = targetPosition.left + targetPosition.width / 2
+    const clientY = targetPosition.top + targetPosition.height / 2
+
+    button.dispatchEvent(
+      createNewEvent('pointerdown', { target: button, clientX, clientY, isPrimary: true, timeStamp: relativeNow() })
+    )
+    clock.tick(EMULATED_CLICK_DURATION)
+    // Finger has moved down the screen (scrolling), so pointerup lands away from pointerdown.
+    button.dispatchEvent(
+      createNewEvent('pointerup', {
+        target: button,
+        clientX,
+        clientY: clientY + moveBy,
+        isPrimary: true,
+        timeStamp: relativeNow(),
+      })
+    )
+    if (scrollAfterPointerUp) {
+      window.dispatchEvent(createNewEvent('scroll'))
+    }
+    if (activity) {
+      // A genuine tap on a button typically triggers some page activity.
+      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      domMutationObservable.notify([createMutationRecord()])
     }
   }
 
