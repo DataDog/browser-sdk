@@ -77,7 +77,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Whether to propagate user and account IDs in the baggage header of trace requests.
    *
    * @category Tracing
-   * @defaultValue false
+   * @defaultValue true
    */
   propagateTraceBaggage?: boolean | undefined
 
