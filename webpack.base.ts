@@ -32,6 +32,9 @@ export default ({
     path: path.resolve('./bundle'),
     chunkFormat: 'module',
     chunkLoading: 'import',
+    trustedTypes: {
+      policyName: 'datadog-chunks',
+    },
   },
   target: ['web', 'es2020'],
   devtool: false,
