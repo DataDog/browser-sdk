@@ -29,6 +29,11 @@
       "require": "./cjs/entries/transport.js",
       "types": "./cjs/entries/transport.d.ts"
     },
+    "./sample": {
+      "import": "./esm/entries/sample.mjs",
+      "require": "./cjs/entries/sample.js",
+      "types": "./cjs/entries/sample.d.ts"
+    },
     "./configuration": {
       "import": "./esm/entries/configuration.mjs",
       "require": "./cjs/entries/configuration.js",
@@ -44,6 +49,7 @@
     "monitor",
     "util",
     "transport",
+    "sample",
     "configuration",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"

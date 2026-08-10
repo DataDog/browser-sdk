@@ -56,6 +56,7 @@
       "@datadog/js-core/monitor": ["./packages/js-core/src/entries/monitor"],
       "@datadog/js-core/util": ["./packages/js-core/src/entries/util"],
       "@datadog/js-core/transport": ["./packages/js-core/src/entries/transport"],
+      "@datadog/js-core/sample": ["./packages/js-core/src/entries/sample"],
       "@datadog/js-core/configuration": ["./packages/js-core/src/entries/configuration"]
     }
   }
