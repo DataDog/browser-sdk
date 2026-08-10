@@ -1,94 +1,21 @@
-import { registerCleanupTask } from '../../test'
+import { createMockWebSocket, mockWebSocket, MockWebSocket, registerCleanupTask } from '../../test'
 import type { Subscription } from '../tools/observable'
 import { setAllowUntrustedEvents } from './addEventListener'
 import type { WebSocketContext } from './webSocketObservable'
 import { initWebSocketObservable, resetWebSocketObservable } from './webSocketObservable'
 
-// A minimal stand-in for the native `WebSocket` constructor. We do not connect to a real server in
-// unit tests; instead we expose helpers to simulate the browser dispatching events on the instance.
-class FakeWebSocket extends EventTarget {
-  static readonly CONNECTING = 0
-  static readonly OPEN = 1
-  static readonly CLOSING = 2
-  static readonly CLOSED = 3
-
-  url: string
-  protocol = ''
-  bufferedAmount = 0
-  readyState: number = FakeWebSocket.CONNECTING
-  onmessage: ((event: MessageEvent) => void) | null = null
-  onopen: ((event: Event) => void) | null = null
-  onclose: ((event: CloseEvent) => void) | null = null
-
-  constructor(url: string | URL, protocols?: string | string[]) {
-    super()
-    this.url = resolveWebSocketUrl(String(url))
-    if (typeof protocols === 'string') {
-      this.protocol = protocols
-    }
-  }
-
-  send(_data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
-    // no-op; tests will set `bufferedAmount` before calling send to verify it is sampled.
-  }
-
-  close(_code?: number, _reason?: string): void {
-    this.readyState = FakeWebSocket.CLOSED
-  }
-
-  simulateOpen() {
-    this.readyState = FakeWebSocket.OPEN
-    const event = new Event('open')
-    this.dispatchEvent(event)
-    this.onopen?.(event)
-  }
-
-  simulateMessage(data: unknown) {
-    const event = new MessageEvent('message', { data })
-    this.dispatchEvent(event)
-    this.onmessage?.(event)
-  }
-
-  simulateClose(code: number, reason: string, wasClean: boolean) {
-    this.readyState = FakeWebSocket.CLOSED
-    // CloseEvent is not always constructable in test environments; use a plain Event with assigned fields.
-    const event = Object.assign(new Event('close'), { code, reason, wasClean }) as CloseEvent
-    this.dispatchEvent(event)
-    this.onclose?.(event)
-  }
-}
-
-// Mimics how a real browser resolves the URL passed to the `WebSocket` constructor: relative URLs
-// are resolved against the document location, and `http(s)` schemes are translated to `ws(s)`.
-function resolveWebSocketUrl(url: string): string {
-  const resolved = new URL(url, location.href)
-  if (resolved.protocol === 'http:') {
-    resolved.protocol = 'ws:'
-  } else if (resolved.protocol === 'https:') {
-    resolved.protocol = 'wss:'
-  }
-  return resolved.href
-}
-
-type FakeWebSocketConstructor = typeof FakeWebSocket
-
-const windowAsWebSocketHost = window as unknown as { WebSocket: FakeWebSocketConstructor }
-
 describe('webSocketObservable', () => {
-  let originalWebSocket: FakeWebSocketConstructor
   let contexts: WebSocketContext[]
   let subscription: Subscription | undefined
 
   beforeEach(() => {
-    originalWebSocket = windowAsWebSocketHost.WebSocket
-    windowAsWebSocketHost.WebSocket = FakeWebSocket
+    mockWebSocket()
     contexts = []
 
     registerCleanupTask(() => {
       subscription?.unsubscribe()
       subscription = undefined
       resetWebSocketObservable()
-      windowAsWebSocketHost.WebSocket = originalWebSocket
     })
   })
 
@@ -111,7 +38,7 @@ describe('webSocketObservable', () => {
     describe('connecting context', () => {
       it('emits a "connecting" context when a WebSocket is constructed', () => {
         const url = 'wss://example.com/socket'
-        const ws = new windowAsWebSocketHost.WebSocket(url)
+        const ws = createMockWebSocket(url)
 
         const connectingContexts = getContexts('connecting')
         expect(connectingContexts.length).toBe(1)
@@ -121,7 +48,7 @@ describe('webSocketObservable', () => {
       })
 
       it('reports the resolved instance.url rather than the raw constructor argument', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('/socket')
+        const ws = createMockWebSocket('/socket')
 
         const connectingContext = getContexts('connecting')[0]
         expect(connectingContext.url).not.toBe('/socket')
@@ -129,7 +56,7 @@ describe('webSocketObservable', () => {
       })
 
       it('does not include protocols in the "connecting" context when omitted', () => {
-        new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        createMockWebSocket('wss://example.com/socket')
 
         expect(getContexts('connecting')[0].protocols).toBeUndefined()
       })
@@ -137,7 +64,7 @@ describe('webSocketObservable', () => {
       it('includes string protocols in the "connecting" context', () => {
         const url = 'wss://example.com/socket'
         const protocols = 'chat.v1'
-        new windowAsWebSocketHost.WebSocket(url, protocols)
+        createMockWebSocket(url, protocols)
 
         expect(getContexts('connecting')[0].protocols).toBe(protocols)
       })
@@ -145,7 +72,7 @@ describe('webSocketObservable', () => {
       it('includes array protocols in the "connecting" context', () => {
         const url = 'wss://example.com/socket'
         const protocols = ['chat.v1', 'json']
-        new windowAsWebSocketHost.WebSocket(url, protocols)
+        createMockWebSocket(url, protocols)
 
         expect(getContexts('connecting')[0].protocols).toEqual(protocols)
       })
@@ -153,7 +80,7 @@ describe('webSocketObservable', () => {
 
     describe('preservation of native behavior', () => {
       it('does not clobber a customer-set onmessage handler', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const customerHandler = jasmine.createSpy()
         ws.onmessage = customerHandler
 
@@ -164,7 +91,7 @@ describe('webSocketObservable', () => {
       })
 
       it('does not clobber a customer-set onopen handler', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const customerHandler = jasmine.createSpy()
         ws.onopen = customerHandler
 
@@ -175,7 +102,7 @@ describe('webSocketObservable', () => {
       })
 
       it('does not clobber a customer-set onclose handler', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const customerHandler = jasmine.createSpy()
         ws.onclose = customerHandler
 
@@ -188,7 +115,7 @@ describe('webSocketObservable', () => {
 
     describe('open context', () => {
       it('emits an "open" context when the WebSocket opens', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const negotiatedProtocol = 'chat.v1'
         ws.protocol = negotiatedProtocol
         ws.simulateOpen()
@@ -201,7 +128,7 @@ describe('webSocketObservable', () => {
       })
 
       it('emits an "open" context with empty protocol when no sub-protocol negotiated', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
 
         const openContexts = getContexts('open')
@@ -212,7 +139,7 @@ describe('webSocketObservable', () => {
 
     describe('message-in context', () => {
       it('emits "message-in" with byte-length size for string payloads', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         const payload = 'hello world'
         ws.simulateMessage(payload)
@@ -223,7 +150,7 @@ describe('webSocketObservable', () => {
       })
 
       it('emits "message-in" with UTF-8 byte length for multi-byte strings', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         // 'é' is 2 bytes in UTF-8 and 'あ' is 3 bytes; total is 5 bytes for 2 chars
         const payload = 'éあ'
@@ -233,7 +160,7 @@ describe('webSocketObservable', () => {
       })
 
       it('emits "message-in" with byteLength for ArrayBuffer payloads', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         const byteLength = 16
         ws.simulateMessage(new ArrayBuffer(byteLength))
@@ -242,7 +169,7 @@ describe('webSocketObservable', () => {
       })
 
       it('emits "message-in" with byteLength for ArrayBufferView payloads', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         const viewByteLength = 12
         ws.simulateMessage(new Uint8Array(new ArrayBuffer(32), 4, viewByteLength))
@@ -251,7 +178,7 @@ describe('webSocketObservable', () => {
       })
 
       it('emits "message-in" with size for Blob payloads', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         const blob = new Blob(['hello'])
         ws.simulateMessage(blob)
@@ -262,7 +189,7 @@ describe('webSocketObservable', () => {
 
     describe('message-out context', () => {
       it('emits "message-out" with size and bufferedAmountPreSend for string payloads', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const bufferedAmountPreSend = 42
         ws.bufferedAmount = bufferedAmountPreSend
         const payload = 'hello'
@@ -276,7 +203,7 @@ describe('webSocketObservable', () => {
       })
 
       it('emits "message-out" with byteLength for ArrayBuffer payloads', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const byteLength = 8
         ws.send(new ArrayBuffer(byteLength))
 
@@ -284,7 +211,7 @@ describe('webSocketObservable', () => {
       })
 
       it('emits "message-out" with byteLength for ArrayBufferView payloads', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const viewByteLength = 10
         ws.send(new Uint8Array(new ArrayBuffer(20), 2, viewByteLength))
 
@@ -292,7 +219,7 @@ describe('webSocketObservable', () => {
       })
 
       it('emits "message-out" with size for Blob payloads', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const blob = new Blob(['hello world'])
         ws.send(blob)
 
@@ -302,7 +229,7 @@ describe('webSocketObservable', () => {
 
     describe('closed context', () => {
       it('emits a "closed" context with code, reason, and wasClean', () => {
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         const closeCode = 1000
         const closeReason = 'bye'
         const wasClean = true
@@ -322,14 +249,14 @@ describe('webSocketObservable', () => {
         subscription?.unsubscribe()
         subscription = undefined
 
-        expect(windowAsWebSocketHost.WebSocket).toBe(FakeWebSocket)
+        expect(window.WebSocket as unknown).toBe(MockWebSocket)
       })
 
       it('does not emit any further events after all subscribers unsubscribe', () => {
         subscription?.unsubscribe()
         subscription = undefined
 
-        const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
+        const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         ws.send('hello')
 
