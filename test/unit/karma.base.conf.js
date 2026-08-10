@@ -10,8 +10,8 @@ import karmaUnexpectedErrorLogReporterPlugin from './karmaUnexpectedErrorLogRepo
 const webpackConfig = webpackBase({
   mode: 'development',
   types: ['jasmine', 'chrome'],
-  // do not replace some build env variables in unit test in order to test different build behaviors
-  keepBuildEnvVariables: ['SDK_VERSION'],
+  version: 'test',
+  includeWorkerString: true,
 })
 
 const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed', 'karma-duplicate-test-name']
