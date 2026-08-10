@@ -26,6 +26,9 @@
 
 import { createRouter as originalCreateRouter } from '@tanstack/react-router'
 import { wrapCreateRouter } from '../domain/tanstackRouter/wrapCreateRouter'
+import { setReactRouterType } from '../domain/reactPlugin'
+
+setReactRouterType('tanstack-router-v1')
 
 /**
  * Use this function in place of `@tanstack/react-router` `createRouter`. Every time a route is

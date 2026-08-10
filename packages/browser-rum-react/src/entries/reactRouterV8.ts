@@ -29,4 +29,10 @@
  * ReactDOM.createRoot(document.getElementById('root')).render(<RouterProvider router={router} />)
  * ```
  */
+/* eslint-disable local-rules/disallow-side-effects */
+
+import { setReactRouterType } from '../domain/reactPlugin'
+
 export { createBrowserRouter, createHashRouter, createMemoryRouter, useRoutes, Routes } from './reactRouterV7'
+
+setReactRouterType('react-router-v8')
