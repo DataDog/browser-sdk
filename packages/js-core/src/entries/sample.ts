@@ -4,6 +4,13 @@
  *
  * @param threshold - The probability of success, as a percentage between `0` and `100`.
  * @returns `true` if the draw succeeds, `false` otherwise. Always `false` when `threshold` is `0`.
+ * @example
+ * ```ts
+ * const isSampled = performDraw(10)
+ * if (isSampled) {
+ *   // Include the event in the sampled payload.
+ * }
+ * ```
  */
 export function performDraw(threshold: number): boolean {
   return threshold !== 0 && Math.random() * 100 <= threshold
