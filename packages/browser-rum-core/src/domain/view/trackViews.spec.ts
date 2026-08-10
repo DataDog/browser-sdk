@@ -97,9 +97,11 @@ describe('track views automatically', () => {
 
     it('should keep the same URL when updating a view ended by a URL change', () => {
       const { getViewUpdateCount, getViewUpdate } = viewTest
+      clock.tick(0)
       expect(getViewUpdateCount()).toEqual(1)
 
       changeLocation('/bar')
+      clock.tick(0)
 
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(0).location.href).toEqual('http://foo.com/foo')
@@ -108,6 +110,7 @@ describe('track views automatically', () => {
     })
 
     it('should ignore URL parameter changes', () => {
+      clock.tick(0)
       expect(viewTest.getViewUpdateCount()).toEqual(1)
 
       changeLocation('/foo?bar=bar')
@@ -118,8 +121,10 @@ describe('track views automatically', () => {
     })
 
     it('should keep the same URL when updating an ended view', () => {
+      clock.tick(0)
       const initialView = viewTest.getViewUpdate(0)
       changeLocation('/bar')
+      clock.tick(0)
       expect(viewTest.getViewUpdateCount()).toEqual(3)
 
       viewTest.lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
@@ -179,6 +184,7 @@ describe('view lifecycle', () => {
     })
 
     it('should end the view at the session expiration clocks', () => {
+      const { lifeCycle } = viewTest
       const endClocks = relativeToClocks(clock.relative(123))
 
       expireSession(lifeCycle, endClocks)
@@ -188,6 +194,8 @@ describe('view lifecycle', () => {
 
     it('should send a final view update', () => {
       const { lifeCycle, getViewUpdateCount, getViewUpdate } = viewTest
+
+      clock.tick(0) // wait for the first view update to be sent
 
       expect(getViewUpdateCount()).toBe(1)
 
@@ -216,12 +224,12 @@ describe('view lifecycle', () => {
       expireSession(lifeCycle)
 
       expect(getViewEndCount()).toBe(1)
-      expect(getViewUpdateCount()).toBe(2)
+      expect(getViewUpdateCount()).toBe(1)
 
       expireSession(lifeCycle)
 
       expect(getViewEndCount()).toBe(1)
-      expect(getViewUpdateCount()).toBe(2)
+      expect(getViewUpdateCount()).toBe(1)
     })
   })
 
@@ -238,10 +246,11 @@ describe('view lifecycle', () => {
     })
 
     it('should use session_renewal loading type for the new view', () => {
-      const { getViewUpdate, getViewUpdateCount } = viewTest
+      const { lifeCycle, getViewUpdate, getViewUpdateCount } = viewTest
 
       expireSession(lifeCycle)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      clock.tick(0)
 
       expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.SESSION_RENEWAL)
     })
@@ -368,11 +377,11 @@ describe('view lifecycle', () => {
     it('should trigger a view update on unloading', () => {
       const { lifeCycle, getViewUpdateCount } = viewTest
 
-      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdateCount()).toEqual(0)
 
       lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 
-      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdateCount()).toEqual(1)
     })
 
     it('should not create a new view when ending the view on unloading', () => {
@@ -417,18 +426,22 @@ describe('view lifecycle', () => {
 
 describe('view loading type', () => {
   it('should collect initial view type as "initial_load"', () => {
+    const clock = mockClock()
     const { getViewUpdate } = setupViewTest()
+    clock.tick(0)
 
     expect(getViewUpdate(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
   })
 
   it('should collect view type as "route_change" after a view change', () => {
+    const clock = mockClock()
     const { getViewUpdate, startView } = setupViewTest()
 
     startView()
+    clock.tick(0)
 
-    expect(getViewUpdate(1).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
-    expect(getViewUpdate(2).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
+    expect(getViewUpdate(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
+    expect(getViewUpdate(1).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
   })
 })
 
@@ -447,6 +460,7 @@ describe('view metrics', () => {
         pending('CLS web vital not supported')
       }
       const { getViewUpdateCount, getViewUpdate } = setupViewTest()
+      clock.tick(0)
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
@@ -490,8 +504,7 @@ describe('view metrics', () => {
   describe('initial view metrics', () => {
     it('updates should be throttled', () => {
       const { getViewUpdateCount, getViewUpdate } = setupViewTest()
-      expect(getViewUpdateCount()).toEqual(1)
-      expect(getViewUpdate(0).initialViewMetrics).toEqual({})
+      expect(getViewUpdateCount()).toEqual(0)
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD - 1)
 
@@ -548,6 +561,7 @@ describe('view metrics', () => {
 
       beforeEach(() => {
         const { getViewUpdateCount, getViewUpdate, startView } = setupViewTest()
+        clock.tick(0)
 
         expect(getViewUpdateCount()).toEqual(1)
 
@@ -558,6 +572,7 @@ describe('view metrics', () => {
         viewDuration = relativeNow()
 
         startView()
+        clock.tick(0)
 
         expect(getViewUpdateCount()).toEqual(3)
 
@@ -619,18 +634,22 @@ describe('view metrics', () => {
 
 describe('view is active', () => {
   it('should set initial view as active', () => {
+    const clock = mockClock()
     const { getViewUpdate } = setupViewTest()
+    clock.tick(0)
 
     expect(getViewUpdate(0).isActive).toBe(true)
   })
 
   it('should set old view as inactive and new one as active after a route change', () => {
+    const clock = mockClock()
     const { getViewUpdate, startView } = setupViewTest()
 
     startView()
+    clock.tick(0)
 
-    expect(getViewUpdate(1).isActive).toBe(false)
-    expect(getViewUpdate(2).isActive).toBe(true)
+    expect(getViewUpdate(0).isActive).toBe(false)
+    expect(getViewUpdate(1).isActive).toBe(true)
   })
 })
 
@@ -648,6 +667,7 @@ describe('view custom timings', () => {
     const { getViewUpdate, startView, addTiming } = viewTest
 
     startView()
+    clock.tick(0) // wait for the first view update to be sent
 
     const currentViewId = getViewUpdate(2).id
     clock.tick(20)
@@ -969,12 +989,14 @@ describe('start view', () => {
 
   it('should start a new view', () => {
     const { getViewUpdateCount, getViewUpdate, startView } = setupViewTest()
+    clock.tick(0)
 
     expect(getViewUpdateCount()).toBe(1)
     const initialViewId = getViewUpdate(0).id
 
     clock.tick(10)
     startView()
+    clock.tick(0)
 
     expect(getViewUpdateCount()).toBe(3)
 
@@ -994,10 +1016,11 @@ describe('start view', () => {
     startView()
     startView({ name: 'foo' })
     startView({ name: 'bar' })
+    clock.tick(0)
 
-    expect(getViewUpdate(2).name).toBeUndefined()
-    expect(getViewUpdate(4).name).toBe('foo')
-    expect(getViewUpdate(6).name).toBe('bar')
+    expect(getViewUpdate(1).name).toBeUndefined()
+    expect(getViewUpdate(2).name).toBe('foo')
+    expect(getViewUpdate(3).name).toBe('bar')
   })
 
   it('should have service and version', () => {
@@ -1006,20 +1029,21 @@ describe('start view', () => {
     startView()
     startView({ service: 'service 1', version: 'version 1' })
     startView({ service: 'service 2', version: 'version 2' })
+    clock.tick(0)
 
-    expect(getViewUpdate(2)).toEqual(
+    expect(getViewUpdate(1)).toEqual(
       jasmine.objectContaining({
         service: undefined,
         version: undefined,
       })
     )
-    expect(getViewUpdate(4)).toEqual(
+    expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
         service: 'service 1',
         version: 'version 1',
       })
     )
-    expect(getViewUpdate(6)).toEqual(
+    expect(getViewUpdate(3)).toEqual(
       jasmine.objectContaining({
         service: 'service 2',
         version: 'version 2',
@@ -1031,7 +1055,9 @@ describe('start view', () => {
     const { getViewUpdate, startView } = setupViewTest()
 
     startView({ service: null, version: null })
-    expect(getViewUpdate(2)).toEqual(
+    clock.tick(0)
+
+    expect(getViewUpdate(1)).toEqual(
       jasmine.objectContaining({
         service: undefined,
         version: undefined,
@@ -1044,18 +1070,19 @@ describe('start view', () => {
 
     clock.tick(100)
     startView({ name: 'foo' }, relativeToClocks(50 as RelativeTime))
+    clock.tick(0)
 
     expect(getViewUpdate(1).duration).toBe(50 as Duration)
     expect(getViewUpdate(2).startClocks.relative).toBe(50 as RelativeTime)
   })
 
   it('should create view with handling stack', () => {
-    const { startView, getViewUpdate } = viewTest
+    const { startView, getViewUpdate } = setupViewTest()
 
     startView({ name: 'foo', handlingStack: 'Error\n    at foo\n    at bar' })
+    clock.tick(0)
 
-    // The new view is at index 2 (after the initial view end and the new view start)
-    expect(getViewUpdate(2).handlingStack).toBe('Error\n    at foo\n    at bar')
+    expect(getViewUpdate(1).handlingStack).toBe('Error\n    at foo\n    at bar')
   })
 })
 
@@ -1087,7 +1114,7 @@ describe('view event count', () => {
 
     changeLocation('/bar')
 
-    expect(getViewUpdate(getViewUpdateCount() - 2).eventCounts.actionCount).toBe(1)
+    expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
   })
 
   it('should be updated for 5 min after view end', () => {
@@ -1142,17 +1169,20 @@ describe('view event count', () => {
       const { getViewUpdate, startView } = setupViewTest()
 
       startView({ context: { foo: 'bar' } })
-      expect(getViewUpdate(2).context).toEqual({ foo: 'bar' })
+      clock.tick(0)
+      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
     })
 
     it('should replace current context set on view event', () => {
       const { getViewUpdate, startView } = setupViewTest()
 
       startView({ context: { foo: 'bar' } })
-      expect(getViewUpdate(2).context).toEqual({ foo: 'bar' })
+      clock.tick(0)
+      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
 
       startView({ context: { bar: 'baz' } })
-      expect(getViewUpdate(4).context).toEqual({ bar: 'baz' })
+      clock.tick(0)
+      expect(getViewUpdate(3).context).toEqual({ bar: 'baz' })
     })
 
     it('should set view context with setViewContext', () => {
@@ -1187,7 +1217,9 @@ describe('view event count', () => {
 
       startView()
       setViewName('foo')
-      expect(getViewUpdate(3).name).toEqual('foo')
+      clock.tick(0)
+
+      expect(getViewUpdate(1).name).toEqual('foo')
     })
 
     it('should set a defined view name', () => {
@@ -1195,20 +1227,25 @@ describe('view event count', () => {
 
       startView({ name: 'initial view name' })
       setViewName('foo')
-      expect(getViewUpdate(3).name).toEqual('foo')
+      clock.tick(0)
+
+      expect(getViewUpdate(1).name).toEqual('foo')
     })
   })
 })
 
 describe('service and version', () => {
   it('should come from the init configuration by default', () => {
+    const clock = mockClock()
     const { getViewUpdate } = setupViewTest({ partialConfig: { service: 'service', version: 'version' } })
+    clock.tick(0)
 
     expect(getViewUpdate(0).service).toEqual('service')
     expect(getViewUpdate(0).version).toEqual('version')
   })
 
   it('should come from the view option if defined', () => {
+    const clock = mockClock()
     const { getViewUpdate } = setupViewTest({
       partialConfig: { service: 'service', version: 'version' },
       initialViewOptions: {
@@ -1216,6 +1253,7 @@ describe('service and version', () => {
         version: 'view version',
       },
     })
+    clock.tick(0)
 
     expect(getViewUpdate(0).service).toEqual('view service')
     expect(getViewUpdate(0).version).toEqual('view version')
@@ -1224,6 +1262,7 @@ describe('service and version', () => {
 
 describe('BFCache views', () => {
   it('should create a new "bf_cache" view when restoring from the BFCache', () => {
+    const clock = mockClock()
     const { getViewCreateCount, getViewEndCount, getViewUpdate, getViewUpdateCount } = setupViewTest()
 
     expect(getViewCreateCount()).toBe(1)
@@ -1232,6 +1271,7 @@ describe('BFCache views', () => {
     const event = createNewEvent('pageshow', { persisted: true })
 
     window.dispatchEvent(event)
+    clock.tick(0)
 
     expect(getViewEndCount()).toBe(1)
     expect(getViewCreateCount()).toBe(2)

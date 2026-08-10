@@ -92,11 +92,13 @@ describe('session expiration lifecycle', () => {
 
 describe('rum session', () => {
   let serverRumEvents: RumEvent[]
+  let clock: Clock
   let lifeCycle: LifeCycle
   let sessionManager: SessionManagerMock
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
+    clock = mockClock()
     sessionManager = createSessionManagerMock().setId('42')
 
     serverRumEvents = collectServerEvents(lifeCycle)
@@ -106,6 +108,7 @@ describe('rum session', () => {
   })
 
   it('when the session is renewed, a new view event should be sent', () => {
+    clock.tick(0)
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
@@ -115,6 +118,7 @@ describe('rum session', () => {
 
     sessionManager.setId('43')
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    clock.tick(0)
 
     expect(serverRumEvents.length).toEqual(3)
 
