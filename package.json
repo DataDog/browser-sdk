@@ -50,7 +50,7 @@
     "@eslint/js": "10.0.1",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
     "@microsoft/api-extractor": "7.58.12",
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.1",
     "@salesforce/cli": "2.145.6",
     "@swc/core": "1.15.46",
     "@types/busboy": "1.5.4",
