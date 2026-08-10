@@ -1,10 +1,20 @@
 import { clocksNow } from '@datadog/js-core/time'
 import { ConsoleApiName } from '@datadog/js-core/util'
 import type { MockFetch } from '../../test'
-import { collectAsyncCalls, mockFetch, mockXhr, registerCleanupTask, replaceMockable, withXhr } from '../../test'
+import {
+  collectAsyncCalls,
+  createMockWebSocket,
+  mockFetch,
+  mockWebSocket,
+  mockXhr,
+  registerCleanupTask,
+  replaceMockable,
+  withXhr,
+} from '../../test'
 import { Observable } from '../tools/observable'
 import { resetFetchObservable } from '../browser/fetchObservable'
 import { resetXhrObservable } from '../browser/xhrObservable'
+import { resetWebSocketObservable } from '../browser/webSocketObservable'
 import { noop } from '../tools/utils/functionUtils'
 import { resetConsoleObservable } from './console/consoleObservable'
 import type { BufferedData } from './bufferedData'
@@ -131,6 +141,40 @@ describe('startBufferingData', () => {
           url: 'http://fake-url/',
           method: 'GET',
           status: 200,
+        }),
+      },
+    ])
+  })
+
+  it('collects web socket activity', async () => {
+    mockWebSocket()
+    const { observable, stop } = startBufferingData()
+    const collected: BufferedData[] = []
+    const bufferedDataCollectedSpy = jasmine.createSpy()
+
+    registerCleanupTask(() => {
+      stop()
+      resetWebSocketObservable()
+    })
+
+    observable.subscribe((data) => {
+      if (data.type === BufferedDataType.WEB_SOCKET) {
+        collected.push(data)
+        bufferedDataCollectedSpy()
+      }
+    })
+
+    const webSocket = createMockWebSocket('wss://fake-url/')
+
+    await collectAsyncCalls(bufferedDataCollectedSpy, 1)
+
+    expect(collected).toEqual([
+      {
+        type: BufferedDataType.WEB_SOCKET,
+        data: jasmine.objectContaining({
+          state: 'connecting',
+          url: 'wss://fake-url/',
+          instance: webSocket as unknown as WebSocket,
         }),
       },
     ])

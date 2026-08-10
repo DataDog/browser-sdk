@@ -6,6 +6,8 @@ import type { FetchContext } from '../browser/fetchObservable'
 import { initFetchObservable } from '../browser/fetchObservable'
 import type { XhrContext } from '../browser/xhrObservable'
 import { initXhrObservable } from '../browser/xhrObservable'
+import type { WebSocketContext } from '../browser/webSocketObservable'
+import { initWebSocketObservable } from '../browser/webSocketObservable'
 import { addTelemetryDebug } from './telemetry'
 import type { RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
@@ -19,6 +21,7 @@ export const enum BufferedDataType {
   FETCH,
   XHR,
   CONSOLE,
+  WEB_SOCKET,
 }
 
 export type BufferedData =
@@ -26,6 +29,7 @@ export type BufferedData =
   | { type: BufferedDataType.FETCH; data: FetchContext }
   | { type: BufferedDataType.XHR; data: XhrContext }
   | { type: BufferedDataType.CONSOLE; data: ConsoleLog }
+  | { type: BufferedDataType.WEB_SOCKET; data: WebSocketContext }
 
 export function startBufferingData() {
   const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT, (count) => {
@@ -51,6 +55,10 @@ export function startBufferingData() {
   subscribe(BufferedDataType.FETCH, initFetchObservable())
   subscribe(BufferedDataType.XHR, initXhrObservable())
   subscribe(BufferedDataType.CONSOLE, initConsoleObservable(Object.values(ConsoleApiName)))
+  // Subscribed unconditionally: the WebSocket opt-in is only known at init(), and consulting it
+  // before instrumenting would miss every connection opened before then. The opt-in is left to the
+  // consumer of this data source.
+  subscribe(BufferedDataType.WEB_SOCKET, initWebSocketObservable())
 
   return {
     observable,
