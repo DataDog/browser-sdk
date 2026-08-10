@@ -2,7 +2,7 @@ import { sanitize, objectEntries } from '@datadog/browser-core'
 import type { Context } from '@datadog/browser-core'
 import { deepClone, getType } from '@datadog/js-core/util'
 
-export type ModifiableFieldPaths = Record<string, 'string' | 'object'>
+export type ModifiableFieldPaths = Record<string, 'string' | 'object' | 'array'>
 
 /**
  * Allows declaring and enforcing modifications to specific fields of an object.
@@ -29,7 +29,12 @@ export function limitModification<T extends Context, Result>(
   return result
 }
 
-function setValueAtPath(object: unknown, clone: unknown, pathSegments: string[], fieldType: 'string' | 'object') {
+function setValueAtPath(
+  object: unknown,
+  clone: unknown,
+  pathSegments: string[],
+  fieldType: 'string' | 'object' | 'array'
+) {
   const [field, ...restPathSegments] = pathSegments
 
   if (field === '[]') {
@@ -55,7 +60,7 @@ function setNestedValue(
   object: Record<string, unknown>,
   field: string,
   value: unknown,
-  fieldType: 'string' | 'object'
+  fieldType: 'string' | 'object' | 'array'
 ) {
   if (object[field] === value) {
     return
@@ -67,6 +72,8 @@ function setNestedValue(
     object[field] = sanitize(value)
   } else if (fieldType === 'object' && (newType === 'undefined' || newType === 'null')) {
     object[field] = {}
+  } else if (fieldType === 'array' && (newType === 'undefined' || newType === 'null')) {
+    object[field] = []
   }
 }
 

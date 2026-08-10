@@ -4,15 +4,14 @@ import { BufferedDataType, ErrorSource, Observable } from '@datadog/browser-core
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
+
 import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 
-import { startNetworkErrorCollection } from './networkErrorCollection'
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT, startNetworkErrorCollection } from './networkErrorCollection'
 
-const CONFIGURATION = {
-  requestErrorResponseLengthLimit: 64,
-} as LogsConfiguration
+const CONFIGURATION = {} as LogsConfiguration
 
 const FAKE_URL = 'http://fake.com/'
 
@@ -156,12 +155,12 @@ describe('network error collection', () => {
     })
 
     it('should truncate responseBody according to limit', () => {
-      const longResponse = 'a'.repeat(100)
+      const longResponse = 'a'.repeat(DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + 1)
       notifyFetch({ url: 'http://fake-url/', status: 500, responseBody: longResponse })
 
       const log = rawLogsEvents[0].rawLogsEvent
-      expect(log.error.stack?.length).toBe(67) // 64 chars + '...'
-      expect(log.error.stack).toMatch(/^a{64}\.\.\.$/)
+      expect(log.error.stack?.length).toBe(DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT + 3) // limit + '...'
+      expect(log.error.stack).toMatch(new RegExp(`^a{${DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT}}\\.\\.\\.`))
     })
 
     it('should use fallback message when no responseBody available', () => {

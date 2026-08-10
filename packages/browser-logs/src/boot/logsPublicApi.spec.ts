@@ -58,6 +58,15 @@ describe('logs entry', () => {
     expect(logsPublicApi.version).toBe('test')
   })
 
+  it('should pass the sdk name to telemetry', async () => {
+    const { logsPublicApi, startTelemetrySpy } = makeLogsPublicApiWithDefaults({ sdkName: 'logs' })
+
+    logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+    await collectAsyncCalls(startTelemetrySpy, 1)
+
+    expect(startTelemetrySpy.calls.argsFor(0)[3]).toBe('logs')
+  })
+
   describe('common context', () => {
     let logsPublicApi: LogsPublicApi
     let startLogsSpy: jasmine.Spy<StartLogs>
@@ -250,8 +259,10 @@ describe('logs entry', () => {
 
 function makeLogsPublicApiWithDefaults({
   startLogsResult,
+  sdkName,
 }: {
   startLogsResult?: Partial<StartLogsResult>
+  sdkName?: string
 } = {}) {
   const handleLogSpy = jasmine.createSpy<StartLogsResult['handleLog']>()
   const startLogsSpy = replaceMockableWithSpy(startLogs).and.callFake(() => ({
@@ -269,13 +280,14 @@ function makeLogsPublicApiWithDefaults({
     return { message, logger, savedCommonContext, savedDate }
   }
 
-  replaceMockable(startTelemetry, createFakeTelemetryObject)
+  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   replaceMockable(startSessionManager, createStartSessionManagerMock())
 
   return {
     startLogsSpy,
+    startTelemetrySpy,
     handleLogSpy,
-    logsPublicApi: makeLogsPublicApi(),
+    logsPublicApi: makeLogsPublicApi({ sdkName }),
     getLoggedMessage,
   }
 }

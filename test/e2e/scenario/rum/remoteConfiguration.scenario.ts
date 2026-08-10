@@ -266,8 +266,8 @@ test.describe('remote configuration', () => {
           (key) => JSON.parse(localStorage.getItem(key)!) as { version: number; config: object },
           CACHE_KEY
         )
-        expect(stored.version).toBe(1)
-        expect(stored.config).toEqual({ applicationId: RC_APP_ID, sessionSampleRate: 1 })
+        expect(stored.version).toBe(2)
+        expect(stored.config).toEqual({ rum: { applicationId: RC_APP_ID, sessionSampleRate: 1 } })
       })
 
     createTest('should resolve an option value from a cookie')
@@ -494,7 +494,7 @@ test.describe('remote configuration', () => {
  * outer one wraps it as a valid JS string literal with proper escaping.
  */
 function seedCache(remoteConfig: RemoteConfiguration) {
-  const entry = JSON.stringify({ version: 1, config: remoteConfig.rum, fetchedAt: 1000 })
+  const entry = JSON.stringify({ version: 2, config: remoteConfig, fetchedAt: 1000 })
   return html`<script>
     localStorage.setItem('${CACHE_KEY}', ${JSON.stringify(entry)})
   </script>`

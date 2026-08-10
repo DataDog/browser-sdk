@@ -1,9 +1,12 @@
 import fs from 'fs'
 import * as path from 'node:path'
-import type { RumEvent } from '@datadog/browser-rum'
+import type { RumEvent, RumResourceEvent } from '@datadog/browser-rum'
 import ajv from 'ajv'
+import { RumEventType } from '@datadog/browser-rum-core'
 
 const schemasDir = path.join(path.dirname(require.resolve('@datadog/rum-events-format/package.json')), 'schemas')
+
+type RumResourceEventTypeWithWebSocket = RumResourceEvent['resource']['type'] | 'websocket'
 
 export function validateRumFormat(events: RumEvent[]) {
   const instance = new ajv({
@@ -15,6 +18,13 @@ export function validateRumFormat(events: RumEvent[]) {
   instance.addSchema(allJsonSchemas)
 
   events.forEach((rumEvent) => {
+    // TODO: remove this once we introduce websockets on rum-events-format
+    if (
+      rumEvent.type === RumEventType.RESOURCE &&
+      (rumEvent.resource.type as RumResourceEventTypeWithWebSocket) === 'websocket'
+    ) {
+      return
+    }
     void instance.validate('rum-events-schema.json', rumEvent)
 
     if (instance.errors) {

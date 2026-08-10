@@ -52,7 +52,8 @@ export default defineConfig(
       'test/apps/vue-router-v4-app',
       'test/apps/nuxt-app',
       'test/apps/nuxt-vue-router-v4-app',
-      'test/apps/sf-lwc-app',
+      'test/apps/sf-lwc-app/force-app/main/default/staticresources/*.js',
+      'test/apps/sf-experience-app/force-app/main/default/staticresources/*.js',
       'sandbox',
       'coverage',
       '.yarn',
@@ -454,6 +455,27 @@ export default defineConfig(
               message: 'Use node:fs or node:fs/promises (fs.glob) instead.',
             },
           ],
+        },
+      ],
+    },
+  },
+
+  {
+    files: [
+      'test/apps/sf-lwc-app/force-app/main/default/lwc/**/*.js',
+      'test/apps/sf-experience-app/force-app/main/default/lwc/**/*.js',
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+    rules: {
+      // Salesforce LWC components are deployed as default-exported classes and import platform-provided
+      // virtual modules that do not exist in this repository's node_modules.
+      'import-x/no-default-export': 'off',
+      'import-x/no-unresolved': [
+        'error',
+        {
+          ignore: ['^lwc$', '^lightning/', '^@salesforce/resourceUrl/'],
         },
       ],
     },

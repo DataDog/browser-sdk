@@ -15,7 +15,14 @@ const sandboxPath = './sandbox'
 const START_PORT = 8080
 const MAX_PORT = 8180
 
-const PACKAGES_WITH_BUNDLE = ['browser-rum', 'browser-rum-slim', 'browser-logs', 'browser-worker', 'browser-debugger']
+const PACKAGES_WITH_BUNDLE = [
+  'browser-rum',
+  'browser-rum-slim',
+  'browser-logs',
+  'browser-worker',
+  'browser-debugger',
+  'browser-rum-shopify',
+]
 
 export function runServer({ writeIntakeFile = true }: { writeIntakeFile?: boolean } = {}): void {
   if (writeIntakeFile) {
@@ -31,6 +38,7 @@ export function runServer({ writeIntakeFile = true }: { writeIntakeFile?: boolea
 
   app.use((_req, res, next) => {
     res.setHeader('Document-Policy', 'js-profiling')
+    res.setHeader('Access-Control-Allow-Origin', '*')
     next()
   })
 

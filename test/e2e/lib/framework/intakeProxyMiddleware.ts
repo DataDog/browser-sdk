@@ -58,11 +58,7 @@ export type DebuggerIntakeRequest = {
 } & BaseIntakeRequest
 
 export type IntakeRequest =
-  | LogsIntakeRequest
-  | RumIntakeRequest
-  | ReplayIntakeRequest
-  | ProfileIntakeRequest
-  | DebuggerIntakeRequest
+  LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest | ProfileIntakeRequest | DebuggerIntakeRequest
 
 interface IntakeRequestInfos {
   isBridge: boolean

@@ -1,3 +1,4 @@
+import { toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 import type { Router } from 'vue-router'
 import { startTrackingNuxtViews } from './router/nuxtRouter'
@@ -48,7 +49,13 @@ export function nuxtRumPlugin(configuration: NuxtPluginConfiguration): NuxtPlugi
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router, nuxt: true }
+      return {
+        router: !!configuration.router,
+        integrations: toIntegrations(
+          toMajorVersionIntegration('nuxt', configuration.nuxtApp?.versions?.nuxt),
+          'nuxt-router'
+        ),
+      }
     },
   } satisfies RumPlugin
 }

@@ -33,7 +33,7 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
     'error.handling_stack': 'string',
     'error.resource.url': 'string',
     'error.fingerprint': 'string',
-    '_dd.debug_ids': 'object',
+    '_dd.debug_ids': 'array',
   },
   [RumEventType.RESOURCE]: {
     ...COMMON_MODIFIABLE_FIELD_PATHS,
@@ -41,6 +41,8 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
     'resource.graphql.variables': 'string',
     'resource.request.headers': 'object',
     'resource.response.headers': 'object',
+    'resource.websocket.close_reason': 'string',
+    'resource.websocket.protocol': 'string',
   },
   [RumEventType.ACTION]: {
     ...COMMON_MODIFIABLE_FIELD_PATHS,
@@ -50,7 +52,7 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
     ...COMMON_MODIFIABLE_FIELD_PATHS,
     'long_task.scripts[].source_url': 'string',
     'long_task.scripts[].invoker': 'string',
-    '_dd.debug_ids': 'object',
+    '_dd.debug_ids': 'array',
   },
   [RumEventType.VITAL]: COMMON_MODIFIABLE_FIELD_PATHS,
 }

@@ -43,6 +43,7 @@ describe('collect fetch', () => {
       bufferedDataObservable
     ))
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     fetch = window.fetch as MockFetch
 
     registerCleanupTask(() => {
@@ -365,6 +366,7 @@ describe('GraphQL response text collection', () => {
       stopBuffering()
     })
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }
   }
 

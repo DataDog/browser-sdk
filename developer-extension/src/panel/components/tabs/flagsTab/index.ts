@@ -1,0 +1,1 @@
+export { FlagsTab } from './flagsTab'

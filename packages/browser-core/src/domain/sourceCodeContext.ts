@@ -1,6 +1,5 @@
 import { globalObject } from '@datadog/js-core/util'
 import { computeStackTrace } from '../tools/stackTrace/computeStackTrace'
-import { isEmptyObject } from '../tools/utils/objectUtils'
 import { addTelemetryUsage } from './telemetry'
 
 /**
@@ -63,19 +62,30 @@ function syncSourceCodeContext() {
   }
 }
 
-export function buildDebugIdByUrl(urls: string[]): { [url: string]: string } | undefined {
+export interface DebugIdEntry {
+  url: string
+  id: string
+}
+
+export function buildDebugIdByUrl(urls: string[]): DebugIdEntry[] | undefined {
   syncSourceCodeContext()
 
-  const debugIdByUrl: { [url: string]: string } = {}
+  const seenUrls = new Set<string>()
+  const debugIds: DebugIdEntry[] = []
 
   for (const url of urls) {
+    if (seenUrls.has(url)) {
+      continue
+    }
+    seenUrls.add(url)
+
     const debugId = contextByUrl.get(url)?.ddDebugId
     if (debugId !== undefined) {
-      debugIdByUrl[url] = debugId
+      debugIds.push({ url, id: debugId })
     }
   }
 
-  return isEmptyObject(debugIdByUrl) ? undefined : debugIdByUrl
+  return debugIds.length ? debugIds : undefined
 }
 
 export function getSourceCodeContext(url: string): SourceCodeContextEntry | undefined {

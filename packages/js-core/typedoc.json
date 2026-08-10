@@ -5,6 +5,7 @@
     "src/entries/monitor.ts",
     "src/entries/util.ts",
     "src/entries/assembly.ts",
-    "src/entries/sample.ts"
+    "src/entries/sample.ts",
+    "src/entries/configuration.ts"
   ]
 }

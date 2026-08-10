@@ -20,7 +20,10 @@ describe('buildDebugIdByUrl', () => {
       [makeStack(thirdUrl)]: { ddDebugId: 'id-3' },
     })
 
-    expect(buildDebugIdByUrl([url, otherUrl])).toEqual({ [url]: 'id-1', [otherUrl]: 'id-2' })
+    expect(buildDebugIdByUrl([url, otherUrl])).toEqual([
+      { url, id: 'id-1' },
+      { url: otherUrl, id: 'id-2' },
+    ])
   })
 
   it('should return undefined for a URL not in DD_SOURCE_CODE_CONTEXT', () => {
@@ -38,7 +41,7 @@ describe('buildDebugIdByUrl', () => {
       [`Error: ctx\n    at top (${url}:1:1)\n    at deeper (${otherUrl}:2:2)`]: { ddDebugId: 'id-1' },
     })
 
-    expect(buildDebugIdByUrl([url])).toEqual({ [url]: 'id-1' })
+    expect(buildDebugIdByUrl([url])).toEqual([{ url, id: 'id-1' }])
     expect(buildDebugIdByUrl([otherUrl])).toBeUndefined()
   })
 
@@ -51,7 +54,13 @@ describe('buildDebugIdByUrl', () => {
     // Context added later
     mock.addEntry(makeStack(url), { service: 'late-service', ddDebugId: 'late-id' })
 
-    expect(buildDebugIdByUrl([url])).toEqual({ [url]: 'late-id' })
+    expect(buildDebugIdByUrl([url])).toEqual([{ url, id: 'late-id' }])
+  })
+
+  it('should deduplicate repeated URLs', () => {
+    mockSourceCodeContext({ [makeStack(url)]: { ddDebugId: 'id-1' } })
+
+    expect(buildDebugIdByUrl([url, url])).toEqual([{ url, id: 'id-1' }])
   })
 })
 

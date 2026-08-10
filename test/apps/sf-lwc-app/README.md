@@ -9,11 +9,14 @@ This app is Lightning-only.
 - A Lightning app named `SF LWC App`
 - A trimmed Home page with Datadog test controls
 - A `Product Explorer` app page with three hardcoded editable products
-- `c:datadogInit` in the utility bar, backed by the `datadog_rum_slim` static resource
+- `c:datadogInit` in the utility bar, backed by the `datadog_rum_salesforce` static resource
+
+For the canonical RUM integration setup, see
+`[packages/browser-rum-slim/src/salesforce/README.md](../../../packages/browser-rum-slim/src/salesforce/README.md)`.
 
 ## Authentication
 
-The Salesforce flow uses the Salesforce CLI with a JWT keypair. There is no separate manual auth step: `yarn salesforce:deploy-app` and `yarn salesforce:get-url` always (re-)authenticate the `sf-lwc-ci` alias before running, since the JWT private key file used for authentication is deleted right after login and can't be reused to refresh a cached session.
+The Salesforce deploy flow uses the Salesforce CLI with a JWT keypair. There is no separate manual auth step: `yarn salesforce:deploy-apps` always (re-)authenticates the `sf-lwc-ci` alias before running, since the JWT private key file used for authentication is deleted right after login and can't be reused to refresh a cached session.
 
 Credentials are set as CI variables.
 
@@ -25,13 +28,13 @@ This app runs from Salesforce metadata already deployed to
 the Salesforce org, so any change to that metadata (Apex, LWC markup/config, permission sets, etc.) requires a full
 redeploy to take effect.
 
-For E2E testing, deployment is not necesary since we will override the deployed rum_slim bundle with Playwright.
+For E2E testing, deployment is not necesary since we will override the deployed RUM Salesforce bundle with Playwright.
 
 ```sh
-yarn salesforce:deploy-app
+yarn salesforce:deploy-apps --app lwc
 ```
 
-This builds the local RUM slim bundle, copies it to the stable `datadog_rum_slim` static resource, and deploys the app metadata.
+This builds the local RUM Salesforce bundle, copies it to the stable `datadog_rum_salesforce` static resource, and deploys the app metadata.
 
 ## Local Bundle
 
@@ -42,20 +45,20 @@ Build the test apps from the repository root instead:
 yarn build:apps --app sf-lwc-app
 ```
 
-This copies the locally built RUM slim bundle into the ignored stable `datadog_rum_slim` static resource file.
+This copies the locally built RUM Salesforce bundle into the ignored stable `datadog_rum_salesforce` static resource file.
 Playwright fulfills Salesforce static resource requests with this local file during E2E tests.
 
 ## Open The App
 
-Print an authenticated URL for the app:
+Print the direct URL for the app:
 
 ```sh
-yarn salesforce:get-url
+yarn salesforce:get-urls --app lwc
 ```
 
-The printed URL is authenticated and should be treated as sensitive.
+The printed URL is a direct Lightning app URL. It requires an existing browser session for the Salesforce org.
 E2E tests don't use this script: they build their own authenticated URL via the JWT/REST flow in
-`test/e2e/lib/framework/buildSalesforceLwcUrl.ts`, and inject the RUM configuration on the page as
+`test/e2e/lib/framework/buildSalesforceUrl.ts`, and inject the RUM configuration on the page as
 `window.RUM_CONFIGURATION`.
 
 ## Run E2E Tests

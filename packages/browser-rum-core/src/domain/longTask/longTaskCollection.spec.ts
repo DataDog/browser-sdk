@@ -98,9 +98,9 @@ describe('longTaskCollection', () => {
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)])
 
-      expect((rawRumEvents[0].rawRumEvent as RawRumLongAnimationFrameEvent)._dd.debug_ids).toEqual({
-        'http://example.com/script.js': debugId,
-      })
+      expect((rawRumEvents[0].rawRumEvent as RawRumLongAnimationFrameEvent)._dd.debug_ids).toEqual([
+        { url: 'http://example.com/script.js', id: debugId },
+      ])
     })
 
     it('should not attach debug_ids when no script url matches the source code context', () => {

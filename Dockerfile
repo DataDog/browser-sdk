@@ -4,7 +4,7 @@
 FROM node:20-bookworm-slim AS playwright-pinned-browsers
 RUN npx -y playwright@1.40.1 install --with-deps chromium firefox webkit
 
-FROM node:26.3.1-bookworm-slim
+FROM node:26.5.0-bookworm-slim
 
 # Node 26 slim images don't bundle yarn — install it globally
 RUN npm install -g yarn
@@ -75,6 +75,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o 
 
 # DD Octo STS to get security token
 COPY --from=registry.ddbuild.io/dd-octo-sts:v1.8.1@sha256:eb2895829cdcb1f41cc4fc9d1f3f329c7d8f6fa72b0e8bb915d8195717e02bfa /usr/local/bin/dd-octo-sts /usr/local/bin/dd-octo-sts
+
+# Commit Headless to create signed (Verified) commits from CI bots
+COPY --from=registry.ddbuild.io/commit-headless /commit-headless /usr/local/bin/commit-headless
 
 RUN apt-get update && apt-get install -y jq
 

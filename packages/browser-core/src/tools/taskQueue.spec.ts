@@ -80,7 +80,9 @@ describe('createTaskQueue', () => {
 })
 
 function replaceRequestIdleCallbackWithPolyfillShim() {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalRequestIdleCallback = window.requestIdleCallback
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalCancelIdleCallback = window.cancelIdleCallback
   // Reproduces `(cb) => setTimeout(cb, 0)` — invokes the callback with no argument.
   window.requestIdleCallback = ((cb: () => void) => setTimeout(() => cb(), 0)) as typeof window.requestIdleCallback

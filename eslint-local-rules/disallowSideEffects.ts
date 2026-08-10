@@ -40,6 +40,8 @@ const pathsWithSideEffect = new Set([
   `${packagesRoot}/browser-logs/src/entries/main.ts`,
   `${packagesRoot}/browser-rum/src/entries/main.ts`,
   `${packagesRoot}/browser-rum-slim/src/entries/main.ts`,
+  `${packagesRoot}/browser-rum-slim/src/entries/salesforce.ts`,
+  `${packagesRoot}/browser-rum-shopify/src/entries/main.ts`,
   `${packagesRoot}/browser-debugger/src/entries/main.ts`,
 ])
 
@@ -51,6 +53,7 @@ const packagesWithoutSideEffect = new Set([
   '@datadog/js-core/monitor',
   '@datadog/js-core/transport',
   '@datadog/js-core/sample',
+  '@datadog/js-core/configuration',
   '@datadog/browser-core',
   '@datadog/browser-rum-core',
   '@datadog/browser-rum-react/internal',

@@ -4,11 +4,13 @@ import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
+import type { WebSocketCompleteEvent } from './resource/webSocketCollection'
 import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
 import type { DurationVitalStart } from './vital/vitalCollection'
 import type { TrackedEventData } from './eventTracker'
 import type { ActionEventData } from './action/trackManualActions'
+import type { SessionExpiredEvent } from './session/session.types'
 
 export const enum LifeCycleEventType {
   // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
@@ -22,6 +24,7 @@ export const enum LifeCycleEventType {
   AFTER_VIEW_ENDED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
+  WEBSOCKET_COMPLETED,
 
   // The SESSION_EXPIRED lifecycle event has been introduced to represent when a session has expired
   // and trigger cleanup tasks related to this, prior to renewing the session. Its implementation is
@@ -67,6 +70,7 @@ declare const LifeCycleEventTypeAsConst: {
   AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
   REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
+  WEBSOCKET_COMPLETED: LifeCycleEventType.WEBSOCKET_COMPLETED
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
   SESSION_RENEWED: LifeCycleEventType.SESSION_RENEWED
   PREPARE_URGENT_FLUSH: LifeCycleEventType.PREPARE_URGENT_FLUSH
@@ -89,7 +93,8 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
-  [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
+  [LifeCycleEventTypeAsConst.WEBSOCKET_COMPLETED]: WebSocketCompleteEvent
+  [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: SessionExpiredEvent
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
   [LifeCycleEventTypeAsConst.PREPARE_URGENT_FLUSH]: UrgentFlushReason
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData

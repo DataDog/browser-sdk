@@ -586,7 +586,9 @@ export interface RumPublicApi extends PublicApi {
   failFeatureOperation: (name: string, failureReason: FailureReason, options?: FeatureOperationOptions) => void
 
   /**
-   * List of default headers used by the {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders} option. See configuration example for extending them.
+   * List of default headers used by the {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders} option.
+   *
+   * @deprecated You can now omit `name` from a MatchHeader entry to include default headers.
    */
   DEFAULT_TRACKED_RESOURCE_HEADERS: typeof DEFAULT_TRACKED_RESOURCE_HEADERS
 }

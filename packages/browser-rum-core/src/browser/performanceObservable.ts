@@ -142,12 +142,7 @@ export interface RumPerformanceScriptTiming {
   forcedStyleAndLayoutDuration: Duration
   invoker: string // e.g. "https://static.datadoghq.com/static/c/93085/chunk-bc4db53278fd4c77a637.min.js"
   invokerType:
-    | 'user-callback'
-    | 'event-listener'
-    | 'resolve-promise'
-    | 'reject-promise'
-    | 'classic-script'
-    | 'module-script'
+    'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script'
   name: 'script'
   pauseDuration: Duration
   sourceCharPosition: number

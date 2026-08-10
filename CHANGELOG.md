@@ -5,15 +5,127 @@
 > **Legend**
 >
 > - 💥 **Breaking change** - Breaking API changes
+>
 > - ✨ **New feature** - New public API, behavior, event, property
+>
 > - 🐛 **Bug fix** - Fix bugs, regressions, crashes
+>
 > - ⚡️ **Performance** - Improve performance, reduce bundle size
+>
 > - 📝 **Documentation** - User-facing documentation
+>
 > - ⚗️ **Experimental** - New public feature behind a feature flag
 >
 > See [Gitmoji](https://gitmoji.dev/) for a guide on the emojis used.
 
 ---
+
+## v7.8.0
+
+**Public Changes:**
+
+- ✨ Use optional MatchHeader name to account for default headers ([#4825](https://github.com/DataDog/browser-sdk/pull/4825))
+- ✨ [FFL-2858] Feature Flags tab — catalog browsing (stacked PR 2 of 3) ([#4916](https://github.com/DataDog/browser-sdk/pull/4916))
+- ✨ [FFL-2597] Feature Flags tab — OAuth sign-in (stacked PR 1 of 3) ([#4913](https://github.com/DataDog/browser-sdk/pull/4913))
+- 🐛 Align session-ended WebSocket teardown with the latest view's end clocks ([#4911](https://github.com/DataDog/browser-sdk/pull/4911))
+
+**Internal Changes:**
+
+- 👷 Bump chrome to 151.0.7922.71-1 ([#4923](https://github.com/DataDog/browser-sdk/pull/4923))
+- 👷 Update all non-major dependencies ([#4894](https://github.com/DataDog/browser-sdk/pull/4894))
+- 👷 Update dependency react-router to v8.3.0 [SECURITY] ([#4917](https://github.com/DataDog/browser-sdk/pull/4917))
+- 👷 Update dependency eslint-plugin-unicorn to v72 ([#4915](https://github.com/DataDog/browser-sdk/pull/4915))
+- 👷 Update actions/setup-node action to v7 ([#4914](https://github.com/DataDog/browser-sdk/pull/4914))
+- 👷 Update dependency next to v16.2.11 [SECURITY] ([#4909](https://github.com/DataDog/browser-sdk/pull/4909))
+- ✅ Add Experience Cloud E2E tests ([#4925](https://github.com/DataDog/browser-sdk/pull/4925))
+
+## v7.7.0
+
+**Public Changes:**
+
+- ✨ Add a version-agnostic React Router entry point ([#4918](https://github.com/DataDog/browser-sdk/pull/4918))
+- ✨ Shopify Integration - implement dedicated bundle ([#4878](https://github.com/DataDog/browser-sdk/pull/4878))
+- ✨ Add a version-agnostic Vue Router entry point ([#4910](https://github.com/DataDog/browser-sdk/pull/4910))
+- ✨ Enable WebSocket resource tracking behind a beta option ([#4882](https://github.com/DataDog/browser-sdk/pull/4882))
+- 📝 [Salesforce Docs] Align with Tile docs ([#4904](https://github.com/DataDog/browser-sdk/pull/4904))
+
+**Internal Changes:**
+
+- ♻️ [js-core] Schema-driven configuration validation across browser-core, browser-logs, and browser-rum-core ([#4798](https://github.com/DataDog/browser-sdk/pull/4798))
+- 🔧 Make Salesforce test apps use rum-salesforce bundle. ([#4893](https://github.com/DataDog/browser-sdk/pull/4893))
+- 🔊 Add SDK_NAME to telemetry ([#4888](https://github.com/DataDog/browser-sdk/pull/4888))
+
+## v7.6.1
+
+**Public Changes:**
+
+- ✨ [RUM-17395] Add debug_ids to profiler wall-time trace for sourcemap unminification ([#4897](https://github.com/DataDog/browser-sdk/pull/4897))
+- 🐛 [rum-nuxt] Fix Nuxt post-hydration error handling ([#4899](https://github.com/DataDog/browser-sdk/pull/4899))
+- 🐛 Avoid BigInt exponentiation in sampling ([#4883](https://github.com/DataDog/browser-sdk/pull/4883))
+- 📝 Add salesforce readme ([#4900](https://github.com/DataDog/browser-sdk/pull/4900))
+
+**Internal Changes:**
+
+- 👷 sign chrome-bump commits with commit-headless ([#4838](https://github.com/DataDog/browser-sdk/pull/4838))
+- ♻️ Add explicit delete method to CookieAccess ([#4887](https://github.com/DataDog/browser-sdk/pull/4887))
+
+## v7.6.0
+
+**Public Changes:**
+
+- ✨ Add salesforce bundle entrypoint ([#4879](https://github.com/DataDog/browser-sdk/pull/4879))
+- ✨ Extend remote configuration supported parameters ([#4877](https://github.com/DataDog/browser-sdk/pull/4877))
+- ✨ Add CDN default headers ([#4857](https://github.com/DataDog/browser-sdk/pull/4857))
+- 🐛 Update session replay sandbox URL and cookie name in developer extension ([#4886](https://github.com/DataDog/browser-sdk/pull/4886))
+- 🐛 Keep primitive values unchanged during sanitization ([#4881](https://github.com/DataDog/browser-sdk/pull/4881))
+- 🐛 Add react-router-v8 to tsconfig ([#4880](https://github.com/DataDog/browser-sdk/pull/4880))
+- 🐛 Use unknown type for addReactError error parameter ([#4863](https://github.com/DataDog/browser-sdk/pull/4863))
+- 🐛 fix bundle size increase threshold never triggering ([#4852](https://github.com/DataDog/browser-sdk/pull/4852))
+- ⚗️ Collect WebSocket resource events ([#4718](https://github.com/DataDog/browser-sdk/pull/4718))
+
+**Internal Changes:**
+
+- 👷 Update dependency pako to v3 ([#4869](https://github.com/DataDog/browser-sdk/pull/4869))
+- 👷 Update all non-major dependencies ([#4868](https://github.com/DataDog/browser-sdk/pull/4868))
+- 👷 Update react-router monorepo (major) ([#4846](https://github.com/DataDog/browser-sdk/pull/4846))
+- 👷 Upgrade Yarn to 4.17.1 ([#4864](https://github.com/DataDog/browser-sdk/pull/4864))
+- 👷 Lock file maintenance ([#4850](https://github.com/DataDog/browser-sdk/pull/4850))
+- 👷 Update dependency @playwright/test to v1.61.1 ([#4847](https://github.com/DataDog/browser-sdk/pull/4847))
+- 👷 Update all non-major dependencies ([#4848](https://github.com/DataDog/browser-sdk/pull/4848))
+- ♻️ [RUM-16925] switch debug_ids to recommended URL/Debug-ID array format ([#4862](https://github.com/DataDog/browser-sdk/pull/4862))
+- ✅ Skip Salesforce LWC tests ([#4860](https://github.com/DataDog/browser-sdk/pull/4860))
+- 🔧 Add Salesforce Experience Cloud testing app ([#4872](https://github.com/DataDog/browser-sdk/pull/4872))
+- 🔧 Use session cookies for Salesforce LWC E2E tests ([#4870](https://github.com/DataDog/browser-sdk/pull/4870))
+- 🔧 Add react V7 to git ignored test applications ([#4873](https://github.com/DataDog/browser-sdk/pull/4873))
+
+## v7.5.0
+
+**Public Changes:**
+
+- ✨ [RUM-16925] attach debug IDs from DD_SOURCE_CODE_CONTEXT to error and long task events ([#4812](https://github.com/DataDog/browser-sdk/pull/4812))
+- ✨ Add betaEnableViewUpdates config option ([#4833](https://github.com/DataDog/browser-sdk/pull/4833))
+- ✨ add support for `remote_configuration_id` in view events ([#4835](https://github.com/DataDog/browser-sdk/pull/4835))
+- 🐛 fix logs not being sent long after session expiration ([#4839](https://github.com/DataDog/browser-sdk/pull/4839))
+- ⚗️ Partial view updates — batch optimizations ([#4807](https://github.com/DataDog/browser-sdk/pull/4807))
+
+**Internal Changes:**
+
+- 🐛 fix empty private regions deployment step ([#4823](https://github.com/DataDog/browser-sdk/pull/4823))
+- 📝 update AGENTS.md monorepo structure to reflect current packages ([#4826](https://github.com/DataDog/browser-sdk/pull/4826))
+- 👷 Bump chrome to 150.0.7871.46-1 ([#4836](https://github.com/DataDog/browser-sdk/pull/4836))
+- 👷 Update all non-major dependencies ([#4827](https://github.com/DataDog/browser-sdk/pull/4827))
+- 👷 Update dependency @playwright/test to v1.61.0 ([#4828](https://github.com/DataDog/browser-sdk/pull/4828))
+- 👷 Update dependency chrome-webstore-upload to v6 ([#4831](https://github.com/DataDog/browser-sdk/pull/4831))
+- 👷 Make json-schemas sync reliable: authenticate API requests and format output deterministically ([#4832](https://github.com/DataDog/browser-sdk/pull/4832))
+- 👷 Update dependency @types/node to v26 ([#4830](https://github.com/DataDog/browser-sdk/pull/4830))
+- 👷 Update actions/checkout action to v7 ([#4829](https://github.com/DataDog/browser-sdk/pull/4829))
+- ♻️ move `endpointBuilder` and its dependencies to `@datadog/js-core` ([#4824](https://github.com/DataDog/browser-sdk/pull/4824))
+- ♻️ clean up `createBatch` API before migrating to js-core ([#4802](https://github.com/DataDog/browser-sdk/pull/4802))
+- ✅ Add Salesforce E2E tests ([#4761](https://github.com/DataDog/browser-sdk/pull/4761))
+- ✅ Add Salesforce LWC Test Application. ([#4757](https://github.com/DataDog/browser-sdk/pull/4757))
+- 🔧 Dissociate pinned e2e setup ([#4811](https://github.com/DataDog/browser-sdk/pull/4811))
+- 🔥 Remove upgrade SDK migration skills (moved to datadog-labs) ([#4834](https://github.com/DataDog/browser-sdk/pull/4834))
+- 🔇 postpone/cleanup cookie and telemetry monitor-until dates ([#4840](https://github.com/DataDog/browser-sdk/pull/4840))
 
 ## v7.4.0
 

@@ -1,6 +1,6 @@
 {
   "name": "@datadog/js-core",
-  "version": "0.0.4",
+  "version": "0.0.9",
   "license": "Apache-2.0",
   "sideEffects": false,
   "exports": {
@@ -33,6 +33,11 @@
       "import": "./esm/entries/sample.mjs",
       "require": "./cjs/entries/sample.js",
       "types": "./cjs/entries/sample.d.ts"
+    },
+    "./configuration": {
+      "import": "./esm/entries/configuration.mjs",
+      "require": "./cjs/entries/configuration.js",
+      "types": "./cjs/entries/configuration.d.ts"
     }
   },
   "files": [
@@ -45,6 +50,7 @@
     "util",
     "transport",
     "sample",
+    "configuration",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],
