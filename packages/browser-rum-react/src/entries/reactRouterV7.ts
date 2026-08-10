@@ -42,6 +42,9 @@ import {
 } from 'react-router'
 import type { Routes as originalRoutes } from 'react-router'
 import { wrapCreateRouter, createRoutesComponent, wrapUseRoutes } from '../domain/reactRouter'
+import { setReactRouterType } from '../domain/reactPlugin'
+
+setReactRouterType('react-router-v7')
 
 /**
  * Use this function in place of `react-router-dom` `createBrowserRouter`. Every time a route is

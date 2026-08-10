@@ -3,21 +3,23 @@ import { createTest } from '../../lib/framework'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
 
 const nuxtApps = [
-  { routerVersion: 'v5' as const, description: 'Vue Router v5' },
-  { routerVersion: 'v4' as const, description: 'Vue Router v4' },
+  { routerVersion: 'v5' as const, description: 'Vue Router v5', nuxtVersion: 'v4' },
+  { routerVersion: 'v4' as const, description: 'Vue Router v4', nuxtVersion: 'v3' },
 ]
 
-const nuxtPluginApps = nuxtApps.map(({ routerVersion, description }) => ({
+const nuxtPluginApps = nuxtApps.map(({ routerVersion, description, nuxtVersion }) => ({
   name: `with Nuxt ${description}`,
   loadApp: (b: ReturnType<typeof createTest>) => b.withNuxtApp(routerVersion),
   viewPrefix: '',
+  plugin: { name: 'nuxt', integrations: [`nuxt-${nuxtVersion}`, 'nuxt-router'] },
 }))
 
 runBasePluginRouterTests(
-  nuxtPluginApps.map(({ name, loadApp, viewPrefix }) => ({
+  nuxtPluginApps.map(({ name, loadApp, viewPrefix, plugin }) => ({
     name,
     loadApp,
     viewPrefix,
+    plugin,
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',

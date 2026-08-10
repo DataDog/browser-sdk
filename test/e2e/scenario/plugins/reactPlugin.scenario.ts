@@ -4,22 +4,24 @@ import { runBasePluginErrorTests } from './basePluginErrorTests'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
 
 const reactApps = [
-  { appName: 'react-router-v6-app', description: 'React Router v6' },
-  { appName: 'react-router-app', description: 'React Router v8' },
-  { appName: 'react-router-v7-app', description: 'React Router v7' },
+  { appName: 'react-router-v6-app', description: 'React Router v6', integrations: ['react-v19', 'react-router-v6'] },
+  { appName: 'react-router-app', description: 'React Router v8', integrations: ['react-v19', 'react-router-v8'] },
+  { appName: 'react-router-v7-app', description: 'React Router v7', integrations: ['react-v19', 'react-router-v7'] },
 ]
 
-const reactPluginApps = reactApps.map(({ appName, description }) => ({
+const reactPluginApps = reactApps.map(({ appName, description, integrations }) => ({
   name: `with ${description}`,
   loadApp: (b: ReturnType<typeof createTest>) => b.withApp(appName),
   viewPrefix: '',
+  plugin: { name: 'react', integrations },
 }))
 
 runBasePluginRouterTests(
-  reactPluginApps.map(({ name, loadApp, viewPrefix }) => ({
+  reactPluginApps.map(({ name, loadApp, viewPrefix, plugin }) => ({
     name,
     loadApp,
     viewPrefix,
+    plugin,
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',
