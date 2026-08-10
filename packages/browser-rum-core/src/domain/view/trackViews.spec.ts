@@ -30,7 +30,10 @@ describe('track views automatically', () => {
   beforeEach(() => {
     clock = mockClock()
 
-    viewTest = setupViewTest({ initialLocation: 'http://foo.com/foo' }, { name: 'initial view name' })
+    viewTest = setupViewTest({
+      initialLocation: 'http://foo.com/foo',
+      initialViewOptions: { name: 'initial view name' },
+    })
     changeLocation = viewTest.changeLocation
   })
 
@@ -142,14 +145,14 @@ describe('view lifecycle', () => {
   beforeEach(() => {
     clock = mockClock()
 
-    viewTest = setupViewTest(
-      { initialLocation: '/foo' },
-      {
+    viewTest = setupViewTest({
+      initialLocation: '/foo',
+      initialViewOptions: {
         name: 'initial view name',
         service: 'initial service',
         version: 'initial version',
-      }
-    )
+      },
+    })
     notifySpy = spyOn(viewTest.lifeCycle, 'notify').and.callThrough()
 
     changeLocation = viewTest.changeLocation
@@ -1197,13 +1200,13 @@ describe('service and version', () => {
   })
 
   it('should come from the view option if defined', () => {
-    const { getViewUpdate } = setupViewTest(
-      { partialConfig: { service: 'service', version: 'version' } },
-      {
+    const { getViewUpdate } = setupViewTest({
+      partialConfig: { service: 'service', version: 'version' },
+      initialViewOptions: {
         service: 'view service',
         version: 'view version',
-      }
-    )
+      },
+    })
 
     expect(getViewUpdate(0).service).toEqual('view service')
     expect(getViewUpdate(0).version).toEqual('view version')
