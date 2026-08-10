@@ -1,5 +1,6 @@
 import { Observable } from '@datadog/browser-core'
 import { deepClone } from '@datadog/js-core/util'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration, setupLocationObserver } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -64,8 +65,10 @@ export function setupViewTest(
     !configuration.trackViewsManually,
     initialViewOptions
   )
+
+  registerCleanupTask(stop)
+
   return {
-    stop,
     startView,
     setViewContext,
     setViewContextProperty,
