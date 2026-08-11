@@ -125,6 +125,9 @@ test.describe('feature name', () => {
 
 - `.withHead(html)` - Add content to `<head>`
 - `.withBody(html)` - Add content to `<body>`
+- `.withPreInitScript(js)` - Run application code after the SDK loads but before `init()`, to test
+  what the SDK buffers before being started. The script is a function body and may return a promise
+  that `init()` waits on.
 - `.withReactApp(name)` - Use a React test app
 - `.withExtension(ext)` - Test with browser extension
 

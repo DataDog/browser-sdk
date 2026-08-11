@@ -7,10 +7,11 @@ declare global {
     LOGS_INIT?: () => void
     RUM_INIT?: () => void
     DEBUGGER_INIT?: () => void
+    DD_PRE_INIT?: () => unknown
   }
 }
 
-if (typeof window !== 'undefined') {
+function runInits() {
   if (window.LOGS_INIT) {
     window.LOGS_INIT()
   }
@@ -21,6 +22,16 @@ if (typeof window !== 'undefined') {
 
   if (window.DEBUGGER_INIT) {
     window.DEBUGGER_INIT()
+  }
+}
+
+if (typeof window !== 'undefined') {
+  if (window.DD_PRE_INIT) {
+    // Application code running once the SDK modules are evaluated — and therefore instrumenting
+    // the page — but before init(). It may return a promise to hold init() back until it settles.
+    void Promise.resolve(window.DD_PRE_INIT()).then(runInits)
+  } else {
+    runInits()
   }
 } else {
   // compat test

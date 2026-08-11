@@ -1,9 +1,22 @@
 import type { RumResourceEvent } from '@datadog/browser-rum'
-import type { RawRumEvent } from '@datadog/browser-rum-core'
+import type { RawRumEvent, RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { expireSession, renewSession } from '../../lib/helpers/session'
-import { DEFAULT_WS_OUT_MESSAGE, expectedWsEchoMessage, WebSocketPage } from '../../lib/pages/webSocketPage'
+import {
+  closePreInitWebSocket,
+  DEFAULT_WS_OUT_MESSAGE,
+  expectedWsEchoMessage,
+  preInitWebSocketScript,
+  WebSocketPage,
+} from '../../lib/pages/webSocketPage'
+
+declare global {
+  interface Window {
+    RUM_INIT_TIME?: number
+  }
+}
 
 type RawRumResource = Extract<RawRumEvent, { type: 'resource' }>
 type WebSocketResourceProperties = NonNullable<RawRumResource['resource']['websocket']>
@@ -195,6 +208,70 @@ test.describe('rum websockets', () => {
       expect(wsResources).toHaveLength(0)
     })
 
+  createTest('collects a websocket opened and used before init()')
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
+    .withRumInit(recordInitTime)
+    .withPreInitScript(preInitWebSocketScript())
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await closePreInitWebSocket(page)
+
+      // Read before flushing: flushEvents() navigates away and drops the page state.
+      const initTime = await getInitTime(page)
+
+      await flushEvents()
+
+      const rumEvent = getLastRumResourceEventWithWebSocket(intakeRegistry.rumResourceEvents)
+      expect(rumEvent).toBeDefined()
+
+      const { websocket } = rumEvent!.resource
+
+      // The message was exchanged before init(): it is only counted if the SDK buffered it.
+      expect(websocket.messages_out.count).toBe(1)
+      expect(websocket.messages_out.size).toBe(DEFAULT_WS_OUT_MESSAGE.length)
+      expect(websocket.messages_in.count).toBe(1)
+      expect(websocket.messages_in.size).toBe(expectedWsEchoMessage().length)
+
+      // Timings come from the constructor call, not from init().
+      expect(websocket.start_time).toBeLessThan(initTime)
+      expect(websocket.handshake_succeeded).toBe(true)
+      expect(websocket.start_time + websocket.setup_duration / NANOSECONDS_PER_MILLISECOND).toBeLessThanOrEqual(
+        initTime
+      )
+
+      const connectingVital = intakeRegistry.rumVitalEvents.find((e) => e.vital.name === 'websocket-connecting')
+      expect(connectingVital).toBeDefined()
+      expect(connectingVital!.context!.connection_id).toBe(websocket.connection_id)
+      expect(connectingVital!.date).toBeLessThan(initTime)
+    })
+
+  createTest('collects a websocket whose whole lifecycle happened before init()')
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
+    .withRumInit(recordInitTime)
+    .withPreInitScript(preInitWebSocketScript({ closeBeforeInit: true }))
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      // Read before flushing: flushEvents() navigates away and drops the page state.
+      const initTime = await getInitTime(page)
+
+      await flushEvents()
+
+      const rumEvent = getLastRumResourceEventWithWebSocket(intakeRegistry.rumResourceEvents)
+      expect(rumEvent).toBeDefined()
+
+      const { websocket } = rumEvent!.resource
+
+      expect(websocket.tracking_end_reason).toBe('close_event')
+      expect(websocket.messages_out.count).toBe(1)
+      expect(websocket.messages_in.count).toBe(1)
+
+      // The connection was opened, used and closed while the SDK was only buffering.
+      expect(websocket.start_time).toBeLessThan(initTime)
+      expect(websocket.end_time).toBeLessThanOrEqual(initTime)
+
+      const closedVital = intakeRegistry.rumVitalEvents.find((e) => e.vital.name === 'websocket-closed')
+      expect(closedVital).toBeDefined()
+      expect(closedVital!.context!.connection_id).toBe(websocket.connection_id)
+    })
+
   createTest('websocket resource records different start and end views when it spanned multiple views')
     .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
@@ -222,6 +299,25 @@ test.describe('rum websockets', () => {
       expect(websocket.start_view_id).not.toBe(websocket.end_view_id)
     })
 })
+
+/**
+ * Serialized into the page, so it must stay self-contained. Marks the moment init() runs, to
+ * assert that pre-init timings are measured from the real WebSocket constructor call.
+ */
+function recordInitTime(configuration: RumInitConfiguration) {
+  window.RUM_INIT_TIME = Date.now()
+  window.DD_RUM!.init(configuration)
+}
+
+/**
+ * init() is held back until the pre-init WebSocket exchange completes, which can outlast the load
+ * event page.goto() waits for — so wait for the marker rather than assuming it is already set.
+ */
+async function getInitTime(page: Page) {
+  await page.waitForFunction(() => window.RUM_INIT_TIME !== undefined)
+  const initTime = await page.evaluate(() => window.RUM_INIT_TIME)
+  return initTime!
+}
 
 function isWebSocketResource(event: RumResourceEvent): event is RumResourceEventWithWebSocket {
   // Public RumResourceEvent.resource omits `websocket` until rum-events-format is updated.

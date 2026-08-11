@@ -23,6 +23,7 @@ export interface SetupOptions {
   eventBridge?: EventBridgeOptions
   head?: string
   body?: string
+  preInitScript?: string
   baseUrlHooks: UrlHook[]
   context: {
     run_id: string
@@ -70,6 +71,58 @@ export const DEFAULT_SETUPS =
         { name: 'bundle', factory: bundleSetup },
       ]
 
+/**
+ * Defines `window.DD_PRE_INIT`, the application script that runs once the SDK is loaded (and
+ * therefore instrumenting the page) but before `init()` is called. The script body may return a
+ * promise: `init()` then waits for it to settle, which lets a scenario complete asynchronous work
+ * — a request, a WebSocket exchange — entirely within the pre-init window.
+ *
+ * Setups call it from their init site through {@link afterPreInitScript}, so the definition itself
+ * can be emitted anywhere in the head. It runs at most once, on the first init site to reach it.
+ */
+function preInitDefinition(options: SetupOptions) {
+  if (!options.preInitScript) {
+    return ''
+  }
+
+  return html`<script type="text/javascript">
+    window.DD_PRE_INIT = (function () {
+      var result
+      var called = false
+      return function () {
+        if (!called) {
+          called = true
+          result = (function () {
+            ${options.preInitScript}
+          })()
+        }
+        return result
+      }
+    })()
+  </script>`
+}
+
+/**
+ * Setups that don't control the init call site can't offer the pre-init window. Fail loudly rather
+ * than silently ignoring the script and letting the scenario pass for the wrong reason.
+ */
+function rejectPreInitScript(options: SetupOptions, setupName: string) {
+  if (options.preInitScript) {
+    throw new Error(`withPreInitScript() is not supported by the ${setupName} setup`)
+  }
+}
+
+/** Wraps init code so that it runs after the pre-init script (see {@link preInitDefinition}). */
+function afterPreInitScript(options: SetupOptions, initCode: string) {
+  if (!options.preInitScript) {
+    return initCode
+  }
+
+  return js`Promise.resolve(window.DD_PRE_INIT()).then(function () {
+    ${initCode}
+  })`
+}
+
 export function asyncSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
   let footer = ''
@@ -81,6 +134,8 @@ export function asyncSetup(options: SetupOptions, servers: Servers) {
   if (options.extension) {
     header += setupExtension(options, servers)
   }
+
+  header += preInitDefinition(options)
 
   function formatSnippet(url: string, globalName: string) {
     return `(function(h,o,u,n,d) {
@@ -96,8 +151,11 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     footer += html`<script>
       ${formatSnippet(logsScriptUrl, 'DD_LOGS')}
       DD_LOGS.onReady(function () {
-        DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+        ${afterPreInitScript(
+          options,
+          js`DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})`
+        )}
       })
     </script>`
   }
@@ -106,8 +164,11 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     footer += html`<script type="text/javascript">
       ${formatSnippet(rumScriptUrl, 'DD_RUM')}
       DD_RUM.onReady(function () {
-        DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+        ${afterPreInitScript(
+          options,
+          js`DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})`
+        )}
       })
     </script>`
   }
@@ -141,30 +202,41 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
 
   const { logsScriptUrl, rumScriptUrl, debuggerScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
+  // Every SDK bundle is loaded before any init() call, so the pre-init script runs with all of
+  // them instrumenting the page.
+  let sdkScripts = ''
+  let initScripts = ''
+
   if (options.logs) {
-    header += html`<script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>`
-    header += html`<script type="text/javascript">
-      DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-      ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+    sdkScripts += html`<script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>`
+    initScripts += html`<script type="text/javascript">
+      ${afterPreInitScript(
+        options,
+        js`DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})`
+      )}
     </script>`
   }
 
   if (options.rum) {
-    header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
-    header += html`<script type="text/javascript">
-      DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-      ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+    sdkScripts += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
+    initScripts += html`<script type="text/javascript">
+      ${afterPreInitScript(
+        options,
+        js`DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})`
+      )}
     </script>`
   }
 
   if (options.debugger) {
-    header += html`
-      <script type="text/javascript" src="${debuggerScriptUrl}"></script>
-      <script type="text/javascript">
-        DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})
-      </script>
-    `
+    sdkScripts += html`<script type="text/javascript" src="${debuggerScriptUrl}"></script>`
+    initScripts += html`<script type="text/javascript">
+      ${afterPreInitScript(options, js`DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})`)}
+    </script>`
   }
+
+  header += preInitDefinition(options) + sdkScripts + initScripts
 
   return basePage({
     header,
@@ -209,6 +281,9 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
     </script>`
   }
 
+  // The app bundle imports the SDK and then calls the *_INIT globals, so it is the one calling
+  // DD_PRE_INIT in between.
+  header += preInitDefinition(options)
   header += html`<script type="text/javascript" src="./app.js"></script>`
 
   return basePage({
@@ -218,6 +293,8 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
 }
 
 export function appSetup(options: SetupOptions, servers: Servers, appName: string) {
+  rejectPreInitScript(options, 'app')
+
   let header = options.head || ''
 
   if (options.eventBridge) {
@@ -276,6 +353,8 @@ export function workerSetup(setupOptions: SetupOptions, servers: Servers) {
 }
 
 export function microfrontendSetup(options: SetupOptions, servers: Servers) {
+  rejectPreInitScript(options, 'microfrontend')
+
   let header = options.head || ''
 
   if (options.eventBridge) {
@@ -307,6 +386,8 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
 // Salesforce apps don't serve a locally-generated page body; this factory only drives the
 // page-side setup needed to init RUM on the remote Salesforce page.
 export async function salesforceSetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
+  rejectPreInitScript(options, 'salesforce')
+
   const salesforceAppDirectory = options.salesforceApp === 'experience-cloud' ? 'sf-experience-app' : 'sf-lwc-app'
   const salesforceBundlePath = resolve(
     __dirname,

@@ -17,6 +17,25 @@ export function expectedWsEchoMessage(out = DEFAULT_WS_OUT_MESSAGE) {
   return `echo: ${out}`
 }
 
+/** In-page expression evaluating to the /ws-echo URL for the current origin. */
+const WS_ECHO_URL = `(function () {
+  var url = new URL('/ws-echo', location.href)
+  url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return url.toString()
+})()`
+
+/** Handle exposed by {@link preInitWebSocketScript} to drive the socket it opened. */
+interface PreInitWebSocketHandle {
+  closed: boolean
+  close: () => void
+}
+
+declare global {
+  interface Window {
+    preInitWebSocket?: PreInitWebSocketHandle
+  }
+}
+
 export class WebSocketPage {
   readonly wsOpenButton: Locator
   readonly wsStatusParagraph: Locator
@@ -113,4 +132,48 @@ export class WebSocketPage {
   async expectLastMessage(text: string) {
     await expect(this.wsLastMessageParagraph).toHaveText(text)
   }
+}
+
+/**
+ * Script for `createTest().withPreInitScript()`: opens a socket to /ws-echo and exchanges a
+ * message before `init()` runs. It returns a promise, so the exchange — and, with
+ * `closeBeforeInit`, the close as well — is guaranteed to complete while the SDK is only
+ * buffering. The socket is left open otherwise, and can be closed later with
+ * {@link closePreInitWebSocket}.
+ *
+ * It has no DOM dependency: it runs in the page `<head>`, before the body exists.
+ */
+export function preInitWebSocketScript({ closeBeforeInit = false } = {}) {
+  return `
+    var socket = new WebSocket(${WS_ECHO_URL})
+    var handle = {
+      closed: false,
+      close: function () {
+        socket.close()
+      },
+    }
+    window.preInitWebSocket = handle
+    return new Promise(function (resolve) {
+      socket.addEventListener('open', function () {
+        socket.send(${JSON.stringify(DEFAULT_WS_OUT_MESSAGE)})
+      })
+      socket.addEventListener('message', function () {
+        ${closeBeforeInit ? 'socket.close()' : 'resolve()'}
+      })
+      // Also covers a failed handshake: an 'error' is always followed by a 'close', so init() is
+      // never held back forever.
+      socket.addEventListener('close', function () {
+        handle.closed = true
+        resolve()
+      })
+    })
+  `
+}
+
+export async function closePreInitWebSocket(page: Page) {
+  // page.goto() only waits for the load event, which can happen before the SDK bundle is
+  // evaluated (async setup) and therefore before the pre-init script has run.
+  await page.waitForFunction(() => window.preInitWebSocket !== undefined)
+  await page.evaluate(() => window.preInitWebSocket!.close())
+  await page.waitForFunction(() => window.preInitWebSocket!.closed)
 }
