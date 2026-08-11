@@ -31,7 +31,7 @@ export type BufferedData =
   | { type: BufferedDataType.CONSOLE; data: ConsoleLog }
   | { type: BufferedDataType.WEB_SOCKET; data: WebSocketContext }
 
-export function startBufferingData() {
+export function startBufferingData(sources?: BufferedDataType[]) {
   const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT, (count) => {
     // monitor-until: 2026-10-14
     addTelemetryDebug('Early data collection dropped data on unbuffer', {
@@ -44,6 +44,9 @@ export function startBufferingData() {
     type: T,
     source: Observable<Extract<BufferedData, { type: T }>['data']>
   ) {
+    if (sources && !sources.includes(type)) {
+      return
+    }
     subscriptions.push(
       source.subscribe((data) => {
         observable.notify({ type, data } as BufferedData)
@@ -55,9 +58,6 @@ export function startBufferingData() {
   subscribe(BufferedDataType.FETCH, initFetchObservable())
   subscribe(BufferedDataType.XHR, initXhrObservable())
   subscribe(BufferedDataType.CONSOLE, initConsoleObservable(Object.values(ConsoleApiName)))
-  // Subscribed unconditionally: the WebSocket opt-in is only known at init(), and consulting it
-  // before instrumenting would miss every connection opened before then. The opt-in is left to the
-  // consumer of this data source.
   subscribe(BufferedDataType.WEB_SOCKET, initWebSocketObservable())
 
   return {

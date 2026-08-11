@@ -1,7 +1,15 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
-import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
+import {
+  display,
+  DefaultPrivacyLevel,
+  ResourceType,
+  startTelemetry,
+  startSessionManager,
+  BufferedDataType,
+  startBufferingData,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -11,6 +19,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
@@ -55,6 +64,23 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
+  it('buffers the data sources consumed by RUM', () => {
+    const startBufferingDataSpy = replaceMockableWithSpy(startBufferingData).and.callFake(startBufferingData)
+
+    makeRumPublicApiWithDefaults()
+
+    if (startBufferingDataSpy.calls.count()) {
+      registerCleanupTask(startBufferingDataSpy.calls.mostRecent().returnValue.stop)
+    }
+    expect(startBufferingDataSpy).toHaveBeenCalledOnceWith([
+      BufferedDataType.RUNTIME_ERROR,
+      BufferedDataType.FETCH,
+      BufferedDataType.XHR,
+      BufferedDataType.CONSOLE,
+      BufferedDataType.WEB_SOCKET,
+    ])
+  })
+
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi

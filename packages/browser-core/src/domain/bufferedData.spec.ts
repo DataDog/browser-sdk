@@ -1,5 +1,5 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { ConsoleApiName } from '@datadog/js-core/util'
+import { ConsoleApiName, globalObject } from '@datadog/js-core/util'
 import type { MockFetch } from '../../test'
 import {
   collectAsyncCalls,
@@ -23,6 +23,59 @@ import { ErrorHandling, ErrorSource, type RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 
 describe('startBufferingData', () => {
+  it('does not instrument unselected sources', () => {
+    mockWebSocket()
+    const originalWebSocket = globalObject.WebSocket
+    const originalOnError = globalObject.onerror
+    const originalOnUnhandledRejection = globalObject.onunhandledrejection
+    const { stop } = startBufferingData([])
+
+    registerCleanupTask(() => {
+      stop()
+      resetWebSocketObservable()
+    })
+
+    expect(globalObject.WebSocket).toBe(originalWebSocket)
+    expect(globalObject.onerror).toBe(originalOnError)
+    expect(globalObject.onunhandledrejection).toBe(originalOnUnhandledRejection)
+  })
+
+  it('collects only selected data sources', (done) => {
+    const runtimeErrorObservable = new Observable<RawError>()
+    replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
+    mockWebSocket()
+    const originalWebSocket = globalObject.WebSocket
+    const { observable, stop } = startBufferingData([BufferedDataType.RUNTIME_ERROR])
+
+    registerCleanupTask(() => {
+      stop()
+      resetWebSocketObservable()
+    })
+
+    expect(globalObject.WebSocket).toBe(originalWebSocket)
+
+    const rawError = {
+      startClocks: clocksNow(),
+      source: ErrorSource.SOURCE,
+      type: 'Error',
+      stack: 'Error: error!',
+      handling: ErrorHandling.UNHANDLED,
+      causes: undefined,
+      fingerprint: undefined,
+      message: 'error!',
+    }
+
+    observable.subscribe((data) => {
+      expect(data).toEqual({
+        type: BufferedDataType.RUNTIME_ERROR,
+        data: rawError,
+      })
+      done()
+    })
+
+    runtimeErrorObservable.notify(rawError)
+  })
+
   it('collects runtime errors', (done) => {
     const runtimeErrorObservable = new Observable<RawError>()
     replaceMockable(trackRuntimeError, () => runtimeErrorObservable)

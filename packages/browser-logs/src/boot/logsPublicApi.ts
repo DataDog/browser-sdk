@@ -12,6 +12,7 @@ import {
   startBufferingData,
   callMonitored,
   mockable,
+  BufferedDataType,
 } from '@datadog/browser-core'
 import { deepClone } from '@datadog/js-core/util'
 import type { LogsInitConfiguration } from '../domain/configuration'
@@ -273,7 +274,12 @@ export interface LogsPublicApiOptions {
 
 export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedDataObservable = startBufferingData().observable
+  const bufferedDataObservable = mockable(startBufferingData)([
+    BufferedDataType.RUNTIME_ERROR,
+    BufferedDataType.FETCH,
+    BufferedDataType.XHR,
+    BufferedDataType.CONSOLE,
+  ]).observable
 
   let strategy = createPreStartStrategy(
     buildCommonContext,

@@ -33,6 +33,7 @@ import {
   startBufferingData,
   mockable,
   generateUUID,
+  BufferedDataType,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -669,7 +670,13 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedData = startBufferingData()
+  const bufferedData = mockable(startBufferingData)([
+    BufferedDataType.RUNTIME_ERROR,
+    BufferedDataType.FETCH,
+    BufferedDataType.XHR,
+    BufferedDataType.CONSOLE,
+    BufferedDataType.WEB_SOCKET,
+  ])
 
   let strategy = createPreStartStrategy(
     options,
