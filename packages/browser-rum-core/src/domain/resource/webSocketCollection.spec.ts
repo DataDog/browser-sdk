@@ -1,4 +1,10 @@
-import { initWebSocketObservable, resetAllowUntrustedEvents, setAllowUntrustedEvents } from '@datadog/browser-core'
+import {
+  addExperimentalFeatures,
+  ExperimentalFeature,
+  initWebSocketObservable,
+  resetAllowUntrustedEvents,
+  setAllowUntrustedEvents,
+} from '@datadog/browser-core'
 import {
   createMockWebSocket,
   mockClock,
@@ -9,7 +15,7 @@ import {
 } from '@datadog/browser-core/test'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks } from '@datadog/js-core/time'
-import { mockViewHistory } from '../../../test'
+import { mockRumConfiguration, mockViewHistory } from '../../../test'
 import { VitalType } from '../../rawRumEvent.types'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -502,11 +508,36 @@ describe('webSocketCollection', () => {
   })
 
   describe('startWebSocketCollection', () => {
-    function startCollection() {
-      const collection = startWebSocketCollection(lifeCycle, mockViewHistory(), jasmine.createSpy())
+    function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
+      const collection = startWebSocketCollection(lifeCycle, configuration, mockViewHistory(), jasmine.createSpy())
       registerCleanupTask(() => collection.stop())
       return collection
     }
+
+    describe('opt-in gate', () => {
+      ;(
+        [
+          { trackResources: true, betaTrackWebSockets: true, experimentalFeature: false, collects: true },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: true, collects: true },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: false, collects: false },
+          { trackResources: false, betaTrackWebSockets: true, experimentalFeature: false, collects: false },
+          { trackResources: false, betaTrackWebSockets: false, experimentalFeature: true, collects: false },
+        ] as const
+      ).forEach(({ trackResources, betaTrackWebSockets, experimentalFeature, collects }) => {
+        it(`${collects ? 'collects' : 'does not collect'} with trackResources=${trackResources}, betaTrackWebSockets=${betaTrackWebSockets}, TRACK_WEBSOCKETS=${experimentalFeature}`, () => {
+          if (experimentalFeature) {
+            addExperimentalFeatures([ExperimentalFeature.TRACK_WEBSOCKETS])
+          }
+
+          startCollection(mockRumConfiguration({ trackResources, betaTrackWebSockets }))
+          const socket = notifyConnecting()
+          notifyOpen(socket, 10)
+          notifyClosed(socket, 20, 1000, 'bye', true)
+
+          expect(webSocketCompleteEvents.length).toBe(collects ? 1 : 0)
+        })
+      })
+    })
 
     it('finalizes open connections with tracking_end_reason="session_end" when the session expires', () => {
       const endClocks = relativeToClocks(clock.relative(40))

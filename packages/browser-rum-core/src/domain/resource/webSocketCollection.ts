@@ -1,9 +1,17 @@
 import type { Observable, WebSocketContext } from '@datadog/browser-core'
-import { generateUUID, initWebSocketObservable, sanitize } from '@datadog/browser-core'
+import {
+  ExperimentalFeature,
+  generateUUID,
+  initWebSocketObservable,
+  isExperimentalFeatureEnabled,
+  noop,
+  sanitize,
+} from '@datadog/browser-core'
 import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { clocksNow, elapsed } from '@datadog/js-core/time'
 import { buildUrl } from '@datadog/js-core/util'
 import { VitalType } from '../../rawRumEvent.types'
+import type { RumConfiguration } from '../configuration'
 import type { ViewHistory } from '../contexts/viewHistory'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -62,11 +70,21 @@ export interface WebSocketConnectionTracker {
   stop: () => void
 }
 
+/**
+ * The opt-in is enforced here rather than by withholding instrumentation, which happens from SDK
+ * load (see `startBufferingData`). When it is closed, nothing is subscribed nor allocated and the
+ * returned stop handle is a no-op.
+ */
 export function startWebSocketCollection(
   lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
   viewHistory: ViewHistory,
   addDurationVital: (vital: DurationVital) => void
 ) {
+  if (!isWebSocketCollectionEnabled(configuration)) {
+    return { stop: noop }
+  }
+
   const tracker = trackWebSocket(lifeCycle, initWebSocketObservable(), viewHistory, addDurationVital)
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
@@ -83,6 +101,13 @@ export function startWebSocketCollection(
       tracker.stop()
     },
   }
+}
+
+function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
+  return (
+    configuration.trackResources &&
+    (configuration.betaTrackWebSockets || isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_WEBSOCKETS))
+  )
 }
 
 export function trackWebSocket(
