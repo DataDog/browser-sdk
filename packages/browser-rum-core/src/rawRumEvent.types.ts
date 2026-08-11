@@ -8,6 +8,7 @@ import type {
   Csp,
   Context,
   DebugIdEntry,
+  RawWasmModule,
 } from '@datadog/browser-core'
 import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
@@ -136,10 +137,7 @@ export interface RawRumErrorEvent {
     handling?: ErrorHandling
     causes?: RawErrorCause[]
     source_type: 'browser' | 'browser+wasm'
-    wasm_modules?: Array<{
-      url: string
-      build_id: string
-    }>
+    wasm_modules?: RawWasmModule[]
     csp?: Csp
   }
   _dd?: {

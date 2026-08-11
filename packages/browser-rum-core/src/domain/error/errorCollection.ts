@@ -8,6 +8,8 @@ import {
   generateUUID,
   computeRawError,
   ErrorHandling,
+  getLoadedWasmModules,
+  isWasmError,
   NonErrorPrefix,
 } from '@datadog/browser-core'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
@@ -15,7 +17,6 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumErrorEventDomainContext } from '../../domainContext.types'
-import { getLoadedWasmModules, hasLoadedWasmModules } from '../wasmModules/wasmModuleTracking'
 import { trackReportError } from './trackReportError'
 
 export interface ProvidedError {
@@ -68,7 +69,7 @@ export function doStartErrorCollection(lifeCycle: LifeCycle) {
 }
 
 function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEvent> {
-  const wasmActive = hasLoadedWasmModules()
+  const isWasm = isWasmError(error)
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
     error: {
@@ -81,10 +82,10 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
       type: error.type,
       handling: error.handling,
       causes: error.causes,
-      source_type: wasmActive ? 'browser+wasm' : 'browser',
+      source_type: isWasm ? 'browser+wasm' : 'browser',
       fingerprint: error.fingerprint,
       csp: error.csp,
-      wasm_modules: wasmActive ? getLoadedWasmModules() : undefined,
+      ...(isWasm ? { wasm_modules: getLoadedWasmModules() } : {}),
     },
     _dd: { debug_ids: error.debugIds },
     type: RumEventType.ERROR,

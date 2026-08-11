@@ -70,6 +70,7 @@ describe('runtime error collection', () => {
         handling: ErrorHandling.UNHANDLED,
         fingerprint: undefined,
         message: undefined,
+        source_type: 'browser',
       },
       message: 'error!',
       status: StatusType.error,
@@ -124,6 +125,7 @@ describe('runtime error collection', () => {
         ],
         fingerprint: undefined,
         message: undefined,
+        source_type: 'browser',
       },
       message: 'High level error',
       status: StatusType.error,
@@ -142,6 +144,29 @@ describe('runtime error collection', () => {
     })
 
     expect(rawLogsEvents.length).toEqual(0)
+  })
+
+  it('should identify WASM runtime errors', () => {
+    const { rawLogsEvents, bufferedDataObservable } = startRuntimeErrorCollectionWithDefaults()
+
+    bufferedDataObservable.notify({
+      type: BufferedDataType.RUNTIME_ERROR,
+      data: {
+        ...RAW_ERROR,
+        stack: 'RuntimeError: unreachable\n  at foo @ https://example.com/app.wasm:wasm-function[42]:0x10',
+      },
+    })
+
+    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
+      kind: 'Error',
+      stack: jasmine.any(String),
+      causes: undefined,
+      handling: ErrorHandling.UNHANDLED,
+      fingerprint: undefined,
+      message: undefined,
+      source_type: 'browser+wasm',
+      wasm_modules: [],
+    })
   })
 
   it('should retrieve dd_context from runtime errors', () => {

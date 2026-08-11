@@ -1,4 +1,5 @@
 import type { RawError } from '@datadog/browser-core'
+import { getLoadedWasmModules, isWasmError } from '@datadog/browser-core'
 import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 
 export function createErrorFieldFromRawError(
@@ -11,6 +12,8 @@ export function createErrorFieldFromRawError(
     includeMessage = false,
   } = {}
 ): NonNullable<RawLoggerLogsEvent['error']> {
+  const isWasm = isWasmError(rawError)
+
   return {
     stack: rawError.stack,
     kind: rawError.type,
@@ -18,5 +21,7 @@ export function createErrorFieldFromRawError(
     causes: rawError.causes,
     fingerprint: rawError.fingerprint,
     handling: rawError.handling,
+    source_type: isWasm ? 'browser+wasm' : 'browser',
+    ...(isWasm ? { wasm_modules: getLoadedWasmModules() } : {}),
   }
 }

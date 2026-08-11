@@ -1,28 +1,46 @@
-// Intercepts WebAssembly module-creation entry points to record (url, build_id)
-// per loaded module. errorCollection reads getLoadedWasmModules() to set
+// Intercepts WebAssembly module-creation entry points to record (url, build ID)
+// per loaded module. Error collectors read getLoadedWasmModules() to set
 // source_type='browser+wasm' and error.wasm_modules on error events.
 // Modules loaded lazily after the initial page load are captured automatically
 // — the hooks stay active for the lifetime of the page.
 
+import type { RawError } from '../error/error.types'
 import { extractWasmBuildId } from './wasmBinaryParser'
 
-export interface WasmModuleEntry {
+export interface RawWasmModule {
   url: string
   build_id: string
 }
 
-const registry: Map<string, WasmModuleEntry> = new Map()
-let installed = false
-
-export function getLoadedWasmModules(): WasmModuleEntry[] {
-  return Array.from(registry.values())
+interface WasmModuleEntry {
+  url: string
+  buildId: string
 }
 
-export function hasLoadedWasmModules(): boolean {
-  return registry.size > 0
+const registry = new Map<string, WasmModuleEntry>()
+let stopTracking: (() => void) | undefined
+let trackingClients = 0
+
+export function getLoadedWasmModules(): RawWasmModule[] {
+  return Array.from(registry.values(), ({ url, buildId }) => ({ url, build_id: buildId }))
 }
 
-function recordModule(url: string, buffer: ArrayBuffer): void {
+const WASM_STACK_FRAME_PATTERNS = [
+  /wasm-function(?:\[|@)/i,
+  /\[wasm code\]/i,
+  /wasm:\/\//i,
+  /\.wasm(?=$|[:@)\s]|[?#])/i,
+]
+
+export function isWasmError({ stack, causes }: Pick<RawError, 'stack' | 'causes'>): boolean {
+  return [stack]
+    .concat(causes?.map((cause) => cause.stack) ?? [])
+    .some(
+      (candidate) => candidate !== undefined && WASM_STACK_FRAME_PATTERNS.some((pattern) => pattern.test(candidate))
+    )
+}
+
+function recordModule(url: string, buffer: ArrayBufferLike): void {
   if (registry.has(url)) {
     return
   }
@@ -32,7 +50,11 @@ function recordModule(url: string, buffer: ArrayBuffer): void {
   } catch {
     // Parser must never throw — debug info absence is normal.
   }
-  registry.set(url, { url, build_id: buildId })
+  registry.set(url, { url, buildId })
+}
+
+function recordModuleFromView(url: string, view: ArrayBufferView): void {
+  recordModule(url, view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength))
 }
 
 // Extracts build_id from a Response without consuming it for the caller.
@@ -45,24 +67,41 @@ function captureFromResponseAsync(response: Response): Response {
       .clone()
       .arrayBuffer()
       .then((buf) => recordModule(url, buf))
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error('[wasm-tracking] capture failed:', err)
-      })
+      .catch(() => undefined)
   }
   return response
 }
 
 export function startWasmModuleTracking(): () => void {
-  if (installed || typeof WebAssembly === 'undefined') {
-    return () => {}
+  if (typeof WebAssembly === 'undefined') {
+    return () => undefined
   }
-  installed = true
 
+  trackingClients += 1
+  if (!stopTracking) {
+    stopTracking = installWasmModuleTracking()
+  }
+
+  let stopped = false
+  return () => {
+    if (stopped) {
+      return
+    }
+    stopped = true
+    trackingClients -= 1
+    if (trackingClients === 0) {
+      stopTracking?.()
+      stopTracking = undefined
+      registry.clear()
+    }
+  }
+}
+
+function installWasmModuleTracking(): () => void {
   const origInstantiate = WebAssembly.instantiate
   const origCompile = WebAssembly.compile
-  const origInstantiateStreaming = (WebAssembly as any).instantiateStreaming
-  const origCompileStreaming = (WebAssembly as any).compileStreaming
+  const origInstantiateStreaming = WebAssembly.instantiateStreaming
+  const origCompileStreaming = WebAssembly.compileStreaming
 
   // Hook 1: instantiate(bytes | module, imports). For raw bytes, we can read
   // build_id directly; for an already-compiled WebAssembly.Module we have no
@@ -72,10 +111,10 @@ export function startWasmModuleTracking(): () => void {
       if (source instanceof ArrayBuffer) {
         recordModule('<wasm-instantiate-bytes>', source)
       } else if (ArrayBuffer.isView(source)) {
-        recordModule('<wasm-instantiate-bytes>', (source as ArrayBufferView).buffer as ArrayBuffer)
+        recordModuleFromView('<wasm-instantiate-bytes>', source)
       } else if (source instanceof WebAssembly.Module) {
         if (!registry.has('<wasm-module-object>')) {
-          registry.set('<wasm-module-object>', { url: '<wasm-module-object>', build_id: '' })
+          registry.set('<wasm-module-object>', { url: '<wasm-module-object>', buildId: '' })
         }
       }
     } catch {
@@ -89,7 +128,7 @@ export function startWasmModuleTracking(): () => void {
       if (bytes instanceof ArrayBuffer) {
         recordModule('<wasm-compile-bytes>', bytes)
       } else if (ArrayBuffer.isView(bytes)) {
-        recordModule('<wasm-compile-bytes>', (bytes as ArrayBufferView).buffer as ArrayBuffer)
+        recordModuleFromView('<wasm-compile-bytes>', bytes)
       }
     } catch {
       // intentionally ignored
@@ -98,24 +137,20 @@ export function startWasmModuleTracking(): () => void {
   } as typeof WebAssembly.compile
 
   if (origInstantiateStreaming) {
-    ;(WebAssembly as any).instantiateStreaming = function (this: typeof WebAssembly, source: any, importObject?: any) {
-      return Promise.resolve(source)
-        .then((response: Response) => {
-          try {
-            captureFromResponseAsync(response)
-          } catch {
-            // never block instantiation on capture failure
-          }
-          return origInstantiateStreaming.call(this, response, importObject)
-        })
+    WebAssembly.instantiateStreaming = function (source, importObject) {
+      return Promise.resolve(source).then((response: Response) => {
+        try {
+          captureFromResponseAsync(response)
+        } catch {
+          // never block instantiation on capture failure
+        }
+        return origInstantiateStreaming.call(this, response, importObject)
+      })
     }
-  } else {
-    // eslint-disable-next-line no-console
-    console.warn('[wasm-tracking] WebAssembly.instantiateStreaming not present, skipping')
   }
 
   if (origCompileStreaming) {
-    ;(WebAssembly as any).compileStreaming = function (this: typeof WebAssembly, source: any) {
+    WebAssembly.compileStreaming = function (source) {
       return Promise.resolve(source).then((response: Response) => {
         try {
           captureFromResponseAsync(response)
@@ -127,22 +162,22 @@ export function startWasmModuleTracking(): () => void {
     }
   }
 
-  return function stopWasmModuleTracking() {
+  return () => {
     WebAssembly.instantiate = origInstantiate
     WebAssembly.compile = origCompile
     if (origInstantiateStreaming) {
-      ;(WebAssembly as any).instantiateStreaming = origInstantiateStreaming
+      WebAssembly.instantiateStreaming = origInstantiateStreaming
     }
     if (origCompileStreaming) {
-      ;(WebAssembly as any).compileStreaming = origCompileStreaming
+      WebAssembly.compileStreaming = origCompileStreaming
     }
-    registry.clear()
-    installed = false
   }
 }
 
 // Test-only helper to reset registry state between test cases.
 export function resetWasmModuleRegistryForTesting(): void {
+  stopTracking?.()
+  stopTracking = undefined
+  trackingClients = 0
   registry.clear()
-  installed = false
 }

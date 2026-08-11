@@ -1,9 +1,12 @@
 // Keep the following in sync with packages/browser-rum/src/entries/main.ts
-import { defineGlobal, globalObject } from '@datadog/browser-core'
+import { defineGlobal, globalObject, startWasmModuleTracking } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 import { makeProfilerApiStub } from '../boot/stubProfilerApi'
+
+// Install WebAssembly hooks before deferred RUM initialization so eagerly loaded modules are captured.
+startWasmModuleTracking()
 
 export type {
   User,

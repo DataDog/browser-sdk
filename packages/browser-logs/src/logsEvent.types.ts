@@ -105,6 +105,17 @@ export interface LogsEvent {
       type?: string
       stack?: string
     }>
+    /**
+     * The language or platform impacting the error stack trace format
+     */
+    source_type?: 'browser' | 'browser+wasm'
+    /**
+     * WebAssembly modules available for stack trace symbolication
+     */
+    wasm_modules?: Array<{
+      url: string
+      build_id: string
+    }>
 
     [k: string]: unknown
   }

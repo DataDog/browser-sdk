@@ -17,8 +17,8 @@ function readLEB128Unsigned(bytes: Uint8Array, offset: number): { value: number;
   let cursor = offset
   while (cursor < bytes.length) {
     const byte = bytes[cursor++]
-    value |= (byte & 0x7f) << shift
-    if ((byte & 0x80) === 0) {
+    value += (byte % 0x80) * 2 ** shift
+    if (byte < 0x80) {
       return { value, nextOffset: cursor }
     }
     shift += 7
@@ -41,7 +41,7 @@ function toHex(bytes: Uint8Array): string {
 const CUSTOM_SECTION_ID = 0
 const WASM_MAGIC = [0x00, 0x61, 0x73, 0x6d]
 
-export function extractWasmBuildId(buffer: ArrayBuffer): string {
+export function extractWasmBuildId(buffer: ArrayBufferLike): string {
   const bytes = new Uint8Array(buffer)
   if (bytes.length < 8) {
     return ''

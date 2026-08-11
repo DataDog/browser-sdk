@@ -19,6 +19,7 @@ import {
   ErrorSource,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  startWasmModuleTracking,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -30,7 +31,6 @@ import { startRequestCollection } from '../domain/requestCollection'
 import { startWebSocketCollection } from '../domain/resource/webSocketCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
-import { startWasmModuleTracking } from '../domain/wasmModules/wasmModuleTracking'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
 import { startRumBatch } from '../transport/startRumBatch'

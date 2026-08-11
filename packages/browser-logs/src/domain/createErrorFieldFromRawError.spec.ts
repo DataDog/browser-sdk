@@ -61,10 +61,27 @@ describe('createErrorFieldFromRawError', () => {
       ],
       fingerprint: 'corge',
       handling: ErrorHandling.HANDLED,
+      source_type: 'browser',
     })
   })
 
   it('includes the message if includeMessage is true', () => {
     expect(createErrorFieldFromRawError(exhaustiveRawError, { includeMessage: true }).message).toBe('quux')
+  })
+
+  it('adds WebAssembly metadata when a cause has a WebAssembly frame', () => {
+    const error = createErrorFieldFromRawError({
+      ...exhaustiveRawError,
+      causes: [
+        {
+          source: ErrorSource.CONSOLE,
+          message: 'Wasm trap',
+          stack: 'RuntimeError: unreachable\n    at wasm-function[42]:0x123',
+        },
+      ],
+    })
+
+    expect(error.source_type).toBe('browser+wasm')
+    expect(error.wasm_modules).toEqual([])
   })
 })
