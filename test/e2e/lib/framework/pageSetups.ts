@@ -37,6 +37,7 @@ export interface SetupOptions {
   callerLocation?: CallerLocation
   mockClock: boolean
   salesforceApp: SalesforceApp | undefined
+  shopifyApp: boolean
 }
 
 export interface CallerLocation {
@@ -335,6 +336,37 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
     // Both sf-lwc-app and sf-experience-app have a committed datadogInit LWC that reads
     // these globals and calls DD_RUM.init. On experience-cloud, that component only runs
     // when the page is loaded with init=true.
+    await page.addInitScript(
+      `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+      window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
+    )
+  }
+  return ''
+}
+
+// Matches the CDN URL used by the store's Theme Liquid snippet and Custom Pixel
+// `https://www.datadoghq-browser-agent.com/<site>/v<major>/datadog-rum-shopify.js`
+const SHOPIFY_BUNDLE_URL_PATTERN = /datadoghq-browser-agent\.com\/[^/]+\/v\d+\/datadog-rum-shopify\.js(?:[?#].*)?$/
+
+// Shopify apps don't serve a locally-generated page body; this factory only intercepts the
+// bootstrap script request and injects the RUM configuration read by the store's Theme Liquid
+// snippet and Custom Pixel. 
+export async function shopifySetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
+  const shopifyBundlePath = resolve(__dirname, '../../../../packages/browser-rum-shopify/bundle/datadog-rum-shopify.js')
+
+  await page.route(SHOPIFY_BUNDLE_URL_PATTERN, async (route) => {
+    await route.fulfill({
+      body: await readFile(shopifyBundlePath),
+      contentType: 'application/javascript',
+      // The snippets load the script with `crossOrigin = 'anonymous'`, so the browser enforces
+      // CORS on this response even though it never leaves the machine.
+      headers: { 'access-control-allow-origin': '*' },
+    })
+  })
+
+  if (options.rum) {
+    // addInitScript runs on every new document in the page, including the Custom Pixel's
+    // sandboxed iframe, so this reaches both the storefront and checkout injection points.
     await page.addInitScript(
       `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
       window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
