@@ -1,5 +1,5 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { getNavigationStart } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
+import { getTimeOrigin } from '@datadog/js-core/time'
 import {
   createDocumentTraceData,
   findTraceComment,
@@ -16,7 +16,7 @@ describe('getDocumentTraceId', () => {
     expect(
       getDocumentTraceId(
         createDocument(
-          `<!-- DATADOG;trace-id=foo;trace-time=${getNavigationStart()} -->
+          `<!-- DATADOG;trace-id=foo;trace-time=${getTimeOrigin()} -->
           ${HTML_DOCTYPE}
           <html>
             <head>
@@ -37,7 +37,7 @@ describe('getDocumentTraceId', () => {
           <html>
             <head>
               <meta name="dd-trace-id" content="foo" />
-              <meta name="dd-trace-time" content="${getNavigationStart()}" />
+              <meta name="dd-trace-time" content="${getTimeOrigin()}" />
             </head>
             <body>
             </body>
@@ -51,12 +51,12 @@ describe('getDocumentTraceId', () => {
     expect(
       getDocumentTraceId(
         createDocument(
-          `<!-- DATADOG;trace-id=comment;trace-time=${getNavigationStart()} -->
+          `<!-- DATADOG;trace-id=comment;trace-time=${getTimeOrigin()} -->
           ${HTML_DOCTYPE}
           <html>
             <head>
               <meta name="dd-trace-id" content="meta" />
-              <meta name="dd-trace-time" content="${getNavigationStart()}" />
+              <meta name="dd-trace-time" content="${getTimeOrigin()}" />
             </head>
             <body>
             </body>
@@ -74,7 +74,7 @@ describe('getDocumentTraceId', () => {
     expect(
       getDocumentTraceId(
         createDocument(`<!-- DATADOG;trace-id=foo;trace-time=${
-          getNavigationStart() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD
+          getTimeOrigin() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD
         } -->
           ${HTML_DOCTYPE}
           <html>

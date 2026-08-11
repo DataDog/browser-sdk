@@ -1,5 +1,8 @@
-import type { Duration, Observable, RelativeTime } from '@datadog/browser-core'
-import { noop, toServerDuration, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
+import type { RelativeTime, Duration } from '@datadog/js-core/time'
+import type { Observable } from '@datadog/browser-core'
+import { toServerDuration, addDuration } from '@datadog/js-core/time'
+import { noop } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -54,7 +57,7 @@ export function startActionCollection(
     },
   }
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
+  hooks.assemble.register(({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (
       eventType !== RumEventType.ERROR &&
       eventType !== RumEventType.RESOURCE &&
@@ -83,13 +86,10 @@ export function startActionCollection(
     }
   })
 
-  hooks.register(
-    HookNames.AssembleTelemetry,
-    ({ startTime }): DefaultTelemetryEventAttributes => ({
-      // todo: fix telemetry event type
-      action: { id: actionContexts.findActionId(startTime) as unknown as string },
-    })
-  )
+  hooks.assembleTelemetry.register(({ startTime }): DefaultTelemetryEventAttributes => ({
+    // todo: fix telemetry event type
+    action: { id: actionContexts.findActionId(startTime) as unknown as string },
+  }))
 
   return {
     addAction: manualActions.addAction,

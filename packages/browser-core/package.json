@@ -1,9 +1,9 @@
 {
   "name": "@datadog/browser-core",
-  "version": "7.2.0",
+  "version": "7.8.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
-  "module": "esm/index.js",
+  "module": "esm/index.mjs",
   "types": "cjs/index.d.ts",
   "sideEffects": false,
   "files": [
@@ -22,9 +22,11 @@
     "url": "https://github.com/DataDog/browser-sdk.git",
     "directory": "packages/browser-core"
   },
+  "dependencies": {
+    "@datadog/js-core": "0.0.9"
+  },
   "devDependencies": {
-    "@types/pako": "2.0.4",
-    "pako": "2.1.0"
+    "pako": "3.0.1"
   },
   "volta": {
     "extends": "../../package.json"

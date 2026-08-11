@@ -1,4 +1,4 @@
-import { isIndexableObject } from '@datadog/browser-core'
+import { isIndexableObject } from '@datadog/js-core/util'
 
 /**
  * Compare two values for deep equality

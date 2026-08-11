@@ -20,7 +20,6 @@ export function trackInput(
   const isShadowRoot = target !== document
 
   const { stop: stopEventListeners } = addEventListeners(
-    scope.configuration,
     target,
     // The 'input' event bubbles across shadow roots, so we don't have to listen for it on shadow
     // roots since it will be handled by the event listener that we did add to the document. Only

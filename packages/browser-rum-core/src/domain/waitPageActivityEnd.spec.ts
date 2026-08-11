@@ -1,5 +1,6 @@
 import type { Subscription } from '@datadog/browser-core'
-import { Observable, ONE_SECOND } from '@datadog/browser-core'
+import { ONE_SECOND } from '@datadog/js-core/time'
+import { Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, replaceMockable } from '@datadog/browser-core/test'
 import {

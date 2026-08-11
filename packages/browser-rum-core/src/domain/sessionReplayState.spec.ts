@@ -1,5 +1,6 @@
 import type { SessionContext } from '@datadog/browser-core'
-import { BridgeCapability, timeStampNow } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
+import { BridgeCapability } from '@datadog/browser-core'
 import { HIGH_HASH_UUID, LOW_HASH_UUID, MID_HASH_UUID, mockEventBridge } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { SessionReplayState, computeSessionReplayState } from './sessionReplayState'

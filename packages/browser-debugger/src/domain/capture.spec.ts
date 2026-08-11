@@ -153,6 +153,104 @@ describe('capture', () => {
       })
     })
 
+    it('should capture cross-realm Error values', () => {
+      const iframe = document.createElement('iframe')
+      document.body.appendChild(iframe)
+      const iframeWindow = iframe.contentWindow as Window & { Error: ErrorConstructor }
+      const error = new iframeWindow.Error('iframe error')
+      iframe.remove()
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.type).toBe('Error')
+      expect(result.fields.message).toEqual({ type: 'string', value: 'iframe error' })
+      expect(result.fields.name).toEqual({ type: 'string', value: 'Error' })
+    })
+
+    it('should use Error as type for Error-like values without a constructor name', () => {
+      const error = Object.create(null)
+      error[Symbol.toStringTag] = 'Error'
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.type).toBe('Error')
+    })
+
+    it('should capture Error properties that cannot be accessed', () => {
+      const error = new Error()
+      Object.defineProperty(error, 'message', {
+        get() {
+          throw new Error('Cannot access message')
+        },
+      })
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.type).toBe('Error')
+      expect(result.fields.message).toEqual({
+        notCapturedReason: 'Error accessing property',
+      })
+    })
+
+    it('should capture Error stack and cause values that cannot be inspected', () => {
+      const error = {
+        [Symbol.toStringTag]: 'Error',
+        name: 'Error',
+        message: 'Cannot inspect error details',
+        stack: new Proxy(
+          {},
+          {
+            ownKeys() {
+              throw new Error('Cannot inspect stack')
+            },
+          }
+        ),
+        cause: new Proxy(
+          {},
+          {
+            ownKeys() {
+              throw new Error('Cannot inspect cause')
+            },
+          }
+        ),
+      }
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.type).toBe('Object')
+      expect(result.fields.stack).toEqual({
+        notCapturedReason: 'Error accessing property',
+      })
+      expect(result.fields.cause).toEqual({
+        notCapturedReason: 'Error accessing property',
+      })
+    })
+
+    it('should read optional Error properties once and omit undefined values', () => {
+      let stackReads = 0
+      let causeReads = 0
+      const error = {
+        [Symbol.toStringTag]: 'Error',
+        name: 'Error',
+        message: 'Optional error details',
+        get stack() {
+          stackReads += 1
+          return 'stack'
+        },
+        get cause() {
+          causeReads += 1
+          return undefined
+        },
+      }
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.fields.stack).toEqual({ type: 'string', value: 'stack' })
+      expect(result.fields.cause).toBeUndefined()
+      expect(stackReads).toBe(1)
+      expect(causeReads).toBe(1)
+    })
+
     it('should capture Promise', () => {
       const promise = Promise.resolve(42)
       const result = capture(promise, defaultOpts, noTimeout())
@@ -334,7 +432,6 @@ describe('capture', () => {
       const result = capture(obj, defaultOpts, noTimeout()) as any
 
       expect(result.fields.throwing).toEqual({
-        type: 'undefined',
         notCapturedReason: 'Error accessing property',
       })
     })
@@ -554,7 +651,6 @@ describe('captureFields', () => {
     const result = captureFields(obj, defaultOpts, noTimeout())
 
     expect(result.throwing).toEqual({
-      type: 'undefined',
       notCapturedReason: 'Error accessing property',
     })
   })

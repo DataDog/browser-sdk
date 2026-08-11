@@ -1,4 +1,5 @@
-import { ONE_MINUTE, resetInitCookies, deleteCookie, setCookie } from '@datadog/browser-core'
+import { resetInitCookies, deleteCookie, setCookie } from '@datadog/browser-core'
+import { ONE_MINUTE } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { CI_VISIBILITY_TEST_ID_COOKIE_NAME, type CiTestWindow } from '../src/domain/contexts/ciVisibilityContext'
 

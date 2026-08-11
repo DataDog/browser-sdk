@@ -8,14 +8,14 @@ packages/browser-rum/src/domain/record/**               @Datadog/rum-browser @Da
 packages/browser-rum/src/domain/segmentCollection/**    @Datadog/rum-browser @Datadog/session-replay-sdk
 packages/browser-rum/src/domain/*.ts                    @Datadog/rum-browser @Datadog/session-replay-sdk
 packages/browser-rum/test/record/**                     @Datadog/rum-browser @Datadog/session-replay-sdk
-test/e2e/scenario/recorder/**                   @Datadog/rum-browser @Datadog/session-replay-sdk
+test/e2e/scenario/recorder/**                           @Datadog/rum-browser @Datadog/session-replay-sdk
 
 # Docs
 /README.md    @Datadog/rum-browser @DataDog/documentation
 
 # Debugger
-packages/browser-debugger                                               @Datadog/rum-browser @DataDog/debugger-nodejs
-packages/browser-debugger/README.md                                     @Datadog/rum-browser @DataDog/debugger-nodejs @DataDog/documentation
+packages/browser-debugger                                       @Datadog/rum-browser @DataDog/debugger-nodejs
+packages/browser-debugger/README.md                             @Datadog/rum-browser @DataDog/debugger-nodejs @DataDog/documentation
 test/apps/instrumentation-overhead                              @Datadog/rum-browser @DataDog/debugger-nodejs
 test/e2e/scenario/debugger.scenario.ts                          @Datadog/rum-browser @DataDog/debugger-nodejs
 test/performance/scenarios/instrumentationOverhead.scenario.ts  @Datadog/rum-browser @DataDog/debugger-nodejs

@@ -1,12 +1,12 @@
-import { ONE_SECOND } from '../tools/utils/timeUtils'
+import { ONE_SECOND } from '@datadog/js-core/time'
+import { buildUrl, globalObject } from '@datadog/js-core/util'
 import {
   findAllCommaSeparatedValues,
   findCommaSeparatedValue,
   findCommaSeparatedValues,
   generateUUID,
 } from '../tools/utils/stringUtils'
-import { buildUrl } from '../tools/utils/urlPolyfill'
-import { globalObject } from '../tools/globalObject'
+import type { Configuration } from '../domain/configuration'
 
 export interface CookieOptions {
   secure?: boolean
@@ -116,4 +116,22 @@ function getCookieDefaultHostName(hostname: string, referrer: string) {
 
 export function resetGetCurrentSite() {
   getCurrentSiteCache = undefined
+}
+
+export function buildCookieOptions(configuration: Configuration): CookieOptions | undefined {
+  const cookieOptions: CookieOptions = {}
+
+  cookieOptions.secure = configuration.useSecureSessionCookie || configuration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.crossSite = configuration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.partitioned = configuration.usePartitionedCrossSiteSessionCookie
+
+  if (configuration.trackSessionAcrossSubdomains) {
+    const currentSite = getCurrentSite()
+    if (!currentSite) {
+      return
+    }
+    cookieOptions.domain = currentSite
+  }
+
+  return cookieOptions
 }

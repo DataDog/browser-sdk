@@ -1,13 +1,13 @@
+import { createHook } from '@datadog/js-core/assembly'
+import { INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED, INTAKE_SITE_US1 } from '@datadog/js-core/transport'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { addExperimentalFeatures } from '../../tools/experimentalFeatures'
-import { validateAndBuildConfiguration, type Configuration } from '../configuration'
-import { INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED, INTAKE_SITE_US1 } from '../intakeSites'
+import { type Configuration } from '../configuration'
 import {
   setNavigatorOnLine,
   setNavigatorConnection,
-  createHooks,
   waitNextMicrotask,
   interceptRequests,
   registerCleanupTask,
@@ -16,7 +16,6 @@ import {
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { HookNames } from '../../tools/abstractHooks'
 import {
   addTelemetryError,
   scrubCustomerFrames,
@@ -36,15 +35,16 @@ import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 function startAndSpyTelemetry(
   configuration?: Partial<Configuration>,
   {
+    sdkName,
     metricSampleRate,
     maxTelemetryEventsPerPage,
-  }: { metricSampleRate?: number; maxTelemetryEventsPerPage?: number } = {}
+  }: { sdkName?: string; metricSampleRate?: number; maxTelemetryEventsPerPage?: number } = {}
 ) {
   const observable = new Observable<TelemetryEvent & Context>()
 
   const events: TelemetryEvent[] = []
   observable.subscribe((event) => events.push(event))
-  const hooks = createHooks()
+  const hook = createHook<any, any>()
   const telemetry = startTelemetryCollection(
     TelemetryService.RUM,
     {
@@ -52,8 +52,9 @@ function startAndSpyTelemetry(
       telemetryUsageSampleRate: 100,
       ...configuration,
     } as Configuration,
-    hooks,
+    hook,
     observable,
+    sdkName,
     metricSampleRate,
     maxTelemetryEventsPerPage
   )
@@ -64,7 +65,7 @@ function startAndSpyTelemetry(
       return events
     },
     telemetry,
-    hooks,
+    hook,
   }
 }
 
@@ -232,6 +233,24 @@ describe('telemetry', () => {
     })
   })
 
+  it('should not contain a sdk name when none is provided', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry()
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect((await getTelemetryEvents())[0].telemetry.sdk_name).toBeUndefined()
+  })
+
+  it('should contain the sdk name', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry(undefined, { sdkName: 'rum-salesforce' })
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect((await getTelemetryEvents())[0].telemetry.sdk_name).toBe('rum-salesforce')
+  })
+
   it('should collect pre start events', async () => {
     addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
@@ -254,9 +273,9 @@ describe('telemetry', () => {
 
   describe('assemble telemetry hook', () => {
     it('should add default telemetry event attributes', async () => {
-      const { getTelemetryEvents, hooks } = startAndSpyTelemetry()
+      const { getTelemetryEvents, hook } = startAndSpyTelemetry()
 
-      hooks.register(HookNames.AssembleTelemetry, () => ({ foo: 'bar' }))
+      hook.register(() => ({ foo: 'bar' }))
 
       callMonitored(() => {
         throw new Error('foo')
@@ -266,8 +285,8 @@ describe('telemetry', () => {
     })
 
     it('should add context progressively', async () => {
-      const { hooks, getTelemetryEvents } = startAndSpyTelemetry()
-      hooks.register(HookNames.AssembleTelemetry, () => ({
+      const { hook, getTelemetryEvents } = startAndSpyTelemetry()
+      hook.register(() => ({
         application: {
           id: 'bar',
         },
@@ -275,7 +294,7 @@ describe('telemetry', () => {
       callMonitored(() => {
         throw new Error('foo')
       })
-      hooks.register(HookNames.AssembleTelemetry, () => ({
+      hook.register(() => ({
         session: {
           id: '123',
         },
@@ -293,9 +312,9 @@ describe('telemetry', () => {
     it('should apply telemetry hook on events collected before telemetry is started', async () => {
       addTelemetryDebug('debug 1')
 
-      const { hooks, getTelemetryEvents } = startAndSpyTelemetry()
+      const { hook, getTelemetryEvents } = startAndSpyTelemetry()
 
-      hooks.register(HookNames.AssembleTelemetry, () => ({
+      hook.register(() => ({
         application: {
           id: 'bar',
         },
@@ -449,10 +468,7 @@ describe('startTelemetryTransport', () => {
     const interceptor = interceptRequests()
     const telemetryObservable = new Observable<TelemetryEvent & Context>()
 
-    const { stop } = startTelemetryTransport(
-      validateAndBuildConfiguration({ clientToken: 'xxx' })!,
-      telemetryObservable
-    )
+    const { stop } = startTelemetryTransport({ clientToken: 'xxx' } as Configuration, telemetryObservable)
 
     registerCleanupTask(stop)
 

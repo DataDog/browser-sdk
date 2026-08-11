@@ -1,4 +1,5 @@
-import { fetch, setTimeout, clearTimeout, buildEndpointUrl } from '@datadog/browser-core'
+import { fetch, setTimeout, clearTimeout } from '@datadog/browser-core'
+import { buildEndpointUrl } from '@datadog/js-core/transport'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 // Reason strings surfaced on RUM events. Backend reasons backend_unavailable and

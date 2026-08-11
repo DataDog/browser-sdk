@@ -1,9 +1,12 @@
-import { DISCARDED, HookNames, SKIPPED } from '@datadog/browser-core'
+import { DISCARDED, SKIPPED } from '@datadog/js-core/assembly'
 import type { TrackingConsentState } from '@datadog/browser-core'
-import type { Hooks } from '../hooks'
+import type { AssembleTelemetryHook } from '../hooks'
 
-export function startTrackingConsentContext(hooks: Hooks, trackingConsentState: TrackingConsentState) {
-  hooks.register(HookNames.AssembleTelemetry, () => {
+export function startTrackingConsentContext(
+  assembleTelemetryHook: AssembleTelemetryHook,
+  trackingConsentState: TrackingConsentState
+) {
+  assembleTelemetryHook.register(() => {
     const wasConsented = trackingConsentState.isGranted()
 
     if (!wasConsented) {

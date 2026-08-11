@@ -1,4 +1,4 @@
-import { ONE_HOUR, ONE_MINUTE, ONE_YEAR } from '../../tools/utils/timeUtils'
+import { ONE_HOUR, ONE_MINUTE, ONE_YEAR } from '@datadog/js-core/time'
 
 export const SESSION_TIME_OUT_DELAY = 4 * ONE_HOUR
 export const SESSION_EXPIRATION_DELAY = 15 * ONE_MINUTE

@@ -37,9 +37,10 @@ const APPS: AppConfig[] = [
   { name: 'instrumentation-overhead' },
 
   // React Router apps
-  { name: 'react-router-v6-app' },
+  { name: 'react-router-app' },
   { name: 'tanstack-router-app' },
-  { name: 'react-router-v7-app', builderFn: buildReactRouterv7App, deps: ['react-router-v6-app'] },
+  { name: 'react-router-v6-app', builderFn: buildReactRouterV6App, deps: ['react-router-app'] },
+  { name: 'react-router-v7-app', builderFn: buildReactRouterV7App, deps: ['react-router-app'] },
 
   // Vue Router apps
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
@@ -58,6 +59,10 @@ const APPS: AppConfig[] = [
     options: { runAt: 'document_start' },
     deps: ['base-extension'],
   },
+
+  // Salesforce apps
+  { name: 'sf-lwc-app', builderFn: buildSalesforceApp },
+  { name: 'sf-experience-app', builderFn: buildSalesforceApp },
 ]
 
 runMain(async () => {
@@ -130,49 +135,59 @@ function showHelpAndExit() {
 }
 
 async function buildApp(appName: string) {
-  const appPath = `test/apps/${appName}`
-  printLog(`Building app at ${appPath}...`)
-  await command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).runAsync()
+  try {
+    const appPath = `test/apps/${appName}`
+    printLog(`Building app at ${appPath}...`)
+    await command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).runAsync()
 
-  // install peer dependencies if any
-  // intent: renovate does not allow to generate local packages before install
-  // so local packages are marked as optional peer dependencies and only installed when we build the test apps
-  const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
-  if (packageJson.peerDependencies) {
-    // For each peer dependency, install it
-    for (const [name] of Object.entries(packageJson.peerDependencies)) {
-      const resolution = packageJson.resolutions?.[name]
-      const specifier = resolution ? `${name}@${resolution}` : name
-      await command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).runAsync()
+    // install peer dependencies if any
+    // intent: renovate does not allow to generate local packages before install
+    // so local packages are marked as optional peer dependencies and only installed when we build the test apps
+    const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
+    if (packageJson.peerDependencies) {
+      // For each peer dependency, install it
+      for (const [name] of Object.entries(packageJson.peerDependencies)) {
+        const resolution = packageJson.resolutions?.[name]
+        const specifier = resolution ? `${name}@${resolution}` : name
+        await command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).runAsync()
+      }
+      // revert package.json & yarn.lock changes if they are versioned
+      const areFilesVersioned = await command`git ls-files package.json yarn.lock`
+        .withCurrentWorkingDirectory(appPath)
+        .runAsync()
+      if (areFilesVersioned) {
+        await command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).runAsync()
+      }
     }
-    // revert package.json & yarn.lock changes if they are versioned
-    const areFilesVersioned = await command`git ls-files package.json yarn.lock`
-      .withCurrentWorkingDirectory(appPath)
-      .runAsync()
-    if (areFilesVersioned) {
-      await command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).runAsync()
-    }
+
+    await command`yarn build`.withCurrentWorkingDirectory(appPath).runAsync()
+  } catch (error) {
+    throw new Error(`Failed to build app '${appName}'`, { cause: error })
   }
-
-  await command`yarn build`.withCurrentWorkingDirectory(appPath).runAsync()
 }
 
-async function buildReactRouterv7App() {
-  await buildGeneratedApp('react-router-v6-app', 'react-router-v7-app', async (appPath) => {
+function buildSalesforceApp(appName: string) {
+  const sourceBundle = 'packages/browser-rum-slim/bundle/datadog-rum-salesforce.js'
+  const targetBundle = `test/apps/${appName}/force-app/main/default/staticresources/datadog_rum_salesforce.js`
+
+  printLog(`Building app at test/apps/${appName}...`)
+  fs.copyFileSync(sourceBundle, targetBundle)
+}
+
+async function buildReactRouterV6App() {
+  await buildGeneratedApp('react-router-app', 'react-router-v6-app', async (appPath) => {
     await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
       content
-        .replace(/"name": "react-router-v6-app"/, '"name": "react-router-v7-app"')
-        .replace(/"react-router-dom": "[^"]*"/, '"react-router": "7.15.1"')
+        .replace(/"name": "react-router-app"/, '"name": "react-router-v6-app"')
+        .replace(/"react-router": "[^"]*"/, '"react-router-dom": "6.30.0"')
     )
 
     await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
       content
-        .replace('@datadog/browser-rum-react/react-router-v6', '@datadog/browser-rum-react/react-router-v7')
-        .replace("from 'react-router-dom'", "from 'react-router'")
-        // Add an onError marker on RouterProvider — v7-only prop, exercised by the
-        // regression test for https://github.com/DataDog/browser-sdk/issues/4657.
+        .replace('@datadog/browser-rum-react/react-router', '@datadog/browser-rum-react/react-router-v6')
+        .replace("from 'react-router'", "from 'react-router-dom'")
+        // Remove the v7-only onError prop
         .replace(
-          /<RouterProvider router={router} \/>/,
           `<RouterProvider
       router={router}
       onError={(error: unknown) => {
@@ -181,14 +196,35 @@ async function buildReactRouterv7App() {
         el.textContent = (error as Error).message ?? String(error)
         document.body.appendChild(el)
       }}
-    />`
+    />`,
+          '<RouterProvider router={router} />'
         )
     )
 
     await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
       content
-        .replace('react-router-v6-app.js', 'react-router-v7-app.js')
-        .replace('react-router-v6-app.js', 'react-router-v7-app.js')
+        .replace('react-router-app.js', 'react-router-v6-app.js')
+        .replace('react-router-app.js', 'react-router-v6-app.js')
+    )
+  })
+}
+
+async function buildReactRouterV7App() {
+  await buildGeneratedApp('react-router-app', 'react-router-v7-app', async (appPath) => {
+    await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
+      content
+        .replace(/"name": "react-router-app"/, '"name": "react-router-v7-app"')
+        .replace(/"react-router": "[^"]*"/, '"react-router": "7.18.1"')
+    )
+
+    await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
+      content.replace('@datadog/browser-rum-react/react-router', '@datadog/browser-rum-react/react-router-v7')
+    )
+
+    await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
+      content
+        .replace('react-router-app.js', 'react-router-v7-app.js')
+        .replace('react-router-app.js', 'react-router-v7-app.js')
     )
   })
 }

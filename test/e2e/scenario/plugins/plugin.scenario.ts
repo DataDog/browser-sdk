@@ -1,8 +1,9 @@
+import type { ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import { test, expect } from '@playwright/test'
 import type { RumPlugin, AllowedRawRumEvent } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType } from '@datadog/browser-rum-core'
-import type { ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { clocksNow, generateUUID } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
+import { generateUUID } from '@datadog/browser-core'
 import { createTest } from '../../lib/framework'
 
 declare global {

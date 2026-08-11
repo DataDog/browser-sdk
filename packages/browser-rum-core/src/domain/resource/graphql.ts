@@ -1,4 +1,5 @@
-import { buildUrl, isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate, tryJsonParse } from '@datadog/browser-core'
+import { isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate, tryJsonParse } from '@datadog/browser-core'
+import { buildUrl } from '@datadog/js-core/util'
 import type { RumConfiguration, GraphQlUrlOption } from '../configuration'
 import type { RequestCompleteEvent } from '../requestCollection'
 

@@ -1,4 +1,13 @@
-FROM node:25.9.0-bookworm-slim
+# Helper stage: install pinned Playwright 1.40.1 browsers using Node 20.
+# Node 26 has a yauzl extraction deadlock bug (playwright/playwright#40724)
+# that affects Playwright < 1.60.0 — running this step on Node 20 avoids it.
+FROM node:20-bookworm-slim AS playwright-pinned-browsers
+RUN npx -y playwright@1.40.1 install --with-deps chromium firefox webkit
+
+FROM node:26.5.0-bookworm-slim
+
+# Node 26 slim images don't bundle yarn — install it globally
+RUN npm install -g yarn
 
 ARG CHROME_PACKAGE_VERSION
 
@@ -40,8 +49,8 @@ ARG PLAYWRIGHT_VERSION
 RUN npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium firefox webkit
 
 # Pinned Playwright browsers: Chromium 120 + Firefox 119 + WebKit 17.4 (used by the e2e-pinned job)
-ARG PINNED_PLAYWRIGHT_VERSION=1.40.1
-RUN npx -y playwright@${PINNED_PLAYWRIGHT_VERSION} install --with-deps chromium firefox webkit
+# Installed in the Node 20 helper stage above; copied here to avoid the Node 26 yauzl deadlock.
+COPY --from=playwright-pinned-browsers /root/.cache/ms-playwright /root/.cache/ms-playwright
 
 
 # Install AWS cli
@@ -66,6 +75,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o 
 
 # DD Octo STS to get security token
 COPY --from=registry.ddbuild.io/dd-octo-sts:v1.8.1@sha256:eb2895829cdcb1f41cc4fc9d1f3f329c7d8f6fa72b0e8bb915d8195717e02bfa /usr/local/bin/dd-octo-sts /usr/local/bin/dd-octo-sts
+
+# Commit Headless to create signed (Verified) commits from CI bots
+COPY --from=registry.ddbuild.io/commit-headless /commit-headless /usr/local/bin/commit-headless
 
 RUN apt-get update && apt-get install -y jq
 

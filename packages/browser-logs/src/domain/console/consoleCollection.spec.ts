@@ -1,14 +1,7 @@
 import type { BufferedData, ConsoleLog, RawError } from '@datadog/browser-core'
-import {
-  BufferedDataType,
-  ConsoleApiName,
-  ErrorHandling,
-  ErrorSource,
-  Observable,
-  clocksNow,
-  noop,
-  objectEntries,
-} from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
+import { ConsoleApiName } from '@datadog/js-core/util'
+import { BufferedDataType, ErrorHandling, ErrorSource, Observable, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'

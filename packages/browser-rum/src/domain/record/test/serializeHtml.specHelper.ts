@@ -1,4 +1,4 @@
-import type { TimeStamp } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { forEachChildNodes, getNodePrivacyLevel } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'

@@ -7,7 +7,7 @@ const PRIMARY_OUTLET = 'primary'
 export function startAngularView(root: RouteSnapshot, url: string) {
   onRumInit((configuration, rumPublicApi) => {
     if (!configuration.router) {
-      display.warn('`router: true` is missing from the react plugin configuration, the view will not be tracked.')
+      display.warn('`router: true` is missing from the angular plugin configuration, the view will not be tracked.')
       return
     }
 

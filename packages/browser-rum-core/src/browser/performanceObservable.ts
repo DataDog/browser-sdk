@@ -1,6 +1,6 @@
-import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
+import type { RelativeTime, Duration } from '@datadog/js-core/time'
+import type { TimeoutId } from '@datadog/browser-core'
 import { addEventListener, Observable, setTimeout, clearTimeout, monitor } from '@datadog/browser-core'
-import type { RumConfiguration } from '../domain/configuration'
 import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
 type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver
@@ -142,12 +142,7 @@ export interface RumPerformanceScriptTiming {
   forcedStyleAndLayoutDuration: Duration
   invoker: string // e.g. "https://static.datadoghq.com/static/c/93085/chunk-bc4db53278fd4c77a637.min.js"
   invokerType:
-    | 'user-callback'
-    | 'event-listener'
-    | 'resolve-promise'
-    | 'reject-promise'
-    | 'classic-script'
-    | 'module-script'
+    'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script'
   name: 'script'
   pauseDuration: Duration
   sourceCharPosition: number
@@ -203,10 +198,11 @@ export interface EntryTypeToReturnType {
   [RumPerformanceEntryType.VISIBILITY_STATE]: RumFirstHiddenTiming
 }
 
-export function createPerformanceObservable<T extends RumPerformanceEntryType>(
-  configuration: RumConfiguration,
-  options: { type: T; buffered?: boolean; durationThreshold?: number }
-) {
+export function createPerformanceObservable<T extends RumPerformanceEntryType>(options: {
+  type: T
+  buffered?: boolean
+  durationThreshold?: number
+}) {
   return new Observable<Array<EntryTypeToReturnType[T]>>((observable) => {
     const handlePerformanceEntries = (entries: PerformanceEntryList) => {
       const rumPerformanceEntries = filterRumPerformanceEntries(entries as Array<EntryTypeToReturnType[T]>)
@@ -231,7 +227,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
     observer.observe(options)
     isObserverInitializing = false
 
-    manageResourceTimingBufferFull(configuration)
+    manageResourceTimingBufferFull()
 
     return () => {
       observer.disconnect()
@@ -241,10 +237,10 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
 }
 
 let resourceTimingBufferFullListener: { stop: () => void } | undefined
-function manageResourceTimingBufferFull(configuration: RumConfiguration) {
+function manageResourceTimingBufferFull() {
   if (!resourceTimingBufferFullListener && supportPerformanceObject() && 'addEventListener' in performance) {
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-    resourceTimingBufferFullListener = addEventListener(configuration, performance, 'resourcetimingbufferfull', () => {
+    resourceTimingBufferFullListener = addEventListener(performance, 'resourcetimingbufferfull', () => {
       performance.clearResourceTimings()
     })
   }

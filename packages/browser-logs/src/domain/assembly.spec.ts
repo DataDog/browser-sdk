@@ -1,5 +1,7 @@
-import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
+import type { Context } from '@datadog/browser-core'
+import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
+import { ErrorSource, noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -47,7 +49,7 @@ describe('startLogsAssembly', () => {
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
     startRUMInternalContext(hooks)
-    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
+    startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -140,7 +142,7 @@ describe('startLogsAssembly', () => {
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
+        rawLogsEvent: { ...DEFAULT_MESSAGE, date: toTimeStamp(1234 as RelativeTime) },
       })
 
       expect(serverLogs[0].foo).toBe('b')
@@ -171,7 +173,7 @@ describe('startLogsAssembly', () => {
 
   describe('assembly precedence', () => {
     it('defaultLogsEventAttributes should take precedence over service, session_id', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         service: 'foo',
         session_id: 'bar',
       }))
@@ -183,7 +185,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('defaultLogsEventAttributes should take precedence over common context', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         view: {
           referrer: 'referrer_from_defaultLogsEventAttributes',
           url: 'url_from_defaultLogsEventAttributes',
@@ -213,7 +215,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('raw log should take precedence over defaultLogsEventAttributes', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         message: 'from-defaultLogsEventAttributes',
       }))
 
@@ -296,7 +298,7 @@ describe('logs limitation', () => {
 
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy, 1)
+    startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, reportErrorSpy, 1)
     clock = mockClock()
   })
 
@@ -340,13 +342,7 @@ describe('logs limitation', () => {
 
       expect(serverLogs.length).toEqual(1)
       expect(serverLogs[0].message).toBe('foo')
-      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
-          message,
-          source: ErrorSource.AGENT,
-        })
-      )
+      expect(reportErrorSpy).toHaveBeenCalledWith(message)
     })
 
     it(`does not take discarded ${status} logs into account (message: "${message}")`, () => {
@@ -395,12 +391,7 @@ describe('logs limitation', () => {
       expect(serverLogs.length).toEqual(2)
       expect(serverLogs[0].message).toEqual('foo')
       expect(serverLogs[1].message).toEqual('baz')
-      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
-          source: ErrorSource.AGENT,
-        })
-      )
+      expect(reportErrorSpy).toHaveBeenCalledWith(message)
     })
 
     it(`allows to send logs with a different status when reaching the limit (message: "${message}")`, () => {
@@ -421,12 +412,7 @@ describe('logs limitation', () => {
       expect(serverLogs.length).toEqual(2)
       expect(serverLogs[0].message).toEqual('foo')
       expect(serverLogs[1].message).toEqual('baz')
-      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
-          source: ErrorSource.AGENT,
-        })
-      )
+      expect(reportErrorSpy).toHaveBeenCalledWith(message)
     })
   })
 
@@ -443,11 +429,6 @@ describe('logs limitation', () => {
 
     expect(serverLogs.length).toEqual(1)
     expect(serverLogs[0].message).toEqual('foo')
-    expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-    expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-      jasmine.objectContaining({
-        source: ErrorSource.AGENT,
-      })
-    )
+    expect(reportErrorSpy).toHaveBeenCalledWith('Reached max number of customs by minute: 1')
   })
 })

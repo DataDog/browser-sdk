@@ -1,4 +1,4 @@
-import type { ServerDuration } from '@datadog/browser-core'
+import type { ServerDuration } from '@datadog/js-core/time'
 import { isNumber } from '@datadog/browser-core'
 
 export function discardNegativeDuration(duration: ServerDuration | undefined): ServerDuration | undefined {

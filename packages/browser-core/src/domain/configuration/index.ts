@@ -1,11 +1,9 @@
-export type { Configuration, InitConfiguration, ProxyFn } from './configuration'
+export type { Configuration, InitConfiguration } from './configuration'
 export {
   DefaultPrivacyLevel,
   TraceContextInjection,
-  isSampleRate,
-  validateAndBuildConfiguration,
   serializeConfiguration,
-  buildCookieOptions,
+  BROWSER_CORE_SCHEMA,
 } from './configuration'
-export type { EndpointBuilder, TrackType } from './endpointBuilder'
-export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointUrl } from './endpointBuilder'
+export { buildCookieOptions } from '../../browser/cookie'
+export { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'

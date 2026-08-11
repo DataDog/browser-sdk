@@ -1,5 +1,5 @@
+import { isWorkerEnvironment } from '@datadog/js-core/util'
 import type { Configuration } from '../configuration'
-import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
 import { SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
@@ -27,14 +27,9 @@ export async function selectSessionStoreStrategyType(
   return undefined
 }
 
-function normalizePersistenceList(
-  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
-): SessionPersistence[] {
-  if (Array.isArray(sessionPersistence)) {
-    return sessionPersistence
-  }
+function normalizePersistenceList(sessionPersistence: SessionPersistence[] | undefined): SessionPersistence[] {
   if (sessionPersistence !== undefined) {
-    return [sessionPersistence]
+    return sessionPersistence
   }
 
   // In worker environments, default to memory since cookie and localStorage are not available
@@ -75,7 +70,7 @@ export function getSessionStoreStrategy(
     case SessionPersistence.COOKIE:
       return initCookieStrategy(sessionStoreStrategyType, configuration)
     case SessionPersistence.LOCAL_STORAGE:
-      return initLocalStorageStrategy(configuration)
+      return initLocalStorageStrategy()
     case SessionPersistence.MEMORY:
       return initMemorySessionStoreStrategy()
   }

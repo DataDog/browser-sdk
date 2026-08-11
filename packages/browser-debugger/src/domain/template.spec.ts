@@ -1,4 +1,5 @@
 import { templateRequiresEvaluation, compileSegments, evaluateProbeMessage, browserInspect } from './template'
+import { formatUnknownError } from './error'
 
 describe('template', () => {
   describe('templateRequiresEvaluation', () => {
@@ -53,13 +54,13 @@ describe('template', () => {
       expect(result).toContain('", y="')
     })
 
-    it('should handle errors in DSL evaluation', () => {
+    it('should generate error handling for DSL evaluation', () => {
       const segments = [{ dsl: 'badExpr', json: { ref: 'nonExistent' } }]
       const code = compileSegments(segments)
 
-      // The compiled code should have error handling
       expect(code).toContain('catch (e)')
-      expect(code).toContain('message')
+      expect(code).toContain('expr: "badExpr"')
+      expect(code).toContain('message: $dd_format_error(e)')
     })
   })
 
@@ -126,6 +127,36 @@ describe('template', () => {
       const result = browserInspect(obj)
       // Should either return [Object] or handle the error
       expect(result).toBeTruthy()
+    })
+
+    it('should not call custom toString when object serialization fails', () => {
+      const obj: any = {
+        toString: jasmine.createSpy('toString', () => 'custom').and.callThrough(),
+      }
+      obj.self = obj
+
+      expect(browserInspect(obj)).toBe('[Object]')
+      expect(obj.toString).not.toHaveBeenCalled()
+    })
+
+    it('should use constructor name when object serialization fails', () => {
+      class Custom {}
+      const obj: any = new Custom()
+      obj.self = obj
+
+      expect(browserInspect(obj)).toBe('[Custom]')
+    })
+
+    it('should fall back when constructor name access throws', () => {
+      const obj: any = {}
+      obj.self = obj
+      Object.defineProperty(obj, 'constructor', {
+        get() {
+          throw new Error('Cannot access constructor')
+        },
+      })
+
+      expect(browserInspect(obj)).toBe('[Object]')
     })
 
     it('should handle objects without constructor', () => {
@@ -211,7 +242,6 @@ describe('template', () => {
   describe('evaluateProbeMessage', () => {
     it('should return static template string when no evaluation needed', () => {
       const probe: any = {
-        templateRequiresEvaluation: false,
         template: 'Static message',
       }
       const result = evaluateProbeMessage(probe, {})
@@ -219,17 +249,8 @@ describe('template', () => {
     })
 
     it('should evaluate template with simple expressions', () => {
-      const template: any = {
-        createFunction: (keys: string[]) => {
-          expect(keys).toEqual(['x', 'y'])
-          // eslint-disable-next-line camelcase, @typescript-eslint/no-unused-vars
-          return ($dd_inspect: any, x: number, y: number) => [`x=${x}, y=${y}`]
-        },
-      }
-
       const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
+        evaluateTemplate: (context: any) => [`x=${context.x}, y=${context.y}`],
       }
 
       const result = evaluateProbeMessage(probe, { x: 10, y: 20 })
@@ -237,22 +258,8 @@ describe('template', () => {
     })
 
     it('should handle segments with static and dynamic parts', () => {
-      const template: any = {
-        createFunction:
-          (keys: string[]) =>
-          // eslint-disable-next-line camelcase, @typescript-eslint/no-unused-vars
-          ($dd_inspect: any, ...values: any[]) => {
-            const context: any = {}
-            keys.forEach((key, i) => {
-              context[key] = values[i]
-            })
-            return ['Value: ', String(context.value)]
-          },
-      }
-
       const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
+        evaluateTemplate: (context: any) => ['Value: ', String(context.value)],
       }
 
       const result = evaluateProbeMessage(probe, { value: 42 })
@@ -260,13 +267,8 @@ describe('template', () => {
     })
 
     it('should handle error objects in segments', () => {
-      const template: any = {
-        createFunction: () => () => [{ expr: 'bad.expr', message: 'TypeError: Cannot read property' }],
-      }
-
       const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
+        evaluateTemplate: () => [{ expr: 'bad.expr', message: 'TypeError: Cannot read property' }],
       }
 
       const result = evaluateProbeMessage(probe, {})
@@ -274,13 +276,8 @@ describe('template', () => {
     })
 
     it('should handle non-string segments', () => {
-      const template: any = {
-        createFunction: () => () => [42, ' ', true, ' ', null],
-      }
-
       const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
+        evaluateTemplate: () => [42, ' ', true, ' ', null],
       }
 
       const result = evaluateProbeMessage(probe, {})
@@ -295,27 +292,8 @@ describe('template', () => {
         { dsl: 'a', json: { ref: 'a' } },
       ]
 
-      // Compile the segments like initializeProbe does
-      const segmentsCode = compileSegments(segments)
-      const fnBodyTemplate = `return ${segmentsCode};`
-      const functionCache = new Map<string, (...args: any[]) => any[]>()
-
-      const template = {
-        createFunction: (contextKeys: string[]) => {
-          const cacheKey = contextKeys.join(',')
-          let fn = functionCache.get(cacheKey)
-          if (!fn) {
-            // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-            fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => any[]
-            functionCache.set(cacheKey, fn)
-          }
-          return fn
-        },
-      }
-
       const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
+        evaluateTemplate: evaluateSegments(segments),
       }
 
       const context = {
@@ -330,27 +308,8 @@ describe('template', () => {
     it('should handle templates without this context', () => {
       const segments = [{ str: 'Simple message with ' }, { dsl: 'a', json: { ref: 'a' } }]
 
-      // Compile the segments like initializeProbe does
-      const segmentsCode = compileSegments(segments)
-      const fnBodyTemplate = `return ${segmentsCode};`
-      const functionCache = new Map<string, (...args: any[]) => any[]>()
-
-      const template = {
-        createFunction: (contextKeys: string[]) => {
-          const cacheKey = contextKeys.join(',')
-          let fn = functionCache.get(cacheKey)
-          if (!fn) {
-            // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-            fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => any[]
-            functionCache.set(cacheKey, fn)
-          }
-          return fn
-        },
-      }
-
       const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
+        evaluateTemplate: evaluateSegments(segments),
       }
 
       // Context without 'this'
@@ -363,30 +322,56 @@ describe('template', () => {
     })
 
     it('should handle template evaluation errors', () => {
-      const template: any = {
-        createFunction: () => () => {
+      const probe: any = {
+        evaluateTemplate: () => {
           throw new Error('Evaluation failed')
         },
-      }
-
-      const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
       }
 
       const result = evaluateProbeMessage(probe, {})
       expect(result).toBe('{Error: Evaluation failed}')
     })
 
-    it('should truncate long messages', () => {
-      const longMessage = 'a'.repeat(10000)
-      const template: any = {
-        createFunction: () => () => [longMessage],
+    it('should handle template evaluation errors that cannot be coerced', () => {
+      const probe: any = {
+        evaluateTemplate: () => {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
+          throw {
+            toString() {
+              throw new Error('Cannot coerce')
+            },
+          }
+        },
       }
 
+      const result = evaluateProbeMessage(probe, {})
+      expect(result).toBe('{<error: unable to stringify error>}')
+    })
+
+    it('should handle template evaluation errors with hostile name and message getters', () => {
       const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
+        evaluateTemplate: () => {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
+          throw {
+            [Symbol.toStringTag]: 'Error',
+            get name() {
+              throw new Error('Cannot read name')
+            },
+            get message() {
+              throw new Error('Cannot read message')
+            },
+          }
+        },
+      }
+
+      const result = evaluateProbeMessage(probe, {})
+      expect(result).toBe('{[object Error]}')
+    })
+
+    it('should truncate long messages', () => {
+      const longMessage = 'a'.repeat(10000)
+      const probe: any = {
+        evaluateTemplate: () => [longMessage],
       }
 
       const result = evaluateProbeMessage(probe, {})
@@ -395,17 +380,8 @@ describe('template', () => {
     })
 
     it('should use browserInspect for object values', () => {
-      const template: any = {
-        // eslint-disable-next-line camelcase
-        createFunction: () => ($dd_inspect: (value: any, options: any) => string, obj: any) => [
-          'Object: ',
-          $dd_inspect(obj, {}),
-        ],
-      }
-
       const probe: any = {
-        templateRequiresEvaluation: true,
-        template,
+        evaluateTemplate: (context: any) => ['Object: ', browserInspect(context.obj)],
       }
 
       const result = evaluateProbeMessage(probe, { obj: { a: 1, b: 2 } })
@@ -432,3 +408,18 @@ describe('template', () => {
     })
   })
 })
+
+function evaluateSegments(segments: Array<{ str?: string; dsl?: string; json?: any }>) {
+  const fnBodyTemplate = `return ${compileSegments(segments)};`
+
+  return (context: Record<string, any>): unknown[] => {
+    const { this: thisValue, ...otherContext } = context
+    const contextKeys = Object.keys(otherContext)
+    const contextValues = Object.values(otherContext)
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+    const fn = new Function('$dd_inspect', '$dd_format_error', ...contextKeys, fnBodyTemplate) as (
+      ...args: any[]
+    ) => unknown[]
+    return fn.call(thisValue, browserInspect, formatUnknownError, ...contextValues)
+  }
+}

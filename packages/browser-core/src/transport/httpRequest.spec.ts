@@ -1,3 +1,5 @@
+import type { EndpointBuilder } from '@datadog/js-core/transport'
+import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { Request } from '../../test'
 import {
   collectAsyncCalls,
@@ -8,8 +10,6 @@ import {
   NETWORK_ERROR_FETCH_MOCK,
   wait,
 } from '../../test'
-import type { EndpointBuilder } from '../domain/configuration'
-import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 import { createHttpRequest, fetchStrategy, RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'

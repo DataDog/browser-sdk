@@ -24,7 +24,9 @@ export function mockRequestIdleCallback(): RequestIdleCallbackMock {
     activeIds.delete(id)
   })
 
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalRequestIdleCallback = window.requestIdleCallback
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalCancelIdleCallback = window.cancelIdleCallback
 
   window.requestIdleCallback = requestSpy

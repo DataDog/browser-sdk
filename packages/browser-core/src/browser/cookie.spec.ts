@@ -1,5 +1,5 @@
-import { mockCookies } from '../../test'
-import { getCurrentSite } from './cookie'
+import { mockBaseConfiguration, mockCookies } from '../../test'
+import { buildCookieOptions, getCurrentSite } from './cookie'
 
 describe('cookie', () => {
   describe('getCurrentSite', () => {
@@ -44,6 +44,37 @@ describe('cookie', () => {
 
       expect(getCurrentSite('example.com')).toBe('example.com')
       expect(setter).toHaveBeenCalledTimes(2)
+    })
+  })
+})
+
+describe('buildCookieOptions', () => {
+  it('should not be secure nor crossSite by default', () => {
+    expect(buildCookieOptions(mockBaseConfiguration())).toEqual({ secure: false, crossSite: false, partitioned: false })
+  })
+
+  it('should be secure when `useSecureSessionCookie` is truthy', () => {
+    expect(buildCookieOptions(mockBaseConfiguration({ useSecureSessionCookie: true }))).toEqual({
+      secure: true,
+      crossSite: false,
+      partitioned: false,
+    })
+  })
+
+  it('should be secure, crossSite and partitioned when `usePartitionedCrossSiteSessionCookie` is truthy', () => {
+    expect(buildCookieOptions(mockBaseConfiguration({ usePartitionedCrossSiteSessionCookie: true }))).toEqual({
+      secure: true,
+      crossSite: true,
+      partitioned: true,
+    })
+  })
+
+  it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
+    expect(buildCookieOptions(mockBaseConfiguration({ trackSessionAcrossSubdomains: true }))).toEqual({
+      secure: false,
+      crossSite: false,
+      partitioned: false,
+      domain: jasmine.any(String),
     })
   })
 })

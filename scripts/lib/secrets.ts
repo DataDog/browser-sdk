@@ -34,6 +34,13 @@ export function getGithubReadToken() {
   return new OctoStsToken('read')
 }
 
+/**
+ * This token is scoped to main branch only.
+ */
+export function getGithubCommitToken() {
+  return new OctoStsToken('commit')
+}
+
 export function getOrg2ApiKey(): string {
   return getSecretKey('ci.browser-sdk.datadog_ci_api_key')
 }
@@ -76,12 +83,32 @@ export function getChromeWebStoreRefreshToken(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.refresh_token')
 }
 
+export function getChromeWebStorePublisherId(): string {
+  return getSecretKey('ci.browser-sdk.chrome_web_store.publisher_id')
+}
+
 export function getBrowserStackUsername(): string {
   return getSecretKey('ci.browser-sdk.bs_username')
 }
 
 export function getBrowserStackAccessKey(): string {
   return getSecretKey('ci.browser-sdk.bs_access_key')
+}
+
+export function getSfLwcClientId(): string {
+  return process.env.SF_LWC_CLIENT_ID ?? getSecretKey('ci.browser-sdk.sf_lwc_client_id')
+}
+
+export function getSfLwcUsername(): string {
+  return process.env.SF_LWC_USERNAME ?? getSecretKey('ci.browser-sdk.sf_lwc_username')
+}
+
+export function getSfLwcInstanceUrl(): string {
+  return process.env.SF_LWC_INSTANCE_URL ?? getSecretKey('ci.browser-sdk.sf_lwc_instance_url')
+}
+
+export function getSfLwcJwtPrivateKey(): string {
+  return process.env.SF_LWC_JWT_PRIVATE_KEY_B64 ?? getSecretKey('ci.browser-sdk.sf_lwc_jwt_private_key_b64')
 }
 
 function getSecretKey(name: string): string {

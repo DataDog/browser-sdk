@@ -564,6 +564,46 @@ Error: foo
     })
   })
 
+  it('should parse an arbitrary custom protocol schema with Chrome error', () => {
+    const stackFrames = computeStackTrace(CapturedExceptions.CUSTOM_PROTOCOL_APP)
+
+    expect(stackFrames.stack.length).toEqual(3)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      column: 27,
+      func: 'dumpExceptionError',
+      line: 41,
+      url: 'app://renderer/file.js',
+    })
+    expect(stackFrames.stack[1]).toEqual({
+      args: [],
+      column: 146,
+      func: 'HTMLButtonElement.onclick',
+      line: 107,
+      url: 'app://renderer/file.js',
+    })
+    expect(stackFrames.stack[2]).toEqual({
+      args: [],
+      column: 3651,
+      func: 'I.e.fn.(anonymous function) [as index]',
+      line: 10,
+      url: 'app://renderer/file.js',
+    })
+  })
+
+  it('should parse a custom protocol scheme containing +, -, . characters', () => {
+    const stackFrames = computeStackTrace(CapturedExceptions.CUSTOM_PROTOCOL_SPECIAL_CHARS)
+
+    expect(stackFrames.stack.length).toEqual(1)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      column: 5,
+      func: 'dumpExceptionError',
+      line: 12,
+      url: 'my-app+v2.beta://renderer/file.js',
+    })
+  })
+
   it('should parse nested eval() from Chrome', () => {
     const stackFrames = computeStackTrace(CapturedExceptions.CHROME_48_EVAL)
 

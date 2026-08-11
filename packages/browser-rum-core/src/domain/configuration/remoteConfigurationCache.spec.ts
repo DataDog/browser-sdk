@@ -1,14 +1,16 @@
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
-import type { RumRemoteConfiguration } from './remoteConfiguration'
+import type { RemoteConfiguration } from './remoteConfiguration'
 import { buildCacheKey, createConfigurationCache, CACHE_VERSION, CACHE_KEY_PREFIX } from './remoteConfigurationCache'
 
 const REMOTE_CONFIGURATION_ID = 'test-id'
 const CACHE_KEY = `${CACHE_KEY_PREFIX}${REMOTE_CONFIGURATION_ID}`
 
-const VALID_CONFIG: RumRemoteConfiguration = {
-  applicationId: 'app-id',
-  sessionSampleRate: 50,
+const VALID_CONFIG: RemoteConfiguration = {
+  rum: {
+    applicationId: 'app-id',
+    sessionSampleRate: 50,
+  },
 }
 
 describe('remoteConfigurationCache', () => {
@@ -143,10 +145,10 @@ describe('remoteConfigurationCache', () => {
       it('should overwrite a previously stored entry', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
-        cache.write({ applicationId: 'first' })
-        cache.write({ applicationId: 'second' })
+        cache.write({ rum: { applicationId: 'first' } })
+        cache.write({ rum: { applicationId: 'second' } })
 
-        expect(cache.read()).toEqual({ status: 'hit', config: { applicationId: 'second' } })
+        expect(cache.read()).toEqual({ status: 'hit', config: { rum: { applicationId: 'second' } } })
       })
 
       it('should silently swallow localStorage.setItem errors', () => {

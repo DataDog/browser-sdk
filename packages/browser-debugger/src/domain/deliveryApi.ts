@@ -1,15 +1,16 @@
-import type { TimeoutId, Site } from '@datadog/browser-core'
+import type { TimeoutId } from '@datadog/browser-core'
+import { dateNow } from '@datadog/js-core/time'
 import {
   addTelemetryDebug,
-  dateNow,
   fetch,
   globalObject,
   isServerError,
   mockable,
   setInterval,
   clearInterval,
-  INTAKE_SITE_US1,
 } from '@datadog/browser-core'
+import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
+import type { Site } from '@datadog/js-core/transport'
 import { display } from './display'
 import { addProbe, clearProbes, removeProbe } from './probes'
 import type { Probe } from './probes'
@@ -234,7 +235,12 @@ function isTransientFailureStatus(status: number): boolean {
 }
 
 function isSupportedProbe(probe: Probe): boolean {
-  return probe.type === 'LOG_PROBE' && probe.where?.typeName !== undefined && probe.where.methodName !== undefined
+  return (
+    probe.type === 'LOG_PROBE' &&
+    probe.where?.typeName !== undefined &&
+    probe.where.methodName !== undefined &&
+    !(probe.captureSnapshot && probe.captureExpressions?.length)
+  )
 }
 
 /**

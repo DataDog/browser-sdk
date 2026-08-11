@@ -1,14 +1,24 @@
 import type { SessionManager } from '@datadog/browser-core'
-import { DISCARDED, HookNames } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { LogsConfiguration } from '../configuration'
-import type { Hooks } from '../hooks'
+import type { AssembleHook } from '../hooks'
 
-export function startSessionContext(hooks: Hooks, configuration: LogsConfiguration, sessionManager: SessionManager) {
-  hooks.register(HookNames.Assemble, ({ startTime }) => {
+export function startSessionContext(
+  hook: AssembleHook,
+  configuration: LogsConfiguration,
+  sessionManager: SessionManager
+) {
+  hook.register(({ startTime }) => {
+    // Used to attach a (fresh, safe-to-reference) session id: subject to the default
+    // TRACKED_SESSION_MAX_AGE, so it becomes undefined once the session is too old to reference.
     const session = sessionManager.findTrackedSession(startTime)
 
+    // Used for the discard decision: unlike `session` above, this ignores session age (logs
+    // should keep being sent indefinitely, with or without a session, once a session was
+    // legitimately tracked here) but still respects sampling.
     const isSessionTracked = sessionManager.findTrackedSession(startTime, {
       returnInactive: true,
+      maxAge: Infinity,
     })
 
     if (!isSessionTracked) {

@@ -1,3 +1,4 @@
+import { ONE_SECOND } from '@datadog/js-core/time'
 import {
   collectAsyncCalls,
   createFakeSessionStoreStrategy,
@@ -14,7 +15,6 @@ import {
 import type { Clock } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { display } from '../../tools/display'
-import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
@@ -113,6 +113,7 @@ describe('startSessionManager', () => {
     it('should call setSessionState to initialize the session', async () => {
       await startSessionManagerWithDefaults()
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(fakeStrategy.setSessionState).toHaveBeenCalled()
     })
 
@@ -797,6 +798,18 @@ describe('startSessionManager', () => {
       await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for external change
 
       expect(sessionManager.findTrackedSession()).toBeUndefined()
+    })
+
+    it('should return the session older than TRACKED_SESSION_MAX_AGE when a larger maxAge is provided', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      // Let the session expire from inactivity, then age well past TRACKED_SESSION_MAX_AGE. The
+      // in-memory session context entry is kept (bounded by maxEntries, not elapsed time), so it
+      // can still be returned with `returnInactive: true` regardless of how old it is.
+      clock.tick(TRACKED_SESSION_MAX_AGE + ONE_SECOND)
+
+      expect(sessionManager.findTrackedSession(undefined, { returnInactive: true })).toBeUndefined()
+      expect(sessionManager.findTrackedSession(undefined, { returnInactive: true, maxAge: Infinity })).toBeDefined()
     })
 
     describe('deterministic sampling', () => {

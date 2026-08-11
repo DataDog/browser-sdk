@@ -19,7 +19,7 @@ describe('trackViewportResize', () => {
     const scope = createRecordingScopeForTesting()
     takeFullSnapshotForTesting(scope)
 
-    viewportResizeTracker = trackVisualViewportResize(emitRecordCallback, scope)
+    viewportResizeTracker = trackVisualViewportResize(emitRecordCallback)
     registerCleanupTask(() => {
       viewportResizeTracker.stop()
     })

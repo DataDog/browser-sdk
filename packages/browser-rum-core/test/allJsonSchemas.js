@@ -10,7 +10,7 @@
 // looking for `require.context` as a standalone statement at build time.
 
 const requireSchema = require.context(
-  '../../../rum-events-format/schemas',
+  '@datadog/rum-events-format/schemas',
   true /* use sub directories */,
   /\.json*$/,
   'sync'

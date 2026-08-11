@@ -1,5 +1,5 @@
 import { defineConfig } from 'wxt'
-import { getBuildEnvValue } from '../scripts/lib/buildEnv'
+import { getBuildEnvDefines } from '../scripts/lib/buildEnv'
 
 // eslint-disable-next-line import-x/no-default-export
 export default defineConfig({
@@ -8,7 +8,7 @@ export default defineConfig({
   entrypointsDir: 'src/entrypoints',
   manifest: {
     name: 'Datadog Browser SDK developer extension',
-    permissions: ['storage', 'browsingData', 'declarativeNetRequest', 'webNavigation', 'scripting'],
+    permissions: ['storage', 'browsingData', 'declarativeNetRequest', 'webNavigation', 'scripting', 'identity'],
     host_permissions: ['<all_urls>'],
     icons: {
       '256': 'icon.png',
@@ -38,8 +38,6 @@ export default defineConfig({
         generateScopedName: '[name]_[local]_[hash:base64:5]',
       },
     },
-    define: {
-      __BUILD_ENV__SDK_VERSION__: JSON.stringify(getBuildEnvValue('SDK_VERSION')),
-    },
+    define: getBuildEnvDefines({ setup: 'npm' }),
   }),
 })

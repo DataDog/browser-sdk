@@ -1,4 +1,4 @@
-import { createDisplay, originalConsoleMethods } from '@datadog/browser-core'
+import { createDisplay, originalConsoleMethods } from '@datadog/js-core/util'
 import { DEBUGGER_DISPLAY_PREFIX } from './display'
 
 describe('debugger display', () => {

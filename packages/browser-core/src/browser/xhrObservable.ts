@@ -1,10 +1,9 @@
+import { elapsed, timeStampNow, clocksNow } from '@datadog/js-core/time'
+import type { Duration, ClocksState } from '@datadog/js-core/time'
+import { normalizeUrl, globalObject } from '@datadog/js-core/util'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
-import type { Duration, ClocksState } from '../tools/utils/timeUtils'
-import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
-import { normalizeUrl } from '../tools/utils/urlPolyfill'
-import { globalObject } from '../tools/globalObject'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
@@ -34,15 +33,7 @@ export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
 let xhrObservable: Observable<XhrContext> | undefined
 const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
-// The singleton XHR observable applies the latest caller's allowUntrustedEvents
-// policy so that the customer's configuration overrides the early call from
-// bufferedData (which always opts in before the customer config is parsed).
-let allowUntrustedEvents: boolean | undefined
-
-export function initXhrObservable(configuration: { allowUntrustedEvents?: boolean | undefined } = {}) {
-  if (configuration.allowUntrustedEvents !== undefined) {
-    allowUntrustedEvents = configuration.allowUntrustedEvents
-  }
+export function initXhrObservable() {
   if (!xhrObservable) {
     xhrObservable = createXhrObservable()
   }
@@ -130,7 +121,7 @@ function sendXhr(
     observable.notify({ ...completeContext, state: 'complete' })
   }
 
-  const { stop: unsubscribeLoadEndListener } = addEventListener({ allowUntrustedEvents }, xhr, 'loadend', onEnd)
+  const { stop: unsubscribeLoadEndListener } = addEventListener(xhr, 'loadend', onEnd)
 
   observable.notify(startContext)
 }
@@ -149,5 +140,4 @@ function abortXhr({ target: xhr }: InstrumentedMethodCall<XMLHttpRequest, 'abort
  */
 export function resetXhrObservable() {
   xhrObservable = undefined
-  allowUntrustedEvents = undefined
 }

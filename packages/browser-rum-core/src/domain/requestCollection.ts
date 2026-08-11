@@ -1,8 +1,8 @@
+import { elapsed, timeStampNow } from '@datadog/js-core/time'
+import type { Duration, ClocksState } from '@datadog/js-core/time'
 import type {
-  Duration,
   XhrCompleteContext,
   XhrStartContext,
-  ClocksState,
   FetchStartContext,
   FetchResolveContext,
   ContextManager,
@@ -15,9 +15,7 @@ import {
   RequestType,
   ResponseBodyAction,
   BufferedDataType,
-  elapsed,
   initFetchObservable,
-  timeStampNow,
   initXhrObservable,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
@@ -79,20 +77,15 @@ export function startRequestCollection(
   bufferedDataObservable: Observable<BufferedData>
 ) {
   const tracer = startTracer(configuration, sessionManager, userContext, accountContext)
-  trackXhr(lifeCycle, configuration, tracer, bufferedDataObservable)
+  trackXhr(lifeCycle, tracer, bufferedDataObservable)
   trackFetch(lifeCycle, configuration, tracer, bufferedDataObservable)
 }
 
-export function trackXhr(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  tracer: Tracer,
-  bufferedDataObservable: Observable<BufferedData>
-) {
+export function trackXhr(lifeCycle: LifeCycle, tracer: Tracer, bufferedDataObservable: Observable<BufferedData>) {
   const subscriptions: Subscription[] = []
 
   subscriptions.push(
-    initXhrObservable(configuration).subscribe((context) => {
+    initXhrObservable().subscribe((context) => {
       if (context.state === 'start' && isAllowedRequestUrl(context.url)) {
         tracer.traceXhr(context, context.xhr)
         assignRequestIndex(context as RumXhrStartContext)

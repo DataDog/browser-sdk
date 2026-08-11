@@ -1,4 +1,4 @@
-import { HookNames, SKIPPED } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { Hooks, ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 
@@ -12,7 +12,7 @@ export function startProfilingContext(hooks: Hooks): ProfilingContextManager {
     status: 'starting',
   }
 
-  hooks.register(HookNames.Assemble, ({ eventType }) => {
+  hooks.assemble.register(({ eventType }) => {
     if (
       eventType !== RumEventType.VIEW &&
       eventType !== RumEventType.LONG_TASK &&

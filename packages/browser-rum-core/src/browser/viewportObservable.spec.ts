@@ -1,7 +1,6 @@
 import type { Subscription } from '@datadog/browser-core/src/tools/observable'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, createNewEvent, registerCleanupTask, waitAfterNextPaint } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../test'
 import type { ViewportDimension } from './viewportObservable'
 import { getViewportDimension, initViewportObservable } from './viewportObservable'
 
@@ -9,10 +8,9 @@ describe('viewportObservable', () => {
   let viewportSubscription: Subscription
   let viewportDimension: ViewportDimension
   let clock: Clock
-  const configuration = mockRumConfiguration()
 
   beforeEach(() => {
-    viewportSubscription = initViewportObservable(configuration).subscribe((dimension) => {
+    viewportSubscription = initViewportObservable().subscribe((dimension) => {
       viewportDimension = dimension
     })
     clock = mockClock()

@@ -1,4 +1,4 @@
-import { buildUrl } from '@datadog/browser-core'
+import { buildUrl } from '@datadog/js-core/util'
 import { CENSORED_STRING_MARK, shouldMaskNode } from '@datadog/browser-rum-core'
 import type { NodePrivacyLevel } from '@datadog/browser-rum-core'
 
@@ -74,20 +74,6 @@ function makeUrlAbsolute(url: string, baseUrl: string): string {
   } catch {
     return url
   }
-}
-
-const TAG_NAME_REGEX = /[^a-z1-6-_]/
-export function getValidTagName(tagName: string): string {
-  const processedTagName = tagName.toLowerCase().trim()
-
-  if (TAG_NAME_REGEX.test(processedTagName)) {
-    // if the tag name is odd and we cannot extract
-    // anything from the string, then we return a
-    // generic div
-    return 'div'
-  }
-
-  return processedTagName
 }
 
 /**

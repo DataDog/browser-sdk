@@ -1,4 +1,4 @@
-import type { RelativeTime, TimeStamp } from '../../src/tools/utils/timeUtils'
+import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export type Clock = ReturnType<typeof mockClock>
@@ -7,7 +7,7 @@ export function mockClock() {
   jasmine.clock().install()
   jasmine.clock().mockDate()
 
-  const timeOrigin = performance.timing.navigationStart // @see getNavigationStart() in timeUtils.ts
+  const timeOrigin = performance.timing.navigationStart // @see getTimeOrigin() in @datadog/js-core/time
   const timeStampStart = Date.now()
   const relativeStart = timeStampStart - timeOrigin
 

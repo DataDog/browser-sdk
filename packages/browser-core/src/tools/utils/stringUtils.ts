@@ -87,3 +87,22 @@ export function safeTruncate(candidate: string, length: number, suffix = '') {
 
   return `${candidate.slice(0, correctedLength)}${suffix}`
 }
+
+/**
+ * Builds a telemetry integration identifier from a library name and its version, e.g. `react-v18`
+ */
+export function toMajorVersionIntegration(name: string, version: string | null | undefined): string {
+  if (!version) {
+    return name
+  }
+  return `${name}-v${version.split('.')[0]}`
+}
+
+/**
+ * Filters out falsy values and returns `undefined` if no integration is left, so plugins report a
+ * consistent "nothing to report" telemetry shape instead of an empty array.
+ */
+export function toIntegrations(...maybeIntegrations: Array<string | false | undefined>): string[] | undefined {
+  const integrations = maybeIntegrations.filter((integration): integration is string => !!integration)
+  return integrations.length > 0 ? integrations : undefined
+}

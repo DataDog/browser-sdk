@@ -1,6 +1,6 @@
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { TimeStamp } from '@datadog/browser-core'
 import { noop } from '@datadog/browser-core'
 import { RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../browser-rum-core/test'

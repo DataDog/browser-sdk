@@ -1,13 +1,16 @@
-import type { ClocksState, Context, Duration, PageMayExitEvent, RawError } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
+import type { Context, RawError, UrgentFlushReason } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
+import type { WebSocketCompleteEvent } from './resource/webSocketCollection'
 import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
 import type { DurationVitalStart } from './vital/vitalCollection'
 import type { TrackedEventData } from './eventTracker'
 import type { ActionEventData } from './action/trackManualActions'
+import type { SessionExpiredEvent } from './session/session.types'
 
 export const enum LifeCycleEventType {
   // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
@@ -21,6 +24,7 @@ export const enum LifeCycleEventType {
   AFTER_VIEW_ENDED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
+  WEBSOCKET_COMPLETED,
 
   // The SESSION_EXPIRED lifecycle event has been introduced to represent when a session has expired
   // and trigger cleanup tasks related to this, prior to renewing the session. Its implementation is
@@ -34,7 +38,7 @@ export const enum LifeCycleEventType {
   // on the same domain.
   SESSION_EXPIRED,
   SESSION_RENEWED,
-  PAGE_MAY_EXIT,
+  PREPARE_URGENT_FLUSH,
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
@@ -66,9 +70,10 @@ declare const LifeCycleEventTypeAsConst: {
   AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
   REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
+  WEBSOCKET_COMPLETED: LifeCycleEventType.WEBSOCKET_COMPLETED
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
   SESSION_RENEWED: LifeCycleEventType.SESSION_RENEWED
-  PAGE_MAY_EXIT: LifeCycleEventType.PAGE_MAY_EXIT
+  PREPARE_URGENT_FLUSH: LifeCycleEventType.PREPARE_URGENT_FLUSH
   RAW_RUM_EVENT_COLLECTED: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED
   RUM_EVENT_COLLECTED: LifeCycleEventType.RUM_EVENT_COLLECTED
   RAW_ERROR_COLLECTED: LifeCycleEventType.RAW_ERROR_COLLECTED
@@ -88,9 +93,10 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
-  [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
+  [LifeCycleEventTypeAsConst.WEBSOCKET_COMPLETED]: WebSocketCompleteEvent
+  [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: SessionExpiredEvent
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
-  [LifeCycleEventTypeAsConst.PAGE_MAY_EXIT]: PageMayExitEvent
+  [LifeCycleEventTypeAsConst.PREPARE_URGENT_FLUSH]: UrgentFlushReason
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
   [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: AssembledRumEvent
   [LifeCycleEventTypeAsConst.RAW_ERROR_COLLECTED]: {

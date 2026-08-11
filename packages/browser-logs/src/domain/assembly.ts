@@ -1,27 +1,22 @@
-import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
-import {
-  DISCARDED,
-  ErrorSource,
-  HookNames,
-  buildTags,
-  combine,
-  createEventRateLimiter,
-  getRelativeTime,
-} from '@datadog/browser-core'
+import type { Context, EventRateLimiter } from '@datadog/browser-core'
+import { ErrorSource, buildTags, createEventRateLimiter } from '@datadog/browser-core'
+import { toRelativeTime } from '@datadog/js-core/time'
+import { DISCARDED } from '@datadog/js-core/assembly'
+import { combine } from '@datadog/js-core/util'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { STATUSES } from './logger'
-import type { Hooks } from './hooks'
+import type { AssembleHook } from './hooks'
 
 export function startLogsAssembly(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
-  hooks: Hooks,
+  hook: AssembleHook,
   getCommonContext: () => CommonContext,
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   eventRateLimit?: number
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
@@ -33,9 +28,9 @@ export function startLogsAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext, ddtags = [] }) => {
-      const startTime = getRelativeTime(rawLogsEvent.date)
+      const startTime = toRelativeTime(rawLogsEvent.date)
       const commonContext = savedCommonContext || getCommonContext()
-      const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultLogsEventAttributes = hook.trigger({
         startTime,
       })
 

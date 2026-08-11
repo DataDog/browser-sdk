@@ -1,6 +1,6 @@
+import { dateNow } from '@datadog/js-core/time'
 import { setTimeout, clearTimeout } from './timer'
 import { monitor } from './monitor'
-import { dateNow } from './utils/timeUtils'
 
 // This type is not yet supported in TS 3.8. Imported from the TS source until we upgrade the
 // minimum supported TS version.

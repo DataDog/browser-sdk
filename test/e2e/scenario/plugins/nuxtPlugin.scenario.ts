@@ -3,21 +3,23 @@ import { createTest } from '../../lib/framework'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
 
 const nuxtApps = [
-  { routerVersion: 'v5' as const, description: 'Vue Router v5' },
-  { routerVersion: 'v4' as const, description: 'Vue Router v4' },
+  { routerVersion: 'v5' as const, description: 'Vue Router v5', nuxtVersion: 'v4' },
+  { routerVersion: 'v4' as const, description: 'Vue Router v4', nuxtVersion: 'v3' },
 ]
 
-const nuxtPluginApps = nuxtApps.map(({ routerVersion, description }) => ({
+const nuxtPluginApps = nuxtApps.map(({ routerVersion, description, nuxtVersion }) => ({
   name: `with Nuxt ${description}`,
   loadApp: (b: ReturnType<typeof createTest>) => b.withNuxtApp(routerVersion),
   viewPrefix: '',
+  plugin: { name: 'nuxt', integrations: [`nuxt-${nuxtVersion}`, 'nuxt-router'] },
 }))
 
 runBasePluginRouterTests(
-  nuxtPluginApps.map(({ name, loadApp, viewPrefix }) => ({
+  nuxtPluginApps.map(({ name, loadApp, viewPrefix, plugin }) => ({
     name,
     loadApp,
     viewPrefix,
+    plugin,
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',
@@ -100,6 +102,25 @@ test.describe('plugin: nuxt error', () => {
           withBrowserLogs((browserLogs) => {
             expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
           })
+        })
+      createTest('should not render the 500 Internal Server Error page for non-fatal client errors after hydration')
+        .withBasePath('/error-test')
+        .withRum()
+        .withNuxtApp(routerVersion)
+        .run(async ({ page, flushEvents, intakeRegistry }) => {
+          // Wait for hydration (app:suspense:resolve) to complete: only the initial render is
+          // allowed to trigger the full-page error.
+          await page.click('[data-testid="trigger-error"]')
+          // Verify that the 500 error page is not rendered.
+          // This is proven by showing that we are still in the same page and the button is still visible.
+          await expect(page.locator('h1')).toHaveText('Error Page')
+          await expect(page.getByTestId('trigger-error')).toBeVisible()
+          await expect(page.getByTestId('error-handled')).toBeVisible()
+
+          await flushEvents()
+
+          const errorEvents = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+          expect(errorEvents).toHaveLength(1)
         })
     })
   }

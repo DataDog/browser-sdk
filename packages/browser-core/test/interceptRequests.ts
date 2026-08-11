@@ -1,4 +1,4 @@
-import type { EndpointBuilder } from '../src'
+import type { EndpointBuilder } from '@datadog/js-core/transport'
 import { noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
 import { readFormData } from './readFormData'
@@ -22,6 +22,7 @@ export function interceptRequests() {
   const requests: Request[] = []
   const originalSendBeacon = isSendBeaconSupported() && navigator.sendBeacon.bind(navigator)
   const originalRequest = window.Request
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalFetch = window.fetch
 
   if (isSendBeaconSupported()) {

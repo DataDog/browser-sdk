@@ -1,8 +1,7 @@
-import type { EndpointBuilder } from '../domain/configuration'
+import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
 import type { Context } from '../tools/serialisation/context'
 import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
-import type { RawError } from '../domain/error/error.types'
 import { Observable } from '../tools/observable'
 import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
@@ -61,18 +60,13 @@ export type HttpRequestEvent<Body extends Payload = Payload> =
 export interface Payload {
   data: string | FormData | Blob
   bytesCount: number
-  retry?: RetryInfo
+  retry?: TransportRetryInfo
   encoding?: 'deflate'
-}
-
-export interface RetryInfo {
-  count: number
-  lastFailureStatus: number
 }
 
 export function createHttpRequest<Body extends Payload = Payload>(
   endpointBuilders: EndpointBuilder[],
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT
 ): HttpRequest<Body> {
   const observable = new Observable<HttpRequestEvent<Body>>()

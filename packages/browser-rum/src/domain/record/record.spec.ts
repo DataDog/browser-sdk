@@ -1,7 +1,7 @@
 import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, collectAsyncCalls, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { recordsPerFullSnapshot } from '../../../test'
 import type {
   AddNodeChange,
@@ -34,7 +34,8 @@ describe('record', () => {
     })
   })
 
-  it('captures stylesheet rules', async () => {
+  it('captures stylesheet rules', () => {
+    const clock = mockClock()
     const styleElement = appendElement('<style></style>') as HTMLStyleElement
 
     startRecording()
@@ -53,61 +54,23 @@ describe('record', () => {
       styleSheet.insertRule('body { color: #ccc; }')
     }, 10)
 
-    await collectAsyncCalls(emitSpy, recordsPerFullSnapshot() + 6)
+    clock.tick(10)
 
-    const records = getEmittedRecords()
-    let i = 0
+    const styleSheetRuleData = getEmittedRecords()
+      .filter(
+        (record): record is BrowserIncrementalSnapshotRecord =>
+          record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.StyleSheetRule
+      )
+      .map((record) => record.data)
 
-    expect(records[i++].type).toEqual(RecordType.Meta)
-    expect(records[i++].type).toEqual(RecordType.Focus)
-    expect(records[i++].type).toEqual(RecordType.FullSnapshot)
-
-    if (window.visualViewport) {
-      expect(records[i++].type).toEqual(RecordType.VisualViewport)
-    }
-
-    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-      jasmine.objectContaining({
-        source: IncrementalSource.StyleSheetRule,
-        adds: [{ rule: 'body { background: #000; }', index: undefined }],
-      })
-    )
-    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-      jasmine.objectContaining({
-        source: IncrementalSource.StyleSheetRule,
-        adds: [{ rule: 'body { background: #111; }', index: undefined }],
-      })
-    )
-    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-      jasmine.objectContaining({
-        source: IncrementalSource.StyleSheetRule,
-        removes: [{ index: 0 }],
-      })
-    )
-    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-      jasmine.objectContaining({
-        source: IncrementalSource.StyleSheetRule,
-        adds: [{ rule: 'body { color: #fff; }', index: undefined }],
-      })
-    )
-    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
-      jasmine.objectContaining({
-        source: IncrementalSource.StyleSheetRule,
-        removes: [{ index: 0 }],
-      })
-    )
-    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-    expect((records[i] as BrowserIncrementalSnapshotRecord).data).toEqual(
-      jasmine.objectContaining({
-        source: IncrementalSource.StyleSheetRule,
-        adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
-      })
-    )
+    expect(styleSheetRuleData).toEqual([
+      jasmine.objectContaining({ adds: [{ rule: 'body { background: #000; }', index: undefined }] }),
+      jasmine.objectContaining({ adds: [{ rule: 'body { background: #111; }', index: undefined }] }),
+      jasmine.objectContaining({ removes: [{ index: 0 }] }),
+      jasmine.objectContaining({ adds: [{ rule: 'body { color: #fff; }', index: undefined }] }),
+      jasmine.objectContaining({ removes: [{ index: 0 }] }),
+      jasmine.objectContaining({ adds: [{ rule: 'body { color: #ccc; }', index: undefined }] }),
+    ])
   })
 
   it('flushes pending mutation records before taking a full snapshot', async () => {

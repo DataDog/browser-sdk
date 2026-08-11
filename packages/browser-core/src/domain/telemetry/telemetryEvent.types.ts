@@ -6,10 +6,7 @@
  * Schema of all properties of a telemetry event
  */
 export type TelemetryEvent =
-  | TelemetryErrorEvent
-  | TelemetryDebugEvent
-  | TelemetryConfigurationEvent
-  | TelemetryUsageEvent
+  TelemetryErrorEvent | TelemetryDebugEvent | TelemetryConfigurationEvent | TelemetryUsageEvent
 /**
  * Schema of all properties of a telemetry error event
  */
@@ -482,6 +479,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the beta encode cookie options is enabled
        */
       beta_encode_cookie_options?: boolean
+      /**
+       * Whether the beta partial view updates feature is enabled
+       */
+      beta_enable_view_updates?: boolean
+      /**
+       * Whether the beta track WebSockets feature is enabled
+       */
+      beta_track_web_sockets?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -636,7 +641,7 @@ export interface CommonTelemetryProperties {
     /**
      * UUID of the action
      */
-    id: string
+    readonly id: string | string[]
     [k: string]: unknown
   }
   /**

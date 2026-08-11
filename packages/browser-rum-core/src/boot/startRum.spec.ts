@@ -1,13 +1,14 @@
-import type { RawError, Duration, BufferedData, SessionManager } from '@datadog/browser-core'
+import { ONE_SECOND, toServerDuration, relativeNow, relativeToClocks } from '@datadog/js-core/time'
+import type { Duration } from '@datadog/js-core/time'
+import type { BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   Observable,
-  toServerDuration,
-  ONE_SECOND,
   findLast,
   noop,
-  relativeNow,
   createIdentityEncoder,
   BufferedObservable,
+  addExperimentalFeatures,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock, SessionManagerMock } from '@datadog/browser-core/test'
 import {
@@ -40,7 +41,7 @@ function startRumStub(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: SessionManager,
-  reportError: (error: RawError) => void
+  reportError: (message: string) => void
 ) {
   const hooks = createHooks()
 
@@ -63,6 +64,32 @@ function startRumStub(
   }
 }
 
+describe('session expiration lifecycle', () => {
+  it('notifies session expiration with clocks captured when the session expires', () => {
+    const clock = mockClock()
+    const sessionManager = createSessionManagerMock()
+    const notifySpy = spyOn(LifeCycle.prototype, 'notify').and.callThrough()
+    const { stop } = startRum(
+      mockRumConfiguration(),
+      sessionManager,
+      noopRecorderApi,
+      noopProfilerApi,
+      undefined,
+      createIdentityEncoder,
+      new BufferedObservable<BufferedData>(100),
+      createFakeTelemetryObject(),
+      createHooks()
+    )
+    registerCleanupTask(stop)
+
+    clock.tick(123)
+    const endClocks = relativeToClocks(relativeNow())
+    sessionManager.expire()
+
+    expect(notifySpy).toHaveBeenCalledWith(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
+  })
+})
+
 describe('rum session', () => {
   let serverRumEvents: RumEvent[]
   let lifeCycle: LifeCycle
@@ -83,7 +110,7 @@ describe('rum session', () => {
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks: relativeToClocks(relativeNow()) })
     expect(serverRumEvents.length).toEqual(2)
 
     sessionManager.setId('43')
@@ -239,5 +266,74 @@ describe('view events', () => {
       (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
     )!
     expect(lastRumViewEvent._dd.sdk_name).toBe('rum')
+  })
+})
+
+describe('WebSocket resource collection activation', () => {
+  it('starts when betaTrackWebSockets is enabled and resources are tracked', () => {
+    const originalWebSocket = window.WebSocket
+    const { stop } = startRumStub(
+      new LifeCycle(),
+      mockRumConfiguration({ trackResources: true, betaTrackWebSockets: true }),
+      createSessionManagerMock(),
+      noop
+    )
+    registerCleanupTask(stop)
+
+    expect(window.WebSocket).not.toBe(originalWebSocket)
+  })
+
+  it('starts when the experimental flag is enabled and resources are tracked', () => {
+    addExperimentalFeatures([ExperimentalFeature.TRACK_WEBSOCKETS])
+    const originalWebSocket = window.WebSocket
+    const { stop } = startRumStub(
+      new LifeCycle(),
+      mockRumConfiguration({ trackResources: true, betaTrackWebSockets: false }),
+      createSessionManagerMock(),
+      noop
+    )
+    registerCleanupTask(stop)
+
+    expect(window.WebSocket).not.toBe(originalWebSocket)
+  })
+
+  it('does not start when neither enablement mechanism is active', () => {
+    const originalWebSocket = window.WebSocket
+    const { stop } = startRumStub(
+      new LifeCycle(),
+      mockRumConfiguration({ trackResources: true, betaTrackWebSockets: false }),
+      createSessionManagerMock(),
+      noop
+    )
+    registerCleanupTask(stop)
+
+    expect(window.WebSocket).toBe(originalWebSocket)
+  })
+
+  it('does not start from the beta option when resource tracking is disabled', () => {
+    const originalWebSocket = window.WebSocket
+    const { stop } = startRumStub(
+      new LifeCycle(),
+      mockRumConfiguration({ trackResources: false, betaTrackWebSockets: true }),
+      createSessionManagerMock(),
+      noop
+    )
+    registerCleanupTask(stop)
+
+    expect(window.WebSocket).toBe(originalWebSocket)
+  })
+
+  it('does not start from the experimental flag when resource tracking is disabled', () => {
+    addExperimentalFeatures([ExperimentalFeature.TRACK_WEBSOCKETS])
+    const originalWebSocket = window.WebSocket
+    const { stop } = startRumStub(
+      new LifeCycle(),
+      mockRumConfiguration({ trackResources: false, betaTrackWebSockets: false }),
+      createSessionManagerMock(),
+      noop
+    )
+    registerCleanupTask(stop)
+
+    expect(window.WebSocket).toBe(originalWebSocket)
   })
 })

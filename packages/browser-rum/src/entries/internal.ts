@@ -5,7 +5,6 @@
  * WARNING: this module is not intended for public usages, and won't follow semver for breaking
  * changes.
  */
-export type { TimeStamp } from '@datadog/browser-core'
 export {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_HIDDEN,
@@ -16,3 +15,6 @@ export {
 export * from '../types'
 
 export { takeFullSnapshot, takeNodeSnapshot } from '../domain/record'
+
+export { makeRecorderApi } from '../boot/recorderApi'
+export { makeProfilerApi } from '../boot/profilerApi'

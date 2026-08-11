@@ -1,11 +1,6 @@
-import type {
-  TrackingConsentState,
-  DeflateWorker,
-  Context,
-  Telemetry,
-  TimeStamp,
-  SessionManager,
-} from '@datadog/browser-core'
+import { timeStampNow, clocksNow } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
+import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
 import {
   BufferedObservable,
   display,
@@ -13,8 +8,6 @@ import {
   displayAlreadyInitializedError,
   willSyntheticsInjectRum,
   noop,
-  timeStampNow,
-  clocksNow,
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,
@@ -33,6 +26,8 @@ import {
   isWorkerEnvironment,
   startTelemetrySessionContext,
   addTelemetryDebug,
+  setAllowUntrustedEvents,
+  isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -46,7 +41,7 @@ import {
   serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { FeatureOperationOptions, FailureReason } from '../domain/vital/vitalCollection'
+import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
@@ -62,7 +57,7 @@ export type DoStartRum = (
 ) => StartRumResult
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, sdkName }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   doStartRum: DoStartRum
 ): Strategy {
@@ -83,8 +78,7 @@ export function createPreStartStrategy(
   bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
 
   let firstStartViewCall:
-    | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
-    | undefined
+    { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void } | undefined
   let deflateWorker: DeflateWorker | undefined
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
@@ -156,8 +150,8 @@ export function createPreStartStrategy(
       return
     }
 
-    const configuration = validateAndBuildRumConfiguration(initConfiguration, errorStack)
-    if (!configuration) {
+    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
       return
     }
 
@@ -181,8 +175,9 @@ export function createPreStartStrategy(
     trackingConsentState.tryToInit(configuration.trackingConsent)
 
     trackingConsentState.onGrantedOnce(() => {
-      startTrackingConsentContext(hooks, trackingConsentState)
-      telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, hooks)
+      const { assembleTelemetry: assembleTelemetryHook } = hooks
+      startTrackingConsentContext(assembleTelemetryHook, trackingConsentState)
+      telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, assembleTelemetryHook, sdkName)
 
       if (isWorkerEnvironment) {
         display.warn('The RUM SDK is not supported in a web or service worker environment.')
@@ -199,7 +194,9 @@ export function createPreStartStrategy(
             return
           }
           sessionManager = newSessionManager
-          startTelemetrySessionContext(hooks, sessionManager, { application: { id: configuration.applicationId } })
+          startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
+            application: { id: configuration.applicationId },
+          })
           addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
           tryStartRum()
@@ -211,14 +208,14 @@ export function createPreStartStrategy(
   const addOperationStepVital = (
     name: string,
     stepType: 'start' | 'end',
-    options?: FeatureOperationOptions,
+    options?: OperationOptions,
     failureReason?: FailureReason
   ) => {
     bufferApiCalls.notify((startRumResult) =>
       startRumResult.addOperationStepVital(
         sanitize(name)!,
         stepType,
-        sanitize(options) as FeatureOperationOptions,
+        sanitize(options) as OperationOptions,
         sanitize(failureReason) as FailureReason | undefined
       )
     )
@@ -232,6 +229,7 @@ export function createPreStartStrategy(
       }
       // Set the experimental feature flags as early as possible, so we can use them in most places
       initFeatureFlags(initConfiguration.enableExperimentalFeatures)
+      setAllowUntrustedEvents(initConfiguration.allowUntrustedEvents)
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration

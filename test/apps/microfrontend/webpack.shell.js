@@ -19,6 +19,7 @@ module.exports = webpackBase({
         sourceCodeContext: {
           service: 'mf-shell-service',
           version: '2.0.0',
+          debugId: true,
         },
       },
     }),

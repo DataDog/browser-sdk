@@ -35,7 +35,12 @@ export interface BrowserLog {
   timestamp: number
 }
 
-const IGNORE_LOG_MESSAGES = ['Ignoring unsupported entryTypes:', 'Layout was forced before the page was fully loaded.']
+const IGNORE_LOG_MESSAGES = [
+  'Ignoring unsupported entryTypes:',
+  'Layout was forced before the page was fully loaded.',
+  // Salesforce generates console errors we cannot control
+  'O11Y Error {name: Error, message: Unsupported WebVital metrics',
+]
 
 export class BrowserLogsManager {
   private logs: BrowserLog[] = []
@@ -99,6 +104,22 @@ export async function sendXhr(page: Page, url: string, headers: string[][] = [])
     throw new Error(`sendXhr: request to ${url} failed`)
   }
   return result.response
+}
+
+export async function generateLongTask(page: Page, durationMs = 500) {
+  await page.evaluate(
+    (duration) =>
+      new Promise<void>((resolve) => {
+        setTimeout(() => {
+          const start = Date.now()
+          while (Date.now() - start < duration) {
+            /* empty */
+          }
+          resolve()
+        })
+      }),
+    durationMs
+  )
 }
 
 export function isContentTypeAvailableInPerformanceEntry(

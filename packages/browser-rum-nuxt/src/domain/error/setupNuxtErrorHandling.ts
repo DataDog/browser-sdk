@@ -1,10 +1,13 @@
 import type { StartRumResult } from '@datadog/browser-rum-core'
 import type { ComponentInternalInstance, ComponentPublicInstance, App } from 'vue'
-import { callMonitored, clocksNow, createHandlingStack } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
+import { callMonitored, createHandlingStack } from '@datadog/browser-core'
 
 export interface NuxtApp {
   vueApp: App
+  versions?: { nuxt?: string }
   hook(name: 'app:error', callback: (err: unknown) => void): void
+  hook(name: 'app:suspense:resolve', callback: () => void): void
 }
 
 export type NuxtErrorReporter = (error: unknown, instance: ComponentPublicInstance | null, info: string) => void
@@ -38,14 +41,30 @@ export function setupNuxtErrorHandling(nuxtApp: NuxtApp, reportError: NuxtErrorR
   // Wrap existing errorHandler rather than replacing it, so Nuxt's own
   // handleVueError (which drives the error page) is still called.
   const original = nuxtApp.vueApp.config.errorHandler
+  let shouldCallOriginal = true
+
+  nuxtApp.hook('app:suspense:resolve', () => {
+    if (isNuxtDefaultErrorHandler(original)) {
+      shouldCallOriginal = false
+    }
+  })
+
   nuxtApp.vueApp.config.errorHandler = (error, instance, info) => {
     deduplicatedReportError(error, instance, info)
-    original?.(error, instance, info)
+    if (shouldCallOriginal) {
+      original?.(error, instance, info)
+    }
   }
 
   nuxtApp.hook('app:error', (err) => {
     deduplicatedReportError(err, null, '')
   })
+}
+
+// https://github.com/nuxt/nuxt/blob/83aa474239388738b611e2b2fd9151936a041a93/packages/nuxt/src/app/entry.ts#L62-L74
+// Follows what Nuxt does internally to determine if the error handler is the default one.
+function isNuxtDefaultErrorHandler(errorHandler: App['config']['errorHandler']) {
+  return !!errorHandler && '__nuxt_default' in errorHandler && errorHandler.__nuxt_default === true
 }
 
 function deduplicateByError(func: NuxtErrorReporter) {

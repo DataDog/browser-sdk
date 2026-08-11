@@ -1,3 +1,4 @@
+import { timeStampNow } from '@datadog/js-core/time'
 import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
   BufferedObservable,
@@ -7,7 +8,6 @@ import {
   initFeatureFlags,
   monitorError,
   noop,
-  timeStampNow,
   buildAccountContextManager,
   CustomerContextKey,
   bufferContextCalls,
@@ -21,6 +21,8 @@ import {
   TelemetryService,
   mockable,
   startTelemetrySessionContext,
+  setAllowUntrustedEvents,
+  isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -40,7 +42,8 @@ export type DoStartLogs = (
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: DoStartLogs
+  doStartLogs: DoStartLogs,
+  sdkName?: string
 ): Strategy {
   const BUFFER_LIMIT = 500
   const bufferApiCalls = new BufferedObservable<(startLogsResult: StartLogsResult) => void>(BUFFER_LIMIT, (count) => {
@@ -84,6 +87,7 @@ export function createPreStartStrategy(
       }
       // Set the experimental feature flags as early as possible, so we can use them in most places
       initFeatureFlags(initConfiguration.enableExperimentalFeatures)
+      setAllowUntrustedEvents(initConfiguration.allowUntrustedEvents)
 
       if (canUseEventBridge()) {
         initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
@@ -97,8 +101,8 @@ export function createPreStartStrategy(
         return
       }
 
-      const configuration = validateAndBuildLogsConfiguration(initConfiguration, errorStack)
-      if (!configuration) {
+      const configuration = validateAndBuildLogsConfiguration(initConfiguration)
+      if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
         return
       }
 
@@ -108,7 +112,7 @@ export function createPreStartStrategy(
 
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
-        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
+        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry, sdkName)
         const sessionManagerPromise = canUseEventBridge()
           ? startSessionManagerStub()
           : mockable(startSessionManager)(configuration, trackingConsentState)
@@ -119,7 +123,7 @@ export function createPreStartStrategy(
               return
             }
             sessionManager = newSessionManager
-            startTelemetrySessionContext(hooks, sessionManager)
+            startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
             addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
             tryStartLogs()
           })

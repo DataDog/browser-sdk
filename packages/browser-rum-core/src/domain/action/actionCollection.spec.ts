@@ -1,5 +1,6 @@
-import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { addDuration, HookNames, Observable } from '@datadog/browser-core'
+import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
+import { addDuration } from '@datadog/js-core/time'
+import { Observable } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
@@ -175,7 +176,7 @@ describe('actionCollection', () => {
       it(`should add action properties on ${eventType} from the context`, () => {
         const actionId = ['1']
         spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hooks.assemble.trigger({
           eventType,
           startTime: 0 as RelativeTime,
         } as AssembleHookParams)
@@ -187,7 +188,7 @@ describe('actionCollection', () => {
       it(`should not add action properties on ${eventType} from the context`, () => {
         const actionId = ['1']
         spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hooks.assemble.trigger({
           eventType,
           startTime: 0 as RelativeTime,
         } as AssembleHookParams)
@@ -200,7 +201,7 @@ describe('actionCollection', () => {
       const longTaskStartTime = 100 as RelativeTime
       const findActionIdSpy = spyOn(actionContexts, 'findActionId').and.returnValue([])
 
-      hooks.triggerHook(HookNames.Assemble, {
+      hooks.assemble.trigger({
         eventType: RumEventType.LONG_TASK,
         startTime: longTaskStartTime,
         duration: 50 as Duration,
@@ -215,20 +216,20 @@ describe('actionCollection', () => {
     it('should add action id', () => {
       const actionId = ['1']
       spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      const telemetryEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
       // todo: fix telemetry event type
-      expect(telemetryEventAttributes.action?.id).toEqual(actionId as unknown as string)
+      expect(telemetryEventAttributes.action?.id).toEqual(actionId)
     })
 
     it('should not add action id if the action is not found', () => {
       spyOn(actionContexts, 'findActionId').and.returnValue([])
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      const telemetryEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
 
-      expect(telemetryEventAttributes.action?.id).toEqual([] as unknown as string)
+      expect(telemetryEventAttributes.action?.id).toEqual([])
     })
   })
 })

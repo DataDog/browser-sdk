@@ -1,4 +1,4 @@
-import { globalObject } from '../../../tools/globalObject'
+import { globalObject } from '@datadog/js-core/util'
 import { Observable } from '../../../tools/observable'
 import { shallowClone } from '../../../tools/utils/objectUtils'
 import { SessionPersistence } from '../sessionConstants'

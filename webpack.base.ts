@@ -2,7 +2,7 @@ import path from 'path'
 import webpack from 'webpack'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
-import { buildEnvKeys, getBuildEnvValue } from './scripts/lib/buildEnv.ts'
+import { getBuildEnvDefines } from './scripts/lib/buildEnv.ts'
 
 const tsconfigPath = path.join(import.meta.dirname, 'tsconfig.webpack.json')
 
@@ -12,11 +12,13 @@ export default ({
   filename,
   plugins,
   types,
-  keepBuildEnvVariables,
+  version,
+  includeWorkerString = false,
 }: Pick<webpack.Configuration, 'entry' | 'mode' | 'plugins'> & {
   filename?: string
   types?: string[]
-  keepBuildEnvVariables?: string[]
+  version?: string
+  includeWorkerString?: boolean
 }): webpack.Configuration => ({
   entry,
   mode,
@@ -57,10 +59,6 @@ export default ({
   resolve: {
     extensions: ['.ts', '.js', '.tsx'],
     plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
-    alias: {
-      // The default "pako.esm.js" build is not transpiled to es5
-      pako: 'pako/dist/pako.es5.js',
-    },
   },
 
   optimization: {
@@ -94,20 +92,13 @@ export default ({
             append: false,
           }
     ),
-    createDefinePlugin({ keepBuildEnvVariables }),
+    new webpack.DefinePlugin(
+      getBuildEnvDefines({
+        setup: 'cdn',
+        version,
+        workerString: includeWorkerString,
+      })
+    ),
     ...(plugins || []),
   ],
 })
-
-export function createDefinePlugin({ keepBuildEnvVariables }: { keepBuildEnvVariables?: string[] } = {}) {
-  return new webpack.DefinePlugin(
-    Object.fromEntries(
-      buildEnvKeys
-        .filter((key) => !keepBuildEnvVariables?.includes(key))
-        .map((key) => [
-          `__BUILD_ENV__${key}__`,
-          webpack.DefinePlugin.runtimeValue(() => JSON.stringify(getBuildEnvValue(key))),
-        ])
-    )
-  )
-}

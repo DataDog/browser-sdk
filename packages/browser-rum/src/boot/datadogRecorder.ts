@@ -1,11 +1,7 @@
-import type { RawError, HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
-import {
-  createHttpRequest,
-  addTelemetryDebug,
-  canUseEventBridge,
-  noop,
-  createEndpointBuilder,
-} from '@datadog/browser-core'
+import type { HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
+import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop, ErrorSource } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
+import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
@@ -27,10 +23,12 @@ export function startRecording(
 ) {
   const cleanupTasks: Array<() => void> = []
 
-  const reportError = (error: RawError) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+  const reportError = (message: string) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+      error: { message, source: ErrorSource.AGENT, startClocks: clocksNow() },
+    })
     // monitor-until: forever, to keep an eye on the errors reported to customers
-    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
+    addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
   const replayRequest =

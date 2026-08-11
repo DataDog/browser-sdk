@@ -22,7 +22,7 @@ const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
 const PACKAGES_NO_RESTRICTED_SYNTAX_RULES = [
   {
     selector: 'Identifier[name="globalThis"]',
-    message: 'Use `globalObject` from @datadog/browser-core instead of `globalThis`.',
+    message: 'Use `globalObject` from @datadog/js-core/util instead of `globalThis`.',
   },
 ]
 
@@ -40,6 +40,9 @@ export default defineConfig(
       'packages/*/esm',
       'test/**/dist',
       'test/**/.next',
+      // Test-app webpack configs are build tooling for fixtures, not part of the typed project graph
+      // (excluded from tsconfig.scripts.json). Without this, projectService fails to find a project.
+      'test/apps/*/webpack.*',
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
       'test/apps/microfrontend',
@@ -49,9 +52,10 @@ export default defineConfig(
       'test/apps/vue-router-v4-app',
       'test/apps/nuxt-app',
       'test/apps/nuxt-vue-router-v4-app',
+      'test/apps/sf-lwc-app/force-app/main/default/staticresources/*.js',
+      'test/apps/sf-experience-app/force-app/main/default/staticresources/*.js',
       'sandbox',
       'coverage',
-      'rum-events-format',
       '.yarn',
       '**/playwright-report',
       'generated-docs',
@@ -291,7 +295,7 @@ export default defineConfig(
         },
       ],
 
-      'unicorn/filename-case': ['error', { case: 'camelCase' }],
+      'unicorn/filename-case': ['error', { case: 'camelCase', checkDirectories: false }],
       'unicorn/no-empty-file': 'error',
     },
   },
@@ -326,7 +330,7 @@ export default defineConfig(
     files: ['scripts/**', 'packages/*/scripts/**'],
     ignores: ['**/lib/**'],
     rules: {
-      'unicorn/filename-case': ['error', { case: 'kebabCase' }],
+      'unicorn/filename-case': ['error', { case: 'kebabCase', checkDirectories: false }],
     },
   },
 
@@ -451,6 +455,27 @@ export default defineConfig(
               message: 'Use node:fs or node:fs/promises (fs.glob) instead.',
             },
           ],
+        },
+      ],
+    },
+  },
+
+  {
+    files: [
+      'test/apps/sf-lwc-app/force-app/main/default/lwc/**/*.js',
+      'test/apps/sf-experience-app/force-app/main/default/lwc/**/*.js',
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+    rules: {
+      // Salesforce LWC components are deployed as default-exported classes and import platform-provided
+      // virtual modules that do not exist in this repository's node_modules.
+      'import-x/no-default-export': 'off',
+      'import-x/no-unresolved': [
+        'error',
+        {
+          ignore: ['^lwc$', '^lightning/', '^@salesforce/resourceUrl/'],
         },
       ],
     },

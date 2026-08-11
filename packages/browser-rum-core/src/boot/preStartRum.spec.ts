@@ -1,13 +1,9 @@
+import type { Duration, TimeStamp } from '@datadog/js-core/time'
+import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
+import { toTimeStamp, relativeToClocks, clocksNow } from '@datadog/js-core/time'
 import {
-  type DeflateWorker,
-  type Duration,
-  type TimeStamp,
-  type TrackingConsentState,
   display,
-  getTimeStamp,
   noop,
-  relativeToClocks,
-  clocksNow,
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
@@ -27,7 +23,7 @@ import {
   replaceMockableWithSpy,
   createStartSessionManagerMock,
 } from '@datadog/browser-core/test'
-import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
+import type { RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
@@ -107,21 +103,23 @@ describe('preStartRum', () => {
     describe('if event bridge present', () => {
       it('init should accept empty application id and client token', () => {
         mockEventBridge()
-        const hybridInitConfiguration: HybridInitConfiguration = {}
+        const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect(display.error).not.toHaveBeenCalled()
       })
 
       it('should force session sample rate to 100', () => {
         mockEventBridge()
-        const invalidConfiguration: HybridInitConfiguration = { sessionSampleRate: 50 }
+        const invalidConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {
+          sessionSampleRate: 50,
+        }
         strategy.init(invalidConfiguration as RumInitConfiguration, PUBLIC_API)
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
       it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
-        const hybridInitConfiguration: HybridInitConfiguration = {}
+        const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           DefaultPrivacyLevel.ALLOW
@@ -130,7 +128,9 @@ describe('preStartRum', () => {
 
       it('should set the default privacy level from the init configuration if provided', () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
-        const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: DefaultPrivacyLevel.MASK }
+        const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {
+          defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        }
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           hybridInitConfiguration.defaultPrivacyLevel
@@ -139,7 +139,7 @@ describe('preStartRum', () => {
 
       it('should set the default privacy level to "mask" if not provided in init configuration nor the bridge', () => {
         mockEventBridge({ privacyLevel: undefined })
-        const hybridInitConfiguration: HybridInitConfiguration = {}
+        const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           DefaultPrivacyLevel.MASK
@@ -412,10 +412,10 @@ describe('preStartRum', () => {
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
 
           expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('first')
-          expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(getTimeStamp(clock.relative(10)))
+          expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(toTimeStamp(clock.relative(10)))
 
           expect(addTimingSpy.calls.argsFor(1)[0]).toEqual('second')
-          expect(addTimingSpy.calls.argsFor(1)[1]).toEqual(getTimeStamp(clock.relative(30)))
+          expect(addTimingSpy.calls.argsFor(1)[1]).toEqual(toTimeStamp(clock.relative(30)))
         })
       })
     })
@@ -553,7 +553,7 @@ describe('preStartRum', () => {
         it('should start the SDK with the cached configuration on cache hit', async () => {
           localStorage.setItem(
             CACHE_KEY,
-            JSON.stringify({ version: 1, config: { sessionSampleRate: 75 }, fetchedAt: 1000 })
+            JSON.stringify({ version: 2, config: { rum: { sessionSampleRate: 75 } }, fetchedAt: 1000 })
           )
           const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
 

@@ -4,15 +4,15 @@ import { resetValueHistoryGlobals } from '../src/tools/valueHistory'
 import { resetFetchObservable } from '../src/browser/fetchObservable'
 import { resetConsoleObservable } from '../src/domain/console/consoleObservable'
 import { resetXhrObservable } from '../src/browser/xhrObservable'
+import { resetWebSocketObservable } from '../src/browser/webSocketObservable'
 import { resetGetCurrentSite } from '../src/browser/cookie'
 import { resetReplayStats } from '../../browser-rum/src/domain/replayStats'
 import { resetInteractionCountPolyfill } from '../../browser-rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
 import { resetMonitor } from '../src/tools/monitor'
 import { resetTelemetry } from '../src/domain/telemetry'
 import { resetSampleDecisionCache } from '../src/domain/sampler'
+import { resetAllowUntrustedEvents } from '../src/browser/addEventListener'
 import { startLeakDetection } from './leakDetection'
-import type { BuildEnvWindow } from './buildEnv'
-;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
 ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(() => {
@@ -33,6 +33,7 @@ afterEach(() => {
   resetFetchObservable()
   resetConsoleObservable()
   resetXhrObservable()
+  resetWebSocketObservable()
   resetGetCurrentSite()
   resetReplayStats()
   resetMonitor()
@@ -41,6 +42,7 @@ afterEach(() => {
   resetSampleDecisionCache()
   resetExperimentalFeatures()
   resetManageResourceTimingBufferFull()
+  resetAllowUntrustedEvents()
 })
 
 function clearAllCookies() {

@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { CI_FILE, replaceCiFileVariable } from '../lib/filesUtils.ts'
-import { initGitConfig, createPullRequest } from '../lib/gitUtils.ts'
+import { initGitConfig, createPullRequest, pushSignedCommit } from '../lib/gitUtils.ts'
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
@@ -51,11 +51,11 @@ runMain(async () => {
 
   command`git add ${CI_FILE}`.run()
   command`git commit -m ${commitMessage}`.run()
-  command`git push origin ${chromeVersionBranch}`.run()
+  pushSignedCommit(chromeVersionBranch)
 
   printLog('Create PR...')
 
-  const pullRequestUrl = createPullRequest(MAIN_BRANCH)
+  const pullRequestUrl = createPullRequest(MAIN_BRANCH, ['dependencies'])
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
 
   // used to share the pull request url to the notification jobs

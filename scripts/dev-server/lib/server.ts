@@ -15,7 +15,14 @@ const sandboxPath = './sandbox'
 const START_PORT = 8080
 const MAX_PORT = 8180
 
-const PACKAGES_WITH_BUNDLE = ['browser-rum', 'browser-rum-slim', 'browser-logs', 'browser-worker', 'browser-debugger']
+const PACKAGES_WITH_BUNDLE = [
+  'browser-rum',
+  'browser-rum-slim',
+  'browser-logs',
+  'browser-worker',
+  'browser-debugger',
+  'browser-rum-shopify',
+]
 
 export function runServer({ writeIntakeFile = true }: { writeIntakeFile?: boolean } = {}): void {
   if (writeIntakeFile) {
@@ -31,6 +38,7 @@ export function runServer({ writeIntakeFile = true }: { writeIntakeFile?: boolea
 
   app.use((_req, res, next) => {
     res.setHeader('Document-Policy', 'js-profiling')
+    res.setHeader('Access-Control-Allow-Origin', '*')
     next()
   })
 
@@ -85,6 +93,7 @@ function createStaticSandboxApp(): express.Application {
             entry: `${packagePath}/src/entries/main.ts`,
             filename:
               packageName === 'browser-worker' ? 'worker.js' : `${packageName.replace(/^browser-/, 'datadog-')}.js`,
+            includeWorkerString: packageName === 'browser-rum' || packageName === 'browser-rum-shopify',
           })
         ),
         { stats: 'minimal' }
@@ -123,6 +132,7 @@ function createReactApp(): express.Application {
           entry: `${sandboxPath}/react-app/main.tsx`,
           plugins: [new HtmlWebpackPlugin({ publicPath: '/react-app/' })],
           mode: 'development',
+          includeWorkerString: true,
         })
       ),
       { stats: 'minimal' }

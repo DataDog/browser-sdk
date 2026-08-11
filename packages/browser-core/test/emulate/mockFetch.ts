@@ -5,6 +5,7 @@ import { registerCleanupTask } from '../registerCleanupTask'
 export type MockFetchManager = ReturnType<typeof mockFetch>
 
 export function mockFetch() {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalFetch = window.fetch
   let allFetchCompleteCallback = noop
   let pendingRequests = 0

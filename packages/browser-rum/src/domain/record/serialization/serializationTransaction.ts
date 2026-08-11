@@ -1,6 +1,5 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { elapsed, timeStampNow } from '@datadog/browser-core'
-
+import { elapsed, timeStampNow } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { ChangeType, RecordType, SnapshotFormat } from '../../../types'
 import type {
   AddCDataSectionNodeChange,

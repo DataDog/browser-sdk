@@ -1,14 +1,7 @@
-import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  display,
-  DefaultPrivacyLevel,
-  timeStampToClocks,
-  ResourceType,
-  startTelemetry,
-  startSessionManager,
-  getTimeStamp,
-} from '@datadog/browser-core'
+import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
+import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
+import type { DeflateWorker } from '@datadog/browser-core'
+import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -577,7 +570,7 @@ describe('rum public api', () => {
 
       expect(addTimingSpy).toHaveBeenCalledTimes(1)
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(addTimingSpy.calls.argsFor(0)[1]).toBe(getTimeStamp(clock.relative(0)))
+      expect(addTimingSpy.calls.argsFor(0)[1]).toBe(toTimeStamp(clock.relative(0)))
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
@@ -753,7 +746,7 @@ describe('rum public api', () => {
     it('is started with the default startSessionReplayRecordingManually', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(true)
+      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
     })
 
     it('is started with the configured startSessionReplayRecordingManually', async () => {
@@ -1026,7 +1019,7 @@ describe('rum public api', () => {
     })
   })
 
-  describe('startFeatureOperation', () => {
+  describe('startOperation', () => {
     it('should call addOperationStepVital on the startRum result with start status', async () => {
       const addOperationStepVitalSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
@@ -1035,7 +1028,7 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      rumPublicApi.startOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
       await collectAsyncCalls(addOperationStepVitalSpy, 1)
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
         'foo',
@@ -1049,7 +1042,7 @@ describe('rum public api', () => {
     })
   })
 
-  describe('succeedFeatureOperation', () => {
+  describe('succeedOperation', () => {
     it('should call addOperationStepVital on the startRum result with end status', async () => {
       const addOperationStepVitalSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
@@ -1058,7 +1051,7 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.succeedFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      rumPublicApi.succeedOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
       await collectAsyncCalls(addOperationStepVitalSpy, 1)
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
         'foo',
@@ -1071,7 +1064,7 @@ describe('rum public api', () => {
     })
   })
 
-  describe('failFeatureOperation', () => {
+  describe('failOperation', () => {
     it('should call addOperationStepVital on the startRum result with end status and failure reason', async () => {
       const addOperationStepVitalSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
@@ -1080,7 +1073,7 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.failFeatureOperation('foo', 'error', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      rumPublicApi.failOperation('foo', 'error', { operationKey: '00000000-0000-0000-0000-000000000000' })
       await collectAsyncCalls(addOperationStepVitalSpy, 1)
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
         'foo',
@@ -1088,6 +1081,46 @@ describe('rum public api', () => {
         { operationKey: '00000000-0000-0000-0000-000000000000' },
         'error'
       )
+    })
+  })
+
+  describe('deprecated *FeatureOperation aliases', () => {
+    it('startFeatureOperation should forward with start status and still expose a handlingStack', async () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: { addOperationStepVital: addOperationStepVitalSpy },
+      })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startFeatureOperation('foo')
+      await collectAsyncCalls(addOperationStepVitalSpy, 1)
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        'start',
+        { handlingStack: jasmine.any(String) },
+        undefined
+      )
+    })
+
+    it('succeedFeatureOperation should forward with end status', async () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: { addOperationStepVital: addOperationStepVitalSpy },
+      })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.succeedFeatureOperation('foo')
+      await collectAsyncCalls(addOperationStepVitalSpy, 1)
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'end', undefined, undefined)
+    })
+
+    it('failFeatureOperation should forward with end status and failure reason', async () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: { addOperationStepVital: addOperationStepVitalSpy },
+      })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.failFeatureOperation('foo', 'error')
+      await collectAsyncCalls(addOperationStepVitalSpy, 1)
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'end', undefined, 'error')
     })
   })
 

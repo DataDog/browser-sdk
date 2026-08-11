@@ -1,4 +1,5 @@
-import type { RelativeTime, ClocksState, Context } from '@datadog/browser-core'
+import type { RelativeTime, ClocksState } from '@datadog/js-core/time'
+import type { Context } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -17,7 +18,7 @@ export interface ViewHistoryEntry {
 }
 
 export interface ViewHistory {
-  findView: (startTime?: RelativeTime) => ViewHistoryEntry | undefined
+  findView: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => ViewHistoryEntry | undefined
   stop: () => void
 }
 
@@ -62,7 +63,7 @@ export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {
   }
 
   return {
-    findView: (startTime) => viewValueHistory.find(startTime),
+    findView: (startTime, options) => viewValueHistory.find(startTime, options),
     stop: () => {
       viewValueHistory.stop()
     },

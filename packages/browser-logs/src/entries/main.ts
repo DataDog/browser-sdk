@@ -42,12 +42,11 @@ export type {
   SessionPersistence,
   TrackingConsent,
   MatchOption,
-  ProxyFn,
-  Site,
-  ConsoleApiName,
   RawReportType,
   ErrorSource,
 } from '@datadog/browser-core'
+export type { ProxyFn, Site } from '@datadog/js-core/transport'
+export type { ConsoleApiName } from '@datadog/js-core/util'
 
 /**
  * The global Logs instance. Use this to call Logs methods.
@@ -56,7 +55,7 @@ export type {
  * @see {@link DatadogLogs}
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
-export const datadogLogs = makeLogsPublicApi()
+export const datadogLogs = makeLogsPublicApi({ sdkName: 'logs' })
 
 interface BrowserWindow {
   DD_LOGS?: LogsPublicApi

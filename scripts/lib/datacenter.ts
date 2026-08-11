@@ -40,6 +40,14 @@ export async function getDatacenterMetadata(name: string): Promise<Datacenter | 
 
 let cachedDatacentersPromise: Promise<Datacenter[]> | undefined
 
+export function mockDatacenters(datacenters: Datacenter[]): void {
+  cachedDatacentersPromise = Promise.resolve(datacenters)
+}
+
+export function resetDatacenterCache(): void {
+  cachedDatacentersPromise = undefined
+}
+
 export function getAllDatacentersMetadata(): Promise<Datacenter[]> {
   if (cachedDatacentersPromise) {
     return cachedDatacentersPromise
@@ -68,7 +76,8 @@ async function fetchDatacentersFromRuntimeMetadataService(): Promise<Datacenters
   const token = await getVaultToken()
 
   // Filter for production environment and site flavor only
-  const selector = 'datacenter.environment == "prod" && datacenter.flavor == "site"'
+  const selector =
+    'datacenter.environment == "prod" && datacenter.flavor == "site" && datacenter.status != "deprecated"'
 
   const response = await fetchHandlingError(
     `${RUNTIME_METADATA_SERVICE_URL}?selector=${encodeURIComponent(selector)}`,

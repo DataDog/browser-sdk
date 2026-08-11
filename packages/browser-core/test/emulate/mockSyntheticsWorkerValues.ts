@@ -1,4 +1,4 @@
-import { ONE_MINUTE } from '../../src/tools/utils/timeUtils'
+import { ONE_MINUTE } from '@datadog/js-core/time'
 import { deleteCookie, resetInitCookies, setCookie } from '../../src/browser/cookie'
 import type { BrowserWindow, SyntheticsContext } from '../../src/domain/synthetics/syntheticsWorkerValues'
 import {

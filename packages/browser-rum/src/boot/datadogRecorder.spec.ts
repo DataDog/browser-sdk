@@ -1,4 +1,5 @@
-import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import type { HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
@@ -43,7 +44,7 @@ describe('startRecording', () => {
       sendOnExit: requestSendSpy,
     }
 
-    const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
+    const deflateEncoder = createDeflateEncoder(worker!, DeflateEncoderStreamId.REPLAY)
     const viewHistory = startViewHistory(lifeCycle)
     initialView(lifeCycle)
 
@@ -275,7 +276,7 @@ describe('startRecording', () => {
 })
 
 function flushSegment(lifeCycle: LifeCycle) {
-  lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
+  lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 }
 
 function createRandomString(minLength: number) {

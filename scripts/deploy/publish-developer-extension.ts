@@ -7,6 +7,7 @@ import {
   getChromeWebStoreClientId,
   getChromeWebStoreClientSecret,
   getChromeWebStoreRefreshToken,
+  getChromeWebStorePublisherId,
 } from '../lib/secrets.ts'
 
 const ZIP_FILE_NAME = 'developer-extension.zip'
@@ -29,6 +30,7 @@ async function uploadAndPublish(): Promise<void> {
   const zipFile = fs.createReadStream(ZIP_FILE_NAME)
   const api = chromeWebstoreUpload({
     extensionId: 'boceobohkgenpcpogecpjlnmnfbdigda',
+    publisherId: getChromeWebStorePublisherId(),
     clientId: getChromeWebStoreClientId(),
     clientSecret: getChromeWebStoreClientSecret(),
     refreshToken: getChromeWebStoreRefreshToken(),

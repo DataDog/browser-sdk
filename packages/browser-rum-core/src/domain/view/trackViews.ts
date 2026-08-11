@@ -1,26 +1,21 @@
-import type {
-  Duration,
-  ClocksState,
-  TimeStamp,
-  Subscription,
-  RelativeTime,
-  Context,
-  ContextValue,
-} from '@datadog/browser-core'
+import {
+  ONE_MINUTE,
+  elapsed,
+  timeStampNow,
+  clocksNow,
+  clocksOrigin,
+  relativeToClocks,
+  isRelativeTime,
+} from '@datadog/js-core/time'
+import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
+import type { Subscription, Context, ContextValue } from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
   shallowClone,
-  elapsed,
   generateUUID,
-  ONE_MINUTE,
   throttle,
-  clocksNow,
-  clocksOrigin,
-  relativeToClocks,
-  timeStampNow,
   display,
-  looksLikeRelativeTime,
   setInterval,
   clearInterval,
   setTimeout,
@@ -124,7 +119,7 @@ export function trackViews(
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
-    stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
+    stopOnBFCacheRestore = onBFCacheRestore((pageshowEvent) => {
       currentView.end()
       const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
       currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
@@ -159,8 +154,8 @@ export function trackViews(
       })
     })
 
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-      currentView.end({ sessionIsActive: false })
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, ({ endClocks }) => {
+      currentView.end({ sessionIsActive: false, endClocks })
     })
   }
 
@@ -284,8 +279,8 @@ function newView(
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
 
-  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
-    if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
+    if (reason === PageExitReason.UNLOADING) {
       triggerViewUpdate()
     }
   })
@@ -375,7 +370,7 @@ function newView(
       if (endClocks) {
         return
       }
-      const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
+      const relativeTime = isRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
     },

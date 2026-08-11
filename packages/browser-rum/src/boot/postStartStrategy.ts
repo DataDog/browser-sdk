@@ -69,7 +69,7 @@ export function createPostStartStrategy(
 
     const [startRecordingImpl] = await Promise.all([
       notifyWhenSettled(observable, { type: 'recorder-settled' }, lazyLoadRecorder()),
-      notifyWhenSettled(observable, { type: 'document-ready' }, asyncRunOnReadyState(configuration, 'interactive')),
+      notifyWhenSettled(observable, { type: 'document-ready' }, asyncRunOnReadyState('interactive')),
     ])
 
     if (status !== RecorderStatus.Starting) {

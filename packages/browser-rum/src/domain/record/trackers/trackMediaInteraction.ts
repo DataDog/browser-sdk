@@ -13,7 +13,6 @@ export function trackMediaInteraction(
   scope: RecordingScope
 ): Tracker {
   return addEventListeners(
-    scope.configuration,
     document,
     [DOM_EVENT.PLAY, DOM_EVENT.PAUSE],
     (event) => {

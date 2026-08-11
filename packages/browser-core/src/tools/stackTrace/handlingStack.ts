@@ -14,6 +14,7 @@ export function createHandlingStack(
     | 'action'
     | 'error'
     | 'instrumented method'
+    | 'instrumented constructor'
     | 'log'
     | 'nuxt error'
     | 'react error'

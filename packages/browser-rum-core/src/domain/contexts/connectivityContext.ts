@@ -1,12 +1,9 @@
-import { getConnectivity, HookNames } from '@datadog/browser-core'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import { getConnectivity } from '@datadog/browser-core'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
-export function startConnectivityContext(hooks: Hooks) {
-  hooks.register(
-    HookNames.Assemble,
-    ({ eventType }): DefaultRumEventAttributes => ({
-      type: eventType,
-      connectivity: getConnectivity(),
-    })
-  )
+export function startConnectivityContext(assembleHook: AssembleHook) {
+  assembleHook.register(({ eventType }): DefaultRumEventAttributes => ({
+    type: eventType,
+    connectivity: getConnectivity(),
+  }))
 }

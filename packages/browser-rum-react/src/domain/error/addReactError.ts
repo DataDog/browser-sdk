@@ -1,6 +1,7 @@
 import type { ErrorInfo } from 'react'
 import type { Context } from '@datadog/browser-core'
-import { callMonitored, clocksNow, createHandlingStack } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
+import { callMonitored, createHandlingStack } from '@datadog/browser-core'
 import { onRumStart } from '../reactPlugin'
 
 /**
@@ -23,7 +24,7 @@ import { onRumStart } from '../reactPlugin'
  * // ...
  * ```
  */
-export function addReactError(error: Error, info: ErrorInfo) {
+export function addReactError(error: unknown, info: ErrorInfo) {
   const handlingStack = createHandlingStack('react error')
   const startClocks = clocksNow()
   onRumStart((addError) => {
@@ -33,7 +34,10 @@ export function addReactError(error: Error, info: ErrorInfo) {
         handlingStack,
         componentStack: info.componentStack ?? undefined,
         startClocks,
-        context: { ...(error as Error & { dd_context?: Context }).dd_context, framework: 'react' },
+        context: {
+          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: Context }).dd_context : undefined),
+          framework: 'react',
+        },
       })
     })
   })

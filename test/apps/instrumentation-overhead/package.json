@@ -14,15 +14,16 @@
   },
   "resolutions": {
     "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
     "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
   },
   "devDependencies": {
-    "ts-loader": "9.5.7",
+    "ts-loader": "9.6.2",
     "typescript": "6.0.3",
-    "webpack": "5.107.2"
+    "webpack": "5.109.0"
   },
   "volta": {
     "extends": "../../../package.json"
   },
-  "packageManager": "yarn@4.15.0"
+  "packageManager": "yarn@4.17.1"
 }

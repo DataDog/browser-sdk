@@ -7,13 +7,13 @@ import {
   monitor,
   sanitize,
   displayAlreadyInitializedError,
-  deepClone,
   createTrackingConsentState,
   defineContextMethod,
   startBufferingData,
   callMonitored,
   mockable,
 } from '@datadog/browser-core'
+import { deepClone } from '@datadog/js-core/util'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
 import type { StatusType } from '../domain/logger/isAuthorized'
@@ -267,7 +267,11 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(): LogsPublicApi {
+export interface LogsPublicApiOptions {
+  sdkName?: string
+}
+
+export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
 
@@ -285,7 +289,8 @@ export function makeLogsPublicApi(): LogsPublicApi {
 
       strategy = createPostStartStrategy(strategy, startLogsResult)
       return startLogsResult
-    }
+    },
+    options.sdkName
   )
 
   const getStrategy = () => strategy

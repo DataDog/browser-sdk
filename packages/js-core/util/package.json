@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/util.js",
+  "module": "../esm/entries/util.mjs",
+  "types": "../cjs/entries/util.d.ts"
+}

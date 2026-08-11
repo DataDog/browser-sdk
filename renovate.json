@@ -27,14 +27,15 @@
       "enabled": false
     },
     {
-      "matchFileNames": ["test/apps/react-router-v6-app/**"],
-      "matchDepNames": ["react-router-dom"],
+      "matchFileNames": ["test/apps/angular-app/**"],
+      "matchPackageNames": ["@angular/**", "@angular-devkit/**", "@ngtools/**", "typescript"],
+      "matchUpdateTypes": ["major"],
       "enabled": false
     },
     {
-      "matchFileNames": ["test/apps/angular-app/**"],
-      "matchPackageNames": ["@angular/**", "typescript"],
-      "matchUpdateTypes": ["major"],
+      "matchFileNames": ["Dockerfile"],
+      "matchDepNames": ["node"],
+      "matchCurrentValue": "/^20/",
       "enabled": false
     }
   ],

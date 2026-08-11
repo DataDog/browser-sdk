@@ -1,3 +1,4 @@
+import { ConsoleApiName } from '@datadog/js-core/util'
 import type { Observable, Subscription } from '../tools/observable'
 import { BufferedObservable } from '../tools/observable'
 import { mockable } from '../tools/mockable'
@@ -5,7 +6,6 @@ import type { FetchContext } from '../browser/fetchObservable'
 import { initFetchObservable } from '../browser/fetchObservable'
 import type { XhrContext } from '../browser/xhrObservable'
 import { initXhrObservable } from '../browser/xhrObservable'
-import { ConsoleApiName } from '../tools/display'
 import { addTelemetryDebug } from './telemetry'
 import type { RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
@@ -49,7 +49,7 @@ export function startBufferingData() {
 
   subscribe(BufferedDataType.RUNTIME_ERROR, mockable(trackRuntimeError)())
   subscribe(BufferedDataType.FETCH, initFetchObservable())
-  subscribe(BufferedDataType.XHR, initXhrObservable({ allowUntrustedEvents: true }))
+  subscribe(BufferedDataType.XHR, initXhrObservable())
   subscribe(BufferedDataType.CONSOLE, initConsoleObservable(Object.values(ConsoleApiName)))
 
   return {

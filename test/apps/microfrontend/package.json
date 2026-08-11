@@ -2,14 +2,14 @@
   "name": "microfrontend-test-app",
   "private": true,
   "scripts": {
-    "build": "webpack --config webpack.app1.js && webpack --config webpack.app2.js && webpack --config webpack.shell.js"
+    "build": "rm -rf dist && webpack --config webpack.lib.js && webpack --config webpack.app1.js && webpack --config webpack.app2.js && webpack --config webpack.shell.js"
   },
   "devDependencies": {
-    "@datadog/webpack-plugin": "3.1.8",
-    "@module-federation/enhanced": "2.5.0",
-    "ts-loader": "9.5.7",
+    "@datadog/webpack-plugin": "3.2.8",
+    "@module-federation/enhanced": "2.8.0",
+    "ts-loader": "9.6.2",
     "typescript": "6.0.3",
-    "webpack": "5.107.2",
-    "webpack-cli": "6.0.1"
+    "webpack": "5.109.0",
+    "webpack-cli": "7.2.1"
   }
 }

@@ -1,6 +1,8 @@
+import type { CookieStore, CookieStoreEventMap } from '@datadog/js-core/util'
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
-import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
+import { noop } from '../tools/utils/functionUtils'
+import type { VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
 
@@ -39,6 +41,7 @@ export const enum DOM_EVENT {
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
   SELECTION_CHANGE = 'selectionchange',
   STORAGE = 'storage',
+  UNHANDLED_REJECTION = 'unhandledrejection',
 }
 
 interface AddEventListenerOptions {
@@ -77,7 +80,9 @@ type EventMapFor<T> = T extends Window
                 ? WorkerEventMap
                 : T extends CookieStore
                   ? CookieStoreEventMap
-                  : Record<never, never>
+                  : T extends WebSocket
+                    ? WebSocketEventMap
+                    : Record<never, never>
 
 /**
  * Add an event listener to an event target object (Window, Element, mock object...).  This provides
@@ -90,13 +95,12 @@ type EventMapFor<T> = T extends Window
  * * returns a `stop` function to remove the listener
  */
 export function addEventListener<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  configuration: { allowUntrustedEvents?: boolean | undefined },
   eventTarget: Target,
   eventName: EventName,
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   options?: AddEventListenerOptions
 ) {
-  return addEventListeners(configuration, eventTarget, [eventName], listener, options)
+  return addEventListeners(eventTarget, [eventName], listener, options)
 }
 
 /**
@@ -112,14 +116,13 @@ export function addEventListener<Target extends EventTarget, EventName extends k
  * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
 export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  configuration: { allowUntrustedEvents?: boolean | undefined },
   eventTarget: Target,
   eventNames: EventName[],
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
   const listenerWithMonitor = monitor((event: TrustableEvent) => {
-    if (!event.isTrusted && !event.__ddIsTrusted && !configuration.allowUntrustedEvents) {
+    if (!event.isTrusted && !event.__ddIsTrusted && allowUntrustedEventsFromConfiguration === false) {
       return
     }
     if (once) {
@@ -145,4 +148,33 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   return {
     stop,
   }
+}
+
+export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
+  eventTarget: Target | undefined,
+  eventName: EventName
+) {
+  if (!eventTarget) {
+    return false
+  }
+
+  try {
+    addEventListener(eventTarget, eventName, noop).stop()
+    return true
+  } catch {
+    return false
+  }
+}
+
+let allowUntrustedEventsFromConfiguration: boolean | undefined
+
+export function setAllowUntrustedEvents(value: boolean | undefined) {
+  if (allowUntrustedEventsFromConfiguration === true) {
+    return // keep the laxer value (true)
+  }
+  allowUntrustedEventsFromConfiguration = value ?? false
+}
+
+export function resetAllowUntrustedEvents() {
+  allowUntrustedEventsFromConfiguration = undefined
 }

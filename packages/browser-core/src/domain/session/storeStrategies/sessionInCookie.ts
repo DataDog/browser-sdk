@@ -2,6 +2,7 @@ import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCookies } from '../../../browser/cookie'
 import type { Configuration } from '../../configuration'
+import { buildCookieOptions } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
@@ -13,8 +14,8 @@ import {
   areCookiesAuthorized,
   createCookieStoreAccess,
   createDocumentCookieAccess,
+  isCookieStoreSupported,
 } from '../../../browser/cookieAccess'
-import { globalObject } from '../../../tools/globalObject'
 import { CookieApi, LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessionStoreStrategy'
 import type {
   SessionStoreStrategy,
@@ -28,19 +29,16 @@ const SESSION_COOKIE_VERSION = 0
 export async function selectCookieStrategy(
   configuration: Configuration
 ): Promise<SessionStoreStrategyType | undefined> {
-  const { cookieOptions } = configuration
+  const cookieOptions = buildCookieOptions(configuration)
   if (!cookieOptions) {
     return undefined
   }
 
-  if (
-    mockable(globalObject.cookieStore) &&
-    (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))
-  ) {
+  if (isCookieStoreSupported() && (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions))) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
   }
 
-  if (await areCookiesAuthorized(createDocumentCookieAccess, cookieOptions, configuration)) {
+  if (await areCookiesAuthorized(createDocumentCookieAccess, cookieOptions)) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.DOCUMENT_COOKIE }
   }
 
@@ -58,7 +56,7 @@ export function initCookieStrategy(
   const sessionObservable = new Observable<SessionState>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
-  const cookieAccess = mockable(createCookieAccess)(cookieApi, configuration, cookieOptions)
+  const cookieAccess = mockable(createCookieAccess)(cookieApi, cookieOptions)
   let isFirstCall = true
 
   cookieAccess.observable.subscribe(() => {
@@ -120,13 +118,9 @@ function isContextGoingAwayError(error: unknown): boolean {
   return error.name === 'AbortError' || error.message.includes('no longer runnable')
 }
 
-export function createCookieAccess(
-  cookieApi: CookieApi,
-  configuration: Configuration,
-  cookieOptions: CookieOptions
-): CookieAccess {
+export function createCookieAccess(cookieApi: CookieApi, cookieOptions: CookieOptions): CookieAccess {
   return cookieApi === CookieApi.COOKIE_STORE
-    ? createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions, configuration)
+    ? createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions)
     : createDocumentCookieAccess(SESSION_STORE_KEY, cookieOptions)
 }
 

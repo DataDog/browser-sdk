@@ -1,17 +1,13 @@
-import type { RelativeTime, Observable } from '@datadog/browser-core'
-import {
-  SESSION_TIME_OUT_DELAY,
-  relativeNow,
-  createValueHistory,
-  HookNames,
-  DISCARDED,
-  mockable,
-  buildUrl,
-} from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import type { Observable } from '@datadog/browser-core'
+import { relativeNow } from '@datadog/js-core/time'
+import { SESSION_TIME_OUT_DELAY, createValueHistory, mockable, globalObject } from '@datadog/browser-core'
+import { buildUrl } from '@datadog/js-core/util'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
 /**
  * We want to attach to an event:
@@ -33,7 +29,7 @@ export interface UrlContexts {
 
 export function startUrlContexts(
   lifeCycle: LifeCycle,
-  hooks: Hooks,
+  assembleHook: AssembleHook,
   locationChangeObservable: Observable<LocationChange>
 ) {
   const urlContextHistory = createValueHistory<UrlContext>({ expireDelay: URL_CONTEXT_TIME_OUT_DELAY })
@@ -41,7 +37,7 @@ export function startUrlContexts(
   let previousViewUrl: string | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks, url }) => {
-    const locationHref = mockable(location).href
+    const locationHref = mockable(globalObject.location).href
     const viewUrl = url !== undefined ? buildUrl(url, locationHref).href : locationHref
     urlContextHistory.add(
       buildUrlContext({
@@ -79,7 +75,7 @@ export function startUrlContexts(
     }
   }
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
+  assembleHook.register(({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const urlContext = urlContextHistory.find(startTime)
 
     if (!urlContext) {

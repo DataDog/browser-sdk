@@ -29,13 +29,18 @@
 
       "@datadog/browser-rum-slim": ["./packages/browser-rum-slim/src/entries/main"],
 
+      "@datadog/browser-rum-shopify": ["./packages/browser-rum-shopify/src/entries/main"],
+
       "@datadog/browser-rum-react": ["./packages/browser-rum-react/src/entries/main"],
       "@datadog/browser-rum-react/internal": ["./packages/browser-rum-react/src/entries/internal"],
+      "@datadog/browser-rum-react/react-router": ["./packages/browser-rum-react/src/entries/reactRouterV8"],
       "@datadog/browser-rum-react/react-router-v6": ["./packages/browser-rum-react/src/entries/reactRouterV6"],
       "@datadog/browser-rum-react/react-router-v7": ["./packages/browser-rum-react/src/entries/reactRouterV7"],
+      "@datadog/browser-rum-react/react-router-v8": ["./packages/browser-rum-react/src/entries/reactRouterV8"],
       "@datadog/browser-rum-react/tanstack-router": ["./packages/browser-rum-react/src/entries/tanstackRouter"],
 
       "@datadog/browser-rum-vue": ["./packages/browser-rum-vue/src/entries/main"],
+      "@datadog/browser-rum-vue/vue-router": ["./packages/browser-rum-vue/src/entries/vueRouter"],
       "@datadog/browser-rum-vue/vue-router-v4": ["./packages/browser-rum-vue/src/entries/vueRouter"],
 
       "@datadog/browser-rum-nuxt": ["./packages/browser-rum-nuxt/src/entries/main"],
@@ -44,7 +49,15 @@
 
       "@datadog/browser-worker": ["./packages/browser-worker/src/entries/main"],
 
-      "@datadog/browser-debugger": ["./packages/browser-debugger/src/entries/main"]
+      "@datadog/browser-debugger": ["./packages/browser-debugger/src/entries/main"],
+
+      "@datadog/js-core/assembly": ["./packages/js-core/src/entries/assembly"],
+      "@datadog/js-core/time": ["./packages/js-core/src/entries/time"],
+      "@datadog/js-core/monitor": ["./packages/js-core/src/entries/monitor"],
+      "@datadog/js-core/util": ["./packages/js-core/src/entries/util"],
+      "@datadog/js-core/transport": ["./packages/js-core/src/entries/transport"],
+      "@datadog/js-core/sample": ["./packages/js-core/src/entries/sample"],
+      "@datadog/js-core/configuration": ["./packages/js-core/src/entries/configuration"]
     }
   }
 }

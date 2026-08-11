@@ -1,14 +1,13 @@
+import type { Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import type {
-  Duration,
   ErrorSource,
   ErrorHandling,
   ResourceType,
-  ServerDuration,
-  TimeStamp,
   RawErrorCause,
   DefaultPrivacyLevel,
   Csp,
   Context,
+  DebugIdEntry,
 } from '@datadog/browser-core'
 import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
@@ -34,12 +33,7 @@ export const RumEventType = {
 export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
 
 export type AssembledRumEvent = (
-  | RumViewEvent
-  | RumActionEvent
-  | RumResourceEvent
-  | RumErrorEvent
-  | RumVitalEvent
-  | RumLongTaskEvent
+  RumViewEvent | RumActionEvent | RumResourceEvent | RumErrorEvent | RumVitalEvent | RumLongTaskEvent
 ) &
   Context
 
@@ -75,6 +69,7 @@ export interface RawRumResourceEvent {
     protocol?: string
     delivery_type?: DeliveryType
     graphql?: GraphQlMetadata
+    websocket?: WebSocketResourceProperties
     request?: ResourceRequest
     response?: ResourceResponse
   }
@@ -86,6 +81,29 @@ export interface RawRumResourceEvent {
     page_states?: PageStateServerEntry[]
   }
   context?: Context
+}
+
+export interface WebSocketResourceProperties {
+  connection_id: string
+  handshake_succeeded: boolean
+  start_time: TimeStamp
+  end_time: TimeStamp
+  start_view_id?: string
+  end_view_id?: string
+  tracking_end_reason: 'close_event' | 'session_end'
+  close_code?: number
+  close_reason?: string
+  was_clean?: boolean
+  messages_in: { count: number; size: number }
+  messages_out: { count: number; size: number }
+  time_to_first_message_in?: ServerDuration
+  time_to_first_message_out?: ServerDuration
+  last_message_in_at?: TimeStamp
+  longest_inbound_silence: ServerDuration
+  inbound_idle_duration_before_close?: ServerDuration
+  buffered_amount_max: number
+  protocol?: string
+  setup_duration: ServerDuration
 }
 
 export type NetworkHeaders = Record<string, string>
@@ -123,6 +141,9 @@ export interface RawRumErrorEvent {
       build_id: string
     }>
     csp?: Csp
+  }
+  _dd?: {
+    debug_ids?: DebugIdEntry[]
   }
   view?: {
     in_foreground: boolean
@@ -176,6 +197,7 @@ export interface RawRumViewEvent {
     }
     configuration: {
       start_session_replay_recording_manually: boolean
+      remote_configuration_id?: string
     }
   }
   device?: {
@@ -292,12 +314,7 @@ export interface RawRumLongTaskEvent {
 export type DeliveryType = 'cache' | 'navigational-prefetch' | 'other'
 
 export type InvokerType =
-  | 'user-callback'
-  | 'event-listener'
-  | 'resolve-promise'
-  | 'reject-promise'
-  | 'classic-script'
-  | 'module-script'
+  'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script'
 
 export interface RawRumLongAnimationFrameEvent {
   date: TimeStamp
@@ -327,6 +344,7 @@ export interface RawRumLongAnimationFrameEvent {
   }
   _dd: {
     discarded: boolean
+    debug_ids?: DebugIdEntry[]
   }
 }
 

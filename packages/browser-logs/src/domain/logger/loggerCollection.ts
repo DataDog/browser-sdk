@@ -1,12 +1,8 @@
-import type { Context, TimeStamp } from '@datadog/browser-core'
-import {
-  combine,
-  ErrorSource,
-  timeStampNow,
-  originalConsoleMethods,
-  globalConsole,
-  ConsoleApiName,
-} from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
+import type { Context } from '@datadog/browser-core'
+import { ErrorSource } from '@datadog/browser-core'
+import { originalConsoleMethods, globalConsole, ConsoleApiName, combine } from '@datadog/js-core/util'
 import type { CommonContext, RawLogsEvent } from '../../rawLogsEvent.types'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

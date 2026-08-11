@@ -1,13 +1,7 @@
-import type { ClocksState, RelativeTime, SessionManager, TimeStamp } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  HookNames,
-  ONE_MINUTE,
-  display,
-  relativeToClocks,
-  startGlobalContext,
-  startTabContext,
-} from '@datadog/browser-core'
+import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
+import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
+import type { SessionManager } from '@datadog/browser-core'
+import { display, ResourceType, startGlobalContext, startTabContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
@@ -22,6 +16,7 @@ import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import { startSessionContext } from './contexts/sessionContext'
 import { createHooks } from './hooks'
+import { WEBSOCKET_CONNECTING_VITAL_NAME } from './resource/webSocketCollection'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
@@ -214,6 +209,29 @@ describe('rum assembly', () => {
 
           expect(serverRumEvents[0].context!.foo).toBe('bar')
         })
+
+        it('should allow beforeSend to add protocols to the websocket-connecting vital context', () => {
+          const protocols = ['chat.v1']
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                if (event.type === RumEventType.VITAL && event.vital.name === WEBSOCKET_CONNECTING_VITAL_NAME) {
+                  event.context.protocols = protocols
+                }
+                return true
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+              vital: { name: WEBSOCKET_CONNECTING_VITAL_NAME },
+              context: { url: 'wss://example.com/socket' },
+            }),
+          })
+
+          expect(serverRumEvents[0].context!.protocols).toEqual(protocols)
+        })
       })
 
       describe('allowed customer provided field', () => {
@@ -229,6 +247,54 @@ describe('rum assembly', () => {
           })
 
           expect((serverRumEvents[0] as RumErrorEvent).error.fingerprint).toBe('my_fingerprint')
+        })
+      })
+
+      describe('_dd.debug_ids', () => {
+        const url = 'http://path/to/redact/app.js'
+
+        const redactDebugIdUrls = (debugIds: Array<{ url: string; id: string }>) => {
+          debugIds.forEach((entry) => {
+            if (entry.url.includes('path/to/redact')) {
+              entry.url = 'redacted-url'
+            }
+          })
+        }
+
+        it('should allow redaction of the url in _dd.debug_ids on error events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                redactDebugIdUrls(event._dd.debug_ids)
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
+              _dd: { debug_ids: [{ url, id: 'debug-id' }] },
+            }),
+          })
+
+          expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual([{ url: 'redacted-url', id: 'debug-id' }])
+        })
+
+        it('should allow redaction of the url in _dd.debug_ids on long task events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                redactDebugIdUrls(event._dd.debug_ids)
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+              _dd: { debug_ids: [{ url, id: 'debug-id' }] },
+            }),
+          })
+
+          expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual([{ url: 'redacted-url', id: 'debug-id' }])
         })
       })
 
@@ -311,6 +377,34 @@ describe('rum assembly', () => {
           expect(resource.response!.headers!['x-powered-by']).toBeUndefined()
           expect(resource.response!.headers!['content-type']).toBe('text/html')
         })
+      })
+
+      it('should allow beforeSend to redact the WebSocket resource protocol', () => {
+        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+          partialConfiguration: {
+            beforeSend: (event) => {
+              if (event.type === RumEventType.RESOURCE) {
+                const webSocket = event.resource.websocket as { protocol?: string } | undefined
+                if (webSocket) {
+                  webSocket.protocol = '[REDACTED]'
+                }
+              }
+              return true
+            },
+          },
+        })
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+            resource: {
+              type: ResourceType.WEBSOCKET,
+              websocket: { protocol: 'credential-bearing-protocol' },
+            },
+          }),
+        })
+
+        const resource = serverRumEvents[0] as RumResourceEvent
+        expect((resource.resource.websocket as { protocol?: string }).protocol).toBe('[REDACTED]')
       })
 
       it('should reject modification of field not sensitive, context or customer provided', () => {
@@ -478,7 +572,7 @@ describe('rum assembly', () => {
         partialConfiguration: { service: 'default-service', version: 'default-version' },
       })
 
-      hooks.register(HookNames.Assemble, ({ eventType }) => ({
+      hooks.assemble.register(({ eventType }) => ({
         type: eventType,
         service: 'new service',
         version: 'new version',
@@ -496,7 +590,7 @@ describe('rum assembly', () => {
     it('should not override customer context', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
 
-      hooks.register(HookNames.Assemble, ({ eventType }) => ({
+      hooks.assemble.register(({ eventType }) => ({
         type: eventType,
         context: { foo: 'bar' },
       }))
@@ -510,7 +604,7 @@ describe('rum assembly', () => {
     it('should include tab.id from tabContext', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
 
-      startTabContext(hooks)
+      startTabContext(hooks.assemble)
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -581,13 +675,7 @@ describe('rum assembly', () => {
 
         expect(serverRumEvents.length).toBe(1)
         expect(serverRumEvents[0].date).toBe(100)
-        expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-        expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-          jasmine.objectContaining({
-            message,
-            source: ErrorSource.AGENT,
-          })
-        )
+        expect(reportErrorSpy).toHaveBeenCalledWith(message)
       })
 
       it(`does not take discarded ${eventType} events into account`, () => {
@@ -688,9 +776,9 @@ function setupAssemblyTestWithDefaults({
   const recorderApi = noopRecorderApi
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
   const configuration = mockRumConfiguration(partialConfiguration)
-  startGlobalContext(hooks, configuration, 'rum', true)
-  startSessionContext(hooks, configuration, rumSessionManager, recorderApi, viewHistory)
-  startRumAssembly(configuration, lifeCycle, hooks, reportErrorSpy, eventRateLimit)
+  startGlobalContext(hooks.assemble, configuration, 'rum', true)
+  startSessionContext(hooks.assemble, configuration, rumSessionManager, recorderApi, viewHistory)
+  startRumAssembly(configuration, lifeCycle, hooks.assemble, reportErrorSpy, eventRateLimit)
 
   registerCleanupTask(() => {
     subscription.unsubscribe()

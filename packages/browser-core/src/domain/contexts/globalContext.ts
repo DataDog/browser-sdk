@@ -1,12 +1,11 @@
-import type { AbstractHooks } from '../../tools/abstractHooks'
+import type { Hook } from '@datadog/js-core/assembly'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
-import { HookNames } from '../../tools/abstractHooks'
 import { createContextManager } from '../context/contextManager'
 import type { Configuration } from '../configuration'
 
 export function startGlobalContext(
-  hooks: AbstractHooks,
+  assembleHook: Hook<any, any>,
   configuration: Configuration,
   productKey: string,
   useContextNamespace: boolean
@@ -14,10 +13,10 @@ export function startGlobalContext(
   const globalContextManager = buildGlobalContextManager()
 
   if (configuration.storeContextsAcrossPages) {
-    storeContextManager(configuration, globalContextManager, productKey, CustomerDataType.GlobalContext)
+    storeContextManager(globalContextManager, productKey, CustomerDataType.GlobalContext)
   }
 
-  hooks.register(HookNames.Assemble, () => {
+  assembleHook.register(() => {
     const context = globalContextManager.getContext()
     return useContextNamespace ? { context } : context
   })

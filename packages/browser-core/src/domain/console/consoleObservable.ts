@@ -1,6 +1,7 @@
+import { clocksNow } from '@datadog/js-core/time'
+import { ConsoleApiName, globalConsole } from '@datadog/js-core/util'
 import { isError, computeRawError } from '../error/error'
 import { Observable, mergeObservables } from '../../tools/observable'
-import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
@@ -8,7 +9,6 @@ import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from '../error/error.types'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { createHandlingStack, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
-import { clocksNow } from '../../tools/utils/timeUtils'
 
 export type ConsoleLog = NonErrorConsoleLog | ErrorConsoleLog
 
@@ -51,6 +51,7 @@ export function resetConsoleObservable() {
 
 function createConsoleObservable(api: ConsoleApiName) {
   return new Observable<ConsoleLog>((observable) => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     const originalConsoleApi = globalConsole[api]
 
     globalConsole[api] = (...params: unknown[]) => {

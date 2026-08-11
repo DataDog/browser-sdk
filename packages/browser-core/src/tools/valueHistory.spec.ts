@@ -1,7 +1,7 @@
+import { ONE_MINUTE, addDuration } from '@datadog/js-core/time'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
-import type { Duration, RelativeTime } from './utils/timeUtils'
-import { addDuration, ONE_MINUTE } from './utils/timeUtils'
 import { CLEAR_OLD_VALUES_INTERVAL, type ValueHistory, createValueHistory } from './valueHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE
@@ -219,6 +219,18 @@ describe('valueHistory', () => {
 
       valueHistory1.stop()
       valueHistory2.stop()
+    })
+
+    it('should not clear closed entries based on elapsed time when expireDelay is not set', () => {
+      const maxEntriesOnlyHistory = createValueHistory<string>({ maxEntries: MAX_ENTRIES })
+      const originalTime = performance.now() as RelativeTime
+      maxEntriesOnlyHistory.add('foo', originalTime).close(addDuration(originalTime, 10 as Duration))
+
+      clock.tick(EXPIRE_DELAY + CLEAR_OLD_VALUES_INTERVAL)
+
+      expect(maxEntriesOnlyHistory.find(originalTime, { returnInactive: true })).toBeDefined()
+
+      maxEntriesOnlyHistory.stop()
     })
   })
 

@@ -1,5 +1,6 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import { ONE_MINUTE } from '@datadog/js-core/time'
+import { DOM_EVENT, addEventListeners, findLast } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { findLcpResourceEntry, getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'
@@ -39,7 +40,6 @@ export function trackLargestContentfulPaint(
   // but the web-vitals reference implementation uses this as a safeguard.
   let firstInteractionTimestamp = Infinity
   const { stop: stopEventListener } = addEventListeners(
-    configuration,
     eventTarget,
     [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN],
     (event) => {
@@ -49,7 +49,7 @@ export function trackLargestContentfulPaint(
   )
 
   let biggestLcpSize = 0
-  const performanceLcpSubscription = createPerformanceObservable(configuration, {
+  const performanceLcpSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
     buffered: true,
   }).subscribe((entries) => {

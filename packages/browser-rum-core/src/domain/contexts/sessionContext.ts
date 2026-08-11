@@ -1,10 +1,10 @@
 import type { SessionManager } from '@datadog/browser-core'
-import { DISCARDED, HookNames } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { RumConfiguration } from '../configuration'
 import { SessionReplayState, computeSessionReplayState } from '../sessionReplayState'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 import type { ViewHistory } from './viewHistory'
 
 export const enum SessionType {
@@ -14,13 +14,13 @@ export const enum SessionType {
 }
 
 export function startSessionContext(
-  hooks: Hooks,
+  assembleHook: AssembleHook,
   configuration: RumConfiguration,
   sessionManager: SessionManager,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory
 ) {
-  hooks.register(HookNames.Assemble, ({ eventType, startTime }): DefaultRumEventAttributes | DISCARDED => {
+  assembleHook.register(({ eventType, startTime }): DefaultRumEventAttributes | DISCARDED => {
     const session = sessionManager.findTrackedSession(startTime)
     const view = viewHistory.findView(startTime)
 

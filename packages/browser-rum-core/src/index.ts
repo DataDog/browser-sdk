@@ -18,6 +18,7 @@ export type {
   RumErrorEventDomainContext,
   RumManualResourceEventDomainContext,
   RumResourceEventDomainContext,
+  RumWebSocketResourceEventDomainContext,
   RumActionEventDomainContext,
   RumViewEventDomainContext,
   RumEventDomainContext,
@@ -68,6 +69,7 @@ export type {
   DurationVitalStart,
   AddDurationVitalOptions,
   DurationVitalOptions,
+  OperationOptions,
   FeatureOperationOptions,
   FailureReason,
 } from './domain/vital/vitalCollection'

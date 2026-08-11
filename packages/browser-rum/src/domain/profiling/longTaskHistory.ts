@@ -1,5 +1,6 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
-import { addDuration, createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
+import { addDuration } from '@datadog/js-core/time'
+import { createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { RumPerformanceEntryType, LifeCycleEventType, RumLongTaskEntryType } from '@datadog/browser-rum-core'
 

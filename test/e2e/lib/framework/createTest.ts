@@ -21,13 +21,16 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
+import { buildSalesforceUrl } from './buildSalesforceUrl'
+import type { SalesforceApp } from './buildSalesforceUrl'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
-import { createIntakeServerApp } from './serverApps/intake'
+import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration, salesforceSetup } from './pageSetups'
+import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
+import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
@@ -78,6 +81,7 @@ export function createTest(title: string) {
 interface TestContext {
   baseUrl: string
   intakeRegistry: IntakeRegistry
+  datadogHttpApiControl: DatadogHttpApiControl
   servers: Servers
   page: Page
   browserContext: BrowserContext
@@ -111,6 +115,7 @@ class TestBuilder {
     logsConfiguration?: LogsInitConfiguration
   } = {}
   private worker: Worker | undefined
+  private salesforceApp: SalesforceApp | undefined = undefined
 
   constructor(
     private title: string,
@@ -266,6 +271,18 @@ class TestBuilder {
     return this
   }
 
+  withSalesforceApp(app: SalesforceApp) {
+    this.salesforceApp = app
+    this.setups = [{ factory: salesforceSetup }]
+    this.baseUrlHooks.push(async (baseUrl) => {
+      baseUrl.href = await buildSalesforceUrl(app)
+      if (app === 'experience-cloud') {
+        baseUrl.searchParams.set('init', 'true')
+      }
+    })
+    return this
+  }
+
   withHostName(hostName: string) {
     this.baseUrlHooks.push((baseUrl) => {
       baseUrl.hostname = hostName
@@ -295,6 +312,7 @@ class TestBuilder {
       worker: this.worker,
       callerLocation: this.callerLocation,
       mockClock: this.mockClock,
+      salesforceApp: this.salesforceApp,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -302,7 +320,9 @@ class TestBuilder {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== appSetup),
+          this.setups.filter(
+            (setup) => setup.factory !== npmSetup && (setup.factory as unknown) !== (appSetup as unknown)
+          ),
           { ...setupOptions, useRumSlim: true },
           runner
         )
@@ -401,7 +421,10 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const servers = await getTestServers()
     const baseUrl = new URL(servers.base.origin)
-    setupOptions.baseUrlHooks.forEach((hook) => hook(baseUrl, servers, setupOptions))
+    // Some hooks (e.g. building the Salesforce URL) need to await network calls before mutating baseUrl
+    for (const hook of setupOptions.baseUrlHooks) {
+      await hook(baseUrl, servers, setupOptions)
+    }
 
     test.skip(
       baseUrl.hostname.endsWith('.localhost') && isBrowserStack,
@@ -422,10 +445,21 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const browserLogs = new BrowserLogsManager()
 
-    const testContext = createTestContext(servers, page, context, browserLogs, browserName, baseUrl.href)
-    servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
+    const intakeRegistry = new IntakeRegistry()
+    const datadogHttpApi = createDatadogHttpApi(intakeRegistry)
+    const testContext = createTestContext(
+      servers,
+      intakeRegistry,
+      datadogHttpApi.control,
+      page,
+      context,
+      browserLogs,
+      browserName,
+      baseUrl.href
+    )
+    servers.datadogHttpApi.bindServerApp(datadogHttpApi.app)
 
-    const setup = factory(setupOptions, servers)
+    const setup = await factory(setupOptions, servers, page)
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
@@ -442,6 +476,8 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
 function createTestContext(
   servers: Servers,
+  intakeRegistry: IntakeRegistry,
+  datadogHttpApiControl: DatadogHttpApiControl,
   page: Page,
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
@@ -450,7 +486,8 @@ function createTestContext(
 ): TestContext {
   return {
     baseUrl,
-    intakeRegistry: new IntakeRegistry(),
+    intakeRegistry,
+    datadogHttpApiControl,
     servers,
     page,
     browserContext,

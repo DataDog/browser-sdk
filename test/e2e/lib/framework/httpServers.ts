@@ -1,5 +1,6 @@
 import * as http from 'http'
 import type { AddressInfo } from 'net'
+import type { Duplex } from 'stream'
 import { test } from '@playwright/test'
 import type { Browser } from '@playwright/test'
 import { getIp } from '../../../envUtils'
@@ -10,14 +11,14 @@ const MAX_SERVER_CREATION_RETRY = 5
 const PORT_MIN = 9200
 const PORT_MAX = 9400
 
-export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => any
+export interface ServerApp {
+  (req: http.IncomingMessage, res: http.ServerResponse): any
+  handleUpgrade?: (req: http.IncomingMessage, socket: Duplex, head: Buffer) => void
+}
 
 export type MockServerApp = ServerApp & {
   getLargeResponseWroteSize(): number
-}
-
-export type IntakeServerApp = ServerApp & {
-  setDebuggerProbes(probes: object[]): void
+  closeEchoWebSockets?: () => void
 }
 
 export interface Server<App extends ServerApp> {
@@ -29,7 +30,7 @@ export interface Server<App extends ServerApp> {
 
 export interface Servers {
   base: Server<MockServerApp>
-  intake: Server<IntakeServerApp>
+  datadogHttpApi: Server<ServerApp>
   crossOrigin: Server<MockServerApp>
 }
 
@@ -40,7 +41,7 @@ export async function getTestServers() {
     serversSingleton = {
       base: await createServer(),
       crossOrigin: await createServer(),
-      intake: await createServer(),
+      datadogHttpApi: await createServer(),
     }
   }
   return serversSingleton
@@ -51,7 +52,11 @@ export async function waitForServersIdle() {
   // still be in-flight from the browser and haven't reached the server yet.
   await new Promise((resolve) => setTimeout(resolve, idleWaitDuration))
   const servers = await getTestServers()
-  await Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
+  await Promise.all([
+    servers.base.waitForIdle(),
+    servers.crossOrigin.waitForIdle(),
+    servers.datadogHttpApi.waitForIdle(),
+  ])
 }
 
 async function createServer<App extends ServerApp>(): Promise<Server<App>> {
@@ -66,6 +71,14 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
     } else {
       res.writeHead(202)
       res.end()
+    }
+  })
+
+  server.on('upgrade', (req: http.IncomingMessage, socket: Duplex, head: Buffer) => {
+    if (serverApp?.handleUpgrade) {
+      serverApp.handleUpgrade(req, socket, head)
+    } else {
+      socket.destroy()
     }
   })
 
@@ -133,7 +146,7 @@ async function measureServerLatency(browser: Browser): Promise<number> {
   // We measure the round-trip time to the test server to calibrate how long we wait after the
   // last pending request before considering the server idle. In BrowserStack, the browser runs
   // remotely, so this latency can be significant.
-  const { intake: server } = await getTestServers()
+  const { datadogHttpApi: server } = await getTestServers()
   const page = await browser.newPage()
   const start = Date.now()
   await page.goto(server.origin)

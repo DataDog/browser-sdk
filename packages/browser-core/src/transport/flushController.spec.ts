@@ -15,15 +15,12 @@ describe('flushController', () => {
   let flushController: FlushController
   let flushSpy: jasmine.Spy<(event: FlushEvent) => void>
   let pageMayExitObservable: Observable<PageMayExitEvent>
-  let sessionExpireObservable: Observable<void>
 
   beforeEach(() => {
     clock = mockClock()
     pageMayExitObservable = new Observable()
-    sessionExpireObservable = new Observable()
     flushController = createFlushController({
       pageMayExitObservable,
-      sessionExpireObservable,
     })
     flushSpy = jasmine.createSpy()
     flushController.flushObservable.subscribe(flushSpy)
@@ -72,39 +69,39 @@ describe('flushController', () => {
     })
   })
 
-  describe('session expire', () => {
-    it('notifies when the session expires', () => {
+  describe('forceFlush', () => {
+    it('notifies when forceFlush is called', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      sessionExpireObservable.notify()
+      flushController.forceFlush('session_expire')
       expect(flushSpy).toHaveBeenCalled()
     })
 
-    it('flush reason should be "session_expire"', () => {
+    it('flush reason should be the provided reason', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      sessionExpireObservable.notify()
+      flushController.forceFlush('session_expire')
       expect(flushSpy.calls.first().args[0].reason).toBe('session_expire')
     })
 
     it('does not notify if no message was added', () => {
-      sessionExpireObservable.notify()
+      flushController.forceFlush('session_expire')
       expect(flushSpy).not.toHaveBeenCalled()
     })
 
-    it('notifies when the session expires even if no message have been fully added yet', () => {
+    it('notifies even if no message have been fully added yet', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
-      sessionExpireObservable.notify()
+      flushController.forceFlush('session_expire')
       expect(flushSpy).toHaveBeenCalled()
     })
   })
 
   describe('bytes limit', () => {
-    it('uses the page exit reason as flush reason for intermediate flushes during page exit', () => {
+    it('uses the urgent reason as flush reason for intermediate flushes during page exit', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
 
-      flushController.preparePageExitFlushObservable.subscribe(() => {
+      flushController.prepareUrgentFlushObservable.subscribe(() => {
         flushController.notifyBeforeAddMessage(BYTES_LIMIT)
       })
 

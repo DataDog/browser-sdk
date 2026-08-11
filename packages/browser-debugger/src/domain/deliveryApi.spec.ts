@@ -3,8 +3,7 @@ import { globalObject } from '@datadog/browser-core'
 import { registerCleanupTask, mockClock, replaceMockable } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import { display } from './display'
-import { getProbes, clearProbes } from './probes'
-import type { Probe } from './probes'
+import { getProbes, getAllProbes, clearProbes } from './probes'
 import {
   buildDeliveryApiUrl,
   startDeliveryApiPolling,
@@ -12,6 +11,9 @@ import {
   clearDeliveryApiState,
 } from './deliveryApi'
 import type { DeliveryApiConfiguration } from './deliveryApi'
+import { createProbe } from './probe.specHelper'
+
+const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
 
 describe('buildDeliveryApiUrl', () => {
   it('should default to datadoghq.com', () => {
@@ -172,29 +174,30 @@ describe('deliveryApi', () => {
     })
 
     it('should add probes from the updates array', async () => {
+      const probe = createProbe()
+
       respondWith({
         nextCursor: 'cursor-1',
-        updates: [makeProbe({ id: 'probe-1', version: 1 })],
+        updates: [probe],
         deletions: [],
       })
 
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
 
-      const probes = getProbes('test.js;testMethod')
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)
       expect(probes).toBeDefined()
       expect(probes!.length).toBe(1)
-      expect(probes![0].id).toBe('probe-1')
+      expect(probes![0].id).toBe(probe.id)
     })
 
     it('should ignore log probes without a method location', async () => {
       respondWith({
         nextCursor: 'cursor-1',
         updates: [
-          makeProbe({
-            id: 'line-probe',
+          createProbe({
             where: {
-              sourceFile: 'packages/apps/live-debugger/toolkit/services/use-debugger-services.hook.ts',
+              sourceFile: 'test.js',
               lines: ['16'],
             },
           }),
@@ -205,13 +208,158 @@ describe('deliveryApi', () => {
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
 
-      expect(getProbes('undefined;undefined')).toBeUndefined()
+      expect(getAllProbes()).toEqual([])
+    })
+
+    it('should ignore log probes with both snapshot capture and capture expressions', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'snapshot-and-capture-expressions',
+            captureSnapshot: true,
+            captureExpressions: [{ name: 'arg', expr: { dsl: 'arg', json: { ref: 'arg' } } }],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should log an error when a capture expression cannot be compiled', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'invalid-capture-expression',
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid-capture-expression:', jasmine.any(Error))
+    })
+
+    it('should keep adding the other probes when one probe in the same response fails to initialize', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({ id: 'valid-before', where: { typeName: 'test.js', methodName: 'before' } }),
+          createProbe({
+            id: 'invalid',
+            where: { typeName: 'test.js', methodName: 'invalid' },
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+          createProbe({ id: 'valid-after', where: { typeName: 'test.js', methodName: 'after' } }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      // The failing probe must not prevent the surrounding probes from being registered.
+      expect(getProbes('test.js;before')).toBeDefined()
+      expect(getProbes('test.js;after')).toBeDefined()
+      expect(getProbes('test.js;invalid')).toBeUndefined()
+      expect(errorSpy).toHaveBeenCalledOnceWith('Failed to add probe invalid:', jasmine.any(Error))
+    })
+
+    it('should not track a probe that failed to initialize, so a later deletion is a no-op', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'invalid',
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+      expect(errorSpy).toHaveBeenCalledOnceWith('Failed to add probe invalid:', jasmine.any(Error))
+
+      errorSpy.calls.reset()
+
+      // The failed probe was never tracked, so deleting it does nothing and must
+      // not attempt a removal (which would log a "Failed to remove probe" error).
+      respondWith({
+        nextCursor: 'cursor-2',
+        updates: [],
+        deletions: ['invalid'],
+      })
+      clock.tick(5000)
+      await flushPromises()
+
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should keep polling after a probe fails to initialize', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'invalid',
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig({ pollInterval: 5000 }))
+      await flushPromises()
+      expect(errorSpy).toHaveBeenCalledOnceWith('Failed to add probe invalid:', jasmine.any(Error))
+
+      // A per-probe compilation error is a data error, not a transport failure:
+      // it must not trip the circuit breaker or stop polling.
+      const callsBefore = fetchSpy.calls.count()
+      clock.tick(5000)
+      await flushPromises()
+
+      expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+      expect(warnSpy).not.toHaveBeenCalledWith(jasmine.stringMatching(/circuit breaker/i))
     })
 
     it('should ignore log probes without a where clause', async () => {
       respondWith({
         nextCursor: 'cursor-1',
-        updates: [{ id: 'log-probe-without-where', version: 1, type: 'LOG_PROBE' } as Probe],
+        updates: [{ ...createProbe(), where: undefined }],
         deletions: [],
       })
 
@@ -224,40 +372,42 @@ describe('deliveryApi', () => {
     it('should ignore non-log probes without requiring a method location', async () => {
       respondWith({
         nextCursor: 'cursor-1',
-        updates: [{ id: 'metric-probe', version: 1, type: 'METRIC_PROBE' } as Probe],
+        updates: [{ id: 'metric-probe', version: 1, type: 'METRIC_PROBE' }],
         deletions: [],
       })
 
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
 
-      expect(getProbes('test.js;testMethod')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
       expect(errorSpy).not.toHaveBeenCalled()
     })
 
     it('should remove probes listed in deletions', async () => {
+      const probe = createProbe()
+
       // First poll: add the probe via the delivery API
       respondWith({
         nextCursor: 'cursor-1',
-        updates: [makeProbe({ id: 'probe-to-delete', version: 1 })],
+        updates: [probe],
         deletions: [],
       })
 
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
-      expect(getProbes('test.js;testMethod')).toBeDefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeDefined()
 
       // Second poll: delete it
       respondWith({
         nextCursor: 'cursor-2',
         updates: [],
-        deletions: ['probe-to-delete'],
+        deletions: [probe.id],
       })
 
       clock.tick(5000)
       await flushPromises()
 
-      expect(getProbes('test.js;testMethod')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should send nextCursor in subsequent requests', async () => {
@@ -283,7 +433,7 @@ describe('deliveryApi', () => {
     it('should update existing probes when they appear in updates again', async () => {
       respondWith({
         nextCursor: 'cursor-1',
-        updates: [makeProbe({ id: 'probe-1', version: 1 })],
+        updates: [createProbe({ version: 1 })],
         deletions: [],
       })
 
@@ -292,14 +442,14 @@ describe('deliveryApi', () => {
 
       respondWith({
         nextCursor: 'cursor-2',
-        updates: [makeProbe({ id: 'probe-1', version: 2 })],
+        updates: [createProbe({ version: 2 })],
         deletions: [],
       })
 
       clock.tick(5000)
       await flushPromises()
 
-      const probes = getProbes('test.js;testMethod')
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)
       expect(probes).toBeDefined()
       expect(probes!.length).toBe(1)
       expect(probes![0].version).toBe(2)
@@ -496,12 +646,12 @@ describe('deliveryApi', () => {
     it('should clear active probes when tripping', async () => {
       respondWith({
         nextCursor: 'cursor-1',
-        updates: [makeProbe({ id: 'probe-1', version: 1 })],
+        updates: [createProbe()],
         deletions: [],
       })
       startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
       await flushPromises()
-      expect(getProbes('test.js;testMethod')).toBeDefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeDefined()
 
       respondWithNetworkError()
       const ticks = Math.ceil(FIVE_MINUTES_MS / POLL_INTERVAL_MS) + 1
@@ -509,7 +659,7 @@ describe('deliveryApi', () => {
         await tickAndFlush(POLL_INTERVAL_MS)
       }
 
-      expect(getProbes('test.js;testMethod')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should honor a configured maxUnreachableDuration', async () => {
@@ -581,7 +731,7 @@ describe('deliveryApi', () => {
 
       // Breaker has tripped: polling stopped, probes cleared, and the in-flight
       // poll's signal must have been aborted.
-      expect(getProbes('test.js;testMethod')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
       expect(firstPollFetchOptions.signal!.aborted).toBeTrue()
       const callsAtTrip = fetchSpy.calls.count()
 
@@ -591,12 +741,12 @@ describe('deliveryApi', () => {
       resolveFirstPoll({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ nextCursor: 'late', updates: [makeProbe({ id: 'late-probe' })], deletions: [] }),
+        json: () => Promise.resolve({ nextCursor: 'late', updates: [createProbe()], deletions: [] }),
         text: () => Promise.resolve(''),
       })
       await flushPromises()
 
-      expect(getProbes('test.js;testMethod')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
       // No new fetches should have been issued either.
       await tickAndFlush(POLL_INTERVAL_MS * 5)
       expect(fetchSpy.calls.count()).toBe(callsAtTrip)
@@ -620,20 +770,5 @@ describe('deliveryApi', () => {
 async function flushPromises() {
   for (let i = 0; i < 10; i++) {
     await Promise.resolve()
-  }
-}
-
-function makeProbe(overrides: Partial<Probe> = {}): Probe {
-  return {
-    id: 'probe-1',
-    version: 1,
-    type: 'LOG_PROBE',
-    where: { typeName: 'test.js', methodName: 'testMethod' },
-    template: 'Test message',
-    captureSnapshot: false,
-    capture: {},
-    sampling: {},
-    evaluateAt: 'ENTRY',
-    ...overrides,
   }
 }

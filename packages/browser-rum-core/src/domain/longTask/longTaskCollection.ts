@@ -1,5 +1,6 @@
-import type { ClocksState } from '@datadog/browser-core'
-import { toServerDuration, relativeToClocks, generateUUID } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/js-core/time'
+import { toServerDuration, relativeToClocks } from '@datadog/js-core/time'
+import { generateUUID, buildDebugIdByUrl } from '@datadog/browser-core'
 import type { RawRumLongTaskEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -21,7 +22,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: Rum
     ? RumPerformanceEntryType.LONG_ANIMATION_FRAME
     : RumPerformanceEntryType.LONG_TASK
 
-  const subscription = createPerformanceObservable(configuration, {
+  const subscription = createPerformanceObservable({
     type: entryType,
     buffered: true,
   }).subscribe((entries) => {
@@ -70,9 +71,12 @@ function processEntry(
       },
     }
   }
+  const scriptUrls = entry.scripts.map((script) => script.sourceURL).filter((url): url is string => !!url)
+  const debugIdByUrl = buildDebugIdByUrl(scriptUrls)
 
   return {
     ...baseEvent,
+    _dd: { discarded: false, debug_ids: debugIdByUrl },
     long_task: {
       id,
       entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME,

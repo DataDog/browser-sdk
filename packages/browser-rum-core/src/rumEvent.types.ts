@@ -163,12 +163,7 @@ export type RumActionEvent = CommonProperties &
          * The strategy of how the auto click action name is computed
          */
         name_source?:
-          | 'custom_attribute'
-          | 'mask_placeholder'
-          | 'standard_attribute'
-          | 'text_content'
-          | 'mask_disallowed'
-          | 'blank'
+          'custom_attribute' | 'mask_placeholder' | 'standard_attribute' | 'text_content' | 'mask_disallowed' | 'blank'
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -513,6 +508,20 @@ export type RumErrorEvent = CommonProperties &
        * Profiling context
        */
       profiling?: ProfilingInternalContextSchema
+      /**
+       * Mapping of source file URLs to their debug IDs for source map deobfuscation
+       */
+      debug_ids?: {
+        /**
+         * URL of the source file
+         */
+        url: string
+        /**
+         * Debug ID (UUID) for the source file
+         */
+        id: string
+        [k: string]: unknown
+      }[]
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -611,12 +620,7 @@ export type RumLongTaskEvent = CommonProperties &
          * Type of the invoker of the script
          */
         readonly invoker_type?:
-          | 'user-callback'
-          | 'event-listener'
-          | 'resolve-promise'
-          | 'reject-promise'
-          | 'classic-script'
-          | 'module-script'
+          'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script'
         /**
          * The container (the top-level document, or an <iframe>) the long animation frame occurred in
          */
@@ -637,6 +641,20 @@ export type RumLongTaskEvent = CommonProperties &
        * Profiling context
        */
       profiling?: ProfilingInternalContextSchema
+      /**
+       * Mapping of source file URLs to their debug IDs for source map deobfuscation
+       */
+      debug_ids?: {
+        /**
+         * URL of the source file
+         */
+        url: string
+        /**
+         * Debug ID (UUID) for the source file
+         */
+        id: string
+        [k: string]: unknown
+      }[]
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -663,17 +681,7 @@ export type RumResourceEvent = CommonProperties &
        * Resource type
        */
       readonly type:
-        | 'document'
-        | 'xhr'
-        | 'beacon'
-        | 'fetch'
-        | 'css'
-        | 'js'
-        | 'image'
-        | 'font'
-        | 'media'
-        | 'other'
-        | 'native'
+        'document' | 'xhr' | 'beacon' | 'fetch' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other' | 'native'
       /**
        * HTTP method of the resource
        */
@@ -919,70 +927,7 @@ export type RumViewEvent = CommonProperties &
       }
       [k: string]: unknown
     }
-    /**
-     * Internal properties
-     */
     readonly _dd: {
-      /**
-       * Version of the update of the view event
-       */
-      readonly document_version: number
-      /**
-       * List of the page states during the view
-       */
-      readonly page_states?: {
-        /**
-         * Page state name
-         */
-        readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
-        /**
-         * Duration in ns between start of the view and start of the page state
-         */
-        readonly start: number
-        [k: string]: unknown
-      }[]
-      /**
-       * Debug metadata for Replay Sessions
-       */
-      replay_stats?: {
-        /**
-         * The number of records produced during this view lifetime
-         */
-        records_count?: number
-        /**
-         * The number of segments sent during this view lifetime
-         */
-        segments_count?: number
-        /**
-         * The total size in bytes of the segments sent during this view lifetime
-         */
-        segments_total_raw_size?: number
-        [k: string]: unknown
-      }
-      /**
-       * Additional information of the reported Cumulative Layout Shift
-       */
-      readonly cls?: {
-        /**
-         * Pixel ratio of the device where the layout shift was reported
-         */
-        readonly device_pixel_ratio?: number
-        [k: string]: unknown
-      }
-      /**
-       * Subset of the SDK configuration options in use during its execution
-       */
-      readonly configuration?: {
-        /**
-         * Whether session replay recording configured to start manually
-         */
-        readonly start_session_replay_recording_manually?: boolean
-        [k: string]: unknown
-      }
-      /**
-       * Profiling context
-       */
-      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -998,16 +943,6 @@ export type RumViewUpdateEvent = ViewContainerSchema &
      * RUM event type
      */
     readonly type: 'view_update'
-    /**
-     * Internal properties
-     */
-    readonly _dd?: {
-      /**
-       * Version of the update of the view event
-       */
-      readonly document_version: number
-      [k: string]: unknown
-    }
     [k: string]: unknown
   }
 export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent
@@ -1254,15 +1189,7 @@ export interface CommonProperties {
      * The list of available network interfaces
      */
     readonly interfaces?: (
-      | 'bluetooth'
-      | 'cellular'
-      | 'ethernet'
-      | 'wifi'
-      | 'wimax'
-      | 'mixed'
-      | 'other'
-      | 'unknown'
-      | 'none'
+      'bluetooth' | 'cellular' | 'ethernet' | 'wifi' | 'wimax' | 'mixed' | 'other' | 'unknown' | 'none'
     )[]
     /**
      * Cellular connection type reflecting the measured network performance
@@ -1653,10 +1580,21 @@ export interface ProfilingInternalContextSchema {
    * - `unexpected-exception`: An exception occurred when starting the Profiler.
    */
   readonly error_reason?:
-    | 'not-supported-by-browser'
-    | 'failed-to-lazy-load'
-    | 'missing-document-policy-header'
-    | 'unexpected-exception'
+    'not-supported-by-browser' | 'failed-to-lazy-load' | 'missing-document-policy-header' | 'unexpected-exception'
+  /**
+   * The reason provided by the profiling quota admission API. This attribute is only present if the status is `stopped` due to quota.
+   *
+   * Possible values:
+   * - `quota_ok`: Quota check passed.
+   * - `quota_exceeded`: The organization has exceeded its profiling quota.
+   * - `org_disabled`: The organization has profiling disabled.
+   * - `backend_unavailable`: The quota admission API is unavailable or not initialized.
+   * - `undefined`: The quota reason is undefined.
+   * - `timeout`: The quota check timed out on the client side.
+   * - `api-error`: An API error occurred on the client side.
+   */
+  readonly quota_reason?:
+    'quota_ok' | 'quota_exceeded' | 'org_disabled' | 'backend_unavailable' | 'undefined' | 'timeout' | 'api-error'
   [k: string]: unknown
 }
 /**
@@ -2043,6 +1981,76 @@ export interface ViewProperties {
       readonly max_scroll_height_time: number
       [k: string]: unknown
     }
+    [k: string]: unknown
+  }
+  /**
+   * Internal properties
+   */
+  readonly _dd?: {
+    /**
+     * Version of the update of the view event
+     */
+    readonly document_version: number
+    /**
+     * List of the page states during the view
+     */
+    readonly page_states?: {
+      /**
+       * Page state name
+       */
+      readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
+      /**
+       * Duration in ns between start of the view and start of the page state
+       */
+      readonly start: number
+      [k: string]: unknown
+    }[]
+    /**
+     * Debug metadata for Replay Sessions
+     */
+    replay_stats?: {
+      /**
+       * The number of records produced during this view lifetime
+       */
+      records_count?: number
+      /**
+       * The number of segments sent during this view lifetime
+       */
+      segments_count?: number
+      /**
+       * The total size in bytes of the segments sent during this view lifetime
+       */
+      segments_total_raw_size?: number
+      [k: string]: unknown
+    }
+    /**
+     * Additional information of the reported Cumulative Layout Shift
+     */
+    readonly cls?: {
+      /**
+       * Pixel ratio of the device where the layout shift was reported
+       */
+      readonly device_pixel_ratio?: number
+      [k: string]: unknown
+    }
+    /**
+     * Subset of the SDK configuration options in use during its execution
+     */
+    readonly configuration?: {
+      /**
+       * Whether session replay recording configured to start manually
+       */
+      readonly start_session_replay_recording_manually?: boolean
+      /**
+       * The id of the remote configuration applied to the SDK, if any
+       */
+      readonly remote_configuration_id?: string
+      [k: string]: unknown
+    }
+    /**
+     * Profiling context
+     */
+    profiling?: ProfilingInternalContextSchema
     [k: string]: unknown
   }
   [k: string]: unknown

@@ -1,13 +1,6 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  addDuration,
-  clocksNow,
-  timeStampNow,
-  relativeNow,
-  DefaultPrivacyLevel,
-  Observable,
-  PageExitReason,
-} from '@datadog/browser-core'
+import { timeStampNow, addDuration, clocksNow, relativeNow } from '@datadog/js-core/time'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
+import { DefaultPrivacyLevel, Observable, PageExitReason } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
@@ -231,9 +224,7 @@ describe('trackClickActions', () => {
 
     clock.tick(12)
 
-    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, {
-      reason: PageExitReason.HIDDEN,
-    })
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
 
     expect(events.length).toBe(1)
     expect(events[0].duration).toBe(12 as Duration)

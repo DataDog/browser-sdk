@@ -1,8 +1,8 @@
+import { ONE_MINUTE, addDuration, relativeNow } from '@datadog/js-core/time'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { setInterval, clearInterval } from './timer'
 import type { TimeoutId } from './timer'
 import { removeItem } from './utils/arrayUtils'
-import type { Duration, RelativeTime } from './utils/timeUtils'
-import { addDuration, relativeNow, ONE_MINUTE } from './utils/timeUtils'
 
 const END_OF_TIMES = Infinity as RelativeTime
 
@@ -40,27 +40,35 @@ function cleanupHistories() {
   cleanupTasks.forEach((task) => task())
 }
 
-export function createValueHistory<Value>({
-  expireDelay,
-  maxEntries,
-}: {
-  expireDelay: number
-  maxEntries?: number
-}): ValueHistory<Value> {
+type ValueHistoryArgs =
+  | {
+      expireDelay?: number
+      maxEntries: number
+    }
+  | {
+      expireDelay: number
+      maxEntries?: number
+    }
+
+export function createValueHistory<Value>({ expireDelay, maxEntries }: ValueHistoryArgs): ValueHistory<Value> {
   let entries: Array<ValueHistoryEntry<Value>> = []
 
-  if (!cleanupHistoriesInterval) {
-    cleanupHistoriesInterval = setInterval(() => cleanupHistories(), CLEAR_OLD_VALUES_INTERVAL)
-  }
-
   const clearExpiredValues = () => {
+    if (!expireDelay) {
+      return
+    }
     const oldTimeThreshold = relativeNow() - expireDelay
     while (entries.length > 0 && entries[entries.length - 1].endTime < oldTimeThreshold) {
       entries.pop()
     }
   }
 
-  cleanupTasks.add(clearExpiredValues)
+  if (expireDelay) {
+    if (!cleanupHistoriesInterval) {
+      cleanupHistoriesInterval = setInterval(() => cleanupHistories(), CLEAR_OLD_VALUES_INTERVAL)
+    }
+    cleanupTasks.add(clearExpiredValues)
+  }
 
   /**
    * Add a value to the history associated with a start time. Returns a reference to this newly

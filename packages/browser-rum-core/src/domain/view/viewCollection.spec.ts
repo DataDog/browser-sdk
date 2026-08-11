@@ -1,5 +1,6 @@
-import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
-import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
+import type { Duration, ServerDuration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
@@ -112,6 +113,7 @@ describe('viewCollection', () => {
         replay_stats: undefined,
         configuration: {
           start_session_replay_recording_manually: jasmine.any(Boolean),
+          remote_configuration_id: undefined,
         },
         cls: undefined,
       },
@@ -239,11 +241,31 @@ describe('viewCollection', () => {
     })
   })
 
+  describe('with configuration.remote_configuration_id', () => {
+    it('should include the remote configuration id when configured', () => {
+      setupViewCollection({ remoteConfigurationId: 'foo' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+      expect(
+        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration.remote_configuration_id
+      ).toBe('foo')
+    })
+
+    it('should be undefined when remote configuration is not used', () => {
+      setupViewCollection({ remoteConfigurationId: undefined })
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+      expect(
+        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration.remote_configuration_id
+      ).toBeUndefined()
+    })
+  })
+
   describe('assembly hook', () => {
     it('should add view properties from the history', () => {
       setupViewCollection({ trackViewsManually: true }, VIEW)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hooks.assemble.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -264,7 +286,7 @@ describe('viewCollection', () => {
     it('should discard the event if no view', () => {
       const viewHistoryEntry = undefined
       setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hooks.assemble.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -277,7 +299,7 @@ describe('viewCollection', () => {
     it('should add view id', () => {
       setupViewCollection({ trackViewsManually: true }, VIEW)
 
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      const telemetryEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: VIEW.startClocks.relative,
       }) as DefaultTelemetryEventAttributes
 
@@ -286,7 +308,7 @@ describe('viewCollection', () => {
 
     it('should not add view id if no view', () => {
       setupViewCollection({ trackViewsManually: true }, undefined)
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      const telemetryEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
 

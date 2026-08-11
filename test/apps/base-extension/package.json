@@ -21,11 +21,12 @@
     "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
     "@datadog/browser-logs": "file:../../../packages/browser-logs/package.tgz",
     "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
     "@datadog/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
     "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz"
   },
   "devDependencies": {
-    "webpack": "5.107.2",
-    "webpack-cli": "6.0.1"
+    "webpack": "5.109.0",
+    "webpack-cli": "7.2.1"
   }
 }

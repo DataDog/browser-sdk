@@ -1,13 +1,14 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { timeStampNow } from '@datadog/browser-core'
-import type { RumRemoteConfiguration } from './remoteConfiguration'
+import { timeStampNow } from '@datadog/js-core/time'
+import { tryJsonParse } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
+import type { RemoteConfiguration } from './remoteConfiguration'
 
-export const CACHE_VERSION = 1
+export const CACHE_VERSION = 2
 export const CACHE_KEY_PREFIX = 'dd_rc_'
 
 interface CachedRemoteConfiguration {
   version: number
-  config: RumRemoteConfiguration
+  config: RemoteConfiguration
   fetchedAt: TimeStamp
 }
 
@@ -17,7 +18,7 @@ export type CacheReadResult =
   | {
       status: Exclude<CacheReadStatus, 'hit'>
     }
-  | { status: Extract<CacheReadStatus, 'hit'>; config: RumRemoteConfiguration }
+  | { status: Extract<CacheReadStatus, 'hit'>; config: RemoteConfiguration }
 
 export const CACHE_STATUS_TO_METRIC_MAP: Record<CacheReadStatus, 'success' | 'missing' | 'failure'> = {
   hit: 'success',
@@ -57,11 +58,8 @@ export function createConfigurationCache({ remoteConfigurationId }: { remoteConf
         return { status: 'miss' }
       }
 
-      let parsed: unknown
-
-      try {
-        parsed = JSON.parse(raw)
-      } catch {
+      const parsed = tryJsonParse(raw)
+      if (parsed === undefined) {
         this.remove()
 
         return { status: 'error' }
@@ -82,7 +80,7 @@ export function createConfigurationCache({ remoteConfigurationId }: { remoteConf
         // Ignore
       }
     },
-    write(config: RumRemoteConfiguration) {
+    write(config: RemoteConfiguration) {
       const entry: CachedRemoteConfiguration = {
         version: CACHE_VERSION,
         config,

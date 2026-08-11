@@ -1,16 +1,15 @@
-import type { Context, RawError, ClocksState, BufferedData } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/js-core/time'
+import { ConsoleApiName, combine } from '@datadog/js-core/util'
+import type { Context, RawError, BufferedData } from '@datadog/browser-core'
 import {
   BufferedDataType,
-  ConsoleApiName,
   Observable,
   ErrorSource,
   generateUUID,
   computeRawError,
   ErrorHandling,
   NonErrorPrefix,
-  combine,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -27,11 +26,7 @@ export interface ProvidedError {
   componentStack?: string
 }
 
-export function startErrorCollection(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  bufferedDataObservable: Observable<BufferedData>
-) {
+export function startErrorCollection(lifeCycle: LifeCycle, bufferedDataObservable: Observable<BufferedData>) {
   const errorObservable = new Observable<RawError>()
 
   bufferedDataObservable.subscribe(({ data, type }) => {
@@ -42,7 +37,7 @@ export function startErrorCollection(
     }
   })
 
-  trackReportError(configuration, errorObservable)
+  trackReportError(errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
@@ -91,6 +86,7 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
       csp: error.csp,
       wasm_modules: wasmActive ? getLoadedWasmModules() : undefined,
     },
+    _dd: { debug_ids: error.debugIds },
     type: RumEventType.ERROR,
     context: error.context,
   }
@@ -100,9 +96,5 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
     handlingStack: error.handlingStack,
   }
 
-  return {
-    rawRumEvent,
-    startClocks: error.startClocks,
-    domainContext,
-  }
+  return { rawRumEvent, startClocks: error.startClocks, domainContext }
 }

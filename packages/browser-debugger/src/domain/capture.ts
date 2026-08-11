@@ -1,3 +1,5 @@
+import { getConstructorName, isError } from '@datadog/browser-core'
+
 export interface CaptureOptions {
   maxReferenceDepth?: number
   maxCollectionSize?: number
@@ -6,7 +8,7 @@ export interface CaptureOptions {
 }
 
 export interface CapturedValue {
-  type: string
+  type?: string
   value?: string
   isNull?: boolean
   truncated?: boolean
@@ -210,7 +212,7 @@ function captureObject(
   ctx: CaptureContext
 ): CapturedValue {
   if (depth >= maxReferenceDepth) {
-    return { type: (obj as any).constructor?.name ?? 'Object', notCapturedReason: 'depth' }
+    return { type: getConstructorName(obj) ?? 'Object', notCapturedReason: 'depth' }
   }
 
   // Built-in objects with specialized serialization
@@ -224,7 +226,7 @@ function captureObject(
   if (obj instanceof RegExp) {
     return { type: 'RegExp', value: obj.toString() }
   }
-  if (obj instanceof Error) {
+  if (isError(obj)) {
     return captureError(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   }
   if (obj instanceof Promise) {
@@ -271,7 +273,7 @@ function captureObject(
   }
 
   // Custom objects
-  const typeName = (obj as any).constructor?.name ?? 'Object'
+  const typeName = getConstructorName(obj) ?? 'Object'
   return captureObjectProperties(
     obj,
     typeName,
@@ -309,21 +311,16 @@ function captureObjectPropertiesFields(
     const keyName =
       typeof key === 'symbol' ? key.description || key.toString() : keyStr.includes('.') ? replaceDots(keyStr) : keyStr
 
-    try {
-      const propValue = obj[key]
-      fields[keyName] = captureValue(
-        propValue,
-        depth + 1,
-        maxReferenceDepth,
-        maxCollectionSize,
-        maxFieldCount,
-        maxLength,
-        ctx
-      )
-    } catch {
-      // Handle getters that throw or other access errors
-      fields[keyName] = { type: 'undefined', notCapturedReason: 'Error accessing property' }
-    }
+    fields[keyName] = captureProperty(
+      obj,
+      key,
+      depth,
+      maxReferenceDepth,
+      maxCollectionSize,
+      maxFieldCount,
+      maxLength,
+      ctx
+    )
   }
 
   return fields
@@ -470,37 +467,87 @@ function captureError(
   maxLength: number,
   ctx: CaptureContext
 ): CapturedValue {
-  const typeName = (err as any).constructor?.name ?? 'Error'
+  const typeName = getConstructorName(err) ?? 'Error'
   const fields: Record<string, CapturedValue> = {
-    message: captureValue(err.message, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
-    name: captureValue(err.name, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
-  }
-
-  if (err.stack !== undefined) {
-    fields.stack = captureValue(
-      err.stack,
-      depth + 1,
+    message: captureProperty(
+      err,
+      'message',
+      depth,
       maxReferenceDepth,
       maxCollectionSize,
       maxFieldCount,
       maxLength,
       ctx
-    )
+    ),
+    name: captureProperty(err, 'name', depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
   }
 
-  if ((err as any).cause !== undefined) {
-    fields.cause = captureValue(
-      (err as any).cause,
-      depth + 1,
-      maxReferenceDepth,
-      maxCollectionSize,
-      maxFieldCount,
-      maxLength,
-      ctx
-    )
+  const stack = captureOptionalProperty(
+    err,
+    'stack',
+    depth,
+    maxReferenceDepth,
+    maxCollectionSize,
+    maxFieldCount,
+    maxLength,
+    ctx
+  )
+  if (stack !== undefined) {
+    fields.stack = stack
+  }
+
+  const cause = captureOptionalProperty(
+    err,
+    'cause',
+    depth,
+    maxReferenceDepth,
+    maxCollectionSize,
+    maxFieldCount,
+    maxLength,
+    ctx
+  )
+  if (cause !== undefined) {
+    fields.cause = cause
   }
 
   return { type: typeName, fields }
+}
+
+function captureProperty(
+  obj: any,
+  property: string | symbol,
+  depth: number,
+  maxReferenceDepth: number,
+  maxCollectionSize: number,
+  maxFieldCount: number,
+  maxLength: number,
+  ctx: CaptureContext
+) {
+  try {
+    return captureValue(obj[property], depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
+  } catch {
+    return { notCapturedReason: 'Error accessing property' }
+  }
+}
+
+function captureOptionalProperty(
+  obj: any,
+  property: string | symbol,
+  depth: number,
+  maxReferenceDepth: number,
+  maxCollectionSize: number,
+  maxFieldCount: number,
+  maxLength: number,
+  ctx: CaptureContext
+): CapturedValue | undefined {
+  try {
+    const value = obj[property]
+    return value === undefined
+      ? undefined
+      : captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
+  } catch {
+    return { notCapturedReason: 'Error accessing property' }
+  }
 }
 
 function captureArrayBuffer(buffer: ArrayBuffer): CapturedValue {
@@ -550,7 +597,7 @@ function captureTypedArray(
   maxLength: number,
   ctx: CaptureContext
 ): CapturedValue {
-  const typeName = typedArray.constructor?.name ?? 'TypedArray'
+  const typeName = getConstructorName(typedArray) ?? 'TypedArray'
   const totalSize = typedArray.length
   const itemsToCapture = Math.min(totalSize, maxCollectionSize)
 

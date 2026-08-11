@@ -1,5 +1,8 @@
-import type { Context, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { combine, ErrorHandling, ErrorSource, generateUUID, relativeNow, ResourceType } from '@datadog/browser-core'
+import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
+import type { Context } from '@datadog/browser-core'
+import { relativeNow } from '@datadog/js-core/time'
+import { ErrorHandling, ErrorSource, generateUUID, ResourceType } from '@datadog/browser-core'
+import { combine } from '@datadog/js-core/util'
 import type { RumMutationRecord } from '@datadog/browser-rum-core'
 import {
   type RumPerformanceEntry,

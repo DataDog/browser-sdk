@@ -1,4 +1,4 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
 import type { RumConfiguration } from '../../configuration'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import type { NavigationTimings } from './trackNavigationTimings'
@@ -21,14 +21,14 @@ export function trackInitialViewMetrics(
 ) {
   const initialViewMetrics: InitialViewMetrics = {}
 
-  const { stop: stopNavigationTracking } = trackNavigationTimings(configuration, (navigationTimings) => {
+  const { stop: stopNavigationTracking } = trackNavigationTimings((navigationTimings) => {
     setLoadEvent(navigationTimings.loadEvent)
     initialViewMetrics.navigationTimings = navigationTimings
     scheduleViewUpdate()
   })
 
-  const firstHidden = trackFirstHidden(configuration, viewStart)
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(configuration, firstHidden, (firstContentfulPaint) => {
+  const firstHidden = trackFirstHidden(viewStart)
+  const { stop: stopFCPTracking } = trackFirstContentfulPaint(firstHidden, (firstContentfulPaint) => {
     initialViewMetrics.firstContentfulPaint = firstContentfulPaint
     scheduleViewUpdate()
   })

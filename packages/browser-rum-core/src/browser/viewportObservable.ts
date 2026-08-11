@@ -1,5 +1,4 @@
 import { Observable, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
-import type { RumConfiguration } from '../domain/configuration'
 
 export interface ViewportDimension {
   height: number
@@ -9,21 +8,20 @@ export interface ViewportDimension {
 
 let viewportObservable: Observable<ViewportDimension> | undefined
 
-export function initViewportObservable(configuration: RumConfiguration) {
+export function initViewportObservable() {
   if (!viewportObservable) {
-    viewportObservable = createViewportObservable(configuration)
+    viewportObservable = createViewportObservable()
   }
   return viewportObservable
 }
 
-export function createViewportObservable(configuration: RumConfiguration) {
+export function createViewportObservable() {
   return new Observable<ViewportDimension>((observable) => {
     const { throttled: updateDimension } = throttle(() => {
       observable.notify(getViewportDimension())
     }, 200)
 
-    return addEventListener(configuration, window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true })
-      .stop
+    return addEventListener(window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true }).stop
   })
 }
 

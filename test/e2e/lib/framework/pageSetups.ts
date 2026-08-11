@@ -1,10 +1,16 @@
-import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { generateUUID } from '@datadog/browser-core'
+import { INTAKE_URL_PARAMETERS } from '@datadog/js-core/transport'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type test from '@playwright/test'
+import { type Page } from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
+import type { SalesforceApp } from './buildSalesforceUrl'
+import { getSalesforceLwcSession } from './buildSalesforceUrl'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration
@@ -30,6 +36,7 @@ export interface SetupOptions {
   worker?: WorkerOptions
   callerLocation?: CallerLocation
   mockClock: boolean
+  salesforceApp: SalesforceApp | undefined
 }
 
 export interface CallerLocation {
@@ -46,10 +53,11 @@ export interface WorkerOptions {
 
 export interface EventBridgeOptions {
   isTraceSampled?: boolean
+  capabilities?: string[]
 }
 
-export type SetupFactory = (options: SetupOptions, servers: Servers) => string
-export type UrlHook = (baseUrl: URL, servers: Servers, options: SetupOptions) => void
+export type SetupFactory = (options: SetupOptions, servers: Servers, page: Page) => string | Promise<string>
+export type UrlHook = (baseUrl: URL, servers: Servers, options: SetupOptions) => void | Promise<void>
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
 // developer laptop) or with Browser Stack (to limit flakiness).
@@ -296,6 +304,45 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
+// Salesforce apps don't serve a locally-generated page body; this factory only drives the
+// page-side setup needed to init RUM on the remote Salesforce page.
+export async function salesforceSetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
+  const salesforceAppDirectory = options.salesforceApp === 'experience-cloud' ? 'sf-experience-app' : 'sf-lwc-app'
+  const salesforceBundlePath = resolve(
+    __dirname,
+    `../../../apps/${salesforceAppDirectory}/force-app/main/default/staticresources/datadog_rum_salesforce.js`
+  )
+
+  await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/, async (route) => {
+    await route.fulfill({
+      body: await readFile(salesforceBundlePath),
+      contentType: 'application/javascript',
+    })
+  })
+
+  if (options.salesforceApp === 'lwc') {
+    const { accessToken, instanceUrl } = await getSalesforceLwcSession()
+    await page.context().addCookies([
+      {
+        name: 'sid',
+        value: accessToken,
+        url: new URL('/', instanceUrl).href,
+      },
+    ])
+  }
+
+  if (options.rum) {
+    // Both sf-lwc-app and sf-experience-app have a committed datadogInit LWC that reads
+    // these globals and calls DD_RUM.init. On experience-cloud, that component only runs
+    // when the page is loaded with init=true.
+    await page.addInitScript(
+      `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+      window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
+    )
+  }
+  return ''
+}
+
 function basePage({ header, body, footer }: { header?: string; body?: string; footer?: string }) {
   // prettier-ignore
   // The empty favicon avoids a /favicon.ico request from the browser.
@@ -314,10 +361,9 @@ function js(parts: readonly string[], ...vars: string[]) {
 function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
   const baseHostname = new URL(servers.base.origin).hostname
 
-  // Send EventBridge events to the intake so we can inspect them in our E2E test cases. The URL
-  // needs to be similar to the normal Datadog intake (through proxy) to make the SDK completely
-  // ignore them.
-  const eventBridgeIntake = `${servers.intake.origin}/?${new URLSearchParams({
+  // Send EventBridge events through the Datadog HTTP API so we can inspect them in our E2E test cases.
+  // The URL needs to be similar to the normal Datadog intake to make the SDK completely ignore them.
+  const eventBridgeProxy = `${servers.datadogHttpApi.origin}/?${new URLSearchParams({
     ddforward: `/api/v2/rum?${INTAKE_URL_PARAMETERS.join('&')}`,
     bridge: 'true',
   }).toString()}`
@@ -329,10 +375,12 @@ function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
       },`
       : ''
 
+  const capabilities = options.capabilities ?? ['records']
+
   return html`<script type="text/javascript">
     window.DatadogEventBridge = {
       getCapabilities() {
-        return '["records"]'
+        return '${JSON.stringify(capabilities)}'
       },
       getPrivacyLevel() {
         return 'mask'
@@ -344,7 +392,7 @@ function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
       send(e) {
         const { eventType, event } = JSON.parse(e)
         const request = new XMLHttpRequest()
-        request.open('POST', ${JSON.stringify(eventBridgeIntake)} + '&event_type=' + eventType, true)
+        request.open('POST', ${JSON.stringify(eventBridgeProxy)} + '&event_type=' + eventType, true)
         request.send(JSON.stringify(event))
       },
     }
@@ -390,7 +438,7 @@ export function formatConfiguration(
   let result = JSON.stringify(
     {
       ...initConfiguration,
-      proxy: servers.intake.origin,
+      proxy: servers.datadogHttpApi.origin,
       remoteConfigurationProxy: `${servers.base.origin}/config`,
     },
     (_key, value) => {

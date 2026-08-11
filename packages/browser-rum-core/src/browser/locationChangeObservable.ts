@@ -1,23 +1,30 @@
-import { addEventListener, DOM_EVENT, instrumentMethod, Observable, shallowClone } from '@datadog/browser-core'
-import type { RumConfiguration } from '../domain/configuration'
+import {
+  addEventListener,
+  DOM_EVENT,
+  globalObject,
+  instrumentMethod,
+  mockable,
+  Observable,
+  shallowClone,
+} from '@datadog/browser-core'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>
   newLocation: Readonly<Location>
 }
 
-export function createLocationChangeObservable(configuration: RumConfiguration) {
-  let currentLocation = shallowClone(location)
+export function createLocationChangeObservable() {
+  let currentLocation = shallowClone(getLocation())
 
   return new Observable<LocationChange>((observable) => {
-    const { stop: stopHistoryTracking } = trackHistory(configuration, onLocationChange)
-    const { stop: stopHashTracking } = trackHash(configuration, onLocationChange)
+    const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
+    const { stop: stopHashTracking } = trackHash(onLocationChange)
 
     function onLocationChange() {
-      if (currentLocation.href === location.href) {
+      if (currentLocation.href === getLocation().href) {
         return
       }
-      const newLocation = shallowClone(location)
+      const newLocation = shallowClone(getLocation())
       observable.notify({
         newLocation,
         oldLocation: currentLocation,
@@ -32,7 +39,11 @@ export function createLocationChangeObservable(configuration: RumConfiguration) 
   })
 }
 
-function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {
+function getLocation() {
+  return mockable(globalObject.location)
+}
+
+function trackHistory(onHistoryChange: () => void) {
   const { stop: stopInstrumentingPushState } = instrumentMethod(
     getHistoryInstrumentationTarget('pushState'),
     'pushState',
@@ -47,7 +58,7 @@ function trackHistory(configuration: RumConfiguration, onHistoryChange: () => vo
       onPostCall(onHistoryChange)
     }
   )
-  const { stop: removeListener } = addEventListener(configuration, window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
 
   return {
     stop: () => {
@@ -58,8 +69,8 @@ function trackHistory(configuration: RumConfiguration, onHistoryChange: () => vo
   }
 }
 
-function trackHash(configuration: RumConfiguration, onHashChange: () => void) {
-  return addEventListener(configuration, window, DOM_EVENT.HASH_CHANGE, onHashChange)
+function trackHash(onHashChange: () => void) {
+  return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 
 function getHistoryInstrumentationTarget(methodName: 'pushState' | 'replaceState') {

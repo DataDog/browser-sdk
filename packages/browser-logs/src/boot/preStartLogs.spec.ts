@@ -1,3 +1,4 @@
+import { ONE_SECOND } from '@datadog/js-core/time'
 import {
   collectAsyncCalls,
   type Clock,
@@ -11,7 +12,6 @@ import {
 } from '@datadog/browser-core/test'
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
-  ONE_SECOND,
   TrackingConsent,
   createTrackingConsentState,
   display,
@@ -19,7 +19,7 @@ import {
   startSessionManager,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
-import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import type { LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { Strategy } from './logsPublicApi'
@@ -101,7 +101,7 @@ describe('preStartLogs', () => {
       })
 
       it('init should accept empty client token', async () => {
-        const hybridInitConfiguration: HybridInitConfiguration = {}
+        const hybridInitConfiguration: Omit<LogsInitConfiguration, 'clientToken'> = {}
         strategy.init(hybridInitConfiguration as LogsInitConfiguration)
 
         await collectAsyncCalls(doStartLogsSpy, 1)
@@ -261,6 +261,15 @@ describe('preStartLogs', () => {
       expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
     })
 
+    it('passes the sdk name to telemetry', async () => {
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({ sdkName: 'logs' })
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startTelemetrySpy, 1)
+
+      expect(startTelemetrySpy.calls.argsFor(0)[3]).toBe('logs')
+    })
+
     it('does not start telemetry until consent is granted', async () => {
       const trackingConsentState = createTrackingConsentState()
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({
@@ -285,9 +294,11 @@ describe('preStartLogs', () => {
 function createPreStartStrategyWithDefaults({
   trackingConsentState = createTrackingConsentState(),
   startSessionManagerMock = createStartSessionManagerMock(),
+  sdkName,
 }: {
   trackingConsentState?: TrackingConsentState
   startSessionManagerMock?: typeof startSessionManager
+  sdkName?: string
 } = {}) {
   const handleLogSpy = jasmine.createSpy()
   const doStartLogsSpy = jasmine.createSpy<DoStartLogs>().and.returnValue({
@@ -298,7 +309,7 @@ function createPreStartStrategyWithDefaults({
   replaceMockable(startSessionManager, startSessionManagerMock)
 
   return {
-    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),
+    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy, sdkName),
     startTelemetrySpy,
     handleLogSpy,
     doStartLogsSpy,

@@ -9,11 +9,22 @@ import {
   clearProbes,
   resetProbeBudgetConfiguration,
 } from './probes'
-import type { Probe } from './probes'
+import { createProbe } from './probe.specHelper'
 
-interface TemplateWithCache {
-  createFunction: (params: string[]) => (...args: any[]) => any
-  clearCache?: () => void
+const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
+
+interface CaptureExpressionsWithCache {
+  expressions: Array<{
+    name: string
+    expression: string
+    capture: {
+      maxReferenceDepth?: number
+      maxCollectionSize?: number
+      maxFieldCount?: number
+      maxLength?: number
+    }
+  }>
+  evaluateExpression: (expression: string, context: Record<string, any>) => unknown
 }
 
 describe('probes', () => {
@@ -26,282 +37,148 @@ describe('probes', () => {
 
   describe('addProbe and getProbes', () => {
     it('should add and retrieve a probe', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'test.js', methodName: 'testMethod' },
-        template: 'Test message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
+      const probe = createProbe()
       addProbe(probe)
-      const retrieved = getProbes('test.js;testMethod')
+      const retrieved = getProbes(DEFAULT_PROBE_FUNCTION_ID)
 
       expect(retrieved).toEqual([
         jasmine.objectContaining({
-          id: 'test-probe-1',
-          templateRequiresEvaluation: false,
+          id: probe.id,
         }),
       ])
+      expect(retrieved![0].evaluateTemplate).toBeUndefined()
     })
 
     it('should return undefined for non-existent probe', () => {
       const retrieved = getProbes('non-existent')
       expect(retrieved).toBeUndefined()
     })
+
+    it('should not register a probe when initialization throws', () => {
+      const probe = createProbe({
+        when: {
+          dsl: 'invalid',
+          json: { invalidOp: 'bad' } as any,
+        },
+      })
+
+      expect(() => addProbe(probe)).toThrow()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
+    })
   })
 
   describe('removeProbe', () => {
     it('should remove a probe', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'testMethod' },
-        template: 'Test',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
+      const probe = createProbe()
       addProbe(probe)
-      expect(getProbes('TestClass;testMethod')).toBeDefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeDefined()
 
-      removeProbe('test-probe-1')
-      expect(getProbes('TestClass;testMethod')).toBeUndefined()
-    })
-
-    it('should clear function cache when removing probe with dynamic template', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'cacheTest' },
-        template: '',
-        segments: [{ dsl: 'x', json: { ref: 'x' } }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      addProbe(probe)
-      const retrieved = getProbes('TestClass;cacheTest')
-      const template = retrieved![0].template as TemplateWithCache
-
-      // Create some cached functions
-      template.createFunction(['x', 'y'])
-      template.createFunction(['x', 'z'])
-
-      // Spy on clearCache method
-      const clearCacheSpy = jasmine.createSpy('clearCache')
-      template.clearCache = clearCacheSpy
-
-      removeProbe('test-probe-1')
-
-      // Verify clearCache was called
-      expect(clearCacheSpy).toHaveBeenCalled()
+      removeProbe(probe.id)
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should handle removing probe with static template without errors', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'staticTest' },
-        template: 'Static message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
+      const probe = createProbe()
       addProbe(probe)
 
-      // Should not throw when removing probe with static template (no clearCache method)
-      expect(() => removeProbe('test-probe-1')).not.toThrow()
+      // Should not throw when removing probe with static template
+      expect(() => removeProbe(probe.id)).not.toThrow()
     })
 
     it('should remove the exact initialized probe instance when passed a probe', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'instanceTest' },
-        template: 'Static message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const initializedProbe = getProbes('TestClass;instanceTest')![0]
+      const initializedProbe = getProbes(DEFAULT_PROBE_FUNCTION_ID)![0]
       removeProbe(initializedProbe)
 
-      expect(getProbes('TestClass;instanceTest')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should not remove a replacement probe when passed a stale probe instance', () => {
-      const staleProbe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'replacementTest' },
-        template: 'Stale message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(staleProbe)
+      const probe = createProbe()
+      addProbe(probe)
 
-      const staleInitializedProbe = getProbes('TestClass;replacementTest')![0]
-      removeProbe('test-probe-1')
-      addProbe({
-        id: 'test-probe-1',
-        version: 1,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'replacementTest' },
-        template: 'Replacement message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      })
+      const staleInitializedProbe = getProbes(DEFAULT_PROBE_FUNCTION_ID)![0]
+      removeProbe(probe.id)
+      addProbe(createProbe({ version: 1 }))
 
       expect(() => removeProbe(staleInitializedProbe)).not.toThrow()
-      expect(getProbes('TestClass;replacementTest')).toEqual([jasmine.objectContaining({ version: 1 })])
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([jasmine.objectContaining({ version: 1 })])
     })
 
     it('should not throw when passed a stale probe instance that is no longer registered', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'staleTest' },
-        template: 'Static message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
+      const probe = createProbe()
       addProbe(probe)
 
-      const initializedProbe = getProbes('TestClass;staleTest')![0]
-      removeProbe('test-probe-1')
+      const initializedProbe = getProbes(DEFAULT_PROBE_FUNCTION_ID)![0]
+      removeProbe(probe.id)
 
       expect(() => removeProbe(initializedProbe)).not.toThrow()
-      expect(getProbes('TestClass;staleTest')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
   })
 
   describe('initializeProbe', () => {
     it('should initialize probe with static template', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'initStatic' },
-        template: 'Static message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
+      const probe = createProbe()
 
       initializeProbe(probe)
 
       expect(probe).toEqual(
         jasmine.objectContaining({
-          templateRequiresEvaluation: false,
-          template: 'Static message',
+          template: 'Test message',
           msBetweenSampling: jasmine.any(Number),
           lastCaptureMs: -Infinity,
         })
       )
+      expect(probe.evaluateTemplate).toBeUndefined()
     })
 
     it('should initialize probe with dynamic template', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'initDynamic' },
-        template: '',
+      const probe = createProbe({
+        template: 'Value: {x}',
         segments: [{ str: 'Value: ' }, { dsl: 'x', json: { ref: 'x' } }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
+      })
 
       initializeProbe(probe)
 
       expect(probe).toEqual(
         jasmine.objectContaining({
-          templateRequiresEvaluation: true,
-          template: {
-            createFunction: jasmine.any(Function),
-            clearCache: jasmine.any(Function),
-          },
+          template: 'Value: {x}',
+          evaluateTemplate: jasmine.any(Function),
         })
       )
       expect(probe.segments).toBeUndefined() // Should be deleted after initialization
     })
 
     it('should compile condition when present', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'conditionCompile' },
+      const probe = createProbe({
         when: {
           dsl: 'x > 5',
           json: { gt: [{ ref: 'x' }, 5] },
         },
-        template: 'Message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'EXIT',
-      }
+      })
 
       initializeProbe(probe)
 
       expect(probe.condition).toEqual(
         jasmine.objectContaining({
           evaluate: jasmine.any(Function),
-          clearCache: jasmine.any(Function),
         })
       )
     })
 
-    it('should not add probe when condition compilation fails', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'conditionError' },
+    it('should throw when condition compilation fails', () => {
+      const probe = createProbe({
         when: {
           dsl: 'invalid',
           json: { invalidOp: 'bad' } as any,
         },
-        template: 'Message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'EXIT',
-      }
+      })
 
       let error: unknown
       try {
-        addProbe(probe)
+        initializeProbe(probe)
       } catch (err) {
         error = err
       }
@@ -309,21 +186,12 @@ describe('probes', () => {
       expect(error).toEqual(jasmine.any(Error))
       expect((error as Error).message).toContain('Cannot compile condition')
       expect((error as ErrorWithCause).cause).toEqual(jasmine.any(TypeError))
-      expect(getProbes('TestClass;conditionError')).toBeUndefined()
     })
 
     it('should calculate msBetweenSampling for snapshot probes', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'samplingCalc' },
-        template: 'Message',
-        captureSnapshot: true,
-        capture: {},
+      const probe = createProbe({
         sampling: { snapshotsPerSecond: 10 },
-        evaluateAt: 'ENTRY',
-      }
+      })
 
       initializeProbe(probe)
 
@@ -331,17 +199,9 @@ describe('probes', () => {
     })
 
     it('should use default sampling rate for snapshot probes without explicit rate', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'samplingDefault' },
-        template: 'Message',
-        captureSnapshot: true,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
+      const probe = createProbe({
+        sampling: undefined,
+      })
 
       initializeProbe(probe)
 
@@ -349,148 +209,117 @@ describe('probes', () => {
     })
 
     it('should use high default sampling rate for non-snapshot probes', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'samplingHigh' },
-        template: 'Message',
+      const probe = createProbe({
         captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
+        sampling: undefined,
+      })
 
       initializeProbe(probe)
 
       expect(probe.msBetweenSampling).toBeLessThan(1) // 5000 per second = 0.2ms
     })
 
-    it('should cache compiled functions by context keys', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'cacheKeys' },
-        template: '',
+    it('should evaluate dynamic template with cached functions', () => {
+      const probe = createProbe({
+        template: '{x}',
         segments: [{ dsl: 'x', json: { ref: 'x' } }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
+      })
 
       initializeProbe(probe)
 
-      const template = probe.template as TemplateWithCache
-      const fn1 = template.createFunction(['x', 'y'])
-      const fn2 = template.createFunction(['x', 'y'])
+      expect(probe.evaluateTemplate!({ x: 1 })).toEqual(['1'])
+      expect(probe.evaluateTemplate!({ x: 2 })).toEqual(['2'])
+    })
 
-      // Should return the same cached function
-      expect(fn1).toBe(fn2)
+    it('should compile capture expressions with per-expression limits', () => {
+      const probe = createProbe({
+        captureSnapshot: false,
+        capture: { maxReferenceDepth: 3, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 6 },
+        captureExpressions: [
+          { name: 'arg', expr: { dsl: 'arg', json: { ref: 'arg' } } },
+          {
+            name: 'obj.value',
+            expr: { dsl: 'obj.value', json: { getmember: [{ ref: 'obj' }, 'value'] } },
+            capture: { maxReferenceDepth: 1, maxLength: 2 },
+          },
+        ],
+      })
 
-      const fn3 = template.createFunction(['x', 'z'])
-      // Different keys should create different function
-      expect(fn1).not.toBe(fn3)
+      initializeProbe(probe)
+
+      const compiledCaptureExpressions = probe.compiledCaptureExpressions as CaptureExpressionsWithCache
+      expect(compiledCaptureExpressions.expressions.length).toBe(2)
+      expect(compiledCaptureExpressions.expressions[0]).toEqual(
+        jasmine.objectContaining({
+          name: 'arg',
+          expression: 'arg',
+          capture: { maxReferenceDepth: 3, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 6 },
+        })
+      )
+      expect(compiledCaptureExpressions.expressions[1]).toEqual(
+        jasmine.objectContaining({
+          name: 'obj.value',
+          capture: { maxReferenceDepth: 1, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 2 },
+        })
+      )
+      expect(compiledCaptureExpressions.expressions[1].expression).toContain('obj')
+      expect(compiledCaptureExpressions.expressions[1].expression).toContain('value')
+      expect(compiledCaptureExpressions.evaluateExpression('arg', { arg: 1 })).toBe(1)
+      expect(probe.captureExpressions).toBeUndefined()
+    })
+
+    it('should not compile capture expressions when the array is empty', () => {
+      const probe = createProbe({ captureSnapshot: false, captureExpressions: [] })
+
+      initializeProbe(probe)
+
+      expect(probe.compiledCaptureExpressions).toBeUndefined()
+    })
+
+    it('should throw when capture expression compilation fails', () => {
+      const probe = createProbe({
+        captureSnapshot: false,
+        captureExpressions: [
+          {
+            name: 'invalid expr',
+            expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+          },
+        ],
+      })
+
+      let error: unknown
+      try {
+        initializeProbe(probe)
+      } catch (err) {
+        error = err
+      }
+
+      expect(error).toEqual(jasmine.any(Error))
+      expect((error as Error).message).toContain('Cannot compile capture expression: invalid expr')
+      expect((error as ErrorWithCause).cause).toEqual(jasmine.any(SyntaxError))
+    })
+
+    it('should not compile capture expressions when snapshot capture is enabled', () => {
+      const probe = createProbe({
+        captureSnapshot: true,
+        captureExpressions: [{ name: 'arg', expr: { dsl: 'arg', json: { ref: 'arg' } } }],
+      })
+
+      initializeProbe(probe)
+
+      expect(probe.compiledCaptureExpressions).toBeUndefined()
     })
   })
 
   describe('clearProbes', () => {
     it('should clear all probes', () => {
-      const probe1: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'clear1' },
-        template: 'Test 1',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      const probe2: Probe = {
-        id: 'test-probe-2',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'clear2' },
-        template: 'Test 2',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      addProbe(probe1)
-      addProbe(probe2)
+      addProbe(createProbe({ where: { typeName: 'test.js', methodName: 'clear1' } }))
+      addProbe(createProbe({ where: { typeName: 'test.js', methodName: 'clear2' } }))
 
       clearProbes()
 
-      expect(getProbes('TestClass;clear1')).toBeUndefined()
-      expect(getProbes('TestClass;clear2')).toBeUndefined()
-    })
-
-    it('should clear function caches for all probes with dynamic templates', () => {
-      const probe1: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'clearCache1' },
-        template: '',
-        segments: [{ dsl: 'x', json: { ref: 'x' } }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      const probe2: Probe = {
-        id: 'test-probe-2',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'clearCache2' },
-        template: '',
-        segments: [{ dsl: 'y', json: { ref: 'y' } }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      const probe3: Probe = {
-        id: 'test-probe-3',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'clearCache3' },
-        template: 'Static message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      addProbe(probe1)
-      addProbe(probe2)
-      addProbe(probe3)
-
-      const template1 = getProbes('TestClass;clearCache1')![0].template as TemplateWithCache
-      const template2 = getProbes('TestClass;clearCache2')![0].template as TemplateWithCache
-
-      // Create some cached functions
-      template1.createFunction(['x'])
-      template2.createFunction(['y'])
-
-      // Spy on clearCache methods
-      const clearCache1Spy = jasmine.createSpy('clearCache1')
-      const clearCache2Spy = jasmine.createSpy('clearCache2')
-      template1.clearCache = clearCache1Spy
-      template2.clearCache = clearCache2Spy
-
-      clearProbes()
-
-      // Verify clearCache was called for both dynamic template probes
-      expect(clearCache1Spy).toHaveBeenCalled()
-      expect(clearCache2Spy).toHaveBeenCalled()
+      expect(getProbes('test.js;clear1')).toBeUndefined()
+      expect(getProbes('test.js;clear2')).toBeUndefined()
     })
   })
 

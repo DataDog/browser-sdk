@@ -1,7 +1,7 @@
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
-import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
+import {} from '../test/recordingScope.specHelper'
 import { trackFocus } from './trackFocus'
 import type { Tracker } from './tracker.types'
 
@@ -11,7 +11,7 @@ describe('trackFocus', () => {
 
   beforeEach(() => {
     emitRecordCallback = jasmine.createSpy()
-    focusTracker = trackFocus(emitRecordCallback, createRecordingScopeForTesting())
+    focusTracker = trackFocus(emitRecordCallback)
     registerCleanupTask(() => {
       focusTracker.stop()
     })

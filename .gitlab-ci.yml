@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-23
+  CURRENT_STAGING: staging-33
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 111
+  CURRENT_CI_IMAGE: 119
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
-  CHROME_PACKAGE_VERSION: 149.0.7827.53-1
+  CHROME_PACKAGE_VERSION: 151.0.7922.71-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
 workflow:
@@ -294,6 +294,16 @@ check-schemas:
   script:
     - yarn
     - node scripts/check-schemas.ts
+
+check-js-core-api:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn workspace @datadog/js-core build
+    - yarn api:check
 
 unit-bs:
   stage: browserstack
@@ -608,6 +618,8 @@ performance-benchmark:
       - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
   script:
     - yarn
+    - yarn build
+    - yarn build:apps
     - yarn test:performance
 
 api-performance-benchmark:
