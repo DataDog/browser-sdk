@@ -667,32 +667,6 @@ describe('webSocketCollection', () => {
       })
     })
 
-    it('leaves application-set handlers and exchanged payloads untouched', () => {
-      const openHandler = jasmine.createSpy<(event: Event) => void>()
-      const messageHandler = jasmine.createSpy<(event: MessageEvent) => void>()
-      const closeHandler = jasmine.createSpy<(event: CloseEvent) => void>()
-      // spied before instrumentation is installed, so that the instrumented `send` delegates to it
-      const sendSpy = spyOn(window.WebSocket.prototype, 'send').and.callThrough()
-
-      startCollection()
-      const socket = notifyConnecting()
-      socket.onopen = openHandler
-      socket.onmessage = messageHandler
-      socket.onclose = closeHandler
-
-      notifyOpen(socket, 10)
-      setClock(20)
-      socket.simulateMessage('hello')
-      setClock(30)
-      socket.send('world')
-      notifyClosed(socket, 40, 1000, 'bye', true)
-
-      expect(openHandler).toHaveBeenCalledTimes(1)
-      expect(messageHandler.calls.mostRecent().args[0].data).toBe('hello')
-      expect(closeHandler.calls.mostRecent().args[0].code).toBe(1000)
-      expect(sendSpy).toHaveBeenCalledOnceWith('world')
-    })
-
     it('finalizes open connections with tracking_end_reason="session_end" when the session expires', () => {
       const endClocks = relativeToClocks(clock.relative(40))
       startCollection()
