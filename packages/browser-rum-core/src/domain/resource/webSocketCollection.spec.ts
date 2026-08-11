@@ -1,4 +1,10 @@
-import { initWebSocketObservable, resetAllowUntrustedEvents, setAllowUntrustedEvents } from '@datadog/browser-core'
+import {
+  addExperimentalFeatures,
+  ExperimentalFeature,
+  initWebSocketObservable,
+  resetAllowUntrustedEvents,
+  setAllowUntrustedEvents,
+} from '@datadog/browser-core'
 import {
   createMockWebSocket,
   mockClock,
@@ -9,7 +15,7 @@ import {
 } from '@datadog/browser-core/test'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks } from '@datadog/js-core/time'
-import { mockViewHistory } from '../../../test'
+import { mockRumConfiguration, mockViewHistory } from '../../../test'
 import { VitalType } from '../../rawRumEvent.types'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -502,11 +508,62 @@ describe('webSocketCollection', () => {
   })
 
   describe('startWebSocketCollection', () => {
-    function startCollection() {
-      const collection = startWebSocketCollection(lifeCycle, mockViewHistory(), jasmine.createSpy())
+    function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
+      const collection = startWebSocketCollection(lifeCycle, configuration, mockViewHistory(), jasmine.createSpy())
       registerCleanupTask(() => collection.stop())
       return collection
     }
+
+    describe('opt-in gate', () => {
+      ;(
+        [
+          { trackResources: true, betaTrackWebSockets: true, experimentalFeature: false, collects: true },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: true, collects: true },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: false, collects: false },
+          { trackResources: false, betaTrackWebSockets: true, experimentalFeature: false, collects: false },
+          { trackResources: false, betaTrackWebSockets: false, experimentalFeature: true, collects: false },
+        ] as const
+      ).forEach(({ trackResources, betaTrackWebSockets, experimentalFeature, collects }) => {
+        it(`${collects ? 'collects' : 'does not collect'} with trackResources=${trackResources}, betaTrackWebSockets=${betaTrackWebSockets}, TRACK_WEBSOCKETS=${experimentalFeature}`, () => {
+          if (experimentalFeature) {
+            addExperimentalFeatures([ExperimentalFeature.TRACK_WEBSOCKETS])
+          }
+
+          startCollection(mockRumConfiguration({ trackResources, betaTrackWebSockets }))
+          const socket = notifyConnecting()
+          notifyOpen(socket, 10)
+          notifyClosed(socket, 20, 1000, 'bye', true)
+
+          expect(webSocketCompleteEvents.length).toBe(collects ? 1 : 0)
+        })
+      })
+    })
+
+    it('leaves application-set handlers and exchanged payloads untouched', () => {
+      const openHandler = jasmine.createSpy<(event: Event) => void>()
+      const messageHandler = jasmine.createSpy<(event: MessageEvent) => void>()
+      const closeHandler = jasmine.createSpy<(event: CloseEvent) => void>()
+      // spied before instrumentation is installed, so that the instrumented `send` delegates to it
+      const sendSpy = spyOn(window.WebSocket.prototype, 'send').and.callThrough()
+
+      startCollection()
+      const socket = notifyConnecting()
+      socket.onopen = openHandler
+      socket.onmessage = messageHandler
+      socket.onclose = closeHandler
+
+      notifyOpen(socket, 10)
+      setClock(20)
+      socket.simulateMessage('hello')
+      setClock(30)
+      socket.send('world')
+      notifyClosed(socket, 40, 1000, 'bye', true)
+
+      expect(openHandler).toHaveBeenCalledTimes(1)
+      expect(messageHandler.calls.mostRecent().args[0].data).toBe('hello')
+      expect(closeHandler.calls.mostRecent().args[0].code).toBe(1000)
+      expect(sendSpy).toHaveBeenCalledOnceWith('world')
+    })
 
     it('finalizes open connections with tracking_end_reason="session_end" when the session expires', () => {
       const endClocks = relativeToClocks(clock.relative(40))
