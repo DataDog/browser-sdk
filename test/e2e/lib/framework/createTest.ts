@@ -105,6 +105,7 @@ class TestBuilder {
   private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
   private body = ''
+  private preInitScript = ''
   private baseUrlHooks: UrlHook[] = []
   private eventBridge: EventBridgeOptions | undefined
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
@@ -159,6 +160,24 @@ class TestBuilder {
 
   withBody(body: string) {
     this.body = body
+    return this
+  }
+
+  /**
+   * Runs application code in the window between the SDK load and `init()`: the SDK is already
+   * instrumenting the page, but is not configured yet. Useful to test what the SDK buffers before
+   * being started.
+   *
+   * `script` is raw JavaScript, evaluated as a function body. It may return a promise, in which
+   * case `init()` waits for it to settle — so an asynchronous exchange can complete entirely
+   * before the SDK starts.
+   *
+   * Supported by the bundle, npm and async setups. With the async setup the script runs from the
+   * first bundle to become ready, so a test configuring several products can't assume the others
+   * are loaded yet.
+   */
+  withPreInitScript(script: string) {
+    this.preInitScript = script
     return this
   }
 
@@ -294,6 +313,7 @@ class TestBuilder {
     const setupOptions: SetupOptions = {
       body: this.body,
       head: this.head,
+      preInitScript: this.preInitScript,
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
       debugger: this.debuggerConfiguration,
