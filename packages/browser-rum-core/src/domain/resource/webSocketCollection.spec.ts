@@ -1,5 +1,16 @@
-import { initWebSocketObservable, resetAllowUntrustedEvents, setAllowUntrustedEvents } from '@datadog/browser-core'
+import type { BufferedData } from '@datadog/browser-core'
 import {
+  addExperimentalFeatures,
+  BufferedDataType,
+  ExperimentalFeature,
+  initWebSocketObservable,
+  Observable,
+  resetAllowUntrustedEvents,
+  setAllowUntrustedEvents,
+  startBufferingData,
+} from '@datadog/browser-core'
+import {
+  collectAsyncCalls,
   createMockWebSocket,
   mockClock,
   mockWebSocket,
@@ -9,7 +20,7 @@ import {
 } from '@datadog/browser-core/test'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks } from '@datadog/js-core/time'
-import { mockViewHistory } from '../../../test'
+import { mockRumConfiguration, mockViewHistory } from '../../../test'
 import { VitalType } from '../../rawRumEvent.types'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -45,11 +56,23 @@ describe('webSocketCollection', () => {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
   }
 
+  // Feeds WebSocket instrumentation into a plain `BufferedData` observable, so that specs keep
+  // driving real sockets while observing the events synchronously. `startBufferingData` is used
+  // instead where the asynchronous buffer replay is what is under test.
+  function createWebSocketDataObservable() {
+    const observable = new Observable<BufferedData>()
+    const subscription = initWebSocketObservable().subscribe((data) =>
+      observable.notify({ type: BufferedDataType.WEB_SOCKET, data })
+    )
+    registerCleanupTask(() => subscription.unsubscribe())
+    return observable
+  }
+
   function startTracking(
     viewHistory = mockViewHistory(),
     addDurationVital: (vital: DurationVital) => void = jasmine.createSpy()
   ) {
-    const tracker = trackWebSocket(lifeCycle, initWebSocketObservable(), viewHistory, addDurationVital)
+    const tracker = trackWebSocket(lifeCycle, createWebSocketDataObservable(), viewHistory, addDurationVital)
     registerCleanupTask(tracker.stop)
     return tracker
   }
@@ -502,11 +525,173 @@ describe('webSocketCollection', () => {
   })
 
   describe('startWebSocketCollection', () => {
-    function startCollection() {
-      const collection = startWebSocketCollection(lifeCycle, mockViewHistory(), jasmine.createSpy())
+    function startCollection(
+      configuration = mockRumConfiguration({ betaTrackWebSockets: true }),
+      bufferedDataObservable = createWebSocketDataObservable()
+    ) {
+      const collection = startWebSocketCollection(
+        lifeCycle,
+        configuration,
+        mockViewHistory(),
+        jasmine.createSpy(),
+        bufferedDataObservable
+      )
       registerCleanupTask(() => collection.stop())
       return collection
     }
+
+    describe('opt-in gate', () => {
+      ;(
+        [
+          { trackResources: true, betaTrackWebSockets: true, experimentalFeature: false, collects: true },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: true, collects: true },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: false, collects: false },
+          { trackResources: false, betaTrackWebSockets: true, experimentalFeature: false, collects: false },
+          { trackResources: false, betaTrackWebSockets: false, experimentalFeature: true, collects: false },
+        ] as const
+      ).forEach(({ trackResources, betaTrackWebSockets, experimentalFeature, collects }) => {
+        it(`${collects ? 'collects' : 'does not collect'} with trackResources=${trackResources}, betaTrackWebSockets=${betaTrackWebSockets}, TRACK_WEBSOCKETS=${experimentalFeature}`, () => {
+          if (experimentalFeature) {
+            addExperimentalFeatures([ExperimentalFeature.TRACK_WEBSOCKETS])
+          }
+
+          startCollection(mockRumConfiguration({ trackResources, betaTrackWebSockets }))
+          const socket = notifyConnecting()
+          notifyOpen(socket, 10)
+          notifyClosed(socket, 20, 1000, 'bye', true)
+
+          expect(webSocketCompleteEvents.length).toBe(collects ? 1 : 0)
+        })
+      })
+
+      it('does not subscribe to the buffered data observable when the gate is closed', () => {
+        const bufferedDataObservable = createWebSocketDataObservable()
+        const subscribeSpy = spyOn(bufferedDataObservable, 'subscribe').and.callThrough()
+
+        startCollection(
+          mockRumConfiguration({ trackResources: true, betaTrackWebSockets: false }),
+          bufferedDataObservable
+        )
+
+        expect(subscribeSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    // WebSocket activity is instrumented and buffered from SDK load; collection only subscribes at
+    // init(), and receives everything that happened before as a replayed burst.
+    describe('connections started before collection subscribed', () => {
+      let bufferedDataObservable: Observable<BufferedData>
+      let completeSpy: jasmine.Spy<(event: WebSocketCompleteEvent) => void>
+
+      beforeEach(() => {
+        const buffering = startBufferingData()
+        bufferedDataObservable = buffering.observable
+        registerCleanupTask(buffering.stop)
+
+        completeSpy = jasmine.createSpy()
+        lifeCycle.subscribe(LifeCycleEventType.WEBSOCKET_COMPLETED, completeSpy)
+      })
+
+      function subscribeCollection(addDurationVital: (vital: DurationVital) => void = jasmine.createSpy()) {
+        const collection = startWebSocketCollection(
+          lifeCycle,
+          mockRumConfiguration({ betaTrackWebSockets: true }),
+          mockViewHistory(),
+          addDurationVital,
+          bufferedDataObservable
+        )
+        registerCleanupTask(() => collection.stop())
+      }
+
+      it('reports a connection that also completed before collection subscribed', async () => {
+        const socket = notifyConnecting(0)
+        notifyOpen(socket, 10)
+        notifyMessageIn(socket, 20, 30)
+        notifyClosed(socket, 40, 1000, 'bye', true)
+
+        subscribeCollection()
+        await collectAsyncCalls(completeSpy)
+
+        expect(webSocketCompleteEvents.length).toBe(1)
+        const webSocket = webSocketCompleteEvents[0]
+        expect(webSocket.messagesIn).toEqual({ count: 1, size: 30 })
+        // measured from the real constructor call, not from the subscription
+        expect(webSocket.setupDuration).toBe(10 as Duration)
+      })
+
+      it('reports a connection spanning the subscription exactly once', async () => {
+        const socket = notifyConnecting(0)
+        notifyOpen(socket, 10)
+        notifyMessageIn(socket, 20, 30)
+
+        // a connection that completed early gives a deterministic signal that the replay is over
+        const replayedSocket = notifyConnecting(21, 'wss://example.com/replayed')
+        notifyClosed(replayedSocket, 22, 1000, 'bye', true)
+        const replaySpy = jasmine.createSpy<(event: WebSocketCompleteEvent) => void>()
+        const replaySubscription = lifeCycle.subscribe(LifeCycleEventType.WEBSOCKET_COMPLETED, replaySpy)
+
+        subscribeCollection()
+        await collectAsyncCalls(replaySpy)
+        replaySubscription.unsubscribe()
+
+        notifyMessageIn(socket, 50, 5)
+        notifyClosed(socket, 60, 1000, 'bye', true)
+
+        // a single event, merging what was replayed with what came in live
+        expect(webSocketCompleteEvents.length).toBe(2)
+        const webSocket = webSocketCompleteEvents[1]
+        expect(webSocket.messagesIn).toEqual({ count: 2, size: 35 })
+        expect(webSocket.setupDuration).toBe(10 as Duration)
+      })
+
+      it('keeps a distinct connection id per early connection and emits both vitals', async () => {
+        const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
+        const firstSocket = notifyConnecting(0, 'wss://example.com/socket-a')
+        const secondSocket = notifyConnecting(5, 'wss://example.com/socket-b')
+        notifyClosed(firstSocket, 10, 1000, 'bye-a', true)
+        notifyClosed(secondSocket, 20, 1000, 'bye-b', true)
+
+        subscribeCollection(addDurationVital)
+        await collectAsyncCalls(completeSpy, 2)
+
+        const [first, second] = webSocketCompleteEvents
+        expect(first.connectionId).not.toBe(second.connectionId)
+
+        const vitalNames = addDurationVital.calls.all().map((call) => call.args[0].name)
+        expect(vitalNames).toEqual([
+          WEBSOCKET_CONNECTING_VITAL_NAME,
+          WEBSOCKET_CONNECTING_VITAL_NAME,
+          WEBSOCKET_CLOSED_VITAL_NAME,
+          WEBSOCKET_CLOSED_VITAL_NAME,
+        ])
+      })
+    })
+
+    it('leaves application-set handlers and exchanged payloads untouched', () => {
+      const openHandler = jasmine.createSpy<(event: Event) => void>()
+      const messageHandler = jasmine.createSpy<(event: MessageEvent) => void>()
+      const closeHandler = jasmine.createSpy<(event: CloseEvent) => void>()
+      // spied before instrumentation is installed, so that the instrumented `send` delegates to it
+      const sendSpy = spyOn(window.WebSocket.prototype, 'send').and.callThrough()
+
+      startCollection()
+      const socket = notifyConnecting()
+      socket.onopen = openHandler
+      socket.onmessage = messageHandler
+      socket.onclose = closeHandler
+
+      notifyOpen(socket, 10)
+      setClock(20)
+      socket.simulateMessage('hello')
+      setClock(30)
+      socket.send('world')
+      notifyClosed(socket, 40, 1000, 'bye', true)
+
+      expect(openHandler).toHaveBeenCalledTimes(1)
+      expect(messageHandler.calls.mostRecent().args[0].data).toBe('hello')
+      expect(closeHandler.calls.mostRecent().args[0].code).toBe(1000)
+      expect(sendSpy).toHaveBeenCalledOnceWith('world')
+    })
 
     it('finalizes open connections with tracking_end_reason="session_end" when the session expires', () => {
       const endClocks = relativeToClocks(clock.relative(40))
