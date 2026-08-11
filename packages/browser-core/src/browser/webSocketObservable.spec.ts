@@ -111,6 +111,16 @@ describe('webSocketObservable', () => {
         expect(customerHandler).toHaveBeenCalledTimes(1)
         expect(getContexts('closed').length).toBe(1)
       })
+
+      it('forwards the sent payload to the native send unaltered', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        const payload = 'hello'
+
+        ws.send(payload)
+
+        expect(ws.sentData).toEqual([payload])
+        expect(getContexts('message-out').length).toBe(1)
+      })
     })
 
     describe('open context', () => {

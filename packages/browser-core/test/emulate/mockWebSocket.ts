@@ -38,6 +38,9 @@ export class MockWebSocket extends EventTarget {
   onmessage: ((event: MessageEvent) => void) | null = null
   onopen: ((event: Event) => void) | null = null
   onclose: ((event: CloseEvent) => void) | null = null
+  // Payloads that reached the socket, in order, so that specs can check instrumentation forwards
+  // them unaltered. Tests set `bufferedAmount` before calling send to verify it is sampled.
+  sentData: Array<string | ArrayBufferLike | Blob | ArrayBufferView> = []
 
   constructor(url: string | URL, protocols?: string | string[]) {
     super()
@@ -47,8 +50,8 @@ export class MockWebSocket extends EventTarget {
     }
   }
 
-  send(_data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
-    // no-op; tests will set `bufferedAmount` before calling send to verify it is sampled.
+  send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+    this.sentData.push(data)
   }
 
   close(_code?: number, _reason?: string): void {
