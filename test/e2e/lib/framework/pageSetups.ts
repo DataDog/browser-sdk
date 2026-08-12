@@ -344,19 +344,23 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
   return ''
 }
 
-// Matches the CDN URL used by the store's Theme Liquid snippet and Custom Pixel
-// `https://www.datadoghq-browser-agent.com/<site>/v<major>/datadog-rum-shopify.js`
-const SHOPIFY_BUNDLE_URL_PATTERN = /datadoghq-browser-agent\.com\/[^/]+\/v\d+\/datadog-rum-shopify\.js(?:[?#].*)?$/
+// Matches the CDN URL used by the store's Theme Liquid snippet and Custom Pixel for the main
+// bundle and its dynamically-imported chunks (e.g. the session replay recorder), served from
+// `https://www.datadoghq-browser-agent.com/<site>/v<major>/[chunks/]<name->]datadog-rum-shopify.js`
+const SHOPIFY_ASSET_URL_PATTERN =
+  /datadoghq-browser-agent\.com\/[^/]+\/v\d+\/(chunks\/)?([\w-]*datadog-rum-shopify\.js)(?:[?#].*)?$/
 
 // Shopify apps don't serve a locally-generated page body; this factory only intercepts the
 // bootstrap script request and injects the RUM configuration read by the store's Theme Liquid
-// snippet and Custom Pixel. 
+// snippet and Custom Pixel.
 export async function shopifySetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
-  const shopifyBundlePath = resolve(__dirname, '../../../../packages/browser-rum-shopify/bundle/datadog-rum-shopify.js')
+  const shopifyBundleDir = resolve(__dirname, '../../../../packages/browser-rum-shopify/bundle')
 
-  await page.route(SHOPIFY_BUNDLE_URL_PATTERN, async (route) => {
+  await page.route(SHOPIFY_ASSET_URL_PATTERN, async (route) => {
+    const [, chunksSegment, fileName] = SHOPIFY_ASSET_URL_PATTERN.exec(route.request().url()) || []
+    const filePath = resolve(shopifyBundleDir, chunksSegment || '', fileName)
     await route.fulfill({
-      body: await readFile(shopifyBundlePath),
+      body: await readFile(filePath),
       contentType: 'application/javascript',
       // The snippets load the script with `crossOrigin = 'anonymous'`, so the browser enforces
       // CORS on this response even though it never leaves the machine.
