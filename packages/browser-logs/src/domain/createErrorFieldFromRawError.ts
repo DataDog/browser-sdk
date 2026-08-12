@@ -21,7 +21,6 @@ export function createErrorFieldFromRawError(
     causes: rawError.causes,
     fingerprint: rawError.fingerprint,
     handling: rawError.handling,
-    source_type: isWasm ? 'browser+wasm' : 'browser',
-    ...(isWasm ? { wasm_modules: getLoadedWasmModules() } : {}),
+    ...(isWasm ? { source_type: 'browser+wasm' as const, wasm_modules: getLoadedWasmModules() } : {}),
   }
 }

@@ -57,19 +57,24 @@ function recordModuleFromView(url: string, view: ArrayBufferView): void {
   recordModule(url, view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength))
 }
 
-// Extracts build_id from a Response without consuming it for the caller.
-// Returns the original response so the actual instantiation can proceed
-// without delay; build_id extraction races in parallel.
-function captureFromResponseAsync(response: Response): Response {
+// Extracts build_id from a Response clone without consuming it for the caller.
+// Streaming compilation and metadata extraction happen in parallel, but the
+// wrapper only resolves once both are done. This guarantees that an error
+// thrown immediately by an exported function can reference the loaded module.
+function captureFromResponse(response: Response): Promise<void> {
   const url = response.url || '<wasm-instantiate-streaming-no-url>'
-  if (!registry.has(url)) {
-    response
+  if (registry.has(url)) {
+    return Promise.resolve()
+  }
+  try {
+    return response
       .clone()
       .arrayBuffer()
-      .then((buf) => recordModule(url, buf))
+      .then((buffer) => recordModule(url, buffer))
       .catch(() => undefined)
+  } catch {
+    return Promise.resolve()
   }
-  return response
 }
 
 export function startWasmModuleTracking(): () => void {
@@ -139,12 +144,10 @@ function installWasmModuleTracking(): () => void {
   if (origInstantiateStreaming) {
     WebAssembly.instantiateStreaming = function (source, importObject) {
       return Promise.resolve(source).then((response: Response) => {
-        try {
-          captureFromResponseAsync(response)
-        } catch {
-          // never block instantiation on capture failure
-        }
-        return origInstantiateStreaming.call(this, response, importObject)
+        const capturePromise = captureFromResponse(response)
+        return Promise.all([origInstantiateStreaming.call(this, response, importObject), capturePromise]).then(
+          ([result]) => result
+        )
       })
     }
   }
@@ -152,12 +155,8 @@ function installWasmModuleTracking(): () => void {
   if (origCompileStreaming) {
     WebAssembly.compileStreaming = function (source) {
       return Promise.resolve(source).then((response: Response) => {
-        try {
-          captureFromResponseAsync(response)
-        } catch {
-          // never block compilation on capture failure
-        }
-        return origCompileStreaming.call(this, response)
+        const capturePromise = captureFromResponse(response)
+        return Promise.all([origCompileStreaming.call(this, response), capturePromise]).then(([module]) => module)
       })
     }
   }

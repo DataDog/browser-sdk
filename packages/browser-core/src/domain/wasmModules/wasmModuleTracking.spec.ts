@@ -74,6 +74,38 @@ describe('startWasmModuleTracking', () => {
     expect(getLoadedWasmModules()).toEqual([{ url: '<wasm-compile-bytes>', build_id: '' }])
   })
 
+  it('waits for module metadata before resolving streaming instantiation', async () => {
+    const wasmModule = new Uint8Array([
+      0, 97, 115, 109, 1, 0, 0, 0, 0, 11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
+    ])
+    let resolveArrayBuffer!: (buffer: ArrayBuffer) => void
+    const arrayBufferPromise = new Promise<ArrayBuffer>((resolve) => {
+      resolveArrayBuffer = resolve
+    })
+    const response = {
+      url: 'https://example.com/module.wasm',
+      clone: () => ({ arrayBuffer: () => arrayBufferPromise }),
+    } as Response
+    const instantiateStreamingSpy = spyOn(WebAssembly, 'instantiateStreaming').and.resolveTo(
+      {} as WebAssembly.WebAssemblyInstantiatedSource
+    )
+
+    startWasmModuleTracking()
+    let isResolved = false
+    const instantiatePromise = WebAssembly.instantiateStreaming(response).then(() => {
+      isResolved = true
+    })
+    await new Promise((resolve) => setTimeout(resolve))
+
+    expect(instantiateStreamingSpy).toHaveBeenCalled()
+    expect(isResolved).toBe(false)
+
+    resolveArrayBuffer(wasmModule.buffer)
+    await instantiatePromise
+
+    expect(getLoadedWasmModules()).toEqual([{ url: response.url, build_id: 'abcd' }])
+  })
+
   it('keeps hooks installed until every tracking client stops', () => {
     const originalCompile = WebAssembly.compile
     const stopFirstClient = startWasmModuleTracking()

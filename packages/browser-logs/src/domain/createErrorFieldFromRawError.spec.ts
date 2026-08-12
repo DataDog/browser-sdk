@@ -61,7 +61,6 @@ describe('createErrorFieldFromRawError', () => {
       ],
       fingerprint: 'corge',
       handling: ErrorHandling.HANDLED,
-      source_type: 'browser',
     })
   })
 
