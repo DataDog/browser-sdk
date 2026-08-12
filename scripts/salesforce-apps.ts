@@ -27,7 +27,7 @@ const APPS: Record<AppKey, { dir: string; url: string; siteName?: string }> = {
   'experience-cloud-headmarkup': {
     dir: resolve(repositoryRoot, 'test/apps/sf-experience-headmarkup-app'),
     url: new URL('sfexperienceheadmarkup/', getSalesforceSiteUrl()).href,
-    siteName: 'SF Experience Cloud Head Markup App',
+    siteName: 'SF Experience Cloud Head Markup',
   },
 }
 
