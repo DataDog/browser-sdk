@@ -287,6 +287,31 @@ test.describe('logs', () => {
       })
     })
 
+  createTest('send WebAssembly runtime errors with module metadata')
+    .withRum()
+    .withLogs({ forwardErrorsToLogs: true })
+    .withWasmUnsafeEval()
+    .run(async ({ baseUrl, intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+      await page.evaluate(async () => {
+        const { instance } = await WebAssembly.instantiateStreaming(fetch('/test-module.wasm'))
+
+        setTimeout(() => (instance.exports.run as () => void)())
+      })
+
+      await flushEvents()
+      const expectedWasmModules = [{ url: new URL('/test-module.wasm', baseUrl).href, build_id: 'abcd' }]
+
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].error?.source_type).toBe('browser+wasm')
+      expect(intakeRegistry.logsEvents[0].error?.wasm_modules).toEqual(expectedWasmModules)
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expect(intakeRegistry.rumErrorEvents[0].error.source_type).toBe('browser+wasm')
+      expect(intakeRegistry.rumErrorEvents[0].error.wasm_modules).toEqual(expectedWasmModules)
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
+    })
+
   createTest('add RUM internal context to logs')
     .withRum()
     .withLogs()

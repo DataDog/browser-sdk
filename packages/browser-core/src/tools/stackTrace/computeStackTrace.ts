@@ -39,10 +39,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
   if (stackProperty) {
     stackProperty.split('\n').forEach((line) => {
       const stackFrame =
-        parseChromeLine(line) ||
-        parseChromeAnonymousLine(line) ||
-        parseWinLine(line) ||
-        parseGeckoLine(line)
+        parseChromeLine(line) || parseChromeAnonymousLine(line) || parseWinLine(line) || parseGeckoLine(line)
       if (stackFrame) {
         if (!stackFrame.func && stackFrame.line) {
           stackFrame.func = UNKNOWN_FUNCTION
@@ -136,7 +133,6 @@ function parseChromeAnonymousLine(line: string): StackFrame | undefined {
     url: parts[2],
   }
 }
-
 
 const WINJS_LINE_RE =
   /^\s*at (?:((?:\[object object\])?.+) )?\(?((?:file|ms-appx|https?|webpack|blob):.*?):(\d+)(?::(\d+))?\)?\s*$/i
