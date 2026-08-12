@@ -36,6 +36,14 @@ export function startSessionContext(
       sampledForReplay = computeSessionReplayState(session, configuration) === SessionReplayState.SAMPLED
       isActive = view.sessionIsActive ? undefined : false
     } else {
+      // KNOWN GAP (RUMS-6240): unlike the VIEW branch above, this is a live, one-shot read of
+      // `isRecording()` with no retry or history. `isRecording()` requires the Deflate worker's
+      // async init handshake to have fully completed (see recorderApi.ts), which is a strictly
+      // later condition than the recorder actually starting to capture DOM mutations (`record()`
+      // in datadogRecorder.ts only needs the worker instance to exist, not be initialized).
+      // An error/action/resource firing in that window gets `has_replay: undefined` baked in
+      // permanently, even if a segment covering that exact moment is captured moments later --
+      // there is no mechanism (analogous to getReplayStats' history) to retroactively correct it.
       hasReplay = recorderApi.isRecording() ? true : undefined
     }
 
