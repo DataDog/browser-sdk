@@ -292,6 +292,11 @@ test.describe('logs', () => {
     .withLogs({ forwardErrorsToLogs: true })
     .withWasmUnsafeEval()
     .run(async ({ baseUrl, intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+      test.skip(
+        test.info().project.name === 'webkit' || test.info().project.name === 'chromium-pinned',
+        'These browser versions do not expose uncaught WebAssembly traps through the runtime error event'
+      )
+
       await page.evaluate(async () => {
         const { instance } = await WebAssembly.instantiateStreaming(fetch('/test-module.wasm'))
 
