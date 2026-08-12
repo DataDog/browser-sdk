@@ -86,24 +86,33 @@ describe('startWasmModuleTracking', () => {
       url: 'https://example.com/module.wasm',
       clone: () => ({ arrayBuffer: () => arrayBufferPromise }),
     } as Response
-    const instantiateStreamingSpy = spyOn(WebAssembly, 'instantiateStreaming').and.resolveTo(
-      {} as WebAssembly.WebAssemblyInstantiatedSource
-    )
+    const originalInstantiateStreaming = WebAssembly.instantiateStreaming
+    const instantiateStreamingSpy = jasmine.createSpy().and.resolveTo({})
+    WebAssembly.instantiateStreaming = instantiateStreamingSpy
 
-    startWasmModuleTracking()
-    let isResolved = false
-    const instantiatePromise = WebAssembly.instantiateStreaming(response).then(() => {
-      isResolved = true
-    })
-    await new Promise((resolve) => setTimeout(resolve))
+    const stopTracking = startWasmModuleTracking()
+    try {
+      let isResolved = false
+      const instantiatePromise = WebAssembly.instantiateStreaming(response).then(() => {
+        isResolved = true
+      })
+      await new Promise((resolve) => setTimeout(resolve))
 
-    expect(instantiateStreamingSpy).toHaveBeenCalled()
-    expect(isResolved).toBe(false)
+      expect(instantiateStreamingSpy).toHaveBeenCalled()
+      expect(isResolved).toBe(false)
 
-    resolveArrayBuffer(wasmModule.buffer)
-    await instantiatePromise
+      resolveArrayBuffer(wasmModule.buffer)
+      await instantiatePromise
 
-    expect(getLoadedWasmModules()).toEqual([{ url: response.url, build_id: 'abcd' }])
+      expect(getLoadedWasmModules()).toEqual([{ url: response.url, build_id: 'abcd' }])
+    } finally {
+      stopTracking()
+      if (originalInstantiateStreaming) {
+        WebAssembly.instantiateStreaming = originalInstantiateStreaming
+      } else {
+        delete (WebAssembly as Partial<typeof WebAssembly>).instantiateStreaming
+      }
+    }
   })
 
   it('keeps hooks installed until every tracking client stops', () => {
