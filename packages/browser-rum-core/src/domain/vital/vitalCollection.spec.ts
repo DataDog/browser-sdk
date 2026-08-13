@@ -3,8 +3,8 @@ import { mockClock, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/js-core/time'
 import { generateUUID } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
-import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
-import { VitalType, RumEventType } from '../../rawRumEvent.types'
+import type { RawRumEvent, RawRumVitalEvent, RawRumWebSocketVitalEvent } from '../../rawRumEvent.types'
+import { VitalType, RumEventType, WebSocketVitalName } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { startVitalCollection } from './vitalCollection'
@@ -276,6 +276,62 @@ describe('vitalCollection', () => {
           context: { foo: 'bar' },
         })
       )
+    })
+  })
+
+  describe('websocket vital', () => {
+    /** A WebSocket vital as its serializer produces it: whole, instant, and schema-valid. */
+    function webSocketVital(id = generateUUID()): RawRumWebSocketVitalEvent {
+      return {
+        date: clocksNow().timeStamp,
+        type: RumEventType.VITAL,
+        vital: {
+          id,
+          type: VitalType.WEBSOCKET,
+          name: WebSocketVitalName.CONNECTING,
+          websocket: {
+            id: generateUUID(),
+            url: 'wss://example.com/socket',
+            connecting_date: clocksNow().timeStamp,
+          },
+        },
+      }
+    }
+
+    it('should collect raw rum event from websocket vital', () => {
+      const vital = webSocketVital()
+      const startClocks = clocksNow()
+      // the vital is dated when it was taken, not when it is handed over
+      clock.tick(100)
+
+      vitalCollection.addWebSocketVital(vital, startClocks)
+
+      expect(rawRumEvents.length).toBe(1)
+      expect(rawRumEvents[0].startClocks).toEqual(startClocks)
+      expect(rawRumEvents[0].rawRumEvent).toBe(vital)
+      expect(rawRumEvents[0].domainContext).toEqual({})
+    })
+
+    it('should collect a websocket vital emitted on a page that was frozen', () => {
+      wasInPageStateDuringPeriodSpy.and.returnValue(true)
+
+      vitalCollection.addWebSocketVital(webSocketVital(), clocksNow())
+
+      expect(rawRumEvents.length).toBe(1)
+    })
+
+    it('should not involve the event tracker', () => {
+      const vitalId = generateUUID()
+      const durationVitalStartedSpy = jasmine.createSpy()
+      lifeCycle.subscribe(LifeCycleEventType.DURATION_VITAL_STARTED, durationVitalStartedSpy)
+
+      vitalCollection.addWebSocketVital(webSocketVital(vitalId), clocksNow())
+
+      expect(durationVitalStartedSpy).not.toHaveBeenCalled()
+      // no start/stop bookkeeping means the vital rides through untouched, keeping its own id and
+      // reporting no duration
+      expect((rawRumEvents[0].rawRumEvent as RawRumWebSocketVitalEvent).vital.id).toBe(vitalId)
+      expect(rawRumEvents[0].duration).toBeUndefined()
     })
   })
 })
