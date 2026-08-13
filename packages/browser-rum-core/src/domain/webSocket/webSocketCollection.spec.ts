@@ -22,6 +22,7 @@ import { relativeToClocks } from '@datadog/js-core/time'
 import { mockRumConfiguration } from '../../../test'
 import type {
   RawRumWebSocketClosedVitalProperties,
+  RawRumWebSocketClosingVitalProperties,
   RawRumWebSocketConnectingVitalProperties,
   RawRumWebSocketOpenVitalProperties,
   RawRumWebSocketVitalEvent,
@@ -97,6 +98,12 @@ describe('webSocketCollection', () => {
     )
   }
 
+  function closingPayloads() {
+    return emittedVitals(WebSocketVitalName.CLOSING).map(
+      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketClosingVitalProperties
+    )
+  }
+
   function closedPayloads() {
     return emittedVitals(WebSocketVitalName.CLOSED).map(
       (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketClosedVitalProperties
@@ -129,6 +136,12 @@ describe('webSocketCollection', () => {
     setClock(at)
     socket.bufferedAmount = bufferedAmountPreSend
     socket.send('x'.repeat(size))
+  }
+
+  /** Drives the application calling `close()`, which is the only way the CLOSING phase is observed. */
+  function notifyClosing(socket: MockWebSocket, at: number, code?: number, reason?: string) {
+    setClock(at)
+    socket.close(code, reason)
   }
 
   function notifyClosed(socket: MockWebSocket, at: number, code: number, reason: string, wasClean: boolean) {
@@ -333,6 +346,108 @@ describe('webSocketCollection', () => {
 
       expect(openPayloads()).toHaveSize(0)
       expect(emittedNames()).toEqual([WebSocketVitalName.CONNECTING, WebSocketVitalName.CLOSED])
+    })
+  })
+
+  describe('the closing vital', () => {
+    it('is emitted on the close() call, carrying the closing date and the client as the initiator', () => {
+      startTracking()
+      const socket = notifyConnecting()
+      notifyOpen(socket, 10)
+
+      notifyClosing(socket, 30)
+
+      expect(closingPayloads()).toHaveSize(1)
+      expect(closingPayloads()[0].closing_date).toBe(clock.timeStamp(30))
+      expect(closingPayloads()[0].close_initiator).toBe('client')
+      expect(closingPayloads()[0].id).toBe(connectingPayloads()[0].id)
+      expect(startClocksOf(emittedVitals(WebSocketVitalName.CLOSING)[0])).toEqual(relativeToClocks(clock.relative(30)))
+    })
+
+    it('carries no cleanliness and no snapshot: neither is knowable before the handshake completes', () => {
+      startTracking()
+      const socket = notifyConnecting()
+      notifyOpen(socket, 10)
+      notifyMessageIn(socket, 20, 30)
+
+      notifyClosing(socket, 30)
+
+      expect(Object.keys(closingPayloads()[0])).toEqual(['id', 'closing_date', 'close_initiator'])
+    })
+
+    it('is reported between the open and the closed vital', () => {
+      startTracking()
+      const socket = notifyConnecting()
+      notifyOpen(socket, 10)
+
+      notifyClosing(socket, 30)
+      notifyClosed(socket, 40, 1000, 'bye', true)
+
+      expect(emittedNames()).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSING,
+        WebSocketVitalName.CLOSED,
+      ])
+    })
+
+    it('takes no snapshot version from the sequence the snapshot-carrying vitals share', () => {
+      startTracking()
+      const socket = notifyConnecting()
+      notifyOpen(socket, 10)
+
+      notifyClosing(socket, 30)
+      notifyClosed(socket, 40, 1000, 'bye', true)
+
+      expect(openPayloads()[0].snapshot_version).toBe(1)
+      expect(closedPayloads()[0].snapshot_version).toBe(2)
+    })
+
+    it('is emitted for a close() during the handshake, whose failure then reports an unclean close', () => {
+      startTracking()
+      const socket = notifyConnecting()
+
+      notifyClosing(socket, 5)
+      // the browser fails a connection aborted mid-handshake
+      notifyClosed(socket, 6, 1006, '', false)
+
+      expect(closingPayloads()).toHaveSize(1)
+      expect(closingPayloads()[0].closing_date).toBe(clock.timeStamp(5))
+      expect(closedPayloads()[0].was_clean).toBe(false)
+      expect(openPayloads()).toHaveSize(0)
+    })
+
+    it('is emitted once for a double close()', () => {
+      startTracking()
+      const socket = notifyConnecting()
+      notifyOpen(socket, 10)
+
+      notifyClosing(socket, 30)
+      notifyClosing(socket, 31)
+
+      expect(closingPayloads()).toHaveSize(1)
+      expect(closingPayloads()[0].closing_date).toBe(clock.timeStamp(30))
+    })
+
+    it('is not emitted for a close() on an already closed socket', () => {
+      startTracking()
+      const socket = notifyConnecting()
+      notifyOpen(socket, 10)
+      notifyClosed(socket, 40, 1000, 'bye', true)
+
+      notifyClosing(socket, 50)
+
+      expect(closingPayloads()).toHaveSize(0)
+    })
+
+    it('is not emitted for a connection the server closed', () => {
+      startTracking()
+      const socket = notifyConnecting()
+      notifyOpen(socket, 10)
+
+      notifyClosed(socket, 40, 1000, 'bye', true)
+
+      expect(closingPayloads()).toHaveSize(0)
     })
   })
 

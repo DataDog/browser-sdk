@@ -114,12 +114,23 @@ describe('webSocketObservable', () => {
 
       it('forwards the sent payload to the native send unaltered', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
         const payload = 'hello'
 
         ws.send(payload)
 
         expect(ws.sentData).toEqual([payload])
         expect(getContexts('message-out').length).toBe(1)
+      })
+
+      it('forwards the close code and reason to the native close unaltered', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+
+        ws.close(1000, 'bye')
+
+        expect(ws.closeCalls).toEqual([{ code: 1000, reason: 'bye' }])
+        expect(ws.readyState).toBe(MockWebSocket.CLOSING)
       })
     })
 
@@ -216,6 +227,7 @@ describe('webSocketObservable', () => {
     describe('message-out context', () => {
       it('emits "message-out" with size and bufferedAmountPreSend for string payloads', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
         const bufferedAmountPreSend = 42
         ws.bufferedAmount = bufferedAmountPreSend
         const payload = 'hello'
@@ -230,6 +242,7 @@ describe('webSocketObservable', () => {
 
       it('emits "message-out" with byteLength for ArrayBuffer payloads', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
         const byteLength = 8
         ws.send(new ArrayBuffer(byteLength))
 
@@ -238,6 +251,7 @@ describe('webSocketObservable', () => {
 
       it('emits "message-out" with byteLength for ArrayBufferView payloads', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
         const viewByteLength = 10
         ws.send(new Uint8Array(new ArrayBuffer(20), 2, viewByteLength))
 
@@ -246,10 +260,65 @@ describe('webSocketObservable', () => {
 
       it('emits "message-out" with size for Blob payloads', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
         const blob = new Blob(['hello world'])
         ws.send(blob)
 
         expect(getContexts('message-out')[0].size).toBe(blob.size)
+      })
+
+      it('emits nothing for a send that the socket rejected outside OPEN', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+
+        expect(() => ws.send('hello')).toThrowError(DOMException)
+
+        expect(ws.sentData).toEqual([])
+        expect(getContexts('message-out').length).toBe(0)
+      })
+    })
+
+    describe('closing context', () => {
+      it('emits a "closing" context when close() is called on a connecting socket', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+
+        ws.close()
+
+        const closingContexts = getContexts('closing')
+        expect(closingContexts.length).toBe(1)
+        expect(closingContexts[0].instance).toBe(ws as unknown as WebSocket)
+        expect(closingContexts[0].at.timeStamp).toEqual(jasmine.any(Number))
+      })
+
+      it('emits a "closing" context when close() is called on an open socket', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+
+        ws.close()
+
+        expect(getContexts('closing').length).toBe(1)
+      })
+
+      // the first call is what left the socket closing, so this is both the CLOSING row of the
+      // truth table and what keeps a defensive double close() from being reported twice
+      it('emits nothing for a close() on a socket its own previous close() left closing', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+        ws.close()
+
+        ws.close()
+
+        expect(ws.readyState).toBe(MockWebSocket.CLOSING)
+        expect(ws.closeCalls.length).toBe(2)
+        expect(getContexts('closing').length).toBe(1)
+      })
+
+      it('emits nothing when close() is called on a socket that is already closed', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateClose(1000, 'bye', true)
+
+        ws.close()
+
+        expect(getContexts('closing').length).toBe(0)
       })
     })
 
@@ -301,6 +370,7 @@ describe('webSocketObservable', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         ws.send('hello')
+        ws.close()
 
         expect(contexts.length).toBe(0)
       })

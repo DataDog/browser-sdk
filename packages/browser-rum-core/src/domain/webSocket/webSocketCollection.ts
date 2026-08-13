@@ -161,6 +161,21 @@ export function trackWebSocket(
         return
       }
 
+      // reported at most once per connection, which the observable's `readyState` guard is what
+      // enforces
+      case 'closing': {
+        const connection = trackedConnections.get(context.instance)
+        if (!connection) {
+          return
+        }
+
+        connection.recordClosing(context.at)
+
+        emitVital(connection, { phase: 'closing', closingClocks: context.at })
+
+        return
+      }
+
       case 'closed': {
         const connection = trackedConnections.get(context.instance)
         if (!connection) {

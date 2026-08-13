@@ -42,6 +42,9 @@ export class MockWebSocket extends EventTarget {
   // Payloads that reached the socket, in order, so that specs can check instrumentation forwards
   // them unaltered. Tests set `bufferedAmount` before calling send to verify it is sampled.
   sentData: Array<string | ArrayBufferLike | Blob | ArrayBufferView> = []
+  // Arguments of every `close()` call that reached the socket, in order, including the calls the
+  // spec makes a no-op, so that specs can check instrumentation forwards them unaltered.
+  closeCalls: Array<{ code?: number; reason?: string }> = []
 
   constructor(url: string | URL, protocols?: string | string[]) {
     super()
@@ -51,12 +54,26 @@ export class MockWebSocket extends EventTarget {
     }
   }
 
+  // Mirrors what the DOM spec makes of a send outside OPEN: rejected before the handshake
+  // completed, and silently discarded once the socket is closing or closed.
   send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+    if (this.readyState === MockWebSocket.CONNECTING) {
+      throw new DOMException('Still in CONNECTING state.', 'InvalidStateError')
+    }
+    if (this.readyState !== MockWebSocket.OPEN) {
+      return
+    }
     this.sentData.push(data)
   }
 
-  close(_code?: number, _reason?: string): void {
-    this.readyState = MockWebSocket.CLOSED
+  // `close()` starts the closing handshake, and is a no-op once one is under way or over. The socket
+  // reaches CLOSED only when the browser fires the close event; see `simulateClose`.
+  close(code?: number, reason?: string): void {
+    this.closeCalls.push({ code, reason })
+    if (this.readyState === MockWebSocket.CLOSING || this.readyState === MockWebSocket.CLOSED) {
+      return
+    }
+    this.readyState = MockWebSocket.CLOSING
   }
 
   simulateOpen() {
