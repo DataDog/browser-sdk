@@ -386,7 +386,7 @@ export interface RawRumVitalEvent {
   vital: {
     id: string
     name: string
-    type: VitalType
+    type: typeof VitalType.DURATION | typeof VitalType.OPERATION_STEP
     step_type?: string
     operation_key?: string
     failure_reason?: string
@@ -529,3 +529,4 @@ export type RawRumEvent =
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
+  | RawRumWebSocketVitalEvent
