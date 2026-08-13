@@ -542,6 +542,22 @@ describe('webSocketCollection', () => {
       expect(closedPayloads()[0].snapshot_version).toBe(2)
     })
 
+    it('counts no outbound message the socket discarded after the closing handshake started', () => {
+      startTracking()
+      const socket = notifyConnecting()
+      notifyOpen(socket, 10)
+      notifyMessageOut(socket, 20, 10)
+      notifyClosing(socket, 30)
+
+      notifyMessageOut(socket, 35, 500)
+
+      notifyClosed(socket, 40, 1000, 'bye', true)
+
+      expect(closedPayloads()[0].snapshot!.outbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 10, message_size_max: 10 })
+      )
+    })
+
     it('reports the terminal snapshot of the connection', () => {
       startTracking()
       const socket = notifyConnecting()
