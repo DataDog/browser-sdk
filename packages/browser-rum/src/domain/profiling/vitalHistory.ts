@@ -38,30 +38,40 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
       return
     }
 
+    // WebSocket vitals report a phase of a connection rather than something a profile can be
+    // attributed to: they are instant, and they carry no vital duration to close an entry with.
+    if (rawRumEvent.vital.type === VitalType.WEBSOCKET) {
+      return
+    }
+
+    // held in a variable rather than read from the event each time, so that the narrowing above
+    // survives into the callbacks below
+    const vital = rawRumEvent.vital
+
     // For operation step vitals, we only tag profiles with the start step's id.
     // This means that if we receive an end step vital, we need to look for the
     // corresponding start one and update its duration. If we receive a start step vital
     // however, we just store it and wait for the end step.
-    if (rawRumEvent.vital.type === VitalType.OPERATION_STEP) {
-      if (rawRumEvent.vital.step_type === 'start') {
+    if (vital.type === VitalType.OPERATION_STEP) {
+      if (vital.step_type === 'start') {
         history.add(
           {
-            id: rawRumEvent.vital.id,
-            type: rawRumEvent.vital.type,
-            operationKey: rawRumEvent.vital.operation_key,
+            id: vital.id,
+            type: vital.type,
+            operationKey: vital.operation_key,
             startClocks,
-            label: rawRumEvent.vital.name,
+            label: vital.name,
           },
           startClocks.relative
         )
-      } else if (rawRumEvent.vital.step_type === 'end') {
+      } else if (vital.step_type === 'end') {
         const historyEntry = history
           .findAllEntries()
           .find(
             (entry) =>
               entry.value.type === VitalType.OPERATION_STEP &&
-              entry.value.label === rawRumEvent.vital.name &&
-              entry.value.operationKey === rawRumEvent.vital.operation_key
+              entry.value.label === vital.name &&
+              entry.value.operationKey === vital.operation_key
           )
 
         if (!historyEntry) {
@@ -77,9 +87,7 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
 
     // All the other vital types are handled normally (i.e. stored in the
     // history and tagged on the profiles)
-    const historyEntry = history
-      .getEntries(startClocks.relative)
-      .find((entry) => entry.value.id === rawRumEvent.vital.id)
+    const historyEntry = history.getEntries(startClocks.relative).find((entry) => entry.value.id === vital.id)
 
     if (historyEntry) {
       historyEntry.value.duration = duration!
@@ -90,12 +98,12 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
     history
       .add(
         {
-          id: rawRumEvent.vital.id,
-          type: rawRumEvent.vital.type,
-          operationKey: rawRumEvent.vital.operation_key,
+          id: vital.id,
+          type: vital.type,
+          operationKey: vital.operation_key,
           startClocks,
           duration,
-          label: rawRumEvent.vital.name,
+          label: vital.name,
         },
         startClocks.relative
       )

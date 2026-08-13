@@ -385,7 +385,7 @@ export interface RawRumVitalEvent {
   vital: {
     id: string
     name: string
-    type: VitalType
+    type: typeof VitalType.DURATION | typeof VitalType.OPERATION_STEP
     step_type?: string
     operation_key?: string
     failure_reason?: string
@@ -403,9 +403,121 @@ export interface RawRumVitalEvent {
 export const VitalType = {
   DURATION: 'duration',
   OPERATION_STEP: 'operation_step',
+  WEBSOCKET: 'websocket',
 } as const
 
 export type VitalType = (typeof VitalType)[keyof typeof VitalType]
+
+/**
+ * One WebSocket connection reports a stream of vitals over its lifetime, one per phase it goes
+ * through, all sharing the connection id. The name is what tells a consumer which phase it holds —
+ * the shipped schema discriminates the four payloads by their disjoint required fields rather than
+ * by this name, so nothing but this type checks that the two agree.
+ */
+export const WebSocketVitalName = {
+  CONNECTING: 'websocket_connecting',
+  OPEN: 'websocket_open',
+  CLOSING: 'websocket_closing',
+  CLOSED: 'websocket_closed',
+} as const
+
+export type WebSocketVitalName = (typeof WebSocketVitalName)[keyof typeof WebSocketVitalName]
+
+/**
+ * Why the SDK stopped tracking a connection. `heartbeat_timeout` is deliberately absent: it exists
+ * on the connection-level event derived from these vitals, for the connections that ended without
+ * the SDK being able to report anything at all.
+ */
+export const WebSocketTrackingEndReason = {
+  CLOSE_EVENT: 'close_event',
+  SESSION_END: 'session_end',
+  PAGE_UNLOADED: 'page_unloaded',
+} as const
+
+export type WebSocketTrackingEndReason = (typeof WebSocketTrackingEndReason)[keyof typeof WebSocketTrackingEndReason]
+
+/** What one phase reports, which is everything a WebSocket vital does not share with the others. */
+interface RawRumWebSocketVitalPayloadOf<Name extends WebSocketVitalName, Properties> {
+  name: Name
+  /** Everything the phase reports about the connection, namespaced under the connection id. */
+  websocket: { id: string } & Properties
+}
+
+/**
+ * A vital reporting one phase of one WebSocket connection. The phase is in the name and in which
+ * properties ride, so a consumer narrows on the name to reach them.
+ */
+export interface RawRumWebSocketVitalEvent {
+  date: TimeStamp
+  type: typeof RumEventType.VITAL
+  vital: {
+    id: string
+    type: typeof VitalType.WEBSOCKET
+  } & RawRumWebSocketVitalPayload
+}
+
+/** Identity, reported on the connecting vital only and never repeated by the later phases. */
+export interface RawRumWebSocketConnectingVitalProperties {
+  url: string
+  requested_protocols?: string[]
+  connecting_date: TimeStamp
+}
+
+export interface RawRumWebSocketOpenVitalProperties {
+  open_handshake_succeeded: true
+  connecting_duration: ServerDuration
+  open_date: TimeStamp
+  selected_protocol?: string
+  selected_extensions?: string
+  snapshot_version: number
+  snapshot: RawRumWebSocketVitalSnapshot
+}
+
+export interface RawRumWebSocketClosingVitalProperties {
+  closing_date: TimeStamp
+  /** Always `client`: a close the SDK observes from the application is initiated by it. */
+  close_initiator: 'client'
+}
+
+export interface RawRumWebSocketClosedVitalProperties {
+  closed_date: TimeStamp
+  duration: ServerDuration
+  tracking_end_reason: WebSocketTrackingEndReason
+  close_code?: number
+  close_reason?: string
+  was_clean?: boolean
+  snapshot_version: number
+  /** Omitted when the connection never opened, rather than reported zero-filled. */
+  snapshot?: RawRumWebSocketVitalSnapshot
+}
+
+/** Exactly the values that change from one vital of a connection to the next. */
+export interface RawRumWebSocketVitalSnapshot {
+  inbound: RawRumWebSocketVitalMessageDirection
+  outbound: RawRumWebSocketVitalMessageDirection & {
+    buffered_amount_max: number
+    backpressured_message_count: number
+    /** Reported by the closed vital only. */
+    buffered_amount_at_close?: number
+  }
+}
+
+export interface RawRumWebSocketVitalMessageDirection {
+  message_count: number
+  message_size_total: number
+  message_size_max: number
+  longest_silence: ServerDuration
+  time_to_first_message?: ServerDuration
+  /** Reported by the closed vital only, and only once a message has been observed. */
+  silence_before_close?: ServerDuration
+}
+
+/** What a phase reports, which is what the serializer builds and the envelope then carries. */
+export type RawRumWebSocketVitalPayload =
+  | RawRumWebSocketVitalPayloadOf<typeof WebSocketVitalName.CONNECTING, RawRumWebSocketConnectingVitalProperties>
+  | RawRumWebSocketVitalPayloadOf<typeof WebSocketVitalName.OPEN, RawRumWebSocketOpenVitalProperties>
+  | RawRumWebSocketVitalPayloadOf<typeof WebSocketVitalName.CLOSING, RawRumWebSocketClosingVitalProperties>
+  | RawRumWebSocketVitalPayloadOf<typeof WebSocketVitalName.CLOSED, RawRumWebSocketClosedVitalProperties>
 
 export type RawRumEvent =
   | RawRumErrorEvent
@@ -416,3 +528,4 @@ export type RawRumEvent =
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
+  | RawRumWebSocketVitalEvent
