@@ -22,6 +22,12 @@ export function mockClock() {
     pendingMicroTasks.push(callback)
   })
 
+  function flushPendingMicroTasks() {
+    while (pendingMicroTasks.length > 0) {
+      pendingMicroTasks.shift()!()
+    }
+  }
+
   return {
     /**
      * Returns a RelativeTime representing the time it was X milliseconds after the `mockClock()`
@@ -34,8 +40,9 @@ export function mockClock() {
      */
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
     tick: (ms: number) => {
-      pendingMicroTasks.splice(0).forEach((task) => task())
+      flushPendingMicroTasks()
       jasmine.clock().tick(ms)
+      flushPendingMicroTasks()
     },
     setDate: (date: Date) => jasmine.clock().mockDate(date),
   }
