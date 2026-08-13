@@ -117,6 +117,13 @@ function createWebSocketObservable() {
       globalObject.WebSocket.prototype,
       'send',
       ({ target: instance, parameters: [data], onPostCall }) => {
+        // only an OPEN socket sends: per spec the payload is rejected before the handshake completed
+        // and silently discarded once the socket is closing or closed, and a payload that never
+        // reached the wire is not an outbound message
+        if (instance.readyState !== READY_STATE_OPEN) {
+          return
+        }
+
         const size = computePayloadSize(data)
         const bufferedAmountPreSend = instance.bufferedAmount
 
