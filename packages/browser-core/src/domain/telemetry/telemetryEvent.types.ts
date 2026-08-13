@@ -464,6 +464,36 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       use_remote_configuration_proxy?: boolean
       /**
+       * Metadata of the remote configuration currently applied for this session
+       */
+      remote_configuration?: {
+        /**
+         * Identifier of the remote configuration bundle this metadata belongs to
+         */
+        config_id?: string
+        /**
+         * CDN version identifier of the applied configuration
+         */
+        version_id?: string
+        /**
+         * CDN publish timestamp of the applied configuration, in ms from epoch
+         */
+        last_modified?: number
+        /**
+         * Timestamp at which the device fetched and cached this configuration version, in ms from epoch
+         */
+        last_synced?: number
+        /**
+         * Timestamp at which this configuration version was first observed as applied by the device, in ms from epoch. Stamped once and reused on every subsequent session that runs on the same version
+         */
+        first_applied?: number
+        /**
+         * Identifier of the sync that produced this configuration version, used to deduplicate repeat sessions from the same device without a persistent identifier
+         */
+        sync_id?: string
+        [k: string]: unknown
+      }
+      /**
        * The percentage of sessions with Profiling enabled
        */
       profiling_sample_rate?: number
@@ -487,6 +517,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the beta track WebSockets feature is enabled
        */
       beta_track_web_sockets?: boolean
+      /**
+       * Whether tracing feature's client-side-stats generation is enabled
+       */
+      use_client_side_stats?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -598,7 +632,7 @@ export interface CommonTelemetryProperties {
     | 'unity'
     | 'kotlin-multiplatform'
     | 'electron'
-    | 'rum-cpp'
+    | 'cpp'
     | 'maui'
   /**
    * The version of the SDK generating the telemetry event

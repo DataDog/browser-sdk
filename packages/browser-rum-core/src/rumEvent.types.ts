@@ -104,7 +104,7 @@ export type RumActionEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the action starting in the foreground (focus in browser)
        */
@@ -178,6 +178,9 @@ export type RumTransitionEvent = CommonProperties & {
    * RUM event type
    */
   readonly type: 'transition'
+  readonly view: {
+    [k: string]: unknown
+  }
   /**
    * Stream properties
    */
@@ -487,7 +490,7 @@ export type RumErrorEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the error starting in the foreground (focus in browser)
        */
@@ -536,6 +539,9 @@ export type RumLongTaskEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'long_task'
+    readonly view: {
+      [k: string]: unknown
+    }
     /**
      * Long Task properties
      */
@@ -669,6 +675,9 @@ export type RumResourceEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'resource'
+    readonly view: {
+      [k: string]: unknown
+    }
     /**
      * Resource properties
      */
@@ -825,6 +834,10 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other'
       /**
+       * Whether the resource was served from the device's local cache
+       */
+      readonly local_cache_hit?: boolean
+      /**
        * The provider for this resource
        */
       readonly provider?: {
@@ -943,9 +956,18 @@ export type RumViewUpdateEvent = ViewContainerSchema &
      * RUM event type
      */
     readonly type: 'view_update'
+    readonly view: {
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
-export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent
+export type RumVitalEvent =
+  | RumVitalDurationEvent
+  | RumVitalOperationStepEvent
+  | RumVitalWebsocketConnectingEvent
+  | RumVitalWebsocketOpenEvent
+  | RumVitalWebsocketClosingEvent
+  | RumVitalWebsocketClosedEvent
 /**
  * Schema for a duration vital event.
  */
@@ -975,6 +997,9 @@ export type RumVitalEventCommonProperties = CommonProperties &
      * RUM event type
      */
     readonly type: 'vital'
+    readonly view: {
+      [k: string]: unknown
+    }
     /**
      * Vital properties
      */
@@ -1029,6 +1054,188 @@ export type RumVitalOperationStepEvent = RumVitalEventCommonProperties & {
      * Reason for the failure of the step, if applicable
      */
     readonly failure_reason?: 'error' | 'abandoned' | 'other'
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema for the vital reported when a WebSocket connection is created. Reported exactly once per connection, when the WebSocket is constructed. Reported with vital.name websocket_connecting
+ */
+export type RumVitalWebsocketConnectingEvent = RumVitalWebsocketCommonProperties & {
+  /**
+   * Vital properties
+   */
+  readonly vital?: {
+    /**
+     * WebSocket properties. The identity of the connection is reported on this vital only, and is not repeated on the vitals of the later phases
+     */
+    readonly websocket?: {
+      /**
+       * URL the connection was opened on, without its query string
+       */
+      readonly url: string
+      /**
+       * Subprotocols the connection was requested with. Omitted when none was requested
+       */
+      readonly requested_protocols?: string[]
+      /**
+       * Date the WebSocket was constructed, in ms from epoch
+       */
+      readonly connecting_date: number
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema of common properties for a WebSocket vital event. One connection reports a stream of vitals over its lifetime, one per phase, all sharing the same vital.websocket.id
+ */
+export type RumVitalWebsocketCommonProperties = RumVitalEventCommonProperties & {
+  /**
+   * Vital properties
+   */
+  readonly vital?: {
+    /**
+     * Type of the vital.
+     */
+    readonly type: 'websocket'
+    /**
+     * Name of the vital, identifying the phase of the connection it reports: websocket_connecting, websocket_open, websocket_closing or websocket_closed
+     */
+    readonly name: string
+    /**
+     * WebSocket properties
+     */
+    readonly websocket: {
+      /**
+       * UUID of the WebSocket connection, stable across every vital reported for that connection. It is not vital.id, which identifies a single vital
+       */
+      readonly id: string
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema for the vital reported when a WebSocket connection opens, then repeatedly as a heartbeat while it stays open. Reported with vital.name websocket_open
+ */
+export type RumVitalWebsocketOpenEvent = RumVitalWebsocketCommonProperties & {
+  /**
+   * Vital properties
+   */
+  readonly vital?: {
+    /**
+     * WebSocket properties
+     */
+    readonly websocket?: {
+      /**
+       * Whether the opening handshake succeeded
+       */
+      readonly open_handshake_succeeded: boolean
+      /**
+       * Interval between the connecting date and the open date of the connection, in nanoseconds
+       */
+      readonly connecting_duration: number
+      /**
+       * Date the connection opened, in ms from epoch
+       */
+      readonly open_date: number
+      /**
+       * Subprotocol the server selected. Omitted when the server selected none
+       */
+      readonly selected_protocol?: string
+      /**
+       * Extensions the server negotiated, as the single string the connection exposes them as. Omitted when none was negotiated
+       */
+      readonly selected_extensions?: string
+      /**
+       * Version of the snapshot, incremented on every vital reporting one, so that heartbeats can be ordered when they are received out of sequence
+       */
+      readonly snapshot_version: number
+      /**
+       * Values of the connection at the time the vital was reported
+       */
+      readonly snapshot: RumVitalWebsocketSnapshot
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema for the vital reported when a WebSocket connection starts closing. Reported at most once per connection. Reported with vital.name websocket_closing
+ */
+export type RumVitalWebsocketClosingEvent = RumVitalWebsocketCommonProperties & {
+  /**
+   * Vital properties
+   */
+  readonly vital?: {
+    /**
+     * WebSocket properties
+     */
+    readonly websocket?: {
+      /**
+       * Date the connection was asked to close, in ms from epoch
+       */
+      readonly closing_date: number
+      /**
+       * Side that initiated the close. Only reported on this vital, and only as client, since a close observed from the application is always initiated by it. The other values are reported by the connection-level data derived from these vitals
+       */
+      readonly close_initiator: 'client' | 'server' | 'unknown'
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema for the vital reported when a WebSocket connection stops being tracked, whether because it closed or because tracking ended first. Reported at most once per connection. Reported with vital.name websocket_closed
+ */
+export type RumVitalWebsocketClosedEvent = RumVitalWebsocketCommonProperties & {
+  /**
+   * Vital properties
+   */
+  readonly vital?: {
+    /**
+     * WebSocket properties
+     */
+    readonly websocket?: {
+      /**
+       * Date tracking of the connection ended, in ms from epoch. It is the date the connection closed when the tracking end reason is close_event, and the date tracking stopped otherwise
+       */
+      readonly closed_date: number
+      /**
+       * Interval between the connecting date and the closed date of the connection, in nanoseconds. It is not vital.duration, which is reported by duration vitals
+       */
+      readonly duration: number
+      /**
+       * Why tracking of the connection ended
+       */
+      readonly tracking_end_reason: 'close_event' | 'session_end' | 'page_unloaded'
+      /**
+       * Code the connection was closed with. Reported when, and only when, the tracking end reason is close_event
+       */
+      readonly close_code?: number
+      /**
+       * Reason the connection was closed with, as an empty string when the other side supplied none. Reported when, and only when, the tracking end reason is close_event
+       */
+      readonly close_reason?: string
+      /**
+       * Whether the connection closed cleanly. Reported when, and only when, the tracking end reason is close_event
+       */
+      readonly was_clean?: boolean
+      /**
+       * Version of the snapshot, incremented on every vital reporting one, so that heartbeats can be ordered when they are received out of sequence
+       */
+      readonly snapshot_version: number
+      /**
+       * Values of the connection when tracking ended. Omitted when the connection never opened
+       */
+      readonly snapshot?: RumVitalWebsocketSnapshot
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -1107,12 +1314,12 @@ export interface CommonProperties {
     | 'unity'
     | 'kotlin-multiplatform'
     | 'electron'
-    | 'rum-cpp'
+    | 'cpp'
     | 'maui'
   /**
    * View properties
    */
-  readonly view: {
+  readonly view?: {
     /**
      * UUID of the view
      */
@@ -1392,6 +1599,10 @@ export interface CommonProperties {
        * The percentage of sessions with traced resources
        */
       readonly trace_sample_rate?: number
+      /**
+       * Session Replay experimental features enabled in the SDK configuration
+       */
+      readonly session_replay_experimental_features?: string[]
       [k: string]: unknown
     }
     /**
@@ -1453,7 +1664,7 @@ export interface ViewContainerSchema {
       | 'unity'
       | 'kotlin-multiplatform'
       | 'electron'
-      | 'rum-cpp'
+      | 'cpp'
       | 'maui'
     [k: string]: unknown
   }
@@ -2333,5 +2544,63 @@ export interface ViewAccessibilityProperties {
    * Indicates whether the right-to-left support is enabled.
    */
   readonly rtl_enabled?: boolean
+  [k: string]: unknown
+}
+/**
+ * Schema of the WebSocket connection values that change from one vital of a connection to the next. Both directions are present whenever the snapshot is, and are zero-filled while no message has been observed
+ */
+export interface RumVitalWebsocketSnapshot {
+  /**
+   * Messages received from the server
+   */
+  readonly inbound: RumVitalWebsocketMessageDirection
+  /**
+   * Messages sent to the server
+   */
+  readonly outbound: RumVitalWebsocketMessageDirection & {
+    /**
+     * Largest amount of bytes ever observed queued in the send buffer, sampled after each send is enqueued
+     */
+    readonly buffered_amount_max: number
+    /**
+     * Number of sends issued while the send buffer was already deep, that is while it held at least 65536 bytes right before the send
+     */
+    readonly backpressured_message_count: number
+    /**
+     * Amount of bytes still queued in the send buffer when tracking ended, in bytes. Set on the websocket_closed vital only
+     */
+    readonly buffered_amount_at_close?: number
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema of the messages observed in one direction of a WebSocket connection
+ */
+export interface RumVitalWebsocketMessageDirection {
+  /**
+   * Number of messages observed in this direction since the connection opened
+   */
+  readonly message_count: number
+  /**
+   * Sum of the payload sizes of the messages observed in this direction, in bytes
+   */
+  readonly message_size_total: number
+  /**
+   * Size of the largest single payload observed in this direction, in bytes. 0 while no message has been observed
+   */
+  readonly message_size_max: number
+  /**
+   * Longest interval between two consecutive messages observed in this direction, in nanoseconds, including the still-open interval since the last message. 0 until two messages have been observed. The interval before the first message is excluded from it, as it is reported by time_to_first_message
+   */
+  readonly longest_silence: number
+  /**
+   * Interval between the open date of the connection and the first message observed in this direction, in nanoseconds. Omitted until a first message has been observed
+   */
+  readonly time_to_first_message?: number
+  /**
+   * Interval between the last message observed in this direction and the closed date of the connection, in nanoseconds. Set on the websocket_closed vital only, and only when at least one message has been observed in this direction
+   */
+  readonly silence_before_close?: number
   [k: string]: unknown
 }
