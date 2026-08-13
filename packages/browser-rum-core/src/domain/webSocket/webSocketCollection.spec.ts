@@ -20,7 +20,7 @@ import {
 } from '@datadog/browser-core/test'
 import type { Duration } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
-import { mockRumConfiguration, mockViewHistory } from '../../../test'
+import { mockRumConfiguration } from '../../../test'
 import { VitalType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { DurationVital } from '../vital/vitalCollection'
@@ -64,7 +64,7 @@ describe('webSocketCollection', () => {
   }
 
   function startTracking() {
-    const tracker = trackWebSocket(createWebSocketDataObservable(), mockViewHistory(), addDurationVitalSpy)
+    const tracker = trackWebSocket(createWebSocketDataObservable(), addDurationVitalSpy)
     registerCleanupTask(tracker.stop)
     return tracker
   }
@@ -287,13 +287,7 @@ describe('webSocketCollection', () => {
       configuration = mockRumConfiguration({ betaTrackWebSockets: true }),
       bufferedDataObservable = createWebSocketDataObservable()
     ) {
-      const collection = startWebSocketCollection(
-        lifeCycle,
-        configuration,
-        mockViewHistory(),
-        addDurationVitalSpy,
-        bufferedDataObservable
-      )
+      const collection = startWebSocketCollection(lifeCycle, configuration, addDurationVitalSpy, bufferedDataObservable)
       registerCleanupTask(() => collection.stop())
       return collection
     }
@@ -351,7 +345,6 @@ describe('webSocketCollection', () => {
         const collection = startWebSocketCollection(
           lifeCycle,
           mockRumConfiguration({ betaTrackWebSockets: true }),
-          mockViewHistory(),
           addDurationVital,
           bufferedDataObservable
         )

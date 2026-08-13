@@ -227,7 +227,6 @@ export function startRumEventCollection(
   const webSocketCollection = startWebSocketCollection(
     lifeCycle,
     configuration,
-    viewHistory,
     vitalCollection.addDurationVital,
     bufferedDataObservable
   )
