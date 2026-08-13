@@ -33,6 +33,7 @@ export class MockWebSocket extends EventTarget {
 
   url: string
   protocol = ''
+  extensions = ''
   bufferedAmount = 0
   readyState: number = MockWebSocket.CONNECTING
   onmessage: ((event: MessageEvent) => void) | null = null
