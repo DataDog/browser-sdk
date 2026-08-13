@@ -716,10 +716,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/rum-events-format@DataDog/rum-events-format#commit=ab3e7c5a13f1a6fed3d63bb22f1e8a9ebaa25671":
+"@datadog/rum-events-format@DataDog/rum-events-format#commit=9fa5cdf08c47483d372090c9c7d3646c518555b1":
   version: 0.0.0
-  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=ab3e7c5a13f1a6fed3d63bb22f1e8a9ebaa25671"
-  checksum: 10c0/2de9683a9f25443be33b1970f7fdd888beac24e4996edbe245744d9ce2d544e12ee5a80abcc503e3758edc457a4a7e552af515097dacf2f27f54fb45db301a4c
+  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=9fa5cdf08c47483d372090c9c7d3646c518555b1"
+  checksum: 10c0/9fd9756e63c6de53d23023763702ce0262d691651e470154528a38bfbfa699894a26b618fa5df83272696eeb6c9249ebdbf6283ea89e2c8c842c2fdc66837c8b
   languageName: node
   linkType: hard
 
@@ -787,7 +787,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint-community/eslint-utils@npm:^4.10.1, @eslint-community/eslint-utils@npm:^4.8.0, @eslint-community/eslint-utils@npm:^4.9.1":
+"@eslint-community/eslint-utils@npm:^4.10.1":
   version: 4.10.1
   resolution: "@eslint-community/eslint-utils@npm:4.10.1"
   dependencies:
@@ -795,6 +795,17 @@ __metadata:
   peerDependencies:
     eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
   checksum: 10c0/b514586655698bc6b74db72a496c77e813c78b63e36a83429845ac7057dd77113b0b6c31e6e590d5baaeee2abae6ea22363a41209bcafa078d895ab83ce83011
+  languageName: node
+  linkType: hard
+
+"@eslint-community/eslint-utils@npm:^4.8.0, @eslint-community/eslint-utils@npm:^4.9.1":
+  version: 4.9.1
+  resolution: "@eslint-community/eslint-utils@npm:4.9.1"
+  dependencies:
+    eslint-visitor-keys: "npm:^3.4.3"
+  peerDependencies:
+    eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
+  checksum: 10c0/dc4ab5e3e364ef27e33666b11f4b86e1a6c1d7cbf16f0c6ff87b1619b3562335e9201a3d6ce806221887ff780ec9d828962a290bb910759fd40a674686503f02
   languageName: node
   linkType: hard
 
@@ -2128,14 +2139,14 @@ __metadata:
   linkType: hard
 
 "@napi-rs/wasm-runtime@npm:^1.1.4":
-  version: 1.2.2
-  resolution: "@napi-rs/wasm-runtime@npm:1.2.2"
+  version: 1.1.6
+  resolution: "@napi-rs/wasm-runtime@npm:1.1.6"
   dependencies:
     "@tybys/wasm-util": "npm:^0.10.3"
   peerDependencies:
-    "@emnapi/core": ^1.7.1 || ^2.0.0-alpha.3
-    "@emnapi/runtime": ^1.7.1 || ^2.0.0-alpha.3
-  checksum: 10c0/670ff8359761660f58d95a29fe22ac959d2c295675144fe9bc35118b0e723d1e0ac192df9896ba428eb13930cf0893b632606b70ccaea259fd6eca1836c2eb09
+    "@emnapi/core": ^1.7.1
+    "@emnapi/runtime": ^1.7.1
+  checksum: 10c0/344518bf3ef65051dda4c00969f293aa4a21ab7dc7822b3f48519b17cd5eaa3f0bc34898d115d50ba59b1817a0cb905d46f7a7223c8249239cd14c28db388e10
   languageName: node
   linkType: hard
 
@@ -5304,7 +5315,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wxt-dev/browser@npm:*, @wxt-dev/browser@npm:>=0.1":
+"@wxt-dev/browser@npm:*":
+  version: 0.2.5
+  resolution: "@wxt-dev/browser@npm:0.2.5"
+  dependencies:
+    "@types/filesystem": "npm:*"
+    "@types/har-format": "npm:*"
+  checksum: 10c0/0e47c8fbfb4cd002dd2a08dbf48dbfd92a0495a9f6b1e762fef405194af3211e1e6815251c16583cb0b60e00bbb36927aa5ae6b6b9459ff87f529e3dac1da20a
+  languageName: node
+  linkType: hard
+
+"@wxt-dev/browser@npm:>=0.1":
   version: 0.2.7
   resolution: "@wxt-dev/browser@npm:0.2.7"
   dependencies:
@@ -6220,7 +6241,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "browser-sdk@workspace:."
   dependencies:
-    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=ab3e7c5a13f1a6fed3d63bb22f1e8a9ebaa25671"
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=9fa5cdf08c47483d372090c9c7d3646c518555b1"
     "@eslint/js": "npm:10.0.1"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@microsoft/api-extractor": "npm:7.59.0"
@@ -11869,7 +11890,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.16, nanoid@npm:^3.3.18":
+"nanoid@npm:^3.3.16":
+  version: 3.3.16
+  resolution: "nanoid@npm:3.3.16"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 10c0/bbf2dcffe22d2b62d16de2711752070b539c0f644c7916f823ad6521986b2078cbe524f2d6240f58c46e9141ea0c7b87a029e100c0f7f175228cacaf30e41bba
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^3.3.18":
   version: 3.3.19
   resolution: "nanoid@npm:3.3.19"
   bin:
@@ -15474,12 +15504,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^5.5.0, type-fest@npm:^5.8.0":
+"type-fest@npm:^5.5.0":
   version: 5.9.0
   resolution: "type-fest@npm:5.9.0"
   dependencies:
     tagged-tag: "npm:^1.0.0"
   checksum: 10c0/9bf14a49454b9b40d9fe85e563a4cf90990bbe7c75958665b72660b4197a905f247be682a7757cac7c8fa60fc0eae32cc8cf51f80a88e15f0a3d4a8ec07eb5b6
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^5.8.0":
+  version: 5.8.0
+  resolution: "type-fest@npm:5.8.0"
+  dependencies:
+    tagged-tag: "npm:^1.0.0"
+  checksum: 10c0/c8aae118a763d550a9552a511dff6b71840a23dab4edf693cf1c4df22596942794e6f6723389bd9036a90182249d915158bacf0815a1ae87f05f901b1d5f574e
   languageName: node
   linkType: hard
 
@@ -15648,7 +15687,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:8.10.2, undici@npm:^8.4.1, undici@npm:^8.5.0":
+"undici@npm:8.10.2":
   version: 8.10.2
   resolution: "undici@npm:8.10.2"
   checksum: 10c0/66d7fc69149207cab570d6abbc9e965b6afe1ae889a7d46945b431165c973d6a56f3dd8b70a856e7ae1e550b6366a1cde6f06e68640587f0dadca38de72995ee
@@ -15666,6 +15705,13 @@ __metadata:
   version: 7.29.0
   resolution: "undici@npm:7.29.0"
   checksum: 10c0/85ea96e91e7f3de24de678cbbc54230fdd641a3b0643005f2aef044af1f1a2db8fbecb88b28e6fa78bb41ffeafda4479b57075b6b6ab92beac4b7b5ab53f9b10
+  languageName: node
+  linkType: hard
+
+"undici@npm:^8.4.1, undici@npm:^8.5.0":
+  version: 8.9.0
+  resolution: "undici@npm:8.9.0"
+  checksum: 10c0/e3d9fa35a9aa8360d9f56e66bd372f451ee053e25066a97fd9fab3816267035660f67870c6d709a58a5411551657af78c4475be5b31c113b04f70251309900d0
   languageName: node
   linkType: hard
 
