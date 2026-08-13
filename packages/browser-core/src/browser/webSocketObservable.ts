@@ -9,6 +9,12 @@ import { addEventListener } from './addEventListener'
 
 type GlobalWithWebSocket = GlobalObject & { WebSocket: typeof WebSocket }
 
+// `readyState` values, as fixed by the WebSocket specification. Held here rather than read off the
+// global constructor, which a third party may have replaced with something that does not carry
+// them, and as plain constants rather than an enum so that nothing of them is shipped.
+const READY_STATE_CONNECTING = 0
+const READY_STATE_OPEN = 1
+
 function isGlobalWithWebSocket(global: GlobalObject): global is GlobalWithWebSocket {
   return typeof (global as { WebSocket?: unknown }).WebSocket === 'function'
 }
@@ -45,6 +51,12 @@ export interface WebSocketMessageOutContext {
   at: ClocksState
 }
 
+export interface WebSocketClosingContext {
+  state: 'closing'
+  instance: WebSocket
+  at: ClocksState
+}
+
 export interface WebSocketClosedContext {
   state: 'closed'
   instance: WebSocket
@@ -61,6 +73,7 @@ export type WebSocketContext =
   | WebSocketOpenContext
   | WebSocketMessageInContext
   | WebSocketMessageOutContext
+  | WebSocketClosingContext
   | WebSocketClosedContext
 
 let webSocketObservable: Observable<WebSocketContext> | undefined
@@ -119,9 +132,35 @@ function createWebSocketObservable() {
       }
     )
 
+    const { stop: stopInstrumentingClose } = instrumentMethod(
+      globalObject.WebSocket.prototype,
+      'close',
+      ({ target: instance, onPostCall }) => {
+        // `close()` is a no-op on a socket that is already closing or closed, so this synchronous
+        // read is both what keeps us from reporting such a call and what makes a defensive double
+        // `close()` notify once. The browser fires no event for this transition, so there is nothing
+        // else to observe it from.
+        if (instance.readyState !== READY_STATE_CONNECTING && instance.readyState !== READY_STATE_OPEN) {
+          return
+        }
+
+        // the date of the call itself, which is what the closing phase is reported at
+        const at = clocksNow()
+
+        onPostCall(() => {
+          observable.notify({
+            state: 'closing',
+            instance,
+            at,
+          })
+        })
+      }
+    )
+
     return () => {
       stopInstrumentingConstructor()
       stopInstrumentingSend()
+      stopInstrumentingClose()
     }
   })
 }
