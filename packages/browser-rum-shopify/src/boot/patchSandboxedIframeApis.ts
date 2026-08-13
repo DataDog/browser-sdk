@@ -11,8 +11,10 @@ import { globalObject } from '@datadog/browser-core'
  * denied without Permissions Policy delegation), but the SDK only catches an async rejection.
  * - `getPristineWindow()` creates a nested iframe to read an unpatched `URL` constructor; that
  * nested iframe's `contentWindow` is cross-origin here, and reading a property off it throws.
+ * - `document.hasFocus()` always returns `false`: the pixel iframe has no focusable UI, so it can
+ * never hold browser focus regardless of whether the customer is actively looking at the page.
  * Shimming these away makes the SDK fall back to code paths that do work in this context
- * (`document.cookie`, same-document promise chaining, `globalObject.URL`).
+ * (`document.cookie`, same-document promise chaining, `globalObject.URL`, always-focused state).
  */
 export function patchSandboxedIframeApis() {
   disableProperty(globalObject, 'cookieStore')
@@ -23,6 +25,12 @@ export function patchSandboxedIframeApis() {
       return null
     },
     configurable: true,
+  })
+
+  Object.defineProperty(document, 'hasFocus', {
+    value: () => true,
+    configurable: true,
+    writable: true,
   })
 }
 
