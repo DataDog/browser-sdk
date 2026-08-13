@@ -7,10 +7,13 @@ import {
   getSfLwcUsername,
 } from '../../../../scripts/lib/secrets.ts'
 
-export type SalesforceApp = 'lwc' | 'experience-cloud'
+export type SalesforceApp = 'lwc' | 'experience-cloud' | 'experience-cloud-headmarkup'
 
 const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
-const experienceSitePath = '/sfexperiencecloud/'
+const experienceSitePaths: Record<Exclude<SalesforceApp, 'lwc'>, string> = {
+  'experience-cloud': '/sfexperiencecloud/',
+  'experience-cloud-headmarkup': '/sfexperienceheadmarkup/',
+}
 
 let salesforceLwcSession: Promise<SalesforceLwcSession> | undefined
 
@@ -20,7 +23,7 @@ export interface SalesforceLwcSession {
 }
 
 export async function buildSalesforceUrl(app: SalesforceApp): Promise<string> {
-  return app === 'lwc' ? await buildSalesforceLwcUrl() : buildSalesforceExperienceUrl()
+  return app === 'lwc' ? await buildSalesforceLwcUrl() : buildSalesforceExperienceUrl(app)
 }
 
 export function getSalesforceLwcSession(): Promise<SalesforceLwcSession> {
@@ -93,7 +96,7 @@ async function getAccessToken(
 // Unlike the Lightning app, the Experience Cloud site is public, so we don't need to
 // authenticate or exchange a frontdoor token: we can derive the site URL directly from the
 // org's instance URL.
-function buildSalesforceExperienceUrl(): string {
+function buildSalesforceExperienceUrl(app: Exclude<SalesforceApp, 'lwc'>): string {
   const instanceUrl = getSfLwcInstanceUrl()
   if (!instanceUrl) {
     console.error('Salesforce credentials are not set')
@@ -101,5 +104,5 @@ function buildSalesforceExperienceUrl(): string {
   }
 
   const siteDomain = instanceUrl.replace('.my.salesforce.com', '.my.site.com')
-  return `${siteDomain}${experienceSitePath}`
+  return `${siteDomain}${experienceSitePaths[app]}`
 }
