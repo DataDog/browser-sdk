@@ -21,6 +21,7 @@ import {
   setTimeout,
   Observable,
   createContextManager,
+  queueMicrotask,
   mockable,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
@@ -286,7 +287,11 @@ function newView(
   })
 
   // Initial view update
-  triggerViewUpdate()
+  mockable(queueMicrotask)(() => {
+    if (documentVersion === 0) {
+      triggerViewUpdate()
+    }
+  })
 
   // View context update should always be throttled
   contextManager.changeObservable.subscribe(scheduleViewUpdate)
