@@ -145,6 +145,22 @@ describe('webSocketObservable', () => {
         expect(openContexts.length).toBe(1)
         expect(openContexts[0].protocol).toBe('')
       })
+
+      it('includes the extensions the server selected', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        const negotiatedExtensions = 'permessage-deflate; client_max_window_bits'
+        ws.extensions = negotiatedExtensions
+        ws.simulateOpen()
+
+        expect(getContexts('open')[0].extensions).toBe(negotiatedExtensions)
+      })
+
+      it('does not include extensions when the server negotiated none', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+
+        expect(getContexts('open')[0].extensions).toBeUndefined()
+      })
     })
 
     describe('message-in context', () => {
@@ -251,6 +267,22 @@ describe('webSocketObservable', () => {
         expect(closeContexts[0].reason).toBe(closeReason)
         expect(closeContexts[0].wasClean).toBe(wasClean)
         expect(closeContexts[0].at.timeStamp).toEqual(jasmine.any(Number))
+      })
+
+      it('reports the bytes still queued in the send buffer at close', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        const bufferedAmount = 1024
+        ws.bufferedAmount = bufferedAmount
+        ws.simulateClose(1006, '', false)
+
+        expect(getContexts('closed')[0].bufferedAmountAtClose).toBe(bufferedAmount)
+      })
+
+      it('reports a zero buffered amount when the send buffer drained', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateClose(1000, 'bye', true)
+
+        expect(getContexts('closed')[0].bufferedAmountAtClose).toBe(0)
       })
     })
 
