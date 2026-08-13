@@ -224,12 +224,7 @@ export function startRumEventCollection(
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
-  const webSocketCollection = startWebSocketCollection(
-    lifeCycle,
-    configuration,
-    viewHistory,
-    vitalCollection.addDurationVital
-  )
+  const webSocketCollection = startWebSocketCollection(lifeCycle, configuration, vitalCollection.addDurationVital)
   cleanupTasks.push(webSocketCollection.stop)
 
   const internalContext = startInternalContext(
