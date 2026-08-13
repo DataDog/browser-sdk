@@ -267,10 +267,32 @@ describe('webSocketObservable', () => {
         expect(getContexts('message-out')[0].size).toBe(blob.size)
       })
 
-      it('emits nothing for a send that the socket rejected outside OPEN', () => {
+      it('emits nothing for a send the socket rejected before the handshake completed', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
 
         expect(() => ws.send('hello')).toThrowError(DOMException)
+
+        expect(ws.sentData).toEqual([])
+        expect(getContexts('message-out').length).toBe(0)
+      })
+
+      it('emits nothing for a send the socket discarded once the closing handshake started', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+        ws.close()
+
+        ws.send('hello')
+
+        expect(ws.sentData).toEqual([])
+        expect(getContexts('message-out').length).toBe(0)
+      })
+
+      it('emits nothing for a send the socket discarded once it had closed', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+        ws.simulateClose(1000, 'bye', true)
+
+        ws.send('hello')
 
         expect(ws.sentData).toEqual([])
         expect(getContexts('message-out').length).toBe(0)
