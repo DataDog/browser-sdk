@@ -20,33 +20,6 @@ import type { DurationVital } from '../vital/vitalCollection'
 export const WEBSOCKET_CONNECTING_VITAL_NAME = 'websocket-connecting'
 export const WEBSOCKET_CLOSED_VITAL_NAME = 'websocket-closed'
 
-export type WebSocketTrackingEndReason = 'close_event' | 'session_end'
-
-export interface WebSocketCompleteEvent {
-  webSocket: WebSocket
-  connectionId: string
-  url: string
-  protocol?: string
-  startClocks: ClocksState
-  endClocks: ClocksState
-  startViewId?: string
-  endViewId?: string
-  messagesIn: { count: number; size: number }
-  messagesOut: { count: number; size: number }
-  firstMessageInOffset?: Duration
-  firstMessageOutOffset?: Duration
-  lastMessageInAt?: TimeStamp
-  longestInboundSilence: Duration
-  bufferedAmountMax: number
-  inboundIdleDurationBeforeClose?: Duration
-  closeCode?: number
-  closeReason?: string
-  wasClean?: boolean
-  handshakeSucceeded: boolean
-  trackingEndReason: WebSocketTrackingEndReason
-  setupDuration: Duration
-}
-
 interface WebSocketConnection {
   webSocket: WebSocket
   connectionId: string
@@ -66,7 +39,7 @@ interface WebSocketConnection {
 }
 
 export interface WebSocketConnectionTracker {
-  flushOpenConnections: (reason: WebSocketTrackingEndReason, endClocks?: ClocksState) => void
+  flushOpenConnections: (endClocks?: ClocksState) => void
   stop: () => void
 }
 
@@ -86,19 +59,18 @@ export function startWebSocketCollection(
     return { stop: noop }
   }
 
-  const tracker = trackWebSocket(lifeCycle, bufferedDataObservable, viewHistory, addDurationVital)
+  const tracker = trackWebSocket(bufferedDataObservable, viewHistory, addDurationVital)
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
-  // connections are finalized once with trackingEndReason "session_end"; later events on the same
-  // WebSocket instance are ignored.
+  // connections are finalized once; later events on the same WebSocket instance are ignored.
   const sessionExpiredSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, ({ endClocks }) => {
-    tracker.flushOpenConnections('session_end', endClocks)
+    tracker.flushOpenConnections(endClocks)
   })
 
   return {
     stop: () => {
       sessionExpiredSubscription.unsubscribe()
-      tracker.flushOpenConnections('session_end')
+      tracker.flushOpenConnections()
       tracker.stop()
     },
   }
@@ -112,30 +84,22 @@ function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
 }
 
 export function trackWebSocket(
-  lifeCycle: LifeCycle,
   bufferedDataObservable: Observable<BufferedData>,
   viewHistory: ViewHistory,
   addDurationVital: (vital: DurationVital) => void
 ): WebSocketConnectionTracker {
   const webSocketRegistry = new Map<WebSocket, WebSocketConnection>()
 
-  function completeConnection(
-    webSocket: WebSocketConnection,
-    endInfo: { at: ClocksState; code?: number; reason?: string; wasClean?: boolean },
-    reason: WebSocketTrackingEndReason
-  ) {
-    const completedEvent = buildCompletedEvent(webSocket, endInfo, reason, viewHistory)
-    lifeCycle.notify(LifeCycleEventType.WEBSOCKET_COMPLETED, completedEvent)
-
+  function completeConnection(webSocket: WebSocketConnection, endClocks: ClocksState) {
     addDurationVital({
       id: generateUUID(),
       name: WEBSOCKET_CLOSED_VITAL_NAME,
       type: VitalType.DURATION,
-      startClocks: completedEvent.endClocks,
+      startClocks: endClocks,
       duration: 0 as Duration,
       context: sanitize({
-        url: completedEvent.url,
-        connection_id: completedEvent.connectionId,
+        url: webSocket.url,
+        connection_id: webSocket.connectionId,
       }),
     })
   }
@@ -228,7 +192,7 @@ export function trackWebSocket(
 
         webSocketRegistry.delete(context.instance)
 
-        completeConnection(webSocket, context, 'close_event')
+        completeConnection(webSocket, context.at)
 
         return
       }
@@ -236,9 +200,9 @@ export function trackWebSocket(
   })
 
   return {
-    flushOpenConnections: (reason, endClocks = clocksNow()) => {
+    flushOpenConnections: (endClocks = clocksNow()) => {
       webSocketRegistry.forEach((webSocket) => {
-        completeConnection(webSocket, { at: endClocks }, reason)
+        completeConnection(webSocket, endClocks)
       })
 
       webSocketRegistry.clear()
@@ -277,36 +241,5 @@ function recordMessageTiming(webSocket: WebSocketConnection, at: ClocksState, di
       }
     }
     webSocket.lastMessageInAt = at.timeStamp
-  }
-}
-
-function buildCompletedEvent(
-  webSocket: WebSocketConnection,
-  endInfo: { at: ClocksState; code?: number; reason?: string; wasClean?: boolean },
-  trackingEndReason: WebSocketTrackingEndReason,
-  viewHistory: ViewHistory
-): WebSocketCompleteEvent {
-  const endClocks = endInfo.at
-  const endViewId =
-    trackingEndReason === 'session_end'
-      ? // On session_end, the websocket event can be received after the active view has been closed.
-        viewHistory.findView(endClocks.relative, { returnInactive: true })?.id
-      : viewHistory.findView(endClocks.relative)?.id
-  const inboundIdleDurationBeforeClose =
-    webSocket.lastMessageInAt !== undefined ? elapsed(webSocket.lastMessageInAt, endClocks.timeStamp) : undefined
-
-  const { openClocks, ...rest } = webSocket
-
-  return {
-    ...rest,
-    endClocks,
-    endViewId,
-    inboundIdleDurationBeforeClose,
-    trackingEndReason,
-    handshakeSucceeded: openClocks !== undefined,
-    setupDuration: webSocket.setupDuration ?? elapsed(webSocket.startClocks.timeStamp, endClocks.timeStamp),
-    closeCode: endInfo.code,
-    closeReason: endInfo.reason,
-    wasClean: endInfo.wasClean,
   }
 }

@@ -1,6 +1,6 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import type { MatchOption, TaskQueue } from '@datadog/browser-core'
-import { elapsed, relativeToClocks, toServerDuration } from '@datadog/js-core/time'
+import { elapsed, toServerDuration } from '@datadog/js-core/time'
 import { createTaskQueue, display, RequestType, ResourceType } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
@@ -14,7 +14,7 @@ import {
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { getNavigationEntry } from '../../browser/performanceUtils'
-import type { RumResourceEventDomainContext, RumWebSocketResourceEventDomainContext } from '../../domainContext.types'
+import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumEvent, RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { MatchHeader, RumConfiguration } from '../configuration'
@@ -24,7 +24,6 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
 import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
-import type { WebSocketCompleteEvent } from '../webSocket/webSocketCollection'
 import { REQUEST_MATCHING_DELAY, startResourceCollection } from './resourceCollection'
 
 function buildMatchHeadersForAllUrls(headerNames: MatchOption[]): MatchHeader[] {
@@ -115,37 +114,6 @@ describe('resourceCollection', () => {
       error: undefined,
       xhr: undefined,
     })
-  })
-
-  it('should emit the correct domainContext for websocket resources', () => {
-    setupResourceCollection()
-
-    const webSocket = {} as WebSocket
-    const startClocks = relativeToClocks(0 as RelativeTime)
-    const endClocks = relativeToClocks(100 as RelativeTime)
-    const webSocketCompleteEvent: WebSocketCompleteEvent = {
-      webSocket,
-      connectionId: 'connection-id',
-      url: 'wss://example.com/socket',
-      protocol: 'chat.v1',
-      startClocks,
-      endClocks,
-      messagesIn: { count: 2, size: 200 },
-      messagesOut: { count: 1, size: 50 },
-      longestInboundSilence: 0 as Duration,
-      bufferedAmountMax: 0,
-      handshakeSucceeded: true,
-      trackingEndReason: 'close_event',
-      setupDuration: 10 as Duration,
-    }
-
-    lifeCycle.notify(LifeCycleEventType.WEBSOCKET_COMPLETED, webSocketCompleteEvent)
-
-    expect(rawRumEvents[0].domainContext).toEqual({
-      isManual: false,
-      isWebSocket: true,
-      webSocket,
-    } satisfies RumWebSocketResourceEventDomainContext)
   })
 
   it('should create resource from completed XHR request', () => {

@@ -18,14 +18,12 @@ import {
   type Clock,
   type MockWebSocket,
 } from '@datadog/browser-core/test'
-import type { Duration, RelativeTime } from '@datadog/js-core/time'
-import { elapsed, relativeToClocks } from '@datadog/js-core/time'
+import type { Duration } from '@datadog/js-core/time'
+import { relativeToClocks } from '@datadog/js-core/time'
 import { mockRumConfiguration, mockViewHistory } from '../../../test'
 import { VitalType } from '../../rawRumEvent.types'
-import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { DurationVital } from '../vital/vitalCollection'
-import type { WebSocketCompleteEvent } from './webSocketCollection'
 import {
   startWebSocketCollection,
   trackWebSocket,
@@ -37,7 +35,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 describe('webSocketCollection', () => {
   let lifeCycle: LifeCycle
-  let webSocketCompleteEvents: WebSocketCompleteEvent[]
+  let addDurationVitalSpy: jasmine.Spy<(vital: DurationVital) => void>
   let clock: Clock
 
   beforeEach(() => {
@@ -45,11 +43,8 @@ describe('webSocketCollection', () => {
     mockWebSocket()
     setAllowUntrustedEvents(true)
     lifeCycle = new LifeCycle()
-    webSocketCompleteEvents = []
+    addDurationVitalSpy = jasmine.createSpy()
     registerCleanupTask(resetAllowUntrustedEvents)
-    lifeCycle.subscribe(LifeCycleEventType.WEBSOCKET_COMPLETED, (webSocket) => {
-      webSocketCompleteEvents.push(webSocket)
-    })
   })
 
   function expireSession(endClocks = relativeToClocks(clock.relative(0))) {
@@ -68,13 +63,31 @@ describe('webSocketCollection', () => {
     return observable
   }
 
-  function startTracking(
-    viewHistory = mockViewHistory(),
-    addDurationVital: (vital: DurationVital) => void = jasmine.createSpy()
-  ) {
-    const tracker = trackWebSocket(lifeCycle, createWebSocketDataObservable(), viewHistory, addDurationVital)
+  function startTracking() {
+    const tracker = trackWebSocket(createWebSocketDataObservable(), mockViewHistory(), addDurationVitalSpy)
     registerCleanupTask(tracker.stop)
     return tracker
+  }
+
+  function emittedVitals(name?: string) {
+    const vitals = addDurationVitalSpy.calls.all().map((call) => call.args[0])
+    return name === undefined ? vitals : vitals.filter((vital) => vital.name === name)
+  }
+
+  function connectingVitals() {
+    return emittedVitals(WEBSOCKET_CONNECTING_VITAL_NAME)
+  }
+
+  function closedVitals() {
+    return emittedVitals(WEBSOCKET_CLOSED_VITAL_NAME)
+  }
+
+  function vitalContext(vital: DurationVital) {
+    return vital.context as { url: string; connection_id: string }
+  }
+
+  function connectionIds(vitals: DurationVital[]) {
+    return vitals.map((vital) => vitalContext(vital).connection_id)
   }
 
   function notifyConnecting(startRelative = 0, url = 'wss://example.com/socket', protocols?: string | string[]) {
@@ -108,92 +121,16 @@ describe('webSocketCollection', () => {
     clock.setDate(new Date(clock.timeStamp(relative)))
   }
 
-  describe('handshakeSucceeded', () => {
-    it('is true when the open event fired before completion', () => {
-      const tracker = startTracking()
-
-      const closedSocket = notifyConnecting()
-      notifyOpen(closedSocket, 10)
-      notifyClosed(closedSocket, 40, 1000, 'bye', true)
-      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeTrue()
-
-      const flushedSocket = notifyConnecting()
-      notifyOpen(flushedSocket, 10)
-      tracker.flushOpenConnections('session_end')
-      expect(webSocketCompleteEvents[1].handshakeSucceeded).toBeTrue()
-    })
-
-    it('is false when the open event never fired before completion', () => {
-      const tracker = startTracking()
-      const closedSocket = notifyConnecting()
-      notifyClosed(closedSocket, 25, 1006, 'abnormal', false)
-      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeFalse()
-
-      notifyConnecting()
-      tracker.flushOpenConnections('session_end')
-      expect(webSocketCompleteEvents[1].handshakeSucceeded).toBeFalse()
-    })
-  })
-
-  it('emits a completed event on close with tracking_end_reason="close_event"', () => {
-    const url = 'wss://example.com/socket'
-    const protocol = 'chat.v1'
-    const messageInSize = 100
-    const messageOutSize = 50
-    const bufferedAmount = 8
-    const closeCode = 1000
-    const closeReason = 'bye'
-
-    startTracking()
-    const socket = notifyConnecting(0, url)
-    notifyOpen(socket, 10, protocol)
-    notifyMessageIn(socket, 20, messageInSize)
-    notifyMessageOut(socket, 30, messageOutSize, bufferedAmount)
-    notifyClosed(socket, 40, closeCode, closeReason, true)
-
-    expect(webSocketCompleteEvents.length).toBe(1)
-    const webSocket = webSocketCompleteEvents[0]
-
-    expect(webSocket.trackingEndReason).toBe('close_event')
-    expect(webSocket.closeCode).toBe(closeCode)
-    expect(webSocket.closeReason).toBe(closeReason)
-    expect(webSocket.wasClean).toBeTrue()
-    expect(webSocket.url).toBe(url)
-    expect(webSocket.protocol).toBe(protocol)
-    expect(webSocket.messagesIn).toEqual({ count: 1, size: messageInSize })
-    expect(webSocket.messagesOut).toEqual({ count: 1, size: messageOutSize })
-    expect(webSocket.bufferedAmountMax).toBe(bufferedAmount)
-  })
-
-  it('removes query parameters from the completed WebSocket URL', () => {
-    const url = 'wss://example.com:8443/path/socket%3Froom?token=secret&tenant=acme'
-
-    startTracking()
-    const socket = notifyConnecting(0, url)
-    notifyClosed(socket, 10, 1000, 'bye', true)
-
-    expect(webSocketCompleteEvents[0].url).toBe('wss://example.com:8443/path/socket%3Froom')
-  })
-
-  it('keeps the server-negotiated protocol on the completed event', () => {
-    startTracking()
-    const socket = notifyConnecting(0, 'wss://example.com/socket', ['auth-token', 'chat.v1'])
-    notifyOpen(socket, 5, 'chat.v1')
-    notifyClosed(socket, 10, 1000, 'bye', true)
-
-    expect(webSocketCompleteEvents[0].protocol).toBe('chat.v1')
-  })
-
   it('generates a unique connection_id per connection', () => {
     startTracking()
     const firstSocket = notifyConnecting()
     notifyClosed(firstSocket, 1, 1000, 'reason_a', true)
-    const firstId = webSocketCompleteEvents[0].connectionId
 
     const secondSocket = notifyConnecting()
     notifyClosed(secondSocket, 1, 1000, 'reason_b', true)
 
-    expect(webSocketCompleteEvents[1].connectionId).not.toBe(firstId)
+    const [firstId, secondId] = connectionIds(connectingVitals())
+    expect(secondId).not.toBe(firstId)
   })
 
   it('tracks overlapping connections independently with unique connection_ids', () => {
@@ -208,199 +145,40 @@ describe('webSocketCollection', () => {
     const socketB = notifyConnecting(10, urlB)
     notifyOpen(socketB, 15)
 
-    notifyMessageIn(socketA, 20, 10)
-    notifyMessageIn(socketB, 25, 20)
-
     notifyClosed(socketA, 30, 1000, 'bye-a', true)
 
-    expect(webSocketCompleteEvents.length).toBe(1)
-    expect(webSocketCompleteEvents[0].url).toBe(urlA)
-    expect(webSocketCompleteEvents[0].messagesIn).toEqual({ count: 1, size: 10 })
-    expect(webSocketCompleteEvents[0].trackingEndReason).toBe('close_event')
+    expect(closedVitals()).toHaveSize(1)
+    expect(closedVitals()[0].context.url).toBe(urlA)
 
-    notifyMessageOut(socketB, 35, 5)
     notifyClosed(socketB, 40, 1000, 'bye-b', true)
 
-    expect(webSocketCompleteEvents.length).toBe(2)
-    expect(webSocketCompleteEvents[1].url).toBe(urlB)
-    expect(webSocketCompleteEvents[1].messagesIn).toEqual({ count: 1, size: 20 })
-    expect(webSocketCompleteEvents[1].messagesOut).toEqual({ count: 1, size: 5 })
-    expect(webSocketCompleteEvents[1].trackingEndReason).toBe('close_event')
-    expect(webSocketCompleteEvents[1].connectionId).not.toBe(webSocketCompleteEvents[0].connectionId)
-
-    expect(webSocketCompleteEvents[0].startClocks.relative).toBeLessThan(
-      webSocketCompleteEvents[1].startClocks.relative
-    )
-    expect(webSocketCompleteEvents[1].endClocks.relative).toBeGreaterThan(webSocketCompleteEvents[0].endClocks.relative)
+    expect(closedVitals()).toHaveSize(2)
+    expect(closedVitals()[1].context.url).toBe(urlB)
+    expect(closedVitals()[1].context.connection_id).not.toBe(closedVitals()[0].context.connection_id)
+    // the vitals of a connection share its id, and the two connections never merge
+    expect(connectionIds(connectingVitals())).toEqual(connectionIds(closedVitals()))
+    expect(closedVitals()[0].startClocks.relative).toBeLessThan(closedVitals()[1].startClocks.relative)
   })
 
-  it('records firstMessageInOffset / firstMessageOutOffset as offsets from open', () => {
-    const openAt = 10
-    const firstMessageInAt = 13
-    const firstMessageOutAt = 17
-
-    startTracking()
-    const socket = notifyConnecting()
-    notifyOpen(socket, openAt)
-    notifyMessageIn(socket, firstMessageInAt, 1)
-    notifyMessageIn(socket, 25, 1) // not first; should not update
-    notifyMessageOut(socket, firstMessageOutAt, 1)
-    notifyClosed(socket, 30, 1000, 'bye', true)
-
-    const webSocket = webSocketCompleteEvents[0]
-    expect(webSocket.firstMessageInOffset).toBe((firstMessageInAt - openAt) as Duration)
-    expect(webSocket.firstMessageOutOffset).toBe((firstMessageOutAt - openAt) as Duration)
-  })
-
-  it('tracks longestInboundSilence from consecutive message-in only', () => {
-    startTracking()
-    const socket = notifyConnecting()
-    notifyOpen(socket, 10)
-    notifyMessageIn(socket, 20, 1)
-    notifyMessageIn(socket, 50, 1) // gap 30
-    notifyMessageIn(socket, 75, 1) // gap 25
-    notifyClosed(socket, 100, 1000, 'bye', true)
-
-    expect(webSocketCompleteEvents[0].longestInboundSilence).toBe(30 as Duration)
-  })
-
-  it('ignores message-out when computing longestInboundSilence', () => {
-    startTracking()
-    const socket = notifyConnecting()
-    notifyOpen(socket, 10)
-    notifyMessageIn(socket, 20, 1)
-    notifyMessageOut(socket, 100, 1)
-    notifyMessageIn(socket, 130, 1) // gap from last in (20) to 130
-    notifyClosed(socket, 200, 1000, 'bye', true)
-
-    expect(webSocketCompleteEvents[0].longestInboundSilence).toBe(110 as Duration)
-  })
-
-  it('records inboundIdleDurationBeforeClose from last message-in to close', () => {
-    const lastMessageInAt = 20
-    const closeAt = 50
-
-    startTracking()
-    const socket = notifyConnecting()
-    notifyOpen(socket, 10)
-    notifyMessageIn(socket, lastMessageInAt, 1)
-    notifyClosed(socket, closeAt, 1000, 'bye', true)
-
-    expect(webSocketCompleteEvents[0].inboundIdleDurationBeforeClose).toBe((closeAt - lastMessageInAt) as Duration)
-  })
-
-  it('leaves inboundIdleDurationBeforeClose and lastMessageInAt undefined when no message was received', () => {
-    startTracking()
-    const socket = notifyConnecting()
-    notifyOpen(socket, 10)
-    notifyMessageOut(socket, 30, 1)
-    notifyClosed(socket, 50, 1000, 'bye', true)
-
-    expect(webSocketCompleteEvents[0].lastMessageInAt).toBeUndefined()
-    expect(webSocketCompleteEvents[0].inboundIdleDurationBeforeClose).toBeUndefined()
-  })
-
-  it('records setupDuration as elapsed time from connecting to open', () => {
-    const startAt = 0
-    const openAt = 10
-    const startClocks = relativeToClocks(clock.relative(startAt))
-    const openClocks = relativeToClocks(clock.relative(openAt))
-    const expectedSetupDuration = elapsed(startClocks.timeStamp, openClocks.timeStamp)
-
-    startTracking()
-    const socket = notifyConnecting(startAt)
-    notifyOpen(socket, openAt)
-    notifyClosed(socket, 40, 1000, 'bye', true)
-
-    expect(webSocketCompleteEvents[0].setupDuration).toBe(expectedSetupDuration)
-  })
-
-  it('records setupDuration as elapsed time from connecting to close when open never fires', () => {
-    const startAt = 0
-    const closeAt = 25
-    const closeCode = 1006
-    const closeReason = 'abnormal'
-    const startClocks = relativeToClocks(clock.relative(startAt))
-    const closeClocks = relativeToClocks(clock.relative(closeAt))
-    const expectedSetupDuration = elapsed(startClocks.timeStamp, closeClocks.timeStamp)
-
-    startTracking()
-    const socket = notifyConnecting(startAt)
-    notifyClosed(socket, closeAt, closeCode, closeReason, false)
-
-    expect(webSocketCompleteEvents[0].setupDuration).toBe(expectedSetupDuration)
-  })
-
-  it('records setupDuration on session_end flush when the connection never opened', () => {
-    const tracker = startTracking()
-    notifyConnecting()
-    tracker.flushOpenConnections('session_end')
-
-    const webSocket = webSocketCompleteEvents[0]
-    expect(webSocket.setupDuration).toBe(elapsed(webSocket.startClocks.timeStamp, webSocket.endClocks.timeStamp))
-  })
-
-  it('collects buffered_amount_max from message-out events', () => {
-    const peakBufferedAmount = 100
-
-    startTracking()
-    const socket = notifyConnecting()
-    notifyOpen(socket, 10)
-    notifyMessageOut(socket, 20, 1, 10)
-    notifyMessageOut(socket, 30, 1, peakBufferedAmount)
-    notifyMessageOut(socket, 40, 1, 50)
-    notifyClosed(socket, 50, 1000, 'bye', true)
-
-    expect(webSocketCompleteEvents[0].bufferedAmountMax).toBe(peakBufferedAmount)
-  })
-
-  it('captures startViewId and endViewId from viewHistory', () => {
-    const startViewB = 100
-    const relativeStartViewA = clock.relative(0)
-    const relativeStartViewB = clock.relative(startViewB)
-    const viewByRelative: Record<number, ViewHistoryEntry> = {
-      [relativeStartViewA]: { id: 'view-A', startClocks: relativeToClocks(relativeStartViewA) },
-      [relativeStartViewB]: { id: 'view-B', startClocks: relativeToClocks(relativeStartViewB) },
-    }
-    const viewHistory = mockViewHistory()
-    spyOn(viewHistory, 'findView').and.callFake((startTime?: RelativeTime) =>
-      startTime !== undefined ? viewByRelative[startTime as number] : undefined
-    )
-
-    startTracking(viewHistory)
-    const socket = notifyConnecting()
-    notifyClosed(socket, startViewB, 1000, 'bye', true)
-
-    const webSocket = webSocketCompleteEvents[0]
-    expect(webSocket.startViewId).toBe('view-A')
-    expect(webSocket.endViewId).toBe('view-B')
-  })
-
-  it('flushOpenConnections finalizes still-open connections with tracking_end_reason="session_end"', () => {
+  it('flushOpenConnections finalizes still-open connections', () => {
     const tracker = startTracking()
     const socket = notifyConnecting()
     notifyOpen(socket, 10)
     notifyMessageIn(socket, 20, 1)
 
-    tracker.flushOpenConnections('session_end')
+    tracker.flushOpenConnections()
 
-    expect(webSocketCompleteEvents.length).toBe(1)
-    expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')
-    expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeTrue()
-    expect(webSocketCompleteEvents[0].closeCode).toBeUndefined()
-    expect(webSocketCompleteEvents[0].closeReason).toBeUndefined()
-    expect(webSocketCompleteEvents[0].wasClean).toBeUndefined()
+    expect(closedVitals()).toHaveSize(1)
   })
 
   it('does not finalize twice when close arrives after flushOpenConnections', () => {
     const tracker = startTracking()
     const socket = notifyConnecting()
     notifyOpen(socket, 10)
-    tracker.flushOpenConnections('session_end')
+    tracker.flushOpenConnections()
     notifyClosed(socket, 20, 1000, 'bye', true)
 
-    expect(webSocketCompleteEvents.length).toBe(1)
-    expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')
+    expect(closedVitals()).toHaveSize(1)
   })
 
   it('stop() unsubscribes from the observable and ignores further events', () => {
@@ -409,16 +187,15 @@ describe('webSocketCollection', () => {
     tracker.stop()
     notifyClosed(socket, 20, 1000, 'bye', true)
 
-    expect(webSocketCompleteEvents.length).toBe(0)
+    expect(closedVitals()).toHaveSize(0)
   })
 
   describe('websocket-connecting vital', () => {
     it('emits a duration-0 vital on connecting', () => {
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
-      startTracking(mockViewHistory(), addDurationVital)
+      startTracking()
       notifyConnecting()
 
-      expect(addDurationVital).toHaveBeenCalledOnceWith(
+      expect(addDurationVitalSpy).toHaveBeenCalledOnceWith(
         jasmine.objectContaining({
           name: WEBSOCKET_CONNECTING_VITAL_NAME,
           type: VitalType.DURATION,
@@ -427,54 +204,43 @@ describe('webSocketCollection', () => {
       )
     })
 
-    it('uses a fresh UUID as the vital id and the connectionId in the context', () => {
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
-      startTracking(mockViewHistory(), addDurationVital)
+    it('uses a fresh UUID as the vital id, distinct from the connection id', () => {
+      startTracking()
       const socket = notifyConnecting()
       notifyClosed(socket, 1, 1000, 'bye', true)
 
-      const vital = addDurationVital.calls.first().args[0]
-      expect(vital.id).not.toBe(webSocketCompleteEvents[0].connectionId)
+      const vital = connectingVitals()[0]
+      expect(vital.id).not.toBe(vital.context.connection_id)
       expect(vital.id).toMatch(UUID_PATTERN)
-      expect(vital.context).toEqual(
-        jasmine.objectContaining({ connection_id: webSocketCompleteEvents[0].connectionId })
-      )
+      expect(vital.context.connection_id).toMatch(UUID_PATTERN)
     })
 
     it('includes the sanitized URL and connection_id, without constructor protocols', () => {
-      const startView = 0
-      const relativeStartView = clock.relative(startView)
-      const viewByRelative: Record<number, ViewHistoryEntry> = {
-        [relativeStartView]: { id: 'view-start', startClocks: relativeToClocks(relativeStartView) },
-      }
-      const viewHistory = mockViewHistory()
-      spyOn(viewHistory, 'findView').and.callFake((startTime?: RelativeTime) =>
-        startTime !== undefined ? viewByRelative[startTime as number] : undefined
-      )
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
-
-      startTracking(viewHistory, addDurationVital)
-      const socket = notifyConnecting(startView, 'wss://example.com/socket?token=secret&tenant=acme', [
-        'auth-token',
-        'chat.v1',
-      ])
+      startTracking()
+      const socket = notifyConnecting(0, 'wss://example.com/socket?token=secret&tenant=acme', ['auth-token', 'chat.v1'])
       notifyClosed(socket, 1, 1000, 'bye', true)
 
-      const vital = addDurationVital.calls.first().args[0]
+      const vital = connectingVitals()[0]
       expect(vital.context).toEqual({
         url: 'wss://example.com/socket',
-        connection_id: webSocketCompleteEvents[0].connectionId,
+        connection_id: closedVitals()[0].context.connection_id,
       })
+    })
+
+    it('removes query parameters from the URL, including from an encoded path', () => {
+      startTracking()
+      notifyConnecting(0, 'wss://example.com:8443/path/socket%3Froom?token=secret&tenant=acme')
+
+      expect(connectingVitals()[0].context.url).toBe('wss://example.com:8443/path/socket%3Froom')
     })
 
     ;(['auth-token', ['auth-token', 'chat.v1']] as Array<string | string[]>).forEach((protocols) => {
       it(`does not include constructor protocols in the vital context when provided as ${typeof protocols === 'string' ? 'a string' : 'an array'}`, () => {
-        const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
-        startTracking(mockViewHistory(), addDurationVital)
+        startTracking()
 
         notifyConnecting(0, 'wss://example.com/socket', protocols)
 
-        const context = addDurationVital.calls.mostRecent().args[0].context
+        const context = connectingVitals()[0].context
         expect('protocols' in context).toBeFalse()
       })
     })
@@ -482,45 +248,37 @@ describe('webSocketCollection', () => {
 
   describe('websocket-closed vital', () => {
     it('emits a duration-0 vital at close time on a close event', () => {
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
-      startTracking(mockViewHistory(), addDurationVital)
+      const closeAt = 40
+      startTracking()
       const socket = notifyConnecting()
-      notifyClosed(socket, 40, 1000, 'bye', true)
+      notifyClosed(socket, closeAt, 1000, 'bye', true)
 
-      const connectingVital = addDurationVital.calls.argsFor(0)[0]
-      const closedVital = addDurationVital.calls.argsFor(1)[0]
+      const closedVital = closedVitals()[0]
 
-      expect(closedVital.name).toBe(WEBSOCKET_CLOSED_VITAL_NAME)
       expect(closedVital.type).toBe(VitalType.DURATION)
       expect(closedVital.duration).toBe(0 as Duration)
-      expect(closedVital.startClocks).toEqual(webSocketCompleteEvents[0].endClocks)
+      expect(closedVital.startClocks).toEqual(relativeToClocks(clock.relative(closeAt)))
       expect(closedVital.context).toEqual({
-        url: webSocketCompleteEvents[0].url,
-        connection_id: webSocketCompleteEvents[0].connectionId,
+        url: 'wss://example.com/socket',
+        connection_id: connectingVitals()[0].context.connection_id,
       })
-      expect(closedVital.context.connection_id).toBe(connectingVital.context.connection_id)
     })
 
     it('emits a duration-0 vital at flush time on a session_end flush', () => {
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
-      const tracker = startTracking(mockViewHistory(), addDurationVital)
+      const tracker = startTracking()
       const endClocks = relativeToClocks(clock.relative(40))
       notifyConnecting()
-      tracker.flushOpenConnections('session_end', endClocks)
+      tracker.flushOpenConnections(endClocks)
 
-      const connectingVital = addDurationVital.calls.argsFor(0)[0]
-      const closedVital = addDurationVital.calls.argsFor(1)[0]
+      const closedVital = closedVitals()[0]
 
-      expect(closedVital.name).toBe(WEBSOCKET_CLOSED_VITAL_NAME)
       expect(closedVital.type).toBe(VitalType.DURATION)
       expect(closedVital.duration).toBe(0 as Duration)
-      expect(webSocketCompleteEvents[0].endClocks).toEqual(endClocks)
-      expect(closedVital.startClocks).toEqual(webSocketCompleteEvents[0].endClocks)
+      expect(closedVital.startClocks).toEqual(endClocks)
       expect(closedVital.context).toEqual({
-        url: webSocketCompleteEvents[0].url,
-        connection_id: webSocketCompleteEvents[0].connectionId,
+        url: 'wss://example.com/socket',
+        connection_id: connectingVitals()[0].context.connection_id,
       })
-      expect(closedVital.context.connection_id).toBe(connectingVital.context.connection_id)
     })
   })
 
@@ -533,7 +291,7 @@ describe('webSocketCollection', () => {
         lifeCycle,
         configuration,
         mockViewHistory(),
-        jasmine.createSpy(),
+        addDurationVitalSpy,
         bufferedDataObservable
       )
       registerCleanupTask(() => collection.stop())
@@ -560,7 +318,8 @@ describe('webSocketCollection', () => {
           notifyOpen(socket, 10)
           notifyClosed(socket, 20, 1000, 'bye', true)
 
-          expect(webSocketCompleteEvents.length).toBe(collects ? 1 : 0)
+          expect(connectingVitals()).toHaveSize(collects ? 1 : 0)
+          expect(closedVitals()).toHaveSize(collects ? 1 : 0)
         })
       })
 
@@ -581,18 +340,14 @@ describe('webSocketCollection', () => {
     // init(), and receives everything that happened before as a replayed burst.
     describe('connections started before collection subscribed', () => {
       let bufferedDataObservable: Observable<BufferedData>
-      let completeSpy: jasmine.Spy<(event: WebSocketCompleteEvent) => void>
 
       beforeEach(() => {
         const buffering = startBufferingData()
         bufferedDataObservable = buffering.observable
         registerCleanupTask(buffering.stop)
-
-        completeSpy = jasmine.createSpy()
-        lifeCycle.subscribe(LifeCycleEventType.WEBSOCKET_COMPLETED, completeSpy)
       })
 
-      function subscribeCollection(addDurationVital: (vital: DurationVital) => void = jasmine.createSpy()) {
+      function subscribeCollection(addDurationVital: (vital: DurationVital) => void = addDurationVitalSpy) {
         const collection = startWebSocketCollection(
           lifeCycle,
           mockRumConfiguration({ betaTrackWebSockets: true }),
@@ -610,55 +365,55 @@ describe('webSocketCollection', () => {
         notifyClosed(socket, 40, 1000, 'bye', true)
 
         subscribeCollection()
-        await collectAsyncCalls(completeSpy)
+        await collectAsyncCalls(addDurationVitalSpy, 2)
 
-        expect(webSocketCompleteEvents.length).toBe(1)
-        const webSocket = webSocketCompleteEvents[0]
-        expect(webSocket.messagesIn).toEqual({ count: 1, size: 30 })
-        // measured from the real constructor call, not from the subscription
-        expect(webSocket.setupDuration).toBe(10 as Duration)
+        expect(connectingVitals()).toHaveSize(1)
+        expect(closedVitals()).toHaveSize(1)
+        // dated from the real close, not from the subscription
+        expect(closedVitals()[0].startClocks).toEqual(relativeToClocks(clock.relative(40)))
       })
 
       it('reports a connection spanning the subscription exactly once', async () => {
+        const replayedUrl = 'wss://example.com/replayed'
         const socket = notifyConnecting(0)
         notifyOpen(socket, 10)
         notifyMessageIn(socket, 20, 30)
 
-        // a connection that completed early gives a deterministic signal that the replay is over
-        const replayedSocket = notifyConnecting(21, 'wss://example.com/replayed')
+        // a connection that completed early gives a deterministic signal that the replay is over:
+        // it reports both of its vitals and, being closed, can never report again
+        const replayedSocket = notifyConnecting(21, replayedUrl)
         notifyClosed(replayedSocket, 22, 1000, 'bye', true)
-        const replaySpy = jasmine.createSpy<(event: WebSocketCompleteEvent) => void>()
-        const replaySubscription = lifeCycle.subscribe(LifeCycleEventType.WEBSOCKET_COMPLETED, replaySpy)
+        const replaySpy = jasmine.createSpy<(vital: DurationVital) => void>()
 
-        subscribeCollection()
-        await collectAsyncCalls(replaySpy)
-        replaySubscription.unsubscribe()
+        subscribeCollection((vital) => {
+          addDurationVitalSpy(vital)
+          if (vitalContext(vital).url === replayedUrl) {
+            replaySpy(vital)
+          }
+        })
+        await collectAsyncCalls(replaySpy, 2)
 
         notifyMessageIn(socket, 50, 5)
         notifyClosed(socket, 60, 1000, 'bye', true)
 
-        // a single event, merging what was replayed with what came in live
-        expect(webSocketCompleteEvents.length).toBe(2)
-        const webSocket = webSocketCompleteEvents[1]
-        expect(webSocket.messagesIn).toEqual({ count: 2, size: 35 })
-        expect(webSocket.setupDuration).toBe(10 as Duration)
+        expect(connectingVitals()).toHaveSize(2)
+        expect(closedVitals()).toHaveSize(2)
+        expect(closedVitals()[1].context.connection_id).toBe(connectingVitals()[0].context.connection_id)
       })
 
       it('keeps a distinct connection id per early connection and emits both vitals', async () => {
-        const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
         const firstSocket = notifyConnecting(0, 'wss://example.com/socket-a')
         const secondSocket = notifyConnecting(5, 'wss://example.com/socket-b')
         notifyClosed(firstSocket, 10, 1000, 'bye-a', true)
         notifyClosed(secondSocket, 20, 1000, 'bye-b', true)
 
-        subscribeCollection(addDurationVital)
-        await collectAsyncCalls(completeSpy, 2)
+        subscribeCollection()
+        await collectAsyncCalls(addDurationVitalSpy, 4)
 
-        const [first, second] = webSocketCompleteEvents
-        expect(first.connectionId).not.toBe(second.connectionId)
+        const [firstId, secondId] = connectionIds(connectingVitals())
+        expect(firstId).not.toBe(secondId)
 
-        const vitalNames = addDurationVital.calls.all().map((call) => call.args[0].name)
-        expect(vitalNames).toEqual([
+        expect(emittedVitals().map((vital) => vital.name)).toEqual([
           WEBSOCKET_CONNECTING_VITAL_NAME,
           WEBSOCKET_CONNECTING_VITAL_NAME,
           WEBSOCKET_CLOSED_VITAL_NAME,
@@ -667,20 +422,15 @@ describe('webSocketCollection', () => {
       })
     })
 
-    it('finalizes open connections with tracking_end_reason="session_end" when the session expires', () => {
+    it('finalizes open connections when the session expires', () => {
       const endClocks = relativeToClocks(clock.relative(40))
       startCollection()
       notifyConnecting()
 
       expireSession(endClocks)
 
-      expect(webSocketCompleteEvents.length).toBe(1)
-      expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')
-      expect(webSocketCompleteEvents[0].endClocks).toEqual(endClocks)
-      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeFalse()
-      expect(webSocketCompleteEvents[0].closeCode).toBeUndefined()
-      expect(webSocketCompleteEvents[0].closeReason).toBeUndefined()
-      expect(webSocketCompleteEvents[0].wasClean).toBeUndefined()
+      expect(closedVitals()).toHaveSize(1)
+      expect(closedVitals()[0].startClocks).toEqual(endClocks)
     })
 
     it('ignores further WebSocket events from the same instance after stop()', () => {
@@ -688,11 +438,11 @@ describe('webSocketCollection', () => {
       const socket = notifyConnecting()
       collection.stop()
 
-      const eventCountAfterStop = webSocketCompleteEvents.length
+      const vitalCountAfterStop = emittedVitals().length
 
       notifyClosed(socket, 1000, 1000, 'bye', true)
 
-      expect(webSocketCompleteEvents.length).toBe(eventCountAfterStop)
+      expect(emittedVitals()).toHaveSize(vitalCountAfterStop)
     })
 
     it('ignores further WebSocket events from the same instance after the session expires', () => {
@@ -703,16 +453,12 @@ describe('webSocketCollection', () => {
 
       expireSession()
 
-      expect(webSocketCompleteEvents.length).toBe(1)
-      expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')
-      expect(webSocketCompleteEvents[0].messagesOut).toEqual({ count: 1, size: 10 })
+      expect(closedVitals()).toHaveSize(1)
 
       notifyMessageOut(socket, 40, 7)
       notifyClosed(socket, 50, 1000, 'bye', true)
 
-      expect(webSocketCompleteEvents.length).toBe(1)
-      expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')
-      expect(webSocketCompleteEvents[0].messagesOut).toEqual({ count: 1, size: 10 })
+      expect(closedVitals()).toHaveSize(1)
     })
   })
 })

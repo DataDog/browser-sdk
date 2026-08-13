@@ -1,7 +1,7 @@
 import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
 import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager } from '@datadog/browser-core'
-import { display, ResourceType, startGlobalContext, startTabContext } from '@datadog/browser-core'
+import { display, startGlobalContext, startTabContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
@@ -377,34 +377,6 @@ describe('rum assembly', () => {
           expect(resource.response!.headers!['x-powered-by']).toBeUndefined()
           expect(resource.response!.headers!['content-type']).toBe('text/html')
         })
-      })
-
-      it('should allow beforeSend to redact the WebSocket resource protocol', () => {
-        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-          partialConfiguration: {
-            beforeSend: (event) => {
-              if (event.type === RumEventType.RESOURCE) {
-                const webSocket = event.resource.websocket as { protocol?: string } | undefined
-                if (webSocket) {
-                  webSocket.protocol = '[REDACTED]'
-                }
-              }
-              return true
-            },
-          },
-        })
-
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
-            resource: {
-              type: ResourceType.WEBSOCKET,
-              websocket: { protocol: 'credential-bearing-protocol' },
-            },
-          }),
-        })
-
-        const resource = serverRumEvents[0] as RumResourceEvent
-        expect((resource.resource.websocket as { protocol?: string }).protocol).toBe('[REDACTED]')
       })
 
       it('should reject modification of field not sensitive, context or customer provided', () => {
