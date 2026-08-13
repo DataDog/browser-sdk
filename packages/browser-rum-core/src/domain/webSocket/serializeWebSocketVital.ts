@@ -50,19 +50,21 @@ interface ClosedPhaseInfoCommonProperties {
 }
 
 /**
- * The close outcome is reported by, and only by, a real close event, so the reason tracking ended
- * and the presence of the event are one choice rather than two — nothing in the schema rejects a
- * close code on a session that merely expired.
+ * Why tracking ended. The close outcome is reported by, and only by, a real close event, so the
+ * reason and the presence of the event are one choice rather than two — nothing in the schema
+ * rejects a close code on a session that merely expired.
  */
-type ClosedPhaseInfo =
-  | (ClosedPhaseInfoCommonProperties & {
+export type WebSocketTrackingEnd =
+  | {
       trackingEndReason: typeof WebSocketTrackingEndReason.CLOSE_EVENT
       closeEvent: WebSocketCloseEvent
-    })
-  | (ClosedPhaseInfoCommonProperties & {
+    }
+  | {
       trackingEndReason: Exclude<WebSocketTrackingEndReason, typeof WebSocketTrackingEndReason.CLOSE_EVENT>
       closeEvent?: never
-    })
+    }
+
+type ClosedPhaseInfo = ClosedPhaseInfoCommonProperties & WebSocketTrackingEnd
 
 /**
  * What the phase being reported adds to what the connection knows: the clocks of its arrival, the
@@ -87,10 +89,11 @@ export function serializeWebSocketVital(
 ): RawRumWebSocketVitalEvent {
   const id = state.id
   const connectingDate = state.connectingClocks.timeStamp
+  const date = webSocketVitalClocks(state, phaseInfo).timeStamp
 
   switch (phaseInfo.phase) {
     case 'connecting':
-      return toRawVital(connectingDate, {
+      return toRawVital(date, {
         name: WebSocketVitalName.CONNECTING,
         websocket: {
           id,
@@ -103,7 +106,7 @@ export function serializeWebSocketVital(
     case 'open': {
       const openDate = phaseInfo.openClocks.timeStamp
 
-      return toRawVital(phaseInfo.beatClocks.timeStamp, {
+      return toRawVital(date, {
         name: WebSocketVitalName.OPEN,
         websocket: {
           id,
@@ -120,7 +123,7 @@ export function serializeWebSocketVital(
     }
 
     case 'closing':
-      return toRawVital(phaseInfo.closingClocks.timeStamp, {
+      return toRawVital(date, {
         name: WebSocketVitalName.CLOSING,
         websocket: {
           id,
@@ -132,7 +135,7 @@ export function serializeWebSocketVital(
     case 'closed': {
       const closedDate = phaseInfo.endClocks.timeStamp
 
-      return toRawVital(closedDate, {
+      return toRawVital(date, {
         name: WebSocketVitalName.CLOSED,
         websocket: {
           id,
@@ -149,6 +152,24 @@ export function serializeWebSocketVital(
         },
       })
     }
+  }
+}
+
+/**
+ * When the phase being reported happened. It is both what the vital is dated at and what assembly
+ * attributes it to a view by, derived once so the two cannot disagree — a vital dated at one moment
+ * and attributed to another would be wrong with nothing to catch it.
+ */
+export function webSocketVitalClocks(state: TrackedConnectionState, phaseInfo: WebSocketVitalPhaseInfo): ClocksState {
+  switch (phaseInfo.phase) {
+    case 'connecting':
+      return state.connectingClocks
+    case 'open':
+      return phaseInfo.beatClocks
+    case 'closing':
+      return phaseInfo.closingClocks
+    case 'closed':
+      return phaseInfo.endClocks
   }
 }
 

@@ -52,7 +52,10 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
     'long_task.scripts[].invoker': 'string',
     '_dd.debug_ids': 'array',
   },
-  [RumEventType.VITAL]: COMMON_MODIFIABLE_FIELD_PATHS,
+  [RumEventType.VITAL]: {
+    ...COMMON_MODIFIABLE_FIELD_PATHS,
+    'vital.websocket.requested_protocols': 'array',
+  },
 }
 
 export function startRumAssembly(

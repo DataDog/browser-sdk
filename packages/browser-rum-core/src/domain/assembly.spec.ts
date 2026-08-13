@@ -8,8 +8,8 @@ import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datad
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
-import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
+import { RumEventType, VitalType, WebSocketVitalName } from '../rawRumEvent.types'
+import type { RumErrorEvent, RumEvent, RumResourceEvent, RumVitalWebsocketConnectingEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -17,7 +17,6 @@ import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import { startSessionContext } from './contexts/sessionContext'
 import { createHooks } from './hooks'
-import { WEBSOCKET_CONNECTING_VITAL_NAME } from './webSocket/webSocketCollection'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
@@ -210,29 +209,6 @@ describe('rum assembly', () => {
 
           expect(serverRumEvents[0].context!.foo).toBe('bar')
         })
-
-        it('should allow beforeSend to add protocols to the websocket-connecting vital context', () => {
-          const protocols = ['chat.v1']
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-            partialConfiguration: {
-              beforeSend: (event) => {
-                if (event.type === RumEventType.VITAL && event.vital.name === WEBSOCKET_CONNECTING_VITAL_NAME) {
-                  event.context.protocols = protocols
-                }
-                return true
-              },
-            },
-          })
-
-          notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
-              vital: { name: WEBSOCKET_CONNECTING_VITAL_NAME },
-              context: { url: 'wss://example.com/socket' },
-            }),
-          })
-
-          expect(serverRumEvents[0].context!.protocols).toEqual(protocols)
-        })
       })
 
       describe('allowed customer provided field', () => {
@@ -296,6 +272,34 @@ describe('rum assembly', () => {
           })
 
           expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual([{ url: 'redacted-url', id: 'debug-id' }])
+        })
+      })
+
+      describe('vital.websocket.requested_protocols', () => {
+        it('should allow replacing the requested protocols of a websocket vital', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                if (event.vital.name === 'websocket_connecting') {
+                  event.vital.websocket.requested_protocols = ['REDACTED']
+                }
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+              vital: {
+                type: VitalType.WEBSOCKET,
+                name: WebSocketVitalName.CONNECTING,
+                websocket: { requested_protocols: ['auth-token', 'chat.v1'] },
+              },
+            }),
+          })
+
+          expect((serverRumEvents[0] as RumVitalWebsocketConnectingEvent).vital.websocket.requested_protocols).toEqual([
+            'REDACTED',
+          ])
         })
       })
 
