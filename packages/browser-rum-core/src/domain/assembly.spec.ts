@@ -16,7 +16,7 @@ import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import { startSessionContext } from './contexts/sessionContext'
 import { createHooks } from './hooks'
-import { WEBSOCKET_CONNECTING_VITAL_NAME } from './resource/webSocketCollection'
+import { WEBSOCKET_CONNECTING_VITAL_NAME } from './webSocket/webSocketCollection'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {

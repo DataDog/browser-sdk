@@ -24,8 +24,8 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
 import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
+import type { WebSocketCompleteEvent } from '../webSocket/webSocketCollection'
 import { REQUEST_MATCHING_DELAY, startResourceCollection } from './resourceCollection'
-import type { WebSocketCompleteEvent } from './webSocketCollection'
 
 function buildMatchHeadersForAllUrls(headerNames: MatchOption[]): MatchHeader[] {
   return headerNames.map((name) => ({ name }))
