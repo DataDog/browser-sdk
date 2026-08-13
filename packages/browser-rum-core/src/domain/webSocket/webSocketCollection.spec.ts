@@ -4,7 +4,9 @@ import {
   BufferedDataType,
   ExperimentalFeature,
   initWebSocketObservable,
+  globalObject,
   Observable,
+  PageExitReason,
   resetAllowUntrustedEvents,
   setAllowUntrustedEvents,
   startBufferingData,
@@ -30,7 +32,7 @@ import type {
 import { VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { AddWebSocketVital } from './webSocketCollection'
-import { startWebSocketCollection, trackWebSocket } from './webSocketCollection'
+import { startWebSocketCollection, trackWebSocket, WEBSOCKET_HEARTBEAT_INTERVAL } from './webSocketCollection'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
@@ -151,6 +153,21 @@ describe('webSocketCollection', () => {
 
   function setClock(relative: number) {
     clock.setDate(new Date(clock.timeStamp(relative)))
+  }
+
+  /**
+   * A connection driven by ticks alone rather than by setting the date, so that the clock's date and
+   * the shared heartbeat timer stay in step. Everything the heartbeat is dated at is derived from
+   * `Date.now()` at the moment the spec drove it.
+   */
+  function openConnection(url = 'wss://example.com/socket') {
+    const socket = createMockWebSocket(url)
+    socket.simulateOpen()
+    return socket
+  }
+
+  function tickBeats(count = 1) {
+    clock.tick(count * WEBSOCKET_HEARTBEAT_INTERVAL)
   }
 
   it('reports every vital of a connection under the same connection id', () => {
@@ -346,6 +363,224 @@ describe('webSocketCollection', () => {
 
       expect(openPayloads()).toHaveSize(0)
       expect(emittedNames()).toEqual([WebSocketVitalName.CONNECTING, WebSocketVitalName.CLOSED])
+    })
+  })
+
+  // One flat cadence in every page state, so that a connection held open for an hour is visible
+  // while it is open, and one that dies without closing still reports the traffic its last beat
+  // carried.
+  describe('the open heartbeat', () => {
+    /**
+     * Watches the intervals scheduled at the heartbeat cadence, which is the only way to tell a
+     * heartbeat that was never scheduled from one that beats nothing. The global is patched by hand
+     * rather than spied on so that the mocked clock's own teardown, which runs after this one,
+     * restores the real timers.
+     */
+    function watchHeartbeatTimer() {
+      const originalSetInterval = globalObject.setInterval.bind(globalObject)
+      const originalClearInterval = globalObject.clearInterval.bind(globalObject)
+      const pendingIds = new Set<unknown>()
+      let scheduledCount = 0
+
+      globalObject.setInterval = (handler: TimerHandler, timeout?: number) => {
+        const intervalId = originalSetInterval(handler, timeout)
+        if (timeout === WEBSOCKET_HEARTBEAT_INTERVAL) {
+          scheduledCount += 1
+          pendingIds.add(intervalId)
+        }
+        return intervalId
+      }
+      globalObject.clearInterval = (intervalId?: number) => {
+        pendingIds.delete(intervalId)
+        originalClearInterval(intervalId)
+      }
+
+      registerCleanupTask(() => {
+        globalObject.setInterval = originalSetInterval
+        globalObject.clearInterval = originalClearInterval
+      })
+
+      return {
+        isScheduled: () => pendingIds.size > 0,
+        scheduledCount: () => scheduledCount,
+      }
+    }
+
+    it('schedules one shared timer, and only while a connection is in phase open', () => {
+      const timer = watchHeartbeatTimer()
+      startTracking()
+
+      expect(timer.isScheduled()).toBe(false)
+
+      const socketA = openConnection('wss://example.com/socket-a')
+      const socketB = openConnection('wss://example.com/socket-b')
+
+      expect(timer.isScheduled()).toBe(true)
+      expect(timer.scheduledCount()).toBe(1)
+
+      socketA.simulateClose(1000, 'bye-a', true)
+
+      expect(timer.isScheduled()).toBe(true)
+
+      socketB.simulateClose(1000, 'bye-b', true)
+
+      expect(timer.isScheduled()).toBe(false)
+    })
+
+    it('beats an open connection once per interval, each beat carrying the next snapshot version', () => {
+      startTracking()
+      openConnection()
+
+      tickBeats(3)
+
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3, 4])
+    })
+
+    it('dates every beat at the beat, while still reporting the date the handshake completed', () => {
+      // the connection is opened with the clock still at its origin, so the beats land on whole
+      // intervals from there
+      const openDate = clock.timeStamp(0)
+      startTracking()
+      openConnection()
+
+      tickBeats(2)
+
+      const beats = emittedVitals(WebSocketVitalName.OPEN)
+      expect(beats.map((vital) => vital.date)).toEqual([
+        openDate,
+        clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL),
+        clock.timeStamp(2 * WEBSOCKET_HEARTBEAT_INTERVAL),
+      ])
+      expect(startClocksOf(beats[2]).timeStamp).toBe(clock.timeStamp(2 * WEBSOCKET_HEARTBEAT_INTERVAL))
+      expect(openPayloads().map((payload) => payload.open_date)).toEqual([openDate, openDate, openDate])
+    })
+
+    it('reports on each beat everything exchanged since the connection opened', () => {
+      startTracking()
+      const socket = openConnection()
+
+      tickBeats()
+      socket.simulateMessage('x'.repeat(30))
+      tickBeats()
+
+      expect(openPayloads()[1].snapshot.inbound.message_count).toBe(0)
+      expect(openPayloads()[2].snapshot.inbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 30 })
+      )
+    })
+
+    it('beats every open connection on the same tick', () => {
+      startTracking()
+      openConnection('wss://example.com/socket-a')
+      openConnection('wss://example.com/socket-b')
+
+      tickBeats()
+
+      const [idA, idB] = connectingPayloads().map((payload) => payload.id)
+      expect(openPayloads().map((payload) => payload.id)).toEqual([idA, idB, idA, idB])
+    })
+
+    it('does not beat a connection whose handshake has not completed', () => {
+      startTracking()
+      notifyConnecting()
+
+      tickBeats(2)
+
+      expect(openPayloads()).toHaveSize(0)
+    })
+
+    it('does not beat when no connection is open', () => {
+      startTracking()
+
+      tickBeats(2)
+
+      expect(emittedVitals()).toHaveSize(0)
+    })
+
+    it('stops beating a connection once close() started the closing handshake', () => {
+      startTracking()
+      const socket = openConnection()
+      tickBeats()
+
+      socket.close()
+      tickBeats(2)
+
+      expect(openPayloads()).toHaveSize(2)
+    })
+
+    // The beat stops at CLOSING so that a hung close falls silent rather than looking alive, and the
+    // traffic of the handshake is not lost for it: the closed vital reports it.
+    it('reports a message arriving during the closing handshake on the closed vital', () => {
+      startTracking()
+      const socket = openConnection()
+
+      socket.close()
+      socket.simulateMessage('x'.repeat(5))
+      socket.simulateClose(1000, 'bye', true)
+
+      expect(openPayloads()).toHaveSize(1)
+      expect(closedPayloads()[0].snapshot!.inbound.message_count).toBe(1)
+    })
+
+    it('stops beating once the last open connection closed', () => {
+      startTracking()
+      const socket = openConnection()
+
+      socket.simulateClose(1000, 'bye', true)
+      tickBeats(3)
+
+      expect(openPayloads()).toHaveSize(1)
+    })
+
+    it('keeps beating the connections still open when one of them closes', () => {
+      startTracking()
+      const socketA = openConnection('wss://example.com/socket-a')
+      openConnection('wss://example.com/socket-b')
+
+      socketA.simulateClose(1000, 'bye-a', true)
+      tickBeats()
+
+      const [, idB] = connectingPayloads().map((payload) => payload.id)
+      expect(openPayloads().filter((payload) => payload.id === idB)).toHaveSize(2)
+      expect(openPayloads()).toHaveSize(3)
+    })
+
+    it('stops beating the connections a flush finalized', () => {
+      const tracker = startTracking()
+      openConnection()
+
+      tracker.flushOpenConnections()
+      tickBeats(3)
+
+      expect(openPayloads()).toHaveSize(1)
+    })
+
+    it('stops beating after stop()', () => {
+      const tracker = startTracking()
+      openConnection()
+
+      tracker.stop()
+      tickBeats(3)
+
+      expect(openPayloads()).toHaveSize(1)
+    })
+
+    // Expected rather than guarded against: one shared timer serves every connection, and both
+    // snapshot versions are correct and ordered.
+    it('beats a connection twice when it opened just before a tick, with ordered versions', () => {
+      startTracking()
+      openConnection('wss://example.com/socket-a')
+      clock.tick(WEBSOCKET_HEARTBEAT_INTERVAL - 1)
+
+      openConnection('wss://example.com/socket-b')
+      clock.tick(1)
+
+      const [, lateId] = connectingPayloads().map((payload) => payload.id)
+      expect(
+        openPayloads()
+          .filter((payload) => payload.id === lateId)
+          .map((payload) => payload.snapshot_version)
+      ).toEqual([1, 2])
     })
   })
 
@@ -721,6 +956,44 @@ describe('webSocketCollection', () => {
           WebSocketVitalName.CLOSED,
           WebSocketVitalName.CLOSED,
         ])
+      })
+    })
+
+    // Unlike view tracking, which filters to the unloading reason: a view survives a background
+    // transition, a connection may not, and hidden is the only signal mobile browsers guarantee at
+    // that point.
+    describe('the background-transition beat', () => {
+      ;[PageExitReason.HIDDEN, PageExitReason.FROZEN, PageExitReason.UNLOADING].forEach((reason) => {
+        it(`beats every open connection on a "${reason}" transition`, () => {
+          startCollection()
+          openConnection('wss://example.com/socket-a')
+          openConnection('wss://example.com/socket-b')
+
+          lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
+
+          const [idA, idB] = connectingPayloads().map((payload) => payload.id)
+          expect(openPayloads().map((payload) => payload.id)).toEqual([idA, idB, idA, idB])
+          expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 1, 2, 2])
+        })
+      })
+
+      it('does not beat a connection that is not open', () => {
+        startCollection()
+        notifyConnecting()
+
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+        expect(openPayloads()).toHaveSize(0)
+      })
+
+      it('stops beating after stop()', () => {
+        const collection = startCollection()
+        openConnection()
+
+        collection.stop()
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+        expect(openPayloads()).toHaveSize(1)
       })
     })
 

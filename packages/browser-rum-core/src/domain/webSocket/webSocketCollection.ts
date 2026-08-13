@@ -1,13 +1,15 @@
-import type { BufferedData, Observable } from '@datadog/browser-core'
+import type { BufferedData, Observable, TimeoutId, WebSocketContext } from '@datadog/browser-core'
 import {
   BufferedDataType,
+  clearInterval,
   ExperimentalFeature,
   generateUUID,
   isExperimentalFeatureEnabled,
   noop,
+  setInterval,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
-import { clocksNow } from '@datadog/js-core/time'
+import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import { buildUrl } from '@datadog/js-core/util'
 import type { RawRumWebSocketVitalEvent } from '../../rawRumEvent.types'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
@@ -22,7 +24,20 @@ import { serializeWebSocketVital, webSocketVitalClocks } from './serializeWebSoc
 /** The seam every WebSocket vital reaches the event pipeline through. */
 export type AddWebSocketVital = (rawRumEvent: RawRumWebSocketVitalEvent, startClocks: ClocksState) => void
 
+/**
+ * How often an open connection reports where it is. One flat cadence in every page state: 60 s is
+ * also the rate Chrome throttles a hidden tab's chained timers to, so the nominal and the throttled
+ * cadence coincide and there is one regime to reason about.
+ *
+ * A module constant rather than a configuration option, because it has to agree with the silence
+ * threshold the reducer synthesises a close after — no page can know that number. It is meant to be
+ * cheap to change, since it will be tuned against what RC1 collects.
+ */
+export const WEBSOCKET_HEARTBEAT_INTERVAL = ONE_MINUTE
+
 export interface WebSocketConnectionTracker {
+  /** One beat of every connection in phase `open`, whether the cadence or a page transition asked. */
+  beatOpenConnections: () => void
   flushOpenConnections: (endClocks?: ClocksState) => void
   stop: () => void
 }
@@ -50,9 +65,18 @@ export function startWebSocketCollection(
     tracker.flushOpenConnections(endClocks)
   })
 
+  // A beat on all three reasons, unlike view tracking, which filters to before-unload: a view
+  // survives a background transition, a connection may not, and hidden is the only signal mobile
+  // browsers guarantee at that point. It is what keeps a backgrounded app's reported traffic from
+  // being stale by however long the app sat in the background.
+  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
+    tracker.beatOpenConnections()
+  })
+
   return {
     stop: () => {
       sessionExpiredSubscription.unsubscribe()
+      prepareUrgentFlushSubscription.unsubscribe()
       tracker.flushOpenConnections()
       tracker.stop()
     },
@@ -71,6 +95,7 @@ export function trackWebSocket(
   addWebSocketVital: AddWebSocketVital
 ): WebSocketConnectionTracker {
   const trackedConnections = new Map<WebSocket, TrackedConnection>()
+  let heartbeatIntervalId: TimeoutId | undefined
 
   /**
    * Reports one phase of one connection. The state is read at the moment of emission, so a
@@ -101,12 +126,71 @@ export function trackWebSocket(
     })
   }
 
+  /**
+   * One beat: every connection in phase `open` reports where it is, at one date and each with the
+   * next version of its own snapshot. A connection in any other phase does not beat — the closing
+   * phase deliberately included, so that a hung close falls silent instead of looking alive.
+   */
+  function beatOpenConnections() {
+    const beatClocks = clocksNow()
+
+    trackedConnections.forEach((connection) => {
+      const state = connection.getState()
+      // the open clocks are read from the connection rather than asserted: the phase implies them,
+      // and only checking for both tells the compiler so
+      if (state.phase !== 'open' || !state.openClocks) {
+        return
+      }
+
+      emitVital(connection, {
+        phase: 'open',
+        openClocks: state.openClocks,
+        beatClocks,
+        snapshotVersion: connection.nextSnapshotVersion(),
+      })
+    })
+  }
+
+  /**
+   * Follows the timer to the population in phase `open`, so the heartbeat costs nothing while no
+   * connection is open.
+   */
+  function syncHeartbeat() {
+    const shouldBeat = hasOpenConnection()
+
+    if (shouldBeat && heartbeatIntervalId === undefined) {
+      heartbeatIntervalId = setInterval(beatOpenConnections, WEBSOCKET_HEARTBEAT_INTERVAL)
+    } else if (!shouldBeat && heartbeatIntervalId !== undefined) {
+      clearInterval(heartbeatIntervalId)
+      heartbeatIntervalId = undefined
+    }
+  }
+
+  function hasOpenConnection() {
+    for (const connection of trackedConnections.values()) {
+      if (connection.getState().phase === 'open') {
+        return true
+      }
+    }
+    return false
+  }
+
   const subscription = bufferedDataObservable.subscribe((bufferedData) => {
     if (bufferedData.type !== BufferedDataType.WEB_SOCKET) {
       return
     }
 
     const context = bufferedData.data
+    handleWebSocketContext(context)
+
+    // after every phase change rather than at the ones that happen to matter, so none can be missed.
+    // Messages are the one hot path here and change no phase, so they are the exception
+    if (context.state !== 'message-in' && context.state !== 'message-out') {
+      syncHeartbeat()
+    }
+  })
+
+  function handleWebSocketContext(context: WebSocketContext) {
     switch (context.state) {
       case 'connecting': {
         const connection = createTrackedConnection({
@@ -192,9 +276,10 @@ export function trackWebSocket(
         return
       }
     }
-  })
+  }
 
   return {
+    beatOpenConnections,
     flushOpenConnections: (endClocks = clocksNow()) => {
       trackedConnections.forEach((connection, instance) => {
         // no close event happened on this path, so the send queue depth is read from the socket and
@@ -205,10 +290,12 @@ export function trackWebSocket(
       })
 
       trackedConnections.clear()
+      syncHeartbeat()
     },
     stop: () => {
       subscription.unsubscribe()
       trackedConnections.clear()
+      syncHeartbeat()
     },
   }
 }
