@@ -5,21 +5,22 @@ import {
   generateUUID,
   isExperimentalFeatureEnabled,
   noop,
-  sanitize,
 } from '@datadog/browser-core'
-import type { ClocksState, Duration } from '@datadog/js-core/time'
+import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
 import { buildUrl } from '@datadog/js-core/util'
-import { VitalType } from '../../rawRumEvent.types'
+import type { RawRumWebSocketVitalEvent } from '../../rawRumEvent.types'
+import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { DurationVital } from '../vital/vitalCollection'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
+import type { WebSocketTrackingEnd, WebSocketVitalPhaseInfo } from './serializeWebSocketVital'
+import { serializeWebSocketVital, webSocketVitalClocks } from './serializeWebSocketVital'
 
-export const WEBSOCKET_CONNECTING_VITAL_NAME = 'websocket-connecting'
-export const WEBSOCKET_CLOSED_VITAL_NAME = 'websocket-closed'
+/** The seam every WebSocket vital reaches the event pipeline through. */
+export type AddWebSocketVital = (rawRumEvent: RawRumWebSocketVitalEvent, startClocks: ClocksState) => void
 
 export interface WebSocketConnectionTracker {
   flushOpenConnections: (endClocks?: ClocksState) => void
@@ -34,14 +35,14 @@ export interface WebSocketConnectionTracker {
 export function startWebSocketCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  addDurationVital: (vital: DurationVital) => void,
+  addWebSocketVital: AddWebSocketVital,
   bufferedDataObservable: Observable<BufferedData>
 ) {
   if (!isWebSocketCollectionEnabled(configuration)) {
     return { stop: noop }
   }
 
-  const tracker = trackWebSocket(bufferedDataObservable, addDurationVital)
+  const tracker = trackWebSocket(bufferedDataObservable, addWebSocketVital)
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once; later events on the same WebSocket instance are ignored.
@@ -67,29 +68,37 @@ function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
 
 export function trackWebSocket(
   bufferedDataObservable: Observable<BufferedData>,
-  addDurationVital: (vital: DurationVital) => void
+  addWebSocketVital: AddWebSocketVital
 ): WebSocketConnectionTracker {
   const trackedConnections = new Map<WebSocket, TrackedConnection>()
 
-  function emitVital(name: string, connection: TrackedConnection, startClocks: ClocksState) {
-    const { id, url } = connection.getState()
-
-    addDurationVital({
-      id: generateUUID(),
-      name,
-      type: VitalType.DURATION,
-      startClocks,
-      duration: 0 as Duration,
-      context: sanitize({
-        url,
-        connection_id: id,
-      }),
-    })
+  /**
+   * Reports one phase of one connection. The state is read at the moment of emission, so a
+   * snapshot-carrying phase must have recorded whatever it observed before getting here.
+   */
+  function emitVital(connection: TrackedConnection, phaseInfo: WebSocketVitalPhaseInfo) {
+    const state = connection.getState()
+    addWebSocketVital(serializeWebSocketVital(state, phaseInfo), webSocketVitalClocks(state, phaseInfo))
   }
 
-  function endTracking(connection: TrackedConnection, endClocks: ClocksState, bufferedAmount: number) {
+  /**
+   * Ends tracking, whichever terminal came first, and reports the connection's last vital. The
+   * snapshot version continues the sequence the open vitals started, so this is the highest one the
+   * connection reports.
+   */
+  function endTracking(
+    connection: TrackedConnection,
+    endClocks: ClocksState,
+    bufferedAmount: number,
+    trackingEnd: WebSocketTrackingEnd
+  ) {
     connection.recordTrackingEnd(endClocks, bufferedAmount)
-    emitVital(WEBSOCKET_CLOSED_VITAL_NAME, connection, endClocks)
+    emitVital(connection, {
+      phase: 'closed',
+      endClocks,
+      snapshotVersion: connection.nextSnapshotVersion(),
+      ...trackingEnd,
+    })
   }
 
   const subscription = bufferedDataObservable.subscribe((bufferedData) => {
@@ -108,17 +117,31 @@ export function trackWebSocket(
         })
         trackedConnections.set(context.instance, connection)
 
-        emitVital(WEBSOCKET_CONNECTING_VITAL_NAME, connection, context.startClocks)
+        emitVital(connection, { phase: 'connecting' })
 
         return
       }
 
       case 'open': {
-        trackedConnections.get(context.instance)?.recordOpen({
+        const connection = trackedConnections.get(context.instance)
+        if (!connection) {
+          return
+        }
+
+        connection.recordOpen({
           openClocks: context.openClocks,
           // the DOM reports "the server negotiated none" as an empty string
           selectedProtocol: context.protocol || undefined,
           selectedExtensions: context.extensions,
+        })
+
+        emitVital(connection, {
+          phase: 'open',
+          openClocks: context.openClocks,
+          // the first vital of the sequence is taken when the handshake completed; the heartbeat's
+          // later beats are the ones where the two dates part
+          beatClocks: context.openClocks,
+          snapshotVersion: connection.nextSnapshotVersion(),
         })
 
         return
@@ -146,7 +169,10 @@ export function trackWebSocket(
 
         trackedConnections.delete(context.instance)
 
-        endTracking(connection, context.at, context.bufferedAmountAtClose)
+        endTracking(connection, context.at, context.bufferedAmountAtClose, {
+          trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
+          closeEvent: { code: context.code, reason: context.reason, wasClean: context.wasClean },
+        })
 
         return
       }
@@ -156,8 +182,11 @@ export function trackWebSocket(
   return {
     flushOpenConnections: (endClocks = clocksNow()) => {
       trackedConnections.forEach((connection, instance) => {
-        // no close event happened on this path, so the send queue depth is read from the socket
-        endTracking(connection, endClocks, instance.bufferedAmount)
+        // no close event happened on this path, so the send queue depth is read from the socket and
+        // the close outcome is genuinely absent rather than defaulted
+        endTracking(connection, endClocks, instance.bufferedAmount, {
+          trackingEndReason: WebSocketTrackingEndReason.SESSION_END,
+        })
       })
 
       trackedConnections.clear()

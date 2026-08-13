@@ -7,7 +7,7 @@ import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datad
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
-import { RumEventType } from '../rawRumEvent.types'
+import { RumEventType, WebSocketVitalName } from '../rawRumEvent.types'
 import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
@@ -16,7 +16,6 @@ import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import { startSessionContext } from './contexts/sessionContext'
 import { createHooks } from './hooks'
-import { WEBSOCKET_CONNECTING_VITAL_NAME } from './webSocket/webSocketCollection'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
@@ -210,12 +209,12 @@ describe('rum assembly', () => {
           expect(serverRumEvents[0].context!.foo).toBe('bar')
         })
 
-        it('should allow beforeSend to add protocols to the websocket-connecting vital context', () => {
+        it('should allow beforeSend to enrich the context of a websocket vital', () => {
           const protocols = ['chat.v1']
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
-                if (event.type === RumEventType.VITAL && event.vital.name === WEBSOCKET_CONNECTING_VITAL_NAME) {
+                if (event.type === RumEventType.VITAL && event.vital.name === WebSocketVitalName.CONNECTING) {
                   event.context.protocols = protocols
                 }
                 return true
@@ -225,7 +224,7 @@ describe('rum assembly', () => {
 
           notifyRawRumEvent(lifeCycle, {
             rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
-              vital: { name: WEBSOCKET_CONNECTING_VITAL_NAME },
+              vital: { name: WebSocketVitalName.CONNECTING },
               context: { url: 'wss://example.com/socket' },
             }),
           })
