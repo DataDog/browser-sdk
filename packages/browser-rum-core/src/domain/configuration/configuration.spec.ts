@@ -332,18 +332,16 @@ describe('validateAndBuildRumConfiguration', () => {
     it('is disabled by default', () => {
       const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
 
-      expect(configuration.enableSessionReplayCanvasRecording).toBeFalse()
-      expect(configuration.sessionReplayMaxCanvasFps).toBe(0)
+      expect(configuration.enableSessionReplayCanvasRecording).toBeUndefined()
     })
 
     it('stays disabled when requested without the experimental feature', () => {
       const configuration = validateAndBuildRumConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
-        enableSessionReplayCanvasRecording: true,
+        enableSessionReplayCanvasRecording: {},
       })!
 
-      expect(configuration.enableSessionReplayCanvasRecording).toBeFalse()
-      expect(configuration.sessionReplayMaxCanvasFps).toBe(0)
+      expect(configuration.enableSessionReplayCanvasRecording).toBeUndefined()
     })
 
     describe('when the experimental feature is enabled', () => {
@@ -354,21 +352,29 @@ describe('validateAndBuildRumConfiguration', () => {
       it('uses one frame per second by default when enabled', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          enableSessionReplayCanvasRecording: true,
+          enableSessionReplayCanvasRecording: {},
         })!
 
-        expect(configuration.enableSessionReplayCanvasRecording).toBeTrue()
-        expect(configuration.sessionReplayMaxCanvasFps).toBe(1)
+        expect(configuration.enableSessionReplayCanvasRecording).toEqual({ maxFramesPerSecond: 1 })
       })
 
       it('uses the configured frame rate', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          enableSessionReplayCanvasRecording: true,
-          sessionReplayMaxCanvasFps: 2.5,
+          enableSessionReplayCanvasRecording: { maxFramesPerSecond: 2.5 },
         })!
 
-        expect(configuration.sessionReplayMaxCanvasFps).toBe(2.5)
+        expect(configuration.enableSessionReplayCanvasRecording).toEqual({ maxFramesPerSecond: 2.5 })
+      })
+
+      it('rejects invalid canvas recording options', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            enableSessionReplayCanvasRecording: true as any,
+          })
+        ).toBeUndefined()
+        expect(displayErrorSpy).toHaveBeenCalledOnceWith('"enableSessionReplayCanvasRecording" is not a valid object')
       })
     })
   })
@@ -923,8 +929,7 @@ describe('serializeRumConfiguration', () => {
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
-      enableSessionReplayCanvasRecording: true,
-      sessionReplayMaxCanvasFps: 2.5,
+      enableSessionReplayCanvasRecording: { maxFramesPerSecond: 2.5 },
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -940,12 +945,7 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
-            Key extends
-                | 'applicationId'
-                | 'subdomain'
-                | 'remoteConfiguration'
-                | 'enableSessionReplayCanvasRecording'
-                | 'sessionReplayMaxCanvasFps'
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'enableSessionReplayCanvasRecording'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
