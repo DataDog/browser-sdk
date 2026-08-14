@@ -114,19 +114,17 @@ export function useInspectedPageOverrides(): OverridesController {
   const mutationQueue = useRef<Promise<void>>(Promise.resolve())
   // Cancels an in-flight settle when a newer navigation (or unmount) supersedes it.
   const cancelSettle = useRef<() => void>(noop)
-  // Monotonic id guarding the post-write state update against a navigation landing mid-write: bumped
-  // before each write applies its result and on navigation start, so a write still in flight when a
-  // new page loads can't clobber it with the previous origin's overrides.
+  // Bumped before each write and on navigation start, so a write still in flight when a new page
+  // loads can't clobber it with the previous origin's overrides.
   const readSeq = useRef(0)
   // Flipped false on unmount so an async write's follow-up read can't setState on a torn-down hook.
   const mounted = useRef(true)
-  // Mirror of status for the write guard (read from event handlers, outside render). Also set
+  // Mirror of status for the write guard, since event handlers read it outside render. Set
   // synchronously on navigation start so a queued write can't slip through before the re-render.
   const statusRef = useRef<FlagPageStatus>(state.status)
   statusRef.current = state.status
 
-  // A fresh `cancelled` flag per call — flipped by cancelSettle on the next navigation, the next
-  // settle, or unmount — supersedes an in-flight settle.
+  // A fresh `cancelled` flag per call supersedes any in-flight settle.
   const settle = useCallback(() => {
     cancelSettle.current()
     let cancelled = false
@@ -136,14 +134,10 @@ export function useInspectedPageOverrides(): OverridesController {
     void settleFlagState(setState, () => cancelled)
   }, [])
 
-  // Read once on mount, then drive the state machine off the page's navigation lifecycle: going
-  // `loading` the moment a top-frame navigation starts hides the provider warning and blocks writes,
-  // and onCompleted/onErrorOccurred re-read once the document has swapped in.
-  //
   // Known limitation (accepted): terminal events aren't correlated to a specific navigation — the
   // webNavigation API exposes no id spanning onBeforeNavigate→onCompleted. In a rare overlapping-
-  // navigation race (e.g. a redirecting page) a stale terminal event could settle to `ready` mid-nav;
-  // it self-corrects on the next read and the write guard limits exposure.
+  // navigation race a stale terminal event could settle to `ready` mid-nav; it self-corrects on the
+  // next read and the write guard limits exposure.
   useEffect(() => {
     mounted.current = true
     settle()

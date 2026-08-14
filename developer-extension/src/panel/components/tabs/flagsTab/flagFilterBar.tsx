@@ -19,10 +19,11 @@ import { useFlagsContext } from './flagsContext'
 import type { FlagIdentityState } from './useFlagIdentity'
 import type { FlagCatalogView } from './useFlagCatalogView'
 
-// Type is a fixed set, so its options are static. There's no tags endpoint and we only load a page
-// at a time, so the Tag filter can't show every tag — instead it offers `tagSuggestions` (tags seen
-// on pages loaded so far) as autocomplete while still accepting any typed tag. Search, type, tags,
-// "My feature flags" (created_by) and "My teams" (team: tags) are all applied server-side.
+/**
+ * Every filter here is applied server-side. Tags are the exception to the "options are known" rule:
+ * there's no tags endpoint and we load a page at a time, so `tagSuggestions` only autocompletes tags
+ * seen so far while still accepting any typed tag.
+ */
 export function FlagFilterBar() {
   const { view, tagSuggestions, identity } = useFlagsContext()
   const typeOptions = FLAG_TYPES.map((type) => ({ value: type, label: FLAG_TYPE_CONFIG[type].label }))
@@ -36,8 +37,7 @@ export function FlagFilterBar() {
         onChange={(event) => view.setSearch(event.currentTarget.value)}
         size="xs"
       />
-      {/* Bottom-aligned so the toggle sits on the same baseline as the labelled selects; the selects
-          flex-grow and wrap so the row stays tidy in the narrow devtools panel. */}
+      {/* Bottom-aligned so the toggle shares a baseline with the labelled selects. */}
       <Group gap="sm" align="flex-end" wrap="wrap">
         <MyFlagsSwitch view={view} identity={identity} />
         <MyTeamsSelect view={view} identity={identity} />
@@ -67,14 +67,13 @@ export function FlagFilterBar() {
 }
 
 function MyFlagsSwitch({ view, identity }: { view: FlagCatalogView; identity: FlagIdentityState }) {
-  // No user id → the created_by filter can't match anything, so disable the toggle rather than
-  // offer one whose only effect is to empty the list.
+  // Without a user id the created_by filter can only ever empty the list, so disable it.
   const unavailable = !identity.loading && !identity.userId
 
   return (
     <Tooltip label="Unavailable: could not determine the signed-in user" disabled={!unavailable} withArrow>
-      {/* Bordered rounded rectangle so the toggle reads as a filter chip matching the Type/Tags boxes.
-          The Box also lets the tooltip fire while the Switch itself is disabled. */}
+      {/* Reads as a filter chip matching the Type/Tags boxes, and lets the tooltip fire while the
+          Switch itself is disabled. */}
       <Box
         style={{
           display: 'flex',
@@ -89,8 +88,7 @@ function MyFlagsSwitch({ view, identity }: { view: FlagCatalogView; identity: Fl
           labelPosition="left"
           color="violet"
           size="xs"
-          // Keep the rendered state honest: while identity is loading or unavailable the filter isn't
-          // applied (see useFlagCatalogView), so it must not read as on.
+          // Without a user id the filter isn't actually applied, so it must not read as on.
           checked={view.myFlagsOnly && !!identity.userId}
           disabled={identity.loading || unavailable}
           onChange={(event) => view.setMyFlagsOnly(event.currentTarget.checked)}
@@ -100,13 +98,13 @@ function MyFlagsSwitch({ view, identity }: { view: FlagCatalogView; identity: Fl
   )
 }
 
-// Show the search field only past this many teams; a shorter list doesn't need filtering. Matches
-// the Datadog web UI's team filter, whose threshold is its default page of 10 plus a small buffer.
+// Matches the web UI's team filter: its default page of 10, plus a small buffer.
 const TEAM_SEARCH_THRESHOLD = 12
 
-// A checkbox dropdown rather than a chip multiselect: the closed control shows a compact "N teams
-// selected" summary (so it never grows tall), and the open list checks the selected teams and floats
-// them to the top.
+/**
+ * A checkbox dropdown rather than a chip multiselect, so the closed control stays a compact "N teams
+ * selected" summary instead of growing tall in the narrow panel.
+ */
 function MyTeamsSelect({ view, identity }: { view: FlagCatalogView; identity: FlagIdentityState }) {
   const selected = view.teamFilter
   const [search, setSearch] = useState('')
@@ -117,15 +115,13 @@ function MyTeamsSelect({ view, identity }: { view: FlagCatalogView; identity: Fl
     },
   })
 
-  // Snapshot a "selected first" ordering when the dropdown opens, so toggling a team mid-list doesn't
-  // make it jump under the cursor. Recomputed on each open.
+  // Snapshot a "selected first" ordering on open, so toggling a team doesn't make it jump under the
+  // cursor. Recomputed on each open.
   const [ordered, setOrdered] = useState<string[]>([])
 
-  // Disabled while there's nothing to pick: still loading, no teams, or the token can't read teams.
   const disabled = identity.teamHandles.length === 0
 
-  // Explain a disabled control — no permission to read teams, the lookup failed, or the user is in
-  // none. Stay silent while still loading, or when there are teams to pick.
+  // Explains a disabled control, but stays silent while loading or when there are teams to pick.
   const tooltipLabel = identity.teamsForbidden
     ? "You don't have permission to view teams"
     : identity.teamsUnavailable
@@ -146,13 +142,11 @@ function MyTeamsSelect({ view, identity }: { view: FlagCatalogView; identity: Fl
     combobox.toggleDropdown()
   }
 
-  // Fall back to the raw handles until the first open populates `ordered`.
   const list = ordered.length > 0 ? ordered : identity.teamHandles
   const searchable = identity.teamHandles.length > TEAM_SEARCH_THRESHOLD
   const query = search.trim().toLowerCase()
   const options = list
-    // Always keep selected teams in the list, even when they don't match the search, so a selection
-    // never disappears out from under the user (matches the web UI's team filter).
+    // Selected teams survive the search filter, so a selection never disappears under the user.
     .filter((handle) => selected.includes(handle) || !query || handle.toLowerCase().includes(query))
     .map((handle) => (
       <Combobox.Option value={handle} key={handle} active={selected.includes(handle)}>

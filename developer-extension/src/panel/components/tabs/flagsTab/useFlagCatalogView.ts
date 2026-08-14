@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FlagCatalogRequest } from './flagsRequests'
 
 const CATALOG_PAGE_SIZE = 20
-// Wait out a typing burst before sending a search to the server, so we don't fire a request per
-// keystroke. Short enough to still feel responsive.
+// Long enough to wait out a typing burst, short enough to still feel responsive.
 const SEARCH_DEBOUNCE_MS = 400
 
 export interface FlagCatalogView {
@@ -41,16 +40,13 @@ export function useFlagCatalogView(currentUserId: string | null): FlagCatalogVie
   const [teamFilter, setTeamFilterState] = useState<string[]>([])
   const [page, setPage] = useState(1)
 
-  // Feed the server the debounced term, not the live one.
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(id)
   }, [search])
 
-  // Identity loads on its own request, separate from connecting, so just after connect `currentUserId`
-  // can still be null — and it stays null if that request failed. So filter by creator only when the
-  // toggle is on AND we actually know the user. Deriving it here (instead of inside the memo) keeps the
-  // request unchanged while the toggle is off, so identity arriving a moment later doesn't refetch.
+  // Derived outside the memo so the request stays unchanged while the toggle is off — otherwise
+  // identity resolving a moment after connect would trigger a needless refetch.
   const createdBy = myFlagsOnly && currentUserId ? currentUserId : null
   const request = useMemo<FlagCatalogRequest>(
     () => ({
