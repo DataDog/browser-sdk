@@ -5,6 +5,8 @@ import {
   DefaultPrivacyLevel,
   TraceContextInjection,
   display,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
   isNumber,
   isNonEmptyArray,
   BROWSER_CORE_SCHEMA,
@@ -212,6 +214,25 @@ export interface RumInitConfiguration extends InitConfiguration {
   startSessionReplayRecordingManually?: boolean | undefined
 
   /**
+   * Enables recording canvas elements in Session Replay.
+   *
+   * @category Session Replay
+   * @defaultValue false
+   * @hidden
+   */
+  recordCanvas?: boolean | undefined
+
+  /**
+   * The maximum number of canvas frames recorded per second. Setting this option to `0` disables canvas frame recording.
+   * This option has no effect unless {@link RumInitConfiguration.recordCanvas | recordCanvas} is enabled.
+   *
+   * @category Session Replay
+   * @defaultValue 1
+   * @hidden
+   */
+  canvasMaxFramesPerSecond?: number | undefined
+
+  /**
    * Enables privacy control for action names.
    *
    * @category Privacy
@@ -394,6 +415,8 @@ export const RUM_SCHEMA = {
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
   startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },
+  recordCanvas: { type: 'boolean', default: false },
+  canvasMaxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
 
   // Enums
   defaultPrivacyLevel: {
@@ -486,8 +509,12 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const recordCanvas = config.recordCanvas && isExperimentalFeatureEnabled(ExperimentalFeature.RECORD_CANVAS)
+
   return {
     ...config,
+    recordCanvas,
+    canvasMaxFramesPerSecond: recordCanvas ? config.canvasMaxFramesPerSecond : 0,
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
