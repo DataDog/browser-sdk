@@ -228,9 +228,9 @@ export async function clearStoredTokens(): Promise<void> {
 }
 
 /**
- * Ends the connection: revokes the grant at Datadog (RFC 7009), then drops the local tokens.
- * Clearing locally alone would only make this extension forget them — the grant would stay live and
- * any copy of the refresh token would keep working.
+ * Ends the connection: revokes the grant at Datadog, then drops the local tokens. Clearing locally
+ * alone would only make this extension forget them — the grant would stay live and any copy of the
+ * refresh token would keep working. Revocation follows https://datatracker.ietf.org/doc/html/rfc7009.
  *
  * Returns whether the revocation succeeded. Local tokens are cleared either way, so a user who asked
  * to disconnect ends up disconnected even if Datadog is unreachable; the caller reports a failure as
@@ -244,9 +244,11 @@ export async function revokeAndClearTokens(site: string): Promise<{ revoked: boo
 }
 
 /**
- * Revokes the refresh token — the renewable part of the grant. The access token is left to expire
- * (RFC 7009 only *recommends* cascading revocation, so we don't rely on it) and is dropped locally
- * by the caller. Refreshes first because the revoke endpoint authenticates with a Bearer token.
+ * Revokes the refresh token, since that's the renewable part of the grant — revoking only the access
+ * token would leave the grant able to mint new ones. The short-lived access token is left to expire
+ * on its own, and dropped locally by the caller.
+ *
+ * Refreshes first: the revoke endpoint authenticates the caller with a Bearer token.
  */
 async function tryRevokeGrant(site: string): Promise<boolean> {
   try {

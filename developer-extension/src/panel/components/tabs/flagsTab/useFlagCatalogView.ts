@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FlagCatalogRequest } from './flagsRequests'
 
 const CATALOG_PAGE_SIZE = 20
-// Long enough to wait out a typing burst, short enough to still feel responsive.
 const SEARCH_DEBOUNCE_MS = 400
 
 export interface FlagCatalogView {

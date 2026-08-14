@@ -132,7 +132,6 @@ function FlagRow({
       py="sm"
       style={{
         borderBottom: '1px solid var(--mantine-color-default-border)',
-        // Mantine's scheme-aware subtle tint (the one variant="light" uses), not a saturated fill.
         backgroundColor: overridden ? 'var(--mantine-color-violet-light)' : undefined,
       }}
     >
@@ -209,7 +208,6 @@ function FlagDescription({ description }: { description: string }) {
   }, [description, expanded])
 
   return (
-    // Slightly more separation than the name↔key gap, so the row reads as "title/key" then "description".
     <Box mt={4}>
       <Text ref={textRef} size="xs" lineClamp={expanded ? undefined : 1}>
         {description}

@@ -5,16 +5,12 @@ import { getFlagsApiHost } from './oauth'
 export interface CatalogFlag {
   key: string
   name: string
-  /** Free-text description authored in the Datadog UI. Empty when the flag has none. */
   description: string
   type: FlagType
   /** Parsed value of each variant (any JSON value); see parseVariantValue. */
   variants: Array<{ name: string; value: unknown }>
   tags: string[]
-  /**
-   * UUID of the user who created the flag. Undefined for flags created by a service account or
-   * integration. Compared against the signed-in user's UUID for the "My feature flags" filter.
-   */
+  /** Undefined for flags created by a service account or integration, which carry no user UUID. */
   createdBy?: string
 }
 
@@ -33,9 +29,7 @@ export interface FlagCatalogRequest {
   search: string
   typeFilter: string[]
   tagFilter: string[]
-  /** Team handles for the "My teams" filter, sent as `tags=team:<handle>`. */
   teamFilter: string[]
-  /** The signed-in user's UUID when "My feature flags" is on, else null. Sent as `created_by`. */
   createdBy: string | null
 }
 

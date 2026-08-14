@@ -10,13 +10,9 @@ import { fetchFfeJson, ForbiddenError } from './ffeApi'
 import { getFlagsApiHost } from './oauth'
 
 export interface FlagIdentity {
-  /** UUID of the signed-in user, or null when it couldn't be resolved. */
   userId: string | null
-  /** Handles of the teams the signed-in user belongs to, sorted for stable display. */
   teamHandles: string[]
-  /** True when the team lookup was refused because the user lacks permission to read teams. */
   teamsForbidden: boolean
-  /** True when the team lookup failed for another reason (network/server), distinct from an empty membership. */
   teamsUnavailable: boolean
 }
 
