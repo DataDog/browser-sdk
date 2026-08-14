@@ -510,7 +510,8 @@ export function validateAndBuildRumConfiguration(
   }
 
   const enableSessionReplayCanvasRecording =
-    config.enableSessionReplayCanvasRecording && isExperimentalFeatureEnabled(ExperimentalFeature.RECORD_CANVAS)
+    config.enableSessionReplayCanvasRecording &&
+    isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS)
 
   return {
     ...config,

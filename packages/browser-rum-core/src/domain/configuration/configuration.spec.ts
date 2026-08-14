@@ -348,7 +348,7 @@ describe('validateAndBuildRumConfiguration', () => {
 
     describe('when the experimental feature is enabled', () => {
       beforeEach(() => {
-        addExperimentalFeatures([ExperimentalFeature.RECORD_CANVAS])
+        addExperimentalFeatures([ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS])
       })
 
       it('uses one frame per second by default when enabled', () => {
