@@ -45,9 +45,6 @@ export function ConnectScreen({ auth }: { auth: FlagAuthState }) {
  * all that renders, so an override left from an earlier session keeps affecting the page with nothing
  * to explain it. Informational only; everything that mutates overrides lives on the connected tab.
  *
- * Shows the count but never the flag keys: this screen is `dd-privacy-allow`, so anything here is
- * unmasked in the extension's own Session Replay, and flag keys are customer data.
- *
  * Mounted only while disconnected, so its navigation listeners never run alongside the connected
  * tab's own instance of this hook.
  */
@@ -60,7 +57,14 @@ function DisconnectedOverridesNotice() {
   }
 
   return (
-    <Alert color="orange" w="100%" title={`${count} override${count === 1 ? '' : 's'} active on this page`}>
+    // Masked despite the surrounding dd-privacy-allow: only a count renders today, but flag keys are
+    // customer data, so anything added here should stay out of the extension's own Session Replay.
+    <Alert
+      color="orange"
+      w="100%"
+      data-dd-privacy="mask"
+      title={`${count} override${count === 1 ? '' : 's'} active on this page`}
+    >
       <Text size="xs">
         These are stored in the page and keep applying while you are signed out. Sign in to view and remove them.
       </Text>
