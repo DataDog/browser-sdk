@@ -220,17 +220,17 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue false
    * @hidden
    */
-  recordCanvas?: boolean | undefined
+  enableSessionReplayCanvasRecording?: boolean | undefined
 
   /**
    * The maximum number of canvas frames recorded per second. Setting this option to `0` disables canvas frame recording.
-   * This option has no effect unless {@link RumInitConfiguration.recordCanvas | recordCanvas} is enabled.
+   * This option has no effect unless {@link RumInitConfiguration.enableSessionReplayCanvasRecording | enableSessionReplayCanvasRecording} is enabled.
    *
    * @category Session Replay
    * @defaultValue 1
    * @hidden
    */
-  canvasMaxFramesPerSecond?: number | undefined
+  sessionReplayMaxCanvasFPS?: number | undefined
 
   /**
    * Enables privacy control for action names.
@@ -415,8 +415,8 @@ export const RUM_SCHEMA = {
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
   startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },
-  recordCanvas: { type: 'boolean', default: false },
-  canvasMaxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
+  enableSessionReplayCanvasRecording: { type: 'boolean', default: false },
+  sessionReplayMaxCanvasFPS: { type: 'number', min: 0, max: 5, default: 1 },
 
   // Enums
   defaultPrivacyLevel: {
@@ -509,12 +509,13 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const recordCanvas = config.recordCanvas && isExperimentalFeatureEnabled(ExperimentalFeature.RECORD_CANVAS)
+  const enableSessionReplayCanvasRecording =
+    config.enableSessionReplayCanvasRecording && isExperimentalFeatureEnabled(ExperimentalFeature.RECORD_CANVAS)
 
   return {
     ...config,
-    recordCanvas,
-    canvasMaxFramesPerSecond: recordCanvas ? config.canvasMaxFramesPerSecond : 0,
+    enableSessionReplayCanvasRecording,
+    sessionReplayMaxCanvasFPS: enableSessionReplayCanvasRecording ? config.sessionReplayMaxCanvasFPS : 0,
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
