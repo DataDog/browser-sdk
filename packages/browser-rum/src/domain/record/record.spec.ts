@@ -77,7 +77,7 @@ describe('record', () => {
     it('instruments canvas drawing when canvas recording is enabled', () => {
       const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
 
-      startRecording({ recordCanvas: true, canvasMaxFramesPerSecond: 1 })
+      startRecording({ enableSessionReplayCanvasRecording: { maxFramesPerSecond: 1 } })
 
       expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).not.toBe(
         originalFillRect
@@ -87,7 +87,7 @@ describe('record', () => {
     it('does not instrument canvas drawing when canvas recording is disabled', () => {
       const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
 
-      startRecording({ recordCanvas: false, canvasMaxFramesPerSecond: 1 })
+      startRecording()
 
       expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
         originalFillRect
@@ -97,7 +97,7 @@ describe('record', () => {
     it('does not instrument canvas drawing when the maximum frame rate is zero', () => {
       const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
 
-      startRecording({ recordCanvas: true, canvasMaxFramesPerSecond: 0 })
+      startRecording({ enableSessionReplayCanvasRecording: { maxFramesPerSecond: 0 } })
 
       expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
         originalFillRect

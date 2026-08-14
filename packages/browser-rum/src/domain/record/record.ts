@@ -78,7 +78,10 @@ export function record(options: RecordOptions): RecordAPI {
     trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
 
-  if (configuration.recordCanvas && configuration.canvasMaxFramesPerSecond > 0) {
+  if (
+    configuration.enableSessionReplayCanvasRecording &&
+    configuration.enableSessionReplayCanvasRecording.maxFramesPerSecond > 0
+  ) {
     const canvasManager = createCanvasManager()
     trackers.push(trackCanvas2DMutations(canvasManager.markCanvasDirty))
   }
