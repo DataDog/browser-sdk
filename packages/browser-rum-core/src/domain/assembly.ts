@@ -1,16 +1,15 @@
 import type { EventRateLimiter } from '@datadog/browser-core'
-import { isEmptyObject, display, createEventRateLimiter, buildTags } from '@datadog/browser-core'
+import { isEmptyObject, display, createEventRateLimiter, buildTags, runBeforeSend } from '@datadog/browser-core'
 import { DISCARDED } from '@datadog/js-core/assembly'
 import { combine } from '@datadog/js-core/util'
-import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
+import type { AssembleHook, AssembleHookParams } from './hooks'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { AssembleHook, AssembleHookParams } from './hooks'
 
 const COMMON_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -89,7 +88,23 @@ export function startRumAssembly(
         ddtags: buildTags(configuration).join(','),
       }) as AssembledRumEvent
 
-      if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
+      if (configuration.beforeSend) {
+        runBeforeSend(
+          serverRumEvent,
+          (event) => configuration.beforeSend!(event, domainContext),
+          handleBeforeSendResult,
+          display,
+          (event) => limitModification(event, MODIFIABLE_FIELD_PATHS_BY_EVENT[event.type])
+        )
+      } else {
+        handleBeforeSendResult(undefined)
+      }
+
+      function handleBeforeSendResult(beforeSendResult: unknown) {
+        if (!shouldSend(serverRumEvent, beforeSendResult, eventRateLimiters)) {
+          return
+        }
+
         if (isEmptyObject(serverRumEvent.context!)) {
           delete serverRumEvent.context
         }
@@ -101,20 +116,14 @@ export function startRumAssembly(
 
 function shouldSend(
   event: AssembledRumEvent,
-  beforeSend: RumConfiguration['beforeSend'],
-  domainContext: RumEventDomainContext,
+  beforeSendResult: unknown,
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
-  if (beforeSend) {
-    const result = limitModification(event, MODIFIABLE_FIELD_PATHS_BY_EVENT[event.type], (event) =>
-      beforeSend(event, domainContext)
-    )
-    if (result === false && event.type !== RumEventType.VIEW) {
-      return false
-    }
-    if (result === false) {
-      display.warn("Can't dismiss view events using beforeSend!")
-    }
+  if (beforeSendResult === false && event.type !== RumEventType.VIEW) {
+    return false
+  }
+  if (beforeSendResult === false) {
+    display.warn("Can't dismiss view events using beforeSend!")
   }
 
   const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()

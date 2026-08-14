@@ -3,6 +3,17 @@ import { display, noop, objectEntries, SANITIZE_DEFAULT_MAX_CHARACTER_COUNT } fr
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 
+function runWithModifier<T extends Context, Result>(
+  object: T,
+  modifiableFieldPaths: ModifiableFieldPaths,
+  modifier: (object: T) => Result
+): Result | undefined {
+  const { event, apply } = limitModification(object, modifiableFieldPaths)
+  const result = modifier(event)
+  apply()
+  return result
+}
+
 describe('limitModification', () => {
   let object: unknown
 
@@ -21,7 +32,7 @@ describe('limitModification', () => {
       candidate.arr[0].foo = 'modified3'
     }
 
-    limitModification(
+    runWithModifier(
       object,
       {
         'foo.bar': 'string',
@@ -45,7 +56,7 @@ describe('limitModification', () => {
       candidate.arr[0].foo = 'modified3'
     }
 
-    limitModification(object, { 'foo.bar': 'string' }, modifier)
+    runWithModifier(object, { 'foo.bar': 'string' }, modifier)
 
     expect(object).toEqual({
       foo: { bar: 'modified1' },
@@ -61,7 +72,7 @@ describe('limitModification', () => {
       candidate.qix = 'modified3'
     }
 
-    limitModification(object, { 'foo.bar': 'string', qux: 'string', qix: 'string' }, modifier)
+    runWithModifier(object, { 'foo.bar': 'string', qux: 'string', qix: 'string' }, modifier)
 
     expect(object as any).toEqual({
       foo: { bar: 'modified1' },
@@ -78,7 +89,7 @@ describe('limitModification', () => {
       candidate.qix = 'modified3'
     }
 
-    limitModification(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
+    runWithModifier(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
 
     expect(object).toEqual({
       foo: { bar: 'modified1' },
@@ -105,7 +116,7 @@ describe('limitModification', () => {
       candidate.object_to_array = []
     }
 
-    limitModification(object, generateModifiableFieldPathsFrom(object), modifier)
+    runWithModifier(object, generateModifiableFieldPathsFrom(object), modifier)
 
     expect(object).toEqual({
       string_to_undefined: 'bar',
@@ -129,7 +140,7 @@ describe('limitModification', () => {
       delete candidate.c
     }
 
-    limitModification(object, generateModifiableFieldPathsFrom(object), modifier)
+    runWithModifier(object, generateModifiableFieldPathsFrom(object), modifier)
 
     expect(object).toEqual({
       a: {},
@@ -146,7 +157,7 @@ describe('limitModification', () => {
       ;(candidate.arr as Array<Record<string, string>>).push({ bar: 'baz' })
     }
 
-    limitModification(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
+    runWithModifier(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
 
     expect(object).toEqual({
       foo: { bar: 'bar' },
@@ -162,7 +173,7 @@ describe('limitModification', () => {
       delete candidate.foo.baz
     }
 
-    limitModification(object, { foo: 'object' }, modifier)
+    runWithModifier(object, { foo: 'object' }, modifier)
 
     expect(object).toEqual({
       foo: { bar: { qux: 'qux' } },
@@ -176,7 +187,7 @@ describe('limitModification', () => {
       return false
     }
 
-    const result = limitModification(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
+    const result = runWithModifier(object, { 'foo.bar': 'string', qux: 'string' }, modifier)
 
     expect(result).toBe(false)
     expect(object).toEqual({
@@ -191,7 +202,7 @@ describe('limitModification', () => {
       candidate.bar.self = candidate.bar
     }
 
-    limitModification(object, { bar: 'object' }, modifier)
+    runWithModifier(object, { bar: 'object' }, modifier)
     expect(() => JSON.stringify(object)).not.toThrowError()
   })
 
@@ -200,7 +211,7 @@ describe('limitModification', () => {
     const wayTooLongUrl = `/${'a'.repeat(SANITIZE_DEFAULT_MAX_CHARACTER_COUNT + 1)}`
     const object: Context = { resource: { url: wayTooLongUrl } }
     const modifier = noop
-    limitModification(object, { 'resource.url': 'string' }, modifier)
+    runWithModifier(object, { 'resource.url': 'string' }, modifier)
     expect(object).toEqual({ resource: { url: wayTooLongUrl } })
   })
 
@@ -216,7 +227,7 @@ describe('limitModification', () => {
       },
     }
     const modifier = noop
-    limitModification(object, { context: 'object' }, modifier)
+    runWithModifier(object, { context: 'object' }, modifier)
     expect(object).toEqual({
       context: {
         response: {

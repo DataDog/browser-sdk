@@ -1,6 +1,5 @@
 import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
-  catchUserErrors,
   serializeConfiguration,
   DefaultPrivacyLevel,
   TraceContextInjection,
@@ -350,9 +349,9 @@ export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource
  *
  * @param event - The RUM event
  * @param context - The RUM event domain context providing access to native browser data based on the event type (e.g. error, performance entry).
- * @returns true if the event should be sent to Datadog, false otherwise
+ * @returns true if the event should be sent to Datadog, false otherwise. The result can be returned asynchronously.
  */
-export type RumBeforeSend = (event: RumEvent, context: RumEventDomainContext) => boolean
+export type RumBeforeSend = (event: RumEvent, context: RumEventDomainContext) => boolean | Promise<boolean>
 
 export interface GraphQlUrlOption {
   match: MatchOption
@@ -489,9 +488,6 @@ export function validateAndBuildRumConfiguration(
   return {
     ...config,
     allowedTracingUrls,
-    beforeSend: config.beforeSend
-      ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
-      : undefined,
     rulePsr: isNumber(initConfiguration.traceSampleRate) ? initConfiguration.traceSampleRate / 100 : undefined,
     trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
     allowedGraphQlUrls: validateAndBuildGraphQlOptions(initConfiguration),

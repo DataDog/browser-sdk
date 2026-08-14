@@ -1,7 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { Context } from '@datadog/browser-core'
 import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
-import { ErrorSource, noop } from '@datadog/browser-core'
+import { ErrorSource, noop, display } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -31,7 +31,7 @@ const COMMON_CONTEXT: CommonContext = {
 }
 
 describe('startLogsAssembly', () => {
-  let beforeSend: (event: LogsEvent) => void | boolean
+  let beforeSend: (event: LogsEvent) => void | boolean | Promise<void | boolean>
   let lifeCycle: LifeCycle
   let configuration: LogsConfiguration
   let serverLogs: Array<LogsEvent & Context> = []
@@ -82,6 +82,47 @@ describe('startLogsAssembly', () => {
       rawLogsEvent: DEFAULT_MESSAGE,
     })
     expect(serverLogs.length).toEqual(0)
+  })
+
+  it('should wait for beforeSend promise resolution', async () => {
+    let resolveBeforeSend: (result: boolean) => void
+    beforeSend = () =>
+      new Promise((resolve) => {
+        resolveBeforeSend = resolve
+      })
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+
+    expect(serverLogs.length).toEqual(0)
+
+    resolveBeforeSend!(true)
+    await Promise.resolve()
+
+    expect(serverLogs.length).toEqual(1)
+  })
+
+  it('should not send if beforeSend promise resolves to false', async () => {
+    beforeSend = () => Promise.resolve(false)
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+
+    expect(serverLogs.length).toEqual(0)
+    await Promise.resolve()
+    expect(serverLogs.length).toEqual(0)
+  })
+
+  it('should report beforeSend promise rejections and send the log', async () => {
+    const error = new Error('beforeSend error')
+    const displaySpy = spyOn(display, 'error')
+    beforeSend = () => Promise.reject(error)
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+
+    expect(serverLogs.length).toEqual(0)
+    await Promise.resolve()
+
+    expect(displaySpy).toHaveBeenCalledWith('beforeSend threw an error:', error)
+    expect(serverLogs.length).toEqual(1)
   })
 
   describe('contexts inclusion', () => {

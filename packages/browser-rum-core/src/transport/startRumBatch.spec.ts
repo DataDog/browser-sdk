@@ -650,4 +650,87 @@ describe('createBatchDispatcher', () => {
       expect(emittedTypes.every((t) => t === RumEventType.VIEW)).toBeTrue()
     })
   })
+
+  describe('out-of-order delivery (async beforeSend)', () => {
+    it('should discard a stale view update arriving after a newer one', () => {
+      const { batch, upsertSpy, flush } = createMockBatch()
+      const { dispatch } = createBatchDispatcher(batch, true)
+
+      dispatch(makeView('view-1', 1))
+      flush()
+
+      upsertSpy.calls.reset()
+
+      // Newer update (doc version 3) arrives first
+      dispatch(makeView('view-1', 3, { view: { ...makeAssembledView().view, action: { count: 2 } } }))
+      // Stale update (doc version 2) arrives after — should be discarded
+      dispatch(makeView('view-1', 2, { view: { ...makeAssembledView().view, action: { count: 1 } } }))
+
+      // Only the newer update should have been upserted
+      expect(upsertSpy.calls.count()).toBe(1)
+      const emitted = upsertSpy.calls.argsFor(0)[0] as AssembledViewDiff
+      expect(emitted._dd?.document_version).toBe(3)
+    })
+
+    it('should discard a stale view update arriving after a newer one (opt-1 path)', () => {
+      const { batch, upsertSpy } = createMockBatch()
+      const { dispatch } = createBatchDispatcher(batch, true)
+
+      dispatch(makeView('view-1', 1)) // sets batchHasFullView
+
+      upsertSpy.calls.reset()
+
+      // Newer update (doc version 3) arrives first — opt-1 upserts full VIEW
+      dispatch(makeView('view-1', 3))
+      // Stale update (doc version 2) arrives after — should be discarded
+      dispatch(makeView('view-1', 2))
+
+      // Only the newer update should have been upserted
+      expect(upsertSpy.calls.count()).toBe(1)
+      expect((upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent)._dd.document_version).toBe(3)
+    })
+  })
+
+  describe('out-of-order delivery with view updates disabled', () => {
+    it('should discard a stale view update even when enableViewUpdates is false', () => {
+      const { batch, upsertSpy } = createMockBatch()
+      const { dispatch } = createBatchDispatcher(batch, false)
+
+      dispatch(makeView('view-1', 1))
+
+      upsertSpy.calls.reset()
+
+      // Newer update (doc version 3) arrives first
+      dispatch(makeView('view-1', 3))
+      // Stale update (doc version 2) arrives after — should be discarded
+      dispatch(makeView('view-1', 2))
+
+      // Only the newer update should have been upserted
+      expect(upsertSpy.calls.count()).toBe(1)
+      expect((upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent)._dd.document_version).toBe(3)
+    })
+  })
+
+  describe('out-of-order view-end before stale active update', () => {
+    it('should discard a stale active update arriving after the view-end', () => {
+      const { batch, upsertSpy } = createMockBatch()
+      const { dispatch } = createBatchDispatcher(batch, true)
+
+      dispatch(makeView('view-1', 1)) // new view
+      dispatch(makeView('view-1', 2, { view: { ...makeAssembledView().view, action: { count: 1 } } })) // intermediate
+
+      upsertSpy.calls.reset()
+
+      // View-end (doc version 3) arrives first (async resolution)
+      dispatch(makeView('view-1', 3, { view: { ...makeAssembledView().view, is_active: false, action: { count: 2 } } }))
+      // Stale active update (doc version 2) arrives after — should be discarded
+      dispatch(makeView('view-1', 2, { view: { ...makeAssembledView().view, is_active: true, action: { count: 1 } } }))
+
+      // Only the view-end should have been upserted
+      expect(upsertSpy.calls.count()).toBe(1)
+      const emitted = upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent
+      expect(emitted._dd.document_version).toBe(3)
+      expect(emitted.view.is_active).toBe(false)
+    })
+  })
 })
