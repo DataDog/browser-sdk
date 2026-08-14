@@ -333,7 +333,7 @@ describe('validateAndBuildRumConfiguration', () => {
       const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
 
       expect(configuration.enableSessionReplayCanvasRecording).toBeFalse()
-      expect(configuration.sessionReplayMaxCanvasFPS).toBe(0)
+      expect(configuration.sessionReplayMaxCanvasFps).toBe(0)
     })
 
     it('stays disabled when requested without the experimental feature', () => {
@@ -343,7 +343,7 @@ describe('validateAndBuildRumConfiguration', () => {
       })!
 
       expect(configuration.enableSessionReplayCanvasRecording).toBeFalse()
-      expect(configuration.sessionReplayMaxCanvasFPS).toBe(0)
+      expect(configuration.sessionReplayMaxCanvasFps).toBe(0)
     })
 
     describe('when the experimental feature is enabled', () => {
@@ -358,17 +358,17 @@ describe('validateAndBuildRumConfiguration', () => {
         })!
 
         expect(configuration.enableSessionReplayCanvasRecording).toBeTrue()
-        expect(configuration.sessionReplayMaxCanvasFPS).toBe(1)
+        expect(configuration.sessionReplayMaxCanvasFps).toBe(1)
       })
 
       it('uses the configured frame rate', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           enableSessionReplayCanvasRecording: true,
-          sessionReplayMaxCanvasFPS: 2.5,
+          sessionReplayMaxCanvasFps: 2.5,
         })!
 
-        expect(configuration.sessionReplayMaxCanvasFPS).toBe(2.5)
+        expect(configuration.sessionReplayMaxCanvasFps).toBe(2.5)
       })
     })
   })
@@ -924,7 +924,7 @@ describe('serializeRumConfiguration', () => {
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
       enableSessionReplayCanvasRecording: true,
-      sessionReplayMaxCanvasFPS: 2.5,
+      sessionReplayMaxCanvasFps: 2.5,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -945,7 +945,7 @@ describe('serializeRumConfiguration', () => {
                 | 'subdomain'
                 | 'remoteConfiguration'
                 | 'enableSessionReplayCanvasRecording'
-                | 'sessionReplayMaxCanvasFPS'
+                | 'sessionReplayMaxCanvasFps'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an

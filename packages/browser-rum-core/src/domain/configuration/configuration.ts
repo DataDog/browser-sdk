@@ -230,7 +230,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue 1
    * @hidden
    */
-  sessionReplayMaxCanvasFPS?: number | undefined
+  sessionReplayMaxCanvasFps?: number | undefined
 
   /**
    * Enables privacy control for action names.
@@ -416,7 +416,7 @@ export const RUM_SCHEMA = {
   propagateTraceBaggage: { type: 'boolean', default: true },
   startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },
   enableSessionReplayCanvasRecording: { type: 'boolean', default: false },
-  sessionReplayMaxCanvasFPS: { type: 'number', min: 0, max: 5, default: 1 },
+  sessionReplayMaxCanvasFps: { type: 'number', min: 0, max: 5, default: 1 },
 
   // Enums
   defaultPrivacyLevel: {
@@ -516,7 +516,7 @@ export function validateAndBuildRumConfiguration(
   return {
     ...config,
     enableSessionReplayCanvasRecording,
-    sessionReplayMaxCanvasFPS: enableSessionReplayCanvasRecording ? config.sessionReplayMaxCanvasFPS : 0,
+    sessionReplayMaxCanvasFps: enableSessionReplayCanvasRecording ? config.sessionReplayMaxCanvasFps : 0,
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
