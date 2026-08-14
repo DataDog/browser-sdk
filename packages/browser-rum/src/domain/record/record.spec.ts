@@ -103,6 +103,31 @@ describe('record', () => {
         originalFillRect
       )
     })
+
+    it('captures dirty canvases at the configured maximum frame rate', async () => {
+      const clock = mockClock()
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')!
+      const blob = new Blob(['frame'], { type: 'image/png' })
+      const capturedImageSpy = jasmine.createSpy()
+      spyOn(canvas, 'toBlob').and.callFake((callback) => callback(blob))
+
+      startRecording({ recordCanvas: true, canvasMaxFramesPerSecond: 1 })
+      recordApi.canvasImageObservable.subscribe(capturedImageSpy)
+      context.fillRect(0, 0, 1, 1)
+      clock.tick(999)
+
+      expect(capturedImageSpy).not.toHaveBeenCalled()
+
+      clock.tick(1)
+      await collectAsyncCalls(capturedImageSpy)
+
+      expect(capturedImageSpy).toHaveBeenCalledOnceWith({
+        blob,
+        canvas,
+        hash: jasmine.any(String),
+      })
+    })
   })
 
   it('flushes pending mutation records before taking a full snapshot', async () => {

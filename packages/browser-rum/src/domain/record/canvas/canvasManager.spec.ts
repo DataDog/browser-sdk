@@ -23,5 +23,18 @@ describe('createCanvasManager', () => {
 
     expect(canvasManager.isCanvasDirty(dirtyCanvas)).toBeTrue()
     expect(canvasManager.isCanvasDirty(cleanCanvas)).toBeFalse()
+    expect(canvasManager.getDirtyCanvases()).toEqual([dirtyCanvas])
+  })
+
+  it('clears all dirty canvases', () => {
+    const canvasManager = createCanvasManager()
+    const firstCanvas = document.createElement('canvas')
+    const secondCanvas = document.createElement('canvas')
+
+    canvasManager.markCanvasDirty(firstCanvas)
+    canvasManager.markCanvasDirty(secondCanvas)
+    canvasManager.clearDirtyCanvases()
+
+    expect(canvasManager.getDirtyCanvases()).toEqual([])
   })
 })

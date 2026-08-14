@@ -1,4 +1,4 @@
-import { sendToExtension } from '@datadog/browser-core'
+import { Observable, sendToExtension } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import * as replayStats from '../replayStats'
 import type { BrowserRecord } from '../../types'
@@ -24,6 +24,8 @@ import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScope } from './recordingScope'
 import { createCanvasManager } from './canvas/canvasManager'
+import type { CapturedCanvasImage } from './canvas/canvasCapture'
+import { startCanvasCapture } from './canvas/canvasCapture'
 
 export interface RecordOptions {
   emitRecord: EmitRecordCallback
@@ -34,6 +36,7 @@ export interface RecordOptions {
 }
 
 export interface RecordAPI {
+  canvasImageObservable: Observable<CapturedCanvasImage>
   stop: () => void
   flushMutations: () => void
   shadowRootsController: ShadowRootsController
@@ -41,6 +44,7 @@ export interface RecordAPI {
 
 export function record(options: RecordOptions): RecordAPI {
   const { emitRecord, emitStats, configuration, lifeCycle } = options
+  const canvasImageObservable = new Observable<CapturedCanvasImage>()
   // runtime checks for user options
   if (!emitRecord || !emitStats) {
     throw new Error('emit functions are required')
@@ -83,10 +87,16 @@ export function record(options: RecordOptions): RecordAPI {
     configuration.sessionReplayCanvasRecording.maxFramesPerSecond > 0
   ) {
     const canvasManager = createCanvasManager()
-    trackers.push(trackCanvas2DMutations(canvasManager.markCanvasDirty))
+    trackers.push(
+      trackCanvas2DMutations(canvasManager.markCanvasDirty),
+      startCanvasCapture(canvasManager, configuration.canvasMaxFramesPerSecond, (image) =>
+        canvasImageObservable.notify(image)
+      )
+    )
   }
 
   return {
+    canvasImageObservable,
     stop: () => {
       shadowRootsController.stop()
       trackers.forEach((tracker) => tracker.stop())
