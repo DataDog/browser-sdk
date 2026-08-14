@@ -30,6 +30,8 @@ const CANVAS_2D_DRAWING_METHODS: readonly Canvas2DDrawingMethod[] = [
   'reset',
 ]
 
+const CANVAS_SIZE_ATTRIBUTES = ['width', 'height']
+
 export function trackCanvas2DMutations(markCanvasDirty: MarkCanvasDirty): Tracker {
   const instrumentationStoppers: Tracker[] = []
 
@@ -46,11 +48,29 @@ export function trackCanvas2DMutations(markCanvasDirty: MarkCanvasDirty): Tracke
   if (typeof HTMLCanvasElement !== 'undefined') {
     instrumentationStoppers.push(
       instrumentSetter(HTMLCanvasElement.prototype, 'width', markCanvasDirty),
-      instrumentSetter(HTMLCanvasElement.prototype, 'height', markCanvasDirty)
+      instrumentSetter(HTMLCanvasElement.prototype, 'height', markCanvasDirty),
+      instrumentMethod(Element.prototype, 'setAttribute', ({ target, parameters, onPostCall }) => {
+        if (target instanceof HTMLCanvasElement && isCanvasSizeAttribute(parameters[0])) {
+          onPostCall(() => markCanvasDirty(target))
+        }
+      }),
+      instrumentMethod(Element.prototype, 'removeAttribute', ({ target, parameters, onPostCall }) => {
+        if (
+          target instanceof HTMLCanvasElement &&
+          isCanvasSizeAttribute(parameters[0]) &&
+          target.hasAttribute(parameters[0])
+        ) {
+          onPostCall(() => markCanvasDirty(target))
+        }
+      })
     )
   }
 
   return {
     stop: () => instrumentationStoppers.forEach((stopper) => stopper.stop()),
   }
+}
+
+function isCanvasSizeAttribute(attributeName: string): boolean {
+  return CANVAS_SIZE_ATTRIBUTES.includes(attributeName.toLowerCase())
 }

@@ -77,13 +77,39 @@ describe('trackCanvas2DMutations', () => {
     expect(markCanvasDirtySpy.calls.argsFor(1)[0]).toBe(canvas)
   })
 
-  it('stops tracking drawing operations', () => {
+  it('marks the canvas dirty when it is resized through attributes', () => {
+    tracker = trackCanvas2DMutations(markCanvasDirtySpy)
+
+    canvas.setAttribute('width', '100')
+    canvas.setAttribute('HEIGHT', '50')
+    canvas.removeAttribute('width')
+    canvas.removeAttribute('height')
+
+    expect(markCanvasDirtySpy).toHaveBeenCalledTimes(4)
+    markCanvasDirtySpy.calls.allArgs().forEach(([dirtyCanvas]) => expect(dirtyCanvas).toBe(canvas))
+  })
+
+  it('does not mark the canvas dirty for unrelated attribute mutations', () => {
+    tracker = trackCanvas2DMutations(markCanvasDirtySpy)
+    const div = document.createElement('div')
+
+    canvas.setAttribute('class', 'foo')
+    canvas.removeAttribute('class')
+    canvas.removeAttribute('width')
+    div.setAttribute('width', '100')
+    div.removeAttribute('width')
+
+    expect(markCanvasDirtySpy).not.toHaveBeenCalled()
+  })
+
+  it('stops tracking canvas mutations', () => {
     const clock: Clock = mockClock()
     tracker = trackCanvas2DMutations(markCanvasDirtySpy)
     tracker.stop()
 
     context.fillRect(0, 0, 1, 1)
     canvas.width = 100
+    canvas.setAttribute('height', '50')
     clock.tick(0)
 
     expect(markCanvasDirtySpy).not.toHaveBeenCalled()
