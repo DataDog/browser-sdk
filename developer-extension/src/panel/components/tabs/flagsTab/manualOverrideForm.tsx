@@ -34,13 +34,19 @@ export function ManualOverrideForm() {
   // The last override submitted, used to report the outcome inline: the form sits below a long
   // catalog, so both the tab-level alert and the "Local overrides" section are easily offscreen from
   // here, and without this Apply looks like it did nothing.
-  const [submitted, setSubmitted] = useState<{ key: string; value: FlagOverride['value'] } | null>(null)
+  const [submitted, setSubmitted] = useState<{ key: string; override: FlagOverride } | null>(null)
 
   const trimmedKey = flagKey.trim()
   const existingOverride = getOverride(overrides, trimmedKey)
   // Derived from the stored overrides rather than the applyOverride call, so it reflects what the
   // page actually holds. A write failure leaves this false and surfaces mutationError instead.
-  const applied = submitted !== null && valuesEqual(getOverride(overrides, submitted.key)?.value, submitted.value)
+  // Type is compared alongside value: re-submitting a stored INTEGER 1 as NUMERIC would otherwise
+  // look already-applied and report success for a write that never landed.
+  const stored = submitted && getOverride(overrides, submitted.key)
+  const applied =
+    submitted !== null &&
+    stored?.type === submitted.override.type &&
+    valuesEqual(stored?.value, submitted.override.value)
 
   /** Wraps a setter so any edit drops the previous outcome, rather than leaving it next to changed input. */
   function edit<T>(set: (value: T) => void) {
@@ -78,7 +84,7 @@ export function ManualOverrideForm() {
       return
     }
     applyOverride(trimmedKey, { type, value })
-    setSubmitted({ key: trimmedKey, value })
+    setSubmitted({ key: trimmedKey, override: { type, value } })
     setError(null)
   }
 
