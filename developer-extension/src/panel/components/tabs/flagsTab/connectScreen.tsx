@@ -1,13 +1,15 @@
-import { Badge, Box, Button, Center, Group, Select, Stack, Text } from '@mantine/core'
+import { Alert, Badge, Box, Button, Center, Group, Select, Stack, Text } from '@mantine/core'
 import React from 'react'
 import { useSettings } from '../../../hooks/useSettings'
 import type { FlagAuthState } from './useFlagAuth'
+import { useInspectedPageOverrides } from './useInspectedPageOverrides'
 import { FLAG_SITES } from './oauth'
 
 export function ConnectScreen({ auth }: { auth: FlagAuthState }) {
   return (
     <Center h="100%" className="dd-privacy-allow">
       <Stack align="center" gap="md" maw={460} px="md">
+        <DisconnectedOverridesNotice />
         <Text size="xl" fw={600} ta="center">
           Authenticate with Datadog to access your feature flags
         </Text>
@@ -38,15 +40,43 @@ export function ConnectScreen({ auth }: { auth: FlagAuthState }) {
   )
 }
 
+/**
+ * Surfaces overrides already stored on the inspected page while signed out — otherwise this screen is
+ * all that renders, so an override left from an earlier session keeps affecting the page with nothing
+ * to explain it. Informational only; everything that mutates overrides lives on the connected tab.
+ *
+ * Shows the count but never the flag keys: this screen is `dd-privacy-allow`, so anything here is
+ * unmasked in the extension's own Session Replay, and flag keys are customer data.
+ *
+ * Mounted only while disconnected, so its navigation listeners never run alongside the connected
+ * tab's own instance of this hook.
+ */
+function DisconnectedOverridesNotice() {
+  const { status, overrides } = useInspectedPageOverrides()
+  const count = Object.keys(overrides).length
+
+  if (status !== 'ready' || count === 0) {
+    return null
+  }
+
+  return (
+    <Alert color="orange" w="100%" title={`${count} override${count === 1 ? '' : 's'} active on this page`}>
+      <Text size="xs">
+        These are stored in the page and keep applying while you are signed out. Sign in to view and remove them.
+      </Text>
+    </Alert>
+  )
+}
+
 export function ConnectionHeader({ auth }: { auth: FlagAuthState }) {
   return (
     <Stack gap={4}>
-      {/* One read-only status badge — "CONNECTED: <site>" — states which site you're connected to
-          without a separate input-looking field (the auth method is an implementation detail the user
-          doesn't need). Disconnect is a red button so it reads as the destructive sign-out. */}
-      <Group gap="xs" align="center">
-        <Badge color="green" variant="light">
-          Connected: {auth.site}
+      {/* The badge opts out of Mantine's default uppercasing: "datad0g.com" and "datadoghq.com"
+          differ by a zero vs an "o", so caps destroy the one glyph telling staging from production.
+          Disconnect sits at the far end — it revokes the grant, so a misclick costs a full re-auth. */}
+      <Group gap="xs" align="center" justify="space-between" wrap="nowrap">
+        <Badge color="green" variant="light" tt="none">
+          Connected: {siteLabel(auth.site)}
         </Badge>
         <Button
           size="compact-xs"
@@ -71,6 +101,12 @@ export function ConnectionHeader({ auth }: { auth: FlagAuthState }) {
       )}
     </Stack>
   )
+}
+
+// Falls back to the raw site so a stale or hand-edited setting still renders something meaningful
+// (getFlagsApiHost is the one that treats an unknown site as an error).
+function siteLabel(site: string): string {
+  return FLAG_SITES.find((entry) => entry.site === site)?.label ?? site
 }
 
 function SiteField({ disabled }: { disabled?: boolean }) {

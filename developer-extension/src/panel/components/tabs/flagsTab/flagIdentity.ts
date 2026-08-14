@@ -1,21 +1,10 @@
 // Fetches who the signed-in user is, so the catalog can offer the webapp's two identity-scoped
-// filters: "My feature flags" (flags whose creator is the signed-in user) and "My teams" (flags
-// tagged `team:<handle>` for a team the user belongs to).
+// filters: "My feature flags" (creator is the signed-in user) and "My teams" (flags tagged
+// `team:<handle>`). The feature-flag API has no notion of "me" — it filters by creator UUID and by
+// tag, both of which the caller must supply — so these come from Datadog's org endpoints instead.
 //
-// The feature-flag API carries no notion of "me" — it filters by creator UUID and by `team:<handle>`
-// tag, both of which the caller has to supply. So the two facts below come from Datadog's org
-// endpoints rather than from FFE:
-//
-//   GET /api/v2/current_user  — permissions=OPEN(), so any valid OAuth access token works. This is
-//                               why "My feature flags" needs no scope beyond the ones we already ask
-//                               for. `data.id` is the user's UUID, the same value the flag API
-//                               returns as `created_by`.
-//   GET /api/v2/team          — gated on the user's own Datadog permission to read teams, not on any
-//                               token scope, so we don't request one for it. `filter[me]=true`
-//                               narrows to the caller's own teams.
-//
-// A user without permission to read teams gets a 403 here. That's an expected state, not an error:
-// the team filter is then reported unavailable and the rest of the tab carries on.
+// Neither endpoint needs a token scope beyond the ones we already request: current_user is OPEN(),
+// and team access is gated on the user's own Datadog permissions.
 
 import { fetchFfeJson, ForbiddenError } from './ffeApi'
 import { getFlagsApiHost } from './oauth'
@@ -40,7 +29,8 @@ interface RawTeamResponse {
 }
 
 /**
- * Returns the signed-in user's UUID, or null when the response omits it.
+ * Returns the signed-in user's UUID (the same value the flag API returns as `created_by`), or null
+ * when the response omits it.
  */
 export async function fetchCurrentUserId(token: string, site: string): Promise<string | null> {
   const body = await fetchFfeJson<RawCurrentUserResponse>(
@@ -51,19 +41,18 @@ export async function fetchCurrentUserId(token: string, site: string): Promise<s
   return body.data?.id ?? null
 }
 
-// The teams endpoint caps `page[size]` at 100; a user in more than 100 teams is unrealistic, so a
-// single page covers every real case.
+// The endpoint caps `page[size]` at 100; membership in more than 100 teams is unrealistic, so one
+// page covers every real case.
 const TEAM_PAGE_SIZE = 100
 
 /**
- * Returns the handles of the teams the signed-in user belongs to. Throws a ForbiddenError (surfaced
- * by fetchFlagIdentity as `teamsForbidden`) when the user isn't allowed to read teams.
+ * Returns the handles of the teams the signed-in user belongs to. Requests only the handle field —
+ * it's all the `team:<handle>` tag match needs, and it keeps other team metadata out of the
+ * extension. Throws a ForbiddenError (surfaced as `teamsForbidden`) when the user can't read teams.
  */
 export async function fetchMyTeamHandles(token: string, site: string): Promise<string[]> {
   const params = new URLSearchParams({
     'filter[me]': 'true',
-    // Ask only for the handle: it's the only field the `team:<handle>` tag match needs, and a
-    // narrower response keeps customer team metadata out of the extension.
     'fields[team]': 'handle',
     'page[size]': String(TEAM_PAGE_SIZE),
   })

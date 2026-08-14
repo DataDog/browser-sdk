@@ -5,38 +5,41 @@ import { getFlagsApiHost } from './oauth'
 export interface CatalogFlag {
   key: string
   name: string
-  // Free-text description authored in the Datadog UI. Empty when the flag has none.
+  /** Free-text description authored in the Datadog UI. Empty when the flag has none. */
   description: string
   type: FlagType
-  // Parsed value of each variant (any JSON value); see parseVariantValue.
+  /** Parsed value of each variant (any JSON value); see parseVariantValue. */
   variants: Array<{ name: string; value: unknown }>
   tags: string[]
-  // UUID of the user who created the flag, as returned by the API. Undefined for flags created by a
-  // service account or an integration, which don't carry a user UUID. Compared against the signed-in
-  // user's UUID to drive the "My feature flags" filter.
+  /**
+   * UUID of the user who created the flag. Undefined for flags created by a service account or
+   * integration. Compared against the signed-in user's UUID for the "My feature flags" filter.
+   */
   createdBy?: string
 }
 
-// Filters + pagination sent to the server so the FFE endpoint does the work — the extension never
-// loads the whole catalog. The endpoint applies all of these itself: `search` matches name/key/tags,
-// `tags` are AND-ed, `value_type` is OR-ed, `created_by` is an IN-list, and `team:<handle>` tags are
-// OR-ed among themselves then AND-ed with regular tags (see dd-source ffe-service). `page` is 1-based.
+/**
+ * Filters + pagination sent to the server so the FFE endpoint does the work — the extension never
+ * loads the whole catalog. The server applies all of these itself: `search` matches name/key/tags,
+ * `tags` are AND-ed, `value_type` is OR-ed, `created_by` is an IN-list, and `team:<handle>` tags are
+ * OR-ed among themselves then AND-ed with regular tags (see dd-source ffe-service). `page` is 1-based.
+ *
+ * Filtering server-side is required, not an optimization: we load one page at a time, so a
+ * client-side filter would only ever see the current page.
+ */
 export interface FlagCatalogRequest {
   page: number
   pageSize: number
   search: string
   typeFilter: string[]
   tagFilter: string[]
-  // Team handles for the "My teams" filter. Sent as `tags=team:<handle>` — the server OR-s team tags
-  // among themselves and AND-s them with the regular `tagFilter`.
+  /** Team handles for the "My teams" filter, sent as `tags=team:<handle>`. */
   teamFilter: string[]
-  // The signed-in user's UUID when "My feature flags" is on, else null. Sent as `created_by` so the
-  // server returns only flags this user created. Filtering here (not client-side) is required: we
-  // load one page at a time, so a client filter would only ever see the current page.
+  /** The signed-in user's UUID when "My feature flags" is on, else null. Sent as `created_by`. */
   createdBy: string | null
 }
 
-// One page of results plus the server's total count (for pagination).
+/** One page of results plus the server's total count (for pagination). */
 export interface FlagCatalogPage {
   flags: CatalogFlag[]
   total: number
@@ -59,13 +62,16 @@ interface RawFeatureFlagsResponse {
   meta?: { page?: { total?: number } }
 }
 
-// Variant values come back from the API as strings regardless of the flag's declared type. Falls
-// back to the raw string on unparseable input so one malformed variant can't blow up the mapping
-// of the entire catalog.
+/**
+ * Variant values come back as strings regardless of the flag's declared type. Tolerant by design:
+ * anything unparseable is kept as its raw string so one malformed variant can't blow up the mapping
+ * of the entire catalog. That includes an unknown `value_type` (a compile-time assumption, not a
+ * runtime guarantee), which must not reach parseTypedString — its switch has no default.
+ */
 function parseVariantValue(type: FlagType, rawValue: string): unknown {
   if (type === 'BOOLEAN') {
-    // Only the exact strings count; anything else (e.g. "True", "falsex", "") is malformed and
-    // kept raw rather than silently collapsing to false.
+    // Only the exact strings count; anything else ("True", "falsex", "") is malformed and kept raw
+    // rather than silently collapsing to false.
     if (rawValue === 'true') {
       return true
     }
@@ -75,13 +81,8 @@ function parseVariantValue(type: FlagType, rawValue: string): unknown {
     return rawValue
   }
   if (!FLAG_TYPES.includes(type)) {
-    // The server returned a value_type outside the known union (which is a compile-time
-    // assumption, not a runtime guarantee) — keep the raw string rather than passing it to
-    // parseTypedString (whose switch has no default and would return undefined), consistent with
-    // never letting one odd variant blow up the mapping.
     return rawValue
   }
-  // The catalog is tolerant: a variant that doesn't parse is kept as its raw string.
   const result = parseTypedString(type, rawValue)
   return result.ok ? result.value : rawValue
 }
@@ -96,8 +97,8 @@ export function fetchFlagCatalog(token: string, site: string, request: FlagCatal
   const url = new URL(`https://${getFlagsApiHost(site)}/api/ui/ffe/feature-flags`)
   url.searchParams.set('page[limit]', String(request.pageSize))
   url.searchParams.set('page[offset]', String((request.page - 1) * request.pageSize))
-  // Active flags only: with archived included, an archived and an active flag can share a key and
-  // land on the same page, which would render as duplicate rows and collide React keys.
+  // Active only: an archived and an active flag can share a key and land on the same page, which
+  // would render as duplicate rows and collide React keys.
   url.searchParams.set('is_archived', 'false')
   if (request.search) {
     url.searchParams.set('search', request.search)
@@ -108,12 +109,9 @@ export function fetchFlagCatalog(token: string, site: string, request: FlagCatal
   for (const tag of request.tagFilter) {
     url.searchParams.append('tags', tag)
   }
-  // "My teams": team handles ride the same `tags` param as `team:<handle>` (the server OR-s team
-  // tags among themselves, then AND-s them with the regular tags above).
   for (const handle of request.teamFilter) {
     url.searchParams.append('tags', `team:${handle}`)
   }
-  // "My feature flags": restrict to flags created by the signed-in user.
   if (request.createdBy) {
     url.searchParams.set('created_by', request.createdBy)
   }
@@ -123,16 +121,16 @@ export function fetchFlagCatalog(token: string, site: string, request: FlagCatal
 
 /**
  * Fetches a specific set of flags by exact key, one request per key (the endpoint's `key` filter is
- * exact and single-valued — there's no batched lookup). Used for the "Local overrides" section, which
- * must show overridden flags even when they're not on the current catalog page. Keys with no match
- * (deleted, or a hand-entered override for a non-existent flag) are simply absent from the result.
+ * exact and single-valued — there's no batched lookup). Used for the "Local overrides" section,
+ * which must show overridden flags even when they're not on the current catalog page.
+ *
+ * Settles per key rather than Promise.all: one key failing transiently must not discard the flags
+ * that did resolve, or the whole section collapses to bare fallback rows. Keys with no match
+ * (deleted, or an override for a non-existent flag) are simply absent, and the caller falls back to
+ * a minimal row. Error labels omit the key — it's customer data, kept out of logs.
  */
 export async function fetchFlagsByKeys(token: string, site: string, keys: string[]): Promise<CatalogFlag[]> {
   const host = getFlagsApiHost(site)
-  // Settle per key rather than Promise.all: one key failing transiently (e.g. a rate limit) must not
-  // discard the flags that did resolve — otherwise the whole "Local overrides" section collapses to
-  // bare fallback rows until the key set changes. A dropped key just falls back to a minimal row in
-  // the caller. (The error label omits the key regardless — it's customer data, kept out of logs.)
   const results = await Promise.allSettled(
     keys.map(async (key) => {
       const url = new URL(`https://${host}/api/ui/ffe/feature-flags`)
@@ -145,10 +143,12 @@ export async function fetchFlagsByKeys(token: string, site: string, keys: string
   return results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
 }
 
-// Shared request/response handling for both fetchFlagCatalog and fetchFlagsByKeys: run the request,
-// tolerate a response that omits/mistypes `data`, and map its resources into CatalogFlag[]. `total`
-// falls back to the resource count when the server omits `meta.page.total` (e.g. a partial/legacy
-// response, or the by-key lookup which never sends pagination fields).
+/**
+ * Shared request/response handling for both fetch functions: run the request, tolerate a response
+ * that omits or mistypes `data`, and map its resources. `total` falls back to the resource count
+ * when the server omits `meta.page.total` (a partial response, or the by-key lookup which sends no
+ * pagination fields).
+ */
 async function fetchFlagPage(url: URL, token: string, errorLabel: string): Promise<FlagCatalogPage> {
   const body = await fetchFfeJson<RawFeatureFlagsResponse>(url.toString(), token, errorLabel)
   const resources = Array.isArray(body?.data) ? body.data : []
@@ -158,9 +158,8 @@ async function fetchFlagPage(url: URL, token: string, errorLabel: string): Promi
   }
 }
 
+/** Maps raw resources to CatalogFlag, deduping by key (collisions would break React keys). */
 function mapResources(resources: RawFeatureFlag[]): CatalogFlag[] {
-  // Dedupe by key as a cheap safety net against a flag appearing twice on a page (see is_archived
-  // note above); collisions would otherwise break React keys (`key={flag.key}`). Keep the first.
   const byKey = new Map<string, CatalogFlag>()
   for (const { attributes } of resources) {
     if (byKey.has(attributes.key)) {

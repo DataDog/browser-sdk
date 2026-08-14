@@ -53,9 +53,7 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
   return (
     <TabBase
       top={
-        // No px here: the TabBase Container already insets by `md`, so the header lines up with the
-        // catalog rows below (which get their `md` from their own Box). No dd-privacy-allow either —
-        // the header/filter/catalog render customer flag names, values, and tags, which must stay
+        // No dd-privacy-allow: this renders customer flag names, values, and tags, which must stay
         // masked in the extension's own Session Replay.
         <Box>
           <Title order={5}>Feature Flag Overrides</Title>
