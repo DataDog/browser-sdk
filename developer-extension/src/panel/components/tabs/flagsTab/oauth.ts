@@ -1,22 +1,29 @@
-// OAuth (authorization_code + PKCE) against Datadog's first-party OAuth server, used to fetch
-// the feature-flag catalog without asking the user to paste API/App keys.
-//
-// The client is a PUBLIC client (no secret), so PKCE is the only client proof. Tokens live in
-// chrome.storage.session (cleared when the browser session ends) — never persisted to disk.
-// See FFL-2596 / the OAuth CLI client `13c94d15-067d-4263-a309-be4811141419` (staging).
+// OAuth (authorization_code + PKCE) against Datadog's first-party OAuth server, used to fetch the
+// feature-flag catalog without asking the user to paste API/App keys. The client is PUBLIC (no
+// secret), so PKCE is the only client proof. Tokens live in chrome.storage.session — never on disk.
+// See FFL-2596.
 
 import { mockable } from '../../../../../../packages/browser-core/src/tools/mockable'
 
-const CLIENT_ID = '13c94d15-067d-4263-a309-be4811141419'
-const SCOPES = ['feature_flag_config_read', 'feature_flag_environment_config_read']
+// Separate registered clients. The prod one is replicated across all prod DCs, so every non-staging
+// site shares it. Both are public PKCE clients.
+const STAGING_CLIENT_ID = '13c94d15-067d-4263-a309-be4811141419'
+const PROD_CLIENT_ID = '2c19b57d-118a-4f52-bcfb-709503a68290'
+
+function getClientId(site: string): string {
+  return site === 'datad0g.com' ? STAGING_CLIENT_ID : PROD_CLIENT_ID
+}
+// GET /api/v2/team needs no scope (it's gated on the user's Datadog permissions), so "My teams"
+// works without teams_read.
+const REQUIRED_SCOPES = ['feature_flag_config_read', 'feature_flag_environment_config_read']
 const TOKENS_STORAGE_KEY = 'flagsOAuthTokens'
-// Refresh a bit before the token actually expires to avoid racing the clock on a slow request.
+// Refresh slightly early so a slow request can't race the clock.
 const EXPIRY_SKEW_MS = 60_000
 
 export interface OAuthTokens {
   accessToken: string
   refreshToken?: string
-  // Absolute epoch-ms timestamp at which accessToken stops being valid.
+  /** Absolute epoch-ms timestamp at which accessToken stops being valid. */
   expiresAt: number
 }
 
@@ -35,20 +42,15 @@ export interface FlagSite {
   label: string
 }
 
-// The Datadog sites the Flags tab can connect to, each paired with the frontend host that serves
-// its OAuth endpoints and FFE API. The site is chosen from this fixed list (a Select in the UI), so
-// there's no free-text host to validate against phishing — the value is always one of these. Host
-// subdomains mirror the canonical builder in browser-rum-core's getSessionReplayUrl.ts: US1 and EU1
-// get `app.`, staging gets `dd.`, and the remaining sites are already their own host.
+/**
+ * The Datadog sites the Flags tab can connect to. A fixed list rather than a free-text host, so
+ * there's no user-entered domain to validate against phishing.
+ *
+ * Trimmed to US1 + Staging while the prod OAuth client replicates to the other DCs; add them back
+ * with the same subdomain scheme (US1/EU1 `app.`, staging `dd.`, regional sites as-is).
+ */
 export const FLAG_SITES: FlagSite[] = [
   { site: 'datadoghq.com', host: 'app.datadoghq.com', label: 'US1 (datadoghq.com)' },
-  { site: 'us3.datadoghq.com', host: 'us3.datadoghq.com', label: 'US3 (us3.datadoghq.com)' },
-  { site: 'us5.datadoghq.com', host: 'us5.datadoghq.com', label: 'US5 (us5.datadoghq.com)' },
-  { site: 'datadoghq.eu', host: 'app.datadoghq.eu', label: 'EU1 (datadoghq.eu)' },
-  { site: 'ap1.datadoghq.com', host: 'ap1.datadoghq.com', label: 'AP1 (ap1.datadoghq.com)' },
-  { site: 'ap2.datadoghq.com', host: 'ap2.datadoghq.com', label: 'AP2 (ap2.datadoghq.com)' },
-  { site: 'ddog-gov.com', host: 'ddog-gov.com', label: 'US1-FED (ddog-gov.com)' },
-  { site: 'us2.ddog-gov.com', host: 'us2.ddog-gov.com', label: 'US2-FED (us2.ddog-gov.com)' },
   { site: 'datad0g.com', host: 'dd.datad0g.com', label: 'Staging (datad0g.com)' },
 ]
 
@@ -79,9 +81,10 @@ function randomBase64Url(byteLength: number): string {
   return base64UrlEncode(bytes.buffer)
 }
 
-// Exported and wrapped with mockable() so tests can stub the hash: crypto.subtle is only exposed in
-// a secure context, which some CI browsers (mobile devices reached over http) don't provide. The
-// extension itself runs on a chrome-extension:// origin, which is always a secure context.
+/**
+ * Exported and mockable so tests can stub the hash: crypto.subtle needs a secure context, which some
+ * CI browsers lack. The extension itself always has one (chrome-extension:// origin).
+ */
 export function sha256(data: BufferSource): Promise<ArrayBuffer> {
   return crypto.subtle.digest('SHA-256', data)
 }
@@ -92,9 +95,11 @@ async function generatePkce(): Promise<{ verifier: string; challenge: string }> 
   return { verifier, challenge: base64UrlEncode(digest) }
 }
 
-// `fallbackRefreshToken` carries the previous refresh token forward: refresh responses often omit
-// `refresh_token` when the server doesn't rotate it, and dropping it would force a full re-login on
-// the next expiry.
+/**
+ * Normalizes a token response. `fallbackRefreshToken` carries the previous refresh token forward:
+ * refresh responses omit `refresh_token` when the server doesn't rotate it, and dropping it would
+ * force a full re-login at the next expiry.
+ */
 function toTokens(raw: RawTokenResponse, fallbackRefreshToken?: string): OAuthTokens {
   return {
     accessToken: raw.access_token,
@@ -103,9 +108,10 @@ function toTokens(raw: RawTokenResponse, fallbackRefreshToken?: string): OAuthTo
   }
 }
 
-// Thrown by requestToken on a non-ok response. `invalidGrant` marks the RFC 6749 `invalid_grant`
-// case — the refresh token itself is dead (expired/revoked/reused) — as opposed to a transient
-// failure (5xx, rate limit) that shouldn't be treated the same way.
+/**
+ * Thrown by requestToken on a non-ok response. `invalidGrant` marks the RFC 6749 case where the
+ * refresh token itself is dead (expired/revoked/reused), as opposed to a transient 5xx or rate limit.
+ */
 class TokenRequestError extends Error {
   constructor(
     message: string,
@@ -135,7 +141,11 @@ async function requestToken(host: string, body: URLSearchParams, fallbackRefresh
  * Runs the interactive OAuth flow: opens Datadog's login/consent screen, then exchanges the
  * returned authorization code for tokens. Returns the tokens (caller is responsible for storing).
  */
-export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
+export function loginWithOAuth(site: string): Promise<OAuthTokens> {
+  return authorize(site, REQUIRED_SCOPES)
+}
+
+async function authorize(site: string, scopes: string[]): Promise<OAuthTokens> {
   const host = getFlagsApiHost(site)
   const redirectUri = chrome.identity.getRedirectURL()
   const { verifier, challenge } = await generatePkce()
@@ -143,9 +153,9 @@ export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
 
   const authUrl = new URL(`https://${host}/oauth2/v1/authorize`)
   authUrl.searchParams.set('response_type', 'code')
-  authUrl.searchParams.set('client_id', CLIENT_ID)
+  authUrl.searchParams.set('client_id', getClientId(site))
   authUrl.searchParams.set('redirect_uri', redirectUri)
-  authUrl.searchParams.set('scope', SCOPES.join(' '))
+  authUrl.searchParams.set('scope', scopes.join(' '))
   authUrl.searchParams.set('code_challenge', challenge)
   authUrl.searchParams.set('code_challenge_method', 'S256')
   authUrl.searchParams.set('state', state)
@@ -159,20 +169,21 @@ export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
   }
 
   const returned = new URL(redirectResponse)
+  // Check CSRF state before acting on ANY other param, including `error`, so a forged callback can't
+  // drive our error handling with attacker-controlled values.
+  if (returned.searchParams.get('state') !== state) {
+    throw new Error('State mismatch — aborting for safety')
+  }
   const errorParam = returned.searchParams.get('error')
   if (errorParam) {
-    throw new Error(`Authorization failed: ${returned.searchParams.get('error_description') ?? errorParam}`)
+    const description = returned.searchParams.get('error_description') ?? errorParam
+    throw new Error(`Authorization failed: ${description}`)
   }
-  // Datadog appends `domain` to the redirect, naming the site the user actually authenticated
-  // against (bare site form, e.g. "datad0g.com"). `site` is our source of truth for every host we
-  // talk to, so if they disagree we abort rather than store tokens that would later be used
-  // against a different site than the one they were issued for.
+  // Datadog appends `domain`, naming the site actually authenticated against. If it disagrees with
+  // our selection, abort rather than store tokens that would be used against a different site.
   const returnedDomain = returned.searchParams.get('domain')
   if (returnedDomain && returnedDomain.toLowerCase() !== site) {
     throw new Error(`Authenticated against "${returnedDomain}" but "${site}" was selected — aborting login`)
-  }
-  if (returned.searchParams.get('state') !== state) {
-    throw new Error('State mismatch — aborting for safety')
   }
   const code = returned.searchParams.get('code')
   if (!code) {
@@ -185,7 +196,7 @@ export async function loginWithOAuth(site: string): Promise<OAuthTokens> {
       grant_type: 'authorization_code',
       code,
       redirect_uri: redirectUri,
-      client_id: CLIENT_ID,
+      client_id: getClientId(site),
       code_verifier: verifier,
     })
   )
@@ -197,7 +208,7 @@ function refreshTokens(site: string, refreshToken: string): Promise<OAuthTokens>
     new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      client_id: CLIENT_ID,
+      client_id: getClientId(site),
     }),
     refreshToken
   )
@@ -217,6 +228,57 @@ export async function clearStoredTokens(): Promise<void> {
 }
 
 /**
+ * Ends the connection: revokes the grant at Datadog, then drops the local tokens. Clearing locally
+ * alone would only make this extension forget them — the grant would stay live and any copy of the
+ * refresh token would keep working. Revocation follows https://datatracker.ietf.org/doc/html/rfc7009.
+ *
+ * Returns whether the revocation succeeded. Local tokens are cleared either way, so a user who asked
+ * to disconnect ends up disconnected even if Datadog is unreachable; the caller reports a failure as
+ * "the grant may still be active". Only a failure to clear locally rejects — the panel would
+ * otherwise claim a disconnection that reopening it would contradict.
+ */
+export async function revokeAndClearTokens(site: string): Promise<{ revoked: boolean }> {
+  const revoked = await tryRevokeGrant(site)
+  await clearStoredTokens()
+  return { revoked }
+}
+
+/**
+ * Revokes the refresh token, since that's the renewable part of the grant — revoking only the access
+ * token would leave the grant able to mint new ones. The short-lived access token is left to expire
+ * on its own, and dropped locally by the caller.
+ *
+ * Refreshes first: the revoke endpoint authenticates the caller with a Bearer token.
+ */
+async function tryRevokeGrant(site: string): Promise<boolean> {
+  try {
+    const accessToken = await getValidAccessToken(site)
+    const tokens = await loadStoredTokens()
+    if (!accessToken || !tokens) {
+      // Nothing usable left to revoke — getValidAccessToken already cleared a dead session.
+      return true
+    }
+
+    const response = await fetch(`https://${getFlagsApiHost(site)}/oauth2/v1/revoke`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: new URLSearchParams({
+        token: tokens.refreshToken ?? tokens.accessToken,
+        token_type_hint: tokens.refreshToken ? 'refresh_token' : 'access_token',
+        client_id: getClientId(site),
+      }).toString(),
+    })
+    return response.ok
+  } catch {
+    // Network failure, or a refresh that couldn't complete: nothing more we can do server-side.
+    return false
+  }
+}
+
+/**
  * Whether a stored token represents a live connection: still valid, or still refreshable (the
  * refresh itself happens lazily at fetch time). An expired token with no refresh token is dead.
  */
@@ -224,10 +286,9 @@ export function isTokenUsable(tokens: OAuthTokens | null): boolean {
   return !!tokens && (tokens.expiresAt > Date.now() || !!tokens.refreshToken)
 }
 
-// Shared in-flight refresh. Each catalog request triggers a getValidAccessToken call, so several can
-// run at once; the refresh token is single-use (the server rotates it), so overlapping refreshes
-// must share one request. Otherwise the loser would replay a spent token, get invalid_grant, and
-// wipe the tokens the winner just stored — disconnecting the user mid-session.
+// Shared in-flight refresh. The refresh token is single-use (the server rotates it), so overlapping
+// refreshes must share one request — otherwise the loser replays a spent token, gets invalid_grant,
+// and wipes the tokens the winner just stored, disconnecting the user mid-session.
 let pendingRefresh: Promise<OAuthTokens> | null = null
 
 /**
@@ -240,16 +301,15 @@ export async function getValidAccessToken(site: string): Promise<string | null> 
   if (!tokens) {
     return null
   }
-  // Refresh early (skew) only when we can actually refresh. Without a refresh token, applying the
-  // skew would discard the last 60s of a still-valid token and force an unnecessary reconnect.
+  // Apply the skew only when we can actually refresh; otherwise it would discard the last 60s of a
+  // still-valid token and force an unnecessary reconnect.
   const skew = tokens.refreshToken ? EXPIRY_SKEW_MS : 0
   if (Date.now() < tokens.expiresAt - skew) {
     return tokens.accessToken
   }
   if (tokens.refreshToken) {
     try {
-      // Coalesce concurrent refreshes into a single request (see pendingRefresh). Capture the shared
-      // promise in a local so the `finally` clearing pendingRefresh can't race the await below.
+      // Capture the shared promise in a local so the `finally` below can't race the await.
       const refresh = (pendingRefresh ??= refreshTokens(site, tokens.refreshToken)
         .then(async (refreshed) => {
           await storeTokens(refreshed)
@@ -260,14 +320,13 @@ export async function getValidAccessToken(site: string): Promise<string | null> 
         }))
       return (await refresh).accessToken
     } catch (err) {
-      // A dead refresh token (invalid_grant) means the session is over — drop it and reconnect.
+      // A dead refresh token means the session is over — drop it and reconnect.
       if (err instanceof TokenRequestError && err.invalidGrant) {
         await clearStoredTokens()
         return null
       }
-      // Transient failure (network blip, 5xx). If we were only refreshing early — still inside the
-      // skew window, so the current token hasn't actually expired — keep using it rather than
-      // failing the caller; the refresh will be retried on the next call.
+      // Transient failure while refreshing early: the current token hasn't actually expired, so keep
+      // using it and retry on the next call.
       if (Date.now() < tokens.expiresAt) {
         return tokens.accessToken
       }
