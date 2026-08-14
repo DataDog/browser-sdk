@@ -15,6 +15,7 @@ import {
   trackViewEnd,
   trackViewportResize,
   trackVisualViewportResize,
+  trackCanvas2DMutations,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -22,6 +23,7 @@ import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScope } from './recordingScope'
+import { createCanvasManager } from './canvas/canvasManager'
 
 export interface RecordOptions {
   emitRecord: EmitRecordCallback
@@ -75,6 +77,11 @@ export function record(options: RecordOptions): RecordAPI {
     trackVisualViewportResize(processRecord),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
+
+  if (configuration.recordCanvas && configuration.canvasMaxFramesPerSecond > 0) {
+    const canvasManager = createCanvasManager()
+    trackers.push(trackCanvas2DMutations(canvasManager.markCanvasDirty))
+  }
 
   return {
     stop: () => {
