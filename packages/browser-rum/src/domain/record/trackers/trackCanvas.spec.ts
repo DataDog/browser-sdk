@@ -20,25 +20,31 @@ describe('trackCanvas2DMutations', () => {
   it('marks the canvas dirty after drawing operations', () => {
     tracker = trackCanvas2DMutations(markCanvasDirtySpy)
     const imageData = context.createImageData(1, 1)
-    const drawingOperations = [
-      () => context.clearRect(0, 0, 1, 1),
-      () => context.fillRect(0, 0, 1, 1),
-      () => context.strokeRect(0, 0, 1, 1),
-      () => context.fill(),
-      () => context.stroke(),
-      () => context.fillText('foo', 0, 0),
-      () => context.strokeText('foo', 0, 0),
-      () => context.drawImage(canvas, 0, 0),
-      () => context.putImageData(imageData, 0, 0),
-      () => context.drawFocusIfNeeded(canvas),
-      () => context.reset(),
+    const drawingOperations: Array<{ method: string; draw: () => void }> = [
+      { method: 'clearRect', draw: () => context.clearRect(0, 0, 1, 1) },
+      { method: 'fillRect', draw: () => context.fillRect(0, 0, 1, 1) },
+      { method: 'strokeRect', draw: () => context.strokeRect(0, 0, 1, 1) },
+      { method: 'fill', draw: () => context.fill() },
+      { method: 'stroke', draw: () => context.stroke() },
+      { method: 'fillText', draw: () => context.fillText('foo', 0, 0) },
+      { method: 'strokeText', draw: () => context.strokeText('foo', 0, 0) },
+      { method: 'drawImage', draw: () => context.drawImage(canvas, 0, 0) },
+      { method: 'putImageData', draw: () => context.putImageData(imageData, 0, 0) },
+      { method: 'drawFocusIfNeeded', draw: () => context.drawFocusIfNeeded(canvas) },
+      { method: 'reset', draw: () => context.reset() },
     ]
 
-    drawingOperations.forEach((draw) => {
-      markCanvasDirtySpy.calls.reset()
-      draw()
-      expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(canvas)
-    })
+    // Skip unsuported APIs per browser version.
+    drawingOperations
+      .filter(
+        ({ method }) =>
+          typeof CanvasRenderingContext2D.prototype[method as keyof CanvasRenderingContext2D] === 'function'
+      )
+      .forEach(({ draw }) => {
+        markCanvasDirtySpy.calls.reset()
+        draw()
+        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(canvas)
+      })
   })
 
   it('does not mark the canvas dirty for non-drawing operations', () => {
