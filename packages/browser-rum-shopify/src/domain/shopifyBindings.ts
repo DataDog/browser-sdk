@@ -11,7 +11,9 @@ export interface ErrorData {
   extensionName?: string
   extensionTarget?: string
   type?: string
+  appId?: string
   appName?: string
+  appVersion?: string
 }
 
 // Matches /checkouts/*, /checkout, including locale-prefixed paths.
@@ -54,12 +56,12 @@ export function initShopifyBindings(rumPublicApi: RumPublicApi, analytics: Shopi
     const err = new Error(error?.message)
     err.stack = error?.trace
     rumPublicApi.addError(err, {
-      extension: {
-        name: error?.extensionName,
-        target: error?.extensionTarget,
-        type: error?.type,
-        appName: error?.appName,
-      },
+      extensionName: error?.extensionName,
+      extensionTarget: error?.extensionTarget,
+      extensionErrorType: error?.type,
+      appId: error?.appId,
+      appName: error?.appName,
+      appVersion: error?.appVersion,
     })
   })
 }
