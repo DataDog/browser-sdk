@@ -219,10 +219,15 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Session Replay
    * @hidden
    */
-  enableSessionReplayCanvasRecording?:
+  sessionReplayCanvasRecording?:
     | {
         /**
-         * The maximum number of canvas frames recorded per second. Setting this option to `0` disables canvas frame recording.
+         * Enables recording canvas elements in Session Replay.
+         */
+        enable: boolean
+
+        /**
+         * The maximum number of canvas frames recorded per second, between 0 and 5. Setting this option to `0` disables canvas frame recording.
          *
          * @defaultValue 1
          */
@@ -413,9 +418,10 @@ export const RUM_SCHEMA = {
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
   startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },
-  enableSessionReplayCanvasRecording: {
+  sessionReplayCanvasRecording: {
     type: 'schema',
     schema: {
+      enable: { type: 'boolean', required: true },
       maxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
     },
   },
@@ -511,15 +517,13 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const enableSessionReplayCanvasRecording = isExperimentalFeatureEnabled(
-    ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS
-  )
-    ? config.enableSessionReplayCanvasRecording
+  const sessionReplayCanvasRecording = isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS)
+    ? config.sessionReplayCanvasRecording
     : undefined
 
   return {
     ...config,
-    enableSessionReplayCanvasRecording,
+    sessionReplayCanvasRecording,
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
