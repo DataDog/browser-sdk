@@ -6,6 +6,8 @@ import {
   TrackingConsent,
   startTelemetry,
   startSessionManager,
+  BufferedDataType,
+  startBufferingData,
 } from '@datadog/browser-core'
 import {
   collectAsyncCalls,
@@ -13,6 +15,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
@@ -27,6 +30,22 @@ const mockSessionId = 'some-session-id'
 const getInternalContext = () => ({ session_id: mockSessionId })
 
 describe('logs entry', () => {
+  it('buffers the data sources consumed by Logs', () => {
+    const startBufferingDataSpy = replaceMockableWithSpy(startBufferingData).and.callFake(startBufferingData)
+
+    makeLogsPublicApi()
+
+    if (startBufferingDataSpy.calls.count()) {
+      registerCleanupTask(startBufferingDataSpy.calls.mostRecent().returnValue.stop)
+    }
+    expect(startBufferingDataSpy).toHaveBeenCalledOnceWith([
+      BufferedDataType.RUNTIME_ERROR,
+      BufferedDataType.FETCH,
+      BufferedDataType.XHR,
+      BufferedDataType.CONSOLE,
+    ])
+  })
+
   it('should add a `_setDebug` that works', () => {
     const displaySpy = spyOn(display, 'error')
     const { logsPublicApi } = makeLogsPublicApiWithDefaults()

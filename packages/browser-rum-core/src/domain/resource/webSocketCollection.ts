@@ -1,9 +1,17 @@
-import type { Observable, WebSocketContext } from '@datadog/browser-core'
-import { generateUUID, initWebSocketObservable, sanitize } from '@datadog/browser-core'
+import type { BufferedData, Observable } from '@datadog/browser-core'
+import {
+  BufferedDataType,
+  ExperimentalFeature,
+  generateUUID,
+  isExperimentalFeatureEnabled,
+  noop,
+  sanitize,
+} from '@datadog/browser-core'
 import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { clocksNow, elapsed } from '@datadog/js-core/time'
 import { buildUrl } from '@datadog/js-core/util'
 import { VitalType } from '../../rawRumEvent.types'
+import type { RumConfiguration } from '../configuration'
 import type { ViewHistory } from '../contexts/viewHistory'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -62,12 +70,23 @@ export interface WebSocketConnectionTracker {
   stop: () => void
 }
 
+/**
+ * The opt-in is enforced here rather than by withholding instrumentation, which happens from SDK
+ * load (see `startBufferingData`). When it is closed, nothing is subscribed nor allocated and the
+ * returned stop handle is a no-op.
+ */
 export function startWebSocketCollection(
   lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
   viewHistory: ViewHistory,
-  addDurationVital: (vital: DurationVital) => void
+  addDurationVital: (vital: DurationVital) => void,
+  bufferedDataObservable: Observable<BufferedData>
 ) {
-  const tracker = trackWebSocket(lifeCycle, initWebSocketObservable(), viewHistory, addDurationVital)
+  if (!isWebSocketCollectionEnabled(configuration)) {
+    return { stop: noop }
+  }
+
+  const tracker = trackWebSocket(lifeCycle, bufferedDataObservable, viewHistory, addDurationVital)
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once with trackingEndReason "session_end"; later events on the same
@@ -85,9 +104,16 @@ export function startWebSocketCollection(
   }
 }
 
+function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
+  return (
+    configuration.trackResources &&
+    (configuration.betaTrackWebSockets || isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_WEBSOCKETS))
+  )
+}
+
 export function trackWebSocket(
   lifeCycle: LifeCycle,
-  webSocketContextObservable: Observable<WebSocketContext>,
+  bufferedDataObservable: Observable<BufferedData>,
   viewHistory: ViewHistory,
   addDurationVital: (vital: DurationVital) => void
 ): WebSocketConnectionTracker {
@@ -114,7 +140,12 @@ export function trackWebSocket(
     })
   }
 
-  const subscription = webSocketContextObservable.subscribe((context) => {
+  const subscription = bufferedDataObservable.subscribe((bufferedData) => {
+    if (bufferedData.type !== BufferedDataType.WEB_SOCKET) {
+      return
+    }
+
+    const context = bufferedData.data
     switch (context.state) {
       case 'connecting': {
         const connectionId = generateUUID()

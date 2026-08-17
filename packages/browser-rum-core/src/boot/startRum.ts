@@ -17,8 +17,6 @@ import {
   startUserContext,
   startTabContext,
   ErrorSource,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -226,13 +224,14 @@ export function startRumEventCollection(
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
-  if (
-    configuration.trackResources &&
-    (configuration.betaTrackWebSockets || isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_WEBSOCKETS))
-  ) {
-    const webSocketCollection = startWebSocketCollection(lifeCycle, viewHistory, vitalCollection.addDurationVital)
-    cleanupTasks.push(webSocketCollection.stop)
-  }
+  const webSocketCollection = startWebSocketCollection(
+    lifeCycle,
+    configuration,
+    viewHistory,
+    vitalCollection.addDurationVital,
+    bufferedDataObservable
+  )
+  cleanupTasks.push(webSocketCollection.stop)
 
   const internalContext = startInternalContext(
     configuration.applicationId,

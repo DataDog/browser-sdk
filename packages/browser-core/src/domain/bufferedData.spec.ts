@@ -1,10 +1,20 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { ConsoleApiName } from '@datadog/js-core/util'
+import { ConsoleApiName, globalObject } from '@datadog/js-core/util'
 import type { MockFetch } from '../../test'
-import { collectAsyncCalls, mockFetch, mockXhr, registerCleanupTask, replaceMockable, withXhr } from '../../test'
+import {
+  collectAsyncCalls,
+  createMockWebSocket,
+  mockFetch,
+  mockWebSocket,
+  mockXhr,
+  registerCleanupTask,
+  replaceMockable,
+  withXhr,
+} from '../../test'
 import { Observable } from '../tools/observable'
 import { resetFetchObservable } from '../browser/fetchObservable'
 import { resetXhrObservable } from '../browser/xhrObservable'
+import { resetWebSocketObservable } from '../browser/webSocketObservable'
 import { noop } from '../tools/utils/functionUtils'
 import { resetConsoleObservable } from './console/consoleObservable'
 import type { BufferedData } from './bufferedData'
@@ -13,6 +23,59 @@ import { ErrorHandling, ErrorSource, type RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 
 describe('startBufferingData', () => {
+  it('does not instrument unselected sources', () => {
+    mockWebSocket()
+    const originalWebSocket = globalObject.WebSocket
+    const originalOnError = globalObject.onerror
+    const originalOnUnhandledRejection = globalObject.onunhandledrejection
+    const { stop } = startBufferingData([])
+
+    registerCleanupTask(() => {
+      stop()
+      resetWebSocketObservable()
+    })
+
+    expect(globalObject.WebSocket).toBe(originalWebSocket)
+    expect(globalObject.onerror).toBe(originalOnError)
+    expect(globalObject.onunhandledrejection).toBe(originalOnUnhandledRejection)
+  })
+
+  it('collects only selected data sources', (done) => {
+    const runtimeErrorObservable = new Observable<RawError>()
+    replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
+    mockWebSocket()
+    const originalWebSocket = globalObject.WebSocket
+    const { observable, stop } = startBufferingData([BufferedDataType.RUNTIME_ERROR])
+
+    registerCleanupTask(() => {
+      stop()
+      resetWebSocketObservable()
+    })
+
+    expect(globalObject.WebSocket).toBe(originalWebSocket)
+
+    const rawError = {
+      startClocks: clocksNow(),
+      source: ErrorSource.SOURCE,
+      type: 'Error',
+      stack: 'Error: error!',
+      handling: ErrorHandling.UNHANDLED,
+      causes: undefined,
+      fingerprint: undefined,
+      message: 'error!',
+    }
+
+    observable.subscribe((data) => {
+      expect(data).toEqual({
+        type: BufferedDataType.RUNTIME_ERROR,
+        data: rawError,
+      })
+      done()
+    })
+
+    runtimeErrorObservable.notify(rawError)
+  })
+
   it('collects runtime errors', (done) => {
     const runtimeErrorObservable = new Observable<RawError>()
     replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
@@ -131,6 +194,40 @@ describe('startBufferingData', () => {
           url: 'http://fake-url/',
           method: 'GET',
           status: 200,
+        }),
+      },
+    ])
+  })
+
+  it('collects web socket activity', async () => {
+    mockWebSocket()
+    const { observable, stop } = startBufferingData()
+    const collected: BufferedData[] = []
+    const bufferedDataCollectedSpy = jasmine.createSpy()
+
+    registerCleanupTask(() => {
+      stop()
+      resetWebSocketObservable()
+    })
+
+    observable.subscribe((data) => {
+      if (data.type === BufferedDataType.WEB_SOCKET) {
+        collected.push(data)
+        bufferedDataCollectedSpy()
+      }
+    })
+
+    const webSocket = createMockWebSocket('wss://fake-url/')
+
+    await collectAsyncCalls(bufferedDataCollectedSpy, 1)
+
+    expect(collected).toEqual([
+      {
+        type: BufferedDataType.WEB_SOCKET,
+        data: jasmine.objectContaining({
+          state: 'connecting',
+          url: 'wss://fake-url/',
+          instance: webSocket as unknown as WebSocket,
         }),
       },
     ])

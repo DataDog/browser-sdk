@@ -6,6 +6,8 @@ import type { FetchContext } from '../browser/fetchObservable'
 import { initFetchObservable } from '../browser/fetchObservable'
 import type { XhrContext } from '../browser/xhrObservable'
 import { initXhrObservable } from '../browser/xhrObservable'
+import type { WebSocketContext } from '../browser/webSocketObservable'
+import { initWebSocketObservable } from '../browser/webSocketObservable'
 import { addTelemetryDebug } from './telemetry'
 import type { RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
@@ -19,6 +21,7 @@ export const enum BufferedDataType {
   FETCH,
   XHR,
   CONSOLE,
+  WEB_SOCKET,
 }
 
 export type BufferedData =
@@ -26,8 +29,9 @@ export type BufferedData =
   | { type: BufferedDataType.FETCH; data: FetchContext }
   | { type: BufferedDataType.XHR; data: XhrContext }
   | { type: BufferedDataType.CONSOLE; data: ConsoleLog }
+  | { type: BufferedDataType.WEB_SOCKET; data: WebSocketContext }
 
-export function startBufferingData() {
+export function startBufferingData(sources?: BufferedDataType[]) {
   const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT, (count) => {
     // monitor-until: 2026-10-14
     addTelemetryDebug('Early data collection dropped data on unbuffer', {
@@ -40,6 +44,9 @@ export function startBufferingData() {
     type: T,
     source: Observable<Extract<BufferedData, { type: T }>['data']>
   ) {
+    if (sources && !sources.includes(type)) {
+      return
+    }
     subscriptions.push(
       source.subscribe((data) => {
         observable.notify({ type, data } as BufferedData)
@@ -51,6 +58,7 @@ export function startBufferingData() {
   subscribe(BufferedDataType.FETCH, initFetchObservable())
   subscribe(BufferedDataType.XHR, initXhrObservable())
   subscribe(BufferedDataType.CONSOLE, initConsoleObservable(Object.values(ConsoleApiName)))
+  subscribe(BufferedDataType.WEB_SOCKET, initWebSocketObservable())
 
   return {
     observable,
