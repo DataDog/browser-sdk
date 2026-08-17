@@ -79,8 +79,8 @@ export function record(options: RecordOptions): RecordAPI {
   ]
 
   if (
-    configuration.enableSessionReplayCanvasRecording &&
-    configuration.enableSessionReplayCanvasRecording.maxFramesPerSecond > 0
+    configuration.sessionReplayCanvasRecording?.enable &&
+    configuration.sessionReplayCanvasRecording.maxFramesPerSecond > 0
   ) {
     const canvasManager = createCanvasManager()
     trackers.push(trackCanvas2DMutations(canvasManager.markCanvasDirty))
