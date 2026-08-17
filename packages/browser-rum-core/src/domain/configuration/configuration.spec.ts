@@ -400,6 +400,32 @@ describe('validateAndBuildRumConfiguration', () => {
         })
       })
 
+      it('rejects invalid canvas dimensions', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: { enable: true, maxHashDimension: 0 },
+          })
+        ).toBeUndefined()
+        expect(displayErrorSpy.calls.allArgs()).toEqual([
+          ['"maxHashDimension" must be a number greater than or equal to 1'],
+          ['"sessionReplayCanvasRecording" is not a valid object'],
+        ])
+
+        displayErrorSpy.calls.reset()
+
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: { enable: true, maxCaptureDimension: 0 },
+          })
+        ).toBeUndefined()
+        expect(displayErrorSpy.calls.allArgs()).toEqual([
+          ['"maxCaptureDimension" must be a number greater than or equal to 1'],
+          ['"sessionReplayCanvasRecording" is not a valid object'],
+        ])
+      })
+
       it('rejects invalid canvas recording options', () => {
         expect(
           validateAndBuildRumConfiguration({

@@ -2,6 +2,7 @@ import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { ONE_SECOND } from '@datadog/js-core/time'
 import { recordsPerFullSnapshot } from '../../../test'
 import type {
   AddNodeChange,
@@ -19,6 +20,7 @@ import type { RecordAPI } from './record'
 import { record } from './record'
 import type { EmitRecordCallback } from './record.types'
 import { createChangeDecoder } from './serialization'
+import type { CapturedCanvasImage } from './canvas/canvasCapture'
 
 describe('record', () => {
   let recordApi: RecordAPI
@@ -77,7 +79,15 @@ describe('record', () => {
     it('instruments canvas drawing when canvas recording is enabled', () => {
       const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
 
-      startRecording({ sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 1 } })
+      startRecording({
+        sessionReplayCanvasRecording: {
+          enable: true,
+          maxFramesPerSecond: 1,
+          maxHashDimension: 100,
+          maxCaptureDimension: 1000,
+          imageFormat: 'image/png',
+        },
+      })
 
       expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).not.toBe(
         originalFillRect
@@ -94,14 +104,52 @@ describe('record', () => {
       )
     })
 
-    it('does not instrument canvas drawing when the maximum frame rate is zero', () => {
+    it('instruments canvas drawing when enabled with a maximum frame rate of zero', () => {
       const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
 
-      startRecording({ sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 0 } })
+      startRecording({
+        sessionReplayCanvasRecording: {
+          enable: true,
+          maxFramesPerSecond: 0,
+          maxHashDimension: 100,
+          maxCaptureDimension: 1000,
+          imageFormat: 'image/png',
+        },
+      })
 
-      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
+      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).not.toBe(
         originalFillRect
       )
+    })
+
+    it('captures canvases drawn before recording starts', () => {
+      const clock = mockClock()
+      const canvas = document.createElement('canvas')
+      document.body.appendChild(canvas)
+      canvas.getContext('2d')!.fillRect(0, 0, 1, 1)
+      const blob = new Blob(['frame'], { type: 'image/png' })
+      spyOn(canvas, 'toBlob').and.callFake((callback) => callback(blob))
+      const capturedImageSpy = jasmine.createSpy<(image: CapturedCanvasImage) => void>()
+      registerCleanupTask(() => canvas.remove())
+
+      startRecording({
+        sessionReplayCanvasRecording: {
+          enable: true,
+          imageFormat: 'image/png',
+          maxCaptureDimension: 1000,
+          maxFramesPerSecond: 1,
+          maxHashDimension: 100,
+        },
+      })
+      recordApi.canvasImageObservable.subscribe(capturedImageSpy)
+
+      clock.tick(ONE_SECOND)
+
+      expect(capturedImageSpy).toHaveBeenCalledOnceWith({
+        blob,
+        canvas,
+        hash: jasmine.any(String),
+      })
     })
   })
 

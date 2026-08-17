@@ -233,13 +233,25 @@ export interface RumInitConfiguration extends InitConfiguration {
          */
         maxFramesPerSecond?: number | undefined
 
-        /** Max side length (px) of the greyscale thumbnail used for change detection. Default 100. */
+        /**
+         * Maximum side length in pixels of the greyscale thumbnail used for change detection.
+         *
+         * @defaultValue 100
+         */
         maxHashDimension?: number | undefined
 
-        /** Max side length (px) of the captured/uploaded image. Larger canvases are downscaled to fit. Default 1000. */
+        /**
+         * Maximum side length in pixels of the captured image. Larger canvases are downscaled to fit.
+         *
+         * @defaultValue 1000
+         */
         maxCaptureDimension?: number | undefined
 
-        /** Image format for captured canvas frames. Default 'image/webp'. */
+        /**
+         * Image format for captured canvas frames.
+         *
+         * @defaultValue image/webp
+         */
         imageFormat?: 'image/png' | 'image/webp' | undefined
       }
     | undefined
@@ -432,8 +444,8 @@ export const RUM_SCHEMA = {
     schema: {
       enable: { type: 'boolean', required: true },
       maxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
-      maxHashDimension: { type: 'number', default: 100 },
-      maxCaptureDimension: { type: 'number', default: 1000 },
+      maxHashDimension: { type: 'number', min: 1, default: 100 },
+      maxCaptureDimension: { type: 'number', min: 1, default: 1000 },
       imageFormat: { type: 'enum', values: ['image/png', 'image/webp'] as const, default: 'image/webp' },
     },
   },

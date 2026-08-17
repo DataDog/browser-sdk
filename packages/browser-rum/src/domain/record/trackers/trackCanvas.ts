@@ -84,7 +84,7 @@ export function markCanvasDirtyFromMutationRecords(
   }
 }
 
-function markCanvasAndDescendantsDirty(node: Node, canvasManager: CanvasManager): void {
+export function markCanvasAndDescendantsDirty(node: Node, canvasManager: CanvasManager): void {
   if (isCanvasElement(node)) {
     canvasManager.markCanvasDirty(node)
   }

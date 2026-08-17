@@ -1,4 +1,4 @@
-import { sendToExtension } from '@datadog/browser-core'
+import { Observable, sendToExtension } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import * as replayStats from '../replayStats'
 import type { BrowserRecord } from '../../types'
@@ -16,6 +16,7 @@ import {
   trackViewportResize,
   trackVisualViewportResize,
   trackCanvas2DMutations,
+  markCanvasAndDescendantsDirty,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -24,6 +25,8 @@ import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScope } from './recordingScope'
 import { createCanvasManager } from './canvas/canvasManager'
+import type { CapturedCanvasImage } from './canvas/canvasCapture'
+import { startCanvasCapture } from './canvas/canvasCapture'
 
 export interface RecordOptions {
   emitRecord: EmitRecordCallback
@@ -34,6 +37,7 @@ export interface RecordOptions {
 }
 
 export interface RecordAPI {
+  canvasImageObservable: Observable<CapturedCanvasImage>
   stop: () => void
   flushMutations: () => void
   shadowRootsController: ShadowRootsController
@@ -41,6 +45,7 @@ export interface RecordAPI {
 
 export function record(options: RecordOptions): RecordAPI {
   const { emitRecord, emitStats, configuration, lifeCycle } = options
+  const canvasImageObservable = new Observable<CapturedCanvasImage>()
   // runtime checks for user options
   if (!emitRecord || !emitStats) {
     throw new Error('emit functions are required')
@@ -53,11 +58,9 @@ export function record(options: RecordOptions): RecordAPI {
     replayStats.addRecord(view.id)
   }
 
-  const canvasManager =
-    configuration.sessionReplayCanvasRecording?.enable &&
-    configuration.sessionReplayCanvasRecording.maxFramesPerSecond > 0
-      ? createCanvasManager()
-      : undefined
+  const canvasCaptureConfiguration = configuration.sessionReplayCanvasRecording
+  const canvasManager = canvasCaptureConfiguration?.enable ? createCanvasManager() : undefined
+
   const shadowRootsController = initShadowRootsController(processRecord, emitStats)
   const scope = createRecordingScope(
     configuration,
@@ -88,11 +91,16 @@ export function record(options: RecordOptions): RecordAPI {
     trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
 
-  if (canvasManager) {
-    trackers.push(trackCanvas2DMutations(canvasManager.markCanvasDirty))
+  if (canvasCaptureConfiguration && canvasManager) {
+    markCanvasAndDescendantsDirty(document, canvasManager)
+    trackers.push(
+      trackCanvas2DMutations(canvasManager.markCanvasDirty),
+      startCanvasCapture(canvasManager, canvasCaptureConfiguration, (image) => canvasImageObservable.notify(image))
+    )
   }
 
   return {
+    canvasImageObservable,
     stop: () => {
       shadowRootsController.stop()
       trackers.forEach((tracker) => tracker.stop())
