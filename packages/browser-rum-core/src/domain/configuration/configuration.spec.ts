@@ -355,16 +355,34 @@ describe('validateAndBuildRumConfiguration', () => {
           sessionReplayCanvasRecording: { enable: true },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 1 })
+        expect(configuration.sessionReplayCanvasRecording).toEqual({
+          enable: true,
+          maxFramesPerSecond: 1,
+          maxHashDimension: 100,
+          maxCaptureDimension: 1000,
+          imageFormat: 'image/webp',
+        })
       })
 
-      it('uses the configured frame rate', () => {
+      it('uses the configured canvas recording options', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
+          sessionReplayCanvasRecording: {
+            enable: true,
+            maxFramesPerSecond: 2.5,
+            maxHashDimension: 50,
+            maxCaptureDimension: 500,
+            imageFormat: 'image/png',
+          },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 2.5 })
+        expect(configuration.sessionReplayCanvasRecording).toEqual({
+          enable: true,
+          maxFramesPerSecond: 2.5,
+          maxHashDimension: 50,
+          maxCaptureDimension: 500,
+          imageFormat: 'image/png',
+        })
       })
 
       it('preserves the configured frame rate when disabled', () => {
@@ -373,7 +391,13 @@ describe('validateAndBuildRumConfiguration', () => {
           sessionReplayCanvasRecording: { enable: false, maxFramesPerSecond: 2.5 },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: false, maxFramesPerSecond: 2.5 })
+        expect(configuration.sessionReplayCanvasRecording).toEqual({
+          enable: false,
+          maxFramesPerSecond: 2.5,
+          maxHashDimension: 100,
+          maxCaptureDimension: 1000,
+          imageFormat: 'image/webp',
+        })
       })
 
       it('rejects invalid canvas recording options', () => {
