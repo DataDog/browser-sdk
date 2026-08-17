@@ -3,11 +3,7 @@ import { getShopifyStorePassword } from '../../../../scripts/lib/secrets.ts'
 
 // A Datadog-owned dev store, password-protected, used only to exercise browser-rum-shopify
 // against a real storefront + checkout + Custom Pixel sandbox.
-const SHOPIFY_STORE_URL = 'https://custom-pixel-e2e.myshopify.com/'
-
-export function buildShopifyUrl(): string {
-  return SHOPIFY_STORE_URL
-}
+export const SHOPIFY_STORE_URL = 'https://custom-pixel-e2e.myshopify.com/'
 
 // Dev stores gate every page behind a storefront password until unlocked for the session.
 const PASSWORD_PATH = /\/password\/?$/

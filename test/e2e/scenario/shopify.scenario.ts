@@ -89,7 +89,7 @@ test.describe(() => {
           const cart = (await response.json()) as { item_count: number }
           return cart.item_count
         })
-      await expect.poll(getCartItemCount, { timeout: 10000 }).toBeGreaterThan(0)
+      await expect.poll(getCartItemCount).toBeGreaterThan(0)
       await page.getByRole('button', { name: 'Check out' }).click()
 
       // Wait for the checkout page's Web Pixel to finish loading and subscribe to click events,
@@ -144,7 +144,7 @@ test.describe(() => {
 
       await page.getByRole('button', { name: 'Pay now' }).click()
 
-      await expect(page.getByRole('heading', { name: /thank you/i })).toBeVisible({ timeout: 30000 })
+      await expect(page.getByRole('heading', { name: /thank you/i })).toBeVisible()
 
       // flushEvents() navigates to /flush and leaves the page there, so it must run while still on
       // the thank-you page, before navigating anywhere else.

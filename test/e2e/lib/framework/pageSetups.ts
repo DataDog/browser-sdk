@@ -305,21 +305,39 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
-// Salesforce apps don't serve a locally-generated page body; this factory only drives the
-// page-side setup needed to init RUM on the remote Salesforce page.
+// Salesforce and Shopify apps don't serve a locally-generated page body; this factory only
+// intercepts the remote bundle request and injects the RUM configuration read by the app's
+// own init snippet/component, via globals set on every new document
+async function interceptRemoteBundleAndConfigureRum(
+  page: Page,
+  urlPattern: RegExp,
+  resolveFilePath: (url: string) => string,
+  options: SetupOptions,
+  servers: Servers,
+  headers?: Record<string, string>
+): Promise<void> {
+  await page.route(urlPattern, async (route) => {
+    await route.fulfill({
+      body: await readFile(resolveFilePath(route.request().url())),
+      contentType: 'application/javascript',
+      headers,
+    })
+  })
+
+  if (options.rum) {
+    await page.addInitScript(
+      `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+      window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
+    )
+  }
+}
+
 export async function salesforceSetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
   const salesforceAppDirectory = options.salesforceApp === 'experience-cloud' ? 'sf-experience-app' : 'sf-lwc-app'
   const salesforceBundlePath = resolve(
     __dirname,
     `../../../apps/${salesforceAppDirectory}/force-app/main/default/staticresources/datadog_rum_salesforce.js`
   )
-
-  await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/, async (route) => {
-    await route.fulfill({
-      body: await readFile(salesforceBundlePath),
-      contentType: 'application/javascript',
-    })
-  })
 
   if (options.salesforceApp === 'lwc') {
     const { accessToken, instanceUrl } = await getSalesforceLwcSession()
@@ -332,15 +350,16 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
     ])
   }
 
-  if (options.rum) {
-    // Both sf-lwc-app and sf-experience-app have a committed datadogInit LWC that reads
-    // these globals and calls DD_RUM.init. On experience-cloud, that component only runs
-    // when the page is loaded with init=true.
-    await page.addInitScript(
-      `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
-      window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
-    )
-  }
+  // Both sf-lwc-app and sf-experience-app have a committed datadogInit LWC that reads the
+  // injected globals and calls DD_RUM.init. On experience-cloud, that component only runs
+  // when the page is loaded with init=true.
+  await interceptRemoteBundleAndConfigureRum(
+    page,
+    /\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/,
+    () => salesforceBundlePath,
+    options,
+    servers
+  )
   return ''
 }
 
@@ -350,32 +369,22 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
 const SHOPIFY_ASSET_URL_PATTERN =
   /datadoghq-browser-agent\.com\/[^/]+\/v\d+\/(chunks\/)?([\w-]*datadog-rum-shopify\.js)(?:[?#].*)?$/
 
-// Shopify apps don't serve a locally-generated page body; this factory only intercepts the
-// bootstrap script request and injects the RUM configuration read by the store's Theme Liquid
-// snippet and Custom Pixel.
 export async function shopifySetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
   const shopifyBundleDir = resolve(__dirname, '../../../../packages/browser-rum-shopify/bundle')
 
-  await page.route(SHOPIFY_ASSET_URL_PATTERN, async (route) => {
-    const [, chunksSegment, fileName] = SHOPIFY_ASSET_URL_PATTERN.exec(route.request().url()) || []
-    const filePath = resolve(shopifyBundleDir, chunksSegment || '', fileName)
-    await route.fulfill({
-      body: await readFile(filePath),
-      contentType: 'application/javascript',
-      // The snippets load the script with `crossOrigin = 'anonymous'`, so the browser enforces
-      // CORS on this response even though it never leaves the machine.
-      headers: { 'access-control-allow-origin': '*' },
-    })
-  })
-
-  if (options.rum) {
-    // addInitScript runs on every new document in the page, including the Custom Pixel's
-    // sandboxed iframe, so this reaches both the storefront and checkout injection points.
-    await page.addInitScript(
-      `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
-      window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
-    )
-  }
+  await interceptRemoteBundleAndConfigureRum(
+    page,
+    SHOPIFY_ASSET_URL_PATTERN,
+    (url) => {
+      const [, chunksSegment, fileName] = SHOPIFY_ASSET_URL_PATTERN.exec(url) || []
+      return resolve(shopifyBundleDir, chunksSegment || '', fileName)
+    },
+    options,
+    servers,
+    // The snippets load the script with `crossOrigin = 'anonymous'`, so the browser enforces
+    // CORS on this response even though it never leaves the machine.
+    { 'access-control-allow-origin': '*' }
+  )
   return ''
 }
 

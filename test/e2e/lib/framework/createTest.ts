@@ -23,7 +23,7 @@ import {
 } from '../helpers/playwright'
 import { buildSalesforceUrl } from './buildSalesforceUrl'
 import type { SalesforceApp } from './buildSalesforceUrl'
-import { buildShopifyUrl, unlockShopifyStorePassword } from './buildShopifyUrl'
+import { SHOPIFY_STORE_URL, unlockShopifyStorePassword } from './shopify'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -297,7 +297,7 @@ class TestBuilder {
     this.shopifyApp = true
     this.setups = [{ factory: shopifySetup }]
     this.baseUrlHooks.push((baseUrl) => {
-      baseUrl.href = buildShopifyUrl()
+      baseUrl.href = SHOPIFY_STORE_URL
     })
     return this
   }
