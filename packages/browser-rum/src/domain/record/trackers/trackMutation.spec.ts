@@ -1,5 +1,5 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { DefaultPrivacyLevel, noop } from '@datadog/browser-core'
+import { registerCleanupTask, waitNextMicrotask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
@@ -15,6 +15,7 @@ import type { ChangeDecoder, SerializationStats } from '../serialization'
 import { aggregateSerializationStats, createSerializationStats } from '../serialization'
 import { serializeHtml } from '../test/serializeHtml.specHelper'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
+import { createCanvasManager } from '../canvas/canvasManager'
 import { trackMutation } from './trackMutation'
 
 describe('trackMutation', () => {
@@ -547,6 +548,149 @@ describe('trackMutation', () => {
         { configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } }
       )
       expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['data-foo', '***']]]])
+    })
+  })
+
+  describe('canvas mutations', () => {
+    const canvasSizeMutations: Array<{
+      name: string
+      mutate: (canvas: HTMLCanvasElement) => void
+    }> = [
+      { name: 'the width property', mutate: (canvas) => (canvas.width = 101) },
+      { name: 'setAttribute', mutate: (canvas) => canvas.setAttribute('width', '101') },
+      { name: 'removeAttribute', mutate: (canvas) => canvas.removeAttribute('width') },
+      { name: 'toggleAttribute', mutate: (canvas) => canvas.toggleAttribute('width') },
+      { name: 'setAttributeNS', mutate: (canvas) => canvas.setAttributeNS(null, 'width', '101') },
+      { name: 'removeAttributeNS', mutate: (canvas) => canvas.removeAttributeNS(null, 'width') },
+      {
+        name: 'Attr.value',
+        mutate: (canvas) => {
+          canvas.attributes.getNamedItem('width')!.value = '101'
+        },
+      },
+      {
+        name: 'NamedNodeMap.setNamedItem',
+        mutate: (canvas) => {
+          const attribute = canvas.ownerDocument.createAttribute('width')
+          attribute.value = '101'
+          canvas.attributes.setNamedItem(attribute)
+        },
+      },
+    ]
+
+    canvasSizeMutations.forEach(({ name, mutate }) => {
+      it(`marks a canvas dirty when its size is changed through ${name}`, async () => {
+        const canvasManager = createCanvasManager()
+        const scope = createRecordingScopeForTesting({ canvasManager })
+        let canvas!: HTMLCanvasElement
+
+        await recordMutationOf(
+          '<div><canvas width="100"></canvas></div>',
+          (sandbox) => {
+            canvas = sandbox.querySelector('canvas')!
+            canvasManager.markCanvasClean(canvas)
+            mutate(canvas)
+          },
+          { scope }
+        )
+
+        expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+      })
+    })
+
+    it('does not mark a canvas dirty for unrelated attributes', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<div><canvas></canvas></div>',
+        (sandbox) => {
+          canvas = sandbox.querySelector('canvas')!
+          canvasManager.markCanvasClean(canvas)
+          canvas.setAttribute('class', 'foo')
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    })
+
+    it('does not mark a canvas dirty for namespaced size attributes', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<div><canvas></canvas></div>',
+        (sandbox) => {
+          canvas = sandbox.querySelector('canvas')!
+          canvasManager.markCanvasClean(canvas)
+          canvas.setAttributeNS('urn:example', 'example:width', '101')
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    })
+
+    it('marks a canvas dirty when it is reinserted', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<div><canvas></canvas></div>',
+        (sandbox) => {
+          canvas = sandbox.querySelector('canvas')!
+          canvasManager.markCanvasClean(canvas)
+          canvas.remove()
+          sandbox.appendChild(canvas)
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    })
+
+    it('marks canvases in an inserted subtree dirty', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<div></div>',
+        (sandbox) => {
+          const container = sandbox.ownerDocument.createElement('div')
+          canvas = sandbox.ownerDocument.createElement('canvas')
+          container.appendChild(canvas)
+          canvasManager.markCanvasClean(canvas)
+          sandbox.appendChild(container)
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    })
+
+    it('marks a canvas dirty when its size changes in a shadow root', async () => {
+      const host = document.createElement('div')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const canvas = document.createElement('canvas')
+      canvas.setAttribute('width', '100')
+      shadowRoot.appendChild(canvas)
+      document.body.appendChild(host)
+      registerCleanupTask(() => host.remove())
+
+      const canvasManager = createCanvasManager()
+      canvasManager.markCanvasClean(canvas)
+      const mutationTracker = trackMutation(shadowRoot, noop, noop, createRecordingScopeForTesting({ canvasManager }))
+      registerCleanupTask(() => mutationTracker.stop())
+
+      canvas.toggleAttribute('width')
+      await waitNextMicrotask()
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
     })
   })
 

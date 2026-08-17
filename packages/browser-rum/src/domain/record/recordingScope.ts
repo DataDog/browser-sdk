@@ -4,6 +4,7 @@ import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createEventIds, createNodeIds, createStringIds, createStyleSheetIds } from './itemIds'
 import type { EventIds, NodeIds, StringIds, StyleSheetIds } from './itemIds'
 import type { ShadowRootsController } from './shadowRootsController'
+import type { CanvasManager } from './canvas/canvasManager'
 
 /**
  * State associated with a stream of session replay records. When a new stream of records
@@ -21,12 +22,14 @@ export interface RecordingScope {
   shadowRootsController: ShadowRootsController
   stringIds: StringIds
   styleSheetIds: StyleSheetIds
+  canvasManager: CanvasManager | undefined
 }
 
 export function createRecordingScope(
   configuration: RumConfiguration,
   elementsScrollPositions: ElementsScrollPositions,
-  shadowRootsController: ShadowRootsController
+  shadowRootsController: ShadowRootsController,
+  canvasManager?: CanvasManager
 ): RecordingScope {
   const eventIds = createEventIds()
   const nodeIds = createNodeIds()
@@ -41,6 +44,7 @@ export function createRecordingScope(
       scope.styleSheetIds.clear()
     },
 
+    canvasManager,
     configuration,
     elementsScrollPositions,
     eventIds,

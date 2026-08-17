@@ -7,6 +7,7 @@ import { createMutationBatch } from '../mutationBatch'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import { serializeMutations } from '../serialization'
 import type { Tracker } from './tracker.types'
+import { markCanvasDirtyFromMutationRecords } from './trackCanvas'
 
 export type MutationTracker = Tracker & { flush: () => void }
 
@@ -25,16 +26,19 @@ export function trackMutation(
   }
 
   const mutationBatch = createMutationBatch((mutations) => {
-    serializeMutations(
-      timeStampNow(),
-      mutations.concat(observer.takeRecords() as RumMutationRecord[]),
-      emitRecord,
-      emitStats,
-      scope
-    )
+    // Process mutations still queued in the observer so canvas changes are tracked before flushing.
+    const queuedMutations = observer.takeRecords() as RumMutationRecord[]
+    markCanvasDirtyFromMutationRecords(queuedMutations, scope.canvasManager)
+    serializeMutations(timeStampNow(), mutations.concat(queuedMutations), emitRecord, emitStats, scope)
   })
 
-  const observer = new MutationObserver(monitor(mutationBatch.addMutations))
+  const observer = new MutationObserver(
+    monitor((mutations) => {
+      // Keep the canvas manager in sync with DOM mutations so unchanged canvases can be skipped.
+      markCanvasDirtyFromMutationRecords(mutations, scope.canvasManager)
+      mutationBatch.addMutations(mutations)
+    })
+  )
 
   observer.observe(target, {
     attributeOldValue: true,

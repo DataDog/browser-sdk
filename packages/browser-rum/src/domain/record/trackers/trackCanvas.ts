@@ -1,4 +1,7 @@
-import { instrumentMethod, instrumentSetter } from '@datadog/browser-core'
+import { instrumentMethod } from '@datadog/browser-core'
+import type { RumMutationRecord } from '@datadog/browser-rum-core'
+import { forEachChildNodes, isElementNode } from '@datadog/browser-rum-core'
+import type { CanvasManager } from '../canvas/canvasManager'
 import type { Tracker } from './tracker.types'
 
 export type MarkCanvasDirty = (canvas: HTMLCanvasElement) => void
@@ -45,30 +48,51 @@ export function trackCanvas2DMutations(markCanvasDirty: MarkCanvasDirty): Tracke
     })
   }
 
-  if (typeof HTMLCanvasElement !== 'undefined') {
-    instrumentationStoppers.push(
-      instrumentSetter(HTMLCanvasElement.prototype, 'width', markCanvasDirty),
-      instrumentSetter(HTMLCanvasElement.prototype, 'height', markCanvasDirty),
-      instrumentMethod(Element.prototype, 'setAttribute', ({ target, parameters, onPostCall }) => {
-        if (target instanceof HTMLCanvasElement && isCanvasSizeAttribute(parameters[0])) {
-          onPostCall(() => markCanvasDirty(target))
-        }
-      }),
-      instrumentMethod(Element.prototype, 'removeAttribute', ({ target, parameters, onPostCall }) => {
-        if (
-          target instanceof HTMLCanvasElement &&
-          isCanvasSizeAttribute(parameters[0]) &&
-          target.hasAttribute(parameters[0])
-        ) {
-          onPostCall(() => markCanvasDirty(target))
-        }
-      })
-    )
-  }
-
   return {
     stop: () => instrumentationStoppers.forEach((stopper) => stopper.stop()),
   }
+}
+
+/**
+ * Canvas dimensions can be changed through several APIs, including the `width` and `height`
+ * properties and their corresponding attributes. The mutation observer consolidates these paths
+ * into attribute mutation records so that the canvas can be marked dirty consistently.
+ */
+export function markCanvasDirtyFromMutationRecords(
+  mutations: RumMutationRecord[],
+  canvasManager: CanvasManager | undefined
+): void {
+  if (!canvasManager) {
+    return
+  }
+
+  for (const mutation of mutations) {
+    if (
+      mutation.type === 'attributes' &&
+      isCanvasElement(mutation.target) &&
+      mutation.attributeNamespace === null &&
+      isCanvasSizeAttribute(mutation.attributeName)
+    ) {
+      canvasManager.markCanvasDirty(mutation.target)
+    }
+
+    if (mutation.type === 'childList') {
+      for (let index = 0; index < mutation.addedNodes.length; index += 1) {
+        markCanvasAndDescendantsDirty(mutation.addedNodes[index], canvasManager)
+      }
+    }
+  }
+}
+
+function markCanvasAndDescendantsDirty(node: Node, canvasManager: CanvasManager): void {
+  if (isCanvasElement(node)) {
+    canvasManager.markCanvasDirty(node)
+  }
+  forEachChildNodes(node, (childNode) => markCanvasAndDescendantsDirty(childNode, canvasManager))
+}
+
+function isCanvasElement(node: Node): node is HTMLCanvasElement {
+  return isElementNode(node) && node.tagName === 'CANVAS'
 }
 
 function isCanvasSizeAttribute(attributeName: string): boolean {

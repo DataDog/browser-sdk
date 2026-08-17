@@ -53,8 +53,18 @@ export function record(options: RecordOptions): RecordAPI {
     replayStats.addRecord(view.id)
   }
 
+  const canvasManager =
+    configuration.sessionReplayCanvasRecording?.enable &&
+    configuration.sessionReplayCanvasRecording.maxFramesPerSecond > 0
+      ? createCanvasManager()
+      : undefined
   const shadowRootsController = initShadowRootsController(processRecord, emitStats)
-  const scope = createRecordingScope(configuration, createElementsScrollPositions(), shadowRootsController)
+  const scope = createRecordingScope(
+    configuration,
+    createElementsScrollPositions(),
+    shadowRootsController,
+    canvasManager
+  )
 
   const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope)
 
@@ -78,11 +88,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
 
-  if (
-    configuration.sessionReplayCanvasRecording?.enable &&
-    configuration.sessionReplayCanvasRecording.maxFramesPerSecond > 0
-  ) {
-    const canvasManager = createCanvasManager()
+  if (canvasManager) {
     trackers.push(trackCanvas2DMutations(canvasManager.markCanvasDirty))
   }
 

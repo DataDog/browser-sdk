@@ -5,13 +5,13 @@ describe('createCanvasManager', () => {
     const canvasManager = createCanvasManager()
     const canvas = document.createElement('canvas')
 
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
-
-    canvasManager.markCanvasDirty(canvas)
     expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
 
     canvasManager.markCanvasClean(canvas)
     expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+
+    canvasManager.markCanvasDirty(canvas)
+    expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
   })
 
   it('tracks canvases independently', () => {
@@ -19,7 +19,7 @@ describe('createCanvasManager', () => {
     const dirtyCanvas = document.createElement('canvas')
     const cleanCanvas = document.createElement('canvas')
 
-    canvasManager.markCanvasDirty(dirtyCanvas)
+    canvasManager.markCanvasClean(cleanCanvas)
 
     expect(canvasManager.isCanvasDirty(dirtyCanvas)).toBeTrue()
     expect(canvasManager.isCanvasDirty(cleanCanvas)).toBeFalse()
