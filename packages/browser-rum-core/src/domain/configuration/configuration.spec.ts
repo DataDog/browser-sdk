@@ -1,5 +1,11 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
+import {
+  addExperimentalFeatures,
+  DefaultPrivacyLevel,
+  display,
+  ExperimentalFeature,
+  TraceContextInjection,
+} from '@datadog/browser-core'
 import type {
   ExtractTelemetryConfiguration,
   CamelToSnakeCase,
@@ -319,6 +325,79 @@ describe('validateAndBuildRumConfiguration', () => {
           startSessionReplayRecordingManually: 'foo' as any,
         })!.startSessionReplayRecordingManually
       ).toBeTrue()
+    })
+  })
+
+  describe('canvas recording', () => {
+    it('is disabled by default', () => {
+      const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
+
+      expect(configuration.sessionReplayCanvasRecording).toBeUndefined()
+    })
+
+    it('stays disabled when requested without the experimental feature', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        sessionReplayCanvasRecording: { enable: true },
+      })!
+
+      expect(configuration.sessionReplayCanvasRecording).toBeUndefined()
+    })
+
+    describe('when the experimental feature is enabled', () => {
+      beforeEach(() => {
+        addExperimentalFeatures([ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS])
+      })
+
+      it('uses one frame per second by default when enabled', () => {
+        const configuration = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionReplayCanvasRecording: { enable: true },
+        })!
+
+        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 1 })
+      })
+
+      it('uses the configured frame rate', () => {
+        const configuration = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
+        })!
+
+        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 2.5 })
+      })
+
+      it('preserves the configured frame rate when disabled', () => {
+        const configuration = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionReplayCanvasRecording: { enable: false, maxFramesPerSecond: 2.5 },
+        })!
+
+        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: false, maxFramesPerSecond: 2.5 })
+      })
+
+      it('rejects invalid canvas recording options', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: true as any,
+          })
+        ).toBeUndefined()
+        expect(displayErrorSpy).toHaveBeenCalledOnceWith('"sessionReplayCanvasRecording" is not a valid object')
+      })
+
+      it('requires the enable option', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: {} as any,
+          })
+        ).toBeUndefined()
+        expect(displayErrorSpy.calls.allArgs()).toEqual([
+          ['"enable" is required'],
+          ['"sessionReplayCanvasRecording" is not a valid object'],
+        ])
+      })
     })
   })
 
@@ -872,6 +951,7 @@ describe('serializeRumConfiguration', () => {
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
+      sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -887,7 +967,7 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
-            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration'
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'sessionReplayCanvasRecording'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
