@@ -13,7 +13,7 @@ export interface RumAttributesMutationRecord {
   oldValue: string | null
   attributeName: string
   // Distinguishes canvas content attributes from namespaced attributes with the same local name.
-  attributeNamespace: string | null
+  attributeNamespace?: string | null
 }
 
 export interface RumChildListMutationRecord {

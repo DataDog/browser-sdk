@@ -70,7 +70,7 @@ export function markCanvasDirtyFromMutationRecords(
     if (
       mutation.type === 'attributes' &&
       isCanvasElement(mutation.target) &&
-      mutation.attributeNamespace === null &&
+      (mutation.attributeNamespace === null || mutation.attributeNamespace === undefined) &&
       isCanvasSizeAttribute(mutation.attributeName)
     ) {
       canvasManager.markCanvasDirty(mutation.target)
