@@ -85,6 +85,11 @@ export function record(options: RecordOptions): RecordAPI {
     }
   )
 
+  // Seed all connected canvases after the initial full snapshot.
+  if (canvasManager) {
+    markCanvasAndDescendantsDirty(document, canvasManager)
+  }
+
   function flushMutations() {
     shadowRootsController.flush()
     mutationTracker.flush()
