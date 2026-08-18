@@ -1,6 +1,7 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
+import { createCanvasManager } from '../canvas/canvasManager'
 import type { Tracker } from './tracker.types'
-import { trackCanvas2DMutations } from './trackCanvas'
+import { markCanvasAndDescendantsDirty, trackCanvas2DMutations } from './trackCanvas'
 
 describe('trackCanvas2DMutations', () => {
   let canvas: HTMLCanvasElement
@@ -70,5 +71,21 @@ describe('trackCanvas2DMutations', () => {
     context.fillRect(0, 0, 1, 1)
 
     expect(markCanvasDirtySpy).not.toHaveBeenCalled()
+  })
+})
+
+describe('markCanvasAndDescendantsDirty', () => {
+  it('marks connected canvases in a subtree dirty', () => {
+    const canvasManager = createCanvasManager()
+    const container = document.createElement('div')
+    const canvas = document.createElement('canvas')
+    const nestedCanvas = document.createElement('canvas')
+    container.append(canvas, nestedCanvas)
+    document.body.appendChild(container)
+    registerCleanupTask(() => container.remove())
+
+    markCanvasAndDescendantsDirty(container, canvasManager)
+
+    expect(canvasManager.getDirtyCanvases()).toEqual([canvas, nestedCanvas])
   })
 })

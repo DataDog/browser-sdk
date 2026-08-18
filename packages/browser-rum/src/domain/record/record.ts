@@ -16,6 +16,7 @@ import {
   trackViewportResize,
   trackVisualViewportResize,
   trackCanvas2DMutations,
+  markCanvasAndDescendantsDirty,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -67,6 +68,11 @@ export function record(options: RecordOptions): RecordAPI {
   )
 
   const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope)
+
+  // Seed all connected canvases after the initial full snapshot.
+  if (canvasManager) {
+    markCanvasAndDescendantsDirty(document, canvasManager)
+  }
 
   function flushMutations() {
     shadowRootsController.flush()
