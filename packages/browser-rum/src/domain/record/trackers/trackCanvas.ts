@@ -92,7 +92,7 @@ export function markCanvasAndDescendantsDirty(node: Node, canvasManager: CanvasM
 }
 
 function isCanvasElement(node: Node): node is HTMLCanvasElement {
-  return isElementNode(node) && node.tagName === 'CANVAS'
+  return isElementNode(node) && node.tagName.toLowerCase() === 'canvas'
 }
 
 function isCanvasSizeAttribute(attributeName: string): boolean {
