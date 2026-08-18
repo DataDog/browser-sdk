@@ -1,7 +1,5 @@
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
-import { queueMicrotask } from '../../src/tools/queueMicrotask'
 import { registerCleanupTask } from '../registerCleanupTask'
-import { replaceMockable } from '../replaceMockable'
 
 export type Clock = ReturnType<typeof mockClock>
 
@@ -17,17 +15,6 @@ export function mockClock() {
 
   registerCleanupTask(() => jasmine.clock().uninstall())
 
-  const pendingMicroTasks: Array<() => void> = []
-  replaceMockable(queueMicrotask, (callback) => {
-    pendingMicroTasks.push(callback)
-  })
-
-  function flushPendingMicroTasks() {
-    while (pendingMicroTasks.length > 0) {
-      pendingMicroTasks.shift()!()
-    }
-  }
-
   return {
     /**
      * Returns a RelativeTime representing the time it was X milliseconds after the `mockClock()`
@@ -39,11 +26,7 @@ export function mockClock() {
      * invokation (the start of the test).
      */
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
-    tick: (ms: number) => {
-      flushPendingMicroTasks()
-      jasmine.clock().tick(ms)
-      flushPendingMicroTasks()
-    },
+    tick: (ms: number) => jasmine.clock().tick(ms),
     setDate: (date: Date) => jasmine.clock().mockDate(date),
   }
 }
