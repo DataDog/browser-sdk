@@ -128,8 +128,6 @@ test.describe('canvas recording', () => {
     .run(async ({ page }) => {
       await page.evaluate(() => window.DD_RUM!.startSessionReplayRecording())
 
-      await expect
-        .poll(() => page.evaluate(() => window.canvasDirtyProbe.dirtyCalls))
-        .toContain('pre-rendered')
+      await expect.poll(() => page.evaluate(() => window.canvasDirtyProbe.dirtyCalls)).toContain('pre-rendered')
     })
 })
