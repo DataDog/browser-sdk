@@ -1,21 +1,35 @@
 export interface CanvasManager {
+  clearDirtyCanvases: () => void
+  getDirtyCanvases: () => HTMLCanvasElement[]
   isCanvasDirty: (canvas: HTMLCanvasElement) => boolean
   markCanvasClean: (canvas: HTMLCanvasElement) => void
   markCanvasDirty: (canvas: HTMLCanvasElement) => void
 }
 
-/**
- * Tracks canvases that have already been captured and found to be clean.
- * Canvases are dirty by default so that newly discovered canvases are captured. After a capture,
- * callers can mark a canvas as clean and avoid sending it again until a drawing or DOM mutation
- * marks it dirty.
- */
 export function createCanvasManager(): CanvasManager {
-  const cleanCanvases = new WeakSet<HTMLCanvasElement>()
+  const dirtyCanvases = new Set<HTMLCanvasElement>()
 
   return {
-    isCanvasDirty: (canvas) => !cleanCanvases.has(canvas),
-    markCanvasClean: (canvas) => cleanCanvases.add(canvas),
-    markCanvasDirty: (canvas) => cleanCanvases.delete(canvas),
+    clearDirtyCanvases: () => dirtyCanvases.clear(),
+    getDirtyCanvases: () => {
+      const connectedCanvases: HTMLCanvasElement[] = []
+
+      dirtyCanvases.forEach((canvas) => {
+        if (canvas.isConnected) {
+          connectedCanvases.push(canvas)
+        } else {
+          dirtyCanvases.delete(canvas)
+        }
+      })
+
+      return connectedCanvases
+    },
+    isCanvasDirty: (canvas) => dirtyCanvases.has(canvas),
+    markCanvasClean: (canvas) => dirtyCanvases.delete(canvas),
+    markCanvasDirty: (canvas) => {
+      if (canvas.isConnected) {
+        dirtyCanvases.add(canvas)
+      }
+    },
   }
 }
