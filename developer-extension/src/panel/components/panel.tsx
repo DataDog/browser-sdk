@@ -54,11 +54,9 @@ export function Panel() {
           <Tabs.Tab value={PanelTabs.Replay}>
             <Text>Live replay</Text>
           </Tabs.Tab>
-          {settings.datadogMode && (
-            <Tabs.Tab value={PanelTabs.Flags}>
-              <Text>Feature Flags</Text>
-            </Tabs.Tab>
-          )}
+          <Tabs.Tab value={PanelTabs.Flags}>
+            <Text>Feature Flags</Text>
+          </Tabs.Tab>
           <Tabs.Tab
             value={PanelTabs.Settings}
             rightSection={
@@ -98,11 +96,9 @@ export function Panel() {
       <Tabs.Panel value={PanelTabs.Replay} className={classes.tab}>
         <ReplayTab />
       </Tabs.Panel>
-      {settings.datadogMode && (
-        <Tabs.Panel value={PanelTabs.Flags} className={classes.tab}>
-          <FlagsTab />
-        </Tabs.Panel>
-      )}
+      <Tabs.Panel value={PanelTabs.Flags} className={classes.tab}>
+        <FlagsTab />
+      </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Settings} className={classes.tab}>
         <SettingsTab />
       </Tabs.Panel>

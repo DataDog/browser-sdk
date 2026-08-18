@@ -1,29 +1,30 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { toErrorMessage } from '../../../../common/toErrorMessage'
 import type { CatalogFlag } from './flagsRequests'
 import { getOverride, type FlagOverride, type FlagOverrides } from './inspectedPageFlags'
 import type { FlagAuthState } from './useFlagAuth'
 import { useFlagCatalog, type FlagCatalogState } from './useFlagCatalog'
 import { useFlagCatalogView, type FlagCatalogView } from './useFlagCatalogView'
+import { useFlagIdentity, type FlagIdentityState } from './useFlagIdentity'
 import { useInspectedPageOverrides, type FlagPageStatus } from './useInspectedPageOverrides'
 import { useOverriddenFlags } from './useOverriddenFlags'
 
-// The connected Flags tab's state + actions, shared with every component below the provider so the
-// tab and its components render state and invoke actions without prop-drilling.
+/** The connected Flags tab's state + actions, shared below the provider to avoid prop-drilling. */
 export interface FlagsContextValue {
   view: FlagCatalogView
+  /** Signed-in user + team handles backing the "My feature flags" and "My teams" filters. */
+  identity: FlagIdentityState
   catalog: FlagCatalogState
-  // Inspected-page override state (see useInspectedPageOverrides).
   overrideStatus: FlagPageStatus
   overrideError: string | null
   overrides: FlagOverrides
   devtoolsEnabled: boolean
-  // The overridden flags' catalog data (pinned "Local overrides" section) and the current page minus
-  // those (so they don't render twice).
+  /** Overridden flags (pinned "Local overrides" section) and the current page minus those. */
   overriddenFlags: CatalogFlag[]
   bottomFlags: CatalogFlag[]
   tagSuggestions: string[]
   totalPages: number
-  // Whether a refresh is needed/in flight to (re)apply overrides, and the last mutation failure.
+  /** Whether a refresh is needed/in flight to (re)apply overrides, and the last mutation failure. */
   pendingReload: boolean
   writesInFlight: number
   mutationError: string | null
@@ -45,11 +46,14 @@ export function useFlagsContext(): FlagsContextValue {
 
 /**
  * Owns the connected Flags tab's orchestration: loads the catalog, tracks inspected-page overrides,
- * resolves the overridden-flag metadata, and exposes the apply/revert/clear/reload actions. The tab
- * and its components consume this via useFlagsContext and stay focused on rendering.
+ * resolves the overridden-flag metadata, and exposes the apply/revert/clear/reload actions, so the
+ * components below stay focused on rendering.
  */
 export function FlagsProvider({ auth, children }: { auth: FlagAuthState; children: ReactNode }) {
-  const view = useFlagCatalogView()
+  // Resolves first: the catalog view needs the user's UUID for "My feature flags", and the filter bar
+  // needs the team handles for "My teams".
+  const identity = useFlagIdentity(auth)
+  const view = useFlagCatalogView(identity.userId)
   const catalog = useFlagCatalog(auth, view.request)
   const { setPage } = view
   const { status, error, overrides, devtoolsEnabled, setOverride, clearOverride, clearAll, reloadPage } =
@@ -65,9 +69,8 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
     }
   }, [view.page, totalPages, setPage])
 
-  // "Local overrides" is its own always-visible section above the paginated list. Fetch each
-  // overridden flag by key so it shows regardless of which catalog page it's on, then fall back to a
-  // minimal row for any key that no longer resolves to a flag (so it can still be reverted).
+  // Fetched by key so an overridden flag shows regardless of which catalog page it's on, with a
+  // minimal row as fallback for a key that no longer resolves (so it can still be reverted).
   const overrideKeys = useMemo(() => Object.keys(overrides), [overrides])
   const overriddenCatalogFlags = useOverriddenFlags(auth, overrideKeys)
   const overriddenFlags = useMemo<CatalogFlag[]>(
@@ -77,6 +80,7 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
           overriddenCatalogFlags.find((flag) => flag.key === key) ?? {
             key,
             name: key,
+            description: '',
             type: overrides[key].type,
             variants: [],
             tags: [],
@@ -84,15 +88,14 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
       ),
     [overrideKeys, overriddenCatalogFlags, overrides]
   )
-  // Drop overridden flags from the paginated list so they don't show twice (they're in the top section).
+  // Dropped from the paginated list so they don't show twice.
   const bottomFlags = useMemo(
     () => catalog.flags.filter((flag) => !getOverride(overrides, flag.key)),
     [catalog.flags, overrides]
   )
 
-  // Progressive tag suggestions: there's no tags endpoint and we only load a page at a time, so the
-  // Tag filter's autocomplete is built from the tags seen on pages loaded so far. `team:*` tags are
-  // excluded (they'd drive a separate team filter); users can still type any tag not yet seen.
+  // No tags endpoint exists, so autocomplete accumulates the tags seen on pages loaded so far.
+  // `team:*` tags are excluded — they drive the separate team filter.
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([])
   useEffect(() => {
     setTagSuggestions((previous) => {
@@ -113,20 +116,18 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
   const [writesInFlight, setWritesInFlight] = useState(0)
   const [mutationError, setMutationError] = useState<string | null>(null)
 
-  // Each override write is an async read-modify-write to the inspected page's localStorage. Track how
-  // many are in flight so the reload button stays disabled until they settle — reloading earlier would
-  // boot the DatadogDevtools wrapper with stale overrides that hadn't been written yet.
+  // Tracks in-flight writes so the reload button stays disabled until they settle — reloading earlier
+  // would boot the wrapper with overrides that hadn't been written yet.
   const runMutation = useCallback((write: Promise<void>) => {
     setMutationError(null)
     setWritesInFlight((count) => count + 1)
     write
       .then(() => {
         setPendingReload(true)
-        // Clear a failure from an earlier queued write that this later one supersedes — mutations are
-        // serialized, so a success here means the current stored state is good.
+        // Mutations are serialized, so a success here supersedes an earlier queued write's failure.
         setMutationError(null)
       })
-      .catch((error: unknown) => setMutationError(error instanceof Error ? error.message : String(error)))
+      .catch((error: unknown) => setMutationError(toErrorMessage(error)))
       .finally(() => setWritesInFlight((count) => count - 1))
   }, [])
 
@@ -147,6 +148,7 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
   const value = useMemo<FlagsContextValue>(
     () => ({
       view,
+      identity,
       catalog,
       overrideStatus: status,
       overrideError: error,
@@ -166,6 +168,7 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
     }),
     [
       view,
+      identity,
       catalog,
       status,
       error,

@@ -26,7 +26,7 @@ export type EnumField = ({
 } & Optionality & Multiple & Strict);
 
 // @public
-export type FieldDef = StringField | PercentageField | BooleanField | SiteField | MatchOptionField | EnumField | UnionField | SchemaField | FunctionField;
+export type FieldDef = StringField | NumberField | PercentageField | BooleanField | SiteField | MatchOptionField | EnumField | UnionField | SchemaField | FunctionField;
 
 // @public
 export type FunctionField = {
@@ -53,6 +53,13 @@ export type MatchOptionField = {
 export interface Multiple {
     multiple?: true;
 }
+
+// @public
+export type NumberField = {
+    type: 'number';
+    min?: number;
+    max?: number;
+} & Optionality & Multiple & Strict;
 
 // @public
 export type Optionality = {

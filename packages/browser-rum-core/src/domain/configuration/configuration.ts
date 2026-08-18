@@ -5,6 +5,8 @@ import {
   DefaultPrivacyLevel,
   TraceContextInjection,
   display,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
   isNumber,
   isNonEmptyArray,
   BROWSER_CORE_SCHEMA,
@@ -212,6 +214,28 @@ export interface RumInitConfiguration extends InitConfiguration {
   startSessionReplayRecordingManually?: boolean | undefined
 
   /**
+   * Configures recording canvas elements in Session Replay. Canvas recording is disabled when this option is omitted.
+   *
+   * @category Session Replay
+   * @hidden
+   */
+  sessionReplayCanvasRecording?:
+    | {
+        /**
+         * Enables recording canvas elements in Session Replay.
+         */
+        enable: boolean
+
+        /**
+         * The maximum number of canvas frames recorded per second, between 0 and 5. Setting this option to `0` disables canvas frame recording.
+         *
+         * @defaultValue 1
+         */
+        maxFramesPerSecond?: number | undefined
+      }
+    | undefined
+
+  /**
    * Enables privacy control for action names.
    *
    * @category Privacy
@@ -394,6 +418,13 @@ export const RUM_SCHEMA = {
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
   startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },
+  sessionReplayCanvasRecording: {
+    type: 'schema',
+    schema: {
+      enable: { type: 'boolean', required: true },
+      maxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
+    },
+  },
 
   // Enums
   defaultPrivacyLevel: {
@@ -486,8 +517,13 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const sessionReplayCanvasRecording = isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS)
+    ? config.sessionReplayCanvasRecording
+    : undefined
+
   return {
     ...config,
+    sessionReplayCanvasRecording,
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)

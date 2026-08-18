@@ -1,4 +1,4 @@
-import { Alert, Anchor, Box, Button, Code, Group, Pagination, Space } from '@mantine/core'
+import { Alert, Anchor, Box, Button, Code, Group, Pagination, Space, Title } from '@mantine/core'
 import React, { useState } from 'react'
 import { TabBase } from '../../tabBase'
 import { ConnectScreen, ConnectionHeader } from './connectScreen'
@@ -21,9 +21,8 @@ export function FlagsTab() {
     )
   }
 
-  // Remount the provider on site change so filters, pagination, overrides, and accumulated tag
-  // suggestions don't carry over from a previously-connected org — stale filters would misleadingly
-  // empty the new catalog, and stale suggestions would leak the old org's tags into autocomplete.
+  // Remount on site change so nothing carries over from a previously-connected org — stale filters
+  // would misleadingly empty the new catalog, and stale suggestions would leak the old org's tags.
   return (
     <FlagsProvider key={auth.site} auth={auth}>
       <ConnectedFlagsTab auth={auth} />
@@ -53,9 +52,11 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
   return (
     <TabBase
       top={
-        // No dd-privacy-allow here: the header/filter/catalog below render customer flag names,
-        // values, and tags, which must stay masked in the extension's own Session Replay.
-        <Box px="md">
+        // No dd-privacy-allow: this renders customer flag names, values, and tags, which must stay
+        // masked in the extension's own Session Replay.
+        <Box>
+          <Title order={5}>Feature Flag Overrides</Title>
+          <Space h="xs" />
           <ConnectionHeader auth={auth} />
           <Space h="sm" />
           <FlagFilterBar />
@@ -107,6 +108,30 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
         )}
 
         <Space h="md" />
+        <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setAddOpen((open) => !open)}>
+          {addOpen ? '− Hide custom override' : '+ Add a custom override'}
+        </Anchor>
+        {addOpen && (
+          <>
+            <Space h="sm" />
+            <ManualOverrideForm />
+          </>
+        )}
+      </Box>
+
+      {/* Sticky so the apply/refresh actions stay visible without scrolling past a long catalog. */}
+      <Box
+        px="md"
+        py="sm"
+        style={{
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 1,
+          backgroundColor: 'var(--mantine-color-body)',
+          borderTop: '1px solid var(--mantine-color-default-border)',
+          boxShadow: '0 -4px 8px -6px rgba(0, 0, 0, 0.25)',
+        }}
+      >
         <Group justify="space-between">
           <Button
             size="xs"
@@ -120,25 +145,13 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
           <Button
             color="violet"
             onClick={reload}
-            // Overrides are written to localStorage immediately, so this button only reloads the page
-            // to (re)apply them. Enable it whenever there are overrides to apply or a change to flush,
-            // but never while a write is still in flight (it would reload with stale state).
+            // Overrides are already written; this only reloads to apply them. Never while a write is
+            // in flight, which would reload with stale state.
             disabled={overrideStatus !== 'ready' || writesInFlight > 0 || (overrideCount === 0 && !pendingReload)}
           >
             Refresh Page
           </Button>
         </Group>
-
-        <Space h="md" />
-        <Anchor component="button" type="button" size="xs" c="dimmed" onClick={() => setAddOpen((open) => !open)}>
-          {addOpen ? '− Hide custom override' : '+ Add a custom override'}
-        </Anchor>
-        {addOpen && (
-          <>
-            <Space h="sm" />
-            <ManualOverrideForm />
-          </>
-        )}
       </Box>
     </TabBase>
   )

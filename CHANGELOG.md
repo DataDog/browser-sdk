@@ -20,6 +20,28 @@
 
 ---
 
+## v7.9.0
+
+**Public Changes:**
+
+- ✨ [FFL-2857] Feature Flags tab — team filtering + token revocation (stacked PR 4 of 4) ([#4932](https://github.com/DataDog/browser-sdk/pull/4932))
+- ✨ add @datadog/js-core/sample sub-path with performDraw ([#4844](https://github.com/DataDog/browser-sdk/pull/4844))
+- ✨ Add plugin router version telemetry ([#4928](https://github.com/DataDog/browser-sdk/pull/4928))
+- ✨ [FFL-2596] Feature Flags tab — overrides (stacked PR 3 of 4) ([#4912](https://github.com/DataDog/browser-sdk/pull/4912))
+- ✨ [RUM-17934] support arbitrary custom url protocols in stack trace parsing ([#4930](https://github.com/DataDog/browser-sdk/pull/4930))
+- 🐛 Fix Shopify Custom Pixel actions being marked as background events, flatten ui_extension_errored context ([#4946](https://github.com/DataDog/browser-sdk/pull/4946))
+- 🐛 Report CDN bundles as CDN SDK setup ([#4934](https://github.com/DataDog/browser-sdk/pull/4934))
+- 📝 Fix propagateTraceBaggage TSDoc @defaultValue (false → true) ([#4933](https://github.com/DataDog/browser-sdk/pull/4933))
+- ⚗️ Add canvas recording init configuration ([#4947](https://github.com/DataDog/browser-sdk/pull/4947))
+
+**Internal Changes:**
+
+- 👷 Update dependency eslint-plugin-jsdoc to v64 ([#4953](https://github.com/DataDog/browser-sdk/pull/4953))
+- 👷 Update all non-major dependencies ([#4952](https://github.com/DataDog/browser-sdk/pull/4952))
+- 👷 Update all non-major dependencies ([#4935](https://github.com/DataDog/browser-sdk/pull/4935))
+- 👷 Update actions/stale action to v11 ([#4937](https://github.com/DataDog/browser-sdk/pull/4937))
+- 👷 Update dependency @playwright/test to v1.62.1 ([#4936](https://github.com/DataDog/browser-sdk/pull/4936))
+
 ## v7.8.0
 
 **Public Changes:**
