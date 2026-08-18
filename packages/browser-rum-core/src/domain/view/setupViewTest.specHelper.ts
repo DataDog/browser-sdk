@@ -1,8 +1,8 @@
 import { Observable } from '@datadog/browser-core'
 import { deepClone } from '@datadog/js-core/util'
-import { registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration, setupLocationObserver } from '../../../test'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ViewCreatedEvent, ViewEvent, ViewOptions, ViewEndedEvent } from './trackViews'
@@ -10,14 +10,16 @@ import { trackViews } from './trackViews'
 
 export type ViewTest = ReturnType<typeof setupViewTest>
 
-interface ViewTestOptions {
+interface ViewTrackingContext {
+  lifeCycle: LifeCycle
   initialLocation?: string
   partialConfig?: Partial<RumConfiguration>
-  initialViewOptions?: ViewOptions
 }
 
-export function setupViewTest({ initialLocation, partialConfig, initialViewOptions }: ViewTestOptions = {}) {
-  const lifeCycle = new LifeCycle()
+export function setupViewTest(
+  { lifeCycle, initialLocation, partialConfig }: ViewTrackingContext,
+  initialViewOptions?: ViewOptions
+) {
   const domMutationObservable = new Observable<RumMutationRecord[]>()
   const windowOpenObservable = new Observable<void>()
   const configuration = mockRumConfiguration(partialConfig)
@@ -62,11 +64,8 @@ export function setupViewTest({ initialLocation, partialConfig, initialViewOptio
     !configuration.trackViewsManually,
     initialViewOptions
   )
-
-  registerCleanupTask(stop)
-
   return {
-    lifeCycle,
+    stop,
     startView,
     setViewContext,
     setViewContextProperty,
@@ -81,6 +80,9 @@ export function setupViewTest({ initialLocation, partialConfig, initialViewOptio
     getViewCreateCount,
     getViewEnd,
     getViewEndCount,
+    getLatestViewContext: () => ({
+      id: getViewCreate(getViewCreateCount() - 1).id,
+    }),
   }
 }
 

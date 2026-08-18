@@ -3,12 +3,11 @@ import { timeStampNow, relativeToClocks, relativeNow } from '@datadog/js-core/ti
 import { PageExitReason, display } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, createNewEvent } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
-import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { PAGE_ACTIVITY_END_DELAY } from '../waitPageActivityEnd'
@@ -23,6 +22,7 @@ function expireSession(lifeCycle: LifeCycle, endClocks: ClocksState = relativeTo
 }
 
 describe('track views automatically', () => {
+  const lifeCycle = new LifeCycle()
   let changeLocation: (to: string) => void
   let viewTest: ViewTest
   let clock: Clock
@@ -30,11 +30,12 @@ describe('track views automatically', () => {
   beforeEach(() => {
     clock = mockClock()
 
-    viewTest = setupViewTest({
-      initialLocation: 'http://foo.com/foo',
-      initialViewOptions: { name: 'initial view name' },
-    })
+    viewTest = setupViewTest({ lifeCycle, initialLocation: 'http://foo.com/foo' }, { name: 'initial view name' })
     changeLocation = viewTest.changeLocation
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
   })
 
   describe('initial view', () => {
@@ -97,11 +98,9 @@ describe('track views automatically', () => {
 
     it('should keep the same URL when updating a view ended by a URL change', () => {
       const { getViewUpdateCount, getViewUpdate } = viewTest
-      clock.tick(0)
       expect(getViewUpdateCount()).toEqual(1)
 
       changeLocation('/bar')
-      clock.tick(0)
 
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(0).location.href).toEqual('http://foo.com/foo')
@@ -110,7 +109,6 @@ describe('track views automatically', () => {
     })
 
     it('should ignore URL parameter changes', () => {
-      clock.tick(0)
       expect(viewTest.getViewUpdateCount()).toEqual(1)
 
       changeLocation('/foo?bar=bar')
@@ -121,13 +119,11 @@ describe('track views automatically', () => {
     })
 
     it('should keep the same URL when updating an ended view', () => {
-      clock.tick(0)
       const initialView = viewTest.getViewUpdate(0)
       changeLocation('/bar')
-      clock.tick(0)
       expect(viewTest.getViewUpdateCount()).toEqual(3)
 
-      viewTest.lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
         type: RumEventType.ERROR,
         view: { id: initialView.id },
       } as AssembledRumEvent)
@@ -142,6 +138,7 @@ describe('track views automatically', () => {
 })
 
 describe('view lifecycle', () => {
+  let lifeCycle: LifeCycle
   let viewTest: ViewTest
   let clock: Clock
   let notifySpy: jasmine.Spy
@@ -149,32 +146,28 @@ describe('view lifecycle', () => {
 
   beforeEach(() => {
     clock = mockClock()
+    lifeCycle = new LifeCycle()
+    notifySpy = spyOn(lifeCycle, 'notify').and.callThrough()
 
-    viewTest = setupViewTest({
-      initialLocation: '/foo',
-      initialViewOptions: {
+    viewTest = setupViewTest(
+      { lifeCycle, initialLocation: '/foo' },
+      {
         name: 'initial view name',
         service: 'initial service',
         version: 'initial version',
-      },
-    })
-    notifySpy = spyOn(viewTest.lifeCycle, 'notify').and.callThrough()
+      }
+    )
 
     changeLocation = viewTest.changeLocation
-  })
 
-  it('notifies a View update asynchronously', () => {
-    const { getViewUpdateCount } = viewTest
-
-    expect(getViewUpdateCount()).toBe(0)
-    clock.tick(0)
-
-    expect(getViewUpdateCount()).toBe(1)
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
   })
 
   describe('expire session', () => {
     it('should end the view when the session expires', () => {
-      const { lifeCycle, getViewEndCount } = viewTest
+      const { getViewEndCount } = viewTest
 
       expect(getViewEndCount()).toBe(0)
 
@@ -184,7 +177,6 @@ describe('view lifecycle', () => {
     })
 
     it('should end the view at the session expiration clocks', () => {
-      const { lifeCycle } = viewTest
       const endClocks = relativeToClocks(clock.relative(123))
 
       expireSession(lifeCycle, endClocks)
@@ -193,9 +185,7 @@ describe('view lifecycle', () => {
     })
 
     it('should send a final view update', () => {
-      const { lifeCycle, getViewUpdateCount, getViewUpdate } = viewTest
-
-      clock.tick(0) // wait for the first view update to be sent
+      const { getViewUpdateCount, getViewUpdate } = viewTest
 
       expect(getViewUpdateCount()).toBe(1)
 
@@ -207,7 +197,7 @@ describe('view lifecycle', () => {
     })
 
     it('should not start a new view if the session expired', () => {
-      const { lifeCycle, getViewCreateCount } = viewTest
+      const { getViewCreateCount } = viewTest
 
       expect(getViewCreateCount()).toBe(1)
 
@@ -217,25 +207,25 @@ describe('view lifecycle', () => {
     })
 
     it('should not end the view again if the view is already ended', () => {
-      const { lifeCycle, getViewEndCount, getViewUpdateCount } = viewTest
+      const { getViewEndCount, getViewUpdateCount } = viewTest
 
       expect(getViewEndCount()).toBe(0)
 
       expireSession(lifeCycle)
 
       expect(getViewEndCount()).toBe(1)
-      expect(getViewUpdateCount()).toBe(1)
+      expect(getViewUpdateCount()).toBe(2)
 
       expireSession(lifeCycle)
 
       expect(getViewEndCount()).toBe(1)
-      expect(getViewUpdateCount()).toBe(1)
+      expect(getViewUpdateCount()).toBe(2)
     })
   })
 
   describe('renew session', () => {
     it('should create new view on renew session', () => {
-      const { lifeCycle, getViewCreateCount } = viewTest
+      const { getViewCreateCount } = viewTest
 
       expect(getViewCreateCount()).toBe(1)
 
@@ -246,17 +236,16 @@ describe('view lifecycle', () => {
     })
 
     it('should use session_renewal loading type for the new view', () => {
-      const { lifeCycle, getViewUpdate, getViewUpdateCount } = viewTest
+      const { getViewUpdate, getViewUpdateCount } = viewTest
 
       expireSession(lifeCycle)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-      clock.tick(0)
 
       expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.SESSION_RENEWAL)
     })
 
     it('should use the current view name, service and version for the new view', () => {
-      const { lifeCycle, getViewCreateCount, getViewCreate, startView } = viewTest
+      const { getViewCreateCount, getViewCreate, startView } = viewTest
       expireSession(lifeCycle)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
@@ -344,7 +333,7 @@ describe('view lifecycle', () => {
     })
 
     it('should not send periodical updates after the session has expired', () => {
-      const { lifeCycle, getViewUpdateCount } = viewTest
+      const { getViewUpdateCount } = viewTest
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD) // make sure we don't have pending update
 
       expireSession(lifeCycle)
@@ -364,7 +353,7 @@ describe('view lifecycle', () => {
       { exitReason: PageExitReason.HIDDEN },
     ].forEach(({ exitReason }) => {
       it(`should not end the current view when the page is exiting for reason ${exitReason}`, () => {
-        const { lifeCycle, getViewEndCount } = viewTest
+        const { getViewEndCount } = viewTest
 
         expect(getViewEndCount()).toEqual(0)
 
@@ -375,17 +364,17 @@ describe('view lifecycle', () => {
     })
 
     it('should trigger a view update on unloading', () => {
-      const { lifeCycle, getViewUpdateCount } = viewTest
+      const { getViewUpdateCount } = viewTest
 
-      expect(getViewUpdateCount()).toEqual(0)
+      expect(getViewUpdateCount()).toEqual(1)
 
       lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 
-      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdateCount()).toEqual(2)
     })
 
     it('should not create a new view when ending the view on unloading', () => {
-      const { lifeCycle, getViewCreateCount } = viewTest
+      const { getViewCreateCount } = viewTest
 
       expect(getViewCreateCount()).toEqual(1)
 
@@ -395,7 +384,7 @@ describe('view lifecycle', () => {
     })
 
     it('should not set the view as inactive on unloading', () => {
-      const { lifeCycle, getViewUpdate, getViewUpdateCount } = viewTest
+      const { getViewUpdate, getViewUpdateCount } = viewTest
 
       lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 
@@ -404,54 +393,64 @@ describe('view lifecycle', () => {
   })
 
   it('should notify BEFORE_VIEW_CREATED before VIEW_CREATED', () => {
-    notifySpy.calls.reset()
-
-    viewTest.changeLocation('/bar')
-
-    const beforeViewCreatedIndex = notifySpy.calls
-      .allArgs()
-      .findIndex((args) => args[0] === LifeCycleEventType.BEFORE_VIEW_CREATED)
-    expect(notifySpy.calls.argsFor(beforeViewCreatedIndex + 1)[0]).toEqual(LifeCycleEventType.VIEW_CREATED)
+    expect(notifySpy.calls.argsFor(0)[0]).toEqual(LifeCycleEventType.BEFORE_VIEW_CREATED)
+    expect(notifySpy.calls.argsFor(1)[0]).toEqual(LifeCycleEventType.VIEW_CREATED)
   })
 
   it('should notify AFTER_VIEW_ENDED after VIEW_ENDED', () => {
-    notifySpy.calls.reset()
+    const callsCount = notifySpy.calls.count()
 
-    viewTest.changeLocation('/bar')
+    viewTest.stop()
 
-    expect(notifySpy.calls.argsFor(0)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
-    expect(notifySpy.calls.argsFor(1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
+    expect(notifySpy.calls.argsFor(callsCount)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
+    expect(notifySpy.calls.argsFor(callsCount + 1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
   })
 })
 
 describe('view loading type', () => {
+  const lifeCycle = new LifeCycle()
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    mockClock()
+
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
   it('should collect initial view type as "initial_load"', () => {
-    const clock = mockClock()
-    const { getViewUpdate } = setupViewTest()
-    clock.tick(0)
+    const { getViewUpdate } = viewTest
 
     expect(getViewUpdate(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
   })
 
   it('should collect view type as "route_change" after a view change', () => {
-    const clock = mockClock()
-    const { getViewUpdate, startView } = setupViewTest()
+    const { getViewUpdate, startView } = viewTest
 
     startView()
-    clock.tick(0)
 
-    expect(getViewUpdate(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
-    expect(getViewUpdate(1).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
+    expect(getViewUpdate(1).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
+    expect(getViewUpdate(2).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
   })
 })
 
 describe('view metrics', () => {
+  const lifeCycle = new LifeCycle()
   let clock: Clock
+  let viewTest: ViewTest
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
   })
 
   describe('common view metrics', () => {
@@ -459,8 +458,7 @@ describe('view metrics', () => {
       if (!isLayoutShiftSupported()) {
         pending('CLS web vital not supported')
       }
-      const { getViewUpdateCount, getViewUpdate } = setupViewTest()
-      clock.tick(0)
+      const { getViewUpdateCount, getViewUpdate } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).initialViewMetrics).toEqual({})
@@ -486,7 +484,7 @@ describe('view metrics', () => {
       if (!isLayoutShiftSupported()) {
         pending('CLS web vital not supported')
       }
-      const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = setupViewTest()
+      const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
       startView()
       clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
       expect(getViewCreateCount()).toEqual(2)
@@ -503,8 +501,9 @@ describe('view metrics', () => {
 
   describe('initial view metrics', () => {
     it('updates should be throttled', () => {
-      const { getViewUpdateCount, getViewUpdate } = setupViewTest()
-      expect(getViewUpdateCount()).toEqual(0)
+      const { getViewUpdateCount, getViewUpdate } = viewTest
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).initialViewMetrics).toEqual({})
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD - 1)
 
@@ -518,7 +517,7 @@ describe('view metrics', () => {
     })
 
     it('should be updated for 5 min after view end', () => {
-      const { getViewCreateCount, getViewUpdate, getViewUpdateCount, startView } = setupViewTest()
+      const { getViewCreateCount, getViewUpdate, getViewUpdateCount, startView } = viewTest
       startView()
       expect(getViewCreateCount()).toEqual(2)
 
@@ -536,7 +535,7 @@ describe('view metrics', () => {
     })
 
     it('should not be updated 5 min after view end', () => {
-      const { getViewCreateCount, getViewUpdate, getViewUpdateCount, startView } = setupViewTest()
+      const { getViewCreateCount, getViewUpdate, getViewUpdateCount, startView } = viewTest
       startView()
       expect(getViewCreateCount()).toEqual(2)
 
@@ -560,8 +559,7 @@ describe('view metrics', () => {
       let viewDuration: Duration
 
       beforeEach(() => {
-        const { getViewUpdateCount, getViewUpdate, startView } = setupViewTest()
-        clock.tick(0)
+        const { getViewUpdateCount, getViewUpdate, startView } = viewTest
 
         expect(getViewUpdateCount()).toEqual(1)
 
@@ -572,7 +570,6 @@ describe('view metrics', () => {
         viewDuration = relativeNow()
 
         startView()
-        clock.tick(0)
 
         expect(getViewUpdateCount()).toEqual(3)
 
@@ -633,33 +630,45 @@ describe('view metrics', () => {
 })
 
 describe('view is active', () => {
+  const lifeCycle = new LifeCycle()
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
   it('should set initial view as active', () => {
-    const clock = mockClock()
-    const { getViewUpdate } = setupViewTest()
-    clock.tick(0)
+    const { getViewUpdate } = viewTest
 
     expect(getViewUpdate(0).isActive).toBe(true)
   })
 
   it('should set old view as inactive and new one as active after a route change', () => {
-    const clock = mockClock()
-    const { getViewUpdate, startView } = setupViewTest()
+    const { getViewUpdate, startView } = viewTest
 
     startView()
-    clock.tick(0)
 
-    expect(getViewUpdate(0).isActive).toBe(false)
-    expect(getViewUpdate(1).isActive).toBe(true)
+    expect(getViewUpdate(1).isActive).toBe(false)
+    expect(getViewUpdate(2).isActive).toBe(true)
   })
 })
 
 describe('view custom timings', () => {
+  const lifeCycle = new LifeCycle()
   let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
     clock = mockClock()
-    viewTest = setupViewTest({ initialLocation: '/foo' })
+    viewTest = setupViewTest({ lifeCycle, initialLocation: '/foo' })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
   })
 
   it('should add custom timing to current view', () => {
@@ -667,7 +676,6 @@ describe('view custom timings', () => {
     const { getViewUpdate, startView, addTiming } = viewTest
 
     startView()
-    clock.tick(0) // wait for the first view update to be sent
 
     const currentViewId = getViewUpdate(2).id
     clock.tick(20)
@@ -771,7 +779,7 @@ describe('view custom timings', () => {
 
   it('should not add custom timing when the session has expired', () => {
     clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
-    const { lifeCycle, getViewUpdateCount, addTiming } = viewTest
+    const { getViewUpdateCount, addTiming } = viewTest
 
     expireSession(lifeCycle)
 
@@ -786,12 +794,17 @@ describe('view custom timings', () => {
 })
 
 describe('manual loading time', () => {
+  const lifeCycle = new LifeCycle()
   let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
     clock = mockClock()
-    viewTest = setupViewTest()
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
   })
 
   it('should set loading time on the current view', () => {
@@ -826,7 +839,7 @@ describe('manual loading time', () => {
 
   it('should not set loading time when the session has expired', () => {
     clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
-    const { lifeCycle, getViewUpdateCount, setLoadingTime } = viewTest
+    const { getViewUpdateCount, setLoadingTime } = viewTest
 
     expireSession(lifeCycle)
 
@@ -981,22 +994,27 @@ describe('manual loading time', () => {
 })
 
 describe('start view', () => {
+  const lifeCycle = new LifeCycle()
   let clock: Clock
+  let viewTest: ViewTest
 
   beforeEach(() => {
     clock = mockClock()
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
   })
 
   it('should start a new view', () => {
-    const { getViewUpdateCount, getViewUpdate, startView } = setupViewTest()
-    clock.tick(0)
+    const { getViewUpdateCount, getViewUpdate, startView } = viewTest
 
     expect(getViewUpdateCount()).toBe(1)
     const initialViewId = getViewUpdate(0).id
 
     clock.tick(10)
     startView()
-    clock.tick(0)
 
     expect(getViewUpdateCount()).toBe(3)
 
@@ -1011,39 +1029,37 @@ describe('start view', () => {
   })
 
   it('should name the view', () => {
-    const { getViewUpdate, startView } = setupViewTest()
+    const { getViewUpdate, startView } = viewTest
 
     startView()
     startView({ name: 'foo' })
     startView({ name: 'bar' })
-    clock.tick(0)
 
-    expect(getViewUpdate(1).name).toBeUndefined()
-    expect(getViewUpdate(2).name).toBe('foo')
-    expect(getViewUpdate(3).name).toBe('bar')
+    expect(getViewUpdate(2).name).toBeUndefined()
+    expect(getViewUpdate(4).name).toBe('foo')
+    expect(getViewUpdate(6).name).toBe('bar')
   })
 
   it('should have service and version', () => {
-    const { getViewUpdate, startView } = setupViewTest()
+    const { getViewUpdate, startView } = viewTest
 
     startView()
     startView({ service: 'service 1', version: 'version 1' })
     startView({ service: 'service 2', version: 'version 2' })
-    clock.tick(0)
 
-    expect(getViewUpdate(1)).toEqual(
+    expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
         service: undefined,
         version: undefined,
       })
     )
-    expect(getViewUpdate(2)).toEqual(
+    expect(getViewUpdate(4)).toEqual(
       jasmine.objectContaining({
         service: 'service 1',
         version: 'version 1',
       })
     )
-    expect(getViewUpdate(3)).toEqual(
+    expect(getViewUpdate(6)).toEqual(
       jasmine.objectContaining({
         service: 'service 2',
         version: 'version 2',
@@ -1052,12 +1068,10 @@ describe('start view', () => {
   })
 
   it('should ignore null service/version', () => {
-    const { getViewUpdate, startView } = setupViewTest()
+    const { getViewUpdate, startView } = viewTest
 
     startView({ service: null, version: null })
-    clock.tick(0)
-
-    expect(getViewUpdate(1)).toEqual(
+    expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
         service: undefined,
         version: undefined,
@@ -1066,37 +1080,43 @@ describe('start view', () => {
   })
 
   it('should use the provided clock to stop the current view and start the new one', () => {
-    const { getViewUpdate, startView } = setupViewTest()
+    const { getViewUpdate, startView } = viewTest
 
     clock.tick(100)
     startView({ name: 'foo' }, relativeToClocks(50 as RelativeTime))
-    clock.tick(0)
 
     expect(getViewUpdate(1).duration).toBe(50 as Duration)
     expect(getViewUpdate(2).startClocks.relative).toBe(50 as RelativeTime)
   })
 
   it('should create view with handling stack', () => {
-    const { startView, getViewUpdate } = setupViewTest()
+    const { startView, getViewUpdate } = viewTest
 
     startView({ name: 'foo', handlingStack: 'Error\n    at foo\n    at bar' })
-    clock.tick(0)
 
-    expect(getViewUpdate(1).handlingStack).toBe('Error\n    at foo\n    at bar')
+    // The new view is at index 2 (after the initial view end and the new view start)
+    expect(getViewUpdate(2).handlingStack).toBe('Error\n    at foo\n    at bar')
   })
 })
 
 describe('view event count', () => {
+  const lifeCycle = new LifeCycle()
   let clock: Clock
+  let viewTest: ViewTest
 
   beforeEach(() => {
     clock = mockClock()
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
   })
 
   it('should be updated when notified with a RUM_EVENT_COLLECTED event', () => {
-    const { lifeCycle, getViewCreate, getViewUpdate, getViewUpdateCount } = setupViewTest()
+    viewTest = setupViewTest({ lifeCycle })
+    const { getViewUpdate, getViewUpdateCount } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent(getViewCreate(0).id))
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -1104,21 +1124,21 @@ describe('view event count', () => {
   })
 
   it('should take child events occurring on view end into account', () => {
-    const { lifeCycle, changeLocation, getViewCreate, getViewUpdate, getViewUpdateCount } = setupViewTest({
-      initialLocation: 'http://foo.com',
-    })
+    viewTest = setupViewTest({ lifeCycle, initialLocation: 'http://foo.com' })
+    const { getViewUpdate, getViewUpdateCount } = viewTest
 
     lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent(getViewCreate(0).id))
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
     })
 
-    changeLocation('/bar')
+    viewTest.changeLocation('/bar')
 
-    expect(getViewUpdate(getViewUpdateCount() - 1).eventCounts.actionCount).toBe(1)
+    expect(getViewUpdate(getViewUpdateCount() - 2).eventCounts.actionCount).toBe(1)
   })
 
   it('should be updated for 5 min after view end', () => {
-    const { lifeCycle, getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = setupViewTest()
+    viewTest = setupViewTest({ lifeCycle })
+    const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
     startView()
     expect(getViewCreateCount()).toEqual(2)
     const firstView = getViewUpdate(0)
@@ -1138,7 +1158,8 @@ describe('view event count', () => {
   })
 
   it('should not be updated 5 min after view end', () => {
-    const { lifeCycle, getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = setupViewTest()
+    viewTest = setupViewTest({ lifeCycle })
+    const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
     startView()
     expect(getViewCreateCount()).toEqual(2)
     const firstView = getViewUpdate(0)
@@ -1156,37 +1177,37 @@ describe('view event count', () => {
     expect(latestUpdate.id).not.toEqual(firstView.id)
   })
 
-  function createFakeActionEvent(viewId: string) {
+  function createFakeActionEvent() {
     return {
       type: RumEventType.ACTION,
       action: {},
-      view: { id: viewId },
+      view: viewTest.getLatestViewContext(),
     } as AssembledRumEvent
   }
 
   describe('view specific context', () => {
     it('should update view context if startView has context parameter', () => {
-      const { getViewUpdate, startView } = setupViewTest()
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, startView } = viewTest
 
       startView({ context: { foo: 'bar' } })
-      clock.tick(0)
-      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
+      expect(getViewUpdate(2).context).toEqual({ foo: 'bar' })
     })
 
     it('should replace current context set on view event', () => {
-      const { getViewUpdate, startView } = setupViewTest()
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, startView } = viewTest
 
       startView({ context: { foo: 'bar' } })
-      clock.tick(0)
-      expect(getViewUpdate(1).context).toEqual({ foo: 'bar' })
+      expect(getViewUpdate(2).context).toEqual({ foo: 'bar' })
 
       startView({ context: { bar: 'baz' } })
-      clock.tick(0)
-      expect(getViewUpdate(3).context).toEqual({ bar: 'baz' })
+      expect(getViewUpdate(4).context).toEqual({ bar: 'baz' })
     })
 
     it('should set view context with setViewContext', () => {
-      const { getViewUpdate, setViewContext } = setupViewTest()
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, setViewContext } = viewTest
 
       setViewContext({ foo: 'bar' })
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -1195,7 +1216,8 @@ describe('view event count', () => {
     })
 
     it('should set view context with setViewContextProperty', () => {
-      const { getViewUpdate, setViewContextProperty } = setupViewTest()
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewUpdate, setViewContextProperty } = viewTest
 
       setViewContextProperty('foo', 'bar')
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -1204,7 +1226,8 @@ describe('view event count', () => {
     })
 
     it('should get view context with getViewContext', () => {
-      const { getViewContext, setViewContextProperty } = setupViewTest()
+      viewTest = setupViewTest({ lifeCycle })
+      const { getViewContext, setViewContextProperty } = viewTest
 
       setViewContextProperty('foo', 'bar')
       expect(getViewContext()).toEqual({ foo: 'bar' })
@@ -1213,47 +1236,58 @@ describe('view event count', () => {
 
   describe('set view name', () => {
     it('should set an undefined view name', () => {
-      const { getViewUpdate, startView, setViewName } = setupViewTest()
+      viewTest = setupViewTest({ lifeCycle })
+
+      const { getViewUpdate, startView, setViewName } = viewTest
 
       startView()
       setViewName('foo')
-      clock.tick(0)
-
-      expect(getViewUpdate(1).name).toEqual('foo')
+      expect(getViewUpdate(3).name).toEqual('foo')
     })
 
     it('should set a defined view name', () => {
-      const { getViewUpdate, startView, setViewName } = setupViewTest()
+      viewTest = setupViewTest({ lifeCycle })
+
+      const { getViewUpdate, startView, setViewName } = viewTest
 
       startView({ name: 'initial view name' })
       setViewName('foo')
-      clock.tick(0)
-
-      expect(getViewUpdate(1).name).toEqual('foo')
+      expect(getViewUpdate(3).name).toEqual('foo')
     })
   })
 })
 
 describe('service and version', () => {
+  const lifeCycle = new LifeCycle()
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    mockClock()
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
   it('should come from the init configuration by default', () => {
-    const clock = mockClock()
-    const { getViewUpdate } = setupViewTest({ partialConfig: { service: 'service', version: 'version' } })
-    clock.tick(0)
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { service: 'service', version: 'version' } })
+
+    const { getViewUpdate } = viewTest
 
     expect(getViewUpdate(0).service).toEqual('service')
     expect(getViewUpdate(0).version).toEqual('version')
   })
 
   it('should come from the view option if defined', () => {
-    const clock = mockClock()
-    const { getViewUpdate } = setupViewTest({
-      partialConfig: { service: 'service', version: 'version' },
-      initialViewOptions: {
+    viewTest = setupViewTest(
+      { lifeCycle, partialConfig: { service: 'service', version: 'version' } },
+      {
         service: 'view service',
         version: 'view version',
-      },
-    })
-    clock.tick(0)
+      }
+    )
+
+    const { getViewUpdate } = viewTest
 
     expect(getViewUpdate(0).service).toEqual('view service')
     expect(getViewUpdate(0).version).toEqual('view version')
@@ -1261,9 +1295,19 @@ describe('service and version', () => {
 })
 
 describe('BFCache views', () => {
+  const lifeCycle = new LifeCycle()
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
   it('should create a new "bf_cache" view when restoring from the BFCache', () => {
-    const clock = mockClock()
-    const { getViewCreateCount, getViewEndCount, getViewUpdate, getViewUpdateCount } = setupViewTest()
+    const { getViewCreateCount, getViewEndCount, getViewUpdate, getViewUpdateCount } = viewTest
 
     expect(getViewCreateCount()).toBe(1)
     expect(getViewEndCount()).toBe(0)
@@ -1271,7 +1315,6 @@ describe('BFCache views', () => {
     const event = createNewEvent('pageshow', { persisted: true })
 
     window.dispatchEvent(event)
-    clock.tick(0)
 
     expect(getViewEndCount()).toBe(1)
     expect(getViewCreateCount()).toBe(2)
