@@ -12,7 +12,6 @@ export interface RumAttributesMutationRecord {
   target: Element
   oldValue: string | null
   attributeName: string
-  // Distinguishes canvas content attributes from namespaced attributes with the same local name.
   attributeNamespace?: string | null
 }
 

@@ -75,12 +75,6 @@ export function markCanvasDirtyFromMutationRecords(
     ) {
       canvasManager.markCanvasDirty(mutation.target)
     }
-
-    if (mutation.type === 'childList') {
-      for (let index = 0; index < mutation.addedNodes.length; index += 1) {
-        markCanvasAndDescendantsDirty(mutation.addedNodes[index], canvasManager)
-      }
-    }
   }
 }
 

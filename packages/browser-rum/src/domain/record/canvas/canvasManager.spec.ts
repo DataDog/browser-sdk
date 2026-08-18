@@ -1,7 +1,7 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createCanvasManager } from './canvasManager'
 
-describe('createCanvasManager', () => {
+describe('CanvasManager', () => {
   it('tracks whether a canvas is dirty', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
