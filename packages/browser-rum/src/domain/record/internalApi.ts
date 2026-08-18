@@ -10,6 +10,7 @@ import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { EmitRecordCallback } from './record.types'
 import type { SerializationTransaction } from './serialization'
 import { createRootInsertionCursor, SerializationKind, serializeInTransaction, serializeNode } from './serialization'
+import { createCanvasManager } from './canvas/canvasManager'
 
 /**
  * Take a full snapshot of the document, generating the same records that the browser SDK
@@ -84,6 +85,7 @@ function createTemporaryRecordingScope(configuration?: Partial<RumConfiguration>
       removeShadowRoot: noop,
       flush: noop,
       stop: noop,
-    }
+    },
+    createCanvasManager()
   )
 }

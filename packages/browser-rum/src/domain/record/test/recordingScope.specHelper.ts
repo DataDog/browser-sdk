@@ -13,6 +13,7 @@ export function createRecordingScopeForTesting({
   configuration,
   addShadowRoot,
   removeShadowRoot,
+  canvasManager = createCanvasManager(),
 }: {
   configuration?: Partial<RumConfiguration>
   addShadowRoot?: AddShadowRootCallBack
@@ -30,6 +31,6 @@ export function createRecordingScopeForTesting({
       addShadowRoot: addShadowRoot || noop,
       removeShadowRoot: removeShadowRoot || noop,
     },
-    createCanvasManager()
+    canvasManager
   )
 }

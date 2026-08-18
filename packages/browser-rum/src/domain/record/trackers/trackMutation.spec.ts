@@ -10,6 +10,7 @@ import {
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../../types'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
+import { createCanvasManager } from '../canvas/canvasManager'
 import type { AddShadowRootCallBack, RemoveShadowRootCallBack } from '../shadowRootsController'
 import type { ChangeDecoder, SerializationStats } from '../serialization'
 import { aggregateSerializationStats, createSerializationStats } from '../serialization'
@@ -547,6 +548,24 @@ describe('trackMutation', () => {
         { configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } }
       )
       expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['data-foo', '***']]]])
+    })
+
+    it('marks a canvas dirty when a size attribute changes', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<canvas></canvas>',
+        (sandbox) => {
+          canvas = sandbox as HTMLCanvasElement
+          canvasManager.markCanvasClean(canvas)
+          canvas.setAttribute('width', '101')
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
     })
   })
 
