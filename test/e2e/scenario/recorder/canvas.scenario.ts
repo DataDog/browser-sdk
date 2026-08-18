@@ -7,7 +7,7 @@ import { createTest, html } from '../../lib/framework'
 declare global {
   interface Window {
     canvasDirtyProbe: {
-      cleanCanvases?: WeakSet<HTMLCanvasElement>
+      dirtyCanvases?: Set<HTMLCanvasElement>
       dirtyCalls: string[]
       originalFillRect: CanvasRenderingContext2D['fillRect']
     }
@@ -17,8 +17,8 @@ declare global {
 const CANVAS_DIRTY_PROBE = html`
   <script>
     ;(() => {
-      // Observe the private clean-canvas set to verify when the recorder marks a canvas dirty.
-      const originalDelete = WeakSet.prototype.delete
+      // Observe the private dirty-canvas set to verify when the recorder marks a canvas dirty.
+      const originalAdd = Set.prototype.add
       const dirtyCalls = []
 
       window.canvasDirtyProbe = {
@@ -26,13 +26,13 @@ const CANVAS_DIRTY_PROBE = html`
         originalFillRect: CanvasRenderingContext2D.prototype.fillRect,
       }
 
-      WeakSet.prototype.delete = function (value) {
+      Set.prototype.add = function (value) {
         if (value instanceof HTMLCanvasElement) {
-          window.canvasDirtyProbe.cleanCanvases = this
+          window.canvasDirtyProbe.dirtyCanvases = this
           dirtyCalls.push(value.id)
         }
 
-        return originalDelete.call(this, value)
+        return originalAdd.call(this, value)
       }
     })()
   </script>
@@ -67,12 +67,12 @@ test.describe('canvas recording', () => {
       await expect
         .poll(() =>
           page.evaluate(() => {
-            const cleanCanvases = window.canvasDirtyProbe.cleanCanvases
+            const dirtyCanvases = window.canvasDirtyProbe.dirtyCanvases
             return {
               dirtyCalls: [...window.canvasDirtyProbe.dirtyCalls].sort(),
-              cleanStates: cleanCanvases
+              dirtyStates: dirtyCanvases
                 ? ['drawn', 'resized', 'unchanged'].map((id) =>
-                    cleanCanvases.has(document.querySelector<HTMLCanvasElement>(`#${id}`)!)
+                    dirtyCanvases.has(document.querySelector<HTMLCanvasElement>(`#${id}`)!)
                   )
                 : undefined,
             }
@@ -80,15 +80,15 @@ test.describe('canvas recording', () => {
         )
         .toEqual({
           dirtyCalls: ['drawn', 'resized', 'unchanged'],
-          cleanStates: [false, false, false],
+          dirtyStates: [true, true, true],
         })
 
-      // Establish the post-capture clean state, then exercise the real canvas drawing and DOM APIs.
+      // Establish a clean state, then exercise the real canvas drawing and DOM APIs.
       await page.evaluate(() => {
         const probe = window.canvasDirtyProbe
         const canvases = document.querySelectorAll('canvas')
 
-        canvases.forEach((canvas) => probe.cleanCanvases!.add(canvas))
+        canvases.forEach((canvas) => probe.dirtyCanvases!.delete(canvas))
         probe.dirtyCalls.length = 0
 
         document.querySelector<HTMLCanvasElement>('#drawn')!.getContext('2d')!.fillRect(0, 0, 10, 10)
@@ -103,11 +103,33 @@ test.describe('canvas recording', () => {
 
       expect(
         await page.evaluate(() => {
-          const cleanCanvases = window.canvasDirtyProbe.cleanCanvases!
+          const dirtyCanvases = window.canvasDirtyProbe.dirtyCanvases!
           return ['drawn', 'resized', 'unchanged'].map((id) =>
-            cleanCanvases.has(document.querySelector<HTMLCanvasElement>(`#${id}`)!)
+            dirtyCanvases.has(document.querySelector<HTMLCanvasElement>(`#${id}`)!)
           )
         })
-      ).toEqual([false, false, true])
+      ).toEqual([true, true, false])
+    })
+
+  createTest('seeds canvases rendered before recording starts')
+    .withHead(CANVAS_DIRTY_PROBE)
+    .withBody(html`
+      <canvas id="pre-rendered" width="100" height="100"></canvas>
+      <script>
+        const canvas = document.querySelector('#pre-rendered')
+        canvas.getContext('2d').fillRect(0, 0, 10, 10)
+      </script>
+    `)
+    .withRum({
+      enableExperimentalFeatures: ['session_replay_record_canvas'],
+      sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 1 },
+      startSessionReplayRecordingManually: true,
+    })
+    .run(async ({ page }) => {
+      await page.evaluate(() => window.DD_RUM!.startSessionReplayRecording())
+
+      await expect
+        .poll(() => page.evaluate(() => window.canvasDirtyProbe.dirtyCalls))
+        .toContain('pre-rendered')
     })
 })
