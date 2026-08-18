@@ -616,6 +616,44 @@ describe('trackMutation', () => {
       expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
     })
 
+    it('marks descendant canvases dirty when a privacy attribute changes', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<div><div><canvas></canvas></div></div>',
+        (sandbox) => {
+          const parent = sandbox.firstElementChild!
+          canvas = sandbox.querySelector('canvas')!
+          canvasManager.markCanvasClean(canvas)
+          parent.setAttribute('data-dd-privacy', 'allow')
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    })
+
+    it('marks descendant canvases dirty when a privacy class is removed', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<div><div class="dd-privacy-mask"><canvas></canvas></div></div>',
+        (sandbox) => {
+          const parent = sandbox.firstElementChild!
+          canvas = sandbox.querySelector('canvas')!
+          canvasManager.markCanvasClean(canvas)
+          parent.classList.remove('dd-privacy-mask')
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    })
+
     it('does not mark a canvas dirty for namespaced size attributes', async () => {
       const canvasManager = createCanvasManager()
       const scope = createRecordingScopeForTesting({ canvasManager })

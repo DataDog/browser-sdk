@@ -13,16 +13,18 @@ describe('startFullSnapshots', () => {
   let lifeCycle: LifeCycle
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let emitStatsCallback: jasmine.Spy<EmitStatsCallback>
+  let onSubsequentFullSnapshot: jasmine.Spy<() => void>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     emitRecordCallback = jasmine.createSpy()
     emitStatsCallback = jasmine.createSpy()
+    onSubsequentFullSnapshot = jasmine.createSpy()
 
     appendElement('<style>body { width: 100%; }</style>', document.head)
 
     const scope = createRecordingScopeForTesting()
-    startFullSnapshots(lifeCycle, emitRecordCallback, emitStatsCallback, noop, scope)
+    startFullSnapshots(lifeCycle, emitRecordCallback, emitStatsCallback, noop, scope, onSubsequentFullSnapshot)
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {
@@ -37,6 +39,16 @@ describe('startFullSnapshots', () => {
     } as Partial<ViewCreatedEvent> as any)
 
     expect(emitRecordCallback).toHaveBeenCalled()
+  })
+
+  it('notifies after a subsequent full snapshot', () => {
+    expect(onSubsequentFullSnapshot).not.toHaveBeenCalled()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      startClocks: viewStartClock,
+    } as Partial<ViewCreatedEvent> as any)
+
+    expect(onSubsequentFullSnapshot).toHaveBeenCalledOnceWith()
   })
 
   it('full snapshot related records should have the view change date', () => {

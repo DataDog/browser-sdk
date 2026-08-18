@@ -1,9 +1,12 @@
 import { clearInterval, setInterval } from '@datadog/browser-core'
+import type { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { Tracker } from '../trackers'
 import type { CanvasManager } from './canvasManager'
 
 export interface CanvasCaptureConfiguration {
+  defaultPrivacyLevel: DefaultPrivacyLevel
   imageFormat: 'image/png' | 'image/webp'
   maxCaptureDimension: number
   maxFramesPerSecond: number
@@ -20,19 +23,22 @@ export type ComputeCanvasImageHash = (canvas: HTMLCanvasElement, maxHashDimensio
 export type ComputeCanvasBlobHash = (blob: Blob) => Promise<string>
 export type EmitCanvasImage = (image: CapturedCanvasImage) => void
 
+export type CanvasCapture = Tracker & { reset: () => void }
+
 export function startCanvasCapture(
   canvasManager: CanvasManager,
   configuration: CanvasCaptureConfiguration,
   emitCanvasImage: EmitCanvasImage,
   computeImageHash: ComputeCanvasImageHash = computeCanvasImageHash,
   computeBlobHash: ComputeCanvasBlobHash = computeCanvasBlobHash
-): Tracker {
+): CanvasCapture {
   if (configuration.maxFramesPerSecond === 0) {
-    return { stop: () => canvasManager.clearDirtyCanvases() }
+    return { reset: () => undefined, stop: () => canvasManager.clearDirtyCanvases() }
   }
 
   const canvasesBeingCaptured = new WeakSet<HTMLCanvasElement>()
-  const lastCanvasHash = new WeakMap<HTMLCanvasElement, string>()
+  let lastCanvasHash = new WeakMap<HTMLCanvasElement, string>()
+  let captureGeneration = 0
   let stopped = false
 
   const captureIntervalId = setInterval(captureDirtyCanvases, ONE_SECOND / configuration.maxFramesPerSecond)
@@ -44,6 +50,11 @@ export function startCanvasCapture(
       }
 
       canvasManager.markCanvasClean(canvas)
+
+      if (!isCanvasCaptureAllowed(canvas, configuration.defaultPrivacyLevel)) {
+        lastCanvasHash.delete(canvas)
+        return
+      }
 
       let hash: string | undefined
       try {
@@ -57,6 +68,7 @@ export function startCanvasCapture(
       }
 
       canvasesBeingCaptured.add(canvas)
+      const generation = captureGeneration
 
       try {
         captureCanvasImage(canvas, configuration.maxCaptureDimension, configuration.imageFormat, (blob) => {
@@ -66,12 +78,12 @@ export function startCanvasCapture(
           }
 
           if (hash !== undefined) {
-            finishCapture(canvas, blob, hash)
+            finishCapture(canvas, blob, hash, generation)
             return
           }
 
           void computeBlobHash(blob)
-            .then((blobHash) => finishCapture(canvas, blob, blobHash))
+            .then((blobHash) => finishCapture(canvas, blob, blobHash, generation))
             .catch(() => canvasesBeingCaptured.delete(canvas))
         })
       } catch {
@@ -80,10 +92,19 @@ export function startCanvasCapture(
     })
   }
 
-  function finishCapture(canvas: HTMLCanvasElement, blob: Blob, hash: string) {
+  function finishCapture(canvas: HTMLCanvasElement, blob: Blob, hash: string, generation: number) {
     canvasesBeingCaptured.delete(canvas)
 
-    if (stopped || lastCanvasHash.get(canvas) === hash) {
+    if (
+      stopped ||
+      generation !== captureGeneration ||
+      !isCanvasCaptureAllowed(canvas, configuration.defaultPrivacyLevel)
+    ) {
+      lastCanvasHash.delete(canvas)
+      return
+    }
+
+    if (lastCanvasHash.get(canvas) === hash) {
       return
     }
 
@@ -92,12 +113,21 @@ export function startCanvasCapture(
   }
 
   return {
+    reset: () => {
+      captureGeneration += 1
+      lastCanvasHash = new WeakMap()
+    },
     stop: () => {
       stopped = true
       clearInterval(captureIntervalId)
       canvasManager.clearDirtyCanvases()
     },
   }
+}
+
+function isCanvasCaptureAllowed(canvas: HTMLCanvasElement, defaultPrivacyLevel: DefaultPrivacyLevel): boolean {
+  const privacyLevel = getNodePrivacyLevel(canvas, defaultPrivacyLevel)
+  return privacyLevel === NodePrivacyLevel.ALLOW || privacyLevel === NodePrivacyLevel.MASK_USER_INPUT
 }
 
 /**

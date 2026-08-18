@@ -13,7 +13,8 @@ export function startFullSnapshots(
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
   flushMutations: () => void,
-  scope: RecordingScope
+  scope: RecordingScope,
+  onSubsequentFullSnapshot?: () => void
 ) {
   takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope)
 
@@ -26,6 +27,7 @@ export function startFullSnapshots(
       emitStats,
       scope
     )
+    onSubsequentFullSnapshot?.()
   })
 
   return {

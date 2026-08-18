@@ -1,9 +1,10 @@
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { collectAsyncCalls, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import { ONE_SECOND } from '@datadog/js-core/time'
-import type { Tracker } from '../trackers'
 import type {
   CanvasCaptureConfiguration,
+  CanvasCapture,
   ComputeCanvasBlobHash,
   ComputeCanvasImageHash,
   EmitCanvasImage,
@@ -13,6 +14,7 @@ import { createCanvasManager } from './canvasManager'
 
 describe('startCanvasCapture', () => {
   const configuration: CanvasCaptureConfiguration = {
+    defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
     imageFormat: 'image/webp',
     maxCaptureDimension: 1000,
     maxFramesPerSecond: 1,
@@ -27,7 +29,7 @@ describe('startCanvasCapture', () => {
   let emitCanvasImageSpy: jasmine.Spy<EmitCanvasImage>
   let imageBlob: Blob
   let toBlobSpy: jasmine.Spy<HTMLCanvasElement['toBlob']>
-  let tracker: Tracker | undefined
+  let tracker: CanvasCapture | undefined
 
   beforeEach(() => {
     canvas = document.createElement('canvas')
@@ -108,6 +110,129 @@ describe('startCanvasCapture', () => {
     expect(computeImageHashSpy).toHaveBeenCalledTimes(2)
     expect(toBlobSpy).toHaveBeenCalledTimes(1)
     expect(emitCanvasImageSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not read canvas pixels when the default privacy level is mask', () => {
+    tracker = startCanvasCapture(
+      canvasManager,
+      { ...configuration, defaultPrivacyLevel: DefaultPrivacyLevel.MASK },
+      emitCanvasImageSpy,
+      computeImageHashSpy,
+      computeBlobHashSpy
+    )
+
+    canvasManager.markCanvasDirty(canvas)
+    clock.tick(ONE_SECOND)
+
+    expect(computeImageHashSpy).not.toHaveBeenCalled()
+    expect(toBlobSpy).not.toHaveBeenCalled()
+  })
+
+  for (const privacyLevel of [DefaultPrivacyLevel.MASK, DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED, 'hidden']) {
+    it(`does not read canvas pixels under a ${privacyLevel} ancestor`, () => {
+      const parent = document.createElement('div')
+      parent.setAttribute('data-dd-privacy', privacyLevel)
+      canvas.parentNode!.insertBefore(parent, canvas)
+      parent.appendChild(canvas)
+      registerCleanupTask(() => parent.remove())
+
+      tracker = startCanvasCapture(
+        canvasManager,
+        configuration,
+        emitCanvasImageSpy,
+        computeImageHashSpy,
+        computeBlobHashSpy
+      )
+      canvasManager.markCanvasDirty(canvas)
+      clock.tick(ONE_SECOND)
+
+      expect(computeImageHashSpy).not.toHaveBeenCalled()
+      expect(toBlobSpy).not.toHaveBeenCalled()
+    })
+  }
+
+  it('does not read canvas pixels under an ignored ancestor', () => {
+    const parent = document.createElement('script')
+    canvas.parentNode!.insertBefore(parent, canvas)
+    parent.appendChild(canvas)
+    registerCleanupTask(() => parent.remove())
+
+    tracker = startCanvasCapture(
+      canvasManager,
+      configuration,
+      emitCanvasImageSpy,
+      computeImageHashSpy,
+      computeBlobHashSpy
+    )
+    canvasManager.markCanvasDirty(canvas)
+    clock.tick(ONE_SECOND)
+
+    expect(computeImageHashSpy).not.toHaveBeenCalled()
+    expect(toBlobSpy).not.toHaveBeenCalled()
+  })
+
+  it('captures an allowed canvas under a masked ancestor', () => {
+    const parent = document.createElement('div')
+    parent.setAttribute('data-dd-privacy', 'mask')
+    canvas.setAttribute('data-dd-privacy', 'allow')
+    canvas.parentNode!.insertBefore(parent, canvas)
+    parent.appendChild(canvas)
+    registerCleanupTask(() => parent.remove())
+
+    tracker = startCanvasCapture(
+      canvasManager,
+      configuration,
+      emitCanvasImageSpy,
+      computeImageHashSpy,
+      computeBlobHashSpy
+    )
+    canvasManager.markCanvasDirty(canvas)
+    clock.tick(ONE_SECOND)
+
+    expect(emitCanvasImageSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('emits the same image again after the canvas becomes private and then allowed', () => {
+    tracker = startCanvasCapture(
+      canvasManager,
+      configuration,
+      emitCanvasImageSpy,
+      computeImageHashSpy,
+      computeBlobHashSpy
+    )
+
+    canvasManager.markCanvasDirty(canvas)
+    clock.tick(ONE_SECOND)
+
+    canvas.setAttribute('data-dd-privacy', 'mask')
+    canvasManager.markCanvasDirty(canvas)
+    clock.tick(ONE_SECOND)
+
+    canvas.setAttribute('data-dd-privacy', 'allow')
+    canvasManager.markCanvasDirty(canvas)
+    clock.tick(ONE_SECOND)
+
+    expect(emitCanvasImageSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('emits the same image again after capture state is reset', () => {
+    tracker = startCanvasCapture(
+      canvasManager,
+      configuration,
+      emitCanvasImageSpy,
+      computeImageHashSpy,
+      computeBlobHashSpy
+    )
+
+    canvasManager.markCanvasDirty(canvas)
+    clock.tick(ONE_SECOND)
+
+    tracker.reset()
+    canvasManager.markCanvasDirty(canvas)
+    clock.tick(ONE_SECOND)
+
+    expect(emitCanvasImageSpy).toHaveBeenCalledTimes(2)
+    expect(emitCanvasImageSpy.calls.argsFor(1)[0].hash).toBe('frame-hash')
   })
 
   it('emits each transition when an image returns to an earlier hash', () => {

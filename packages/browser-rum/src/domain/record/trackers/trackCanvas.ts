@@ -1,6 +1,6 @@
 import { instrumentMethod } from '@datadog/browser-core'
 import type { RumMutationRecord } from '@datadog/browser-rum-core'
-import { forEachChildNodes, isElementNode } from '@datadog/browser-rum-core'
+import { forEachChildNodes, isElementNode, PRIVACY_ATTR_NAME, PRIVACY_CLASS_PREFIX } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import type { Tracker } from './tracker.types'
 
@@ -76,6 +76,10 @@ export function markCanvasDirtyFromMutationRecords(
       canvasManager.markCanvasDirty(mutation.target)
     }
 
+    if (mutation.type === 'attributes' && isPrivacyMutation(mutation)) {
+      markCanvasAndDescendantsDirty(mutation.target, canvasManager)
+    }
+
     if (mutation.type === 'childList') {
       for (let index = 0; index < mutation.addedNodes.length; index += 1) {
         markCanvasAndDescendantsDirty(mutation.addedNodes[index], canvasManager)
@@ -97,4 +101,24 @@ function isCanvasElement(node: Node): node is HTMLCanvasElement {
 
 function isCanvasSizeAttribute(attributeName: string): boolean {
   return CANVAS_SIZE_ATTRIBUTES.includes(attributeName.toLowerCase())
+}
+
+function isPrivacyMutation(mutation: Extract<RumMutationRecord, { type: 'attributes' }>): boolean {
+  if (mutation.attributeNamespace !== null && mutation.attributeNamespace !== undefined) {
+    return false
+  }
+
+  if (mutation.attributeName === PRIVACY_ATTR_NAME) {
+    return true
+  }
+
+  return (
+    mutation.attributeName === 'class' &&
+    (hasPrivacyClass(mutation.oldValue) ||
+      (isElementNode(mutation.target) && hasPrivacyClass(mutation.target.getAttribute('class'))))
+  )
+}
+
+function hasPrivacyClass(value: string | null): boolean {
+  return value?.split(/\s+/).some((className) => className.startsWith(PRIVACY_CLASS_PREFIX)) === true
 }

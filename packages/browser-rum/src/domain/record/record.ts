@@ -69,7 +69,21 @@ export function record(options: RecordOptions): RecordAPI {
     canvasManager
   )
 
-  const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope)
+  let resetCanvasCapture: (() => void) | undefined
+
+  const { stop: stopFullSnapshots } = startFullSnapshots(
+    lifeCycle,
+    processRecord,
+    emitStats,
+    flushMutations,
+    scope,
+    () => {
+      resetCanvasCapture?.()
+      if (canvasManager) {
+        markCanvasAndDescendantsDirty(document, canvasManager)
+      }
+    }
+  )
 
   function flushMutations() {
     shadowRootsController.flush()
@@ -93,10 +107,13 @@ export function record(options: RecordOptions): RecordAPI {
 
   if (canvasCaptureConfiguration && canvasManager) {
     markCanvasAndDescendantsDirty(document, canvasManager)
-    trackers.push(
-      trackCanvas2DMutations(canvasManager.markCanvasDirty),
-      startCanvasCapture(canvasManager, canvasCaptureConfiguration, (image) => canvasImageObservable.notify(image))
+    const canvasCapture = startCanvasCapture(
+      canvasManager,
+      { ...canvasCaptureConfiguration, defaultPrivacyLevel: configuration.defaultPrivacyLevel },
+      (image) => canvasImageObservable.notify(image)
     )
+    resetCanvasCapture = canvasCapture.reset
+    trackers.push(trackCanvas2DMutations(canvasManager.markCanvasDirty), canvasCapture)
   }
 
   return {
