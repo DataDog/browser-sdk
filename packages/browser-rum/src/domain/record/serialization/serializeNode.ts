@@ -13,6 +13,7 @@ import {
 } from '@datadog/browser-rum-core'
 import { MediaInteractionType } from '../../../types'
 import type { NodeId, StyleSheetId } from '../itemIds'
+import { isCanvasElement } from '../canvas/canvasUtils'
 import type { InsertionCursor } from './insertionCursor'
 import type { SerializationTransaction } from './serializationTransaction'
 import { serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'
@@ -137,6 +138,10 @@ function serializeElementNode(
   const { nodeId, insertionPoint } = cursor.advance(element)
   const domAttributes = Object.entries(serializeDOMAttributes(element, privacyLevel, transaction))
   transaction.addNode(insertionPoint, encodedElementName(element), ...domAttributes)
+
+  if (isCanvasElement(element)) {
+    transaction.scope.canvasManager.markCanvasDirty(element)
+  }
 
   const {
     _cssText: cssText,

@@ -12,6 +12,7 @@ import type { AttributeChange } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds } from '../itemIds'
+import { markCanvasDirtyFromMutationRecords } from '../canvas/canvasUtils'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
 import { serializeNode } from './serializeNode'
@@ -26,6 +27,7 @@ export function serializeMutations(
   emitStats: EmitStatsCallback,
   scope: RecordingScope
 ): void {
+  markCanvasDirtyFromMutationRecords(mutations, scope.canvasManager)
   serializeInTransaction(
     SerializationKind.INCREMENTAL_SNAPSHOT,
     emitRecord,

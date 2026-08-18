@@ -5,6 +5,7 @@ import type { RecordingScope } from '../recordingScope'
 import { createRecordingScope } from '../recordingScope'
 import type { CanvasManager } from '../canvas/canvasManager'
 import type { AddShadowRootCallBack, RemoveShadowRootCallBack } from '../shadowRootsController'
+import { createCanvasManager } from '../canvas/canvasManager'
 import { DEFAULT_CONFIGURATION } from './rumConfiguration.specHelper'
 import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './shadowRootsController.specHelper'
 
@@ -12,7 +13,6 @@ export function createRecordingScopeForTesting({
   configuration,
   addShadowRoot,
   removeShadowRoot,
-  canvasManager,
 }: {
   configuration?: Partial<RumConfiguration>
   addShadowRoot?: AddShadowRootCallBack
@@ -30,6 +30,6 @@ export function createRecordingScopeForTesting({
       addShadowRoot: addShadowRoot || noop,
       removeShadowRoot: removeShadowRoot || noop,
     },
-    canvasManager
+    createCanvasManager()
   )
 }

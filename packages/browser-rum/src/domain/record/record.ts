@@ -15,8 +15,7 @@ import {
   trackViewEnd,
   trackViewportResize,
   trackVisualViewportResize,
-  trackCanvas2DMutations,
-  markCanvasAndDescendantsDirty,
+  trackCanvasContent,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -54,11 +53,7 @@ export function record(options: RecordOptions): RecordAPI {
     replayStats.addRecord(view.id)
   }
 
-  const canvasManager =
-    configuration.sessionReplayCanvasRecording?.enable &&
-    configuration.sessionReplayCanvasRecording.maxFramesPerSecond > 0
-      ? createCanvasManager()
-      : undefined
+  const canvasManager = createCanvasManager()
   const shadowRootsController = initShadowRootsController(processRecord, emitStats)
   const scope = createRecordingScope(
     configuration,
@@ -68,11 +63,6 @@ export function record(options: RecordOptions): RecordAPI {
   )
 
   const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope)
-
-  // Seed all connected canvases after the initial full snapshot.
-  if (canvasManager) {
-    markCanvasAndDescendantsDirty(document, canvasManager)
-  }
 
   function flushMutations() {
     shadowRootsController.flush()
@@ -94,9 +84,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
 
-  if (canvasManager) {
-    trackers.push(trackCanvas2DMutations(canvasManager.markCanvasDirty))
-  }
+  trackers.push(trackCanvasContent(scope))
 
   return {
     stop: () => {

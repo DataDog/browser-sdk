@@ -1,7 +1,8 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createCanvasManager } from '../canvas/canvasManager'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
-import { markCanvasAndDescendantsDirty, trackCanvas2DMutations } from './trackCanvas'
+import { trackCanvasContent } from './trackCanvas'
 
 describe('trackCanvas2DMutations', () => {
   let canvas: HTMLCanvasElement
@@ -18,7 +19,7 @@ describe('trackCanvas2DMutations', () => {
   })
 
   it('marks the canvas dirty after drawing operations', () => {
-    tracker = trackCanvas2DMutations(markCanvasDirtySpy)
+    tracker = trackCanvasContent(createRecordingScopeForTesting())
     const imageData = context.createImageData(1, 1)
     const drawingOperations: Array<{ method: string; draw: () => void }> = [
       { method: 'clearRect', draw: () => context.clearRect(0, 0, 1, 1) },
@@ -48,7 +49,7 @@ describe('trackCanvas2DMutations', () => {
   })
 
   it('does not mark the canvas dirty for non-drawing operations', () => {
-    tracker = trackCanvas2DMutations(markCanvasDirtySpy)
+    tracker = trackCanvasContent(createRecordingScopeForTesting())
 
     context.beginPath()
     context.moveTo(0, 0)
@@ -58,14 +59,14 @@ describe('trackCanvas2DMutations', () => {
   })
 
   it('does not mark the canvas dirty when a drawing operation throws', () => {
-    tracker = trackCanvas2DMutations(markCanvasDirtySpy)
+    tracker = trackCanvasContent(createRecordingScopeForTesting())
 
     expect(() => context.putImageData(null as unknown as ImageData, 0, 0)).toThrow()
     expect(markCanvasDirtySpy).not.toHaveBeenCalled()
   })
 
   it('stops tracking canvas mutations', () => {
-    tracker = trackCanvas2DMutations(markCanvasDirtySpy)
+    tracker = trackCanvasContent(createRecordingScopeForTesting())
     tracker.stop()
 
     context.fillRect(0, 0, 1, 1)
@@ -84,7 +85,7 @@ describe('markCanvasAndDescendantsDirty', () => {
     document.body.appendChild(container)
     registerCleanupTask(() => container.remove())
 
-    markCanvasAndDescendantsDirty(container, canvasManager)
+    trackCanvasContent(createRecordingScopeForTesting({ canvasManager }))
 
     expect(canvasManager.getDirtyCanvases()).toEqual([canvas, nestedCanvas])
   })

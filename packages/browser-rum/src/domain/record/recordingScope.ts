@@ -15,6 +15,7 @@ import type { CanvasManager } from './canvas/canvasManager'
 export interface RecordingScope {
   resetIds(): void
 
+  canvasManager: CanvasManager
   configuration: RumConfiguration
   elementsScrollPositions: ElementsScrollPositions
   eventIds: EventIds
@@ -22,14 +23,13 @@ export interface RecordingScope {
   shadowRootsController: ShadowRootsController
   stringIds: StringIds
   styleSheetIds: StyleSheetIds
-  canvasManager: CanvasManager | undefined
 }
 
 export function createRecordingScope(
   configuration: RumConfiguration,
   elementsScrollPositions: ElementsScrollPositions,
   shadowRootsController: ShadowRootsController,
-  canvasManager?: CanvasManager
+  canvasManager: CanvasManager
 ): RecordingScope {
   const eventIds = createEventIds()
   const nodeIds = createNodeIds()
