@@ -27,7 +27,15 @@ interface GlobalWithInflightFetches {
 function getInflightFetches(): Map<string, Promise<FetchRemoteConfigurationResult>> {
   const global = globalObject as GlobalWithInflightFetches
   if (!global.__ddRcInflight) {
-    global.__ddRcInflight = new Map()
+    const map = new Map<string, Promise<FetchRemoteConfigurationResult>>()
+    map.delete = (key) => {
+      const result = Map.prototype.delete.call(map, key)
+      if (map.size === 0) {
+        delete global.__ddRcInflight
+      }
+      return result
+    }
+    global.__ddRcInflight = map
   }
   return global.__ddRcInflight
 }
@@ -55,12 +63,7 @@ export function fetchRemoteConfiguration(
   const inflightFetches = getInflightFetches()
 
   if (!inflightFetches.has(endpoint)) {
-    const promise = doFetchRemoteConfiguration(endpoint).finally(() => {
-      inflightFetches.delete(endpoint)
-      if (inflightFetches.size === 0) {
-        delete (globalObject as GlobalWithInflightFetches).__ddRcInflight
-      }
-    })
+    const promise = doFetchRemoteConfiguration(endpoint).finally(() => inflightFetches.delete(endpoint))
     inflightFetches.set(endpoint, promise)
   }
 

@@ -89,29 +89,30 @@ export function createPreStartStrategy(
 
     const hasRemoteConfiguration = getRemoteConfigurationId(cachedInitConfiguration)
 
-    if (hasRemoteConfiguration) {
-      const isSyncLoading =
-        !!cachedInitConfiguration.remoteConfigurationId || !!cachedInitConfiguration.remoteConfiguration?.sync
-
-      if (isSyncLoading) {
-        void fetchAndApplyLogsRemoteConfiguration(cachedInitConfiguration)
-          .then((resolvedInitConfig) => {
-            if (resolvedInitConfig) {
-              doInit(resolvedInitConfig)
-            }
-          })
-          .catch(monitorError)
-        return
-      }
-
-      const resolvedInitConfig = getLogsRemoteConfiguration(cachedInitConfiguration)
-      if (!resolvedInitConfig) {
-        return
-      }
-      doInit(resolvedInitConfig)
-    } else {
+    if (!hasRemoteConfiguration) {
       doInit(cachedInitConfiguration)
+      return
     }
+
+    const isSyncLoading =
+      !!cachedInitConfiguration.remoteConfigurationId || !!cachedInitConfiguration.remoteConfiguration?.sync
+
+    if (isSyncLoading) {
+      void fetchAndApplyLogsRemoteConfiguration(cachedInitConfiguration)
+        .then((resolvedInitConfig) => {
+          if (resolvedInitConfig) {
+            doInit(resolvedInitConfig)
+          }
+        })
+        .catch(monitorError)
+      return
+    }
+
+    const resolvedInitConfig = getLogsRemoteConfiguration(cachedInitConfiguration)
+    if (!resolvedInitConfig) {
+      return
+    }
+    doInit(resolvedInitConfig)
   }
 
   return {

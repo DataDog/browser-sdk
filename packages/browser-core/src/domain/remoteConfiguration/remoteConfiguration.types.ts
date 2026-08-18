@@ -51,7 +51,7 @@ export interface RumSdkConfig {
    */
   logs?: {
     /**
-     * Whether to forward console.error calls as Datadog log events
+     * Whether to forward uncaught exceptions and network errors as Datadog log events
      */
     forwardErrorsToLogs?: boolean
     /**
