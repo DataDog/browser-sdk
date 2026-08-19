@@ -108,17 +108,18 @@ function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransac
 
   for (const node of nodes) {
     const nodeId = nodeIds.get(node)
-    if (nodeId === undefined) {
-      continue // This node wasn't serialized.
-    }
 
     forNodeAndDescendants(node, (node: Node) => {
-      if (isNodeShadowHost(node)) {
-        transaction.scope.shadowRootsController.removeShadowRoot(node.shadowRoot)
-      }
-
       if (isCanvasElement(node)) {
         transaction.scope.canvasManager.markCanvasClean(node)
+      }
+
+      if (nodeId === undefined) {
+        return
+      }
+
+      if (isNodeShadowHost(node)) {
+        transaction.scope.shadowRootsController.removeShadowRoot(node.shadowRoot)
       }
 
       // Forget this node's identity. If it's added to the DOM again in another mutation,
@@ -128,6 +129,10 @@ function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransac
       // part.
       nodeIds.delete(node)
     })
+
+    if (nodeId === undefined) {
+      continue // This node wasn't serialized.
+    }
 
     transaction.removeNode(nodeId)
   }

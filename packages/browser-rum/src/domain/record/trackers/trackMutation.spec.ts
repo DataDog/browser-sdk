@@ -459,6 +459,25 @@ describe('trackMutation', () => {
 
       expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
     })
+
+    it('removes an unserialized canvas from dirty canvases when it is removed', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<div></div>',
+        (sandbox) => {
+          canvas = sandbox.ownerDocument.createElement('canvas')
+          sandbox.appendChild(canvas)
+          canvasManager.markCanvasDirty(canvas)
+          canvas.remove()
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    })
   })
 
   describe('characterData mutations', () => {
