@@ -21,6 +21,7 @@ export function createRecordingScopeForTesting({
   canvasManager?: CanvasManager
 } = {}): RecordingScope {
   return createRecordingScope(
+    canvasManager,
     {
       ...DEFAULT_CONFIGURATION,
       ...configuration,
@@ -30,7 +31,6 @@ export function createRecordingScopeForTesting({
       ...DEFAULT_SHADOW_ROOT_CONTROLLER,
       addShadowRoot: addShadowRoot || noop,
       removeShadowRoot: removeShadowRoot || noop,
-    },
-    canvasManager
+    }
   )
 }

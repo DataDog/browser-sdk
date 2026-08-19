@@ -34,7 +34,8 @@ const CANVAS_2D_DRAWING_METHODS: readonly Canvas2DDrawingMethod[] = [
 export function trackCanvasContent(scope: RecordingScope): Tracker {
   if (
     !scope.configuration.sessionReplayCanvasRecording?.enable ||
-    scope.configuration.sessionReplayCanvasRecording.maxFramesPerSecond === 0
+    scope.configuration.sessionReplayCanvasRecording.maxFramesPerSecond === 0 ||
+    typeof CanvasRenderingContext2D === 'undefined'
   ) {
     return { stop: noop }
   }
@@ -43,15 +44,13 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
 
   const { markCanvasDirty } = scope.canvasManager
 
-  if (typeof CanvasRenderingContext2D !== 'undefined') {
-    CANVAS_2D_DRAWING_METHODS.forEach((method) => {
-      instrumentationStoppers.push(
-        instrumentMethod(CanvasRenderingContext2D.prototype, method, ({ target: context, onPostCall }) => {
-          onPostCall(() => markCanvasDirty(context.canvas))
-        })
-      )
-    })
-  }
+  CANVAS_2D_DRAWING_METHODS.forEach((method) => {
+    instrumentationStoppers.push(
+      instrumentMethod(CanvasRenderingContext2D.prototype, method, ({ target: context, onPostCall }) => {
+        onPostCall(() => markCanvasDirty(context.canvas))
+      })
+    )
+  })
 
   return {
     stop: () => instrumentationStoppers.forEach((stopper) => stopper.stop()),

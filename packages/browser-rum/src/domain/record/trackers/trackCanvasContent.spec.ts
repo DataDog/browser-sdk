@@ -3,7 +3,7 @@ import type { CanvasManager } from '../canvas/canvasManager'
 import { createCanvasManager } from '../canvas/canvasManager'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
-import { trackCanvasContent } from './trackCanvas'
+import { trackCanvasContent } from './trackCanvasContent'
 
 describe('trackCanvasContent', () => {
   let canvas: HTMLCanvasElement

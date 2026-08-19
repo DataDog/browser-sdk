@@ -26,10 +26,10 @@ export interface RecordingScope {
 }
 
 export function createRecordingScope(
+  canvasManager: CanvasManager,
   configuration: RumConfiguration,
   elementsScrollPositions: ElementsScrollPositions,
-  shadowRootsController: ShadowRootsController,
-  canvasManager: CanvasManager
+  shadowRootsController: ShadowRootsController
 ): RecordingScope {
   const eventIds = createEventIds()
   const nodeIds = createNodeIds()

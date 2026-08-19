@@ -56,10 +56,10 @@ export function record(options: RecordOptions): RecordAPI {
   const canvasManager = createCanvasManager()
   const shadowRootsController = initShadowRootsController(processRecord, emitStats)
   const scope = createRecordingScope(
+    canvasManager,
     configuration,
     createElementsScrollPositions(),
-    shadowRootsController,
-    canvasManager
+    shadowRootsController
   )
 
   const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope)
@@ -82,9 +82,8 @@ export function record(options: RecordOptions): RecordAPI {
     trackFocus(processRecord),
     trackVisualViewportResize(processRecord),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
+    trackCanvasContent(scope),
   ]
-
-  trackers.push(trackCanvasContent(scope))
 
   return {
     stop: () => {

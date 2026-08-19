@@ -75,6 +75,7 @@ export function takeNodeSnapshot(
 
 function createTemporaryRecordingScope(configuration?: Partial<RumConfiguration>): RecordingScope {
   return createRecordingScope(
+    createCanvasManager(),
     {
       defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
       ...configuration,
@@ -85,7 +86,6 @@ function createTemporaryRecordingScope(configuration?: Partial<RumConfiguration>
       removeShadowRoot: noop,
       flush: noop,
       stop: noop,
-    },
-    createCanvasManager()
+    }
   )
 }
