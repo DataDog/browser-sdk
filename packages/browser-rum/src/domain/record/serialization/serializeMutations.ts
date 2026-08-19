@@ -12,7 +12,7 @@ import type { AttributeChange } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds } from '../itemIds'
-import { markCanvasDirtyFromMutationRecords } from '../canvas/canvasUtils'
+import { isCanvasElement, markCanvasDirtyFromMutationRecords } from '../canvas/canvasUtils'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
 import { serializeNode } from './serializeNode'
@@ -115,6 +115,10 @@ function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransac
     forNodeAndDescendants(node, (node: Node) => {
       if (isNodeShadowHost(node)) {
         transaction.scope.shadowRootsController.removeShadowRoot(node.shadowRoot)
+      }
+
+      if (isCanvasElement(node)) {
+        transaction.scope.canvasManager.markCanvasClean(node)
       }
 
       // Forget this node's identity. If it's added to the DOM again in another mutation,

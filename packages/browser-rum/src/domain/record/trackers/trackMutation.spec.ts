@@ -440,6 +440,25 @@ describe('trackMutation', () => {
         expect(removeShadowRootSpy.calls.argsFor(1)[0]).toBe(childShadowRoot)
       })
     })
+
+    it('removes a canvas from dirty canvases when it is removed', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<canvas></canvas>',
+        (sandbox) => {
+          canvas = sandbox as HTMLCanvasElement
+          expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+
+          canvas.remove()
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    })
   })
 
   describe('characterData mutations', () => {
