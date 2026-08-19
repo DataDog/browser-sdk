@@ -7,9 +7,12 @@
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 
-import { defineGlobal, globalObject } from '@datadog/browser-core'
+import { defineGlobal, globalObject, startWasmModuleTracking } from '@datadog/browser-core'
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
+
+// Install WebAssembly hooks before deferred Logs initialization so eagerly loaded modules are captured.
+startWasmModuleTracking()
 
 export type { InternalContext } from '../domain/contexts/internalContext'
 export type { LogsMessage } from '../domain/logger'

@@ -1,4 +1,4 @@
-import type { ErrorSource, RawErrorCause, ErrorHandling } from '@datadog/browser-core'
+import type { ErrorSource, RawErrorCause, ErrorHandling, RawWasmModule } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { StatusType } from './domain/logger/isAuthorized'
 
@@ -17,6 +17,8 @@ interface Error {
   fingerprint?: string
   causes?: RawErrorCause[]
   handling: ErrorHandling | undefined
+  source_type?: 'browser' | 'browser+wasm'
+  wasm_modules?: RawWasmModule[]
 }
 
 interface CommonRawLogsEvent {
