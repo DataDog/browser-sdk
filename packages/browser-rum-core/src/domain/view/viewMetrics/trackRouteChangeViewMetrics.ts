@@ -28,6 +28,7 @@ export function trackRouteChangeViewMetrics(configuration: RumConfiguration, sch
   const initialViewMetrics: InitialViewMetrics = {}
 
   let softNavEntry: RumSoftNavigationEntry | undefined
+  let softNavStopped = false
   let biggestIcpSize = 0
   const pendingIcpEntries: RumInteractionContentfulPaintTiming[] = []
 
@@ -52,6 +53,7 @@ export function trackRouteChangeViewMetrics(configuration: RumConfiguration, sch
     // (Chrome's documented ordering caveat) -- re-scan everything seen so far now that we know
     // our interactionId.
     applyIcpEntries(pendingIcpEntries)
+    pendingIcpEntries.length = 0
 
     const seededIcp = softNavEntry.getLargestInteractionContentfulPaint()
     if (seededIcp) {
@@ -84,10 +86,13 @@ export function trackRouteChangeViewMetrics(configuration: RumConfiguration, sch
   return {
     initialViewMetrics,
     setViewEnd: () => {
+      softNavStopped = true
       softNavSubscription.unsubscribe()
     },
     stop: () => {
-      softNavSubscription.unsubscribe()
+      if (!softNavStopped) {
+        softNavSubscription.unsubscribe()
+      }
       icpSubscription.unsubscribe()
     },
   }

@@ -30,7 +30,7 @@ test.describe('soft navigation', () => {
       expect(routeChangeViews.length).toBeGreaterThanOrEqual(1)
 
       const lastRouteChange = routeChangeViews[routeChangeViews.length - 1]
-      expect(lastRouteChange.view.performance?.lcp?.timestamp).toBeGreaterThanOrEqual(0)
+      expect(lastRouteChange.view.performance?.lcp?.timestamp).toBeGreaterThan(0)
     })
 
   createTest('does not report LCP on a route_change view without the experimental feature enabled')

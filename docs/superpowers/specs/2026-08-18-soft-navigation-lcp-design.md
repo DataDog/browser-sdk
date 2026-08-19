@@ -99,9 +99,8 @@ export interface RumSoftNavigationEntry {
   entryType: RumPerformanceEntryType.SOFT_NAVIGATION
   name: string
   startTime: RelativeTime
-  navigationId: string
   interactionId: number
-  getLargestInteractionContentfulPaint(): RumInteractionContentfulPaintTiming | undefined
+  getLargestInteractionContentfulPaint(): RumInteractionContentfulPaintTiming | null
   toJSON(): Omit<RumSoftNavigationEntry, 'toJSON' | 'getLargestInteractionContentfulPaint'>
 }
 
