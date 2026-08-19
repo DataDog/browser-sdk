@@ -459,25 +459,6 @@ describe('trackMutation', () => {
 
       expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
     })
-
-    it('removes an unserialized canvas from dirty canvases when it is removed', async () => {
-      const canvasManager = createCanvasManager()
-      const scope = createRecordingScopeForTesting({ canvasManager })
-      let canvas!: HTMLCanvasElement
-
-      await recordMutationOf(
-        '<div></div>',
-        (sandbox) => {
-          canvas = sandbox.ownerDocument.createElement('canvas')
-          sandbox.appendChild(canvas)
-          canvasManager.markCanvasDirty(canvas)
-          canvas.remove()
-        },
-        { scope }
-      )
-
-      expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
-    })
   })
 
   describe('characterData mutations', () => {
@@ -604,6 +585,24 @@ describe('trackMutation', () => {
       )
 
       expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    })
+
+    it('does not mark a canvas dirty when an unrelated attribute changes', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      await recordMutationOf(
+        '<canvas></canvas>',
+        (sandbox) => {
+          canvas = sandbox as HTMLCanvasElement
+          canvasManager.markCanvasClean(canvas)
+          canvas.setAttribute('class', 'foo')
+        },
+        { scope }
+      )
+
+      expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
     })
   })
 

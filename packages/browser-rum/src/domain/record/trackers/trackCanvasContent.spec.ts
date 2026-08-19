@@ -22,12 +22,12 @@ describe('trackCanvasContent', () => {
   })
 
   function startTracking(enable = true, maxFramesPerSecond = 1): Tracker {
-    tracker = trackCanvasContent(
-      createRecordingScopeForTesting({
-        canvasManager,
-        configuration: { sessionReplayCanvasRecording: { enable, maxFramesPerSecond } },
-      })
-    )
+    const scope = createRecordingScopeForTesting({
+      canvasManager,
+      configuration: { sessionReplayCanvasRecording: { enable, maxFramesPerSecond } },
+    })
+    scope.nodeIds.getOrInsert(canvas)
+    tracker = trackCanvasContent(scope)
     return tracker
   }
 
@@ -67,6 +67,18 @@ describe('trackCanvasContent', () => {
     context.beginPath()
     context.moveTo(0, 0)
     context.lineTo(1, 1)
+
+    expect(markCanvasDirtySpy).not.toHaveBeenCalled()
+  })
+
+  it('does not mark an unserialized canvas dirty', () => {
+    const scope = createRecordingScopeForTesting({
+      canvasManager,
+      configuration: { sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 1 } },
+    })
+    tracker = trackCanvasContent(scope)
+
+    context.fillRect(0, 0, 1, 1)
 
     expect(markCanvasDirtySpy).not.toHaveBeenCalled()
   })

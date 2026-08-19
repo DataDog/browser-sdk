@@ -42,12 +42,14 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
 
   const instrumentationStoppers: Tracker[] = []
 
-  const { markCanvasDirty } = scope.canvasManager
-
   CANVAS_2D_DRAWING_METHODS.forEach((method) => {
     instrumentationStoppers.push(
       instrumentMethod(CanvasRenderingContext2D.prototype, method, ({ target: context, onPostCall }) => {
-        onPostCall(() => markCanvasDirty(context.canvas))
+        onPostCall(() => {
+          if (scope.nodeIds.get(context.canvas) !== undefined) {
+            scope.canvasManager.markCanvasDirty(context.canvas)
+          }
+        })
       })
     )
   })

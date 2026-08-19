@@ -12,7 +12,6 @@ export interface RumAttributesMutationRecord {
   target: Element
   oldValue: string | null
   attributeName: string
-  attributeNamespace: string | null
 }
 
 export interface RumChildListMutationRecord {
