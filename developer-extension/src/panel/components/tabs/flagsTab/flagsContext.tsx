@@ -26,6 +26,10 @@ export interface FlagsContextValue {
   totalPages: number
   /** Whether a refresh is needed/in flight to (re)apply overrides, and the last mutation failure. */
   pendingReload: boolean
+  /** The page is still applying another site's overrides until it reloads. */
+  siteSwitchNeedsReload: boolean
+  /** Set when scoping to the connected site failed, so the page may be applying another site's. */
+  scopeError: string | null
   writesInFlight: number
   mutationError: string | null
   applyOverride: (flagKey: string, override: FlagOverride) => void
@@ -56,8 +60,18 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
   const view = useFlagCatalogView(identity.userId)
   const catalog = useFlagCatalog(auth, view.request)
   const { setPage } = view
-  const { status, error, overrides, devtoolsEnabled, setOverride, clearOverride, clearAll, reloadPage } =
-    useInspectedPageOverrides()
+  const {
+    status,
+    error,
+    overrides,
+    devtoolsEnabled,
+    setOverride,
+    clearOverride,
+    clearAll,
+    reloadPage,
+    siteSwitchNeedsReload,
+    scopeError,
+  } = useInspectedPageOverrides(auth.site)
 
   const totalPages = Math.max(1, Math.ceil(catalog.total / view.pageSize))
 
@@ -160,6 +174,8 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
       tagSuggestions,
       totalPages,
       pendingReload,
+      siteSwitchNeedsReload,
+      scopeError,
       writesInFlight,
       mutationError,
       applyOverride,
@@ -180,6 +196,8 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
       tagSuggestions,
       totalPages,
       pendingReload,
+      siteSwitchNeedsReload,
+      scopeError,
       writesInFlight,
       mutationError,
       applyOverride,

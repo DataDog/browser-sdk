@@ -120,8 +120,10 @@ function DisconnectedOverridesNotice() {
       <Group gap="xs" mt="xs">
         {phase === 'confirming' || phase === 'clearing' ? (
           <>
+            {/* Signed out there's no site to scope to, so this wipes the saved stores for every
+                Datadog site as well — say so rather than deleting more than the count implies. */}
             <Text size="xs" fw={600}>
-              Clear all {count} override{count === 1 ? '' : 's'} on this page?
+              Clear all overrides on this page, including any saved for other Datadog sites?
             </Text>
             <Button size="compact-xs" color="red" onClick={handleClearAll} loading={phase === 'clearing'}>
               Clear

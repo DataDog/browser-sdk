@@ -1,4 +1,4 @@
-import { Alert, Anchor, Box, Button, Code, Group, Pagination, Space, Title } from '@mantine/core'
+import { Alert, Anchor, Box, Button, Code, Group, Pagination, Space, Text, Title } from '@mantine/core'
 import React, { useState } from 'react'
 import { TabBase } from '../../tabBase'
 import { ConnectScreen, ConnectionHeader } from './connectScreen'
@@ -40,6 +40,8 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
     totalPages,
     view,
     pendingReload,
+    siteSwitchNeedsReload,
+    scopeError,
     writesInFlight,
     mutationError,
     removeAll,
@@ -64,6 +66,39 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
       }
     >
       <Box px="md" py="sm">
+        {/* Louder than the usual pending-refresh nudge: until this reload happens the page is running
+            a different site's overrides than the ones listed below. */}
+        {siteSwitchNeedsReload && (
+          <>
+            <Alert color="orange" title="Reload to apply this site's overrides">
+              <Group justify="space-between" wrap="nowrap">
+                <Text size="sm">
+                  Which overrides apply changed when you switched sites, and the page hasn&apos;t reloaded since.
+                </Text>
+                <Button
+                  size="compact-xs"
+                  color="orange"
+                  onClick={reload}
+                  // Same guard as Refresh Page: reloading mid-write boots the wrapper without it.
+                  disabled={overrideStatus !== 'ready' || writesInFlight > 0}
+                >
+                  Reload page
+                </Button>
+              </Group>
+            </Alert>
+            <Space h="sm" />
+          </>
+        )}
+
+        {scopeError && (
+          <>
+            <Alert color="red" title="Couldn't scope overrides to this site">
+              {scopeError}
+            </Alert>
+            <Space h="sm" />
+          </>
+        )}
+
         {mutationError && (
           <>
             <Alert color="red" title="Failed to update overrides">

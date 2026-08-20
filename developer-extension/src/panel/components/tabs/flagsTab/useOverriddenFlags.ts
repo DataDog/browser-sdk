@@ -19,8 +19,8 @@ const EMPTY: OverriddenFlagsState = { flags: [], missingKeys: new Set() }
  * Loads the catalog data (name, variants, type) for the currently-overridden flag keys, so the
  * "Local overrides" section can render them even when they're not on the current catalog page. A key
  * that doesn't resolve falls back to a minimal row so the override can still be reverted, and lands
- * in `missingKeys` — which the row turns into a "clear this" warning, so only proven absence counts.
- * Failures are non-blocking: the section shows fallback rows, unmarked.
+ * in `missingKeys`, which the row notes as archived or deleted. Failures are non-blocking: the
+ * section shows fallback rows, unmarked.
  */
 export function useOverriddenFlags(auth: FlagAuthState, keys: string[]): OverriddenFlagsState {
   const { isConnected, site } = auth

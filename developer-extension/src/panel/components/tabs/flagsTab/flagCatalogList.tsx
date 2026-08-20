@@ -16,7 +16,7 @@ import { IconArrowBackUp, IconCopy } from '@tabler/icons-react'
 import React, { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { CatalogFlag } from './flagsRequests'
 import { useFlagsContext } from './flagsContext'
-import { flagTypeLabel, isOverrideUnusable, validateOverrideValue } from './flagTypes'
+import { flagTypeLabel, validateOverrideValue } from './flagTypes'
 import { getOverride, type FlagOverride } from './inspectedPageFlags'
 
 export function FlagCatalogBody() {
@@ -121,7 +121,9 @@ function FlagRow({
   onRevert: (flagKey: string) => void
 }) {
   const overridden = override !== undefined
-  const unusable = isOverrideUnusable(flag, override)
+  // The wrapper rejects a mismatched type at resolve time, so this override genuinely won't apply —
+  // unlike an unresolved key, which still resolves fine and is only worth noting.
+  const typeMismatch = overridden && override.type !== flag.type
 
   return (
     <Group
@@ -133,7 +135,7 @@ function FlagRow({
       py="sm"
       style={{
         borderBottom: '1px solid var(--mantine-color-default-border)',
-        backgroundColor: unusable
+        backgroundColor: typeMismatch
           ? 'var(--mantine-color-red-light)'
           : overridden
             ? 'var(--mantine-color-violet-light)'
@@ -146,11 +148,16 @@ function FlagRow({
         </Text>
         <FlagKey value={flag.key} />
         {flag.description && <FlagDescription description={flag.description} />}
-        {override && unusable && (
+        {override && typeMismatch && (
           <Text size="xs" c="red" fw={600}>
-            {flag.unresolved
-              ? "No active flag with this key on this site — it's from a different Datadog environment, or archived here. Clear it."
-              : `Type mismatch: stored as ${flagTypeLabel(override.type)}, this flag is ${flagTypeLabel(flag.type)}. Clear it.`}
+            Type mismatch: stored as {flagTypeLabel(override.type)}, but this flag is {flagTypeLabel(flag.type)}. It
+            won&apos;t apply until you clear it.
+          </Text>
+        )}
+        {/* Not an error: the override still resolves, the flag just isn't in the catalog any more. */}
+        {flag.unresolved && (
+          <Text size="xs" c="dimmed">
+            No active flag with this key on this site — it may have been archived or deleted.
           </Text>
         )}
       </Stack>
@@ -168,7 +175,7 @@ function FlagRow({
           </Text>
         ) : (
           flag.variants.map((variant) => {
-            const isActive = overridden && !unusable && valuesEqual(override.value, variant.value)
+            const isActive = overridden && !typeMismatch && valuesEqual(override.value, variant.value)
             // The catalog keeps an unparseable variant as its raw string (see parseVariantValue), and
             // writing that through would break the override type contract. `allowNull` keeps a
             // legitimate JSON `null` variant applyable.

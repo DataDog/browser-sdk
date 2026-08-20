@@ -133,8 +133,8 @@ export interface FlagsByKeysResult {
  *
  * Active-only for the same reason as the catalog: an archived and an active flag can share a key,
  * and mapResources keeps whichever the server listed first, so including archived ones would risk
- * describing the override against the wrong flag's type and variants. The cost is that an override
- * on a flag archived here reads as absent, which the row copy accounts for.
+ * describing the override against the wrong flag's type and variants. An override on a flag archived
+ * here therefore reads as absent, which the row reports as archived or deleted.
  */
 export async function fetchFlagsByKeys(token: string, site: string, keys: string[]): Promise<FlagsByKeysResult> {
   const host = getFlagsApiHost(site)

@@ -6,6 +6,7 @@ import {
   readFlagState,
   reloadInspectedPage,
   sanitizeOverrides,
+  syncSiteOverrides,
   writeOverride,
 } from './inspectedPageFlags'
 
@@ -30,6 +31,14 @@ export interface OverridesController extends FlagPageState {
   clearOverride: (flagKey: string) => Promise<void>
   clearAll: () => Promise<void>
   reloadPage: () => void
+  /**
+   * True once scoping the page to the connected site changed which overrides apply, until a reload
+   * picks them up. The page is running another site's values in the meantime, so this is louder than
+   * the ordinary "you edited an override" nudge.
+   */
+  siteSwitchNeedsReload: boolean
+  /** Set when scoping failed outright, so the page's overrides may belong to another site. */
+  scopeError: string | null
 }
 
 function delay(ms: number): Promise<void> {
@@ -46,11 +55,12 @@ function delay(ms: number): Promise<void> {
 //  - no read ever succeeded               -> error
 async function settleFlagState(
   setState: Dispatch<SetStateAction<FlagPageState>>,
-  isCancelled: () => boolean
+  isCancelled: () => boolean,
+  site?: string
 ): Promise<void> {
   let lastRead: FlagState | null = null
   for (let attempts = 1; ; attempts++) {
-    const next = await readFlagState()
+    const next = await readFlagState(site)
     if (isCancelled()) {
       return
     }
@@ -102,14 +112,20 @@ async function settleFlagState(
  * before deciding it's absent.
  *
  * Assumes a single mounted instance — the mutation queue only serializes writes within one hook.
+ *
+ * `site` scopes everything to the connected Datadog site, so overrides made on one site neither
+ * apply nor show up on another. Omitted when signed out: there's no site to scope to then, and the
+ * caller wants what the page is actually applying.
  */
-export function useInspectedPageOverrides(): OverridesController {
+export function useInspectedPageOverrides(site?: string): OverridesController {
   const [state, setState] = useState<FlagPageState>({
     status: 'loading',
     overrides: {},
     devtoolsEnabled: false,
     error: null,
   })
+  const [siteSwitchNeedsReload, setSiteSwitchNeedsReload] = useState(false)
+  const [scopeError, setScopeError] = useState<string | null>(null)
   // Serializes mutations so overlapping read-modify-writes can't clobber each other.
   const mutationQueue = useRef<Promise<void>>(Promise.resolve())
   // Cancels an in-flight settle when a newer navigation (or unmount) supersedes it.
@@ -131,8 +147,48 @@ export function useInspectedPageOverrides(): OverridesController {
     cancelSettle.current = () => {
       cancelled = true
     }
-    void settleFlagState(setState, () => cancelled)
-  }, [])
+    void settleFlagState(setState, () => cancelled, site)
+  }, [site])
+
+  // Point the wrapper's key at this site's store whenever the connected site changes. Reruns on
+  // navigation too (the new page has its own localStorage), keyed off `status` returning to ready.
+  //
+  // Known limitation (accepted): this runs outside the mutation queue, which only spans one hook
+  // instance anyway — the provider remounts on a site change. A write dispatched just before the
+  // switch writes the old site's projection and can land after this sync, leaving the old site's
+  // overrides projected until the next sync. Each eval is atomic, so the stores stay consistent.
+  useEffect(() => {
+    if (!site || state.status !== 'ready') {
+      return
+    }
+    let cancelled = false
+    const seq = readSeq.current
+    void syncSiteOverrides(site).then((result) => {
+      if (cancelled) {
+        return
+      }
+      if (!result) {
+        // Without a successful projection the page may still be applying another site's overrides,
+        // and the list below wouldn't show it. Never fail this silently.
+        setScopeError("Couldn't scope overrides to this site. The page may still be applying another site's.")
+        return
+      }
+      setScopeError(null)
+      // Only a projection that actually changed leaves the page running the wrong values; an
+      // unchanged one must stay silent, or every sign-in would demand a pointless reload.
+      if (result.changed) {
+        setSiteSwitchNeedsReload(true)
+      }
+      // Adoption can put overrides in the store after the settle read found none. Skipped if a write
+      // or navigation landed meanwhile, since that result is newer.
+      if (seq === readSeq.current) {
+        setState((prev) => ({ ...prev, overrides: result.overrides }))
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [site, state.status])
 
   // Known limitation (accepted): terminal events aren't correlated to a specific navigation — the
   // webNavigation API exposes no id spanning onBeforeNavigate→onCompleted. In a rare overlapping-
@@ -154,6 +210,9 @@ export function useInspectedPageOverrides(): OverridesController {
       // (before the re-render mirrors statusRef from state).
       readSeq.current += 1
       statusRef.current = 'loading'
+      // The reload the banner asked for may be this navigation, however it was triggered. The sync
+      // that runs once the new page settles raises it again if it's still needed.
+      setSiteSwitchNeedsReload(false)
       setState((prev) => ({ ...prev, status: 'loading', error: null }))
     }
     const onNavigationSettled = (details: { tabId: number; frameId: number }) => {
@@ -201,13 +260,13 @@ export function useInspectedPageOverrides(): OverridesController {
   }, [])
 
   const setOverride = useCallback(
-    (flagKey: string, override: FlagOverride) => enqueue(() => writeOverride(flagKey, override)),
-    [enqueue]
+    (flagKey: string, override: FlagOverride) => enqueue(() => writeOverride(flagKey, override, site)),
+    [enqueue, site]
   )
 
-  const clearOverride = useCallback((flagKey: string) => enqueue(() => deleteOverride(flagKey)), [enqueue])
+  const clearOverride = useCallback((flagKey: string) => enqueue(() => deleteOverride(flagKey, site)), [enqueue, site])
 
-  const clearAll = useCallback(() => enqueue(() => clearAllOverrides()), [enqueue])
+  const clearAll = useCallback(() => enqueue(() => clearAllOverrides(site)), [enqueue, site])
 
   const reloadPage = useCallback(() => reloadInspectedPage(), [])
 
@@ -220,6 +279,8 @@ export function useInspectedPageOverrides(): OverridesController {
     clearOverride,
     clearAll,
     reloadPage,
+    siteSwitchNeedsReload,
+    scopeError,
   }
 }
 
