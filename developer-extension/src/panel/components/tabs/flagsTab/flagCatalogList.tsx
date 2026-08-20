@@ -121,8 +121,7 @@ function FlagRow({
   onRevert: (flagKey: string) => void
 }) {
   const overridden = override !== undefined
-  // The wrapper rejects a mismatched type, so this override won't apply — unlike an unresolved key,
-  // which still resolves fine.
+  // The wrapper rejects a mismatched type, so this override won't apply.
   const typeMismatch = overridden && override.type !== flag.type
 
   return (

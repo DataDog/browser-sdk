@@ -120,8 +120,6 @@ function DisconnectedOverridesNotice() {
       <Group gap="xs" mt="xs">
         {phase === 'confirming' || phase === 'clearing' ? (
           <>
-            {/* Signed out this clears every site's overrides, not just the ones counted above, so
-                the prompt says so. */}
             <Text size="xs" fw={600}>
               Clear all overrides on this page, including any saved for other Datadog sites?
             </Text>

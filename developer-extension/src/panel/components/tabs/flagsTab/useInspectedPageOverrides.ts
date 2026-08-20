@@ -161,7 +161,6 @@ export function useInspectedPageOverrides(site?: string): OverridesController {
         return
       }
       if (!result) {
-        // The page may still be applying another site's overrides, and the list wouldn't show it.
         setScopeError("Couldn't scope overrides to this site. The page may still be applying another site's.")
         return
       }
@@ -171,7 +170,7 @@ export function useInspectedPageOverrides(site?: string): OverridesController {
         setSiteSwitchNeedsReload(true)
       }
       // Adoption can fill the store after the settle read found none. Skipped if a newer write or
-      // navigation already landed.
+      // navigation landed meanwhile.
       if (seq === readSeq.current) {
         setState((prev) => ({ ...prev, overrides: result.overrides }))
       }
@@ -201,8 +200,7 @@ export function useInspectedPageOverrides(site?: string): OverridesController {
       // (before the re-render mirrors statusRef from state).
       readSeq.current += 1
       statusRef.current = 'loading'
-      // This may be the reload the banner asked for. If the page still needs one, the sync that
-      // runs once it settles raises the banner again.
+      // This may be the reload the banner asked for; the sync after settling re-raises it if not.
       setSiteSwitchNeedsReload(false)
       setState((prev) => ({ ...prev, status: 'loading', error: null }))
     }

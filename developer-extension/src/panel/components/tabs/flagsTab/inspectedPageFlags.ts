@@ -66,8 +66,8 @@ export function sanitizeOverrides(overrides: Record<string, unknown>): FlagOverr
   return sanitized
 }
 
-// Shared by every eval so all paths read storage the same way. `parse` returns null for anything
-// that isn't an overrides map; `stable` compares two maps ignoring key order.
+// Shared by every eval so all paths read storage the same way. `stable` ignores key order, so two
+// equal maps compare equal.
 const EVAL_HELPERS = `
   const parse = (raw) => {
     try {
@@ -97,8 +97,7 @@ function overridesPrelude(storeKey: string): string {
  * "not detected" warning.
  */
 export async function readFlagState(site?: string): Promise<FlagState | null> {
-  // Signed out there's no site to scope to, so read the key the wrapper uses — that shows whatever
-  // the page is currently applying.
+  // Signed out there's no site to scope to, so read the key the wrapper uses: what the page applies.
   const storeKey = site ? siteOverridesKey(site) : OVERRIDES_KEY
   try {
     const raw = (await evalInWindow(`
@@ -145,8 +144,7 @@ export async function syncSiteOverrides(site: string): Promise<{ changed: boolea
           }
         }
         siteOverrides = anySiteOverrides ? {} : projection
-        // An empty store would still count as existing above and block adoption for good, so don't
-        // write one.
+        // An empty store would still count as existing above, blocking adoption for good.
         if (Object.keys(siteOverrides).length > 0) {
           localStorage.setItem(${JSON.stringify(storeKey)}, JSON.stringify(siteOverrides))
         }
