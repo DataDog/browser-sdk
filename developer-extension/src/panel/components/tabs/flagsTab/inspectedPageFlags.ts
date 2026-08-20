@@ -133,47 +133,26 @@ export async function readFlagState(site?: string): Promise<FlagState | null> {
  * Copies `site`'s store into the key the wrapper reads, so only that site's overrides apply.
  * `changed` is false when it already matched, so callers don't ask for a needless reload.
  *
- * Overrides predating this scheme are adopted by the first site to connect, and only while no store
- * holds anything — adopting per-site would copy whatever is live into every site, which is the leak
- * this prevents. After that, writes made straight to OVERRIDES_KEY are overwritten.
+ * The store is the only source: anything written straight to OVERRIDES_KEY is overwritten, including
+ * overrides left by builds that predate per-site scoping. Those are dropped on first connect rather
+ * than migrated — the tab is days old, so there's nothing worth carrying forward.
  *
  * Null means the write failed — callers must surface that, since the page then keeps applying
  * whichever site's overrides it already had.
  */
-export async function syncSiteOverrides(site: string): Promise<{ changed: boolean; overrides: FlagOverrides } | null> {
+export async function syncSiteOverrides(site: string): Promise<{ changed: boolean } | null> {
   const storeKey = siteOverridesKey(site)
   try {
-    const result = (await evalInWindow(`
+    return (await evalInWindow(`
       ${EVAL_HELPERS}
       const projection = parse(localStorage.getItem(${JSON.stringify(OVERRIDES_KEY)})) || {}
-      let siteOverrides = parse(localStorage.getItem(${JSON.stringify(storeKey)}))
-
-      if (siteOverrides === null) {
-        let anySiteOverrides = false
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i)
-          if (key && key.indexOf(${JSON.stringify(SITE_OVERRIDES_PREFIX)}) === 0) {
-            const store = parse(localStorage.getItem(key))
-            if (store && Object.keys(store).length > 0) {
-              anySiteOverrides = true
-              break
-            }
-          }
-        }
-        siteOverrides = anySiteOverrides ? {} : projection
-        // An empty store would still count as existing above, blocking adoption for good.
-        if (Object.keys(siteOverrides).length > 0) {
-          localStorage.setItem(${JSON.stringify(storeKey)}, JSON.stringify(siteOverrides))
-        }
-      }
-
+      const siteOverrides = parse(localStorage.getItem(${JSON.stringify(storeKey)})) || {}
       const changed = stable(projection) !== stable(siteOverrides)
       if (changed) {
         localStorage.setItem(${JSON.stringify(OVERRIDES_KEY)}, JSON.stringify(siteOverrides))
       }
-      return { changed, overrides: siteOverrides }
-    `)) as { changed: boolean; overrides: Record<string, unknown> }
-    return { changed: result.changed, overrides: sanitizeOverrides(result.overrides ?? {}) }
+      return { changed }
+    `)) as { changed: boolean }
   } catch (error) {
     logger.error('Error while scoping flag overrides to the site:', error)
     return null

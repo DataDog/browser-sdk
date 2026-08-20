@@ -155,7 +155,6 @@ export function useInspectedPageOverrides(site?: string): OverridesController {
       return
     }
     let cancelled = false
-    const seq = readSeq.current
     void syncSiteOverrides(site).then((result) => {
       if (cancelled) {
         return
@@ -166,14 +165,7 @@ export function useInspectedPageOverrides(site?: string): OverridesController {
       }
       setScopeError(null)
       // Prompting when nothing changed would make every sign-in demand a needless reload.
-      if (result.changed) {
-        setSiteSwitchNeedsReload(true)
-      }
-      // Adoption can fill the store after the settle read found none. Skipped if a newer write or
-      // navigation landed meanwhile.
-      if (seq === readSeq.current) {
-        setState((prev) => ({ ...prev, overrides: result.overrides }))
-      }
+      setSiteSwitchNeedsReload(result.changed)
     })
     return () => {
       cancelled = true

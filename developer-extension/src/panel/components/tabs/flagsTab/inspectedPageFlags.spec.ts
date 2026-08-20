@@ -174,35 +174,13 @@ describe('inspectedPageFlags read/write against page localStorage', () => {
       expect((await syncSiteOverrides(STAGING))?.changed).toBe(false)
     })
 
-    it('adopts pre-scoping overrides into the first site connected, without disturbing the page', async () => {
+    it('drops overrides left in the wrapper key by a build without per-site stores', async () => {
       localStorage.setItem(OVERRIDES_KEY, JSON.stringify({ legacy: override }))
 
       const result = await syncSiteOverrides(STAGING)
 
-      expect(stored(siteOverridesKey(STAGING))).toEqual({ legacy: override })
-      expect(result?.changed).toBe(false)
-    })
-
-    it('does not adopt again once a site store holds something, or every site would inherit the last one', async () => {
-      await writeOverride('dark-mode', override, STAGING)
-      localStorage.setItem(OVERRIDES_KEY, JSON.stringify({ 'dark-mode': override }))
-
-      await syncSiteOverrides(US1)
-
       expect(stored(OVERRIDES_KEY)).toEqual({})
-      expect(localStorage.getItem(siteOverridesKey(US1))).toBeNull()
-    })
-
-    it('writes no store for a site with nothing in it, so adoption stays available on a clean page', async () => {
-      await syncSiteOverrides(US1)
-      expect(localStorage.getItem(siteOverridesKey(US1))).toBeNull()
-
-      // An override written straight to the wrapper's key afterwards is adopted, not wiped.
-      localStorage.setItem(OVERRIDES_KEY, JSON.stringify({ legacy: override }))
-      await syncSiteOverrides(US1)
-
-      expect(stored(OVERRIDES_KEY)).toEqual({ legacy: override })
-      expect(stored(siteOverridesKey(US1))).toEqual({ legacy: override })
+      expect(result?.changed).toBe(true)
     })
 
     it("clearing while connected leaves the other sites' overrides alone", async () => {
