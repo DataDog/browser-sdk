@@ -2,6 +2,7 @@ import { registerCleanupTask, replaceMockable } from '../../../../../../packages
 import {
   clearStoredTokens,
   getFlagsApiHost,
+  siteShortLabel,
   getValidAccessToken,
   loadStoredTokens,
   loginWithOAuth,
@@ -45,6 +46,12 @@ describe('oauth', () => {
       expect(getFlagsApiHost('ap1.datadoghq.com')).toBe('ap1.datadoghq.com')
       expect(getFlagsApiHost('ap2.datadoghq.com')).toBe('ap2.datadoghq.com')
       expect(getFlagsApiHost('datad0g.com')).toBe('dd.datad0g.com')
+    })
+
+    it('shortens a site label to its name, falling back to the raw site when unknown', () => {
+      expect(siteShortLabel('datadoghq.com')).toBe('US1')
+      expect(siteShortLabel('datad0g.com')).toBe('Staging')
+      expect(siteShortLabel('unknown.example')).toBe('unknown.example')
     })
 
     it('throws on a site that is not in the known list', () => {

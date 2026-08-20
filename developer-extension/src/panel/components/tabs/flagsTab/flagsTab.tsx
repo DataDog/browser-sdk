@@ -6,6 +6,7 @@ import { FlagCatalogBody, OverridesSection } from './flagCatalogList'
 import { FlagFilterBar } from './flagFilterBar'
 import { FlagsProvider, useFlagsContext } from './flagsContext'
 import { ManualOverrideForm } from './manualOverrideForm'
+import { siteShortLabel } from './oauth'
 import type { FlagAuthState } from './useFlagAuth'
 import { useFlagAuth } from './useFlagAuth'
 
@@ -68,9 +69,9 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
       <Box px="md" py="sm">
         {siteSwitchNeedsReload && (
           <>
-            <Alert color="orange" title="Reload to apply this site's overrides">
+            <Alert color="orange" title={`Reload to apply ${siteShortLabel(auth.site)}'s overrides`}>
               <Group justify="space-between" wrap="nowrap">
-                <Text size="sm">The page is still using the overrides it loaded with, not this site&apos;s.</Text>
+                <Text size="sm">The page is currently loaded with a different set of overrides.</Text>
                 <Button
                   size="compact-xs"
                   color="orange"

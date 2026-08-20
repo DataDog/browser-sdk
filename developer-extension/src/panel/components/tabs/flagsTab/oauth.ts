@@ -65,6 +65,15 @@ export const FLAG_SITES: FlagSite[] = [
 ]
 
 /**
+ * The site's name without its host — "US1" rather than "US1 (datadoghq.com)" — for copy with no room
+ * for the full label. Falls back to the whole label, so a future entry without the host still reads.
+ */
+export function siteShortLabel(site: string): string {
+  const label = FLAG_SITES.find((entry) => entry.site === site)?.label ?? site
+  return label.split(' (')[0]
+}
+
+/**
  * Returns the frontend host serving OAuth + FFE for a site. Throws on an unknown site: the UI only
  * ever passes a value from FLAG_SITES, so an unknown one means a stale or hand-edited setting.
  */
