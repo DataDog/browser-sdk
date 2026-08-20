@@ -65,6 +65,19 @@ export function parseTypedString(type: Exclude<FlagType, 'BOOLEAN'>, raw: string
 }
 
 /**
+ * Flags an override the connected site can't honour: no active flag holds the key, or one does but
+ * the stored type disagrees. localStorage has no site concept, so the usual cause is an override
+ * left by another Datadog site — though a flag archived here, or a manual override applied with the
+ * wrong type, land here too, and a key that exists identically on both sites is missed entirely.
+ */
+export function isOverrideUnusable(
+  flag: { type: FlagType; unresolved?: boolean },
+  override: { type: FlagType } | undefined
+): boolean {
+  return override !== undefined && (flag.unresolved === true || override.type !== flag.type)
+}
+
+/**
  * Validates an already-parsed override value against its declared type, returning an error message
  * or null. The value-level counterpart to parseTypedString: the catalog's variant-click path
  * validates its value directly, and the manual form validates what parseTypedString produced.

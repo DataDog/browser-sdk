@@ -72,7 +72,7 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
   // Fetched by key so an overridden flag shows regardless of which catalog page it's on, with a
   // minimal row as fallback for a key that no longer resolves (so it can still be reverted).
   const overrideKeys = useMemo(() => Object.keys(overrides), [overrides])
-  const overriddenCatalogFlags = useOverriddenFlags(auth, overrideKeys)
+  const { flags: overriddenCatalogFlags, missingKeys } = useOverriddenFlags(auth, overrideKeys)
   const overriddenFlags = useMemo<CatalogFlag[]>(
     () =>
       overrideKeys.map(
@@ -84,9 +84,10 @@ export function FlagsProvider({ auth, children }: { auth: FlagAuthState; childre
             type: overrides[key].type,
             variants: [],
             tags: [],
+            unresolved: missingKeys.has(key),
           }
       ),
-    [overrideKeys, overriddenCatalogFlags, overrides]
+    [overrideKeys, overriddenCatalogFlags, missingKeys, overrides]
   )
   // Dropped from the paginated list so they don't show twice.
   const bottomFlags = useMemo(

@@ -1,5 +1,6 @@
 import { Alert, Badge, Box, Button, Center, Group, Select, Stack, Text } from '@mantine/core'
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { toErrorMessage } from '../../../../common/toErrorMessage'
 import { useSettings } from '../../../hooks/useSettings'
 import type { FlagAuthState } from './useFlagAuth'
 import { useInspectedPageOverrides } from './useInspectedPageOverrides'
@@ -41,16 +42,63 @@ export function ConnectScreen({ auth }: { auth: FlagAuthState }) {
 }
 
 /**
- * Surfaces overrides already stored on the inspected page while signed out — otherwise this screen is
- * all that renders, so an override left from an earlier session keeps affecting the page with nothing
- * to explain it. Informational only; everything that mutates overrides lives on the connected tab.
+ * Surfaces overrides already stored on the inspected page while signed out, with a Clear all so they
+ * can be wiped without signing in just for that.
  *
  * Mounted only while disconnected, so its navigation listeners never run alongside the connected
  * tab's own instance of this hook.
  */
 function DisconnectedOverridesNotice() {
-  const { status, overrides } = useInspectedPageOverrides()
+  const { status, overrides, clearAll, reloadPage } = useInspectedPageOverrides()
+  const [phase, setPhase] = useState<'idle' | 'confirming' | 'clearing' | 'cleared'>('idle')
+  const [error, setError] = useState<string | null>(null)
+  // Bumped on navigation so a clear that settles afterwards can't report on the page it left.
+  const generation = useRef(0)
   const count = Object.keys(overrides).length
+
+  // A navigation brings a fresh set of overrides: a pending confirmation would clear those instead,
+  // and a previous "cleared" no longer describes the page.
+  useEffect(() => {
+    if (status === 'loading') {
+      generation.current += 1
+      setPhase('idle')
+      setError(null)
+    }
+  }, [status])
+
+  const handleClearAll = () => {
+    const started = generation.current
+    setPhase('clearing')
+    setError(null)
+    void clearAll()
+      .then(() => {
+        if (started === generation.current) {
+          setPhase('cleared')
+        }
+      })
+      .catch((err: unknown) => {
+        if (started === generation.current) {
+          setError(toErrorMessage(err))
+          setPhase('idle')
+        }
+      })
+  }
+
+  // Gated on the page agreeing it has none: a same-document SPA navigation fires no webNavigation
+  // event, so without this the banner could outlive the state it describes.
+  if (phase === 'cleared' && status === 'ready' && count === 0) {
+    // The page keeps applying them until it reloads and rebuilds its provider.
+    return (
+      <Alert color="green" w="100%" title="Overrides cleared">
+        <Group gap="xs">
+          <Text size="xs">Reload the page to stop applying them.</Text>
+          <Button size="compact-xs" variant="light" color="green" onClick={reloadPage}>
+            Reload page
+          </Button>
+        </Group>
+      </Alert>
+    )
+  }
 
   if (status !== 'ready' || count === 0) {
     return null
@@ -66,8 +114,39 @@ function DisconnectedOverridesNotice() {
       title={`${count} override${count === 1 ? '' : 's'} active on this page`}
     >
       <Text size="xs">
-        These are stored in the page and keep applying while you are signed out. Sign in to view and remove them.
+        These are stored in the page and keep applying while you are signed out. Sign in to review and remove them
+        individually.
       </Text>
+      <Group gap="xs" mt="xs">
+        {phase === 'confirming' || phase === 'clearing' ? (
+          <>
+            <Text size="xs" fw={600}>
+              Clear all {count} override{count === 1 ? '' : 's'} on this page?
+            </Text>
+            <Button size="compact-xs" color="red" onClick={handleClearAll} loading={phase === 'clearing'}>
+              Clear
+            </Button>
+            <Button
+              size="compact-xs"
+              variant="subtle"
+              color="gray"
+              onClick={() => setPhase('idle')}
+              disabled={phase === 'clearing'}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button size="compact-xs" variant="light" color="red" onClick={() => setPhase('confirming')}>
+            Clear all
+          </Button>
+        )}
+      </Group>
+      {error && (
+        <Text c="red" size="xs" mt="xs">
+          Could not clear the overrides: {error}
+        </Text>
+      )}
     </Alert>
   )
 }

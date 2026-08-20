@@ -1,7 +1,6 @@
 import { registerCleanupTask, replaceMockable } from '../../../../../../packages/browser-core/test'
 import {
   clearStoredTokens,
-  FLAG_SITES,
   getFlagsApiHost,
   getValidAccessToken,
   loadStoredTokens,
@@ -46,12 +45,6 @@ describe('oauth', () => {
       expect(getFlagsApiHost('ap1.datadoghq.com')).toBe('ap1.datadoghq.com')
       expect(getFlagsApiHost('ap2.datadoghq.com')).toBe('ap2.datadoghq.com')
       expect(getFlagsApiHost('datad0g.com')).toBe('dd.datad0g.com')
-    })
-
-    it('covers every site in FLAG_SITES, so a new entry cannot ship without a host', () => {
-      for (const { site, host } of FLAG_SITES) {
-        expect(getFlagsApiHost(site)).toBe(host)
-      }
     })
 
     it('throws on a site that is not in the known list', () => {

@@ -1,4 +1,24 @@
-import { flagTypeLabel, validateOverrideValue, type FlagType } from './flagTypes'
+import { flagTypeLabel, isOverrideUnusable, validateOverrideValue, type FlagType } from './flagTypes'
+
+describe('isOverrideUnusable', () => {
+  const flag = { type: 'BOOLEAN' } as const
+
+  it('is false with no override', () => {
+    expect(isOverrideUnusable(flag, undefined)).toBe(false)
+  })
+
+  it('is false when the override matches the resolved flag', () => {
+    expect(isOverrideUnusable(flag, { type: 'BOOLEAN' })).toBe(false)
+  })
+
+  it('is true when no flag on this site holds the key', () => {
+    expect(isOverrideUnusable({ ...flag, unresolved: true }, { type: 'BOOLEAN' })).toBe(true)
+  })
+
+  it('is true when the stored type disagrees with the resolved flag', () => {
+    expect(isOverrideUnusable(flag, { type: 'JSON' })).toBe(true)
+  })
+})
 
 describe('flagTypeLabel', () => {
   it('returns the display label, or the raw type for an unsupported value_type', () => {
