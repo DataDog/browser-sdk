@@ -56,6 +56,9 @@ export const ChangeType: {
   AttachedStyleSheets: ChangeTypeId<8, SessionReplay.AttachedStyleSheetsChange>
   MediaPlaybackState: ChangeTypeId<9, SessionReplay.MediaPlaybackStateChange>
   VisualViewport: ChangeTypeId<10, SessionReplay.VisualViewportChange>
+  AddRoleAnnotatedStrings: ChangeTypeId<11, SessionReplay.AddRoleAnnotatedStringsChange>
+  InputValue: ChangeTypeId<12, SessionReplay.InputValueChange>
+  InputSelection: ChangeTypeId<13, SessionReplay.InputSelectionChange>
 } = {
   AddString: 0,
   AddNode: 1,
@@ -68,6 +71,9 @@ export const ChangeType: {
   AttachedStyleSheets: 8,
   MediaPlaybackState: 9,
   VisualViewport: 10,
+  AddRoleAnnotatedStrings: 11,
+  InputValue: 12,
+  InputSelection: 13,
 } as const
 
 export type ChangeType = (typeof ChangeType)[keyof typeof ChangeType]

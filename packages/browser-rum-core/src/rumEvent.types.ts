@@ -104,7 +104,7 @@ export type RumActionEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the action starting in the foreground (focus in browser)
        */
@@ -178,6 +178,9 @@ export type RumTransitionEvent = CommonProperties & {
    * RUM event type
    */
   readonly type: 'transition'
+  readonly view: {
+    [k: string]: unknown
+  }
   /**
    * Stream properties
    */
@@ -487,7 +490,7 @@ export type RumErrorEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the error starting in the foreground (focus in browser)
        */
@@ -536,6 +539,9 @@ export type RumLongTaskEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'long_task'
+    readonly view: {
+      [k: string]: unknown
+    }
     /**
      * Long Task properties
      */
@@ -669,6 +675,9 @@ export type RumResourceEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'resource'
+    readonly view: {
+      [k: string]: unknown
+    }
     /**
      * Resource properties
      */
@@ -825,6 +834,10 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other'
       /**
+       * Whether the resource was served from the device's local cache
+       */
+      readonly local_cache_hit?: boolean
+      /**
        * The provider for this resource
        */
       readonly provider?: {
@@ -943,6 +956,9 @@ export type RumViewUpdateEvent = ViewContainerSchema &
      * RUM event type
      */
     readonly type: 'view_update'
+    readonly view: {
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
 export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent
@@ -975,6 +991,9 @@ export type RumVitalEventCommonProperties = CommonProperties &
      * RUM event type
      */
     readonly type: 'vital'
+    readonly view: {
+      [k: string]: unknown
+    }
     /**
      * Vital properties
      */
@@ -1107,12 +1126,12 @@ export interface CommonProperties {
     | 'unity'
     | 'kotlin-multiplatform'
     | 'electron'
-    | 'rum-cpp'
+    | 'cpp'
     | 'maui'
   /**
    * View properties
    */
-  readonly view: {
+  readonly view?: {
     /**
      * UUID of the view
      */
@@ -1392,6 +1411,10 @@ export interface CommonProperties {
        * The percentage of sessions with traced resources
        */
       readonly trace_sample_rate?: number
+      /**
+       * Session Replay experimental features enabled in the SDK configuration
+       */
+      readonly session_replay_experimental_features?: string[]
       [k: string]: unknown
     }
     /**
@@ -1453,7 +1476,7 @@ export interface ViewContainerSchema {
       | 'unity'
       | 'kotlin-multiplatform'
       | 'electron'
-      | 'rum-cpp'
+      | 'cpp'
       | 'maui'
     [k: string]: unknown
   }

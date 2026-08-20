@@ -1,8 +1,9 @@
+import type { StringOrStringReference } from '../../../types'
 import type { StringId } from '../itemIds'
 
 export interface StringTable {
   add(newString: string): void
-  decode(stringOrStringId: number | string): string
+  decode(value: StringOrStringReference): string
 }
 
 export function createStringTable(): StringTable {
@@ -11,13 +12,17 @@ export function createStringTable(): StringTable {
     add(newString: string): void {
       strings.set(strings.size as StringId, newString)
     },
-    decode(stringOrStringId: number | string): string {
-      if (typeof stringOrStringId === 'string') {
-        return stringOrStringId
+    decode(value: StringOrStringReference): string {
+      if (typeof value === 'string') {
+        return value // A plain string literal.
       }
-      const referencedString = strings.get(stringOrStringId as StringId)
+      if (typeof value === 'object') {
+        return value.string // A role-annotated string literal.
+      }
+
+      const referencedString = strings.get(value as StringId)
       if (referencedString === undefined) {
-        throw new Error(`Reference to unknown string: ${stringOrStringId}`)
+        throw new Error(`Reference to unknown string: ${value}`)
       }
       return referencedString
     },

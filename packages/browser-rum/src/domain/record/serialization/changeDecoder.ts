@@ -114,6 +114,12 @@ function decodeChangeRecord(
         break
       }
 
+      case ChangeType.AddRoleAnnotatedStrings:
+      case ChangeType.InputValue:
+      case ChangeType.InputSelection:
+        // These change types exist in the schema, but nothing generates them yet.
+        throw new Error(`Unsupported ChangeType: ${change[0]}`)
+
       default:
         change satisfies never
         throw new Error(`Unsupported ChangeType: ${change[0] as any}`)
