@@ -31,13 +31,9 @@ export interface OverridesController extends FlagPageState {
   clearOverride: (flagKey: string) => Promise<void>
   clearAll: () => Promise<void>
   reloadPage: () => void
-  /**
-   * True once scoping the page to the connected site changed which overrides apply, until a reload
-   * picks them up. The page is running another site's values in the meantime, so this is louder than
-   * the ordinary "you edited an override" nudge.
-   */
+  /** Scoping changed which overrides apply; the page needs a reload to pick it up. */
   siteSwitchNeedsReload: boolean
-  /** Set when scoping failed outright, so the page's overrides may belong to another site. */
+  /** Scoping failed, so the page may be applying another site's overrides. */
   scopeError: string | null
 }
 
@@ -113,9 +109,8 @@ async function settleFlagState(
  *
  * Assumes a single mounted instance — the mutation queue only serializes writes within one hook.
  *
- * `site` scopes everything to the connected Datadog site, so overrides made on one site neither
- * apply nor show up on another. Omitted when signed out: there's no site to scope to then, and the
- * caller wants what the page is actually applying.
+ * `site` scopes everything to the connected Datadog site, so overrides made on one neither apply nor
+ * show up on another. Omitted when signed out, where the caller wants what the page is applying.
  */
 export function useInspectedPageOverrides(site?: string): OverridesController {
   const [state, setState] = useState<FlagPageState>({
@@ -150,13 +145,11 @@ export function useInspectedPageOverrides(site?: string): OverridesController {
     void settleFlagState(setState, () => cancelled, site)
   }, [site])
 
-  // Point the wrapper's key at this site's store whenever the connected site changes. Reruns on
-  // navigation too (the new page has its own localStorage), keyed off `status` returning to ready.
+  // Scope the page to the connected site. Reruns on navigation too, via `status` returning to ready.
   //
-  // Known limitation (accepted): this runs outside the mutation queue, which only spans one hook
-  // instance anyway — the provider remounts on a site change. A write dispatched just before the
-  // switch writes the old site's projection and can land after this sync, leaving the old site's
-  // overrides projected until the next sync. Each eval is atomic, so the stores stay consistent.
+  // Known limitation (accepted): this runs outside the mutation queue, which covers one hook
+  // instance anyway — the provider remounts on a site change. A write sent just before the switch
+  // can land after this sync and restore the old site's copy until the next one.
   useEffect(() => {
     if (!site || state.status !== 'ready') {
       return
@@ -168,19 +161,17 @@ export function useInspectedPageOverrides(site?: string): OverridesController {
         return
       }
       if (!result) {
-        // Without a successful projection the page may still be applying another site's overrides,
-        // and the list below wouldn't show it. Never fail this silently.
+        // The page may still be applying another site's overrides, and the list wouldn't show it.
         setScopeError("Couldn't scope overrides to this site. The page may still be applying another site's.")
         return
       }
       setScopeError(null)
-      // Only a projection that actually changed leaves the page running the wrong values; an
-      // unchanged one must stay silent, or every sign-in would demand a pointless reload.
+      // Prompting when nothing changed would make every sign-in demand a needless reload.
       if (result.changed) {
         setSiteSwitchNeedsReload(true)
       }
-      // Adoption can put overrides in the store after the settle read found none. Skipped if a write
-      // or navigation landed meanwhile, since that result is newer.
+      // Adoption can fill the store after the settle read found none. Skipped if a newer write or
+      // navigation already landed.
       if (seq === readSeq.current) {
         setState((prev) => ({ ...prev, overrides: result.overrides }))
       }
@@ -210,8 +201,8 @@ export function useInspectedPageOverrides(site?: string): OverridesController {
       // (before the re-render mirrors statusRef from state).
       readSeq.current += 1
       statusRef.current = 'loading'
-      // The reload the banner asked for may be this navigation, however it was triggered. The sync
-      // that runs once the new page settles raises it again if it's still needed.
+      // This may be the reload the banner asked for. If the page still needs one, the sync that
+      // runs once it settles raises the banner again.
       setSiteSwitchNeedsReload(false)
       setState((prev) => ({ ...prev, status: 'loading', error: null }))
     }

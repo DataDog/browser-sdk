@@ -121,8 +121,8 @@ function FlagRow({
   onRevert: (flagKey: string) => void
 }) {
   const overridden = override !== undefined
-  // The wrapper rejects a mismatched type at resolve time, so this override genuinely won't apply —
-  // unlike an unresolved key, which still resolves fine and is only worth noting.
+  // The wrapper rejects a mismatched type, so this override won't apply — unlike an unresolved key,
+  // which still resolves fine.
   const typeMismatch = overridden && override.type !== flag.type
 
   return (
@@ -154,7 +154,7 @@ function FlagRow({
             won&apos;t apply until you clear it.
           </Text>
         )}
-        {/* Not an error: the override still resolves, the flag just isn't in the catalog any more. */}
+        {/* Not an error: the override still works, the flag just left the catalog. */}
         {flag.unresolved && (
           <Text size="xs" c="dimmed">
             No active flag with this key on this site — it may have been archived or deleted.

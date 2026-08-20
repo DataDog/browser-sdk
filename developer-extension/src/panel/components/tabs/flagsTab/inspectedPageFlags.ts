@@ -11,13 +11,9 @@ export const OVERRIDES_KEY = 'dd.dd_flag.overrides'
 export const DEVTOOLS_MARKER_KEY = 'dd.dd_flag.devtools'
 
 /**
- * Per-site stores, owned by this extension alone. The wrapper knows nothing about them: it only ever
- * reads OVERRIDES_KEY, which we keep as a projection of the connected site's store. That's what
- * stops an override made on staging from applying on US1 — the other site's copy is parked here
- * rather than sitting in the key the wrapper reads.
- *
- * The trailing dot matters: it keeps these keys from colliding with OVERRIDES_KEY itself when we
- * enumerate them.
+ * Per-site stores. The wrapper only reads OVERRIDES_KEY, so we keep that as a copy of the connected
+ * site's store and leave the other sites here, where the wrapper can't see them. The trailing dot
+ * stops these keys matching OVERRIDES_KEY itself.
  */
 const SITE_OVERRIDES_PREFIX = `${OVERRIDES_KEY}.`
 
@@ -70,26 +66,27 @@ export function sanitizeOverrides(overrides: Record<string, unknown>): FlagOverr
   return sanitized
 }
 
-// Shared prelude for every inspected-window eval: parses an overrides map out of localStorage,
-// tolerating malformed/absent/mistyped storage, and leaves a normalized `overrides` in scope.
-// Defined once so the read and mutation paths can't interpret storage differently as the contract
-// evolves. `storeKey` is the site's store when connected, and OVERRIDES_KEY when signed out.
-function readOverridesPrelude(storeKey: string): string {
-  return `
-  let overrides = {}
-  try {
-    const parsed = JSON.parse(localStorage.getItem(${JSON.stringify(storeKey)}) || '{}')
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      overrides = parsed
+// Shared by every eval so all paths read storage the same way. `parse` returns null for anything
+// that isn't an overrides map; `stable` compares two maps ignoring key order.
+const EVAL_HELPERS = `
+  const parse = (raw) => {
+    try {
+      const parsed = JSON.parse(raw || 'null')
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null
+    } catch (e) {
+      return null
     }
-  } catch (e) {}
-`
-}
-
-/** Key order can differ between two equal maps, so compare entries rather than raw JSON. */
-const STABLE_STRINGIFY = `
+  }
   const stable = (map) => JSON.stringify(Object.keys(map).sort().map((k) => [k, map[k]]))
 `
+
+// Leaves a mutable `overrides` in scope for the read and write paths.
+function overridesPrelude(storeKey: string): string {
+  return `
+  ${EVAL_HELPERS}
+  let overrides = parse(localStorage.getItem(${JSON.stringify(storeKey)})) || {}
+`
+}
 
 /**
  * Reads the current overrides and enablement marker straight from the inspected page's localStorage
@@ -100,12 +97,12 @@ const STABLE_STRINGIFY = `
  * "not detected" warning.
  */
 export async function readFlagState(site?: string): Promise<FlagState | null> {
-  // Connected, so show that site's own overrides. Signed out there's no site to scope by, and what
-  // matters is what the page is actually applying — which is the projection.
+  // Signed out there's no site to scope to, so read the key the wrapper uses — that shows whatever
+  // the page is currently applying.
   const storeKey = site ? siteOverridesKey(site) : OVERRIDES_KEY
   try {
     const raw = (await evalInWindow(`
-      ${readOverridesPrelude(storeKey)}
+      ${overridesPrelude(storeKey)}
       const devtoolsEnabled = localStorage.getItem(${JSON.stringify(DEVTOOLS_MARKER_KEY)}) === 'enabled'
       return { overrides, devtoolsEnabled }
     `)) as FlagState
@@ -117,32 +114,21 @@ export async function readFlagState(site?: string): Promise<FlagState | null> {
 }
 
 /**
- * Points the key the wrapper reads at `site`'s store, so only that site's overrides apply. Returns
- * that store, plus whether the projection actually changed: if it didn't, the page is already
- * running the right values and must not be asked to reload — that's what keeps signing in inert.
+ * Copies `site`'s store into the key the wrapper reads, so only that site's overrides apply.
+ * `changed` is false when it already matched, so callers don't ask for a needless reload.
  *
- * Also adopts pre-scoping overrides, but only while no site store holds anything. Adopting per-site
- * would copy whatever is live into each site as you visit it, which is the leak this exists to stop.
- * Once a store does hold something the extension owns the projection, and anything written straight
- * to OVERRIDES_KEY from outside is overwritten on the next sync.
+ * Overrides predating this scheme are adopted by the first site to connect, and only while no store
+ * holds anything — adopting per-site would copy whatever is live into every site, which is the leak
+ * this prevents. After that, writes made straight to OVERRIDES_KEY are overwritten.
  *
- * Returns null if the page couldn't be written to. The caller must surface that rather than assume
- * success — an unprojected page keeps applying whichever site it had.
+ * Null means the write failed — callers must surface that, since the page then keeps applying
+ * whichever site's overrides it already had.
  */
 export async function syncSiteOverrides(site: string): Promise<{ changed: boolean; overrides: FlagOverrides } | null> {
   const storeKey = siteOverridesKey(site)
   try {
     const result = (await evalInWindow(`
-      ${STABLE_STRINGIFY}
-      const parse = (raw) => {
-        try {
-          const parsed = JSON.parse(raw || 'null')
-          return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null
-        } catch (e) {
-          return null
-        }
-      }
-
+      ${EVAL_HELPERS}
       const projection = parse(localStorage.getItem(${JSON.stringify(OVERRIDES_KEY)})) || {}
       let siteOverrides = parse(localStorage.getItem(${JSON.stringify(storeKey)}))
 
@@ -159,8 +145,8 @@ export async function syncSiteOverrides(site: string): Promise<{ changed: boolea
           }
         }
         siteOverrides = anySiteOverrides ? {} : projection
-        // Only persist a store with something in it. Writing an empty one on a clean page would
-        // disarm adoption for this origin forever, so a later hand-written override would be wiped.
+        // An empty store would still count as existing above and block adoption for good, so don't
+        // write one.
         if (Object.keys(siteOverrides).length > 0) {
           localStorage.setItem(${JSON.stringify(storeKey)}, JSON.stringify(siteOverrides))
         }
@@ -187,7 +173,7 @@ export async function syncSiteOverrides(site: string): Promise<{ changed: boolea
 async function applyOverrideStatement(statement: string, site?: string): Promise<Record<string, unknown>> {
   const storeKey = site ? siteOverridesKey(site) : OVERRIDES_KEY
   return (await evalInWindow(`
-    ${readOverridesPrelude(storeKey)}
+    ${overridesPrelude(storeKey)}
     ${statement}
     const serialized = JSON.stringify(overrides)
     localStorage.setItem(${JSON.stringify(storeKey)}, serialized)
@@ -209,10 +195,8 @@ export function deleteOverride(key: string, site?: string): Promise<Record<strin
 }
 
 /**
- * Connected, this clears the site you're on and leaves the other sites' stores alone. Signed out
- * there's no site to scope to, so it wipes every store as well as the projection — clearing only the
- * projection would let the overrides reappear the moment you reconnect, which reads as the button
- * not having worked.
+ * Connected, clears the current site only. Signed out, clears every site — leaving the other stores
+ * would bring their overrides back on reconnect, as if the button hadn't worked.
  */
 export async function clearAllOverrides(site?: string): Promise<Record<string, unknown>> {
   if (site) {

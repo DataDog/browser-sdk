@@ -66,8 +66,8 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
       }
     >
       <Box px="md" py="sm">
-        {/* Louder than the usual pending-refresh nudge: until this reload happens the page is running
-            a different site's overrides than the ones listed below. */}
+        {/* Louder than the usual refresh nudge: the page is applying a different set than the one
+            listed below. */}
         {siteSwitchNeedsReload && (
           <>
             <Alert color="orange" title="Reload to apply this site's overrides">
