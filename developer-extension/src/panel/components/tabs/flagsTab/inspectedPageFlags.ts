@@ -97,11 +97,28 @@ function overridesPrelude(storeKey: string): string {
  * "not detected" warning.
  */
 export async function readFlagState(site?: string): Promise<FlagState | null> {
-  // Signed out there's no site to scope to, so read the key the wrapper uses: what the page applies.
-  const storeKey = site ? siteOverridesKey(site) : OVERRIDES_KEY
+  // Signed out we can't tell what the page is applying: a site switch repoints the projection before
+  // the reload that picks it up, so the page can still be running the site it loaded with. Report
+  // everything stored instead — which is also exactly what Clear all wipes there.
+  const source = site
+    ? overridesPrelude(siteOverridesKey(site))
+    : `
+      ${overridesPrelude(OVERRIDES_KEY)}
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.indexOf(${JSON.stringify(SITE_OVERRIDES_PREFIX)}) === 0) {
+          const store = parse(localStorage.getItem(key)) || {}
+          for (const flagKey of Object.keys(store)) {
+            if (!Object.prototype.hasOwnProperty.call(overrides, flagKey)) {
+              overrides[flagKey] = store[flagKey]
+            }
+          }
+        }
+      }
+    `
   try {
     const raw = (await evalInWindow(`
-      ${overridesPrelude(storeKey)}
+      ${source}
       const devtoolsEnabled = localStorage.getItem(${JSON.stringify(DEVTOOLS_MARKER_KEY)}) === 'enabled'
       return { overrides, devtoolsEnabled }
     `)) as FlagState

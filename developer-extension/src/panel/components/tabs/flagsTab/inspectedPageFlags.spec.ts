@@ -140,14 +140,21 @@ describe('inspectedPageFlags read/write against page localStorage', () => {
       expect(stored(OVERRIDES_KEY)).toEqual({ 'dark-mode': override })
     })
 
-    it('reads the connected site when given one, and what the page is applying when not', async () => {
+    it('reads only the connected site when given one', async () => {
       await writeOverride('dark-mode', override, STAGING)
       await syncSiteOverrides(US1)
 
-      // US1 has none of its own; signed out we report the projection, which is now US1's (empty).
       expect((await readFlagState(STAGING))?.overrides).toEqual({ 'dark-mode': override })
       expect((await readFlagState(US1))?.overrides).toEqual({})
-      expect((await readFlagState())?.overrides).toEqual({})
+    })
+
+    it('reports every stored override when signed out, even one the page has not reloaded away from', async () => {
+      await writeOverride('dark-mode', override, STAGING)
+      // Switching empties the projection, but the page keeps applying staging's until it reloads —
+      // so the signed-out notice must still offer to clear it.
+      await syncSiteOverrides(US1)
+
+      expect((await readFlagState())?.overrides).toEqual({ 'dark-mode': override })
     })
 
     it("stops one site's override from applying on another", async () => {

@@ -111,10 +111,10 @@ function DisconnectedOverridesNotice() {
       color="orange"
       w="100%"
       data-dd-privacy="mask"
-      title={`${count} override${count === 1 ? '' : 's'} active on this page`}
+      title={`${count} override${count === 1 ? '' : 's'} stored for this page`}
     >
       <Text size="xs">
-        These are stored in the page and keep applying while you are signed out. Sign in to review and remove them
+        These stay in the page and may still be applying while you are signed out. Sign in to review and remove them
         individually.
       </Text>
       <Group gap="xs" mt="xs">
