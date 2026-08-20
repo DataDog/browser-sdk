@@ -43,7 +43,7 @@ export function ConnectScreen({ auth }: { auth: FlagAuthState }) {
 
 /**
  * Surfaces overrides already stored on the inspected page while signed out, with a Clear all so they
- * can be wiped without signing in just for that.
+ * can be wiped without signing in.
  *
  * Mounted only while disconnected, so its navigation listeners never run alongside the connected
  * tab's own instance of this hook.
@@ -91,7 +91,7 @@ function DisconnectedOverridesNotice() {
     return (
       <Alert color="green" w="100%" title="Overrides cleared">
         <Group gap="xs">
-          <Text size="xs">Reload the page to stop applying them.</Text>
+          <Text size="xs">Please reload the page to stop applying them.</Text>
           <Button size="compact-xs" variant="light" color="green" onClick={reloadPage}>
             Reload page
           </Button>
