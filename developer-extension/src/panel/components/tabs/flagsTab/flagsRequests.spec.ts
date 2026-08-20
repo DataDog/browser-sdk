@@ -247,22 +247,35 @@ describe('flagsRequests', () => {
         return Promise.resolve(new Response(JSON.stringify({ data })))
       })
 
-      const flags = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a', 'missing', 'flag-b'])
+      const { flags, missingKeys } = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a', 'missing', 'flag-b'])
 
       expect(spy).toHaveBeenCalledTimes(3)
       const firstUrl = new URL(spy.calls.argsFor(0)[0] as string)
       expect(firstUrl.searchParams.get('key')).toBe('flag-a')
+      // Active-only: an archived flag sharing the key would win the dedupe and describe the override
+      // against the wrong type and variants.
       expect(firstUrl.searchParams.get('is_archived')).toBe('false')
       expect(flags.map((flag) => flag.key)).toEqual(['flag-a', 'flag-b'])
+      expect(missingKeys).toEqual(['missing'])
+    })
+
+    it('does not call a key missing when the response body has no data array', async () => {
+      // A 2xx that isn't the expected envelope (proxy interstitial, schema change) is tolerated so
+      // the section still renders, but it is not evidence the flag is gone.
+      spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response(JSON.stringify({ errors: ['x'] }))))
+
+      const { flags, missingKeys } = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a'])
+      expect(flags).toEqual([])
+      expect(missingKeys).toEqual([])
     })
 
     it('makes no request and returns nothing for an empty key list', async () => {
       const spy = spyOn(globalThis, 'fetch')
-      expect(await fetchFlagsByKeys('tok', 'datad0g.com', [])).toEqual([])
+      expect(await fetchFlagsByKeys('tok', 'datad0g.com', [])).toEqual({ flags: [], missingKeys: [] })
       expect(spy).not.toHaveBeenCalled()
     })
 
-    it('drops a key whose request fails but keeps the ones that resolve', async () => {
+    it('drops a key whose request fails, keeps the ones that resolve, and does not call it missing', async () => {
       spyOn(globalThis, 'fetch').and.callFake((input) => {
         const key = new URL(input as string).searchParams.get('key')
         if (key === 'boom') {
@@ -273,8 +286,9 @@ describe('flagsRequests', () => {
         )
       })
 
-      const flags = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a', 'boom', 'flag-b'])
+      const { flags, missingKeys } = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a', 'boom', 'flag-b'])
       expect(flags.map((flag) => flag.key)).toEqual(['flag-a', 'flag-b'])
+      expect(missingKeys).toEqual([])
     })
   })
 })

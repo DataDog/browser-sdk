@@ -46,13 +46,32 @@ export interface FlagSite {
  * The Datadog sites the Flags tab can connect to. A fixed list rather than a free-text host, so
  * there's no user-entered domain to validate against phishing.
  *
- * Trimmed to US1 + Staging while the prod OAuth client replicates to the other DCs; add them back
- * with the same subdomain scheme (US1/EU1 `app.`, staging `dd.`, regional sites as-is).
+ * Hosts follow the standard scheme: US1 and EU1 are served from `app.`, regional sites from their
+ * own subdomain, staging from `dd.`. Every non-staging site shares one prod OAuth client (see
+ * getClientId), which is replicated across the commercial DCs.
+ *
+ * FED (`ddog-gov.com`, `us2.ddog-gov.com`) is deliberately absent — GovCloud is a separate
+ * deployment and the client isn't registered there. Offering a site whose sign-in always fails is
+ * worse than omitting it.
  */
 export const FLAG_SITES: FlagSite[] = [
   { site: 'datadoghq.com', host: 'app.datadoghq.com', label: 'US1 (datadoghq.com)' },
+  { site: 'us3.datadoghq.com', host: 'us3.datadoghq.com', label: 'US3 (us3.datadoghq.com)' },
+  { site: 'us5.datadoghq.com', host: 'us5.datadoghq.com', label: 'US5 (us5.datadoghq.com)' },
+  { site: 'datadoghq.eu', host: 'app.datadoghq.eu', label: 'EU1 (datadoghq.eu)' },
+  { site: 'ap1.datadoghq.com', host: 'ap1.datadoghq.com', label: 'AP1 (ap1.datadoghq.com)' },
+  { site: 'ap2.datadoghq.com', host: 'ap2.datadoghq.com', label: 'AP2 (ap2.datadoghq.com)' },
   { site: 'datad0g.com', host: 'dd.datad0g.com', label: 'Staging (datad0g.com)' },
 ]
+
+/**
+ * The site's name without its host — "US1" rather than "US1 (datadoghq.com)" — for copy with no room
+ * for the full label. Falls back to the whole label, so a future entry without the host still reads.
+ */
+export function siteShortLabel(site: string): string {
+  const label = FLAG_SITES.find((entry) => entry.site === site)?.label ?? site
+  return label.split(' (')[0]
+}
 
 /**
  * Returns the frontend host serving OAuth + FFE for a site. Throws on an unknown site: the UI only

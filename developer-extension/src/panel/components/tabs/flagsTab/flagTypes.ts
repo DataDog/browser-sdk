@@ -96,8 +96,13 @@ export function validateOverrideValue(
   return null
 }
 
-/** Display label for a flag type, falling back to the raw type for one we don't model yet. */
+/**
+ * Display label for a flag type, falling back to the raw type for one we don't model yet. Always a
+ * string: sanitizeOverrides keeps a shaped-but-malformed override so it stays removable, so `type`
+ * can be a non-string, and returning that would crash the row rendering it. `label` is checked
+ * rather than `config` because a type named `toString` or `constructor` finds an inherited member.
+ */
 export function flagTypeLabel(type: FlagType): string {
   const config: FlagTypeConfig | undefined = FLAG_TYPE_CONFIG[type]
-  return config ? config.label : type
+  return typeof config?.label === 'string' ? config.label : String(type)
 }

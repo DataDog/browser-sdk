@@ -12,6 +12,8 @@ export interface CatalogFlag {
   tags: string[]
   /** Undefined for flags created by a service account or integration, which carry no user UUID. */
   createdBy?: string
+  /** Synthesized locally, never from the API: no active flag on the connected site holds this key. */
+  unresolved?: boolean
 }
 
 /**
@@ -113,42 +115,65 @@ export function fetchFlagCatalog(token: string, site: string, request: FlagCatal
   return fetchFlagPage(url, token, 'Failed to fetch flag catalog')
 }
 
+export interface FlagsByKeysResult {
+  flags: CatalogFlag[]
+  /** Keys whose lookup completed and matched nothing; a failed lookup is not in here. */
+  missingKeys: string[]
+}
+
 /**
  * Fetches a specific set of flags by exact key, one request per key (the endpoint's `key` filter is
  * exact and single-valued — there's no batched lookup). Used for the "Local overrides" section,
  * which must show overridden flags even when they're not on the current catalog page.
  *
  * Settles per key rather than Promise.all: one key failing transiently must not discard the flags
- * that did resolve, or the whole section collapses to bare fallback rows. Keys with no match
- * (deleted, or an override for a non-existent flag) are simply absent, and the caller falls back to
- * a minimal row. Error labels omit the key — it's customer data, kept out of logs.
+ * that did resolve, or the whole section collapses to bare fallback rows. Only a well-formed
+ * response that matched nothing counts as `missingKeys` — a failed request, or a 2xx whose body
+ * isn't the expected envelope, proves nothing. Error labels omit the key — it's customer data.
+ *
+ * Active-only for the same reason as the catalog: an archived and an active flag can share a key,
+ * and mapResources keeps whichever the server listed first, so including archived ones would risk
+ * describing the override against the wrong flag's type and variants. An override on a flag archived
+ * here therefore reads as absent, which the row reports as archived or deleted.
  */
-export async function fetchFlagsByKeys(token: string, site: string, keys: string[]): Promise<CatalogFlag[]> {
+export async function fetchFlagsByKeys(token: string, site: string, keys: string[]): Promise<FlagsByKeysResult> {
   const host = getFlagsApiHost(site)
   const results = await Promise.allSettled(
-    keys.map(async (key) => {
+    keys.map((key) => {
       const url = new URL(`https://${host}/api/ui/ffe/feature-flags`)
       url.searchParams.set('key', key)
       url.searchParams.set('is_archived', 'false')
-      const { flags } = await fetchFlagPage(url, token, 'Failed to fetch flag')
-      return flags
+      return fetchFlagPage(url, token, 'Failed to fetch flag')
     })
   )
-  return results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
+  const flags = results.flatMap((result) => (result.status === 'fulfilled' ? result.value.flags : []))
+  const foundKeys = new Set(flags.map((flag) => flag.key))
+  const missingKeys = keys.filter(
+    (key, index) => results[index].status === 'fulfilled' && results[index].value.wellFormed && !foundKeys.has(key)
+  )
+  return { flags, missingKeys }
 }
 
 /**
  * Shared request/response handling for both fetch functions: run the request, tolerate a response
  * that omits or mistypes `data`, and map its resources. `total` falls back to the resource count
  * when the server omits `meta.page.total` (a partial response, or the by-key lookup which sends no
- * pagination fields).
+ * pagination fields). `wellFormed` reports whether `data` was actually there, so a caller reading
+ * meaning into an empty result can tell a real no-match from a body we merely tolerated.
  */
-async function fetchFlagPage(url: URL, token: string, errorLabel: string): Promise<FlagCatalogPage> {
+async function fetchFlagPage(
+  url: URL,
+  token: string,
+  errorLabel: string
+): Promise<FlagCatalogPage & { wellFormed: boolean }> {
   const body = await fetchFfeJson<RawFeatureFlagsResponse>(url.toString(), token, errorLabel)
-  const resources = Array.isArray(body?.data) ? body.data : []
+  const data = body?.data
+  const wellFormed = Array.isArray(data)
+  const resources = wellFormed ? data : []
   return {
     flags: mapResources(resources),
     total: body?.meta?.page?.total ?? resources.length,
+    wellFormed,
   }
 }
 
