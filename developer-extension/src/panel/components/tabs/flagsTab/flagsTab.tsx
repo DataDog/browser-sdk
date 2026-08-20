@@ -70,9 +70,7 @@ function ConnectedFlagsTab({ auth }: { auth: FlagAuthState }) {
           <>
             <Alert color="orange" title="Reload to apply this site's overrides">
               <Group justify="space-between" wrap="nowrap">
-                <Text size="sm">
-                  You switched sites, so a different set of overrides applies now. Reload the page to pick them up.
-                </Text>
+                <Text size="sm">The page is still using the overrides it loaded with, not the ones listed below.</Text>
                 <Button
                   size="compact-xs"
                   color="orange"
