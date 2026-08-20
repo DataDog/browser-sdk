@@ -20,6 +20,47 @@
 
 ---
 
+## v7.9.0
+
+**Public Changes:**
+
+- ✨ [FFL-2857] Feature Flags tab — team filtering + token revocation (stacked PR 4 of 4) ([#4932](https://github.com/DataDog/browser-sdk/pull/4932))
+- ✨ add @datadog/js-core/sample sub-path with performDraw ([#4844](https://github.com/DataDog/browser-sdk/pull/4844))
+- ✨ Add plugin router version telemetry ([#4928](https://github.com/DataDog/browser-sdk/pull/4928))
+- ✨ [FFL-2596] Feature Flags tab — overrides (stacked PR 3 of 4) ([#4912](https://github.com/DataDog/browser-sdk/pull/4912))
+- ✨ [RUM-17934] support arbitrary custom url protocols in stack trace parsing ([#4930](https://github.com/DataDog/browser-sdk/pull/4930))
+- 🐛 Fix Shopify Custom Pixel actions being marked as background events, flatten ui_extension_errored context ([#4946](https://github.com/DataDog/browser-sdk/pull/4946))
+- 🐛 Report CDN bundles as CDN SDK setup ([#4934](https://github.com/DataDog/browser-sdk/pull/4934))
+- 📝 Fix propagateTraceBaggage TSDoc @defaultValue (false → true) ([#4933](https://github.com/DataDog/browser-sdk/pull/4933))
+- ⚗️ Add canvas recording init configuration ([#4947](https://github.com/DataDog/browser-sdk/pull/4947))
+
+**Internal Changes:**
+
+- 👷 Update dependency eslint-plugin-jsdoc to v64 ([#4953](https://github.com/DataDog/browser-sdk/pull/4953))
+- 👷 Update all non-major dependencies ([#4952](https://github.com/DataDog/browser-sdk/pull/4952))
+- 👷 Update all non-major dependencies ([#4935](https://github.com/DataDog/browser-sdk/pull/4935))
+- 👷 Update actions/stale action to v11 ([#4937](https://github.com/DataDog/browser-sdk/pull/4937))
+- 👷 Update dependency @playwright/test to v1.62.1 ([#4936](https://github.com/DataDog/browser-sdk/pull/4936))
+
+## v7.8.0
+
+**Public Changes:**
+
+- ✨ Use optional MatchHeader name to account for default headers ([#4825](https://github.com/DataDog/browser-sdk/pull/4825))
+- ✨ [FFL-2858] Feature Flags tab — catalog browsing (stacked PR 2 of 3) ([#4916](https://github.com/DataDog/browser-sdk/pull/4916))
+- ✨ [FFL-2597] Feature Flags tab — OAuth sign-in (stacked PR 1 of 3) ([#4913](https://github.com/DataDog/browser-sdk/pull/4913))
+- 🐛 Align session-ended WebSocket teardown with the latest view's end clocks ([#4911](https://github.com/DataDog/browser-sdk/pull/4911))
+
+**Internal Changes:**
+
+- 👷 Bump chrome to 151.0.7922.71-1 ([#4923](https://github.com/DataDog/browser-sdk/pull/4923))
+- 👷 Update all non-major dependencies ([#4894](https://github.com/DataDog/browser-sdk/pull/4894))
+- 👷 Update dependency react-router to v8.3.0 [SECURITY] ([#4917](https://github.com/DataDog/browser-sdk/pull/4917))
+- 👷 Update dependency eslint-plugin-unicorn to v72 ([#4915](https://github.com/DataDog/browser-sdk/pull/4915))
+- 👷 Update actions/setup-node action to v7 ([#4914](https://github.com/DataDog/browser-sdk/pull/4914))
+- 👷 Update dependency next to v16.2.11 [SECURITY] ([#4909](https://github.com/DataDog/browser-sdk/pull/4909))
+- ✅ Add Experience Cloud E2E tests ([#4925](https://github.com/DataDog/browser-sdk/pull/4925))
+
 ## v7.7.0
 
 **Public Changes:**

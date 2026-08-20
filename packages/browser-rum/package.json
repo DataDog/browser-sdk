@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum",
-  "version": "7.7.0",
+  "version": "7.9.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -16,17 +16,17 @@
     "!src/**/*.specHelper.ts"
   ],
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-rum.js",
-    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-rum.js",
+    "build": "node ../../scripts/build/build-package.ts --modules --worker-string --bundle datadog-rum.js",
+    "build:bundle": "node ../../scripts/build/build-package.ts --worker-string --bundle datadog-rum.js",
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.7.0",
-    "@datadog/browser-rum-core": "7.7.0",
-    "@datadog/js-core": "0.0.8"
+    "@datadog/browser-core": "7.9.0",
+    "@datadog/browser-rum-core": "7.9.0",
+    "@datadog/js-core": "0.0.10"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "7.7.0"
+    "@datadog/browser-logs": "7.9.0"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-logs": {
@@ -39,8 +39,8 @@
     "directory": "packages/browser-rum"
   },
   "devDependencies": {
-    "@datadog/browser-worker": "7.7.0",
-    "pako": "3.0.0"
+    "@datadog/browser-worker": "7.9.0",
+    "pako": "3.0.1"
   },
   "volta": {
     "extends": "../../package.json"

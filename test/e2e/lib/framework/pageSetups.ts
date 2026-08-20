@@ -37,6 +37,7 @@ export interface SetupOptions {
   callerLocation?: CallerLocation
   mockClock: boolean
   salesforceApp: SalesforceApp | undefined
+  shopifyApp: boolean
 }
 
 export interface CallerLocation {
@@ -310,8 +311,33 @@ const salesforceAppDirectories: Record<SalesforceApp, string> = {
   'experience-cloud-headmarkup': 'sf-experience-headmarkup-app',
 }
 
-// Salesforce apps don't serve a locally-generated page body; this factory only drives the
-// page-side setup needed to init RUM on the remote Salesforce page.
+// Salesforce and Shopify apps don't serve a locally-generated page body; this factory only
+// intercepts the remote bundle request and injects the RUM configuration read by the app's
+// own init snippet/component, via globals set on every new document
+async function interceptRemoteBundleAndConfigureRum(
+  page: Page,
+  urlPattern: RegExp,
+  resolveFilePath: (url: string) => string,
+  options: SetupOptions,
+  servers: Servers,
+  headers?: Record<string, string>
+): Promise<void> {
+  await page.route(urlPattern, async (route) => {
+    await route.fulfill({
+      body: await readFile(resolveFilePath(route.request().url())),
+      contentType: 'application/javascript',
+      headers,
+    })
+  })
+
+  if (options.rum) {
+    await page.addInitScript(
+      `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+      window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
+    )
+  }
+}
+
 export async function salesforceSetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
   if (!options.salesforceApp) {
     throw new Error('Salesforce app is not set')
@@ -321,12 +347,6 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
     __dirname,
     `../../../apps/${salesforceAppDirectory}/force-app/main/default/staticresources/datadog_rum_salesforce.js`
   )
-  await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/, async (route) => {
-    await route.fulfill({
-      body: await readFile(salesforceBundlePath),
-      contentType: 'application/javascript',
-    })
-  })
 
   if (options.salesforceApp === 'lwc') {
     const { accessToken, instanceUrl } = await getSalesforceLwcSession()
@@ -339,15 +359,42 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
     ])
   }
 
-  if (options.rum) {
-    // The LWC and standard Experience Cloud apps have a committed datadogInit LWC that reads
-    // these globals and calls DD_RUM.init. The Head Markup site reads the same globals from its
-    // configured head markup instead.
-    await page.addInitScript(
-      `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
-      window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
-    )
-  }
+  // The LWC and standard Experience Cloud apps have a committed datadogInit LWC that reads
+  // these globals and calls DD_RUM.init. The Head Markup site reads the same globals from its
+  // configured head markup instead. On experience-cloud, that component only runs when the
+  // page is loaded with init=true.
+  await interceptRemoteBundleAndConfigureRum(
+    page,
+    /\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/,
+    () => salesforceBundlePath,
+    options,
+    servers
+  )
+  return ''
+}
+
+// Matches the CDN URL used by the store's Theme Liquid snippet and Custom Pixel for the main
+// bundle and its dynamically-imported chunks (e.g. the session replay recorder), served from
+// `https://www.datadoghq-browser-agent.com/<site>/v<major>/[chunks/]<name->]datadog-rum-shopify.js`
+const SHOPIFY_ASSET_URL_PATTERN =
+  /datadoghq-browser-agent\.com\/[^/]+\/v\d+\/(chunks\/)?([\w-]*datadog-rum-shopify\.js)(?:[?#].*)?$/
+
+export async function shopifySetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
+  const shopifyBundleDir = resolve(__dirname, '../../../../packages/browser-rum-shopify/bundle')
+
+  await interceptRemoteBundleAndConfigureRum(
+    page,
+    SHOPIFY_ASSET_URL_PATTERN,
+    (url) => {
+      const [, chunksSegment, fileName] = SHOPIFY_ASSET_URL_PATTERN.exec(url) || []
+      return resolve(shopifyBundleDir, chunksSegment || '', fileName)
+    },
+    options,
+    servers,
+    // The snippets load the script with `crossOrigin = 'anonymous'`, so the browser enforces
+    // CORS on this response even though it never leaves the machine.
+    { 'access-control-allow-origin': '*' }
+  )
   return ''
 }
 

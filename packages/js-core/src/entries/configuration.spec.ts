@@ -69,6 +69,44 @@ describe('validateAndBuildConfiguration', () => {
     })
   })
 
+  describe('number fields', () => {
+    it('accepts finite numbers without bounds', () => {
+      const schema = { value: { type: 'number', required: true } } as const
+
+      expect(validateAndBuildConfiguration({ value: -42.5 }, schema, display)).toEqual({ value: -42.5 })
+    })
+
+    it('accepts finite numbers within inclusive bounds', () => {
+      const schema = { value: { type: 'number', min: 0, max: 5, required: true } } as const
+
+      expect(validateAndBuildConfiguration({ value: 0 }, schema, display)).toEqual({ value: 0 })
+      expect(validateAndBuildConfiguration({ value: 2.5 }, schema, display)).toEqual({ value: 2.5 })
+      expect(validateAndBuildConfiguration({ value: 5 }, schema, display)).toEqual({ value: 5 })
+    })
+
+    it('rejects non-finite numbers and values outside the bounds', () => {
+      const schema = { value: { type: 'number', min: 0, max: 5, default: 1 } } as const
+
+      ;[-1, 6, NaN, Infinity, '1'].forEach((value) => {
+        expect(validateAndBuildConfiguration({ value }, schema, display)).toBeUndefined()
+      })
+    })
+
+    it('uses the default when missing', () => {
+      const schema = { value: { type: 'number', default: 1 } } as const
+
+      expect(validateAndBuildConfiguration({}, schema, display)).toEqual({ value: 1 })
+    })
+
+    it('supports one-sided bounds', () => {
+      const minimumSchema = { value: { type: 'number', min: 0, required: true } } as const
+      const maximumSchema = { value: { type: 'number', max: 5, required: true } } as const
+
+      expect(validateAndBuildConfiguration({ value: -1 }, minimumSchema, display)).toBeUndefined()
+      expect(validateAndBuildConfiguration({ value: 6 }, maximumSchema, display)).toBeUndefined()
+    })
+  })
+
   describe('enum fields with allowAll', () => {
     const VALUES = ['a', 'b', 'c'] as const
     const schema = {
@@ -487,6 +525,30 @@ describe('validateAndBuildConfiguration', () => {
       const schema = { rate: { type: 'percentage' as const, default: 100 } }
       validateAndBuildConfiguration({ rate: 200 }, schema, display)
       expect(display.error).toHaveBeenCalledOnceWith('"rate" must be a number between 0 and 100')
+    })
+
+    it('reports the configured bounds for an invalid number', () => {
+      const schema = { value: { type: 'number' as const, min: 0, max: 5, default: 1 } }
+      validateAndBuildConfiguration({ value: 6 }, schema, display)
+      expect(display.error).toHaveBeenCalledOnceWith('"value" must be a number between 0 and 5')
+    })
+
+    it('reports a configured minimum for an invalid number', () => {
+      const schema = { value: { type: 'number' as const, min: 0 } }
+      validateAndBuildConfiguration({ value: -1 }, schema, display)
+      expect(display.error).toHaveBeenCalledOnceWith('"value" must be a number greater than or equal to 0')
+    })
+
+    it('reports a configured maximum for an invalid number', () => {
+      const schema = { value: { type: 'number' as const, max: 5 } }
+      validateAndBuildConfiguration({ value: 6 }, schema, display)
+      expect(display.error).toHaveBeenCalledOnceWith('"value" must be a number less than or equal to 5')
+    })
+
+    it('reports finite-number requirements for an unbounded number', () => {
+      const schema = { value: { type: 'number' as const } }
+      validateAndBuildConfiguration({ value: Infinity }, schema, display)
+      expect(display.error).toHaveBeenCalledOnceWith('"value" must be a finite number')
     })
 
     it('reports the right message for an invalid boolean', () => {

@@ -1,4 +1,4 @@
-// WebSocket translation proxy that lets a recent @playwright/test client (1.61) drive an
+// WebSocket translation proxy that lets a recent @playwright/test client (1.62) drive an
 // older `playwright run-server` (1.40). Two layers of translation:
 //
 // 1) HTTP upgrade — the 1.40 server's User-Agent version check rejects mismatched clients
@@ -10,7 +10,7 @@
 //
 // Patches were derived from a diff of the JSON-RPC protocol schema in packages/protocol/src
 // (`protocol.yml` up to v1.59.1, `channels.d.ts` from v1.60.0 onward — `protocol.yml` was
-// removed in 1.60) between v1.40.1 and v1.61.0 — only the divergences exercised by this
+// removed in 1.60) between v1.40.1 and v1.62.0 — only the divergences exercised by this
 // repo's e2e tests are translated.
 //
 // Usage: node pinnedProxy.ts --listen 5400 --upstream 127.0.0.1:5401
@@ -141,7 +141,7 @@ function forwardHeader(headers: http.IncomingHttpHeaders, name: string): Record<
   return typeof value === 'string' ? { [name]: value } : {}
 }
 
-// Server (1.40) -> Client (1.60). Returns one or more messages to forward to the client, or
+// Server (1.40) -> Client (1.62). Returns one or more messages to forward to the client, or
 // null to drop the upstream message. Returning multiple messages allows synthesising channels
 // that newer client schemas require but the older server doesn't emit (e.g. Debugger).
 function rewriteServerToClient(
@@ -244,7 +244,7 @@ function rewriteServerToClient(
   return [JSON.stringify(msg)]
 }
 
-// Client (1.60) -> Server (1.40)
+// Client (1.62) -> Server (1.40)
 function rewriteClientToServer(
   text: string,
   guidTypes: Map<string, string>,

@@ -1,18 +1,18 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "7.7.0",
+  "version": "7.9.0",
   "private": true,
   "scripts": {
     "build": "wxt build",
     "dev": "wxt"
   },
   "devDependencies": {
-    "@types/chrome": "0.2.2",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
+    "@types/chrome": "0.2.5",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
     "@wxt-dev/module-react": "1.2.2",
     "typescript": "6.0.3",
-    "vite": "8.1.3"
+    "vite": "8.2.1"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
@@ -20,13 +20,13 @@
     "@datadog/browser-rum": "workspace:*",
     "@datadog/browser-rum-core": "workspace:*",
     "@datadog/js-core": "workspace:*",
-    "@mantine/core": "9.4.1",
-    "@mantine/hooks": "9.4.1",
-    "@tabler/icons-react": "3.44.0",
+    "@mantine/core": "9.5.1",
+    "@mantine/hooks": "9.5.1",
+    "@tabler/icons-react": "3.46.0",
     "clsx": "2.1.1",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
-    "wxt": "0.20.27"
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "wxt": "0.21.3"
   },
   "volta": {
     "extends": "../package.json"

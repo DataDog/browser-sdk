@@ -93,6 +93,7 @@ function createStaticSandboxApp(): express.Application {
             entry: `${packagePath}/src/entries/main.ts`,
             filename:
               packageName === 'browser-worker' ? 'worker.js' : `${packageName.replace(/^browser-/, 'datadog-')}.js`,
+            includeWorkerString: packageName === 'browser-rum' || packageName === 'browser-rum-shopify',
           })
         ),
         { stats: 'minimal' }
@@ -131,6 +132,7 @@ function createReactApp(): express.Application {
           entry: `${sandboxPath}/react-app/main.tsx`,
           plugins: [new HtmlWebpackPlugin({ publicPath: '/react-app/' })],
           mode: 'development',
+          includeWorkerString: true,
         })
       ),
       { stats: 'minimal' }

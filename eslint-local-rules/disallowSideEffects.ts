@@ -52,6 +52,7 @@ const packagesWithoutSideEffect = new Set([
   '@datadog/js-core/util',
   '@datadog/js-core/monitor',
   '@datadog/js-core/transport',
+  '@datadog/js-core/sample',
   '@datadog/js-core/configuration',
   '@datadog/browser-core',
   '@datadog/browser-rum-core',

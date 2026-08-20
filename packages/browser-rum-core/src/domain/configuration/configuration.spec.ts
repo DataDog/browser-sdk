@@ -1,5 +1,11 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
+import {
+  addExperimentalFeatures,
+  DefaultPrivacyLevel,
+  display,
+  ExperimentalFeature,
+  TraceContextInjection,
+} from '@datadog/browser-core'
 import type {
   ExtractTelemetryConfiguration,
   CamelToSnakeCase,
@@ -322,6 +328,79 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('canvas recording', () => {
+    it('is disabled by default', () => {
+      const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
+
+      expect(configuration.sessionReplayCanvasRecording).toBeUndefined()
+    })
+
+    it('stays disabled when requested without the experimental feature', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        sessionReplayCanvasRecording: { enable: true },
+      })!
+
+      expect(configuration.sessionReplayCanvasRecording).toBeUndefined()
+    })
+
+    describe('when the experimental feature is enabled', () => {
+      beforeEach(() => {
+        addExperimentalFeatures([ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS])
+      })
+
+      it('uses one frame per second by default when enabled', () => {
+        const configuration = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionReplayCanvasRecording: { enable: true },
+        })!
+
+        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 1 })
+      })
+
+      it('uses the configured frame rate', () => {
+        const configuration = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
+        })!
+
+        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 2.5 })
+      })
+
+      it('preserves the configured frame rate when disabled', () => {
+        const configuration = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionReplayCanvasRecording: { enable: false, maxFramesPerSecond: 2.5 },
+        })!
+
+        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: false, maxFramesPerSecond: 2.5 })
+      })
+
+      it('rejects invalid canvas recording options', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: true as any,
+          })
+        ).toBeUndefined()
+        expect(displayErrorSpy).toHaveBeenCalledOnceWith('"sessionReplayCanvasRecording" is not a valid object')
+      })
+
+      it('requires the enable option', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: {} as any,
+          })
+        ).toBeUndefined()
+        expect(displayErrorSpy.calls.allArgs()).toEqual([
+          ['"enable" is required'],
+          ['"sessionReplayCanvasRecording" is not a valid object'],
+        ])
+      })
+    })
+  })
+
   describe('actionNameAttribute', () => {
     it('defaults to undefined', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.actionNameAttribute).toBeUndefined()
@@ -431,6 +510,42 @@ describe('validateAndBuildRumConfiguration', () => {
         expect(result).toEqual(DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })))
       })
 
+      it('accepts a MatchHeader without name for default headers', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{}],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{}])
+      })
+
+      it('preserves location when name is absent', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ location: 'response' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ location: 'response' }])
+      })
+
+      it('combines default header matcher with custom matchers in array order', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{}, { name: 'x-custom' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{}, { name: 'x-custom' }])
+      })
+
+      it('treats undefined name like absent name', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: undefined }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{}])
+      })
+
       it('accepts a MatchHeader with only name', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
@@ -518,21 +633,26 @@ describe('validateAndBuildRumConfiguration', () => {
         })!.trackResourceHeaders
 
         expect(result).toEqual([{ name: 'x-valid' }, { name: 'x-also-valid' }])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-          "trackResourceHeaders[1] should be a MatchHeader object with a 'name' property"
-        )
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[1] should be a MatchHeader object')
       })
 
-      it('warns and skips item without name', () => {
+      it('accepts a MatchHeader without name', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [{ url: 'https://example.com' } as any],
+          trackResourceHeaders: [{ url: 'https://example.com' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ url: 'https://example.com' }])
+      })
+
+      it('warns and skips item with invalid name', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 42 as any }],
         })!.trackResourceHeaders
 
         expect(result).toEqual([])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-          "trackResourceHeaders[0] should be a MatchHeader object with a 'name' property"
-        )
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[0].name should be a MatchOption')
       })
 
       it('warns and skips item with invalid url', () => {
@@ -831,6 +951,7 @@ describe('serializeRumConfiguration', () => {
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
+      sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -846,7 +967,7 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
-            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration'
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'sessionReplayCanvasRecording'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an

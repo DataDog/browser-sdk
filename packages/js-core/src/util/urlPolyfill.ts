@@ -1,9 +1,17 @@
 import type { GlobalObject } from './globalObject'
 import { globalObject } from './globalObject'
 
-/** Resolves a URL against the current page location, returning a normalized absolute URL string. */
+/**
+ * Resolves a URL, returning a normalized absolute URL string.
+ *
+ * Document-relative inputs are resolved against `document.baseURI` (the `<base href>`, defaulting to
+ * the document location) to match how the browser resolves relative request URLs — so the URL
+ * recorded for a fetch/XHR matches the one actually requested. Falls back to `location.href` in
+ * environments without a document (workers, SSR). Absolute and root-relative inputs ignore the base
+ * and are unaffected.
+ */
 export function normalizeUrl(url: string) {
-  return buildUrl(url, globalObject.location?.href).href
+  return buildUrl(url, globalObject.document?.baseURI ?? globalObject.location?.href).href
 }
 
 /** Returns true if the given string is a valid URL. */

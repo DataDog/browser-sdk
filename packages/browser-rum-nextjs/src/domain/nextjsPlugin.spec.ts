@@ -1,5 +1,7 @@
+import { globalObject } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
+import { appendElement } from '../../../browser-rum-core/test'
 import {
   nextjsPlugin,
   startNextjsView,
@@ -10,6 +12,10 @@ import {
 } from './nextjsPlugin'
 
 const INIT_CONFIGURATION = {} as RumInitConfiguration
+
+interface NextjsGlobalObject {
+  next?: { version?: string }
+}
 
 function createPublicApi() {
   const startViewSpy = jasmine.createSpy('startView')
@@ -25,8 +31,13 @@ function initPlugin() {
 
 describe('nextjsPlugin', () => {
   beforeEach(() => {
+    const nextjsGlobalObject = globalObject as NextjsGlobalObject
+    const originalNext = nextjsGlobalObject.next
+    nextjsGlobalObject.next = { version: '16.2.0' }
+
     registerCleanupTask(() => {
       resetNextjsPlugin()
+      nextjsGlobalObject.next = originalNext
     })
   })
 
@@ -38,6 +49,7 @@ describe('nextjsPlugin', () => {
         name: 'nextjs',
         onInit: jasmine.any(Function),
         onRumStart: jasmine.any(Function),
+        getConfigurationTelemetry: jasmine.any(Function),
       })
     )
   })
@@ -85,6 +97,32 @@ describe('nextjsPlugin', () => {
     startNextjsView('/other')
 
     expect(startViewSpy.calls.mostRecent().args[0]).toEqual({ name: '/other', url: undefined })
+  })
+
+  it('reports app-router when no __NEXT_DATA__ script is present', () => {
+    const { plugin } = initPlugin()
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({
+      router: true,
+      integrations: ['nextjs-v16', 'app-router'],
+    })
+  })
+
+  it('reports pages-router when a __NEXT_DATA__ script is present', () => {
+    appendElement('<script id="__NEXT_DATA__"></script>')
+
+    const { plugin } = initPlugin()
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({
+      router: true,
+      integrations: ['nextjs-v16', 'pages-router'],
+    })
+  })
+
+  it('does not return the router integration before onInit is called', () => {
+    const plugin = nextjsPlugin()
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, integrations: ['nextjs-v16'] })
   })
 
   describe('lifecycle subscribers', () => {

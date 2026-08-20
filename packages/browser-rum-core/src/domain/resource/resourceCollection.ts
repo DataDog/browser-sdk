@@ -1,5 +1,4 @@
 import {
-  addTelemetryDebug,
   createTaskQueue,
   display,
   generateUUID,
@@ -11,6 +10,7 @@ import {
   safeTruncate,
   setTimeout,
 } from '@datadog/browser-core'
+import type { MatchOption } from '@datadog/browser-core'
 import type { Duration } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks, toServerDuration } from '@datadog/js-core/time'
 import { combine } from '@datadog/js-core/util'
@@ -20,6 +20,7 @@ import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import type { NetworkHeaders, RawRumResourceEvent, ResourceRequest, ResourceResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { MatchHeader, RumConfiguration } from '../configuration'
+import { DEFAULT_TRACKED_RESOURCE_HEADERS } from '../configuration'
 import { startEventTracker } from '../eventTracker'
 import { extractRegexMatch } from '../extractRegexMatch'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -388,16 +389,15 @@ const FORBIDDEN_HEADER_PATTERN =
   /(token|cookie|secret|authorization|(api|secret|access|app).?key|(client|connecting|real).?ip|forwarded)/
 const MAX_HEADER_COUNT = 100
 const MAX_HEADER_VALUE_LENGTH = 128
+const defaultHeadersMatchOption: MatchOption = (headerName) =>
+  (DEFAULT_TRACKED_RESOURCE_HEADERS as readonly string[]).includes(headerName)
 
 function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {}
   let collectedHeaderCount = 0
-  let totalHeaderCount = 0
   let hasReachedMaxHeaderCount = false
 
   headers.forEach((value, name) => {
-    totalHeaderCount++
-
     if (collectedHeaderCount >= MAX_HEADER_COUNT) {
       if (!hasReachedMaxHeaderCount) {
         display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
@@ -413,7 +413,7 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
       return
     }
 
-    const matchHeader = matchers.find((m) => matchList([m.name], lowerName))
+    const matchHeader = matchers.find((m) => matchList([m.name ?? defaultHeadersMatchOption], lowerName))
     if (!matchHeader) {
       return
     }
@@ -428,25 +428,11 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
       display.warn(
         `Header "${lowerName}" value was truncated from ${capturedValue.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
       )
-      // monitor-until: 2026-07-23
-      addTelemetryDebug('Resource header value was truncated', {
-        header_name: lowerName,
-        original_length: capturedValue.length,
-        limit: MAX_HEADER_VALUE_LENGTH,
-      })
     }
 
     result[lowerName] = safeTruncate(capturedValue, MAX_HEADER_VALUE_LENGTH)
     collectedHeaderCount++
   })
-
-  if (hasReachedMaxHeaderCount) {
-    // monitor-until: 2026-07-23
-    addTelemetryDebug('Maximum number of resource headers reached', {
-      collectedHeaderCount,
-      totalHeaderCount,
-    })
-  }
 
   return collectedHeaderCount > 0 ? result : undefined
 }

@@ -19,11 +19,11 @@
     "prepack": "yarn build"
   },
   "devDependencies": {
-    "acorn": "8.17.0"
+    "acorn": "8.18.0"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.7.0",
-    "@datadog/js-core": "0.0.8"
+    "@datadog/browser-core": "7.9.0",
+    "@datadog/js-core": "0.0.10"
   },
   "repository": {
     "type": "git",

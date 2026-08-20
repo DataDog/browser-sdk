@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises'
-import { readFileSync, globSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import ts from 'typescript'
 import webpack from 'webpack'
@@ -7,7 +6,7 @@ import { build as tsdownBuild } from 'tsdown'
 import webpackBase from '../../webpack.base.ts'
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
-import { buildEnvKeys, getBuildEnvValue } from '../lib/buildEnv.ts'
+import { getBuildEnvDefines } from '../lib/buildEnv.ts'
 
 runMain(async () => {
   const { values } = parseArgs({
@@ -19,6 +18,10 @@ runMain(async () => {
         type: 'string',
         multiple: true,
       },
+      'worker-string': {
+        type: 'boolean',
+        default: false,
+      },
       verbose: {
         type: 'boolean',
         default: false,
@@ -28,12 +31,16 @@ runMain(async () => {
 
   if (values.modules) {
     printLog('Building modules...')
-    await buildModules({ verbose: values.verbose })
+    await buildModules({ verbose: values.verbose, includeWorkerString: values['worker-string'] })
   }
 
   if (values.bundle?.length) {
     printLog('Building bundle...')
-    await buildBundles({ bundles: values.bundle.map(parseBundleOption), verbose: values.verbose })
+    await buildBundles({
+      bundles: values.bundle.map(parseBundleOption),
+      verbose: values.verbose,
+      includeWorkerString: values['worker-string'],
+    })
   }
 
   printLog('Done.')
@@ -55,7 +62,15 @@ function parseBundleOption(bundle: string): Bundle {
   }
 }
 
-async function buildBundles({ bundles, verbose }: { bundles: Bundle[]; verbose: boolean }) {
+async function buildBundles({
+  bundles,
+  verbose,
+  includeWorkerString,
+}: {
+  bundles: Bundle[]
+  verbose: boolean
+  includeWorkerString: boolean
+}) {
   await fs.rm('./bundle', { recursive: true, force: true })
   await Promise.all(bundles.map(buildBundle))
 
@@ -66,6 +81,7 @@ async function buildBundles({ bundles, verbose }: { bundles: Bundle[]; verbose: 
           mode: 'production',
           entry,
           filename,
+          includeWorkerString,
         }),
         (error, stats) => {
           if (error) {
@@ -91,19 +107,7 @@ async function buildBundles({ bundles, verbose }: { bundles: Bundle[]; verbose: 
   }
 }
 
-// Returns only the build-env keys actually referenced in this package's sources. tsdown's `define`
-// is eager: every listed key is computed up front, for every package. WORKER_STRING reads (and may
-// rebuild) packages/browser-worker/bundle/worker.js, so computing it for packages that don't use it
-// makes them race against browser-worker's own concurrent rebuild. Filtering to referenced keys
-// mirrors webpack's lazy DefinePlugin.runtimeValue, so only browser-rum (the sole consumer) touches
-// the worker bundle.
-function referencedBuildEnvKeys() {
-  const files = globSync('./src/**/*.ts', { exclude: ['**/*.spec.*', '**/*.specHelper.*'] })
-  const content = files.map((file) => readFileSync(file, 'utf8')).join('\n')
-  return buildEnvKeys.filter((key) => content.includes(`__BUILD_ENV__${key}__`))
-}
-
-async function buildModules({ verbose }: { verbose: boolean }) {
+async function buildModules({ verbose, includeWorkerString }: { verbose: boolean; includeWorkerString: boolean }) {
   // Transpile the source with tsdown (Rolldown). We let TypeScript emit the declaration files (see
   // emitDeclarations) rather than tsdown, because Rolldown's declaration bundler restructures
   // modules in ways that break compatibility with older TypeScript versions (e.g. inline `type`
@@ -134,9 +138,10 @@ async function buildModules({ verbose }: { verbose: boolean }) {
     unbundle: true,
     dts: false,
     tsconfig: '../../tsconfig.base.json',
-    define: Object.fromEntries(
-      referencedBuildEnvKeys().map((key) => [`__BUILD_ENV__${key}__`, JSON.stringify(getBuildEnvValue(key))])
-    ),
+    define: getBuildEnvDefines({
+      setup: 'npm',
+      workerString: includeWorkerString,
+    }),
     sourcemap: true,
     logLevel: verbose ? 'info' : 'error',
   })

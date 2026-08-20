@@ -122,7 +122,7 @@ describe('initShopifyBindings', () => {
     expect(stopAction).toHaveBeenCalledWith('element-without-id', { type: 'click' })
   })
 
-  it('maps "ui_extension_errored" to addError with the extension context', () => {
+  it('maps "ui_extension_errored" to addError with the flattened extension context', () => {
     const { rumPublicApi, addError } = createFakeRumPublicApi()
     const { analytics, emit } = createFakeAnalytics()
 
@@ -138,18 +138,20 @@ describe('initShopifyBindings', () => {
           extensionName: 'my-extension',
           extensionTarget: 'purchase.checkout.block.render',
           type: 'RUNTIME',
+          appId: 'gid://shopify/App/1',
           appName: 'my-app',
+          appVersion: '1.2.3',
         },
       },
     })
 
     expect(addError).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Boom', stack: 'stack trace' }), {
-      extension: {
-        name: 'my-extension',
-        target: 'purchase.checkout.block.render',
-        type: 'RUNTIME',
-        appName: 'my-app',
-      },
+      extensionName: 'my-extension',
+      extensionTarget: 'purchase.checkout.block.render',
+      extensionErrorType: 'RUNTIME',
+      appId: 'gid://shopify/App/1',
+      appName: 'my-app',
+      appVersion: '1.2.3',
     })
   })
 })

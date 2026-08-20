@@ -33,6 +33,7 @@ export interface BrowserLog {
   message: string
   source: string
   timestamp: number
+  url?: string
 }
 
 const IGNORE_LOG_MESSAGES = [

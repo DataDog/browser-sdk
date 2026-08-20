@@ -5,7 +5,6 @@ import { browserSdkVersion } from './browserSdkVersion.ts'
 import { command } from './command.ts'
 
 type BuildMode = 'dev' | 'release' | 'canary'
-type SdkSetup = 'npm' | 'cdn'
 
 /**
  * Allows to define which sdk_version to send to the intake.
@@ -19,54 +18,46 @@ const BUILD_MODES: BuildMode[] = [
   'canary',
 ]
 
-/**
- * Allows to define which sdk setup to send to the telemetry.
- */
-const SDK_SETUPS: SdkSetup[] = ['npm', 'cdn']
-
 const WORKER_PATH = path.join(import.meta.dirname, '../../packages/browser-worker')
 
-const buildEnvCache = new Map<string, string>()
-
-type BuildEnvFactories = {
-  [K in 'SDK_VERSION' | 'SDK_SETUP' | 'WORKER_STRING']: () => string
-}
-
-const buildEnvFactories: BuildEnvFactories = {
-  SDK_VERSION: () => {
-    switch (getBuildMode()) {
-      case 'release':
-        return browserSdkVersion
-      case 'canary': {
-        const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
-        // TODO when tags would allow '+' characters
-        //  use build separator (+) instead of prerelease separator (-)
-        return `${browserSdkVersion}-${commitSha1}`
-      }
-      default:
-        return 'dev'
-    }
-  },
-  SDK_SETUP: () => getSdkSetup(),
-  WORKER_STRING: () => {
-    if (needsWorkerRebuild()) {
-      command`yarn build`.withCurrentWorkingDirectory(WORKER_PATH).run()
-    }
-    return fs.readFileSync(path.join(WORKER_PATH, 'bundle/worker.js'), {
-      encoding: 'utf-8',
-    })
-  },
-}
-
-export const buildEnvKeys = Object.keys(buildEnvFactories) as Array<keyof BuildEnvFactories>
-
-export function getBuildEnvValue(key: keyof BuildEnvFactories): string {
-  let value = buildEnvCache.get(key)
-  if (!value) {
-    value = buildEnvFactories[key]()
-    buildEnvCache.set(key, value)
+export function getBuildEnvDefines({
+  setup,
+  version = getBuildEnvSdkVersion(),
+  workerString = false,
+}: {
+  setup: 'npm' | 'cdn'
+  version?: string
+  workerString?: boolean
+}): Record<string, string> {
+  return {
+    __BUILD_ENV__SDK_VERSION__: JSON.stringify(version),
+    __BUILD_ENV__SDK_SETUP__: JSON.stringify(setup),
+    ...(workerString && { __BUILD_ENV__WORKER_STRING__: JSON.stringify(getWorkerString()) }),
   }
-  return value
+}
+
+export function getBuildEnvSdkVersion(): string {
+  switch (getBuildMode()) {
+    case 'release':
+      return browserSdkVersion
+    case 'canary': {
+      const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
+      // TODO when tags would allow '+' characters
+      //  use build separator (+) instead of prerelease separator (-)
+      return `${browserSdkVersion}-${commitSha1}`
+    }
+    default:
+      return 'dev'
+  }
+}
+
+function getWorkerString(): string {
+  if (needsWorkerRebuild()) {
+    command`yarn build`.withCurrentWorkingDirectory(WORKER_PATH).run()
+  }
+  return fs.readFileSync(path.join(WORKER_PATH, 'bundle/worker.js'), {
+    encoding: 'utf-8',
+  })
 }
 
 function getBuildMode(): BuildMode {
@@ -77,17 +68,6 @@ function getBuildMode(): BuildMode {
     return process.env.BUILD_MODE as BuildMode
   }
   console.log(`Invalid build mode "${process.env.BUILD_MODE}". Possible build modes are: ${BUILD_MODES.join(', ')}`)
-  process.exit(1)
-}
-
-function getSdkSetup(): SdkSetup {
-  if (!process.env.SDK_SETUP) {
-    return SDK_SETUPS[0] // npm
-  }
-  if (SDK_SETUPS.includes(process.env.SDK_SETUP as SdkSetup)) {
-    return process.env.SDK_SETUP as SdkSetup
-  }
-  console.log(`Invalid SDK setup "${process.env.SDK_SETUP}". Possible SDK setups are: ${SDK_SETUPS.join(', ')}`)
   process.exit(1)
 }
 
