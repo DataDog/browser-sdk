@@ -54,6 +54,7 @@ export default defineConfig(
       'test/apps/nuxt-vue-router-v4-app',
       'test/apps/sf-lwc-app/force-app/main/default/staticresources/*.js',
       'test/apps/sf-experience-app/force-app/main/default/staticresources/*.js',
+      'test/apps/sf-experience-headmarkup-app/force-app/main/default/staticresources/*.js',
       'sandbox',
       'coverage',
       '.yarn',
@@ -464,6 +465,7 @@ export default defineConfig(
     files: [
       'test/apps/sf-lwc-app/force-app/main/default/lwc/**/*.js',
       'test/apps/sf-experience-app/force-app/main/default/lwc/**/*.js',
+      'test/apps/sf-experience-headmarkup-app/force-app/main/default/lwc/**/*.js',
     ],
     languageOptions: {
       globals: globals.browser,

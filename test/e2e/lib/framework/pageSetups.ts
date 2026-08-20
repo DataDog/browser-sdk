@@ -305,6 +305,12 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
+const salesforceAppDirectories: Record<SalesforceApp, string> = {
+  lwc: 'sf-lwc-app',
+  'experience-cloud': 'sf-experience-app',
+  'experience-cloud-headmarkup': 'sf-experience-headmarkup-app',
+}
+
 // Salesforce and Shopify apps don't serve a locally-generated page body; this factory only
 // intercepts the remote bundle request and injects the RUM configuration read by the app's
 // own init snippet/component, via globals set on every new document
@@ -333,7 +339,10 @@ async function interceptRemoteBundleAndConfigureRum(
 }
 
 export async function salesforceSetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
-  const salesforceAppDirectory = options.salesforceApp === 'experience-cloud' ? 'sf-experience-app' : 'sf-lwc-app'
+  if (!options.salesforceApp) {
+    throw new Error('Salesforce app is not set')
+  }
+  const salesforceAppDirectory = salesforceAppDirectories[options.salesforceApp]
   const salesforceBundlePath = resolve(
     __dirname,
     `../../../apps/${salesforceAppDirectory}/force-app/main/default/staticresources/datadog_rum_salesforce.js`
@@ -350,9 +359,10 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
     ])
   }
 
-  // Both sf-lwc-app and sf-experience-app have a committed datadogInit LWC that reads the
-  // injected globals and calls DD_RUM.init. On experience-cloud, that component only runs
-  // when the page is loaded with init=true.
+  // The LWC and standard Experience Cloud apps have a committed datadogInit LWC that reads
+  // these globals and calls DD_RUM.init. The Head Markup site reads the same globals from its
+  // configured head markup instead. On experience-cloud, that component only runs when the
+  // page is loaded with init=true.
   await interceptRemoteBundleAndConfigureRum(
     page,
     /\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/,
