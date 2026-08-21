@@ -4,20 +4,7 @@ import type { Tracker } from './tracker.types'
 
 export type MarkCanvasDirty = (canvas: HTMLCanvasElement) => void
 
-type Canvas2DDrawingMethod =
-  | 'clearRect'
-  | 'fillRect'
-  | 'strokeRect'
-  | 'fill'
-  | 'stroke'
-  | 'fillText'
-  | 'strokeText'
-  | 'drawImage'
-  | 'putImageData'
-  | 'drawFocusIfNeeded'
-  | 'reset'
-
-const CANVAS_2D_DRAWING_METHODS: readonly Canvas2DDrawingMethod[] = [
+const CANVAS_2D_DRAWING_METHODS = [
   'clearRect',
   'fillRect',
   'strokeRect',
@@ -29,7 +16,7 @@ const CANVAS_2D_DRAWING_METHODS: readonly Canvas2DDrawingMethod[] = [
   'putImageData',
   'drawFocusIfNeeded',
   'reset',
-]
+] as const
 
 export function trackCanvasContent(scope: RecordingScope): Tracker {
   if (
