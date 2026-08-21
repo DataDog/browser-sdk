@@ -1,3 +1,4 @@
+import { isWorkerEnvironment } from '@datadog/js-core/util'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
@@ -23,7 +24,6 @@ import {
   startTelemetry,
   TelemetryService,
   mockable,
-  isWorkerEnvironment,
   startTelemetrySessionContext,
   addTelemetryDebug,
   setAllowUntrustedEvents,

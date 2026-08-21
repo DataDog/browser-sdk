@@ -1,5 +1,5 @@
+import type { NetworkInformation } from '@datadog/js-core/util'
 import { registerCleanupTask } from '../registerCleanupTask'
-import type { NetworkInformation } from '../../src'
 
 export function setNavigatorOnLine(onLine: boolean) {
   Object.defineProperty(navigator, 'onLine', {

@@ -1,4 +1,5 @@
-import { defineGlobal, globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
+import { defineGlobal } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { datadogRum } from './salesforce'

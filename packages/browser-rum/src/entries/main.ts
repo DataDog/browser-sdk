@@ -6,8 +6,9 @@
  * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
 
+import { globalObject } from '@datadog/js-core/util'
 // Keep the following in sync with packages/browser-rum-slim/src/entries/main.ts
-import { defineGlobal, globalObject } from '@datadog/browser-core'
+import { defineGlobal } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'

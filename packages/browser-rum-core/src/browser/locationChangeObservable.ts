@@ -1,7 +1,7 @@
+import { globalObject } from '@datadog/js-core/util'
 import {
   addEventListener,
   DOM_EVENT,
-  globalObject,
   instrumentMethod,
   mockable,
   Observable,

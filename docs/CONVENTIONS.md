@@ -94,7 +94,7 @@ Avoid polluting browser context or conflicting with customer own polyfills.
 
 ## Global object access
 
-Use `globalObject` from `@datadog/browser-core` instead of `window` or `globalThis`. It is typed
+Use `globalObject` from `@datadog/js-core/util` instead of `window` or `globalThis`. It is typed
 as `GlobalObject`, a custom interface that marks browser APIs as optional when they are not
 available in all supported browsers or execution contexts (e.g. Web Workers). This makes
 availability checks explicit and type-safe.
@@ -111,7 +111,7 @@ availability checks explicit and type-safe.
 - **OK** to use `globalObject`
 
   ```typescript
-  import { globalObject } from '@datadog/browser-core'
+  import { globalObject } from '@datadog/js-core/util'
 
   globalObject.navigator.locks?.request('my-lock', doWork)
   globalObject.cookieStore?.get('my-cookie')
