@@ -220,7 +220,7 @@ function newView(
   const contextManager = createContextManager()
 
   let sessionIsActive = true
-  let name = viewOptions?.name
+  let name = sanitizeViewName(viewOptions?.name)
   const service = viewOptions?.service || configuration.service
   const version = viewOptions?.version || configuration.version
   const context = viewOptions?.context
@@ -376,10 +376,21 @@ function newView(
     },
     setLoadingTime,
     setViewName(updatedName: string) {
-      name = updatedName
+      name = sanitizeViewName(updatedName)
       triggerViewUpdate()
     },
   }
+}
+
+function sanitizeViewName(name: unknown): string | undefined {
+  if (name === undefined) {
+    return undefined
+  }
+  if (typeof name !== 'string') {
+    display.warn(`Invalid view name provided (expected a string, got ${typeof name}). Ignoring.`)
+    return undefined
+  }
+  return name
 }
 
 /**
