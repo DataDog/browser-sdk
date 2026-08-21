@@ -387,6 +387,7 @@ export default defineConfig(
       'local-rules/enforce-monitor-until-comment': 'error',
       'local-rules/monitor-until-comment-expired': MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL,
       'local-rules/disallow-side-effects': 'error',
+      'local-rules/disallow-re-exports-from-other-packages': ['error', { allowEntryFiles: ['**/entries/**/*.ts'] }],
       'local-rules/disallow-zone-js-patched-values': 'error',
       'local-rules/disallow-url-constructor-patched-values': 'error',
       'no-restricted-syntax': [
