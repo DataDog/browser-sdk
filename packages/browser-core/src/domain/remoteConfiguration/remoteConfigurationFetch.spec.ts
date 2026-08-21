@@ -1,0 +1,77 @@
+import { interceptRequests } from '@datadog/browser-core/test'
+import { fetchRemoteConfiguration } from './remoteConfigurationFetch'
+
+describe('fetchRemoteConfiguration', () => {
+  const options = { site: 'datadoghq.com', remoteConfigurationId: 'test-id' }
+  let interceptor: ReturnType<typeof interceptRequests>
+
+  beforeEach(() => {
+    interceptor = interceptRequests()
+  })
+
+  it('returns ok:true with the parsed config on success', async () => {
+    const config = { rum: { applicationId: 'abc', sessionSampleRate: 50 } }
+    interceptor.withFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(config),
+      })
+    )
+
+    const result = await fetchRemoteConfiguration(options)
+    expect(result).toEqual({ ok: true, value: config })
+  })
+
+  it('returns ok:false on HTTP error (non-ok response)', async () => {
+    interceptor.withFetch(() => Promise.resolve({ ok: false, status: 404 }))
+
+    const result = await fetchRemoteConfiguration(options)
+    expect(result.ok).toBeFalse()
+    expect((result as { ok: false; error: Error }).error).toBeInstanceOf(Error)
+  })
+
+  it('returns ok:false on network failure (fetch throws)', async () => {
+    interceptor.withFetch(() => Promise.reject(new Error('Network error')))
+
+    const result = await fetchRemoteConfiguration(options)
+    expect(result.ok).toBeFalse()
+    expect((result as { ok: false; error: Error }).error).toBeInstanceOf(Error)
+  })
+
+  it('returns ok:false when response body is not valid JSON', async () => {
+    interceptor.withFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+      })
+    )
+
+    const result = await fetchRemoteConfiguration(options)
+    expect(result.ok).toBeFalse()
+    expect((result as { ok: false; error: Error }).error).toBeInstanceOf(Error)
+  })
+
+  it('removes the window registry entry after all fetches settle', async () => {
+    const config = { rum: { applicationId: 'abc', sessionSampleRate: 50 } }
+    interceptor.withFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve(config) }))
+
+    await fetchRemoteConfiguration(options)
+
+    expect((window as unknown as Record<string, unknown>).__ddRcInflight).toBeUndefined()
+  })
+
+  it('deduplicates concurrent calls for the same endpoint', async () => {
+    let fetchCount = 0
+    const config = { rum: { applicationId: 'abc', sessionSampleRate: 50 } }
+    interceptor.withFetch(() => {
+      fetchCount++
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(config) })
+    })
+
+    const [result1, result2] = await Promise.all([fetchRemoteConfiguration(options), fetchRemoteConfiguration(options)])
+
+    expect(fetchCount).toBe(1)
+    expect(result1).toEqual({ ok: true, value: config })
+    expect(result2).toEqual({ ok: true, value: config })
+  })
+})
