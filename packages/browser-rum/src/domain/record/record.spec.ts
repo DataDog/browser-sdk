@@ -73,6 +73,38 @@ describe('record', () => {
     ])
   })
 
+  describe('canvas mutation tracking', () => {
+    it('instruments canvas drawing when canvas recording is enabled', () => {
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording({ sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 1 } })
+
+      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).not.toBe(
+        originalFillRect
+      )
+    })
+
+    it('does not instrument canvas drawing when canvas recording is disabled', () => {
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording()
+
+      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
+        originalFillRect
+      )
+    })
+
+    it('does not instrument canvas drawing when the maximum frame rate is zero', () => {
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording({ sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 0 } })
+
+      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
+        originalFillRect
+      )
+    })
+  })
+
   it('flushes pending mutation records before taking a full snapshot', async () => {
     startRecording()
 
@@ -374,12 +406,12 @@ describe('record', () => {
     })
   })
 
-  function startRecording() {
+  function startRecording(configuration: Partial<RumConfiguration> = {}) {
     lifeCycle = new LifeCycle()
     recordApi = record({
       emitRecord: emitSpy,
       emitStats: noop,
-      configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
+      configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW, ...configuration } as RumConfiguration,
       lifeCycle,
       viewHistory: {
         findView: () => ({ id: FAKE_VIEW_ID, startClocks: {} }),
