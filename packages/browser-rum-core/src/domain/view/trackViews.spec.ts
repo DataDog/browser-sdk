@@ -1,6 +1,6 @@
 import type { RelativeTime, Duration, ClocksState } from '@datadog/js-core/time'
 import { timeStampNow, relativeToClocks, relativeNow } from '@datadog/js-core/time'
-import { PageExitReason, display } from '@datadog/browser-core'
+import { PageExitReason, display, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
@@ -625,6 +625,116 @@ describe('view metrics', () => {
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
         expect(initialView.last.commonViewMetrics.loadingTime).toEqual(jasmine.any(Number))
       })
+    })
+  })
+
+  describe('route change view metrics (soft navigation)', () => {
+    function getLatestUpdateForView(
+      viewId: string,
+      getViewUpdate: (index: number) => ViewEvent,
+      getViewUpdateCount: () => number
+    ) {
+      for (let i = getViewUpdateCount() - 1; i >= 0; i--) {
+        if (getViewUpdate(i).id === viewId) {
+          return getViewUpdate(i)
+        }
+      }
+      return undefined
+    }
+
+    it('does not track LCP for route_change views when the experimental feature is disabled', () => {
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = setupViewTest()
+      startView()
+      clock.tick(0)
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, {
+          interactionId: 7,
+          getLargestInteractionContentfulPaint: () =>
+            createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
+              interactionId: 7,
+              largestContentfulPaint: createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT),
+            }),
+        }),
+      ])
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      const routeChangeViewId = getViewCreate(getViewCreateCount() - 1).id
+      const routeChangeUpdate = getLatestUpdateForView(routeChangeViewId, getViewUpdate, getViewUpdateCount)!
+      expect(routeChangeUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+      expect(routeChangeUpdate.initialViewMetrics).toEqual({})
+    })
+
+    it('tracks LCP for route_change views when the experimental feature is enabled and the browser supports it', () => {
+      addExperimentalFeatures([ExperimentalFeature.SOFT_NAVIGATION])
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = setupViewTest()
+      startView()
+      clock.tick(0)
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, {
+          startTime: clock.relative(0),
+          interactionId: 7,
+          getLargestInteractionContentfulPaint: () =>
+            createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
+              interactionId: 7,
+              largestContentfulPaint: createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+                startTime: clock.relative(200),
+                size: 100,
+              }),
+            }),
+        }),
+      ])
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      const routeChangeViewId = getViewCreate(getViewCreateCount() - 1).id
+      const routeChangeUpdate = getLatestUpdateForView(routeChangeViewId, getViewUpdate, getViewUpdateCount)!
+      expect(routeChangeUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+      expect(routeChangeUpdate.initialViewMetrics.largestContentfulPaint?.value).toBe(200 as RelativeTime)
+    })
+
+    it('does not track LCP for route_change views when the browser does not support the soft navigation API', () => {
+      addExperimentalFeatures([ExperimentalFeature.SOFT_NAVIGATION])
+      // Remove soft_navigation from the mocked supported entry types to simulate unsupported browser
+      ;(window.PerformanceObserver as any).supportedEntryTypes = [RumPerformanceEntryType.RESOURCE]
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = setupViewTest()
+      startView()
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      const routeChangeViewId = getViewCreate(getViewCreateCount() - 1).id
+      const routeChangeUpdate = getLatestUpdateForView(routeChangeViewId, getViewUpdate, getViewUpdateCount)!
+      expect(routeChangeUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+      expect(routeChangeUpdate.initialViewMetrics).toEqual({})
+    })
+
+    it("does not let a later route_change view steal an earlier, already-ended view's soft-navigation entry", () => {
+      addExperimentalFeatures([ExperimentalFeature.SOFT_NAVIGATION])
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, startView } = setupViewTest()
+
+      // First route change: no soft-navigation entry ever fires for it (e.g. a programmatic pushState).
+      startView()
+      clock.tick(0)
+      const firstRouteChangeViewId = getViewCreate(1).id
+
+      // Second route change starts (ending the first view) and its interaction produces a soft nav.
+      startView()
+      clock.tick(0)
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, {
+          interactionId: 42,
+          getLargestInteractionContentfulPaint: () =>
+            createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
+              interactionId: 42,
+              largestContentfulPaint: createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+                size: 100,
+              }),
+            }),
+        }),
+      ])
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      const latestUpdateForFirstView = getLatestUpdateForView(firstRouteChangeViewId, getViewUpdate, getViewUpdateCount)
+      expect(latestUpdateForFirstView!.initialViewMetrics).toEqual({})
     })
   })
 })
