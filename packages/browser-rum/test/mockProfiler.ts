@@ -1,6 +1,6 @@
+import { globalObject } from '@datadog/js-core/util'
+import type { ProfilerTrace, ProfilerInitOptions } from '@datadog/js-core/util'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { globalObject } from '@datadog/browser-core'
-import type { ProfilerTrace, ProfilerInitOptions } from '@datadog/browser-core'
 
 export function mockProfiler(mockedTrace: ProfilerTrace) {
   // Save original Profiler class to restore it during cleanup.

@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '@datadog/js-core/transport'
-import { DOCS_TROUBLESHOOTING, MORE_DETAILS, display } from '../tools/display'
+import { MORE_DETAILS } from '@datadog/js-core/util'
+import { DOCS_TROUBLESHOOTING, display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason, createPageMayExitObservable } from '../browser/pageMayExitObservable'

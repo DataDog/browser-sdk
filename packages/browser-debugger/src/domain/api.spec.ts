@@ -1,4 +1,4 @@
-import { globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
 import { display } from './display'

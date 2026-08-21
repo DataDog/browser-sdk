@@ -1,5 +1,7 @@
+import { globalObject } from '@datadog/js-core/util'
+import type { Profiler } from '@datadog/js-core/util'
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
-import type { SessionManager, Profiler, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
+import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
   canUseEventBridge,
@@ -8,7 +10,6 @@ import {
   DOM_EVENT,
   monitorError,
   display,
-  globalObject,
   mockable,
   isSampled,
   correctedChildSampleRate,
