@@ -51,6 +51,28 @@ runBasePluginErrorTests(
 )
 
 test.describe('plugin: nextjs', () => {
+  createTest('should not create a view for a discarded App Router render')
+    .withRum()
+    .withBasePath('/?discard-nextjs-render')
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+      await page.waitForSelector('[data-testid="discarded-render-probe-ready"]', { state: 'attached' })
+
+      await flushEvents()
+
+      const homeViewEvents = intakeRegistry.rumViewEvents.filter((event) => event.view.name === '/')
+      expect(homeViewEvents.length).toBeGreaterThan(0)
+
+      const homeViewId = homeViewEvents[0].view.id
+      expect(homeViewEvents.every((event) => event.view.id === homeViewId)).toBe(true)
+
+      withBrowserLogs((logs) => {
+        const errors = logs.filter((log) => log.level === 'error')
+        expect(errors).toHaveLength(1)
+        expect(errors[0].message).toContain('Minified React error #418')
+      })
+    })
+
   createTest('should not be affected by parallel routes')
     .withRum()
     .withNextjsApp('app')
