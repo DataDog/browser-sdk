@@ -1,12 +1,15 @@
 import type { Duration, ServerDuration } from '@datadog/js-core/time'
-import { ResourceType } from '@datadog/browser-core'
+import { Observable, ResourceType } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import { collectAndValidateRawRumEvents } from '../../../test'
+import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumResourceEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import { type RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
+import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { startEventTracker } from '../eventTracker'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import type { PageActivityEvent } from '../waitPageActivityEnd'
+import { createPageActivityObservable } from '../waitPageActivityEnd'
 import type { ManualResourceData } from './trackManualResources'
 import { trackManualResources } from './trackManualResources'
 
@@ -182,6 +185,48 @@ describe('trackManualResources', () => {
 
       expect(rawRumEvents).toHaveSize(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/data')
+    })
+  })
+
+  describe('pending activity tracking', () => {
+    it('notifies REQUEST_STARTED when a manual resource starts and REQUEST_COMPLETED when it stops', () => {
+      const startedSpy = jasmine.createSpy('started')
+      const completedSpy = jasmine.createSpy('completed')
+      lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startedSpy)
+      lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completedSpy)
+
+      startResource('my-channel')
+      expect(startedSpy).toHaveBeenCalledTimes(1)
+      expect(startedSpy.calls.argsFor(0)[0].url).toBe('my-channel')
+      expect(typeof startedSpy.calls.argsFor(0)[0].requestIndex).toBe('number')
+
+      clock.tick(42)
+      stopResource('my-channel')
+      expect(completedSpy).toHaveBeenCalledTimes(1)
+      const completedArg = completedSpy.calls.argsFor(0)[0]
+      expect(completedArg.requestIndex).toBe(startedSpy.calls.argsFor(0)[0].requestIndex)
+      expect(completedArg.duration).toBe(42)
+    })
+
+    it('holds page activity busy while a manual resource is in flight', () => {
+      const domMutationObservable = new Observable<RumMutationRecord[]>()
+      const windowOpenObservable = new Observable<void>()
+      const pageActivityObservable = createPageActivityObservable(
+        lifeCycle,
+        domMutationObservable,
+        windowOpenObservable,
+        mockRumConfiguration()
+      )
+      const events: PageActivityEvent[] = []
+      const subscription = pageActivityObservable.subscribe((event) => events.push(event))
+
+      startResource('my-channel')
+      expect(events).toEqual([{ isBusy: true }])
+
+      stopResource('my-channel')
+      expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
+
+      subscription.unsubscribe()
     })
   })
 })
