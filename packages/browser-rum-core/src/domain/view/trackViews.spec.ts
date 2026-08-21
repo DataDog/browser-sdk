@@ -1254,29 +1254,6 @@ describe('view event count', () => {
       setViewName('foo')
       expect(getViewUpdate(3).name).toEqual('foo')
     })
-
-    it('should ignore a non-string view name passed to setViewName and warn', () => {
-      const displaySpy = spyOn(display, 'warn')
-      viewTest = setupViewTest({ lifeCycle })
-
-      const { getViewUpdate, startView, setViewName } = viewTest
-
-      startView({ name: 'initial view name' })
-      setViewName({ foo: 'bar' } as any)
-      expect(getViewUpdate(3).name).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalled()
-    })
-
-    it('should ignore a non-string initial view name and warn', () => {
-      const displaySpy = spyOn(display, 'warn')
-      viewTest = setupViewTest({ lifeCycle })
-
-      const { getViewUpdate, startView } = viewTest
-
-      startView({ name: { foo: 'bar' } } as any)
-      expect(getViewUpdate(0).name).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalled()
-    })
   })
 })
 

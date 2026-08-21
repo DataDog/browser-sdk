@@ -733,13 +733,9 @@ export function makeRumPublicApi(
       const sanitizedOptions = typeof options === 'object' ? options : { name: options }
       strategy.startView({
         ...sanitizedOptions,
-        ...('name' in sanitizedOptions && { name: sanitizeStringOption(sanitizedOptions.name, 'view name') }),
-        ...(sanitizedOptions.service !== undefined && {
-          service: sanitizeStringOption(sanitizedOptions.service, 'view service'),
-        }),
-        ...(sanitizedOptions.version !== undefined && {
-          version: sanitizeStringOption(sanitizedOptions.version, 'view version'),
-        }),
+        name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
+        service: sanitizeStringOption(sanitizedOptions.service, 'view service'),
+        version: sanitizeStringOption(sanitizedOptions.version, 'view version'),
         handlingStack,
       })
       addTelemetryUsage({ feature: 'start-view' })
