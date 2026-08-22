@@ -7,7 +7,7 @@
     "dev": "wxt"
   },
   "devDependencies": {
-    "@types/chrome": "0.2.5",
+    "@types/chrome": "0.2.6",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@wxt-dev/module-react": "1.2.2",
@@ -26,7 +26,7 @@
     "clsx": "2.1.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "wxt": "0.21.3"
+    "wxt": "0.21.4"
   },
   "volta": {
     "extends": "../package.json"
