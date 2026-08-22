@@ -1,12 +1,6 @@
 import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import { ConsoleApiName } from '@datadog/js-core/util'
-import {
-  serializeConfiguration,
-  catchUserErrors,
-  display,
-  RawReportType,
-  BROWSER_CORE_SCHEMA,
-} from '@datadog/browser-core'
+import { serializeConfiguration, display, RawReportType, BROWSER_CORE_SCHEMA } from '@datadog/browser-core'
 import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { InferredConfig } from '@datadog/js-core/configuration'
 import type { LogsEvent } from '../logsEvent.types'
@@ -78,9 +72,9 @@ export interface LogsInitConfiguration extends InitConfiguration {
  *
  * @param event - The log event
  * @param context - The log event domain context
- * @returns true if the event should be sent to Datadog, false otherwise
+ * @returns true if the event should be sent to Datadog, false otherwise. The result can be returned asynchronously.
  */
-export type LogsBeforeSend = (event: LogsEvent, context: LogsEventDomainContext) => boolean
+export type LogsBeforeSend = (event: LogsEvent, context: LogsEventDomainContext) => boolean | Promise<boolean>
 
 export const LOGS_SCHEMA = {
   ...BROWSER_CORE_SCHEMA,
@@ -106,18 +100,7 @@ export type LogsConfiguration = InferredConfig<typeof LOGS_SCHEMA>
 export function validateAndBuildLogsConfiguration(
   initConfiguration: LogsInitConfiguration
 ): LogsConfiguration | undefined {
-  const config = validateAndBuildConfiguration(
-    initConfiguration as unknown as Record<string, unknown>,
-    LOGS_SCHEMA,
-    display
-  )
-  if (!config) {
-    return
-  }
-  return {
-    ...config,
-    beforeSend: config.beforeSend ? catchUserErrors(config.beforeSend as any, 'beforeSend threw an error:') : undefined,
-  }
+  return validateAndBuildConfiguration(initConfiguration as unknown as Record<string, unknown>, LOGS_SCHEMA, display)
 }
 
 export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {

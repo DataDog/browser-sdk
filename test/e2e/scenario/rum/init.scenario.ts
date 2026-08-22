@@ -227,6 +227,25 @@ test.describe('beforeSend', () => {
       expect(initialDocument.context).toEqual(expect.objectContaining({ foo: 'bar' }))
     })
 
+  createTest('allows asynchronous callbacks to access fetch responses')
+    .withRum({
+      beforeSend: async (event, context) => {
+        if (event.type === 'resource' && 'response' in context && context.response) {
+          event.context ??= {}
+          event.context.responseBody = await context.response.text()
+        }
+        return true
+      },
+    })
+    .withRumSlim()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => fetch('/ok'))
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.endsWith('/ok'))!
+      expect(resourceEvent.context).toEqual(expect.objectContaining({ responseBody: 'ok' }))
+    })
+
   createTest('allows to replace events context')
     .withRum({
       beforeSend: (event) => {

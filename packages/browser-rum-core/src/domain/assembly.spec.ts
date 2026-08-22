@@ -441,6 +441,32 @@ describe('rum assembly', () => {
     })
 
     describe('events dismission', () => {
+      it('should wait for beforeSend promise resolution and apply modifications', async () => {
+        let resolveBeforeSend: () => void
+        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+          partialConfiguration: {
+            beforeSend: async (event) => {
+              await new Promise<void>((resolve) => {
+                resolveBeforeSend = resolve
+              })
+              event.view.url = 'modified'
+            },
+          },
+        })
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION, { view: { url: 'original' } }),
+        })
+
+        expect(serverRumEvents.length).toBe(0)
+
+        resolveBeforeSend!()
+        await Promise.resolve()
+        await Promise.resolve()
+
+        expect(serverRumEvents[0].view.url).toBe('modified')
+      })
+
       it('should allow dismissing events other than views', () => {
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
@@ -472,6 +498,22 @@ describe('rum assembly', () => {
           }),
         })
 
+        expect(serverRumEvents.length).toBe(0)
+      })
+
+      it('should dismiss events when beforeSend promise resolves to false', async () => {
+        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+          partialConfiguration: {
+            beforeSend: () => Promise.resolve(false),
+          },
+        })
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        })
+
+        expect(serverRumEvents.length).toBe(0)
+        await Promise.resolve()
         expect(serverRumEvents.length).toBe(0)
       })
 
