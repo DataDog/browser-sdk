@@ -6130,7 +6130,7 @@ __metadata:
     globals: "npm:17.9.0"
     html-webpack-plugin: "npm:5.6.8"
     http-server: "npm:14.1.1"
-    jasmine-core: "npm:3.99.1"
+    jasmine-core: "npm:7.0.1"
     json-schema-to-typescript: "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support"
     karma: "npm:6.4.4"
     karma-browserstack-launcher: "npm:1.6.0"
@@ -10154,7 +10154,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jasmine-core@npm:3.99.1, jasmine-core@npm:^3.6.0":
+"jasmine-core@npm:7.0.1":
+  version: 7.0.1
+  resolution: "jasmine-core@npm:7.0.1"
+  checksum: 10c0/25b15c46ca44df8160cb73c5449f93457d2c64947d84fc4858b11f60ea70361192d196e25babdfcd0905d5944ef5b9ed0dcf9809a86e1bb0666c642f25116091
+  languageName: node
+  linkType: hard
+
+"jasmine-core@npm:^3.6.0":
   version: 3.99.1
   resolution: "jasmine-core@npm:3.99.1"
   checksum: 10c0/f89721874e2af19a098e214b8f3f201a644d625339c010733b6b0dba4ff9149f16997712a639c2bb427e7533526f82e0477b7927e175d3a2b2f9ff92928a5329
