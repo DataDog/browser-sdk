@@ -33,7 +33,7 @@ runMain(async () => {
 
   command`git fetch --no-tags origin ${currentStaging}`.run()
   command`git checkout ${currentStaging} -f`.run()
-  command`git pull`.run()
+  command`git pull origin ${currentStaging}`.run()
 
   printLog(
     `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHORT_SHA}) can be merged into ${currentStaging}...`
