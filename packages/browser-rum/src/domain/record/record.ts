@@ -76,7 +76,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackMouseInteraction(processRecord, scope),
     trackScroll(document, processRecord, scope),
     trackViewportResize(processRecord),
-    trackInput(document, processRecord, scope),
+    trackInput(document, processRecord, emitStats, scope),
     trackMediaInteraction(processRecord, scope),
     trackStyleSheet(processRecord, scope),
     trackFocus(processRecord),
