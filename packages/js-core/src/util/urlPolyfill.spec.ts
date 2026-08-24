@@ -1,4 +1,4 @@
-import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from '@datadog/js-core/util'
+import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from './urlPolyfill'
 
 describe('normalize url', () => {
   it('should resolve absolute paths', () => {
