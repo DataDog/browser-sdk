@@ -1,4 +1,4 @@
-import { globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
 import { buildLocation, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
 import { createLocationChangeObservable } from './locationChangeObservable'
 

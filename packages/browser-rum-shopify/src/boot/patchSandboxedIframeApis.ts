@@ -1,5 +1,3 @@
-import { globalObject } from '@datadog/browser-core'
-
 /**
  * A Shopify Custom Pixel runs in a "lax" sandboxed iframe (`sandbox="allow-scripts"`, no
  * `allow-same-origin`): it shares the parent page's cookie jar (same domain) but has an
@@ -14,6 +12,7 @@ import { globalObject } from '@datadog/browser-core'
  * Shimming these away makes the SDK fall back to code paths that do work in this context
  * (`document.cookie`, same-document promise chaining, `globalObject.URL`, always-focused state).
  */
+import { globalObject } from '@datadog/js-core/util'
 export function patchSandboxedIframeApis() {
   disableProperty(globalObject, 'cookieStore')
   disableProperty(navigator, 'locks')
