@@ -82,6 +82,13 @@ async function getInfos(): Promise<SdkInfos> {
         // SDK v7 renamed the session cookie from '_dd_s' to '_dd_s_v2'. Only prefer the
         // new name when a v7 SDK is detected on the page, so a stale _dd_s_v2 left over
         // from a previous v7 session doesn't shadow an active v6 session.
+        //
+        // When multiple cookies share the same name (e.g. after changing
+        // trackSessionAcrossSubdomains or usePartitionedCrossSiteSessionCookie), the SDK
+        // picks the one whose 'c' marker matches its current cookie options. We replicate
+        // that formula here: c = ((domainCount << 1) | crossSite).toString(16).
+        // SESSION_COOKIE_VERSION is omitted because it is currently 0 and contributes
+        // nothing to the value.
         function findCookieValue(name) {
           return document.cookie
             .split(';')
@@ -89,8 +96,28 @@ async function getInfos(): Promise<SdkInfos> {
             .find(([cookieName]) => cookieName === name)
             ?.[1]
         }
+        function findMatchingCookieValue(name, config) {
+          const domain = config?.domain
+          const crossSite = config?.usePartitionedCrossSiteSessionCookie ? 1 : 0
+          const domainCount = domain ? domain.split('.').length - 1 : 0
+          const expectedC = ((domainCount << 1) | crossSite).toString(16)
+
+          const matches = document.cookie
+            .split(';')
+            .map(c => c.match(/(\\S*?)=(.*)/)?.slice(1) || [])
+            .filter(([cookieName]) => cookieName === name)
+            .map(([, val]) => val)
+
+          for (const val of [...matches].reverse()) {
+            const entries = Object.fromEntries(val.split('&').map(v => v.split('=')))
+            if (entries.c === expectedC) return val
+          }
+
+          return matches[0]
+        }
         const isV7 = window.DD_RUM?.version?.startsWith('7') || window.DD_LOGS?.version?.startsWith('7')
-        const cookieRawValue = isV7 ? (findCookieValue('_dd_s_v2') ?? findCookieValue('_dd_s')) : findCookieValue('_dd_s')
+        const sdkConfig = window.DD_RUM?.getInitConfiguration?.() ?? window.DD_LOGS?.getInitConfiguration?.()
+        const cookieRawValue = isV7 ? (findMatchingCookieValue('_dd_s_v2', sdkConfig) ?? findCookieValue('_dd_s')) : findCookieValue('_dd_s')
 
         const cookieEntries = cookieRawValue
           ? cookieRawValue.split('&').map((value) => value.split('='))
