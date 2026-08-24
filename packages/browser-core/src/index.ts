@@ -78,7 +78,7 @@ export {
 export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'
 export { createIdentityEncoder } from './tools/encoder'
-export { normalizeUrl, isValidUrl, getPathName, buildUrl, getPristineWindow } from '@datadog/js-core/util'
+export { normalizeUrl, isValidUrl, getPathName, buildUrl } from '@datadog/js-core/util'
 export * from './tools/utils/arrayUtils'
 
 export * from './tools/serialisation/sanitize'
