@@ -8,11 +8,11 @@ import { display } from './display'
 // mutable holder.
 let onMonitorErrorCollected: ((error: unknown) => void) | undefined
 
-const { monitored, monitor, callMonitored, monitorError } = createMonitor(display, (error) =>
+const { monitored, monitor, callMonitored, monitorError, monitorPromise } = createMonitor(display, (error) =>
   onMonitorErrorCollected?.(error)
 )
 
-export { monitored, monitor, callMonitored, monitorError }
+export { monitored, monitor, callMonitored, monitorError, monitorPromise }
 
 export function startMonitorErrorCollection(newOnMonitorErrorCollected: (error: unknown) => void) {
   onMonitorErrorCollected = newOnMonitorErrorCollected

@@ -1,7 +1,7 @@
 import type { LifeCycle, RumConfiguration, StartRecordingOptions, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState, computeSessionReplayState } from '@datadog/browser-rum-core'
 import type { Telemetry, DeflateEncoder, SessionManager } from '@datadog/browser-core'
-import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
+import { asyncRunOnReadyState, monitorPromise, Observable } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
 import type { startRecording } from './datadogRecorder'
@@ -121,7 +121,7 @@ export function createPostStartStrategy(
     const forced = shouldForceReplay(replayState, options) || false
 
     // Intentionally not awaiting doStart() to keep it asynchronous
-    doStart(forced).catch(monitorError)
+    monitorPromise(doStart(forced))
 
     if (forced) {
       sessionManager.updateSessionState({ forcedReplay: '1' })

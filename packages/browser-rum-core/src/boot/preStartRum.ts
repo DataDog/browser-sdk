@@ -17,7 +17,7 @@ import {
   buildGlobalContextManager,
   buildUserContextManager,
   bufferContextCalls,
-  monitorError,
+  monitorPromise,
   sanitize,
   startSessionManager,
   startSessionManagerStub,
@@ -188,8 +188,8 @@ export function createPreStartStrategy(
         ? startSessionManagerStub()
         : mockable(startSessionManager)(configuration, trackingConsentState)
 
-      void sessionManagerPromise
-        .then((newSessionManager) => {
+      monitorPromise(
+        sessionManagerPromise.then((newSessionManager) => {
           if (!newSessionManager) {
             return
           }
@@ -201,7 +201,7 @@ export function createPreStartStrategy(
 
           tryStartRum()
         })
-        .catch(monitorError)
+      )
     })
   }
 
@@ -251,13 +251,15 @@ export function createPreStartStrategy(
         const isSyncLoading = !!initConfiguration.remoteConfigurationId || !!initConfiguration.remoteConfiguration?.sync
 
         if (isSyncLoading) {
-          fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
-            .then((resolvedInitConfiguration) => {
-              if (resolvedInitConfiguration) {
-                doInit(resolvedInitConfiguration, errorStack)
+          monitorPromise(
+            fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers).then(
+              (resolvedInitConfiguration) => {
+                if (resolvedInitConfiguration) {
+                  doInit(resolvedInitConfiguration, errorStack)
+                }
               }
-            })
-            .catch(monitorError)
+            )
+          )
         } else {
           const resolvedInitConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 

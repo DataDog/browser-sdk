@@ -77,17 +77,47 @@ export interface Monitor {
    * but can also be called to report an error caught elsewhere.
    *
    * When to use: prefer this when you **already hold an error value** and only need to route it to
-   * telemetry — e.g. a promise rejection, which `monitor`/`callMonitored` do not catch (they only
-   * handle synchronous throws).
+   * telemetry. For promise rejections, prefer {@link Monitor.monitorPromise} over
+   * `.catch(monitorError)` — `monitor`/`callMonitored` only catch synchronous throws, and
+   * `monitorPromise` keeps the swallow-rejection semantics explicit.
    *
    * @param e - The error to report.
+   */
+  monitorError: (e: unknown) => void
+
+  /**
+   * Routes a promise rejection to telemetry, mirroring how {@link Monitor.monitor} captures the
+   * active context for callbacks: attach it to a promise the SDK owns and any rejection is
+   * reported (via the error callback) instead of surfacing as an unhandled rejection.
+   *
+   * **Swallows the rejection** after reporting it, returning a promise that resolves to `undefined`
+   * (matching {@link Monitor.callMonitored}'s on-throw return). Because of this, use it **only for
+   * promises the SDK owns end-to-end** — never for promises handed back to customer code, where
+   * swallowing would hide the rejection from the caller.
+   *
+   * When to use: prefer this over `.catch(monitorError)` for SDK-internal async work (fetch
+   * pipelines, session persistence, remote configuration, profiling). `monitor`/`callMonitored`
+   * only catch synchronous throws, so promise rejections need this helper.
+   *
+   * @param promise - The promise to monitor.
+   * @param mapError - Optional transform applied to the rejection before it is reported (e.g. to
+   * wrap a low-level error in a descriptive `new Error(...)`). When omitted the rejection is
+   * reported as-is. The transform runs inside the rejection handler, so it sees the original
+   * error.
+   * @returns A promise that resolves with the original value, or to `undefined` if the input
+   * rejected (the rejection is reported and swallowed).
    * @example
    * ```ts
    * // route a promise rejection to telemetry
-   * doAsyncThing().catch(monitorError)
+   * monitorPromise(doAsyncThing())
+   *
+   * // wrap the rejection in a descriptive error before reporting
+   * monitorPromise(resolveInitialState(), (error) =>
+   *   new Error(`Error while resolving initial session state: ${error}`)
+   * )
    * ```
    */
-  monitorError: (e: unknown) => void
+  monitorPromise: <T>(promise: Promise<T>, mapError?: (error: unknown) => unknown) => Promise<T | undefined>
 }
 
 /**
@@ -151,10 +181,15 @@ export function createMonitor(display: Display, onMonitorErrorCollected: (error:
     }
   }
 
+  function monitorPromise<T>(promise: Promise<T>, mapError?: (error: unknown) => unknown): Promise<T | undefined> {
+    return promise.catch((e) => monitorError(mapError ? mapError(e) : e)) as Promise<T | undefined>
+  }
+
   return {
     monitored,
     monitor,
     callMonitored,
     monitorError,
+    monitorPromise,
   }
 }

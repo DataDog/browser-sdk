@@ -16,6 +16,7 @@ export interface Monitor {
     monitor: <T extends (...args: any[]) => unknown>(fn: T) => T;
     monitored: <T extends (...params: any[]) => unknown>(_: any, __: string, descriptor: TypedPropertyDescriptor<T>) => void;
     monitorError: (e: unknown) => void;
+    monitorPromise: <T>(promise: Promise<T>, mapError?: (error: unknown) => unknown) => Promise<T | undefined>;
 }
 
 // (No @packageDocumentation comment for this package)

@@ -7,7 +7,7 @@ import {
   correctedChildSampleRate,
   isSampled,
   mockable,
-  monitorError,
+  monitorPromise,
 } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
@@ -49,8 +49,8 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
-    mockable(lazyLoadProfiler)()
-      .then((createRumProfiler) => {
+    monitorPromise(
+      mockable(lazyLoadProfiler)().then((createRumProfiler) => {
         if (!createRumProfiler) {
           profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
           return
@@ -67,7 +67,7 @@ export function makeProfilerApi(): ProfilerApi {
         )
         profiler.start()
       })
-      .catch(monitorError)
+    )
   }
 
   return {

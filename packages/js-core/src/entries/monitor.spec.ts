@@ -136,6 +136,29 @@ describe('monitor', () => {
         expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
       })
     })
+
+    describe('monitorPromise', () => {
+      it('resolves with the original value when the promise fulfills', async () => {
+        const result = await currentMonitor.monitorPromise(Promise.resolve(42))
+        expect(result).toEqual(42)
+      })
+
+      it('reports the rejection and resolves to undefined', async () => {
+        const result = await currentMonitor.monitorPromise(Promise.reject(new Error('rejected')))
+
+        expect(result).toBeUndefined()
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('rejected'))
+      })
+
+      it('transforms the rejection via mapError before reporting', async () => {
+        await currentMonitor.monitorPromise(
+          Promise.reject(new Error('original')),
+          (error) => new Error(`wrapped: ${String(error)}`)
+        )
+
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('wrapped: Error: original'))
+      })
+    })
   })
 
   describe('debug logging', () => {
@@ -171,6 +194,14 @@ describe('monitor', () => {
 
       expect(displayErrorSpy).toHaveBeenCalledWith('[MONITOR]', new Error('message'))
       expect(displayErrorSpy).toHaveBeenCalledWith('[MONITOR]', new Error('unexpected'))
+    })
+
+    it('logs rejected promises to the display when debug mode is enabled', async () => {
+      setDebugMode(true)
+
+      await currentMonitor.monitorPromise(Promise.reject(new Error('message')))
+
+      expect(displayErrorSpy).toHaveBeenCalledWith('[MONITOR]', new Error('message'))
     })
   })
 })

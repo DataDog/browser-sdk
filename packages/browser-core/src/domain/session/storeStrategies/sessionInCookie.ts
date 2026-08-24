@@ -8,7 +8,7 @@ import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
-import { monitorError } from '../../../tools/monitor'
+import { monitorPromise } from '../../../tools/monitor'
 import type { CookieAccess } from '../../../browser/cookieAccess'
 import {
   areCookiesAuthorized,
@@ -60,12 +60,12 @@ export function initCookieStrategy(
   let isFirstCall = true
 
   cookieAccess.observable.subscribe(() => {
-    cookieAccess
-      .getAll()
-      .then((cookieValues) => {
+    monitorPromise(
+      cookieAccess.getAll().then((cookieValues) => {
         sessionObservable.notify(findMatchingSessionState(cookieValues, opts))
-      })
-      .catch((error) => monitorError(new Error(`Error while reading session cookies on change: ${error}`)))
+      }),
+      (error) => new Error(`Error while reading session cookies on change: ${String(error)}`)
+    )
   })
 
   function applyAndWrite(fn: (state: SessionState) => SessionState) {
