@@ -17,8 +17,10 @@ test.describe('soft navigation', () => {
   createTest('reports LCP on a route_change view created from a user-initiated soft navigation')
     .withRum({ enableExperimentalFeatures: ['soft_navigation'] })
     .withBody(NAV_BUTTON)
-    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
-      test.skip(browserName !== 'chromium', 'Soft navigation API is Chromium-only')
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      // Excludes chromium-pinned (Chrome 120), which predates the Soft Navigation API (Chrome 151+).
+      // browserName alone can't tell these apart since both normalize to 'chromium'.
+      test.skip(test.info().project.name !== 'chromium', 'Soft navigation API requires current Chromium (151+)')
 
       await page.locator('#nav-button').click()
       // Let the async soft-navigation and interaction-contentful-paint PerformanceEntries settle.

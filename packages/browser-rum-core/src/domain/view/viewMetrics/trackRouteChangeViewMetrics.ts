@@ -1,9 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { RumConfiguration } from '../../configuration'
-import {
-  createPerformanceObservable,
-  RumPerformanceEntryType,
-} from '../../../browser/performanceObservable'
+import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type {
   RumInteractionContentfulPaintTiming,
   RumSoftNavigationEntry,

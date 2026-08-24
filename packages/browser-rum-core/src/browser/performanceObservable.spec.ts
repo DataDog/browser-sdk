@@ -93,7 +93,9 @@ describe('performanceObservable', () => {
       jasmine.objectContaining({
         entryType: RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT,
         interactionId: 42,
-        largestContentfulPaint: jasmine.objectContaining({ entryType: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT }),
+        largestContentfulPaint: jasmine.objectContaining({
+          entryType: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
+        }),
       }),
     ])
   })
