@@ -2,10 +2,10 @@ import { mockable } from '@datadog/browser-core'
 import type { RumPlugin } from '@datadog/browser-rum-core'
 import { patchSandboxedIframeApis } from '../boot/patchSandboxedIframeApis'
 import type { ShopifyAnalyticsApi } from './shopifyAnalytics'
-import { initShopifyBindings } from './shopifyBindings'
+import { initShopifyBindings, isCheckoutPage } from './shopifyBindings'
 
 export interface ShopifyPluginConfiguration {
-  shopifyAnalytics?: ShopifyAnalyticsApi
+  shopifyAnalytics: ShopifyAnalyticsApi
 }
 
 /**
@@ -20,19 +20,38 @@ export function shopifyPlugin(configuration: ShopifyPluginConfiguration): RumPlu
     onInit({ initConfiguration, publicApi }) {
       const analytics = configuration.shopifyAnalytics
       if (!analytics) {
-        return
+        return false
       }
 
-      mockable(patchSandboxedIframeApis)()
-      mockable(initShopifyBindings)(publicApi, analytics)
+      return new Promise((resolve) => {
+        let isBindingsInstalled = false
 
-      initConfiguration.trackViewsManually = true // Views are started explicitly via startView()
-      initConfiguration.sessionReplaySampleRate = 0 // Session Replay is not usable in the Pixel sandbox iframe
-      initConfiguration.profilingSampleRate = 0 // Profiling is not usable in the Pixel sandbox iframe
-      initConfiguration.trackUserInteractions = false // Pixel sandbox iframe has no real DOM to interact with
-      initConfiguration.trackResources = false // Iframe resources are not meaningful
-      initConfiguration.trackLongTasks = false // PerformanceObserver tracks the empty iframe
-      initConfiguration.sessionPersistence = 'cookie'
+        analytics.subscribe('page_viewed', (event) => {
+          if (isBindingsInstalled) {
+            return
+          }
+
+          if (!isCheckoutPage(event)) {
+            resolve(false)
+            return
+          }
+
+          mockable(patchSandboxedIframeApis)()
+          mockable(initShopifyBindings)(publicApi, analytics)
+
+          isBindingsInstalled = true
+
+          initConfiguration.trackViewsManually = true // Views are started explicitly via startView()
+          initConfiguration.sessionReplaySampleRate = 0 // Session Replay is not usable in the Pixel sandbox iframe
+          initConfiguration.profilingSampleRate = 0 // Profiling is not usable in the Pixel sandbox iframe
+          initConfiguration.trackUserInteractions = false // Pixel sandbox iframe has no real DOM to interact with
+          initConfiguration.trackResources = false // Iframe resources are not meaningful
+          initConfiguration.trackLongTasks = false // PerformanceObserver tracks the empty iframe
+          initConfiguration.sessionPersistence = 'cookie'
+
+          resolve()
+        })
+      })
     },
   }
 }

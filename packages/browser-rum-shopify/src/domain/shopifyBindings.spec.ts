@@ -90,6 +90,8 @@ describe('initShopifyBindings', () => {
     })
   })
 
+  const checkoutContext = { document: { location: { href: 'https://shop.example/checkout' } } }
+
   it('maps "clicked" to a zero-duration startAction/stopAction pair named after the element id', () => {
     const { rumPublicApi, startAction, stopAction } = createFakeRumPublicApi()
     const { analytics, emit } = createFakeAnalytics()
@@ -99,6 +101,7 @@ describe('initShopifyBindings', () => {
       name: 'clicked',
       id: '11',
       timestamp: '2026-07-06T00:00:00Z',
+      context: checkoutContext,
       data: { element: { id: 'add-to-cart-button', value: undefined, href: undefined } },
     })
 
@@ -115,11 +118,29 @@ describe('initShopifyBindings', () => {
       name: 'clicked',
       id: '12',
       timestamp: '2026-07-06T00:00:00Z',
+      context: checkoutContext,
       data: { element: {} },
     })
 
     expect(startAction).toHaveBeenCalledWith('element-without-id', { type: 'click' })
     expect(stopAction).toHaveBeenCalledWith('element-without-id', { type: 'click' })
+  })
+
+  it('does not report "clicked" outside a checkout page', () => {
+    const { rumPublicApi, startAction, stopAction } = createFakeRumPublicApi()
+    const { analytics, emit } = createFakeAnalytics()
+
+    initShopifyBindings(rumPublicApi, analytics)
+    emit('clicked', {
+      name: 'clicked',
+      id: '13',
+      timestamp: '2026-07-06T00:00:00Z',
+      context: { document: { location: { href: 'https://shop.example/products/foo' } } },
+      data: { element: { id: 'add-to-cart-button' } },
+    })
+
+    expect(startAction).not.toHaveBeenCalled()
+    expect(stopAction).not.toHaveBeenCalled()
   })
 
   it('maps "ui_extension_errored" to addError with the flattened extension context', () => {
@@ -131,6 +152,7 @@ describe('initShopifyBindings', () => {
       name: 'ui_extension_errored',
       id: '10',
       timestamp: '2026-07-06T00:00:00Z',
+      context: checkoutContext,
       data: {
         error: {
           message: 'Boom',

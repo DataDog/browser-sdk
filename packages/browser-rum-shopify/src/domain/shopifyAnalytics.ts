@@ -18,3 +18,7 @@ export interface ShopifyPixelEvent<TData = Record<string, unknown>> {
 export interface ShopifyAnalyticsApi {
   subscribe: (eventName: string, callback: (event: ShopifyPixelEvent) => void) => void
 }
+
+export function getPageUrl(event: ShopifyPixelEvent): string | undefined {
+  return event.context?.document?.location?.href
+}
