@@ -76,6 +76,17 @@ export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
 
   /**
+   * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * When omitted, it defaults to the {@link RumInitConfiguration.applicationId}. Note that
+   * `allowedTracingUrls` still requires an explicitly configured service.
+   *
+   * @category Data Collection
+   * @defaultValue the `applicationId`
+   */
+  service?: string | undefined | null
+
+  /**
    * Whether to propagate user and account IDs in the baggage header of trace requests.
    *
    * @category Tracing
@@ -523,6 +534,9 @@ export function validateAndBuildRumConfiguration(
 
   return {
     ...config,
+    // Fall back to the applicationId so events are always attributed to a service. Applied after
+    // the tracing check above, which still requires an explicitly configured service.
+    service: config.service || config.applicationId,
     sessionReplayCanvasRecording,
     allowedTracingUrls,
     beforeSend: config.beforeSend

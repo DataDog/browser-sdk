@@ -40,6 +40,44 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('service', () => {
+    it('defaults to the applicationId if the option is not provided', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, applicationId: 'my-app-id' })!.service
+      ).toBe('my-app-id')
+    })
+
+    it('is set to the provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'my-app-id',
+          service: 'my-service',
+        })!.service
+      ).toBe('my-service')
+    })
+
+    it('defaults to the applicationId if the option is null', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'my-app-id',
+          service: null,
+        })!.service
+      ).toBe('my-app-id')
+    })
+
+    it('defaults to the applicationId if the option is an empty string', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'my-app-id',
+          service: '',
+        })!.service
+      ).toBe('my-app-id')
+    })
+  })
+
   describe('sessionReplaySampleRate', () => {
     it('defaults to 0 if the option is not provided', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.sessionReplaySampleRate).toBe(0)

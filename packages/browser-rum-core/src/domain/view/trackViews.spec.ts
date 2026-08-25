@@ -4,7 +4,7 @@ import { PageExitReason, display } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
+import { createPerformanceEntry, mockPerformanceObserver, FAKE_APP_ID } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -306,14 +306,14 @@ describe('view lifecycle', () => {
       expect(getViewCreate(6)).toEqual(
         jasmine.objectContaining({
           name: undefined,
-          service: undefined,
+          service: FAKE_APP_ID,
           version: undefined,
         })
       )
       expect(getViewCreate(7)).toEqual(
         jasmine.objectContaining({
           name: undefined,
-          service: undefined,
+          service: FAKE_APP_ID,
           version: undefined,
         })
       )
@@ -1049,7 +1049,7 @@ describe('start view', () => {
 
     expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
-        service: undefined,
+        service: FAKE_APP_ID,
         version: undefined,
       })
     )
@@ -1067,13 +1067,13 @@ describe('start view', () => {
     )
   })
 
-  it('should ignore null service/version', () => {
+  it('should fall back to the configured service/version when they are null', () => {
     const { getViewUpdate, startView } = viewTest
 
     startView({ service: null, version: null })
     expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
-        service: undefined,
+        service: FAKE_APP_ID,
         version: undefined,
       })
     )
