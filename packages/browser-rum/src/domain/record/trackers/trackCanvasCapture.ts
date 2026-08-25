@@ -119,6 +119,7 @@ function computeImageHash(canvas: HTMLCanvasElement, maxHashDimension: number): 
   if (!context) {
     return undefined
   }
+  context.imageSmoothingQuality = 'low'
   context.filter = 'grayscale(1)'
   context.drawImage(canvas, 0, 0, width, height)
 
