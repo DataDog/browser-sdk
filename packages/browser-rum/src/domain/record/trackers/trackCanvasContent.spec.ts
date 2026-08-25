@@ -21,10 +21,17 @@ describe('trackCanvasContent', () => {
     registerCleanupTask(() => tracker?.stop())
   })
 
-  function startTracking(enable = true, maxFramesPerSecond = 1, hashingMaxDimension = 100, maxImageDimension = 100): Tracker {
+  function startTracking(
+    enable = true,
+    maxFramesPerSecond = 1,
+    hashingMaxDimension = 100,
+    maxImageDimension = 1000
+  ): Tracker {
     const scope = createRecordingScopeForTesting({
       canvasManager,
-      configuration: { sessionReplayCanvasRecording: { enable, maxFramesPerSecond, hashingMaxDimension, maxImageDimension } },
+      configuration: {
+        sessionReplayCanvasRecording: { enable, maxFramesPerSecond, hashingMaxDimension, maxImageDimension },
+      },
     })
     scope.nodeIds.getOrInsert(canvas)
     tracker = trackCanvasContent(scope)
@@ -74,7 +81,14 @@ describe('trackCanvasContent', () => {
   it('does not mark an unserialized canvas dirty', () => {
     const scope = createRecordingScopeForTesting({
       canvasManager,
-      configuration: { sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 1, hashingMaxDimension: 100, maxImageDimension: 100 } },
+      configuration: {
+        sessionReplayCanvasRecording: {
+          enable: true,
+          maxFramesPerSecond: 1,
+          hashingMaxDimension: 100,
+          maxImageDimension: 1000,
+        },
+      },
     })
     tracker = trackCanvasContent(scope)
 
