@@ -242,31 +242,48 @@ export function createPreStartStrategy(
         return
       }
 
-      callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+      function proceedWithInit() {
+        const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
 
-      const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
+        if (hasRemoteConfiguration) {
+          const supportedContextManagers = { user: userContext, context: globalContext }
+          const isSyncLoading =
+            !!initConfiguration.remoteConfigurationId || !!initConfiguration.remoteConfiguration?.sync
 
-      if (hasRemoteConfiguration) {
-        const supportedContextManagers = { user: userContext, context: globalContext }
-        const isSyncLoading = !!initConfiguration.remoteConfigurationId || !!initConfiguration.remoteConfiguration?.sync
+          if (isSyncLoading) {
+            fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
+              .then((resolvedInitConfiguration) => {
+                if (resolvedInitConfiguration) {
+                  doInit(resolvedInitConfiguration, errorStack)
+                }
+              })
+              .catch(monitorError)
+          } else {
+            const resolvedInitConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
-        if (isSyncLoading) {
-          fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
-            .then((resolvedInitConfiguration) => {
-              if (resolvedInitConfiguration) {
-                doInit(resolvedInitConfiguration, errorStack)
-              }
-            })
-            .catch(monitorError)
-        } else {
-          const resolvedInitConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
-
-          if (resolvedInitConfiguration) {
-            doInit(resolvedInitConfiguration, errorStack)
+            if (resolvedInitConfiguration) {
+              doInit(resolvedInitConfiguration, errorStack)
+            }
           }
+        } else {
+          doInit(initConfiguration, errorStack)
+        }
+      }
+
+      const shouldContinue = callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+
+      if (typeof shouldContinue === 'boolean') {
+        if (shouldContinue) {
+          proceedWithInit()
         }
       } else {
-        doInit(initConfiguration, errorStack)
+        shouldContinue
+          .then((result) => {
+            if (result) {
+              proceedWithInit()
+            }
+          })
+          .catch(monitorError)
       }
     },
 

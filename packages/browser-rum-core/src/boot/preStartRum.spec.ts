@@ -620,6 +620,45 @@ describe('preStartRum', () => {
         expect(doStartRumSpy).toHaveBeenCalled()
         expect(doStartRumSpy.calls.mostRecent().args[0].applicationId).toBe('application-id')
       })
+
+      it('does not start RUM, synchronously, when a plugin synchronously returns false', () => {
+        const plugin: RumPlugin = { name: 'a', onInit: () => false }
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('starts RUM once a plugin resolves its onInit promise to void', async () => {
+        const plugin: RumPlugin = { name: 'a', onInit: () => Promise.resolve() }
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+        await collectAsyncCalls(doStartRumSpy, 1)
+
+        expect(doStartRumSpy).toHaveBeenCalled()
+      })
+
+      it('does not start RUM when a plugin resolves its onInit promise to false', async () => {
+        const plugin: RumPlugin = { name: 'a', onInit: () => Promise.resolve(false) }
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('does not start RUM and does not throw when a plugin onInit promise rejects', async () => {
+        const plugin: RumPlugin = { name: 'a', onInit: () => Promise.reject(new Error('boom')) }
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
     })
   })
 
