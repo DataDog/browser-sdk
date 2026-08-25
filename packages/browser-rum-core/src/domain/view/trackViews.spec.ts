@@ -4,7 +4,7 @@ import { PageExitReason, display } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver, FAKE_APP_ID } from '../../../test'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -306,14 +306,14 @@ describe('view lifecycle', () => {
       expect(getViewCreate(6)).toEqual(
         jasmine.objectContaining({
           name: undefined,
-          service: FAKE_APP_ID,
+          service: 'appId',
           version: undefined,
         })
       )
       expect(getViewCreate(7)).toEqual(
         jasmine.objectContaining({
           name: undefined,
-          service: FAKE_APP_ID,
+          service: 'appId',
           version: undefined,
         })
       )
@@ -1049,7 +1049,7 @@ describe('start view', () => {
 
     expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
-        service: FAKE_APP_ID,
+        service: 'appId',
         version: undefined,
       })
     )
@@ -1073,7 +1073,7 @@ describe('start view', () => {
     startView({ service: null, version: null })
     expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
-        service: FAKE_APP_ID,
+        service: 'appId',
         version: undefined,
       })
     )
