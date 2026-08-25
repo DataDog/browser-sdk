@@ -19,7 +19,7 @@ import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
 import { serializeNode } from './serializeNode'
 import { createChildInsertionCursor } from './insertionCursor'
-import { getElementInputValue } from './serializationUtils'
+import { getElementInputValue, normalizedTagName } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
 
 export function serializeMutations(
@@ -258,6 +258,8 @@ function processAttributeMutations(
       continue // Mutations to this node should be ignored.
     }
 
+    const tagName = normalizedTagName(node)
+
     const change: AttributeChange = [nodeId]
     for (const [domAttributeName, oldValue] of attributeNames) {
       if (node.getAttribute(domAttributeName) === oldValue) {
@@ -271,7 +273,7 @@ function processAttributeMutations(
       if (domAttributeName === 'value') {
         const domAttributeValue = getElementInputValue(node, privacyLevel)
         if (domAttributeValue !== undefined) {
-          change.push(createAttributeAssignment(domAttributeName, domAttributeValue))
+          change.push(createAttributeAssignment(tagName, domAttributeName, domAttributeValue))
         }
         continue
       }
@@ -282,7 +284,7 @@ function processAttributeMutations(
         domAttributeName,
         transaction.scope.configuration
       )
-      change.push(createAttributeAssignmentOrDeletion(domAttributeName, domAttributeValue))
+      change.push(createAttributeAssignmentOrDeletion(tagName, domAttributeName, domAttributeValue))
     }
 
     if (change.length > 1) {

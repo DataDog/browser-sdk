@@ -19,6 +19,7 @@ import { isCanvasElement } from '../canvas/canvasUtils'
 import type { InsertionCursor } from './insertionCursor'
 import type { SerializationTransaction } from './serializationTransaction'
 import { serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'
+import { normalizedTagName } from './serializationUtils'
 
 export function serializeNode(
   cursor: InsertionCursor,
@@ -217,7 +218,7 @@ function serializeHiddenNodePlaceholder(
   transaction.addNode(
     insertionPoint,
     encodedElementName(node),
-    createAttributeAssignment(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
+    createAttributeAssignment(normalizedTagName(node), PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
   )
   const { width, height } = node.getBoundingClientRect()
   transaction.setSize(nodeId, width, height)

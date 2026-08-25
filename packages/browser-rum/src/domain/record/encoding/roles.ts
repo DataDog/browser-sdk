@@ -13,22 +13,30 @@ export function createString<Role extends StringRole, Literal extends string>(
 
 export type RoleAnnotatedAttributeAssignment = [RoleAnnotatedStringLiteral, RoleAnnotatedStringLiteral]
 
-/** Create a serialized attribute assignment annotated with the appropriate roles. */
+/**
+ * Given a normalized tag name, an attribute name, and an attribute value, returns a
+ * serialized attribute assignment annotated with the appropriate roles.
+ */
 export function createAttributeAssignment(
+  tagName: string,
   attributeName: string,
   attributeValue: string
 ): RoleAnnotatedAttributeAssignment {
   return [
     createString(StringRole.AttributeName, attributeName),
-    createString(attributeValueRole(attributeName), attributeValue),
+    createString(attributeValueRole(tagName, attributeName), attributeValue),
   ]
 }
 
 export type RoleAnnotatedAttributeAssignmentOrDeletion =
   [RoleAnnotatedStringLiteral, RoleAnnotatedStringLiteral] | [RoleAnnotatedStringLiteral]
 
-/** Create a serialized attribute assignment or deletion annotated with the appropriate roles. */
+/**
+ * Given a normalized tag name, an attribute name, and an attribute value, returns a
+ * serialized attribute assignment or deletion annotated with the appropriate roles.
+ */
 export function createAttributeAssignmentOrDeletion(
+  tagName: string,
   attributeName: string,
   attributeValue: string | null
 ): RoleAnnotatedAttributeAssignmentOrDeletion {
@@ -38,8 +46,15 @@ export function createAttributeAssignmentOrDeletion(
     return [name]
   }
 
-  return [name, createString(attributeValueRole(attributeName), attributeValue)]
+  return [name, createString(attributeValueRole(tagName, attributeName), attributeValue)]
 }
+
+/**
+ * Elements whose `value` attribute holds form input. Every other element that carries a `value`
+ * attribute — `<li>`, `<button>`, `<meter>`, `<param>`, and the rest — holds an ordinary attribute
+ * value there, and masking it would change how the page renders rather than hide anything private.
+ */
+const FORM_ELEMENT_NAMES = new Set(['input', 'option', 'select', 'textarea'])
 
 /** Attributes whose value is a URL or a list of URLs. */
 const URL_ATTRIBUTE_NAMES = new Set([
@@ -57,11 +72,11 @@ const URL_ATTRIBUTE_NAMES = new Set([
   'srcset',
 ])
 
-/** The role that the value of the given attribute plays. */
-function attributeValueRole(attributeName: string): StringRole {
+/** The role that the value of the given attribute plays on the given element. */
+function attributeValueRole(tagName: string, attributeName: string): StringRole {
   switch (attributeName) {
     case 'value':
-      return StringRole.FormInput
+      return FORM_ELEMENT_NAMES.has(tagName) ? StringRole.FormInput : StringRole.AttributeValue
     case 'style':
       return StringRole.Css
     default:

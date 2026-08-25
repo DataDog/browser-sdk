@@ -42,6 +42,40 @@ describe('string roles of a serialized node', () => {
     ])
   })
 
+  it('puts the value of every kind of form element in the form input role', async () => {
+    const record = await serializeHtml('<select><option value="chosen"></option></select>', { roles: 'keep' })
+    expect(record?.data).toEqual([
+      [
+        ChangeType.AddNode,
+        [
+          null,
+          createString(StringRole.NodeName, 'SELECT'),
+          [createString(StringRole.AttributeName, 'value'), createString(StringRole.FormInput, 'chosen')],
+        ],
+        [
+          1,
+          createString(StringRole.NodeName, 'OPTION'),
+          [createString(StringRole.AttributeName, 'value'), createString(StringRole.FormInput, 'chosen')],
+          [createString(StringRole.AttributeName, 'selected'), createString(StringRole.AttributeValue, '')],
+        ],
+      ],
+    ])
+  })
+
+  it('puts a value attribute on an element with no form behavior in the attribute value role', async () => {
+    const record = await serializeHtml('<li value="3"></li>', { roles: 'keep' })
+    expect(record?.data).toEqual([
+      [
+        ChangeType.AddNode,
+        [
+          null,
+          createString(StringRole.NodeName, 'LI'),
+          [createString(StringRole.AttributeName, 'value'), createString(StringRole.AttributeValue, '3')],
+        ],
+      ],
+    ])
+  })
+
   it('puts inline styles in the CSS role', async () => {
     const record = await serializeHtml('<div style="color: red"></div>', { roles: 'keep' })
     expect(record?.data).toEqual([

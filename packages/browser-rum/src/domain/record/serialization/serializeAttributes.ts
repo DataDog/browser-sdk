@@ -26,7 +26,7 @@ export function serializeDOMAttributes(
     if (attributeName === 'value' || attributeName === 'selected' || attributeName === 'checked') {
       continue // Handled specially below.
     }
-    serializeDOMAttributeInto(attributes, element, attributeName, nodePrivacyLevel, transaction)
+    serializeDOMAttributeInto(attributes, element, tagName, attributeName, nodePrivacyLevel, transaction)
   }
 
   if (
@@ -35,10 +35,10 @@ export function serializeDOMAttributes(
   ) {
     const formValue = getElementInputValue(element, nodePrivacyLevel)
     if (formValue !== undefined) {
-      attributes.push(createAttributeAssignment('value', formValue))
+      attributes.push(createAttributeAssignment(tagName, 'value', formValue))
     }
   } else if (element.hasAttribute('value')) {
-    serializeDOMAttributeInto(attributes, element, 'value', nodePrivacyLevel, transaction)
+    serializeDOMAttributeInto(attributes, element, tagName, 'value', nodePrivacyLevel, transaction)
   }
 
   /**
@@ -46,10 +46,10 @@ export function serializeDOMAttributes(
    */
   if (tagName === 'option') {
     if ((element as HTMLOptionElement).selected && !shouldMaskNode(element, nodePrivacyLevel)) {
-      attributes.push(createAttributeAssignment('selected', ''))
+      attributes.push(createAttributeAssignment(tagName, 'selected', ''))
     }
   } else if (element.hasAttribute('selected')) {
-    serializeDOMAttributeInto(attributes, element, 'selected', nodePrivacyLevel, transaction)
+    serializeDOMAttributeInto(attributes, element, tagName, 'selected', nodePrivacyLevel, transaction)
   }
 
   /**
@@ -63,10 +63,10 @@ export function serializeDOMAttributes(
   const inputElement = element as HTMLInputElement
   if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
     if (inputElement.checked && !shouldMaskNode(element, nodePrivacyLevel)) {
-      attributes.push(createAttributeAssignment('checked', ''))
+      attributes.push(createAttributeAssignment(tagName, 'checked', ''))
     }
   } else if (element.hasAttribute('checked')) {
-    serializeDOMAttributeInto(attributes, element, 'checked', nodePrivacyLevel, transaction)
+    serializeDOMAttributeInto(attributes, element, tagName, 'checked', nodePrivacyLevel, transaction)
   }
 
   return attributes
@@ -75,13 +75,14 @@ export function serializeDOMAttributes(
 function serializeDOMAttributeInto(
   attributes: RoleAnnotatedAttributeAssignment[],
   element: Element,
+  tagName: string,
   attributeName: string,
   nodePrivacyLevel: NodePrivacyLevel,
   transaction: SerializationTransaction
 ): void {
   const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, transaction.scope.configuration)
   if (attributeValue !== null) {
-    attributes.push(createAttributeAssignment(attributeName, attributeValue))
+    attributes.push(createAttributeAssignment(tagName, attributeName, attributeValue))
   }
 }
 
