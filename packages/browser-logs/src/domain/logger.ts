@@ -78,6 +78,7 @@ export class Logger {
         context = combine(
           {
             error: createErrorFieldFromRawError(rawError, { includeMessage: true }),
+            _dd: { debug_ids: rawError.debugIds },
           },
           rawError.context,
           sanitizedMessageContext

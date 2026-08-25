@@ -6,6 +6,7 @@ import { addEventListener, DOM_EVENT, isEventSupported } from '../../browser/add
 import { safeTruncate } from '../../tools/utils/stringUtils'
 import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
+import { buildDebugIdByUrl } from '../sourceCodeContext'
 import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
 
 export const RawReportType = {
@@ -72,53 +73,76 @@ function createCspViolationReportObservable() {
   })
 }
 
+/**
+ * The single frame every report kind boils down to. Reports don't carry a real stack, but they all
+ * point at a source file, so this is what both the stack trace and the debug ids are derived from.
+ */
+interface ReportSourceLocation {
+  message: string
+  sourceFile: string | null
+  lineNumber: number | null
+  columnNumber: number | null
+}
+
 function buildRawReportErrorFromReport(report: DeprecationReport | InterventionReport): RawReportError {
   const { type, body } = report
 
-  return buildRawReportError({
-    type: body.id,
-    message: `${type}: ${body.message}`,
-    originalError: report,
-    stack: buildStack(body.id, body.message, body.sourceFile, body.lineNumber, body.columnNumber),
-  })
+  return buildRawReportError(
+    {
+      type: body.id,
+      message: `${type}: ${body.message}`,
+      originalError: report,
+    },
+    {
+      message: body.message,
+      sourceFile: body.sourceFile,
+      lineNumber: body.lineNumber,
+      columnNumber: body.columnNumber,
+    }
+  )
 }
 
 function buildRawReportErrorFromCspViolation(event: SecurityPolicyViolationEvent): RawReportError {
   const message = `'${event.blockedURI}' blocked by '${event.effectiveDirective}' directive`
-  return buildRawReportError({
-    type: event.effectiveDirective,
-    message: `${RawReportType.cspViolation}: ${message}`,
-    originalError: event,
-    csp: {
-      disposition: event.disposition,
+  return buildRawReportError(
+    {
+      type: event.effectiveDirective,
+      message: `${RawReportType.cspViolation}: ${message}`,
+      originalError: event,
+      csp: {
+        disposition: event.disposition,
+      },
     },
-    stack: buildStack(
-      event.effectiveDirective,
-      event.originalPolicy
+    {
+      message: event.originalPolicy
         ? `${message} of the policy "${safeTruncate(event.originalPolicy, 100, '...')}"`
         : 'no policy',
-      event.sourceFile,
-      event.lineNumber,
-      event.columnNumber
-    ),
-  })
+      sourceFile: event.sourceFile,
+      lineNumber: event.lineNumber,
+      columnNumber: event.columnNumber,
+    }
+  )
 }
 
-function buildRawReportError(partial: Omit<RawReportError, 'startClocks' | 'source' | 'handling'>): RawReportError {
+function buildRawReportError(
+  partial: Omit<RawReportError, 'startClocks' | 'source' | 'handling' | 'stack' | 'debugIds' | 'type'> & {
+    type: string
+  },
+  location: ReportSourceLocation
+): RawReportError {
   return {
     startClocks: clocksNow(),
     source: ErrorSource.REPORT,
     handling: ErrorHandling.UNHANDLED,
     ...partial,
+    stack: buildStack(partial.type, location),
+    debugIds: location.sourceFile ? buildDebugIdByUrl([location.sourceFile]) : undefined,
   }
 }
 
 function buildStack(
   name: string,
-  message: string,
-  sourceFile: string | null,
-  lineNumber: number | null,
-  columnNumber: number | null
+  { message, sourceFile, lineNumber, columnNumber }: ReportSourceLocation
 ): string | undefined {
   return sourceFile
     ? toStackTraceString({

@@ -31,6 +31,7 @@ export function startRuntimeErrorCollection(
           message: error.message,
           date: error.startClocks.timeStamp,
           error: createErrorFieldFromRawError(error),
+          _dd: { debug_ids: error.debugIds },
           origin: ErrorSource.SOURCE,
           status: StatusType.error,
         },
