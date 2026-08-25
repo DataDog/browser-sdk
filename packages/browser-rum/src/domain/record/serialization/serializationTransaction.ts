@@ -16,15 +16,16 @@ import type {
   InputSelectionState,
   InsertionPoint,
   MediaInteractionType,
+  RoleAnnotatedStringLiteral,
   StyleSheetMediaList,
   StyleSheetRules,
 } from '../../../types'
-import type { NodeId, StyleSheetId } from '../itemIds'
+import type { NodeId, StyleSheetId } from '../encoding'
+import { createChangeEncoder } from '../encoding'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
 import type { SerializationStats } from './serializationStats'
 import { createSerializationStats, updateSerializationStats } from './serializationStats'
-import { createChangeEncoder } from './changeEncoder'
 
 export const enum SerializationKind {
   INITIAL_FULL_SNAPSHOT,
@@ -69,7 +70,7 @@ export interface SerializationTransaction {
     nodeName: Exclude<string, `#${string}`>,
     ...params: AddNodeParams<AddElementNodeChange>
   ): void
-  addNode(pos: InsertionPoint, nodeName: string, ...params: AddNodeParams<AddNodeChange>): void
+  addNode(pos: InsertionPoint, nodeName: RoleAnnotatedStringLiteral, ...params: AddNodeParams<AddNodeChange>): void
 
   /** Add a stylesheet to the document. */
   addStyleSheet(rules: StyleSheetRules, mediaList?: StyleSheetMediaList, disabled?: boolean): void
@@ -90,7 +91,7 @@ export interface SerializationTransaction {
   setInputSelection(state: InputSelectionState, nodeIds: NodeId[]): void
 
   /** Set the value of a form element. */
-  setInputValue(nodeId: NodeId, value: string): void
+  setInputValue(nodeId: NodeId, value: RoleAnnotatedStringLiteral): void
 
   /** Set the media playback state of an <audio> or <video> element. */
   setMediaPlaybackState(nodeId: NodeId, state: MediaInteractionType): void
@@ -102,7 +103,7 @@ export interface SerializationTransaction {
   setSize(nodeId: NodeId, width: number, height: number): void
 
   /** Set the given node's text content. */
-  setText(nodeId: NodeId, content: string): void
+  setText(nodeId: NodeId, content: RoleAnnotatedStringLiteral): void
 
   /** The kind of serialization being performed in this transaction. */
   kind: SerializationKind
@@ -158,7 +159,7 @@ export function serializeInTransaction(
       }
       encoder.add(ChangeType.InputSelection, change)
     },
-    setInputValue(nodeId: NodeId, value: string): void {
+    setInputValue(nodeId: NodeId, value: RoleAnnotatedStringLiteral): void {
       encoder.add(ChangeType.InputValue, [nodeId, value])
     },
     setMediaPlaybackState(nodeId: NodeId, state: MediaInteractionType): void {
@@ -170,7 +171,7 @@ export function serializeInTransaction(
     setSize(nodeId: NodeId, width: number, height: number): void {
       encoder.add(ChangeType.Size, [nodeId, width, height])
     },
-    setText(nodeId: NodeId, content: string): void {
+    setText(nodeId: NodeId, content: RoleAnnotatedStringLiteral): void {
       encoder.add(ChangeType.Text, [nodeId, content])
     },
     kind,

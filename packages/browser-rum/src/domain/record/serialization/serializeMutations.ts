@@ -8,10 +8,12 @@ import {
   getTextContent,
   NodePrivacyLevel,
 } from '@datadog/browser-rum-core'
+import { StringRole } from '../../../types'
 import type { AttributeChange } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
-import type { NodeId, NodeIds } from '../itemIds'
+import type { NodeId, NodeIds } from '../encoding'
+import { createAttributeAssignment, createAttributeAssignmentOrDeletion, createString } from '../encoding'
 import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
@@ -220,7 +222,7 @@ function processCharacterDataMutations(
     }
 
     const content = getTextContent(node, parentNodePrivacyLevel)
-    transaction.setText(nodeId, content)
+    transaction.setText(nodeId, createString(StringRole.TextContent, content))
   }
 }
 
@@ -257,29 +259,30 @@ function processAttributeMutations(
     }
 
     const change: AttributeChange = [nodeId]
-    for (const [attributeName, oldValue] of attributeNames) {
-      if (node.getAttribute(attributeName) === oldValue) {
+    for (const [domAttributeName, oldValue] of attributeNames) {
+      if (node.getAttribute(domAttributeName) === oldValue) {
         continue // No change since the last snapshot.
       }
 
-      if (isCanvasElement(node) && isCanvasSizeAttribute(attributeName)) {
+      if (isCanvasElement(node) && isCanvasSizeAttribute(domAttributeName)) {
         transaction.scope.canvasManager.markCanvasDirty(node)
       }
 
-      if (attributeName === 'value') {
-        const attributeValue = getElementInputValue(node, privacyLevel)
-        if (attributeValue !== undefined) {
-          change.push([attributeName, attributeValue])
+      if (domAttributeName === 'value') {
+        const domAttributeValue = getElementInputValue(node, privacyLevel)
+        if (domAttributeValue !== undefined) {
+          change.push(createAttributeAssignment(domAttributeName, domAttributeValue))
         }
         continue
       }
 
-      const attributeValue = serializeAttribute(node, privacyLevel, attributeName, transaction.scope.configuration)
-      if (attributeValue === null) {
-        change.push([attributeName])
-      } else {
-        change.push([attributeName, attributeValue])
-      }
+      const domAttributeValue = serializeAttribute(
+        node,
+        privacyLevel,
+        domAttributeName,
+        transaction.scope.configuration
+      )
+      change.push(createAttributeAssignmentOrDeletion(domAttributeName, domAttributeValue))
     }
 
     if (change.length > 1) {

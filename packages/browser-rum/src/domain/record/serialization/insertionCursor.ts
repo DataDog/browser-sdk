@@ -1,5 +1,5 @@
 import type { InsertionPoint } from '../../../types'
-import type { NodeId, NodeIds } from '../itemIds'
+import type { NodeId, NodeIds } from '../encoding'
 
 /**
  * InsertionCursor tracks the point at which the next node will be inserted during

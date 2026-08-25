@@ -17,7 +17,7 @@ import { getReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
 import type { EmitRecordCallback } from './record.types'
-import { createChangeDecoder } from './serialization'
+import { createChangeDecoder } from './encoding'
 
 describe('record', () => {
   let recordApi: RecordAPI
