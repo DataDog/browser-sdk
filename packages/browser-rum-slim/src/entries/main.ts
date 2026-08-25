@@ -1,5 +1,6 @@
 // Keep the following in sync with packages/browser-rum/src/entries/main.ts
-import { defineGlobal, globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
+import { defineGlobal } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'

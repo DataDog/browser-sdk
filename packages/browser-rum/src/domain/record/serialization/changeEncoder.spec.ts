@@ -211,6 +211,8 @@ describe('ChangeEncoder', () => {
       encoder.add(ChangeType.AddStyleSheet, [['rule1']])
       encoder.add(ChangeType.ScrollPosition, [0, 10, 20])
       encoder.add(ChangeType.Size, [0, 100, 200])
+      encoder.add(ChangeType.InputSelection, [0, 1])
+      encoder.add(ChangeType.InputValue, [0, 'value'])
       encoder.add(ChangeType.Text, [0, 'text'])
       encoder.add(ChangeType.Attribute, [0, ['id', 'test']])
       encoder.add(ChangeType.RemoveNode, 1)
@@ -227,6 +229,8 @@ describe('ChangeEncoder', () => {
         ChangeType.RemoveNode,
         ChangeType.Attribute,
         ChangeType.Text,
+        ChangeType.InputValue,
+        ChangeType.InputSelection,
         ChangeType.Size,
         ChangeType.ScrollPosition,
         ChangeType.AddStyleSheet,

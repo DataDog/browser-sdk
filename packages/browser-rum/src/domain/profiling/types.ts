@@ -1,5 +1,6 @@
+import type { Profiler } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
-import type { TimeoutId, Profiler } from '@datadog/browser-core'
+import type { TimeoutId } from '@datadog/browser-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type { LongTaskContext } from './longTaskHistory'
 

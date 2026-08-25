@@ -10,6 +10,7 @@ import type {
   BrowserChangeRecord,
   BrowserFullSnapshotChangeRecord,
   Change,
+  InputValueChange,
   StyleSheetRules,
   TextChange,
 } from '../../../types'
@@ -66,6 +67,10 @@ function decodeChangeRecord(
         // Deliberately don't include this change in the decoded record.
         break
 
+      case ChangeType.AddRoleAnnotatedStrings:
+        // This change type exists in the schema, but nothing generates it yet.
+        throw new Error(`Unsupported ChangeType: ${change[0]}`)
+
       case ChangeType.AddNode: {
         const decoded: [typeof ChangeType.AddNode, ...AddNodeChange[]] = [ChangeType.AddNode]
         for (let i = 1; i < change.length; i++) {
@@ -97,11 +102,21 @@ function decodeChangeRecord(
         break
       }
 
+      case ChangeType.InputValue: {
+        const decoded: [typeof ChangeType.InputValue, ...InputValueChange[]] = [ChangeType.InputValue]
+        for (let i = 1; i < change.length; i++) {
+          decoded.push(decodeInputValueChange(change[i] as InputValueChange, stringTable))
+        }
+        decodedData.push(decoded)
+        break
+      }
+
       case ChangeType.Size:
       case ChangeType.ScrollPosition:
       case ChangeType.AttachedStyleSheets:
       case ChangeType.MediaPlaybackState:
       case ChangeType.VisualViewport:
+      case ChangeType.InputSelection:
         decodedData.push(change)
         break
 
@@ -113,12 +128,6 @@ function decodeChangeRecord(
         decodedData.push(decoded)
         break
       }
-
-      case ChangeType.AddRoleAnnotatedStrings:
-      case ChangeType.InputValue:
-      case ChangeType.InputSelection:
-        // These change types exist in the schema, but nothing generates them yet.
-        throw new Error(`Unsupported ChangeType: ${change[0]}`)
 
       default:
         change satisfies never
@@ -185,6 +194,10 @@ function decodeAttributeChange(change: AttributeChange, stringTable: StringTable
 }
 
 function decodeTextChange(change: TextChange, stringTable: StringTable): TextChange {
+  return [change[0], stringTable.decode(change[1])]
+}
+
+function decodeInputValueChange(change: InputValueChange, stringTable: StringTable): InputValueChange {
   return [change[0], stringTable.decode(change[1])]
 }
 

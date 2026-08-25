@@ -1,9 +1,14 @@
-import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
-import { IncrementalSource, ChangeType, RecordType } from '@datadog/browser-rum/src/types'
+import type { StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
+import { IncrementalSource, ChangeType, InputSelectionState, RecordType } from '@datadog/browser-rum/src/types'
 
 import { DefaultPrivacyLevel, SESSION_STORE_KEY } from '@datadog/browser-core'
 
-import { decodeChangeRecords, findChangeRecords } from '@datadog/browser-rum/test/record/changes'
+import {
+  decodeChangeRecords,
+  findChangeRecords,
+  findInputSelections,
+  findInputValues,
+} from '@datadog/browser-rum/test/record/changes'
 import {
   getElementIdsFromFullSnapshot,
   getScrollPositionsFromFullSnapshot,
@@ -339,8 +344,8 @@ test.describe('recorder', () => {
           </label>
           <label for="select">
             <select name="" id="select">
-              <option value="1">1</option>
-              <option value="2">2</option>
+              <option value="1" id="select-option-1">1</option>
+              <option value="2" id="select-option-2">2</option>
             </select>
           </label>
         </form>
@@ -365,47 +370,41 @@ test.describe('recorder', () => {
 
         const fullSnapshot = findFullSnapshot({ records: intakeRegistry.replayRecords })!
         const elementIds = getElementIdsFromFullSnapshot(fullSnapshot)
+        const changeRecords = decodeChangeRecords(findChangeRecords(intakeRegistry.replayRecords))
 
-        const textInputRecords = filterRecordsByIdAttribute('text-input')
-        expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
-        expect((textInputRecords[textInputRecords.length - 1].data as { text?: string }).text).toBe('test')
+        const textInputValues = valuesRecordedFor('text-input')
+        expect(textInputValues.length).toBeGreaterThanOrEqual(4)
+        expect(textInputValues.at(-1)).toBe('test')
 
-        const radioInputRecords = filterRecordsByIdAttribute('radio-input')
-        expect(radioInputRecords).toHaveLength(1)
-        expect((radioInputRecords[0].data as { text?: string }).text).toBe(undefined)
-        expect((radioInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
+        expect(selectionsRecordedFor('radio-input')).toEqual([InputSelectionState.Selected])
 
-        const checkboxInputRecords = filterRecordsByIdAttribute('checkbox-input')
-        expect(checkboxInputRecords).toHaveLength(1)
-        expect((checkboxInputRecords[0].data as { text?: string }).text).toBe(undefined)
-        expect((checkboxInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
+        expect(selectionsRecordedFor('checkbox-input')).toEqual([InputSelectionState.Selected])
 
-        const textareaRecords = filterRecordsByIdAttribute('textarea')
-        expect(textareaRecords.length).toBeGreaterThanOrEqual(4)
-        expect((textareaRecords[textareaRecords.length - 1].data as { text?: string }).text).toBe('textarea test')
+        const textareaValues = valuesRecordedFor('textarea')
+        expect(textareaValues.length).toBeGreaterThanOrEqual(4)
+        expect(textareaValues.at(-1)).toBe('textarea test')
 
-        const selectRecords = filterRecordsByIdAttribute('select')
-        expect(selectRecords).toHaveLength(1)
-        expect((selectRecords[0].data as { text?: string }).text).toBe('2')
+        expect(valuesRecordedFor('select')).toEqual([])
+        expect(selectionsRecordedFor('select-option-1')).toEqual([])
+        expect(selectionsRecordedFor('select-option-2')).toEqual([InputSelectionState.Selected])
 
-        function filterRecordsByIdAttribute(idAttribute: string) {
-          const id = elementIds.get(idAttribute)
-          const records = findAllIncrementalSnapshots(
-            { records: intakeRegistry.replayRecords },
-            IncrementalSource.Input
-          ) as Array<{ data: InputData }>
-          return records.filter((record) => record.data.id === id)
+        function valuesRecordedFor(idAttribute: string) {
+          return findInputValues(changeRecords, elementIds.get(idAttribute)!)
+        }
+
+        function selectionsRecordedFor(idAttribute: string) {
+          return findInputSelections(changeRecords, elementIds.get(idAttribute)!)
         }
       })
 
-    createTest("don't record ignored input interactions")
+    createTest('mask input interactions of elements marked as user input')
       .withRum({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
       .withBody(html`
         <input type="text" id="first" name="first" />
-        <input type="text" id="second" name="second" data-dd-privacy="input-ignored" />
-        <input type="text" id="third" name="third" class="dd-privacy-input-ignored" />
+        <input type="text" id="second" name="second" data-dd-privacy="mask-user-input" />
+        <input type="text" id="third" name="third" class="dd-privacy-mask-user-input" />
         <input type="password" id="fourth" name="fourth" />
       `)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -423,13 +422,20 @@ test.describe('recorder', () => {
 
         await flushEvents()
 
-        const inputRecords = findAllIncrementalSnapshots(
-          { records: intakeRegistry.replayRecords },
-          IncrementalSource.Input
-        )
+        const fullSnapshot = findFullSnapshot({ records: intakeRegistry.replayRecords })!
+        const elementIds = getElementIdsFromFullSnapshot(fullSnapshot)
+        const changeRecords = decodeChangeRecords(findChangeRecords(intakeRegistry.replayRecords))
 
-        expect(inputRecords.length).toBeGreaterThanOrEqual(3) // 4 on Safari, 3 on others
-        expect((inputRecords[inputRecords.length - 1].data as { text?: string }).text).toBe('***')
+        // #second and #third are marked as user input, by attribute and by class name; a
+        // password input is masked whatever the privacy level says. #first is recorded as typed.
+        expect(lastValueRecordedFor('first')).toBe('foo')
+        expect(lastValueRecordedFor('second')).toBe('***')
+        expect(lastValueRecordedFor('third')).toBe('***')
+        expect(lastValueRecordedFor('fourth')).toBe('***')
+
+        function lastValueRecordedFor(idAttribute: string) {
+          return findInputValues(changeRecords, elementIds.get(idAttribute)!).at(-1)
+        }
       })
 
     createTest('replace masked values by asterisks')
@@ -449,15 +455,15 @@ test.describe('recorder', () => {
 
         expect(intakeRegistry.replaySegments).toHaveLength(1)
 
-        const segment = intakeRegistry.replaySegments[0]
+        const fullSnapshot = findFullSnapshot({ records: intakeRegistry.replayRecords })!
+        const elementIds = getElementIdsFromFullSnapshot(fullSnapshot)
+        const changeRecords = decodeChangeRecords(findChangeRecords(intakeRegistry.replaySegments[0].records))
 
-        const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
-
-        expect(inputRecords.length).toBeGreaterThan(0)
-
-        expect(inputRecords.every((inputRecord) => /^\**$/.test((inputRecord.data as { text: string }).text))).toBe(
-          true
-        )
+        for (const idAttribute of ['by-data-attribute', 'by-classname']) {
+          const values = findInputValues(changeRecords, elementIds.get(idAttribute)!)
+          expect(values.length).toBeGreaterThan(0)
+          expect(values.every((value) => /^\**$/.test(value))).toBe(true)
+        }
       })
   })
 

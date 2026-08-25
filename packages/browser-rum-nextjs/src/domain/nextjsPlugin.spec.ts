@@ -1,4 +1,4 @@
-import { globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { appendElement } from '../../../browser-rum-core/test'
