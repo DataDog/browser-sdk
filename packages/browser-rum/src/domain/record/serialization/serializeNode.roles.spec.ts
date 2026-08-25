@@ -104,6 +104,25 @@ describe('string roles of a serialized node', () => {
     ])
   })
 
+  it('puts a namespaced URL attribute value in the URL role', async () => {
+    const record = await serializeHtml('<svg><use xlink:href="/icons.svg#star" href="/icons.svg#moon"></use></svg>', {
+      roles: 'keep',
+    })
+
+    expect(record?.data).toEqual([
+      [
+        ChangeType.AddNode,
+        [null, createString(StringRole.NodeName, 'svg>svg')],
+        [
+          1,
+          createString(StringRole.NodeName, 'svg>use'),
+          [createString(StringRole.AttributeName, 'xlink:href'), createString(StringRole.Url, '/icons.svg#star')],
+          [createString(StringRole.AttributeName, 'href'), createString(StringRole.Url, '/icons.svg#moon')],
+        ],
+      ],
+    ])
+  })
+
   it("puts a #doctype's name and ids in their own roles", async () => {
     // A legacy doctype, since the HTML5 one has an empty public id and system id and so says
     // nothing about the roles they are given.

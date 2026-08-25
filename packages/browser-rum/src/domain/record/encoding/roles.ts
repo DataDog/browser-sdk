@@ -120,6 +120,7 @@ const URL_ATTRIBUTE_NAMES = new Set([
   'poster',
   'src',
   'srcset',
+  'xlink:href',
 ])
 
 /** The role that the value of the given attribute plays on the given element. */
