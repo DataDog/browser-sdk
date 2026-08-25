@@ -36,6 +36,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
 
       const nodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
       if (shouldMaskNode(canvas, nodePrivacyLevel)) {
+        canvasManager.markCanvasClean(canvas)
         return // Do not read pixels from masked canvases
       }
 
@@ -74,6 +75,12 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
           if (!image) {
             canvasManager.markCanvasDirty(canvas)
             return
+          }
+
+          const currentNodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
+          if (shouldMaskNode(canvas, currentNodePrivacyLevel)) {
+            canvasManager.markCanvasClean(canvas)
+            return // Do not emit pixels if the canvas became masked during capture
           }
 
           onCanvasCapture({ nodeId, changeHash: hash, image })

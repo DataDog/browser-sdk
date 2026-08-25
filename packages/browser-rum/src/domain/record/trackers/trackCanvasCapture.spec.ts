@@ -1,5 +1,6 @@
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
+import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { createCanvasManager } from '../canvas/canvasManager'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
@@ -142,6 +143,35 @@ describe('trackCanvasCapture', () => {
 
     expect(onCanvasCapture).not.toHaveBeenCalled()
     expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+  })
+
+  it('does not capture masked canvases and marks them clean', async () => {
+    canvas.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+    const onCanvasCapture = startTracking()
+
+    markCanvasDirtyAndWaitForCapture()
+    await waitForCanvasCapture()
+
+    expect(onCanvasCapture).not.toHaveBeenCalled()
+    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+  })
+
+  it('does not emit a capture if the canvas becomes masked while capturing', async () => {
+    let resolveToBlob: BlobCallback | undefined
+    toBlobSpy.and.callFake((callback) => {
+      resolveToBlob = callback
+    })
+
+    draw('red')
+    const onCanvasCapture = startTracking()
+    markCanvasDirtyAndWaitForCapture()
+
+    canvas.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+    resolveToBlob!(new Blob([], { type: 'image/png' }))
+    await waitForCanvasCapture()
+
+    expect(onCanvasCapture).not.toHaveBeenCalled()
+    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
   })
 
   it('stops capturing after the tracker is stopped', async () => {
