@@ -74,6 +74,22 @@ describe('stringUtils', () => {
       expect(findCommaSeparatedValue(cookieStringWithLeadingEmptyValue, 'second')).toBe('second')
     })
 
+    it('keeps reading after a segment with no value', () => {
+      // `document.cookie = 'foo'` stores a cookie with no name, and reading it
+      // back gives a bare value with no `=`. The old regex resumed matching on
+      // the `;` after it, so every pair beyond that point became unreachable.
+      expect(findCommaSeparatedValue('noequals;foo=1', 'foo')).toBe('1')
+      expect(findCommaSeparatedValue('a=1;;b=2', 'b')).toBe('2')
+      expect(findCommaSeparatedValue('a=1;;b=2', 'a')).toBe('1')
+    })
+
+    it('parses a long value without a separator in linear time', () => {
+      // The old pattern was quadratic here: 512,000 characters took ~70s.
+      const start = performance.now()
+      expect(findCommaSeparatedValue('a'.repeat(512 * 1024), 'foo')).toBeUndefined()
+      expect(performance.now() - start).toBeLessThan(1000)
+    })
+
     it('supports cookie string with trailing empty value', () => {
       const cookieStringWithTrailingEmptyValue = 'first=first;second='
 
@@ -97,6 +113,13 @@ describe('stringUtils', () => {
       expectedValues.set('foo', ['a', 'c'])
       expectedValues.set('bar', ['b'])
       expect(findAllCommaSeparatedValues('foo=a;bar=b;foo=c')).toEqual(expectedValues)
+    })
+
+    it('keeps reading after a segment with no value', () => {
+      const expectedValues = new Map<string, string[]>()
+      expectedValues.set('foo', ['a'])
+      expectedValues.set('bar', ['b'])
+      expect(findAllCommaSeparatedValues('foo=a;novalue;bar=b')).toEqual(expectedValues)
     })
   })
 
