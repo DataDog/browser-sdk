@@ -17,6 +17,8 @@ import type {
   InsertionPoint,
   MediaInteractionType,
   RoleAnnotatedStringLiteral,
+  StringLiteral,
+  StringReference,
   StyleSheetMediaList,
   StyleSheetRules,
 } from '../../../types'
@@ -34,6 +36,15 @@ export const enum SerializationKind {
 }
 
 type AddNodeParams<NodeChange extends AddNodeChange> = NodeChange extends [any, any, ...infer Params] ? Params : never
+
+/**
+ * The node name of a node change. We exclude the string literal variant, since it's
+ * obsolete, and the string reference variant, since only the encoder should produce it.
+ */
+type AddNodeName<NodeChange extends AddNodeChange> = Exclude<NodeChange[1], StringLiteral | StringReference>
+
+/** The string literal type corresponding to a node name. */
+type NodeNameOf<Name> = Name extends RoleAnnotatedStringLiteral ? Name['string'] : never
 
 export type SerializationTransactionCallback = (transaction: SerializationTransaction) => void
 
@@ -55,22 +66,44 @@ export interface SerializationTransaction {
   addMetric(metric: keyof SerializationStats, value: number): void
 
   /** Add a node to the document at the given insertion point. */
-  addNode(pos: InsertionPoint, nodeName: '#cdata-section', ...params: AddNodeParams<AddCDataSectionNodeChange>): void
-  addNode(pos: InsertionPoint, nodeName: '#doctype', ...params: AddNodeParams<AddDocTypeNodeChange>): void
-  addNode(pos: InsertionPoint, nodeName: '#document', ...params: AddNodeParams<AddDocumentNodeChange>): void
   addNode(
     pos: InsertionPoint,
-    nodeName: '#document-fragment',
+    nodeName: AddNodeName<AddCDataSectionNodeChange>,
+    ...params: AddNodeParams<AddCDataSectionNodeChange>
+  ): void
+  addNode(
+    pos: InsertionPoint,
+    nodeName: AddNodeName<AddDocTypeNodeChange>,
+    ...params: AddNodeParams<AddDocTypeNodeChange>
+  ): void
+  addNode(
+    pos: InsertionPoint,
+    nodeName: AddNodeName<AddDocumentNodeChange>,
+    ...params: AddNodeParams<AddDocumentNodeChange>
+  ): void
+  addNode(
+    pos: InsertionPoint,
+    nodeName: AddNodeName<AddDocumentFragmentNodeChange>,
     ...params: AddNodeParams<AddDocumentFragmentNodeChange>
   ): void
-  addNode(pos: InsertionPoint, nodeName: '#shadow-root', ...params: AddNodeParams<AddShadowRootNodeChange>): void
-  addNode(pos: InsertionPoint, nodeName: '#text', ...params: AddNodeParams<AddTextNodeChange>): void
   addNode(
     pos: InsertionPoint,
-    nodeName: Exclude<string, `#${string}`>,
-    ...params: AddNodeParams<AddElementNodeChange>
+    nodeName: AddNodeName<AddShadowRootNodeChange>,
+    ...params: AddNodeParams<AddShadowRootNodeChange>
   ): void
-  addNode(pos: InsertionPoint, nodeName: RoleAnnotatedStringLiteral, ...params: AddNodeParams<AddNodeChange>): void
+  addNode(
+    pos: InsertionPoint,
+    nodeName: AddNodeName<AddTextNodeChange>,
+    ...params: AddNodeParams<AddTextNodeChange>
+  ): void
+  addNode<Name extends AddNodeName<AddElementNodeChange>>(
+    pos: InsertionPoint,
+    nodeName: Name,
+    // This overload is deliberately unsatisfiable; a '#'-prefixed name belongs to one of
+    // the node kinds above, so we should never reach it unless the caller provided
+    // invalid parameters.
+    ...params: NodeNameOf<Name> extends `#${string}` ? [never] : AddNodeParams<AddElementNodeChange>
+  ): void
 
   /** Add a stylesheet to the document. */
   addStyleSheet(rules: StyleSheetRules, mediaList?: StyleSheetMediaList, disabled?: boolean): void
@@ -127,7 +160,9 @@ export function serializeInTransaction(
     addMetric(metric: keyof SerializationStats, value: number): void {
       updateSerializationStats(stats, metric, value)
     },
-    addNode(...change): void {
+    // The overloads declared above are what callers are checked against; this implementation
+    // takes the parameters of any of them.
+    addNode(...change: unknown[]): void {
       encoder.add(ChangeType.AddNode, change as AddNodeChange)
     },
     addStyleSheet(rules: StyleSheetRules, mediaList?: StyleSheetMediaList, disabled?: boolean): void {
