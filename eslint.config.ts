@@ -4,6 +4,8 @@ import * as tseslint from 'typescript-eslint'
 import { importX } from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
+// @ts-expect-error -- eslint-plugin-secure-coding is not typed
+import secureCoding from 'eslint-plugin-secure-coding'
 // @ts-expect-error -- eslint-plugin-jasmine is not typed
 import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
@@ -299,6 +301,29 @@ export default defineConfig(
 
       'unicorn/filename-case': ['error', { case: 'camelCase', checkDirectories: false }],
       'unicorn/no-empty-file': 'error',
+    },
+  },
+
+  {
+    // The cookie and stack-trace parsers run on strings the page does not
+    // control — document.cookie, an Error stack — so a pattern that backtracks
+    // super-linearly there is a main-thread stall a visitor can trigger.
+    // `findCommaSeparatedValue` was one: /(\S+?)\s*=\s*(.*?)(?:;|$)/g took
+    // 69s on a 512KB cookie string before it was rewritten as an index scan.
+    //
+    // Scoped to tools/utils, which is clean under this rule today, rather
+    // than the whole repository. `tools/stackTrace/computeStackTrace.ts:156`
+    // reports as well — GECKO_LINE_RE trades characters between `(.*?)` and
+    // the alternation after it — and that is a separate fix rather than
+    // something to smuggle into a cookie-parsing PR. Happy to send it next if
+    // you want the scope widened.
+    //
+    // Pinned to 4.3.0, published nine days ago, so it satisfies the 7-day
+    // minimumReleaseAge in renovate.json rather than asking for an exception.
+    files: ['packages/browser-core/src/tools/utils/*.ts'],
+    plugins: { 'secure-coding': secureCoding },
+    rules: {
+      'secure-coding/no-redos-vulnerable-regex': 'error',
     },
   },
 

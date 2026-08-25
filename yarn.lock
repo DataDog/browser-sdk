@@ -794,7 +794,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint-community/regexpp@npm:^4.12.2":
+"@eslint-community/regexpp@npm:^4.10.0, @eslint-community/regexpp@npm:^4.12.2, @eslint-community/regexpp@npm:^4.8.0":
   version: 4.12.2
   resolution: "@eslint-community/regexpp@npm:4.12.2"
   checksum: 10c0/fddcbc66851b308478d04e302a4d771d6917a0b3740dc351513c0da9ca2eab8a1adf99f5e0aa7ab8b13fa0df005c81adeee7e63a92f3effd7d367a163b721c2d
@@ -1653,6 +1653,25 @@ __metadata:
     "@types/node":
       optional: true
   checksum: 10c0/80678ac1c6e19ce309909e4a54a69adc95697ea3abc2cb92f17b1bc52f4caadbcb4003ae7339fb5a70c0d36d3bde975e1bb4450069662f41c953a0d28695bb70
+  languageName: node
+  linkType: hard
+
+"@interlace/eslint-devkit@npm:^1.16.0":
+  version: 1.17.1
+  resolution: "@interlace/eslint-devkit@npm:1.17.1"
+  peerDependencies:
+    "@typescript-eslint/utils": ^7.0.0 || ^8.0.0
+    eslint: ^8.40.0 || ^9.0.0 || ^10.0.0
+    oxc-resolver: ^11.24.2
+    typescript: ">=4.8.4"
+  peerDependenciesMeta:
+    "@typescript-eslint/utils":
+      optional: true
+    oxc-resolver:
+      optional: true
+    typescript:
+      optional: true
+  checksum: 10c0/aaf03f95654fa24b0f2e0958e70acedd9a51ce1576af859ef34936f2e3b0d9ff5c99c764705d1b2689d93ee0bb00e85b53892a4e348311eed58d9751eb186476
   languageName: node
   linkType: hard
 
@@ -6125,6 +6144,7 @@ __metadata:
     eslint-plugin-import-x: "npm:4.17.1"
     eslint-plugin-jasmine: "npm:4.2.2"
     eslint-plugin-jsdoc: "npm:64.1.0"
+    eslint-plugin-secure-coding: "npm:4.3.0"
     eslint-plugin-unicorn: "npm:73.0.0"
     express: "npm:5.2.1"
     globals: "npm:17.9.0"
@@ -8020,6 +8040,19 @@ __metadata:
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
   checksum: 10c0/cbde7fa3c3bb70f13c95a371ca85efba62eac4ac322802d58a2127e678959f93f4ce0e13212cd70d3abbb1407eab814afa0590ddaf6723a9b306494d6eb3fabb
+  languageName: node
+  linkType: hard
+
+"eslint-plugin-secure-coding@npm:4.3.0":
+  version: 4.3.0
+  resolution: "eslint-plugin-secure-coding@npm:4.3.0"
+  dependencies:
+    "@eslint-community/regexpp": "npm:^4.10.0"
+    "@interlace/eslint-devkit": "npm:^1.16.0"
+    scslre: "npm:^0.3.0"
+  peerDependencies:
+    eslint: ^8.40.0 || ^9.0.0 || ^10.0.0
+  checksum: 10c0/3e1ff089ec855d4ef00297d16cc50dfd13b4cc7ea07b2ae2ca2bc0357b876d222e7e1c2297a970f7d391cbe041c9d7e1d16ec3d43e973c1b8c8385ed2c15b972
   languageName: node
   linkType: hard
 
@@ -13551,6 +13584,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"refa@npm:^0.12.0, refa@npm:^0.12.1":
+  version: 0.12.1
+  resolution: "refa@npm:0.12.1"
+  dependencies:
+    "@eslint-community/regexpp": "npm:^4.8.0"
+  checksum: 10c0/5c2f3dc5421f73aba44ec3d67bad58f36ff921dc13b0a921e1784c0510cf26be6d4e14010955a71607e67ff23a815f3ac30b337d06b5a2e8914417b67626c900
+  languageName: node
+  linkType: hard
+
+"regexp-ast-analysis@npm:^0.7.0":
+  version: 0.7.1
+  resolution: "regexp-ast-analysis@npm:0.7.1"
+  dependencies:
+    "@eslint-community/regexpp": "npm:^4.8.0"
+    refa: "npm:^0.12.1"
+  checksum: 10c0/1b0e6d66e1e619b42a0e7f62b4c9983d0ce69d94fc759802c02272cbab8abd2e0d5b94186472de4e7c4baaf5826ca674d3c7c083615e39c4be55d1ff9d12c823
+  languageName: node
+  linkType: hard
+
 "registry-auth-token@npm:^5.1.1":
   version: 5.1.1
   resolution: "registry-auth-token@npm:5.1.1"
@@ -13969,6 +14021,17 @@ __metadata:
     ajv-formats: "npm:^2.1.1"
     ajv-keywords: "npm:^5.1.0"
   checksum: 10c0/1c8d2c480a026d7c02ab2ecbe5919133a096d6a721a3f201fa50663e4f30f6d6ba020dfddd93cb828b66b922e76b342e103edd19a62c95c8f60e9079cc403202
+  languageName: node
+  linkType: hard
+
+"scslre@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "scslre@npm:0.3.0"
+  dependencies:
+    "@eslint-community/regexpp": "npm:^4.8.0"
+    refa: "npm:^0.12.0"
+    regexp-ast-analysis: "npm:^0.7.0"
+  checksum: 10c0/47eb72cf913693b453b7622dfee26871b4c408169874b31b8a1f3de8f41698e6dbacd7565fccc8d24cd2fd30f53c21f16995a7f9072e8b25cd938a6c3a750c3c
   languageName: node
   linkType: hard
 
