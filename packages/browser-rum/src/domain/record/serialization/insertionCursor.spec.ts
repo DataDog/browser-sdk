@@ -1,6 +1,6 @@
 import type { InsertionPoint } from '../../../types'
-import type { NodeId, NodeIds } from '../itemIds'
-import { createNodeIds } from '../itemIds'
+import type { NodeId, NodeIds } from '../encoding'
+import { createNodeIds } from '../encoding'
 import { createChildInsertionCursor, createRootInsertionCursor } from './insertionCursor'
 
 describe('InsertionCursor', () => {

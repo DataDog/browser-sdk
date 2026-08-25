@@ -1,9 +1,10 @@
 import { instrumentSetter, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
-import { InputSelectionState } from '../../../types'
+import { InputSelectionState, StringRole } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
-import type { NodeId } from '../itemIds'
+import { createString } from '../encoding'
+import type { NodeId } from '../encoding'
 import type { RecordingScope } from '../recordingScope'
 import type { SerializationTransaction } from '../serialization'
 import { getElementInputValue, SerializationKind, serializeInTransaction } from '../serialization'
@@ -164,7 +165,7 @@ export function trackInput(
       (transaction: SerializationTransaction) => {
         if (changedNodeId !== undefined) {
           if (inputState.type === InputStateType.VALUE) {
-            transaction.setInputValue(changedNodeId, inputState.value)
+            transaction.setInputValue(changedNodeId, createString(StringRole.FormInput, inputState.value))
           } else {
             transaction.setInputSelection(inputState.selection, [changedNodeId])
           }

@@ -1,12 +1,10 @@
-import type { EventId, ItemIds, NodeId, StringId, StyleSheetId } from './itemIds'
+import type { EventId, ItemIds, NodeId, StyleSheetId } from './itemIds'
 import {
   createEventIds,
   createNodeIds,
-  createStringIds,
   createStyleSheetIds,
   EventIdConstants,
   NodeIdConstants,
-  StringIdConstants,
   StyleSheetIdConstants,
 } from './itemIds'
 
@@ -148,14 +146,6 @@ describe('ItemIds', () => {
     createNodeIds,
     () => document.createElement('div'),
     NodeIdConstants.FIRST_ID as NodeId
-  )
-
-  let nextString = 0
-  describeItemIdVariant(
-    'StringIds',
-    createStringIds,
-    () => `string${nextString++}`,
-    StringIdConstants.FIRST_ID as StringId
   )
 
   describeItemIdVariant(

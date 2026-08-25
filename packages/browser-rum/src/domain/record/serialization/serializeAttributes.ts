@@ -1,41 +1,32 @@
 import { NodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { isSafari } from '@datadog/browser-core'
+import type { RoleAnnotatedAttributeAssignment } from '../encoding'
+import { createAttributeAssignment } from '../encoding'
 import { getElementInputValue, normalizedTagName, switchToAbsoluteUrl } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind } from './serializationTransaction'
 import type { VirtualAttributes } from './serialization.types'
 
-export function serializeAttributes(
-  element: Element,
-  nodePrivacyLevel: NodePrivacyLevel,
-  transaction: SerializationTransaction
-): Record<string, number | string> {
-  return {
-    ...serializeDOMAttributes(element, nodePrivacyLevel, transaction),
-    ...serializeVirtualAttributes(element, nodePrivacyLevel, transaction),
-  }
-}
-
 export function serializeDOMAttributes(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
   transaction: SerializationTransaction
-): Record<string, string> {
+): RoleAnnotatedAttributeAssignment[] {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
-    return {}
+    return []
   }
 
-  const attrs: Record<string, string> = {}
+  const attributes: RoleAnnotatedAttributeAssignment[] = []
   const tagName = normalizedTagName(element)
 
   for (let i = 0; i < element.attributes.length; i += 1) {
     const attribute = element.attributes.item(i)!
     const attributeName = attribute.name
-    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, transaction.scope.configuration)
-    if (attributeValue !== null) {
-      attrs[attributeName] = attributeValue
+    if (attributeName === 'value' || attributeName === 'selected' || attributeName === 'checked') {
+      continue // Handled specially below.
     }
+    serializeDOMAttributeInto(attributes, element, attributeName, nodePrivacyLevel, transaction)
   }
 
   if (
@@ -44,20 +35,21 @@ export function serializeDOMAttributes(
   ) {
     const formValue = getElementInputValue(element, nodePrivacyLevel)
     if (formValue !== undefined) {
-      attrs.value = formValue
+      attributes.push(createAttributeAssignment('value', formValue))
     }
+  } else if (element.hasAttribute('value')) {
+    serializeDOMAttributeInto(attributes, element, 'value', nodePrivacyLevel, transaction)
   }
 
   /**
    * <Option> can be selected, which occurs if its `value` matches ancestor `<Select>.value`
    */
   if (tagName === 'option') {
-    const optionElement = element as HTMLOptionElement
-    if (optionElement.selected && !shouldMaskNode(optionElement, nodePrivacyLevel)) {
-      attrs.selected = ''
-    } else {
-      delete attrs.selected
+    if ((element as HTMLOptionElement).selected && !shouldMaskNode(element, nodePrivacyLevel)) {
+      attributes.push(createAttributeAssignment('selected', ''))
     }
+  } else if (element.hasAttribute('selected')) {
+    serializeDOMAttributeInto(attributes, element, 'selected', nodePrivacyLevel, transaction)
   }
 
   /**
@@ -70,14 +62,27 @@ export function serializeDOMAttributes(
    */
   const inputElement = element as HTMLInputElement
   if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
-    if (inputElement.checked && !shouldMaskNode(inputElement, nodePrivacyLevel)) {
-      attrs.checked = ''
-    } else {
-      delete attrs.checked
+    if (inputElement.checked && !shouldMaskNode(element, nodePrivacyLevel)) {
+      attributes.push(createAttributeAssignment('checked', ''))
     }
+  } else if (element.hasAttribute('checked')) {
+    serializeDOMAttributeInto(attributes, element, 'checked', nodePrivacyLevel, transaction)
   }
 
-  return attrs
+  return attributes
+}
+
+function serializeDOMAttributeInto(
+  attributes: RoleAnnotatedAttributeAssignment[],
+  element: Element,
+  attributeName: string,
+  nodePrivacyLevel: NodePrivacyLevel,
+  transaction: SerializationTransaction
+): void {
+  const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, transaction.scope.configuration)
+  if (attributeValue !== null) {
+    attributes.push(createAttributeAssignment(attributeName, attributeValue))
+  }
 }
 
 export function serializeVirtualAttributes(

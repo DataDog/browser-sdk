@@ -112,7 +112,7 @@ runMain(async () => {
         if ('builderFn' in app) {
           await app.builderFn(app.name, app.options)
         } else {
-          await buildApp(app.name)
+          await buildApp(app.name, { restorePackageFiles: true })
         }
       })()
       buildPromises.set(app.name, promise)
@@ -139,35 +139,51 @@ function showHelpAndExit() {
   process.exit(0)
 }
 
-async function buildApp(appName: string) {
+async function buildApp(appName: string, { restorePackageFiles = false }: { restorePackageFiles?: boolean } = {}) {
   try {
     const appPath = `test/apps/${appName}`
     printLog(`Building app at ${appPath}...`)
-    await command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).runAsync()
 
-    // install peer dependencies if any
-    // intent: renovate does not allow to generate local packages before install
-    // so local packages are marked as optional peer dependencies and only installed when we build the test apps
-    const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
-    if (packageJson.peerDependencies) {
-      // For each peer dependency, install it
-      for (const [name] of Object.entries(packageJson.peerDependencies)) {
-        const resolution = packageJson.resolutions?.[name]
-        const specifier = resolution ? `${name}@${resolution}` : name
-        await command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).runAsync()
+    await restoreFilesAfter(
+      restorePackageFiles ? ['package.json', 'yarn.lock'].map((fileName) => path.join(appPath, fileName)) : [],
+      async () => {
+        await command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).runAsync()
+
+        // Renovate cannot generate local packages before install, so local packages are marked as optional peer dependencies.
+        // Install them only when building the test apps.
+        const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
+        if (packageJson.peerDependencies) {
+          // For each peer dependency, install it
+          for (const [name] of Object.entries(packageJson.peerDependencies)) {
+            const resolution = packageJson.resolutions?.[name]
+            const specifier = resolution ? `${name}@${resolution}` : name
+            await command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).runAsync()
+          }
+        }
       }
-      // revert package.json & yarn.lock changes if they are versioned
-      const areFilesVersioned = await command`git ls-files package.json yarn.lock`
-        .withCurrentWorkingDirectory(appPath)
-        .runAsync()
-      if (areFilesVersioned) {
-        await command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).runAsync()
-      }
-    }
+    )
 
     await command`yarn build`.withCurrentWorkingDirectory(appPath).runAsync()
   } catch (error) {
     throw new Error(`Failed to build app '${appName}'`, { cause: error })
+  }
+}
+
+async function restoreFilesAfter<T>(filePaths: string[], action: () => Promise<T>): Promise<T> {
+  const restoreFiles = filePaths.map((filePath) => {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath)
+      return () => fs.writeFileSync(filePath, content)
+    }
+    return () => fs.rmSync(filePath, { force: true })
+  })
+
+  try {
+    return await action()
+  } finally {
+    for (const restoreFile of restoreFiles) {
+      restoreFile()
+    }
   }
 }
 
