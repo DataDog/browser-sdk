@@ -9,10 +9,9 @@ import {
   NodePrivacyLevel,
 } from '@datadog/browser-rum-core'
 import { StringRole } from '../../../types'
-import type { AttributeChange } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
-import type { NodeId, NodeIds } from '../encoding'
+import type { NodeId, NodeIds, RoleAnnotatedAttributeChange } from '../encoding'
 import { createAttributeAssignment, createAttributeAssignmentOrDeletion, createString } from '../encoding'
 import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
 import type { SerializationTransaction } from './serializationTransaction'
@@ -260,7 +259,7 @@ function processAttributeMutations(
 
     const tagName = normalizedTagName(node)
 
-    const change: AttributeChange = [nodeId]
+    const change: RoleAnnotatedAttributeChange = [nodeId]
     for (const [domAttributeName, oldValue] of attributeNames) {
       if (node.getAttribute(domAttributeName) === oldValue) {
         continue // No change since the last snapshot.

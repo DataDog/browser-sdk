@@ -11,18 +11,22 @@ import type {
   AddShadowRootNodeChange,
   AddTextNodeChange,
   AttachedStyleSheetsChange,
-  AttributeChange,
   InputSelectionChange,
   InputSelectionState,
   InsertionPoint,
   MediaInteractionType,
   RoleAnnotatedStringLiteral,
-  StringLiteral,
-  StringReference,
-  StyleSheetMediaList,
-  StyleSheetRules,
 } from '../../../types'
-import type { NodeId, StyleSheetId } from '../encoding'
+import type {
+  NodeId,
+  RoleAnnotatedAddNodeName,
+  RoleAnnotatedAddNodeParams,
+  RoleAnnotatedAttributeChange,
+  RoleAnnotatedStringLiteralValue,
+  RoleAnnotatedStyleSheetMediaList,
+  RoleAnnotatedStyleSheetRules,
+  StyleSheetId,
+} from '../encoding'
 import { createChangeEncoder } from '../encoding'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
@@ -34,17 +38,6 @@ export const enum SerializationKind {
   SUBSEQUENT_FULL_SNAPSHOT,
   INCREMENTAL_SNAPSHOT,
 }
-
-type AddNodeParams<NodeChange extends AddNodeChange> = NodeChange extends [any, any, ...infer Params] ? Params : never
-
-/**
- * The node name of a node change. We exclude the string literal variant, since it's
- * obsolete, and the string reference variant, since only the encoder should produce it.
- */
-type AddNodeName<NodeChange extends AddNodeChange> = Exclude<NodeChange[1], StringLiteral | StringReference>
-
-/** The string literal type corresponding to a node name. */
-type NodeNameOf<Name> = Name extends RoleAnnotatedStringLiteral ? Name['string'] : never
 
 export type SerializationTransactionCallback = (transaction: SerializationTransaction) => void
 
@@ -68,45 +61,51 @@ export interface SerializationTransaction {
   /** Add a node to the document at the given insertion point. */
   addNode(
     pos: InsertionPoint,
-    nodeName: AddNodeName<AddCDataSectionNodeChange>,
-    ...params: AddNodeParams<AddCDataSectionNodeChange>
+    nodeName: RoleAnnotatedAddNodeName<AddCDataSectionNodeChange>,
+    ...params: RoleAnnotatedAddNodeParams<AddCDataSectionNodeChange>
   ): void
   addNode(
     pos: InsertionPoint,
-    nodeName: AddNodeName<AddDocTypeNodeChange>,
-    ...params: AddNodeParams<AddDocTypeNodeChange>
+    nodeName: RoleAnnotatedAddNodeName<AddDocTypeNodeChange>,
+    ...params: RoleAnnotatedAddNodeParams<AddDocTypeNodeChange>
   ): void
   addNode(
     pos: InsertionPoint,
-    nodeName: AddNodeName<AddDocumentNodeChange>,
-    ...params: AddNodeParams<AddDocumentNodeChange>
+    nodeName: RoleAnnotatedAddNodeName<AddDocumentNodeChange>,
+    ...params: RoleAnnotatedAddNodeParams<AddDocumentNodeChange>
   ): void
   addNode(
     pos: InsertionPoint,
-    nodeName: AddNodeName<AddDocumentFragmentNodeChange>,
-    ...params: AddNodeParams<AddDocumentFragmentNodeChange>
+    nodeName: RoleAnnotatedAddNodeName<AddDocumentFragmentNodeChange>,
+    ...params: RoleAnnotatedAddNodeParams<AddDocumentFragmentNodeChange>
   ): void
   addNode(
     pos: InsertionPoint,
-    nodeName: AddNodeName<AddShadowRootNodeChange>,
-    ...params: AddNodeParams<AddShadowRootNodeChange>
+    nodeName: RoleAnnotatedAddNodeName<AddShadowRootNodeChange>,
+    ...params: RoleAnnotatedAddNodeParams<AddShadowRootNodeChange>
   ): void
   addNode(
     pos: InsertionPoint,
-    nodeName: AddNodeName<AddTextNodeChange>,
-    ...params: AddNodeParams<AddTextNodeChange>
+    nodeName: RoleAnnotatedAddNodeName<AddTextNodeChange>,
+    ...params: RoleAnnotatedAddNodeParams<AddTextNodeChange>
   ): void
-  addNode<Name extends AddNodeName<AddElementNodeChange>>(
+  addNode<Name extends RoleAnnotatedAddNodeName<AddElementNodeChange>>(
     pos: InsertionPoint,
     nodeName: Name,
     // This overload is deliberately unsatisfiable; a '#'-prefixed name belongs to one of
     // the node kinds above, so we should never reach it unless the caller provided
     // invalid parameters.
-    ...params: NodeNameOf<Name> extends `#${string}` ? [never] : AddNodeParams<AddElementNodeChange>
+    ...params: RoleAnnotatedStringLiteralValue<Name> extends `#${string}`
+      ? [never]
+      : RoleAnnotatedAddNodeParams<AddElementNodeChange>
   ): void
 
   /** Add a stylesheet to the document. */
-  addStyleSheet(rules: StyleSheetRules, mediaList?: StyleSheetMediaList, disabled?: boolean): void
+  addStyleSheet(
+    rules: RoleAnnotatedStyleSheetRules,
+    mediaList?: RoleAnnotatedStyleSheetMediaList,
+    disabled?: boolean
+  ): void
 
   /**
    * Attach one or more stylesheets to a <link>, <style>, #document, #document-fragment,
@@ -118,7 +117,7 @@ export interface SerializationTransaction {
   removeNode(nodeId: NodeId): void
 
   /** Set a node's attributes to the given values. */
-  setAttributes(change: AttributeChange): void
+  setAttributes(change: RoleAnnotatedAttributeChange): void
 
   /** Set the selection state of one or more checkboxes, radio buttons, or <option> elements. */
   setInputSelection(state: InputSelectionState, nodeIds: NodeId[]): void
@@ -165,7 +164,11 @@ export function serializeInTransaction(
     addNode(...change: unknown[]): void {
       encoder.add(ChangeType.AddNode, change as AddNodeChange)
     },
-    addStyleSheet(rules: StyleSheetRules, mediaList?: StyleSheetMediaList, disabled?: boolean): void {
+    addStyleSheet(
+      rules: RoleAnnotatedStyleSheetRules,
+      mediaList?: RoleAnnotatedStyleSheetMediaList,
+      disabled?: boolean
+    ): void {
       if (disabled) {
         encoder.add(ChangeType.AddStyleSheet, [rules, mediaList || [], disabled])
       } else if (mediaList) {
@@ -184,7 +187,7 @@ export function serializeInTransaction(
     removeNode(nodeId: NodeId): void {
       encoder.add(ChangeType.RemoveNode, nodeId)
     },
-    setAttributes(change: AttributeChange): void {
+    setAttributes(change: RoleAnnotatedAttributeChange): void {
       encoder.add(ChangeType.Attribute, change)
     },
     setInputSelection(state: InputSelectionState, nodeIds: NodeId[]): void {
