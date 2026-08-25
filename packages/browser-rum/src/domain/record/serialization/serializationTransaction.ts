@@ -12,6 +12,8 @@ import type {
   AddTextNodeChange,
   AttachedStyleSheetsChange,
   AttributeChange,
+  InputSelectionChange,
+  InputSelectionState,
   InsertionPoint,
   MediaInteractionType,
   StyleSheetMediaList,
@@ -84,6 +86,12 @@ export interface SerializationTransaction {
   /** Set a node's attributes to the given values. */
   setAttributes(change: AttributeChange): void
 
+  /** Set the selection state of one or more checkboxes, radio buttons, or <option> elements. */
+  setInputSelection(state: InputSelectionState, nodeIds: NodeId[]): void
+
+  /** Set the value of a form element. */
+  setInputValue(nodeId: NodeId, value: string): void
+
   /** Set the media playback state of an <audio> or <video> element. */
   setMediaPlaybackState(nodeId: NodeId, state: MediaInteractionType): void
 
@@ -142,6 +150,16 @@ export function serializeInTransaction(
     },
     setAttributes(change: AttributeChange): void {
       encoder.add(ChangeType.Attribute, change)
+    },
+    setInputSelection(state: InputSelectionState, nodeIds: NodeId[]): void {
+      const change: InputSelectionChange = [state]
+      for (const nodeId of nodeIds) {
+        change.push(nodeId)
+      }
+      encoder.add(ChangeType.InputSelection, change)
+    },
+    setInputValue(nodeId: NodeId, value: string): void {
+      encoder.add(ChangeType.InputValue, [nodeId, value])
     },
     setMediaPlaybackState(nodeId: NodeId, state: MediaInteractionType): void {
       encoder.add(ChangeType.MediaPlaybackState, [nodeId, state])

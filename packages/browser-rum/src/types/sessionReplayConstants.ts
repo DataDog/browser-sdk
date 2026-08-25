@@ -78,6 +78,19 @@ export const ChangeType: {
 
 export type ChangeType = (typeof ChangeType)[keyof typeof ChangeType]
 
+/** The selection state of a checkbox, radio button, or `<option>`. */
+export const InputSelectionState: {
+  Selected: SessionReplay.InputSelectionStateSelected
+  Deselected: SessionReplay.InputSelectionStateDeselected
+  Indeterminate: SessionReplay.InputSelectionStateIndeterminate
+} = {
+  Selected: 0,
+  Deselected: 1,
+  Indeterminate: 2,
+} as const
+
+export type InputSelectionState = (typeof InputSelectionState)[keyof typeof InputSelectionState]
+
 export const PlaybackState: {
   Playing: SessionReplay.PlaybackStatePlaying
   Paused: SessionReplay.PlaybackStatePaused
