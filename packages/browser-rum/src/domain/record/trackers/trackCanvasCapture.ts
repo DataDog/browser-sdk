@@ -1,4 +1,5 @@
 import { clearInterval, noop, setInterval } from '@datadog/browser-core'
+import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { NodeId } from '../itemIds'
 import type { RecordingScope } from '../recordingScope'
@@ -23,6 +24,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
 
   const previousHashes = new WeakMap<HTMLCanvasElement, string>()
   const inFlightCaptures = new WeakSet<HTMLCanvasElement>()
+  let stopped = false
   const captureIntervalId = setInterval(captureDirtyCanvases, ONE_SECOND / maxFramesPerSecond)
 
   function captureDirtyCanvases() {
@@ -30,6 +32,11 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
     dirtyCanvases.forEach((canvas) => {
       if (inFlightCaptures.has(canvas)) {
         return
+      }
+
+      const nodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
+      if (shouldMaskNode(canvas, nodePrivacyLevel)) {
+        return // Do not read pixels from masked canvases
       }
 
       let hash: string | undefined
@@ -60,6 +67,10 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
 
       captureCanvasImage(canvas, configuration?.maxImageDimension ?? 1000)
         .then((image) => {
+          if (stopped) {
+            return
+          }
+
           if (!image) {
             canvasManager.markCanvasDirty(canvas)
             return
@@ -70,7 +81,9 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         })
         .catch(() => {
           // Leave the canvas dirty so it can be retried on the next interval.
-          canvasManager.markCanvasDirty(canvas)
+          if (!stopped) {
+            canvasManager.markCanvasDirty(canvas)
+          }
         })
         .finally(() => {
           inFlightCaptures.delete(canvas)
@@ -79,7 +92,10 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
   }
 
   return {
-    stop: () => clearInterval(captureIntervalId),
+    stop: () => {
+      stopped = true
+      clearInterval(captureIntervalId)
+    },
   }
 }
 
