@@ -306,14 +306,14 @@ describe('view lifecycle', () => {
       expect(getViewCreate(6)).toEqual(
         jasmine.objectContaining({
           name: undefined,
-          service: 'appId',
+          service: 'app-id',
           version: undefined,
         })
       )
       expect(getViewCreate(7)).toEqual(
         jasmine.objectContaining({
           name: undefined,
-          service: 'appId',
+          service: 'app-id',
           version: undefined,
         })
       )
@@ -1049,7 +1049,7 @@ describe('start view', () => {
 
     expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
-        service: 'appId',
+        service: 'app-id',
         version: undefined,
       })
     )
@@ -1073,7 +1073,7 @@ describe('start view', () => {
     startView({ service: null, version: null })
     expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
-        service: 'appId',
+        service: 'app-id',
         version: undefined,
       })
     )
