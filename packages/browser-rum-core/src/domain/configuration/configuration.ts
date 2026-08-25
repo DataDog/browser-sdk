@@ -439,8 +439,8 @@ export const RUM_SCHEMA = {
     schema: {
       enable: { type: 'boolean', required: true },
       maxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
-      hashingMaxDimension: { type: 'number', min: 1, default: 100 },
-      maxImageDimension: { type: 'number', min: 1, default: 1000 },
+      hashingMaxDimension: { type: 'number', min: 1, max: 100, default: 100 },
+      maxImageDimension: { type: 'number', min: 1, max: 1000, default: 1000 },
     },
   },
 

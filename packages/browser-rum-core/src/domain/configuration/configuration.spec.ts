@@ -396,6 +396,24 @@ describe('validateAndBuildRumConfiguration', () => {
         })
       })
 
+      it('rejects a hashing dimension above 100 pixels', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: { enable: true, hashingMaxDimension: 101 },
+          })
+        ).toBeUndefined()
+      })
+
+      it('rejects an image dimension above 1000 pixels', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: { enable: true, maxImageDimension: 1001 },
+          })
+        ).toBeUndefined()
+      })
+
       it('rejects invalid canvas recording options', () => {
         expect(
           validateAndBuildRumConfiguration({
