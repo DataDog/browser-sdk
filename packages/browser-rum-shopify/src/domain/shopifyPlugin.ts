@@ -24,6 +24,11 @@ export function shopifyPlugin(configuration: ShopifyPluginConfiguration): RumPlu
       }
 
       return new Promise((resolve) => {
+        // Some page transitions in a Shopify store happen without a full page reload (for
+        // example, transitioning from Checkout to the Thank You page). In such cases, the
+        // `page_viewed` event may be emitted multiple times, which would otherwise trigger
+        // multiple `initShopifyBindings()` calls and duplicate subscriptions to the Shopify
+        // analytics events. This flag prevents that.
         let isBindingsInstalled = false
 
         analytics.subscribe('page_viewed', (event) => {
