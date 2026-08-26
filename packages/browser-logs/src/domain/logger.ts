@@ -6,13 +6,13 @@ import {
   ErrorHandling,
   createContextManager,
   ErrorSource,
-  callMonitored,
   sanitize,
   NonErrorPrefix,
   createHandlingStack,
   buildTag,
   sanitizeTag,
 } from '@datadog/browser-core'
+import { callMonitored } from '@datadog/js-core/monitor'
 
 import { isAuthorized, StatusType } from './logger/isAuthorized'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'

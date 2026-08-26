@@ -11,7 +11,7 @@
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/main/src/lib/polyfills/interactionCountPolyfill.ts
  */
 
-import { monitor } from '@datadog/browser-core'
+import { monitor } from '@datadog/js-core/monitor'
 import type {
   BrowserWindow,
   RumPerformanceEventTiming,
