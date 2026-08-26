@@ -11,7 +11,7 @@ export function initializeAngularPlugin({
   resetAngularPlugin()
   const plugin = angularPlugin()
 
-  plugin.onInit!({
+  void plugin.onInit!({
     publicApi: {} as RumPublicApi,
     initConfiguration: {} as RumInitConfiguration,
   })

@@ -17,7 +17,7 @@ export function initializeVuePlugin({
 } = {}) {
   resetVuePlugin()
   const plugin = vuePlugin(configuration)
-  plugin.onInit({
+  void plugin.onInit({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
   })

@@ -25,7 +25,7 @@ function createPublicApi() {
 function initPlugin() {
   const { publicApi, startViewSpy } = createPublicApi()
   const plugin = nextjsPlugin()
-  plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
+  void plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
   return { plugin, publicApi, startViewSpy }
 }
 
@@ -58,7 +58,7 @@ describe('nextjsPlugin', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
     const { publicApi } = createPublicApi()
 
-    nextjsPlugin().onInit({ publicApi, initConfiguration })
+    void nextjsPlugin().onInit({ publicApi, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
@@ -133,7 +133,7 @@ describe('nextjsPlugin', () => {
 
       expect(callbackSpy).not.toHaveBeenCalled()
 
-      nextjsPlugin().onInit({
+      void nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
       })
@@ -146,7 +146,7 @@ describe('nextjsPlugin', () => {
       const callbackSpy = jasmine.createSpy()
       const { publicApi } = createPublicApi()
 
-      nextjsPlugin().onInit({
+      void nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
       })

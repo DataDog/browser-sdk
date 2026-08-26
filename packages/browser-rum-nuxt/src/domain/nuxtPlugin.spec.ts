@@ -24,7 +24,7 @@ describe('nuxtRumPlugin', () => {
   it('sets trackViewsManually to true', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
 
-    nuxtRumPlugin({ router: makeRouter() }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    void nuxtRumPlugin({ router: makeRouter() }).onInit({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })

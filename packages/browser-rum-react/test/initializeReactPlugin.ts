@@ -18,7 +18,7 @@ export function initializeReactPlugin({
   resetReactPlugin()
   const plugin = reactPlugin(configuration)
 
-  plugin.onInit({
+  void plugin.onInit({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
   })

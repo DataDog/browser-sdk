@@ -15,7 +15,7 @@ export function initializeNextjsPlugin({
   resetNextjsPlugin()
   const plugin = nextjsPlugin()
 
-  plugin.onInit({
+  void plugin.onInit({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
   })

@@ -19,7 +19,7 @@ export function initializeNuxtPlugin({
   resetNuxtPlugin()
   const plugin = nuxtRumPlugin({ router })
 
-  plugin.onInit({
+  void plugin.onInit({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
   })

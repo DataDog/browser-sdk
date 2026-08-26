@@ -32,7 +32,7 @@ describe('angularPlugin', () => {
 
     expect(callbackSpy).not.toHaveBeenCalled()
 
-    angularPlugin(pluginConfiguration).onInit!({
+    void angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
     })
@@ -45,7 +45,7 @@ describe('angularPlugin', () => {
   it('calls callbacks immediately if onInit was already invoked', () => {
     const callbackSpy = jasmine.createSpy()
     const pluginConfiguration = {}
-    angularPlugin(pluginConfiguration).onInit!({
+    void angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
     })
@@ -59,14 +59,14 @@ describe('angularPlugin', () => {
 
   it('enforce manual view tracking when router is enabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    angularPlugin({ router: true }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
+    void angularPlugin({ router: true }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('does not enforce manual view tracking when router is disabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    angularPlugin({ router: false }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
+    void angularPlugin({ router: false }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })
