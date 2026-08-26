@@ -12,11 +12,9 @@ interface BrowserWindow {
 
 const global = globalObject as BrowserWindow
 
-const datadogRum: ShopifyRumPublicApi = Object.assign(
-  makeRumPublicApi(makeRecorderApi(), makeProfilerApi(), {
-    sdkName: 'rum-shopify',
-  }),
-  { shopifyPlugin }
-)
+const datadogRum = makeRumPublicApi(makeRecorderApi(), makeProfilerApi(), {
+  sdkName: 'rum-shopify',
+  embeddedPlugins: { shopifyPlugin },
+}) as ShopifyRumPublicApi
 
 defineGlobal(global, 'DD_RUM', datadogRum)

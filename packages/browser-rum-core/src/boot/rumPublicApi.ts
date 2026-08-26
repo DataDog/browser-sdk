@@ -50,6 +50,7 @@ import type {
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
+import type { RumPlugin } from '../domain/plugins'
 import { callPluginsOnRumStart } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
@@ -622,6 +623,8 @@ export interface ProfilerApi {
   ) => void
 }
 
+export type EmbeddedPlugin = (configuration: any) => RumPlugin
+
 export interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
   startDeflateWorker?: (
@@ -631,6 +634,7 @@ export interface RumPublicApiOptions {
   ) => DeflateWorker | undefined
   createDeflateEncoder?: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
   sdkName?: SdkName
+  embeddedPlugins?: Record<string, EmbeddedPlugin>
 }
 
 export interface Strategy {
@@ -1031,6 +1035,8 @@ export function makeRumPublicApi(
     startOperation,
     succeedOperation,
     failOperation,
+
+    ...options.embeddedPlugins,
 
     // Deprecated aliases — kept for backwards compatibility, forward to the renamed APIs above.
     // TODO: remove in the next major version (RUM-16921).
