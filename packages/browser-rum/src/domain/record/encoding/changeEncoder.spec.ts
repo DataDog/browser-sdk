@@ -1,13 +1,13 @@
 import { ChangeType, StringRole } from '../../../types'
 import { createString } from './roles'
-import type { StringId } from './stringIds'
+import type { StringId, StringIds } from './stringIds'
 import { createStringIds, StringIdConstants } from './stringIds'
 import type { ChangeEncoder } from './changeEncoder'
 import { createChangeEncoder } from './changeEncoder'
 
 describe('ChangeEncoder', () => {
   let encoder: ChangeEncoder
-  let stringIds: ReturnType<typeof createStringIds>
+  let stringIds: StringIds
 
   beforeEach(() => {
     stringIds = createStringIds()
@@ -196,16 +196,6 @@ describe('ChangeEncoder', () => {
         [ChangeType.Text, [0, 0 as StringId]],
       ])
     })
-
-    it('keeps the role of a string that did not fit in the string table', () => {
-      Object.defineProperty(stringIds, 'size', { get: () => StringIdConstants.SOFT_MAX_SIZE, configurable: true })
-
-      const annotatedString = createString(StringRole.TextContent, 'new-string')
-      encoder.add(ChangeType.Text, [0, annotatedString])
-      const changes = encoder.flush()
-
-      expect(changes).toEqual([[ChangeType.Text, [0, annotatedString]]])
-    })
   })
 
   describe('optimizing the encoding', () => {
@@ -241,51 +231,137 @@ describe('ChangeEncoder', () => {
   })
 
   describe('soft max size of the string table', () => {
-    // Simulates a full string table without actually inserting a million entries.
-    const simulateFullStringTable = () => {
-      Object.defineProperty(stringIds, 'size', { get: () => StringIdConstants.SOFT_MAX_SIZE, configurable: true })
+    /**
+     * Replaces the string table with one that claims to already hold all but
+     * `remainingEntries` of the entries its soft max size allows; inserting enough
+     * strings to actually reach the limit would be far too expensive for a test. The
+     * phantom entries don't affect the ids that real strings get, which still start at
+     * the first id, and clearing the table discards them along with the real entries.
+     */
+    const fillStringTableToWithin = (remainingEntries: number) => {
+      const realStringIds = createStringIds()
+      let phantomStringCount = Number(StringIdConstants.SOFT_MAX_SIZE) - remainingEntries
+      stringIds = {
+        clear: () => {
+          phantomStringCount = 0
+          realStringIds.clear()
+        },
+        get: realStringIds.get,
+        getOrInsert: realStringIds.getOrInsert,
+        get size() {
+          return phantomStringCount + realStringIds.size
+        },
+      }
+      encoder = createChangeEncoder(stringIds)
     }
 
-    it('does not add new strings to the table once the soft max size is reached', () => {
-      simulateFullStringTable()
+    it('clears the string table once the soft max size is reached', () => {
+      fillStringTableToWithin(1)
 
       encoder.add(ChangeType.Text, [0, 'new-string'])
       const changes = encoder.flush()
 
-      // The new string remains a literal in the change data and no definition is emitted. It is
-      // tagged with the role it would have been defined in, even though that role is the
-      // default one, so that the intake can tell what kind of data every literal holds.
-      expect(changes).toEqual([[ChangeType.Text, [0, createString(StringRole.Default, 'new-string')]]])
-    })
-
-    it('still reuses existing string ids once the soft max size is reached', () => {
-      // Put 'existing' in the string table before it fills up.
-      encoder.add(ChangeType.Text, [0, 'existing'])
-      encoder.flush()
-      simulateFullStringTable()
-
-      encoder.add(ChangeType.Text, [0, 'existing'])
-      const changes = encoder.flush()
-
-      // No definition is emitted, but the existing string is still replaced with its id.
-      expect(changes).toEqual([[ChangeType.Text, [0, 0 as StringId]]])
-    })
-
-    it('handles a mix of new and existing strings once the soft max size is reached', () => {
-      // Put 'foo' in the string table before it fills up.
-      encoder.add(ChangeType.AddNode, [null, 'foo'])
-      encoder.flush()
-      simulateFullStringTable()
-
-      encoder.add(ChangeType.AddNode, [null, 'foo', ['class', 'bar']])
-      const changes = encoder.flush()
-
-      // 'foo' is replaced with its existing id; 'class' and 'bar' stay as role-annotated literals.
+      // The new string is defined in the string table like any other. The table is cleared
+      // afterwards, once the changes that refer to its entries have been played back.
       expect(changes).toEqual([
-        [
-          ChangeType.AddNode,
-          [null, 0 as StringId, [createString(StringRole.Default, 'class'), createString(StringRole.Default, 'bar')]],
-        ],
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'new-string']],
+        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.ClearStrings],
+      ])
+    })
+
+    it('keeps the string table until the soft max size is reached', () => {
+      fillStringTableToWithin(2)
+
+      encoder.add(ChangeType.Text, [0, 'new-string'])
+      const changes = encoder.flush()
+
+      expect(changes).toEqual([
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'new-string']],
+        [ChangeType.Text, [0, 0 as StringId]],
+      ])
+    })
+
+    it('counts the strings the buffered changes will define toward the soft max size', () => {
+      fillStringTableToWithin(2)
+
+      // Neither change fills the string table on its own, but together they reach the limit.
+      encoder.add(ChangeType.Text, [0, 'first'])
+      encoder.add(ChangeType.Text, [1, 'second'])
+      const changes = encoder.flush()
+
+      expect(changes).toEqual([
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'first', 'second']],
+        [ChangeType.Text, [0, 0 as StringId], [1, 1 as StringId]],
+        [ChangeType.ClearStrings],
+      ])
+    })
+
+    it('counts a string the changes refer to repeatedly only once', () => {
+      fillStringTableToWithin(2)
+
+      // Both changes refer to the same string, so only one entry is needed for them.
+      encoder.add(ChangeType.Text, [0, 'repeated'])
+      encoder.add(ChangeType.Text, [1, 'repeated'])
+      const changes = encoder.flush()
+
+      expect(changes).toEqual([
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'repeated']],
+        [ChangeType.Text, [0, 0 as StringId], [1, 0 as StringId]],
+      ])
+    })
+
+    it('starts a new run of changes where it clears the string table', () => {
+      fillStringTableToWithin(1)
+
+      // The first change reaches the soft max size, so it ends up in a run of its own, ahead of
+      // the clear. The changes after it define their strings in the emptied table, which hands
+      // out its ids from the start again, rather than carrying them as literals.
+      encoder.add(ChangeType.Text, [0, 'before the clear'])
+      encoder.add(ChangeType.AddNode, [null, 'div', ['class', 'container']])
+      const changes = encoder.flush()
+
+      expect(changes).toEqual([
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'before the clear']],
+        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.ClearStrings],
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'div', 'class', 'container']],
+        [ChangeType.AddNode, [null, 0 as StringId, [1 as StringId, 2 as StringId]]],
+      ])
+    })
+
+    it('keeps a change that depends on an earlier one after it across a clear', () => {
+      fillStringTableToWithin(1)
+
+      // Adding the node reaches the soft max size, so the attribute change that depends on it
+      // lands in the run after the clear. Only the changes within a run are reordered to
+      // satisfy their dependencies, so the node has to stay in the earlier run.
+      encoder.add(ChangeType.AddNode, [null, 'div'])
+      encoder.add(ChangeType.Attribute, [0, ['class', 'container']])
+      const changes = encoder.flush()
+
+      expect(changes).toEqual([
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'div']],
+        [ChangeType.AddNode, [null, 0 as StringId]],
+        [ChangeType.ClearStrings],
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'class', 'container']],
+        [ChangeType.Attribute, [0, [0 as StringId, 1 as StringId]]],
+      ])
+    })
+
+    it('defines strings again once the string table has been cleared', () => {
+      fillStringTableToWithin(1)
+      encoder.add(ChangeType.Text, [0, 'discarded'])
+      encoder.flush()
+
+      encoder.add(ChangeType.Text, [1, 'discarded'])
+      const changes = encoder.flush()
+
+      // The cleared table no longer holds the string, so it is defined again, and it takes the
+      // first id now that the table is empty.
+      expect(changes).toEqual([
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'discarded']],
+        [ChangeType.Text, [1, 0 as StringId]],
       ])
     })
   })

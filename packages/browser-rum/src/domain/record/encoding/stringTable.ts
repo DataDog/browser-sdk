@@ -6,6 +6,9 @@ import type { StringId } from './stringIds'
 export interface StringTable {
   add(newString: string, role: StringRole): void
 
+  /** Remove every string from the table, so that the next string added gets the first id. */
+  clear(): void
+
   /** The string that the given value holds, whichever form it takes. */
   decode(value: StringOrStringReference): string
 
@@ -32,7 +35,12 @@ export function createStringTable(allowObsoleteStringRepresentations = false, ke
     }
 
     if (typeof value === 'object') {
-      return value // A role-annotated string literal.
+      // A role-annotated string literal. The encoder gives every string an entry in the
+      // string table, so something must have built this change data outside the encoder.
+      if (!allowObsoleteStringRepresentations) {
+        throw new Error(`Obsolete string literal outside the string table: ${value.string}`)
+      }
+      return value
     }
 
     const referencedString = strings.get(value as StringId)
@@ -45,6 +53,9 @@ export function createStringTable(allowObsoleteStringRepresentations = false, ke
   return {
     add(newString: string, role: StringRole): void {
       strings.set(strings.size as StringId, createString(role, newString))
+    },
+    clear(): void {
+      strings.clear()
     },
     decode(value: StringOrStringReference): string {
       return literalOf(value).string
