@@ -23,6 +23,7 @@ import {
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
   isAllowedTrackingOrigins,
+  startWasmModuleTracking,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -36,7 +37,8 @@ import type { StartLogsResult } from './startLogs'
 export type DoStartLogs = (
   configuration: LogsConfiguration,
   sessionManager: SessionManager,
-  hooks: Hooks
+  hooks: Hooks,
+  stopWasmModuleTracking: () => void
 ) => StartLogsResult
 
 export function createPreStartStrategy(
@@ -64,16 +66,17 @@ export function createPreStartStrategy(
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
   let sessionManager: SessionManager | undefined
+  let stopWasmModuleTracking: (() => void) | undefined
   const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager || !stopWasmModuleTracking) {
       return
     }
 
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedConfiguration, sessionManager, hooks)
+    const startLogsResult = doStartLogs(cachedConfiguration, sessionManager, hooks, stopWasmModuleTracking)
 
     bufferApiCalls.subscribe((callback) => callback(startLogsResult))
     bufferApiCalls.unbuffer()
@@ -113,6 +116,7 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry, sdkName)
+        stopWasmModuleTracking = mockable(startWasmModuleTracking)()
         const sessionManagerPromise = canUseEventBridge()
           ? startSessionManagerStub()
           : mockable(startSessionManager)(configuration, trackingConsentState)
@@ -120,6 +124,8 @@ export function createPreStartStrategy(
         void sessionManagerPromise
           .then((newSessionManager) => {
             if (!newSessionManager) {
+              stopWasmModuleTracking?.()
+              stopWasmModuleTracking = undefined
               return
             }
             sessionManager = newSessionManager
@@ -127,7 +133,11 @@ export function createPreStartStrategy(
             addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
             tryStartLogs()
           })
-          .catch(monitorError)
+          .catch((error) => {
+            stopWasmModuleTracking?.()
+            stopWasmModuleTracking = undefined
+            monitorError(error)
+          })
       })
     },
 

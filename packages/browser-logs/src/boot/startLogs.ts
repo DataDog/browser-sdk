@@ -6,7 +6,6 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
-  startWasmModuleTracking,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
@@ -35,12 +34,15 @@ export function startLogs(
   sessionManager: SessionManager,
   getCommonContext: () => CommonContext,
   bufferedDataObservable: BufferedObservable<BufferedData>,
-  hooks: Hooks
+  hooks: Hooks,
+  stopWasmModuleTracking?: () => void
 ) {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
 
-  cleanupTasks.push(startWasmModuleTracking())
+  if (stopWasmModuleTracking) {
+    cleanupTasks.push(stopWasmModuleTracking)
+  }
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 

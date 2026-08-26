@@ -28,6 +28,7 @@ import {
   addTelemetryDebug,
   setAllowUntrustedEvents,
   isAllowedTrackingOrigins,
+  startWasmModuleTracking,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -53,7 +54,8 @@ export type DoStartRum = (
   deflateWorker: DeflateWorker | undefined,
   initialViewOptions: ViewOptions | undefined,
   telemetry: Telemetry,
-  hooks: Hooks
+  hooks: Hooks,
+  stopWasmModuleTracking: () => void
 ) => StartRumResult
 
 export function createPreStartStrategy(
@@ -85,6 +87,7 @@ export function createPreStartStrategy(
   let cachedConfiguration: RumConfiguration | undefined
   let sessionManager: SessionManager | undefined
   let telemetry: Telemetry | undefined
+  let stopWasmModuleTracking: (() => void) | undefined
   const hooks = createHooks()
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
@@ -94,7 +97,14 @@ export function createPreStartStrategy(
   let started = false
 
   function tryStartRum() {
-    if (started || !cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
+    if (
+      started ||
+      !cachedInitConfiguration ||
+      !cachedConfiguration ||
+      !sessionManager ||
+      !telemetry ||
+      !stopWasmModuleTracking
+    ) {
       return
     }
 
@@ -123,7 +133,8 @@ export function createPreStartStrategy(
       deflateWorker,
       initialViewOptions,
       telemetry,
-      hooks
+      hooks,
+      stopWasmModuleTracking
     )
 
     started = true
@@ -184,6 +195,7 @@ export function createPreStartStrategy(
         return
       }
 
+      stopWasmModuleTracking = mockable(startWasmModuleTracking)()
       const sessionManagerPromise = canUseEventBridge()
         ? startSessionManagerStub()
         : mockable(startSessionManager)(configuration, trackingConsentState)
@@ -191,6 +203,8 @@ export function createPreStartStrategy(
       void sessionManagerPromise
         .then((newSessionManager) => {
           if (!newSessionManager) {
+            stopWasmModuleTracking?.()
+            stopWasmModuleTracking = undefined
             return
           }
           sessionManager = newSessionManager
@@ -201,7 +215,11 @@ export function createPreStartStrategy(
 
           tryStartRum()
         })
-        .catch(monitorError)
+        .catch((error) => {
+          stopWasmModuleTracking?.()
+          stopWasmModuleTracking = undefined
+          monitorError(error)
+        })
     })
   }
 

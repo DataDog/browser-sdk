@@ -9,6 +9,7 @@ import {
   DefaultPrivacyLevel,
   startTelemetry,
   startSessionManager,
+  startWasmModuleTracking,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -157,12 +158,13 @@ describe('preStartRum', () => {
   })
 
   it('should not start when session manager initialization fails', async () => {
-    const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+    const { strategy, doStartRumSpy, stopWasmModuleTrackingSpy } = createPreStartStrategyWithDefaults({
       startSessionManagerMock: () => Promise.reject(new Error('Session init failed')),
     })
     strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-    await collectAsyncCalls(doStartRumSpy, 0)
+    await collectAsyncCalls(stopWasmModuleTrackingSpy, 1)
     expect(doStartRumSpy).not.toHaveBeenCalled()
+    expect(stopWasmModuleTrackingSpy).toHaveBeenCalled()
   })
 
   describe('init', () => {
@@ -953,11 +955,14 @@ describe('preStartRum', () => {
   describe('tracking consent', () => {
     let strategy: Strategy
     let doStartRumSpy: jasmine.Spy<DoStartRum>
+    let startWasmModuleTrackingSpy: jasmine.Spy
+    let stopWasmModuleTrackingSpy: jasmine.Spy
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
-      ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({ trackingConsentState }))
+      ;({ strategy, doStartRumSpy, startWasmModuleTrackingSpy, stopWasmModuleTrackingSpy } =
+        createPreStartStrategyWithDefaults({ trackingConsentState }))
     })
 
     it('does not start rum if tracking consent is not granted at init', () => {
@@ -969,6 +974,7 @@ describe('preStartRum', () => {
         PUBLIC_API
       )
       expect(doStartRumSpy).not.toHaveBeenCalled()
+      expect(startWasmModuleTrackingSpy).not.toHaveBeenCalled()
     })
 
     it('starts rum if tracking consent is granted before init', async () => {
@@ -982,6 +988,7 @@ describe('preStartRum', () => {
       )
       await collectAsyncCalls(doStartRumSpy, 1)
       expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+      expect(doStartRumSpy.calls.argsFor(0)[6]).toBe(stopWasmModuleTrackingSpy)
     })
 
     it('does not start rum if tracking consent is withdrawn before init', () => {
@@ -994,6 +1001,16 @@ describe('preStartRum', () => {
         PUBLIC_API
       )
       expect(doStartRumSpy).not.toHaveBeenCalled()
+      expect(startWasmModuleTrackingSpy).not.toHaveBeenCalled()
+    })
+
+    it('starts WebAssembly tracking before the session manager resolves', async () => {
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(startWasmModuleTrackingSpy).toHaveBeenCalledTimes(1)
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+
+      await collectAsyncCalls(doStartRumSpy, 1)
     })
 
     it('does not start rum if no view is started', () => {
@@ -1074,10 +1091,15 @@ function createPreStartStrategyWithDefaults({
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  const stopWasmModuleTrackingSpy = jasmine.createSpy()
+  const startWasmModuleTrackingSpy =
+    replaceMockableWithSpy(startWasmModuleTracking).and.returnValue(stopWasmModuleTrackingSpy)
   replaceMockable(startSessionManager, startSessionManagerMock)
   return {
     strategy: createPreStartStrategy(rumPublicApiOptions, trackingConsentState, doStartRumSpy),
     doStartRumSpy,
     startTelemetrySpy,
+    startWasmModuleTrackingSpy,
+    stopWasmModuleTrackingSpy,
   }
 }

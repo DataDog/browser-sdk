@@ -7,19 +7,12 @@
  */
 
 // Keep the following in sync with packages/browser-rum-slim/src/entries/main.ts
-import { defineGlobal, globalObject, startWasmModuleTracking } from '@datadog/browser-core'
+import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { makeProfilerApi } from '../boot/profilerApi'
-
-// Install WebAssembly hooks synchronously at SDK script-load time. DD_RUM.init()
-// defers its startRum work to a microtask, which races against eagerly-loaded
-// wasm modules — by the time the deferred wrap installs, instantiateStreaming
-// may have already been called. Installing here (before any deferral) closes
-// that race.
-startWasmModuleTracking()
 
 export type {
   User,

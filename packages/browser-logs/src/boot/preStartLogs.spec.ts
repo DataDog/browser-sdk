@@ -17,6 +17,7 @@ import {
   display,
   startTelemetry,
   startSessionManager,
+  startWasmModuleTracking,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsInitConfiguration } from '../domain/configuration'
@@ -112,12 +113,13 @@ describe('preStartLogs', () => {
   })
 
   it('should not start when session manager initialization fails', async () => {
-    const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults({
+    const { strategy, doStartLogsSpy, stopWasmModuleTrackingSpy } = createPreStartStrategyWithDefaults({
       startSessionManagerMock: () => Promise.reject(new Error('Session init failed')),
     })
     strategy.init(DEFAULT_INIT_CONFIGURATION)
-    await collectAsyncCalls(doStartLogsSpy, 0)
+    await collectAsyncCalls(stopWasmModuleTrackingSpy, 1)
     expect(doStartLogsSpy).not.toHaveBeenCalled()
+    expect(stopWasmModuleTrackingSpy).toHaveBeenCalled()
   })
 
   it('allows sending logs', async () => {
@@ -207,11 +209,14 @@ describe('preStartLogs', () => {
   describe('tracking consent', () => {
     let strategy: Strategy
     let doStartLogsSpy: jasmine.Spy<DoStartLogs>
+    let startWasmModuleTrackingSpy: jasmine.Spy
+    let stopWasmModuleTrackingSpy: jasmine.Spy
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
-      ;({ strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults({ trackingConsentState }))
+      ;({ strategy, doStartLogsSpy, startWasmModuleTrackingSpy, stopWasmModuleTrackingSpy } =
+        createPreStartStrategyWithDefaults({ trackingConsentState }))
     })
 
     it('does not start logs if tracking consent is not granted at init', () => {
@@ -220,6 +225,7 @@ describe('preStartLogs', () => {
         trackingConsent: TrackingConsent.NOT_GRANTED,
       })
       expect(doStartLogsSpy).not.toHaveBeenCalled()
+      expect(startWasmModuleTrackingSpy).not.toHaveBeenCalled()
     })
 
     it('starts logs if tracking consent is granted before init', async () => {
@@ -230,6 +236,7 @@ describe('preStartLogs', () => {
       })
       await collectAsyncCalls(doStartLogsSpy, 1)
       expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
+      expect(doStartLogsSpy.calls.argsFor(0)[3]).toBe(stopWasmModuleTrackingSpy)
     })
 
     it('does not start logs if tracking consent is not withdrawn before init', () => {
@@ -239,6 +246,16 @@ describe('preStartLogs', () => {
         trackingConsent: TrackingConsent.GRANTED,
       })
       expect(doStartLogsSpy).not.toHaveBeenCalled()
+      expect(startWasmModuleTrackingSpy).not.toHaveBeenCalled()
+    })
+
+    it('starts WebAssembly tracking before the session manager resolves', async () => {
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(startWasmModuleTrackingSpy).toHaveBeenCalledTimes(1)
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
+
+      await collectAsyncCalls(doStartLogsSpy, 1)
     })
 
     it('do not call startLogs when tracking consent state is updated after init', async () => {
@@ -306,6 +323,9 @@ function createPreStartStrategyWithDefaults({
   } as unknown as StartLogsResult)
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  const stopWasmModuleTrackingSpy = jasmine.createSpy()
+  const startWasmModuleTrackingSpy =
+    replaceMockableWithSpy(startWasmModuleTracking).and.returnValue(stopWasmModuleTrackingSpy)
   replaceMockable(startSessionManager, startSessionManagerMock)
 
   return {
@@ -313,6 +333,8 @@ function createPreStartStrategyWithDefaults({
     startTelemetrySpy,
     handleLogSpy,
     doStartLogsSpy,
+    startWasmModuleTrackingSpy,
+    stopWasmModuleTrackingSpy,
     getCommonContextSpy,
     getLoggedMessage: (index: number) => {
       const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)

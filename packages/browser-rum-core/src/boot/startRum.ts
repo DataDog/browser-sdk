@@ -19,7 +19,6 @@ import {
   ErrorSource,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  startWasmModuleTracking,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -70,10 +69,15 @@ export function startRum(
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
   hooks: Hooks,
-  sdkName?: SdkName
+  sdkName?: SdkName,
+  stopWasmModuleTracking?: () => void
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
+
+  if (stopWasmModuleTracking) {
+    cleanupTasks.push(stopWasmModuleTracking)
+  }
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
@@ -220,13 +224,6 @@ export function startRumEventCollection(
 
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
-
-  // Intercept WebAssembly module loads to capture build_id. errorCollection
-  // reads it to set source_type='browser+wasm' and error.wasm_modules.
-  // Must start before any wasm load — RUM is initialised before the page's
-  // wasm fetch in typical setups.
-  const stopWasmModuleTracking = startWasmModuleTracking()
-  cleanupTasks.push(stopWasmModuleTracking)
 
   const { addError } = startErrorCollection(lifeCycle, bufferedDataObservable)
 

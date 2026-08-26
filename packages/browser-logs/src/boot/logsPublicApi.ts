@@ -278,13 +278,14 @@ export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPubli
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (configuration, logsSessionManager, hooks) => {
+    (configuration, logsSessionManager, hooks, stopWasmModuleTracking) => {
       const startLogsResult = mockable(startLogs)(
         configuration,
         logsSessionManager,
         buildCommonContext,
         bufferedDataObservable,
-        hooks
+        hooks,
+        stopWasmModuleTracking
       )
 
       strategy = createPostStartStrategy(strategy, startLogsResult)
