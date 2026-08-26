@@ -5,6 +5,12 @@
 ```ts
 
 // @public
+export const callMonitored: {
+    <T extends (...args: any[]) => unknown>(fn: T, context: ThisParameterType<T>, args: Parameters<T>): ReturnType<T> | undefined;
+    <T extends (this: void) => unknown>(fn: T): ReturnType<T> | undefined;
+};
+
+// @public
 export function createMonitor(display: Display, onMonitorErrorCollected: (error: unknown) => void): Monitor;
 
 // @public
@@ -17,6 +23,21 @@ export interface Monitor {
     monitored: <T extends (...params: any[]) => unknown>(_: any, __: string, descriptor: TypedPropertyDescriptor<T>) => void;
     monitorError: (e: unknown) => void;
 }
+
+// @public
+export const monitor: <T extends (...args: any[]) => unknown>(fn: T) => T;
+
+// @public
+export const monitored: <T extends (...params: any[]) => unknown>(_: any, __: string, descriptor: TypedPropertyDescriptor<T>) => void;
+
+// @public
+export const monitorError: (e: unknown) => void;
+
+// @public
+export function startMonitorErrorCollection(onMonitorErrorCollectedCallback: (error: unknown) => void): boolean;
+
+// @public
+export function stopMonitorErrorCollection(): void;
 
 // (No @packageDocumentation comment for this package)
 
