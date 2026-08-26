@@ -75,6 +75,8 @@ export function createChangeEncoder(stringIds: StringIds): ChangeEncoder {
       ChangeType.RemoveNode,
       ChangeType.Attribute,
       ChangeType.Text,
+      ChangeType.InputValue,
+      ChangeType.InputSelection,
       ChangeType.Size,
       ChangeType.ScrollPosition,
       ChangeType.AddStyleSheet,

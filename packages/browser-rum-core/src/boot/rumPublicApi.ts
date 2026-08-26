@@ -33,6 +33,7 @@ import {
   startBufferingData,
   mockable,
   generateUUID,
+  display,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -731,7 +732,13 @@ export function makeRumPublicApi(
     const handlingStack = createHandlingStack('view')
     callMonitored(() => {
       const sanitizedOptions = typeof options === 'object' ? options : { name: options }
-      strategy.startView({ ...sanitizedOptions, handlingStack })
+      strategy.startView({
+        ...sanitizedOptions,
+        name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
+        service: sanitizeStringOption(sanitizedOptions.service, 'view service'),
+        version: sanitizeStringOption(sanitizedOptions.version, 'view version'),
+        handlingStack,
+      })
       addTelemetryUsage({ feature: 'start-view' })
     })
   }
@@ -766,7 +773,7 @@ export function makeRumPublicApi(
     }),
 
     setViewName: monitor((name: string) => {
-      strategy.setViewName(name)
+      strategy.setViewName(sanitizeStringOption(name, 'view name')!)
       addTelemetryUsage({ feature: 'set-view-name' })
     }),
 
@@ -1036,6 +1043,17 @@ export function makeRumPublicApi(
   })
 
   return rumPublicApi
+}
+
+function sanitizeStringOption(value: unknown, label: string): string | undefined {
+  if (value === undefined) {
+    return undefined
+  }
+  if (typeof value !== 'string') {
+    display.warn(`Invalid ${label} provided (expected a string, got ${typeof value}). Ignoring.`)
+    return undefined
+  }
+  return sanitize(value)
 }
 
 function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {

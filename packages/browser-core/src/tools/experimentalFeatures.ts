@@ -14,6 +14,7 @@ import { objectHasValue } from './utils/objectUtils'
 
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
+  SESSION_REPLAY_RECORD_CANVAS = 'session_replay_record_canvas',
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   TRACK_WEBSOCKETS = 'track_websockets',
 }

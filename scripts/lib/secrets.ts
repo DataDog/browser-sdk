@@ -111,6 +111,10 @@ export function getSfLwcJwtPrivateKey(): string {
   return process.env.SF_LWC_JWT_PRIVATE_KEY_B64 ?? getSecretKey('ci.browser-sdk.sf_lwc_jwt_private_key_b64')
 }
 
+export function getShopifyStorePassword(): string {
+  return process.env.SHOPIFY_STORE_PASSWORD ?? getSecretKey('ci.browser-sdk.shopify_store_password')
+}
+
 function getSecretKey(name: string): string {
   return command`
     aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}

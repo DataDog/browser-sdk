@@ -30,7 +30,7 @@ runMain(() => {
 
   try {
     command`git checkout ${MAIN_BRANCH} -f`.run()
-    command`git pull`.run()
+    command`git pull origin ${MAIN_BRANCH}`.run()
     command`git merge --squash ${CI_COMMIT_SHA}`.run()
   } catch (error) {
     const diff = command`git diff`.run()
@@ -45,7 +45,7 @@ runMain(() => {
     command`git commit -am ${'squash test'}`.run()
 
     command`git checkout ${currentStaging} -f`.run()
-    command`git pull`.run()
+    command`git pull origin ${currentStaging}`.run()
     command`git merge ${MAIN_BRANCH}`.run()
   } catch (error) {
     const diff = command`git diff`.run()

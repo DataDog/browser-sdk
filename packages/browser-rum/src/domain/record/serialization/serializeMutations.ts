@@ -12,6 +12,7 @@ import type { AttributeChange } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds } from '../itemIds'
+import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
 import { serializeNode } from './serializeNode'
@@ -111,6 +112,10 @@ function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransac
     }
 
     forNodeAndDescendants(node, (node: Node) => {
+      if (isCanvasElement(node)) {
+        transaction.scope.canvasManager.markCanvasClean(node)
+      }
+
       if (isNodeShadowHost(node)) {
         transaction.scope.shadowRootsController.removeShadowRoot(node.shadowRoot)
       }
@@ -255,6 +260,10 @@ function processAttributeMutations(
     for (const [attributeName, oldValue] of attributeNames) {
       if (node.getAttribute(attributeName) === oldValue) {
         continue // No change since the last snapshot.
+      }
+
+      if (isCanvasElement(node) && isCanvasSizeAttribute(attributeName)) {
+        transaction.scope.canvasManager.markCanvasDirty(node)
       }
 
       if (attributeName === 'value') {

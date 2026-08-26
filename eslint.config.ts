@@ -12,6 +12,7 @@ import eslintLocalRules from './eslint-local-rules/index.ts'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
+const PUBLIC_PACKAGE_ENTRIES = 'packages/{browser-rum,browser-logs,browser-rum-slim}/src/entries/*.ts'
 const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
   (process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL as 'warn' | 'error' | undefined) || 'warn'
 
@@ -54,6 +55,7 @@ export default defineConfig(
       'test/apps/nuxt-vue-router-v4-app',
       'test/apps/sf-lwc-app/force-app/main/default/staticresources/*.js',
       'test/apps/sf-experience-app/force-app/main/default/staticresources/*.js',
+      'test/apps/sf-experience-headmarkup-app/force-app/main/default/staticresources/*.js',
       'sandbox',
       'coverage',
       '.yarn',
@@ -418,6 +420,14 @@ export default defineConfig(
 
   {
     files: ['packages/*/src/**/*.ts'],
+    ignores: [SPEC_FILES, PUBLIC_PACKAGE_ENTRIES],
+    rules: {
+      'local-rules/disallow-re-exports-from-other-packages': 'error',
+    },
+  },
+
+  {
+    files: ['packages/*/src/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
       'import-x/consistent-type-specifier-style': ['error', 'prefer-top-level'],
@@ -425,7 +435,7 @@ export default defineConfig(
   },
 
   {
-    files: ['packages/{browser-rum,browser-logs,browser-rum-slim}/src/entries/*.ts'],
+    files: [PUBLIC_PACKAGE_ENTRIES],
     rules: {
       'local-rules/disallow-enum-exports': 'error',
     },
@@ -464,6 +474,7 @@ export default defineConfig(
     files: [
       'test/apps/sf-lwc-app/force-app/main/default/lwc/**/*.js',
       'test/apps/sf-experience-app/force-app/main/default/lwc/**/*.js',
+      'test/apps/sf-experience-headmarkup-app/force-app/main/default/lwc/**/*.js',
     ],
     languageOptions: {
       globals: globals.browser,

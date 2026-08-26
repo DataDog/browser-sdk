@@ -7,7 +7,8 @@
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 
-import { defineGlobal, globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
+import { defineGlobal } from '@datadog/browser-core'
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
 

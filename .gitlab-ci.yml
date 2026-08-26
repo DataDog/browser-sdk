@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-33
+  CURRENT_STAGING: staging-35
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 120
+  CURRENT_CI_IMAGE: 122
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
-  CHROME_PACKAGE_VERSION: 151.0.7922.71-1
+  CHROME_PACKAGE_VERSION: 152.0.7977.64-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
 workflow:
@@ -254,7 +254,8 @@ e2e:
     - yarn build:apps
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
-    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
+    # Shopify is excluded here: it only runs on a schedule (see e2e-shopify-scheduled)
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER --grep-invert "shopify"
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 
@@ -632,6 +633,30 @@ api-performance-benchmark:
   script:
     - yarn
     - node ./scripts/api-performance/index.ts
+
+########################################################################################################################
+# Shopify e2e (scheduled, against a live external store)
+########################################################################################################################
+
+e2e-shopify-scheduled:
+  stage: task
+  extends:
+    - .base-configuration
+    - .resource-allocation-4-cpus
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "e2e-shopify-scheduled"
+  artifacts:
+    when: always
+    reports:
+      junit: test-report/e2e/*.xml
+  script:
+    - yarn
+    - yarn build
+    - yarn build:apps
+    - FORCE_COLOR=1 PW_BROWSER=chromium yarn test:e2e --project=chromium -g "shopify"
+  after_script:
+    - node ./scripts/test/export-test-result.ts e2e
 
 ########################################################################################################################
 # Check expired telemetry

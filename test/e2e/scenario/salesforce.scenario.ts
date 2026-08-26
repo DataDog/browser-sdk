@@ -17,9 +17,11 @@ const baseSalesforceRumConfiguration = {
   trackUserInteractions: true,
 }
 
-const salesforceApps: SalesforceApp[] = ['lwc', 'experience-cloud']
+const salesforceApps: SalesforceApp[] = ['lwc', 'experience-cloud', 'experience-cloud-headmarkup']
 
 for (const app of salesforceApps) {
+  const canCallRumFromComponents = app !== 'experience-cloud-headmarkup'
+
   createTest(`salesforce ${app} views`)
     .withRum(baseSalesforceRumConfiguration)
     .withSalesforceApp(app)
@@ -59,19 +61,23 @@ for (const app of salesforceApps) {
       }
     })
 
-  createTest(`salesforce ${app} long tasks and vitals`)
+  createTest(`salesforce ${app} long tasks${canCallRumFromComponents ? ' and vitals' : ''}`)
     .withRum(baseSalesforceRumConfiguration)
     .withSalesforceApp(app)
     .run(async ({ page, intakeRegistry, flushEvents }) => {
       await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
       await page.getByTestId('long-task').click()
-      await page.getByRole('button', { name: 'Add Duration Vital' }).click()
+      if (canCallRumFromComponents) {
+        await page.getByRole('button', { name: 'Add Duration Vital' }).click()
+      }
 
       await flushEvents()
 
       expect(intakeRegistry.rumLongTaskEvents.length).toBeGreaterThanOrEqual(1)
-      expect(intakeRegistry.rumVitalEvents.length).toBeGreaterThanOrEqual(1)
+      if (canCallRumFromComponents) {
+        expect(intakeRegistry.rumVitalEvents.length).toBeGreaterThanOrEqual(1)
+      }
     })
 
   createTest(`salesforce ${app} actions`)
@@ -87,10 +93,12 @@ for (const app of salesforceApps) {
       const actionTypes = new Set(intakeRegistry.rumActionEvents.map((e) => e.action.type))
       expect(actionTypes.has('click')).toBe(true)
 
-      const customAction = intakeRegistry.rumActionEvents.find(
-        (e) => e.action.type === 'custom' && e.action.target?.name?.includes('custom action 1') === true
-      )
-      expect(customAction).toBeDefined()
+      if (canCallRumFromComponents) {
+        const customAction = intakeRegistry.rumActionEvents.find(
+          (e) => e.action.type === 'custom' && e.action.target?.name?.includes('custom action 1') === true
+        )
+        expect(customAction).toBeDefined()
+      }
     })
 
   createTest(`salesforce ${app} errors`)
@@ -99,7 +107,9 @@ for (const app of salesforceApps) {
     .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs }) => {
       await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
-      await page.getByTestId('custom-error-1').click()
+      if (canCallRumFromComponents) {
+        await page.getByTestId('custom-error-1').click()
+      }
       await page.getByTestId('runtime-error').click()
       await page.evaluate(() => window.console.error('salesforce console error test'))
 
@@ -119,9 +129,11 @@ for (const app of salesforceApps) {
       )
       expect(errorEvent).toBeDefined()
 
-      const customError = intakeRegistry.rumErrorEvents.find(
-        (e) => e.error.source === 'custom' && e.error.message?.includes('custom error 1') === true
-      )
-      expect(customError).toBeDefined()
+      if (canCallRumFromComponents) {
+        const customError = intakeRegistry.rumErrorEvents.find(
+          (e) => e.error.source === 'custom' && e.error.message?.includes('custom error 1') === true
+        )
+        expect(customError).toBeDefined()
+      }
     })
 }

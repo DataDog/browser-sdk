@@ -521,6 +521,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether tracing feature's client-side-stats generation is enabled
        */
       use_client_side_stats?: boolean
+      /**
+       * Whether trace sampling rules are configured
+       */
+      use_trace_sampling_rules?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -592,7 +596,7 @@ export type TelemetryBrowserFeaturesUsage =
 /**
  * Schema of mobile specific features usage
  */
-export type TelemetryMobileFeaturesUsage = TrackWebView | AndroidNetworkInstrumentation
+export type TelemetryMobileFeaturesUsage = TrackWebView | Timeseries | AndroidNetworkInstrumentation
 
 /**
  * Schema of common properties of Telemetry events
@@ -1027,6 +1031,13 @@ export interface TrackWebView {
    * trackWebView API
    */
   feature: 'trackWebView'
+  [k: string]: unknown
+}
+export interface Timeseries {
+  /**
+   * Timeseries tracking enabled
+   */
+  feature: 'timeseries'
   [k: string]: unknown
 }
 export interface AndroidNetworkInstrumentation {

@@ -1,5 +1,5 @@
-import type { GlobalObject } from '@datadog/browser-core'
-import { globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
+import type { GlobalObject } from '@datadog/js-core/util'
 import { registerCleanupTask, mockClock, replaceMockable } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import { display } from './display'

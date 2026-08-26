@@ -23,12 +23,21 @@ import {
 } from '../helpers/playwright'
 import { buildSalesforceUrl } from './buildSalesforceUrl'
 import type { SalesforceApp } from './buildSalesforceUrl'
+import { SHOPIFY_STORE_URL, unlockShopifyStorePassword } from './shopify'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration, salesforceSetup } from './pageSetups'
+import {
+  html,
+  DEFAULT_SETUPS,
+  npmSetup,
+  appSetup,
+  formatConfiguration,
+  salesforceSetup,
+  shopifySetup,
+} from './pageSetups'
 import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
 import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
 import { createMockServerApp } from './serverApps/mock'
@@ -117,6 +126,7 @@ class TestBuilder {
   } = {}
   private worker: Worker | undefined
   private salesforceApp: SalesforceApp | undefined = undefined
+  private shopifyApp = false
 
   constructor(
     private title: string,
@@ -289,6 +299,15 @@ class TestBuilder {
     return this
   }
 
+  withShopifyApp() {
+    this.shopifyApp = true
+    this.setups = [{ factory: shopifySetup }]
+    this.baseUrlHooks.push((baseUrl) => {
+      baseUrl.href = SHOPIFY_STORE_URL
+    })
+    return this
+  }
+
   withHostName(hostName: string) {
     this.baseUrlHooks.push((baseUrl) => {
       baseUrl.hostname = hostName
@@ -320,6 +339,7 @@ class TestBuilder {
       mockClock: this.mockClock,
       allowWasmUnsafeEval: this.allowWasmUnsafeEval,
       salesforceApp: this.salesforceApp,
+      shopifyApp: this.shopifyApp,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -541,7 +561,7 @@ function createTestContext(
 
 async function setUpTest(
   browserLogsManager: BrowserLogsManager,
-  { mockClock }: SetupOptions,
+  { mockClock, shopifyApp }: SetupOptions,
   { baseUrl, page, browserContext }: TestContext
 ) {
   browserContext.on('console', (msg) => {
@@ -550,6 +570,7 @@ async function setUpTest(
       message: msg.text(),
       source: 'console',
       timestamp: Date.now(),
+      url: msg.location().url,
     })
   })
 
@@ -570,6 +591,11 @@ async function setUpTest(
     }
   }
   await page.goto(baseUrl)
+
+  if (shopifyApp) {
+    await unlockShopifyStorePassword(page)
+  }
+
   await waitForServersIdle()
 }
 

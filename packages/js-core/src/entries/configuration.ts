@@ -43,6 +43,9 @@ export type StringField = { type: 'string' } & Optionality & Multiple & Strict
 /** A numeric field constrained to the 0–100 range, typically used for sample rates. */
 export type PercentageField = { type: 'percentage' } & Optionality & Multiple & Strict
 
+/** A finite numeric field, optionally constrained by inclusive minimum and maximum values. */
+export type NumberField = { type: 'number'; min?: number; max?: number } & Optionality & Multiple & Strict
+
 /**
  * A boolean field. When `strict: false`, a non-boolean value is coerced with `!!value`
  * instead of being rejected.
@@ -100,6 +103,7 @@ export type FunctionField = {
 /** The union of all field definition types supported by a {@link ConfigurationSchema}. */
 export type FieldDef =
   | StringField
+  | NumberField
   | PercentageField
   | BooleanField
   | SiteField
@@ -125,7 +129,7 @@ export interface ConfigurationSchema {
 
 type InferBase<F extends FieldDef> = F extends { type: 'string' }
   ? string
-  : F extends { type: 'percentage' }
+  : F extends { type: 'number' | 'percentage' }
     ? number
     : F extends { type: 'boolean' }
       ? boolean
@@ -154,7 +158,7 @@ type InferBase<F extends FieldDef> = F extends { type: 'string' }
 // Non-recursive variant of InferBase used inside UnionField to avoid infinite type instantiation.
 type InferVariant<F> = F extends { type: 'string' }
   ? string
-  : F extends { type: 'percentage' }
+  : F extends { type: 'number' | 'percentage' }
     ? number
     : F extends { type: 'boolean' }
       ? boolean
@@ -229,6 +233,17 @@ function buildErrorMessage(key: string, field: FieldDef): string {
   switch (field.type) {
     case 'string':
       return `"${key}" must be a non-empty string`
+    case 'number':
+      if (field.min !== undefined && field.max !== undefined) {
+        return `"${key}" must be a number between ${field.min} and ${field.max}`
+      }
+      if (field.min !== undefined) {
+        return `"${key}" must be a number greater than or equal to ${field.min}`
+      }
+      if (field.max !== undefined) {
+        return `"${key}" must be a number less than or equal to ${field.max}`
+      }
+      return `"${key}" must be a finite number`
     case 'percentage':
       return `"${key}" must be a number between 0 and 100`
     case 'boolean':
@@ -375,6 +390,13 @@ function validateField(field: FieldDef, value: unknown, display: Display): unkno
       return typeof value === 'function' ? value : undefined
     case 'string':
       return typeof value === 'string' && value.length > 0 ? value : undefined
+    case 'number':
+      return typeof value === 'number' &&
+        Number.isFinite(value) &&
+        (field.min === undefined || value >= field.min) &&
+        (field.max === undefined || value <= field.max)
+        ? value
+        : undefined
     case 'percentage':
       return isPercentage(value) ? value : undefined
     case 'boolean':
