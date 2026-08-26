@@ -42,7 +42,7 @@ import {
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
-import { callPluginsMethod } from '../domain/plugins'
+import { runOnInitPlugins } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -270,7 +270,7 @@ export function createPreStartStrategy(
         }
       }
 
-      const shouldContinue = callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+      const shouldContinue = runOnInitPlugins(initConfiguration.plugins, { initConfiguration, publicApi })
 
       if (typeof shouldContinue === 'boolean') {
         if (shouldContinue) {

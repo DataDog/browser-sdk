@@ -26,9 +26,9 @@ export interface OnRumStartOptions {
  * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
  * using.
  *
- * `onInit` may abort the SDK initialization by returning (or resolving to) `false`. Returning a
- * Promise defers the remaining plugins' `onInit` calls and the actual initialization until it
- * resolves.
+ * `onInit` may abort the SDK initialization by returning (or resolving to) `false`. All plugins'
+ * `onInit` are called concurrently and independently; a Promise defers the actual initialization
+ * until it resolves, but does not delay any other plugin's `onInit` call.
  *
  * @experimental
  */
@@ -42,75 +42,44 @@ export interface RumPlugin {
   onRumStart?(options: OnRumStartOptions): void
 }
 
-type MethodNames = 'onInit' | 'onRumStart'
-type MethodParameter<MethodName extends MethodNames> = Parameters<NonNullable<RumPlugin[MethodName]>>[0]
-
-export function callPluginsMethod(
-  plugins: RumPlugin[] | undefined,
-  methodName: 'onInit',
-  parameter: MethodParameter<'onInit'>
-): boolean | Promise<boolean>
-export function callPluginsMethod(
-  plugins: RumPlugin[] | undefined,
-  methodName: 'onRumStart',
-  parameter: MethodParameter<'onRumStart'>
-): void
-export function callPluginsMethod<MethodName extends MethodNames>(
-  plugins: RumPlugin[] | undefined,
-  methodName: MethodName,
-  parameter: any
-): any {
-  if (methodName === 'onInit') {
-    return runOnInitPlugins(plugins, parameter)
-  }
-  if (!plugins) {
-    return
-  }
-  for (const plugin of plugins) {
-    const method = plugin[methodName]
-    if (method) {
-      // nothing apart from onInit is expected to return a value
-      void method(parameter)
-    }
-  }
-}
-
 const DEFAULT_ON_INIT_TIMEOUT = 3000
 
 /**
- * Calls each plugin's `onInit` method in order, stopping (synchronously or asynchronously) as
- * soon as one returns `false`. Stays synchronous as long as no plugin returns a thenable.
+ * Calls every plugin's `onInit` method concurrently, without waiting for one to resolve before
+ * calling the next. Stays synchronous as long as no plugin returns a thenable.
+ * Returns `false` if any plugin returned (or resolved to) `false`, `true` otherwise.
  */
-function runOnInitPlugins(
+export function runOnInitPlugins(
   plugins: RumPlugin[] | undefined,
   parameter: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }
 ): boolean | Promise<boolean> {
-  if (!plugins) {
-    return true
-  }
-  let index = 0
-
-  function next(): boolean | Promise<boolean> {
-    while (index < plugins!.length) {
-      const result = plugins![index++].onInit?.(parameter)
-      if (isThenable<boolean | void>(result)) {
-        return waitForThenable(result, DEFAULT_ON_INIT_TIMEOUT)
-          .then((resolved) => (resolved === false ? false : next()))
-          .catch((reason) => {
-            if (isTimeoutError(reason)) {
-              throw new Error(
-                `Plugin ${plugins![index - 1].name} onInit() timed out after ${DEFAULT_ON_INIT_TIMEOUT}ms`
-              )
-            }
-            throw reason
-          })
-      }
-      if (result === false) {
-        return false
-      }
-    }
+  if (!plugins?.length) {
     return true
   }
 
-  return next()
+  const results = plugins.map((plugin) => plugin.onInit?.(parameter))
+
+  if (results.some(isThenable)) {
+    return Promise.all(
+      results.map((result, index) =>
+        waitForThenable(Promise.resolve(result), DEFAULT_ON_INIT_TIMEOUT).catch((reason) => {
+          if (isTimeoutError(reason)) {
+            throw new Error(`Plugin ${plugins[index].name} onInit() timed out after ${DEFAULT_ON_INIT_TIMEOUT}ms`)
+          }
+          throw reason
+        })
+      )
+    ).then((results) => !results.includes(false))
+  }
+
+  return !results.includes(false)
+}
+
+/**
+ * Calls each plugin's `onRumStart` method in order.
+ */
+export function callPluginsOnRumStart(plugins: RumPlugin[] | undefined, options: OnRumStartOptions): void {
+  for (const plugin of plugins ?? []) {
+    plugin.onRumStart?.(options)
+  }
 }
