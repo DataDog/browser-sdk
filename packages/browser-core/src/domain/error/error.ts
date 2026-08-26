@@ -46,7 +46,7 @@ function computeErrorBase({
   }
 }
 
-function getStackTraceUrls(stackTrace: StackTrace | undefined): string[] {
+export function getStackTraceUrls(stackTrace: StackTrace | undefined): string[] {
   return stackTrace?.stack.map((frame) => frame.url).filter((url): url is string => !!url) ?? []
 }
 

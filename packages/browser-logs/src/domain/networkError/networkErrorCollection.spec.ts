@@ -1,7 +1,7 @@
 import type { BufferedData, FetchResolveContext } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { BufferedDataType, ErrorSource, Observable } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { mockSourceCodeContext, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 
@@ -168,6 +168,30 @@ describe('network error collection', () => {
 
       const log = rawLogsEvents[0].rawLogsEvent
       expect(log.error.stack).toBe('Failed to load')
+    })
+
+    it('should attach debug_ids from the fetch rejection stack trace', () => {
+      const debugIdUrl = 'http://path/to/debug-id.js'
+      mockSourceCodeContext({
+        [`Error: Network failure\n    at foo (${debugIdUrl}:1:1)`]: {
+          ddDebugId: '01234567-89ab-cdef-0123-456789abcdef',
+        },
+      })
+
+      const error = new Error('Network failure')
+      error.stack = `Error: Network failure\n    at foo (${debugIdUrl}:1:1)`
+      notifyFetch({ url: 'http://fake-url/', status: 0, error, responseBody: undefined })
+
+      expect(rawLogsEvents[0].rawLogsEvent._dd).toEqual({
+        debug_ids: [{ url: debugIdUrl, id: '01234567-89ab-cdef-0123-456789abcdef' }],
+      })
+    })
+
+    it('should not attach _dd when there are no debug_ids', () => {
+      const error = new Error('Network failure')
+      notifyFetch({ url: 'http://fake-url/', status: 0, error, responseBody: undefined })
+
+      expect(rawLogsEvents[0].rawLogsEvent._dd).toBeUndefined()
     })
   })
 })

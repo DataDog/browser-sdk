@@ -11,6 +11,8 @@ import {
   ResponseBodyAction,
   safeTruncate,
   ONE_KIBI_BYTE,
+  buildDebugIdByUrl,
+  getStackTraceUrls,
 } from '@datadog/browser-core'
 import { isIntakeUrl } from '@datadog/js-core/transport'
 import type { LogsConfiguration } from '../configuration'
@@ -52,11 +54,9 @@ export function startNetworkErrorCollection(
     if (!isNetworkError(request)) {
       return
     }
-
-    const stack =
-      'error' in request && request.error
-        ? toStackTraceString(computeStackTrace(request.error))
-        : request.responseBody || 'Failed to load'
+    const stackTrace = 'error' in request && request.error ? computeStackTrace(request.error) : undefined
+    const stack = stackTrace ? toStackTraceString(stackTrace) : request.responseBody || 'Failed to load'
+    const debugIds = stackTrace ? buildDebugIdByUrl(getStackTraceUrls(stackTrace)) : undefined
 
     const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
       handlingStack: request.handlingStack,
@@ -71,6 +71,7 @@ export function startNetworkErrorCollection(
           // We don't know if the error was handled or not, so we set it to undefined
           handling: undefined,
         },
+        ...(debugIds ? { _dd: { debug_ids: debugIds } } : {}),
         http: {
           method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
           status_code: request.status,
