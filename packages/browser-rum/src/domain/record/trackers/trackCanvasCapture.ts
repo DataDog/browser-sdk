@@ -1,5 +1,5 @@
 import { clearInterval, noop, setInterval } from '@datadog/browser-core'
-import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
+import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { NodeId } from '../itemIds'
 import type { RecordingScope } from '../recordingScope'
@@ -35,9 +35,9 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       }
 
       const nodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
-      if (shouldMaskNode(canvas, nodePrivacyLevel)) {
+      if (nodePrivacyLevel !== NodePrivacyLevel.ALLOW) {
         canvasManager.markCanvasClean(canvas)
-        return // Do not read pixels from masked canvases
+        return // Do not read pixels from privacy levels other than allow
       }
 
       let hash: string | undefined
@@ -78,9 +78,9 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
           }
 
           const currentNodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
-          if (shouldMaskNode(canvas, currentNodePrivacyLevel)) {
+          if (currentNodePrivacyLevel !== NodePrivacyLevel.ALLOW) {
             canvasManager.markCanvasClean(canvas)
-            return // Do not emit pixels if the canvas became masked during capture
+            return // Do not emit pixels if the canvas became privacy level other than allow during capture
           }
 
           onCanvasCapture({ nodeId, changeHash: hash, image })

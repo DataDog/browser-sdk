@@ -1,6 +1,10 @@
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
-import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
+import {
+  NodePrivacyLevel,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_MASK,
+} from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { createCanvasManager } from '../canvas/canvasManager'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
@@ -15,6 +19,9 @@ describe('trackCanvasCapture', () => {
   let tracker: Tracker
   let clock: Clock
   let toBlobSpy: jasmine.Spy
+  const privacyLevels = Object.values(NodePrivacyLevel).filter(
+    (privacyLevel) => privacyLevel !== NodePrivacyLevel.IGNORE
+  )
 
   beforeEach(() => {
     clock = mockClock()
@@ -145,16 +152,22 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
   })
 
-  it('does not capture masked canvases and marks them clean', async () => {
-    canvas.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
-    const onCanvasCapture = startTracking()
+  for (const privacyLevel of privacyLevels) {
+    it(`only captures canvases with the allow privacy level, when the privacy level is ${privacyLevel}`, async () => {
+      canvas.setAttribute(PRIVACY_ATTR_NAME, privacyLevel)
+      const onCanvasCapture = startTracking()
+      markCanvasDirtyAndWaitForCapture()
+      await waitForCanvasCapture()
 
-    markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
-
-    expect(onCanvasCapture).not.toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
-  })
+      if (privacyLevel === NodePrivacyLevel.ALLOW) {
+        expect(onCanvasCapture).toHaveBeenCalled()
+        expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+      } else {
+        expect(onCanvasCapture).not.toHaveBeenCalled()
+        expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+      }
+    })
+  }
 
   it('does not emit a capture if the canvas becomes masked while capturing', async () => {
     let resolveToBlob: BlobCallback | undefined
