@@ -42,6 +42,40 @@ describe('string roles of a serialized node', () => {
     ])
   })
 
+  it('puts the value of every kind of form element in the form input role', async () => {
+    const record = await serializeHtml('<select><option value="chosen"></option></select>', { roles: 'keep' })
+    expect(record?.data).toEqual([
+      [
+        ChangeType.AddNode,
+        [
+          null,
+          createString(StringRole.NodeName, 'SELECT'),
+          [createString(StringRole.AttributeName, 'value'), createString(StringRole.FormInput, 'chosen')],
+        ],
+        [
+          1,
+          createString(StringRole.NodeName, 'OPTION'),
+          [createString(StringRole.AttributeName, 'value'), createString(StringRole.FormInput, 'chosen')],
+          [createString(StringRole.AttributeName, 'selected'), createString(StringRole.AttributeValue, '')],
+        ],
+      ],
+    ])
+  })
+
+  it('puts a value attribute on an element with no form behavior in the attribute value role', async () => {
+    const record = await serializeHtml('<li value="3"></li>', { roles: 'keep' })
+    expect(record?.data).toEqual([
+      [
+        ChangeType.AddNode,
+        [
+          null,
+          createString(StringRole.NodeName, 'LI'),
+          [createString(StringRole.AttributeName, 'value'), createString(StringRole.AttributeValue, '3')],
+        ],
+      ],
+    ])
+  })
+
   it('puts inline styles in the CSS role', async () => {
     const record = await serializeHtml('<div style="color: red"></div>', { roles: 'keep' })
     expect(record?.data).toEqual([
@@ -65,6 +99,25 @@ describe('string roles of a serialized node', () => {
           null,
           createString(StringRole.NodeName, 'A'),
           [createString(StringRole.AttributeName, 'href'), createString(StringRole.Url, 'https://example.com/')],
+        ],
+      ],
+    ])
+  })
+
+  it('puts a namespaced URL attribute value in the URL role', async () => {
+    const record = await serializeHtml('<svg><use xlink:href="/icons.svg#star" href="/icons.svg#moon"></use></svg>', {
+      roles: 'keep',
+    })
+
+    expect(record?.data).toEqual([
+      [
+        ChangeType.AddNode,
+        [null, createString(StringRole.NodeName, 'svg>svg')],
+        [
+          1,
+          createString(StringRole.NodeName, 'svg>use'),
+          [createString(StringRole.AttributeName, 'xlink:href'), createString(StringRole.Url, '/icons.svg#star')],
+          [createString(StringRole.AttributeName, 'href'), createString(StringRole.Url, '/icons.svg#moon')],
         ],
       ],
     ])

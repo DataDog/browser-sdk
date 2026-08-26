@@ -9,17 +9,16 @@ import {
   NodePrivacyLevel,
 } from '@datadog/browser-rum-core'
 import { StringRole } from '../../../types'
-import type { AttributeChange } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
-import type { NodeId, NodeIds } from '../encoding'
+import type { NodeId, NodeIds, RoleAnnotatedAttributeChange } from '../encoding'
 import { createAttributeAssignment, createAttributeAssignmentOrDeletion, createString } from '../encoding'
 import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
 import { serializeNode } from './serializeNode'
 import { createChildInsertionCursor } from './insertionCursor'
-import { getElementInputValue } from './serializationUtils'
+import { getElementInputValue, normalizedTagName } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
 
 export function serializeMutations(
@@ -258,7 +257,9 @@ function processAttributeMutations(
       continue // Mutations to this node should be ignored.
     }
 
-    const change: AttributeChange = [nodeId]
+    const tagName = normalizedTagName(node)
+
+    const change: RoleAnnotatedAttributeChange = [nodeId]
     for (const [domAttributeName, oldValue] of attributeNames) {
       if (node.getAttribute(domAttributeName) === oldValue) {
         continue // No change since the last snapshot.
@@ -271,7 +272,7 @@ function processAttributeMutations(
       if (domAttributeName === 'value') {
         const domAttributeValue = getElementInputValue(node, privacyLevel)
         if (domAttributeValue !== undefined) {
-          change.push(createAttributeAssignment(domAttributeName, domAttributeValue))
+          change.push(createAttributeAssignment(tagName, domAttributeName, domAttributeValue))
         }
         continue
       }
@@ -282,7 +283,7 @@ function processAttributeMutations(
         domAttributeName,
         transaction.scope.configuration
       )
-      change.push(createAttributeAssignmentOrDeletion(domAttributeName, domAttributeValue))
+      change.push(createAttributeAssignmentOrDeletion(tagName, domAttributeName, domAttributeValue))
     }
 
     if (change.length > 1) {
