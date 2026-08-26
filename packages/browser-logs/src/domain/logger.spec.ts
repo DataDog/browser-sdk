@@ -1,6 +1,5 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
 import { display, ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
-import { mockSourceCodeContext } from '@datadog/browser-core/test'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'
@@ -55,7 +54,6 @@ describe('Logger', () => {
             handling: ErrorHandling.HANDLED,
             fingerprint: undefined,
           },
-          _dd: { debug_ids: undefined },
         })
       })
 
@@ -119,7 +117,6 @@ describe('Logger', () => {
             handling: ErrorHandling.HANDLED,
             fingerprint: undefined,
           },
-          _dd: { debug_ids: undefined },
         },
         status: 'error',
       })
@@ -131,18 +128,6 @@ describe('Logger', () => {
       logger.log('message', {}, StatusType.error, error)
 
       expect(getLoggedMessage(0).context!.foo).toBe('bar')
-    })
-
-    it('should attach debug_ids resolved from the source code context', () => {
-      const url = 'http://path/to/debug-id.js'
-      const debugId = '01234567-89ab-cdef-0123-456789abcdef'
-      mockSourceCodeContext({ [`Error: foo\n    at foo (${url}:52:15)`]: { ddDebugId: debugId } })
-
-      const error = new Error('foo')
-      error.stack = `Error: foo\n    at foo (${url}:52:15)`
-      logger.log('message', {}, StatusType.error, error)
-
-      expect(getLoggedMessage(0).context!._dd).toEqual({ debug_ids: [{ url, id: debugId }] })
     })
 
     describe('when using logger.error', () => {
@@ -196,7 +181,6 @@ describe('Logger', () => {
               ],
               fingerprint: undefined,
             },
-            _dd: { debug_ids: undefined },
           },
         })
       })

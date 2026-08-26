@@ -78,6 +78,7 @@ describe('network error collection', () => {
         status_code: 503,
         url: 'http://fake.com/',
       },
+      _dd: { debug_ids: undefined },
     })
   })
 
@@ -185,13 +186,6 @@ describe('network error collection', () => {
       expect(rawLogsEvents[0].rawLogsEvent._dd).toEqual({
         debug_ids: [{ url: debugIdUrl, id: '01234567-89ab-cdef-0123-456789abcdef' }],
       })
-    })
-
-    it('should not attach _dd when there are no debug_ids', () => {
-      const error = new Error('Network failure')
-      notifyFetch({ url: 'http://fake-url/', status: 0, error, responseBody: undefined })
-
-      expect(rawLogsEvents[0].rawLogsEvent._dd).toBeUndefined()
     })
   })
 })

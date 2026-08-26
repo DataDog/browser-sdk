@@ -31,6 +31,7 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
           message: logsMessage.message,
           status: logsMessage.status,
           origin: ErrorSource.LOGGER,
+          _dd: { debug_ids: logsMessage.debugIds },
         },
         messageContext,
         savedCommonContext,

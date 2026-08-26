@@ -71,7 +71,7 @@ export function startNetworkErrorCollection(
           // We don't know if the error was handled or not, so we set it to undefined
           handling: undefined,
         },
-        ...(debugIds ? { _dd: { debug_ids: debugIds } } : {}),
+        _dd: { debug_ids: debugIds },
         http: {
           method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
           status_code: request.status,
