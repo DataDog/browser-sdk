@@ -1,4 +1,5 @@
-import type { ContextManager, ContextValue } from '@datadog/browser-core'
+import type { ContextManager } from '@datadog/browser-core'
+import type { ContextValue } from '@datadog/js-core/util'
 import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
 import { MID_HASH_UUID, MOCK_SESSION_ID, createSessionManagerMock } from '@datadog/browser-core/test'

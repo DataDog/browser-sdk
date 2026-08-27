@@ -1,7 +1,7 @@
 import type { EndpointBuilder } from '@datadog/js-core/transport'
 import { MORE_DETAILS, computeBytesCount, ONE_KIBI_BYTE } from '@datadog/js-core/util'
+import type { Context } from '@datadog/js-core/util'
 import { DOCS_TROUBLESHOOTING, display } from '../tools/display'
-import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason, createPageMayExitObservable } from '../browser/pageMayExitObservable'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'

@@ -1,6 +1,6 @@
 import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
+import type { Context, ContextArray, ContextValue } from '@datadog/js-core/util'
 import { display } from '../display'
-import type { Context, ContextArray, ContextValue } from './context'
 import type { ObjectWithToJsonMethod } from './jsonStringify'
 import { detachToJsonMethod } from './jsonStringify'
 

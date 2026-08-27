@@ -1,4 +1,5 @@
-import type { FlushEvent, Context, Telemetry } from '@datadog/browser-core'
+import type { FlushEvent, Telemetry } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { Observable } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'

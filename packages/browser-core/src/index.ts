@@ -99,7 +99,6 @@ export {
 export { NonErrorPrefix } from './domain/error/error.types'
 export { buildDebugIdByUrl, getSourceCodeContext } from './domain/sourceCodeContext'
 export type { DebugIdEntry } from './domain/sourceCodeContext'
-export type { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
 export { isCookieStoreSupported } from './browser/cookieAccess'
 export type { WeakRef, WeakRefConstructor } from './browser/browser.types'

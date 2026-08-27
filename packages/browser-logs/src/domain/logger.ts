@@ -1,4 +1,5 @@
-import type { Context, ContextManager, DebugIdEntry } from '@datadog/browser-core'
+import type { DebugIdEntry, ContextManager } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { clocksNow } from '@datadog/js-core/time'
 import { combine } from '@datadog/js-core/util'
 import {

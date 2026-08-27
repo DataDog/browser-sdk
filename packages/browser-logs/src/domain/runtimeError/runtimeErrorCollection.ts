@@ -1,5 +1,6 @@
 import type { ClocksState } from '@datadog/js-core/time'
-import type { Context, Observable, BufferedData } from '@datadog/browser-core'
+import type { Observable, BufferedData } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { noop, ErrorSource, BufferedDataType } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'

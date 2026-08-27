@@ -1,6 +1,7 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import { ConsoleApiName, combine } from '@datadog/js-core/util'
-import type { Context, RawError, BufferedData } from '@datadog/browser-core'
+import type { RawError, BufferedData } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import {
   BufferedDataType,
   Observable,

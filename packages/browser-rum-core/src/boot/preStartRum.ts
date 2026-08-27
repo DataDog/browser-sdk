@@ -2,7 +2,8 @@ import { isWorkerEnvironment } from '@datadog/js-core/util'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import {
   BufferedObservable,
   display,

@@ -46,6 +46,19 @@ export const ConsoleApiName: {
 // @public
 export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName];
 
+// @public (undocumented)
+export interface Context {
+    // (undocumented)
+    [x: string]: ContextValue;
+}
+
+// @public (undocumented)
+export interface ContextArray extends Array<ContextValue> {
+}
+
+// @public (undocumented)
+export type ContextValue = string | number | boolean | Context | ContextArray | undefined | null;
+
 // @public
 type CookieChangeEvent_2 = Event & {
     changed: CookieChangeItem[];

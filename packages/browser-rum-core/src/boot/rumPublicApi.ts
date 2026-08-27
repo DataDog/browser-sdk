@@ -2,7 +2,6 @@ import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/tim
 import { deepClone } from '@datadog/js-core/util'
 import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
-  Context,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
@@ -17,6 +16,7 @@ import type {
   ResourceType,
   SessionManager,
 } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import {
   ContextManagerMethod,
   addTelemetryUsage,
