@@ -1,10 +1,22 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 let renderAttempt = 0
 let suspendPromise: Promise<void> | undefined
 
 export function DiscardedRenderProbe() {
-  if (typeof window === 'undefined' || !new URLSearchParams(window.location.search).has('discard-nextjs-render')) {
+  const enabled =
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('discard-nextjs-render')
+  const [started, setStarted] = useState(false)
+
+  useEffect(() => {
+    if (enabled) {
+      setStarted(true)
+    }
+  }, [enabled])
+
+  if (!started) {
     return null
   }
 

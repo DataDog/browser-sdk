@@ -12,8 +12,8 @@ export function DatadogAppRouter() {
   const viewName = computeViewNameFromParams(pathname, params)
 
   useLayoutEffect(() => {
-    setNextjsViewName(viewName)
-  }, [viewName])
+    setNextjsViewName(viewName, pathname)
+  }, [pathname, viewName])
 
   return null
 }

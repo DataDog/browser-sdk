@@ -65,8 +65,11 @@ test.describe('plugin: nextjs', () => {
       await page.waitForSelector('[data-testid="discarded-render-probe-ready"]', { state: 'attached' })
       await flushEvents()
 
-      expect(intakeRegistry.rumViewEvents).toHaveLength(1)
-      expect(intakeRegistry.rumViewEvents[0].view.loading_type).toBe('initial_load')
+      const viewEvents = intakeRegistry.rumViewEvents
+      const viewIds = new Set(viewEvents.map((event) => event.view.id))
+
+      expect(viewIds.size).toBe(1)
+      expect(viewEvents[0].view.loading_type).toBe('initial_load')
     })
 
   createTest('should start a slow navigation view before the route commits')

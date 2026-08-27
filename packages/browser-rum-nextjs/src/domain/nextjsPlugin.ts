@@ -14,6 +14,7 @@ type StartSubscriber = (addError: StartRumResult['addError']) => void
 let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
 let currentViewName: string | undefined
+let currentAppRouterPathname: string | undefined
 let routerType: NextjsRouterType | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
@@ -28,6 +29,7 @@ export function nextjsPlugin(): NextjsPlugin {
       routerType = mockable(detectNextjsRouterType)()
 
       if (routerType === 'app-router') {
+        currentAppRouterPathname = window.location.pathname
         startNextjsView(window.location.pathname, window.location.href)
       }
 
@@ -66,7 +68,10 @@ export function startNextjsView(viewName: string, url?: string) {
   }
 }
 
-export function setNextjsViewName(viewName: string) {
+export function setNextjsViewName(viewName: string, pathname?: string) {
+  // The App Router component calls this after the route has committed.
+  currentAppRouterPathname = pathname ?? currentAppRouterPathname
+
   if (globalPublicApi && currentViewName !== viewName) {
     currentViewName = viewName
     globalPublicApi.setViewName(viewName)
@@ -77,8 +82,9 @@ export function setNextjsViewName(viewName: string) {
 export function onRouterTransitionStart(url: string) {
   const navigationUrl = buildUrl(url, window.location.origin)
 
-  // Keep the existing integration behavior: query-string and hash-only navigations do not create views.
-  if (navigationUrl.origin === window.location.origin && navigationUrl.pathname !== window.location.pathname) {
+  // Compare with the last committed pathname because window.location can already contain the target pathname
+  // when this callback runs.
+  if (navigationUrl.origin === window.location.origin && navigationUrl.pathname !== currentAppRouterPathname) {
     startNextjsView(navigationUrl.pathname, navigationUrl.href)
   }
 }
@@ -105,5 +111,6 @@ export function resetNextjsPlugin() {
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
   currentViewName = undefined
+  currentAppRouterPathname = undefined
   routerType = undefined
 }

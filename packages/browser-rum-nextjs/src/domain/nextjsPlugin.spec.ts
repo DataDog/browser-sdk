@@ -96,6 +96,21 @@ describe('nextjsPlugin', () => {
     })
   })
 
+  it('starts views for successive concrete App Router pathnames', () => {
+    const { startViewSpy } = initPlugin()
+    startViewSpy.calls.reset()
+
+    onRouterTransitionStart('/user/42?admin=true')
+    setNextjsViewName('/user/[id]', '/user/42')
+    onRouterTransitionStart('/user/999?admin=true')
+
+    expect(startViewSpy).toHaveBeenCalledTimes(2)
+    expect(startViewSpy.calls.argsFor(1)[0]).toEqual({
+      name: '/user/999',
+      url: `${window.location.origin}/user/999?admin=true`,
+    })
+  })
+
   it('does not start a view for query-string or hash-only navigations', () => {
     const { startViewSpy } = initPlugin()
     startViewSpy.calls.reset()
@@ -118,8 +133,8 @@ describe('nextjsPlugin', () => {
   it('sets the normalized name after the view has started', () => {
     const { setViewNameSpy } = initPlugin()
 
-    setNextjsViewName('/users/[id]')
-    setNextjsViewName('/users/[id]')
+    setNextjsViewName('/users/[id]', '/users/42')
+    setNextjsViewName('/users/[id]', '/users/42')
 
     expect(setViewNameSpy).toHaveBeenCalledOnceWith('/users/[id]')
   })
