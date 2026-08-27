@@ -124,6 +124,9 @@ export function createDisplay(prefix: string): Display;
 // @public
 export function deepClone<T>(value: T): T;
 
+// @public (undocumented)
+export function detachToJsonMethod(value: object): () => void;
+
 // @public
 export interface Display {
     // (undocumented)
@@ -184,6 +187,9 @@ export function isValidUrl(url: string): boolean;
 export const isWorkerEnvironment: boolean;
 
 // @public
+export function jsonStringify(value: unknown, replacer?: Array<string | number>, space?: string | number): string | undefined;
+
+// @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
 // @public
@@ -217,6 +223,12 @@ export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 
 
 // @public
 export function normalizeUrl(url: string): string;
+
+// @public (undocumented)
+export interface ObjectWithToJsonMethod {
+    // (undocumented)
+    toJSON?: () => unknown;
+}
 
 // @public (undocumented)
 export const ONE_KIBI_BYTE = 1024;

@@ -1,8 +1,6 @@
-import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
-import type { Context, ContextArray, ContextValue } from '@datadog/js-core/util'
+import { ONE_KIBI_BYTE, detachToJsonMethod } from '@datadog/js-core/util'
+import type { Context, ContextArray, ContextValue, ObjectWithToJsonMethod } from '@datadog/js-core/util'
 import { display } from '../display'
-import type { ObjectWithToJsonMethod } from './jsonStringify'
-import { detachToJsonMethod } from './jsonStringify'
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function

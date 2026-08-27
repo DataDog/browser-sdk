@@ -1,5 +1,3 @@
-import { noop } from '../utils/functionUtils'
-
 /**
  * Custom implementation of JSON.stringify that ignores some toJSON methods. We need to do that
  * because some sites badly override toJSON on certain objects. Removing all toJSON methods from
@@ -49,5 +47,9 @@ export function detachToJsonMethod(value: object) {
       object.toJSON = objectToJson
     }
   }
+
   return noop
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+function noop() {}
