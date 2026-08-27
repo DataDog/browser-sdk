@@ -19,11 +19,11 @@ import {
   startSessionManagerStub,
   startTelemetry,
   TelemetryService,
-  mockable,
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
   isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
+import { mockable } from '@datadog/js-core/util'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'

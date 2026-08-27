@@ -10,10 +10,9 @@ import {
   createTrackingConsentState,
   defineContextMethod,
   startBufferingData,
-  mockable,
 } from '@datadog/browser-core'
+import { mockable, deepClone } from '@datadog/js-core/util'
 import { monitor, callMonitored } from '@datadog/js-core/monitor'
-import { deepClone } from '@datadog/js-core/util'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
 import type { StatusType } from '../domain/logger/isAuthorized'

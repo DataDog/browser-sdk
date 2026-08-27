@@ -9,7 +9,7 @@ export const mockableReplacements = new Map<unknown, unknown>()
  *
  * @example
  * // In source file:
- * import { mockable } from '../tools/mockable'
+ * import { mockable } from '@datadog/js-core/util'
  * export function formatNavigationEntry(): string {
  *   const navigationEntry = mockable(getNavigationEntry)()
  *   ...

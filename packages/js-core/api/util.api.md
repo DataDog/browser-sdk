@@ -187,6 +187,12 @@ export const isWorkerEnvironment: boolean;
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
 // @public
+export function mockable<T>(value: T): T;
+
+// @public (undocumented)
+export const mockableReplacements: Map<unknown, unknown>;
+
+// @public
 export const MORE_DETAILS = "More details:";
 
 // @public
