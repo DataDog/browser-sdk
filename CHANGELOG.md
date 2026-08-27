@@ -20,6 +20,32 @@
 
 ---
 
+## v7.10.0
+
+**Public Changes:**
+
+- ✨ [RUM-18253] attach debug_ids to logs events ([#4982](https://github.com/DataDog/browser-sdk/pull/4982))
+- ✨ Feature Flags tab — all Datadog sites, with overrides scoped per site ([#4965](https://github.com/DataDog/browser-sdk/pull/4965))
+- 🐛 Sanitize and validate name in startView/setViewName ([#4969](https://github.com/DataDog/browser-sdk/pull/4969))
+- 🐛 Resolve document-relative URLs against document.baseURI in normalizeUrl ([#4943](https://github.com/DataDog/browser-sdk/pull/4943))
+- 🐛 use global URL constructor and fall back to pristine iframe only when needed ([#4967](https://github.com/DataDog/browser-sdk/pull/4967))
+- ⚗️ Add canvas change detection for Session Replay ([#4949](https://github.com/DataDog/browser-sdk/pull/4949))
+
+**Internal Changes:**
+
+- 👷 Bump chrome to 152.0.7977.64-1 ([#4985](https://github.com/DataDog/browser-sdk/pull/4985))
+- 👷 Update all non-major dependencies ([#4971](https://github.com/DataDog/browser-sdk/pull/4971))
+- 👷 [PANA-8578] Update schema to support session replay string roles ([#4968](https://github.com/DataDog/browser-sdk/pull/4968))
+- 👷 Update dependency eslint-plugin-unicorn to v73 ([#4954](https://github.com/DataDog/browser-sdk/pull/4954))
+- 👷 Build test apps outside Git repositories ([#4962](https://github.com/DataDog/browser-sdk/pull/4962))
+- 👷 fix staging CI scripts git pull failing with no tracking info ([#4975](https://github.com/DataDog/browser-sdk/pull/4975))
+- 👷 fix staging-reset git pull failing with no tracking info ([#4973](https://github.com/DataDog/browser-sdk/pull/4973))
+- ♻️ [PANA-8578] Record form input using change operations ([#4977](https://github.com/DataDog/browser-sdk/pull/4977))
+- ♻️ use global URL constructor and fall back to pristine iframe only when needed ([#4967](https://github.com/DataDog/browser-sdk/pull/4967))
+- ✅ Add Salesforce Experience Cloud Head Markup E2E ([#4945](https://github.com/DataDog/browser-sdk/pull/4945))
+- ✅ [RUM-17233] Add Shopify checkout views and actions e2e test ([#4941](https://github.com/DataDog/browser-sdk/pull/4941))
+- 🚨 Prevent re-exporting values from @datadog/js-core ([#4970](https://github.com/DataDog/browser-sdk/pull/4970))
+
 ## v7.9.0
 
 **Public Changes:**
