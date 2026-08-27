@@ -34,10 +34,23 @@ export function jsonStringify(
   }
 }
 
+/**
+ * An object that may define a `toJSON()` method, which `jsonStringify` detaches before
+ * serializing to avoid faulty overrides on some websites.
+ */
 export interface ObjectWithToJsonMethod {
   toJSON?: () => unknown
 }
 
+/**
+ * Detaches the `toJSON` method from `value` (if present) and returns a restore function.
+ *
+ * This is used by {@link jsonStringify} and `sanitize` to prevent faulty `toJSON` overrides
+ * from interfering with serialization. The restore function re-attaches the original method.
+ *
+ * @param value - The object whose `toJSON` should be detached.
+ * @returns A function that restores the original `toJSON` (or a no-op if none was present).
+ */
 export function detachToJsonMethod(value: object) {
   const object = value as ObjectWithToJsonMethod
   const objectToJson = object.toJSON

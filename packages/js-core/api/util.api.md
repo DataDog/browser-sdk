@@ -28,10 +28,10 @@ export function combine<A, B, C, D, E, F, G>(a: A, b: B, c: C, d: D, e: E, f: F,
 // @public (undocumented)
 export function combine<A, B, C, D, E, F, G, H>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): Combined<Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>, H>;
 
-// @public (undocumented)
+// @public
 export function computeBytesCount(candidate: string): number;
 
-// @public (undocumented)
+// @public
 export function concatBuffers(buffers: Uint8ArrayBuffer[]): Uint8ArrayBuffer;
 
 // @public
@@ -46,17 +46,17 @@ export const ConsoleApiName: {
 // @public
 export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName];
 
-// @public (undocumented)
+// @public
 export interface Context {
     // (undocumented)
     [x: string]: ContextValue;
 }
 
-// @public (undocumented)
+// @public
 export interface ContextArray extends Array<ContextValue> {
 }
 
-// @public (undocumented)
+// @public
 export type ContextValue = string | number | boolean | Context | ContextArray | undefined | null;
 
 // @public
@@ -124,7 +124,7 @@ export function createDisplay(prefix: string): Display;
 // @public
 export function deepClone<T>(value: T): T;
 
-// @public (undocumented)
+// @public
 export function detachToJsonMethod(value: object): () => void;
 
 // @public
@@ -195,7 +195,7 @@ export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 // @public
 export function mockable<T>(value: T): T;
 
-// @public (undocumented)
+// @public
 export const mockableReplacements: Map<unknown, unknown>;
 
 // @public
@@ -224,16 +224,16 @@ export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 
 // @public
 export function normalizeUrl(url: string): string;
 
-// @public (undocumented)
+// @public
 export interface ObjectWithToJsonMethod {
     // (undocumented)
     toJSON?: () => unknown;
 }
 
-// @public (undocumented)
+// @public
 export const ONE_KIBI_BYTE = 1024;
 
-// @public (undocumented)
+// @public
 export const ONE_MEBI_BYTE: number;
 
 // @public
@@ -305,7 +305,7 @@ export interface SampleBufferFullEvent extends Event {
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
 
-// @public (undocumented)
+// @public
 export interface Uint8ArrayBuffer extends Uint8Array {
     // (undocumented)
     readonly buffer: ArrayBuffer;
