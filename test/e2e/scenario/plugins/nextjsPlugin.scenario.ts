@@ -51,26 +51,42 @@ runBasePluginErrorTests(
 )
 
 test.describe('plugin: nextjs', () => {
-  createTest('should not create a view for a discarded App Router render')
+  createTest('should not create views from discarded renders')
     .withRum()
-    .withBasePath('/?discard-nextjs-render')
     .withNextjsApp('app')
-    .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+    .run(async ({ page, flushEvents, intakeRegistry, baseUrl }) => {
+      await flushEvents()
+      intakeRegistry.empty()
+
+      const discardedRenderUrl = new URL(baseUrl)
+      discardedRenderUrl.searchParams.set('discard-nextjs-render', 'true')
+
+      await page.goto(discardedRenderUrl.href)
       await page.waitForSelector('[data-testid="discarded-render-probe-ready"]', { state: 'attached' })
+      await flushEvents()
+
+      expect(intakeRegistry.rumViewEvents).toHaveLength(1)
+      expect(intakeRegistry.rumViewEvents[0].view.loading_type).toBe('initial_load')
+    })
+
+  createTest('should start a slow navigation view before the route commits')
+    .withRum()
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      const navigationStartedAt = Date.now()
+
+      await page.click('text=Go to Slow Page')
+      await page.waitForURL('**/slow')
+      await page.waitForSelector('text=Slow Page')
+      const routeCommittedAt = Date.now()
 
       await flushEvents()
 
-      const homeViewEvents = intakeRegistry.rumViewEvents.filter((event) => event.view.name === '/')
-      expect(homeViewEvents.length).toBeGreaterThan(0)
-
-      const homeViewId = homeViewEvents[0].view.id
-      expect(homeViewEvents.every((event) => event.view.id === homeViewId)).toBe(true)
-
-      withBrowserLogs((logs) => {
-        const errors = logs.filter((log) => log.level === 'error')
-        expect(errors).toHaveLength(1)
-        expect(errors[0].message).toContain('Minified React error #418')
-      })
+      const slowView = intakeRegistry.rumViewEvents.find((event) => event.view.name === '/slow')
+      expect(slowView).toBeDefined()
+      expect(slowView?.view.loading_type).toBe('route_change')
+      expect(slowView?.date).toBeGreaterThanOrEqual(navigationStartedAt)
+      expect(routeCommittedAt - slowView!.date).toBeGreaterThan(500)
     })
 
   createTest('should not be affected by parallel routes')

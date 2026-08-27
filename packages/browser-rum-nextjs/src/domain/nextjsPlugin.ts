@@ -13,7 +13,7 @@ type StartSubscriber = (addError: StartRumResult['addError']) => void
 
 let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
-let lastNavigationUrl: string | undefined
+let currentViewName: string | undefined
 let routerType: NextjsRouterType | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
@@ -26,6 +26,10 @@ export function nextjsPlugin(): NextjsPlugin {
       globalPublicApi = publicApi
       initConfiguration.trackViewsManually = true
       routerType = mockable(detectNextjsRouterType)()
+
+      if (routerType === 'app-router') {
+        startNextjsView(window.location.pathname, window.location.href)
+      }
 
       for (const subscriber of onRumInitSubscribers) {
         subscriber(publicApi)
@@ -55,18 +59,28 @@ function detectNextjsRouterType(): NextjsRouterType {
   return document.getElementById('__NEXT_DATA__') ? 'pages-router' : 'app-router'
 }
 
-export function startNextjsView(viewName: string) {
+export function startNextjsView(viewName: string, url?: string) {
   if (globalPublicApi) {
-    // Use the URL captured by onRouterTransitionStart if available, since React renders before pushState updates window.location
-    const url = lastNavigationUrl ? buildUrl(lastNavigationUrl, window.location.origin).href : undefined
-    lastNavigationUrl = undefined
+    currentViewName = viewName
     globalPublicApi.startView({ name: viewName, url })
   }
 }
 
-// Must be re-exported from the user's instrumentation-client.ts so we can capture the URL before React renders
+export function setNextjsViewName(viewName: string) {
+  if (globalPublicApi && currentViewName !== viewName) {
+    currentViewName = viewName
+    globalPublicApi.setViewName(viewName)
+  }
+}
+
+// Must be re-exported from the user's instrumentation-client.ts so we can start the view before React renders
 export function onRouterTransitionStart(url: string) {
-  lastNavigationUrl = url
+  const navigationUrl = buildUrl(url, window.location.origin)
+
+  // Keep the existing integration behavior: query-string and hash-only navigations do not create views.
+  if (navigationUrl.origin === window.location.origin && navigationUrl.pathname !== window.location.pathname) {
+    startNextjsView(navigationUrl.pathname, navigationUrl.href)
+  }
 }
 
 export function onRumInit(callback: InitSubscriber) {
@@ -90,6 +104,6 @@ export function resetNextjsPlugin() {
   globalAddError = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
-  lastNavigationUrl = undefined
+  currentViewName = undefined
   routerType = undefined
 }

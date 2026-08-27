@@ -5,6 +5,7 @@ import { appendElement } from '../../../browser-rum-core/test'
 import {
   nextjsPlugin,
   startNextjsView,
+  setNextjsViewName,
   onRumInit,
   onRumStart,
   onRouterTransitionStart,
@@ -19,14 +20,19 @@ interface NextjsGlobalObject {
 
 function createPublicApi() {
   const startViewSpy = jasmine.createSpy('startView')
-  return { publicApi: { startView: startViewSpy } as unknown as RumPublicApi, startViewSpy }
+  const setViewNameSpy = jasmine.createSpy('setViewName')
+  return {
+    publicApi: { startView: startViewSpy, setViewName: setViewNameSpy } as unknown as RumPublicApi,
+    startViewSpy,
+    setViewNameSpy,
+  }
 }
 
 function initPlugin() {
-  const { publicApi, startViewSpy } = createPublicApi()
+  const { publicApi, startViewSpy, setViewNameSpy } = createPublicApi()
   const plugin = nextjsPlugin()
   plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
-  return { plugin, publicApi, startViewSpy }
+  return { plugin, publicApi, startViewSpy, setViewNameSpy }
 }
 
 describe('nextjsPlugin', () => {
@@ -63,25 +69,26 @@ describe('nextjsPlugin', () => {
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
-  it('does not start a view on init', () => {
+  it('starts the initial app-router view on init', () => {
     const { startViewSpy } = initPlugin()
 
-    expect(startViewSpy).not.toHaveBeenCalled()
+    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: window.location.pathname, url: window.location.href })
   })
 
   it('delegates startNextjsView to publicApi.startView with name', () => {
     const { startViewSpy } = initPlugin()
+    startViewSpy.calls.reset()
 
     startNextjsView('/about')
 
     expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/about', url: undefined })
   })
 
-  it('uses onRouterTransitionStart URL when available', () => {
+  it('starts a view from onRouterTransitionStart before React renders', () => {
     const { startViewSpy } = initPlugin()
+    startViewSpy.calls.reset()
 
     onRouterTransitionStart('/about?foo=bar')
-    startNextjsView('/about')
 
     expect(startViewSpy).toHaveBeenCalledOnceWith({
       name: '/about',
@@ -89,14 +96,32 @@ describe('nextjsPlugin', () => {
     })
   })
 
-  it('clears onRouterTransitionStart URL after startNextjsView consumes it', () => {
+  it('does not start a view for query-string or hash-only navigations', () => {
     const { startViewSpy } = initPlugin()
+    startViewSpy.calls.reset()
 
-    onRouterTransitionStart('/about')
-    startNextjsView('/about')
-    startNextjsView('/other')
+    onRouterTransitionStart(`${window.location.pathname}?foo=bar`)
+    onRouterTransitionStart(`${window.location.pathname}#section`)
 
-    expect(startViewSpy.calls.mostRecent().args[0]).toEqual({ name: '/other', url: undefined })
+    expect(startViewSpy).not.toHaveBeenCalled()
+  })
+
+  it('does not start a view for external navigations', () => {
+    const { startViewSpy } = initPlugin()
+    startViewSpy.calls.reset()
+
+    onRouterTransitionStart('https://example.com/about')
+
+    expect(startViewSpy).not.toHaveBeenCalled()
+  })
+
+  it('sets the normalized name after the view has started', () => {
+    const { setViewNameSpy } = initPlugin()
+
+    setNextjsViewName('/users/[id]')
+    setNextjsViewName('/users/[id]')
+
+    expect(setViewNameSpy).toHaveBeenCalledOnceWith('/users/[id]')
   })
 
   it('reports app-router when no __NEXT_DATA__ script is present', () => {
