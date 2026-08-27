@@ -1,4 +1,5 @@
-import type { Uint8ArrayBuffer, Encoder, EncoderResult, DeflateEncoderStreamId, Context } from '@datadog/browser-core'
+import type { Encoder, EncoderResult, DeflateEncoderStreamId, Context } from '@datadog/browser-core'
+import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import { addTelemetryDebug, createHttpRequest, jsonStringify, objectEntries, ErrorSource } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createEndpointBuilder } from '@datadog/js-core/transport'

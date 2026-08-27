@@ -28,6 +28,12 @@ export function combine<A, B, C, D, E, F, G>(a: A, b: B, c: C, d: D, e: E, f: F,
 // @public (undocumented)
 export function combine<A, B, C, D, E, F, G, H>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): Combined<Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>, H>;
 
+// @public (undocumented)
+export function computeBytesCount(candidate: string): number;
+
+// @public (undocumented)
+export function concatBuffers(buffers: Uint8ArrayBuffer[]): Uint8ArrayBuffer;
+
 // @public
 export const ConsoleApiName: {
     readonly log: "log";
@@ -193,6 +199,12 @@ export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 
 // @public
 export function normalizeUrl(url: string): string;
 
+// @public (undocumented)
+export const ONE_KIBI_BYTE = 1024;
+
+// @public (undocumented)
+export const ONE_MEBI_BYTE: number;
+
 // @public
 export const originalConsoleMethods: Display;
 
@@ -261,6 +273,14 @@ export interface SampleBufferFullEvent extends Event {
 
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
+
+// @public (undocumented)
+export interface Uint8ArrayBuffer extends Uint8Array {
+    // (undocumented)
+    readonly buffer: ArrayBuffer;
+    // (undocumented)
+    subarray(begin?: number, end?: number): Uint8ArrayBuffer;
+}
 
 // (No @packageDocumentation comment for this package)
 

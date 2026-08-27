@@ -1,5 +1,5 @@
+import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import type { Encoder } from '../../tools/encoder'
-import type { Uint8ArrayBuffer } from '../../tools/utils/byteUtils'
 
 export type DeflateWorkerAction =
   // Action to send when creating the worker to check if the communication is working correctly.

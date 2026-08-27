@@ -1,5 +1,5 @@
-import type { Uint8ArrayBuffer } from './utils/byteUtils'
-import { concatBuffers } from './utils/byteUtils'
+import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
+import { concatBuffers } from '@datadog/js-core/util'
 import { noop } from './utils/functionUtils'
 
 /**

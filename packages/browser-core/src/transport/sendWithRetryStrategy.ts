@@ -1,7 +1,7 @@
 import { ONE_MINUTE, ONE_SECOND } from '@datadog/js-core/time'
 import type { TrackType } from '@datadog/js-core/transport'
+import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '@datadog/js-core/util'
 import { setTimeout } from '../tools/timer'
-import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { isServerError } from '../tools/utils/responseUtils'
 import type { Observable } from '../tools/observable'
 import type { Payload, HttpRequestEvent, HttpResponse, BandwidthStats } from './httpRequest'
