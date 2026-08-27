@@ -1,5 +1,10 @@
 import type { MockCspEventListener, MockReportingObserver } from '../../../test'
-import { mockReportingObserver, mockCspEventListener, FAKE_CSP_VIOLATION_EVENT } from '../../../test'
+import {
+  mockReportingObserver,
+  mockCspEventListener,
+  mockSourceCodeContext,
+  FAKE_CSP_VIOLATION_EVENT,
+} from '../../../test'
 import type { Subscription } from '../../tools/observable'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import type { RawReportError } from './reportObservable'
@@ -63,7 +68,31 @@ describe('report observable', () => {
   at <anonymous> @ http://foo.bar/index.js:17:8`,
       handling: ErrorHandling.UNHANDLED,
       csp: { disposition: 'enforce' },
+      debugIds: undefined,
     })
+  })
+
+  it('should resolve debug ids from the report source file', () => {
+    const debugId = '01234567-89ab-cdef-0123-456789abcdef'
+    mockSourceCodeContext({ 'Error: foo\n    at foo (http://foo.bar/index.js:52:15)': { ddDebugId: debugId } })
+
+    consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
+    reportingObserver.raiseReport(RawReportType.intervention)
+
+    const [report] = notifyReport.calls.mostRecent().args
+
+    expect(report.debugIds).toEqual([{ url: 'http://foo.bar/index.js', id: debugId }])
+  })
+
+  it('should not set debug ids when the report source file has none', () => {
+    mockSourceCodeContext()
+
+    consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
+    reportingObserver.raiseReport(RawReportType.intervention)
+
+    const [report] = notifyReport.calls.mostRecent().args
+
+    expect(report.debugIds).toBeUndefined()
   })
 
   it(`should not notify ${RawReportType.cspViolation} when the event is not supported`, () => {
