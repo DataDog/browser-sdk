@@ -1,5 +1,3 @@
-export type { ChangeDecoder } from './changeDecoder'
-export { createChangeDecoder } from './changeDecoder'
 export { createChildInsertionCursor, createRootInsertionCursor } from './insertionCursor'
 export { getElementInputValue } from './serializationUtils'
 export { serializeFullSnapshot } from './serializeFullSnapshot'

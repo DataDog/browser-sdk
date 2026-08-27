@@ -120,6 +120,11 @@ describe('serializeNode for DOM nodes', () => {
       ])
     })
 
+    it('serializes attributes whose names are inherited from Object.prototype', async () => {
+      const record = await serializeHtml('<div __proto__="a" constructor="b"></div>')
+      expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'DIV', ['__proto__', 'a'], ['constructor', 'b']]]])
+    })
+
     it('marks nested canvases dirty when their subtree is serialized', async () => {
       const scope = createRecordingScopeForTesting()
 

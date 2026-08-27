@@ -78,6 +78,33 @@ export const ChangeType: {
 
 export type ChangeType = (typeof ChangeType)[keyof typeof ChangeType]
 
+/**
+ * The role that a string in the string table plays on the page. A role says what kind of data the
+ * string holds, which lets the intake store strings with similar content together, and lets it
+ * redact them according to their kind.
+ */
+export const StringRole: {
+  Default: SessionReplay.StringRoleDefault
+  NodeName: SessionReplay.StringRoleNodeName
+  AttributeName: SessionReplay.StringRoleAttributeName
+  AttributeValue: SessionReplay.StringRoleAttributeValue
+  TextContent: SessionReplay.StringRoleTextContent
+  FormInput: SessionReplay.StringRoleFormInput
+  Css: SessionReplay.StringRoleCSS
+  Url: SessionReplay.StringRoleURL
+} = {
+  Default: 0,
+  NodeName: 1,
+  AttributeName: 2,
+  AttributeValue: 3,
+  TextContent: 4,
+  FormInput: 5,
+  Css: 6,
+  Url: 7,
+} as const
+
+export type StringRole = (typeof StringRole)[keyof typeof StringRole]
+
 /** The selection state of a checkbox, radio button, or `<option>`. */
 export const InputSelectionState: {
   Selected: SessionReplay.InputSelectionStateSelected

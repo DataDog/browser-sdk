@@ -16,18 +16,6 @@ export function createNodeIds(): NodeIds {
   return createWeakIdMap(NodeIdConstants.FIRST_ID as NodeId)
 }
 
-export type StringId = number & { __brand: 'StringId' }
-export type StringIds = ItemIds<string, StringId>
-export const enum StringIdConstants {
-  FIRST_ID = 0,
-
-  // An arbitrarily-chosen soft limit on the maximum size of the string id map.
-  SOFT_MAX_SIZE = 1000000,
-}
-export function createStringIds(): StringIds {
-  return createIdMap(StringIdConstants.FIRST_ID as StringId)
-}
-
 export type StyleSheetId = number & { __brand: 'StyleSheetId' }
 export type StyleSheetIds = ItemIds<CSSStyleSheet, StyleSheetId>
 export const enum StyleSheetIdConstants {
@@ -44,10 +32,6 @@ export interface ItemIds<ItemType, ItemId extends number> {
   getOrInsert(this: void, item: ItemType): ItemId
   get nextId(): ItemId
   get size(): number
-}
-
-function createIdMap<ItemType, ItemId extends number>(firstId: ItemId): ItemIds<ItemType, ItemId> {
-  return createItemIds(() => new Map<ItemType, ItemId>(), firstId)
 }
 
 function createWeakIdMap<ItemType extends object, ItemId extends number>(firstId: ItemId): ItemIds<ItemType, ItemId> {
