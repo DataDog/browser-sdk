@@ -169,6 +169,10 @@ function decodeChangeRecord(
         break
       }
 
+      case ChangeType.ClearStrings:
+        // This change type exists in the schema, but nothing generates it yet.
+        throw new Error(`Unsupported ChangeType: ${change[0]}`)
+
       default:
         change satisfies never
         throw new Error(`Unsupported ChangeType: ${change[0] as any}`)
