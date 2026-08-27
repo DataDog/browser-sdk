@@ -33,7 +33,11 @@ export function trackRouteChangeViewMetrics(configuration: RumConfiguration, sch
     type: RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT,
     buffered: true,
   }).subscribe((entries) => {
-    pendingIcpEntries.push(...entries)
+    if (!softNavEntry) {
+      // Buffer only until we know which interaction to correlate against -- once softNavEntry is
+      // set, applyIcpEntries below handles everything live and this buffer is never read again.
+      pendingIcpEntries.push(...entries)
+    }
     applyIcpEntries(entries)
   })
 
