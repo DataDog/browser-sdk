@@ -21,7 +21,7 @@ import { createStringTable } from './stringTable'
 /**
  * ChangeDecoder converts a BrowserChangeRecord, or a stream of BrowserChangeRecords, into
  * a more human-readable form by:
- * - Removing the changes that define string table entries.
+ * - Removing the changes that manage the string table.
  * - Replacing string table references in all other changes with their literal values.
  *
  * This makes it easier to visualize the contents of BrowserChangeRecords or to write test
@@ -39,9 +39,10 @@ export interface ChangeDecoder {
 
 export interface ChangeDecoderOptions {
   /**
-   * If true, accept the string representations that the ChangeEncoder no longer produces:
-   * - AddStringChange (rather than AddRoleAnnotatedStringsChange)
-   * - StringLiteral (rather than RoleAnnotatedStringLiteral)
+   * If true, accept the string representations that the ChangeEncoder does not produce:
+   * - AddStringChange (replaced by AddRoleAnnotatedStringsChange)
+   * - StringLiteral (only string table references are generated)
+   * - RoleAnnotatedStringLiteral (only string table references are generated)
    *
    * When this option is false (the default), ChangeDecoder will throw when it encounters
    * these obsolete string representations.
@@ -111,6 +112,12 @@ function decodeChangeRecord(
         // Deliberately don't include this change in the decoded record.
         break
 
+      case ChangeType.ClearStrings:
+        stringTable.clear()
+
+        // Deliberately don't include this change in the decoded record.
+        break
+
       case ChangeType.AddNode: {
         const decoded: [typeof ChangeType.AddNode, ...AddNodeChange[]] = [ChangeType.AddNode]
         for (let i = 1; i < change.length; i++) {
@@ -168,10 +175,6 @@ function decodeChangeRecord(
         decodedData.push(decoded)
         break
       }
-
-      case ChangeType.ClearStrings:
-        // This change type exists in the schema, but nothing generates it yet.
-        throw new Error(`Unsupported ChangeType: ${change[0]}`)
 
       default:
         change satisfies never

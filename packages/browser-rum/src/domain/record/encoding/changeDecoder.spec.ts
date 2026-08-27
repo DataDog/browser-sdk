@@ -22,19 +22,67 @@ describe('ChangeDecoder', () => {
     expect(decoded.data).toEqual([[ChangeType.Text, [0, 'Hello World']]])
   })
 
-  it('decodes a role-annotated literal to the string it holds', () => {
-    const decoder = createChangeDecoder()
+  describe('clearing the string table', () => {
+    it('interprets the references that follow a clear against an emptied string table', () => {
+      const decoder = createChangeDecoder()
 
-    const decoded = decoder.decode(
-      changeRecord([ChangeType.Text, [0, createString(StringRole.TextContent, 'Hello World')]])
-    )
+      const decoded = decoder.decode(
+        changeRecord(
+          [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'before the clear']],
+          [ChangeType.Text, [0, 0]],
+          [ChangeType.ClearStrings],
+          [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'after the clear']],
+          [ChangeType.Text, [1, 0]]
+        )
+      )
 
-    expect(decoded.data).toEqual([[ChangeType.Text, [0, 'Hello World']]])
+      // The clear is dropped along with the definitions, and the id that both changes use
+      // resolves to whichever string the string table held at the time.
+      expect(decoded.data).toEqual([
+        [ChangeType.Text, [0, 'before the clear']],
+        [ChangeType.Text, [1, 'after the clear']],
+      ])
+    })
+
+    it('keeps the string table cleared for the records that follow', () => {
+      const decoder = createChangeDecoder()
+      decoder.decode(
+        changeRecord(
+          [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'before the clear']],
+          [ChangeType.ClearStrings]
+        )
+      )
+
+      const decoded = decoder.decode(
+        changeRecord(
+          [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'after the clear']],
+          [ChangeType.Text, [0, 0]]
+        )
+      )
+
+      expect(decoded.data).toEqual([[ChangeType.Text, [0, 'after the clear']]])
+    })
+
+    it('throws on a reference to a string that a clear discarded', () => {
+      const decoder = createChangeDecoder()
+
+      expect(() =>
+        decoder.decode(
+          changeRecord(
+            [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'discarded']],
+            [ChangeType.ClearStrings],
+            [ChangeType.Text, [0, 0]]
+          )
+        )
+      ).toThrowError(/Reference to unknown string/)
+    })
   })
 
-  describe('obsolete string representations', () => {
+  describe('string representations the encoder does not produce', () => {
     const withAddString = () => changeRecord([ChangeType.AddString, 'Hello World'], [ChangeType.Text, [0, 0]])
     const withUntaggedLiteral = () => changeRecord([ChangeType.Text, [0, 'Hello World']])
+    const withAnnotatedLiteral = () =>
+      changeRecord([ChangeType.Text, [0, createString(StringRole.TextContent, 'Hello World')]])
 
     it('throws on an AddString change by default', () => {
       expect(() => createChangeDecoder().decode(withAddString())).toThrowError(/Obsolete AddString change/)
@@ -42,6 +90,12 @@ describe('ChangeDecoder', () => {
 
     it('throws on an untagged string literal by default', () => {
       expect(() => createChangeDecoder().decode(withUntaggedLiteral())).toThrowError(/Obsolete untagged string literal/)
+    })
+
+    it('throws on a role-annotated string literal by default', () => {
+      expect(() => createChangeDecoder().decode(withAnnotatedLiteral())).toThrowError(
+        /Obsolete string literal outside the string table/
+      )
     })
 
     it('decodes an AddString change when they are allowed', () => {
@@ -55,7 +109,14 @@ describe('ChangeDecoder', () => {
 
       expect(decoder.decode(withUntaggedLiteral()).data).toEqual([[ChangeType.Text, [0, 'Hello World']]])
     })
+
+    it('decodes a role-annotated string literal when they are allowed', () => {
+      const decoder = createChangeDecoder({ allowObsoleteStringRepresentations: true })
+
+      expect(decoder.decode(withAnnotatedLiteral()).data).toEqual([[ChangeType.Text, [0, 'Hello World']]])
+    })
   })
+
   describe('keepRoles', () => {
     it('keeps the role a string was defined in', () => {
       const decoder = createChangeDecoder({ keepRoles: true })
@@ -71,7 +132,7 @@ describe('ChangeDecoder', () => {
     })
 
     it('keeps the role of a literal that carries its own', () => {
-      const decoder = createChangeDecoder({ keepRoles: true })
+      const decoder = createChangeDecoder({ allowObsoleteStringRepresentations: true, keepRoles: true })
       const literal = createString(StringRole.Css, 'color: red')
 
       expect(decoder.decode(changeRecord([ChangeType.Text, [0, literal]])).data).toEqual([
