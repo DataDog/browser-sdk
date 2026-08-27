@@ -60,7 +60,10 @@ test.describe('soft navigation', () => {
       // Runs on chromium-pinned (Chrome 120, genuinely lacks the API) plus firefox/webkit.
       // Excludes only current chromium -- project.name (not browserName) is what distinguishes
       // it from chromium-pinned, since both normalize to browserName 'chromium'.
-      test.skip(test.info().project.name === 'chromium', 'This test validates behavior on browsers without soft-navigation API')
+      test.skip(
+        test.info().project.name === 'chromium',
+        'This test validates behavior on browsers without soft-navigation API'
+      )
 
       await page.locator('#nav-button').click()
       await flushEvents()
