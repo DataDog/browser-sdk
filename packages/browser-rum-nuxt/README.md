@@ -1,7 +1,5 @@
 # RUM Browser Monitoring - Nuxt integration
 
-**Note**: This integration is in Preview. Features and configuration are subject to change.
-
 ## Overview
 
 The Datadog RUM Nuxt integration provides framework-specific instrumentation to help you monitor and debug Nuxt applications. This integration adds:
