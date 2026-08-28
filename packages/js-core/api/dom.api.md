@@ -5,8 +5,111 @@
 ```ts
 
 // @public
+function addEventListener_2<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target, eventName: EventName, listener: (event: EventMapFor<Target>[EventName] & {
+    type: EventName;
+}) => void, options?: AddEventListenerOptions_2): {
+    stop: () => void;
+};
+export { addEventListener_2 as addEventListener }
+
+// @public
+export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target, eventNames: EventName[], listener: (event: EventMapFor<Target>[EventName] & {
+    type: EventName;
+}) => void, input?: AddEventListenerOptions_2): {
+    stop: () => void;
+};
+
+// @public (undocumented)
+export const enum DOM_EVENT {
+    // (undocumented)
+    BEFORE_UNLOAD = "beforeunload",
+    // (undocumented)
+    BLUR = "blur",
+    // (undocumented)
+    CHANGE = "change",
+    // (undocumented)
+    CLICK = "click",
+    // (undocumented)
+    CONTEXT_MENU = "contextmenu",
+    // (undocumented)
+    DBL_CLICK = "dblclick",
+    // (undocumented)
+    DOM_CONTENT_LOADED = "DOMContentLoaded",
+    // (undocumented)
+    FOCUS = "focus",
+    // (undocumented)
+    FREEZE = "freeze",
+    // (undocumented)
+    HASH_CHANGE = "hashchange",
+    // (undocumented)
+    INPUT = "input",
+    // (undocumented)
+    KEY_DOWN = "keydown",
+    // (undocumented)
+    LOAD = "load",
+    // (undocumented)
+    MOUSE_DOWN = "mousedown",
+    // (undocumented)
+    MOUSE_MOVE = "mousemove",
+    // (undocumented)
+    MOUSE_UP = "mouseup",
+    // (undocumented)
+    PAGE_HIDE = "pagehide",
+    // (undocumented)
+    PAGE_SHOW = "pageshow",
+    // (undocumented)
+    PAUSE = "pause",
+    // (undocumented)
+    PLAY = "play",
+    // (undocumented)
+    POINTER_CANCEL = "pointercancel",
+    // (undocumented)
+    POINTER_DOWN = "pointerdown",
+    // (undocumented)
+    POINTER_UP = "pointerup",
+    // (undocumented)
+    POP_STATE = "popstate",
+    // (undocumented)
+    RESIZE = "resize",
+    // (undocumented)
+    RESUME = "resume",
+    // (undocumented)
+    SCROLL = "scroll",
+    // (undocumented)
+    SECURITY_POLICY_VIOLATION = "securitypolicyviolation",
+    // (undocumented)
+    SELECTION_CHANGE = "selectionchange",
+    // (undocumented)
+    STORAGE = "storage",
+    // (undocumented)
+    TOUCH_END = "touchend",
+    // (undocumented)
+    TOUCH_MOVE = "touchmove",
+    // (undocumented)
+    TOUCH_START = "touchstart",
+    // (undocumented)
+    UNHANDLED_REJECTION = "unhandledrejection",
+    // (undocumented)
+    VISIBILITY_CHANGE = "visibilitychange"
+}
+
+// @public
 function fetch_2(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
 export { fetch_2 as fetch }
+
+// @public (undocumented)
+export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target | undefined, eventName: EventName): boolean;
+
+// @public (undocumented)
+export function resetAllowUntrustedEvents(): void;
+
+// @public (undocumented)
+export function setAllowUntrustedEvents(value: boolean | undefined): void;
+
+// @public (undocumented)
+export type TrustableEvent<E extends Event = Event> = E & {
+    __ddIsTrusted?: boolean;
+};
 
 // (No @packageDocumentation comment for this package)
 

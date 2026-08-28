@@ -1,7 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { Subscription } from '@datadog/js-core/util'
-import { DOM_EVENT } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
+import { DOM_EVENT } from '@datadog/js-core/dom'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ScrollMetrics, ScrollValues } from './trackScrollMetrics'

@@ -18,9 +18,9 @@ import {
   setTimeout,
   Observable,
 } from '@datadog/js-core/util'
+import { addEventListener, addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { monitorError } from '@datadog/js-core/monitor'
 import { createValueHistory } from '../../tools/valueHistory'
-import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { noop, throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'

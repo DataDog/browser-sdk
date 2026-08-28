@@ -1,6 +1,6 @@
 import { globalObject, Observable } from '@datadog/js-core/util'
+import { addEventListeners, addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import { objectValues } from '../tools/utils/polyfills'
-import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
 export const PageExitReason = {
   HIDDEN: 'visibility_hidden',
