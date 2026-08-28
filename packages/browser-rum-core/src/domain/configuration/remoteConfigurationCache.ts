@@ -30,15 +30,17 @@ interface CachedRemoteConfiguration {
 
 export type CacheReadStatus = 'hit' | 'miss' | 'error'
 
+export interface CacheHitResult {
+  status: Extract<CacheReadStatus, 'hit'>
+  config: RemoteConfiguration
+  metadata: RemoteConfigurationMetadata
+}
+
 export type CacheReadResult =
   | {
       status: Exclude<CacheReadStatus, 'hit'>
     }
-  | {
-      status: Extract<CacheReadStatus, 'hit'>
-      config: RemoteConfiguration
-      metadata: RemoteConfigurationMetadata
-    }
+  | CacheHitResult
 
 export const CACHE_STATUS_TO_METRIC_MAP: Record<CacheReadStatus, 'success' | 'missing' | 'failure'> = {
   hit: 'success',
@@ -131,6 +133,21 @@ export function createConfigurationCache({ remoteConfigurationId }: { remoteConf
         config,
         metadata: { lastModified, lastSynced: timeStampNow(), syncId: generateUUID() },
       })
+    },
+    /**
+     * Records when this configuration version was first put into effect. Stamped on the first page
+     * load that applies it, then reused by every later one, so the reported value marks a fixed
+     * point in time instead of drifting with each page load.
+     */
+    stampFirstApplied(cached: CacheHitResult): RemoteConfigurationMetadata {
+      if (cached.metadata.firstApplied !== undefined) {
+        return cached.metadata
+      }
+
+      const metadata: RemoteConfigurationMetadata = { ...cached.metadata, firstApplied: timeStampNow() }
+      persist(key, { version: CACHE_VERSION, config: cached.config, metadata })
+
+      return metadata
     },
   }
 }
