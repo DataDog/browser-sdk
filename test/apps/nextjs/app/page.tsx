@@ -28,6 +28,9 @@ export default function HomePage() {
         <li>
           <Link href="/?discard-nextjs-render">Discard Next.js Render</Link>
         </li>
+        <li>
+          <Link href="/redirect">Go to Redirect</Link>
+        </li>
       </ul>
     </div>
   )
