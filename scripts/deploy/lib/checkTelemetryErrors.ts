@@ -120,7 +120,7 @@ async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query
   for (let i = 0; i < queries.length; i++) {
     const query = queries[i]
     const buckets = await queryLogsApi(site, apiKey, applicationKey, query, agent)
-    const count = buckets[0]?.computes?.c0
+    const count = buckets[0]?.computes?.c0 ?? 0
 
     // buckets are sorted by count, so we only need to check the first one
     if (count > query.threshold) {
