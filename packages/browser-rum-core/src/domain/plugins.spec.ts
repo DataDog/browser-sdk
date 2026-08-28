@@ -3,16 +3,16 @@ import { mockClock } from '@datadog/browser-core/test'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { RumInitConfiguration } from './configuration'
 import type { RumPlugin } from './plugins'
-import { runOnInitPlugins, callPluginsOnRumStart } from './plugins'
+import { callPluginsOnInit, callPluginsOnRumStart } from './plugins'
 
-describe('runOnInitPlugins', () => {
+describe('callPluginsOnInit', () => {
   const PARAMETER = { initConfiguration: {} as RumInitConfiguration, publicApi: {} as RumPublicApi }
 
   it('calls onInit on each plugin', () => {
     const plugin1 = { name: 'a', onInit: jasmine.createSpy() } satisfies RumPlugin
     const plugin2 = { name: 'b', onInit: jasmine.createSpy() } satisfies RumPlugin
 
-    void runOnInitPlugins([plugin1, plugin2], PARAMETER)
+    void callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
     expect(plugin1.onInit).toHaveBeenCalledWith(PARAMETER)
     expect(plugin2.onInit).toHaveBeenCalledWith(PARAMETER)
@@ -22,19 +22,19 @@ describe('runOnInitPlugins', () => {
     const plugin1 = { name: 'a', onInit: jasmine.createSpy() } satisfies RumPlugin
     const plugin2 = { name: 'b' } satisfies RumPlugin
 
-    expect(() => runOnInitPlugins([plugin1, plugin2], PARAMETER)).not.toThrow()
+    expect(() => callPluginsOnInit([plugin1, plugin2], PARAMETER)).not.toThrow()
     expect(plugin1.onInit).toHaveBeenCalledWith(PARAMETER)
   })
 
   it('returns true synchronously when there are no plugins', () => {
-    expect(runOnInitPlugins(undefined, PARAMETER)).toBe(true)
+    expect(callPluginsOnInit(undefined, PARAMETER)).toBe(true)
   })
 
   it('returns true synchronously when every plugin returns void or true', () => {
     const plugin1 = { name: 'a', onInit: jasmine.createSpy().and.returnValue(undefined) } satisfies RumPlugin
     const plugin2 = { name: 'b', onInit: jasmine.createSpy().and.returnValue(true) } satisfies RumPlugin
 
-    const result = runOnInitPlugins([plugin1, plugin2], PARAMETER)
+    const result = callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
     expect(result).toBe(true)
     expect(plugin1.onInit).toHaveBeenCalledWith(PARAMETER)
@@ -45,7 +45,7 @@ describe('runOnInitPlugins', () => {
     const plugin1 = { name: 'a', onInit: jasmine.createSpy().and.returnValue(false) } satisfies RumPlugin
     const plugin2 = { name: 'b', onInit: jasmine.createSpy() } satisfies RumPlugin
 
-    const result = runOnInitPlugins([plugin1, plugin2], PARAMETER)
+    const result = callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
     expect(result).toBe(false)
     expect(plugin2.onInit).toHaveBeenCalledWith(PARAMETER)
@@ -55,7 +55,7 @@ describe('runOnInitPlugins', () => {
     const plugin1 = { name: 'a', onInit: () => Promise.resolve() } satisfies RumPlugin
     const plugin2 = { name: 'b', onInit: jasmine.createSpy().and.returnValue(true) } satisfies RumPlugin
 
-    const result = runOnInitPlugins([plugin1, plugin2], PARAMETER)
+    const result = callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
     expect(result).not.toBe(true)
     expect(await result).toBe(true)
@@ -66,7 +66,7 @@ describe('runOnInitPlugins', () => {
     const plugin1 = { name: 'a', onInit: () => Promise.resolve(false) } satisfies RumPlugin
     const plugin2 = { name: 'b', onInit: jasmine.createSpy() } satisfies RumPlugin
 
-    const result = runOnInitPlugins([plugin1, plugin2], PARAMETER)
+    const result = callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
     expect(plugin2.onInit).toHaveBeenCalledWith(PARAMETER)
     expect(await result).toBe(false)
@@ -89,7 +89,7 @@ describe('runOnInitPlugins', () => {
     } satisfies RumPlugin
     const initConfiguration = {} as RumInitConfiguration
 
-    await runOnInitPlugins([plugin1, plugin2], { initConfiguration, publicApi: {} as RumPublicApi })
+    await callPluginsOnInit([plugin1, plugin2], { initConfiguration, publicApi: {} as RumPublicApi })
 
     expect(clientTokenSeenByPlugin2).toBeUndefined()
   })
@@ -98,7 +98,7 @@ describe('runOnInitPlugins', () => {
     const clock = mockClock()
     const plugin = { name: 'a', onInit: () => new Promise<void>(noop) } satisfies RumPlugin
 
-    const result = runOnInitPlugins([plugin], PARAMETER)
+    const result = callPluginsOnInit([plugin], PARAMETER)
     clock.tick(3_000)
 
     await expectAsync(result).toBeRejectedWithError(/Plugin a onInit\(\) timed out after \d+ms/)

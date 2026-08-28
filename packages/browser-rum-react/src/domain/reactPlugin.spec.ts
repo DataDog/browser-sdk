@@ -29,7 +29,8 @@ describe('reactPlugin', () => {
 
     expect(callbackSpy).not.toHaveBeenCalled()
 
-    void reactPlugin(pluginConfiguration).onInit({
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    reactPlugin(pluginConfiguration).onInit({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
     })
@@ -42,7 +43,8 @@ describe('reactPlugin', () => {
   it('calls callbacks immediately if onInit was already invoked', () => {
     const callbackSpy = jasmine.createSpy()
     const pluginConfiguration = {}
-    void reactPlugin(pluginConfiguration).onInit({
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    reactPlugin(pluginConfiguration).onInit({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
     })
@@ -56,14 +58,16 @@ describe('reactPlugin', () => {
 
   it('enforce manual view tracking when router is enabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    void reactPlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    reactPlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('does not enforce manual view tracking when router is disabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    void reactPlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    reactPlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })

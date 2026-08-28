@@ -49,11 +49,11 @@ const DEFAULT_ON_INIT_TIMEOUT = 3000
  * calling the next. Stays synchronous as long as no plugin returns a thenable.
  * Returns `false` if any plugin returned (or resolved to) `false`, `true` otherwise.
  */
-export function runOnInitPlugins(
+export function callPluginsOnInit(
   plugins: RumPlugin[] | undefined,
   parameter: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }
 ): boolean | Promise<boolean> {
-  if (!plugins?.length) {
+  if (!plugins) {
     return true
   }
 

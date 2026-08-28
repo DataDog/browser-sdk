@@ -11,7 +11,8 @@ export function initializeAngularPlugin({
   resetAngularPlugin()
   const plugin = angularPlugin()
 
-  void plugin.onInit!({
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+  plugin.onInit!({
     publicApi: {} as RumPublicApi,
     initConfiguration: {} as RumInitConfiguration,
   })

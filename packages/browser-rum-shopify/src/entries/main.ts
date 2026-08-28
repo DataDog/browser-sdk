@@ -14,7 +14,8 @@ const global = globalObject as BrowserWindow
 
 const datadogRum = makeRumPublicApi(makeRecorderApi(), makeProfilerApi(), {
   sdkName: 'rum-shopify',
-  embeddedPlugins: { shopifyPlugin },
 }) as ShopifyRumPublicApi
+
+datadogRum.shopifyPlugin = shopifyPlugin
 
 defineGlobal(global, 'DD_RUM', datadogRum)

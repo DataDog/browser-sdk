@@ -20,27 +20,31 @@ describe('vuePlugin', () => {
     const spy = jasmine.createSpy()
     const config = {}
     onRumInit(spy)
-    void vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
     expect(spy).toHaveBeenCalledOnceWith(config, PUBLIC_API)
   })
 
   it('calls callbacks immediately if onInit was already invoked', () => {
     const spy = jasmine.createSpy()
     const config = {}
-    void vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
     onRumInit(spy)
     expect(spy).toHaveBeenCalledOnceWith(config, PUBLIC_API)
   })
 
   it('sets trackViewsManually when router is true', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    void vuePlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    vuePlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('does not set trackViewsManually when router is false', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    void vuePlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    vuePlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })
 

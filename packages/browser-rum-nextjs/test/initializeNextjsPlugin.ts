@@ -15,7 +15,8 @@ export function initializeNextjsPlugin({
   resetNextjsPlugin()
   const plugin = nextjsPlugin()
 
-  void plugin.onInit({
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+  plugin.onInit({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
   })

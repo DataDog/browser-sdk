@@ -42,7 +42,7 @@ import {
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
-import { runOnInitPlugins } from '../domain/plugins'
+import { callPluginsOnInit } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -242,6 +242,22 @@ export function createPreStartStrategy(
         return
       }
 
+      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, { initConfiguration, publicApi })
+
+      if (typeof shouldContinue === 'boolean') {
+        if (shouldContinue) {
+          proceedWithInit()
+        }
+      } else {
+        shouldContinue
+          .then((result) => {
+            if (result) {
+              proceedWithInit()
+            }
+          })
+          .catch(monitorError)
+      }
+
       function proceedWithInit() {
         const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
 
@@ -268,22 +284,6 @@ export function createPreStartStrategy(
         } else {
           doInit(initConfiguration, errorStack)
         }
-      }
-
-      const shouldContinue = runOnInitPlugins(initConfiguration.plugins, { initConfiguration, publicApi })
-
-      if (typeof shouldContinue === 'boolean') {
-        if (shouldContinue) {
-          proceedWithInit()
-        }
-      } else {
-        shouldContinue
-          .then((result) => {
-            if (result) {
-              proceedWithInit()
-            }
-          })
-          .catch(monitorError)
       }
     },
 
