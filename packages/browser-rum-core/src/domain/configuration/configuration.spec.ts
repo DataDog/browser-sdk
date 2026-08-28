@@ -1,3 +1,4 @@
+import type { TimeStamp } from '@datadog/js-core/time'
 import type { InitConfiguration } from '@datadog/browser-core'
 import {
   addExperimentalFeatures,
@@ -799,6 +800,28 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('serializeRumConfiguration', () => {
+    describe('remote configuration metadata serialization', () => {
+      it('should serialize the applied metadata', () => {
+        const serialized = serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION, undefined, {
+          lastModified: 1500,
+          lastSynced: 2000 as TimeStamp,
+          firstApplied: 3000 as TimeStamp,
+          syncId: 'sync-id',
+        })
+
+        expect(serialized.remote_configuration).toEqual({
+          last_modified: 1500,
+          last_synced: 2000 as TimeStamp,
+          first_applied: 3000 as TimeStamp,
+          sync_id: 'sync-id',
+        })
+      })
+
+      it('should omit remote_configuration when no metadata was applied', () => {
+        expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).remote_configuration).toBeUndefined()
+      })
+    })
+
     describe('selected tracing propagators serialization', () => {
       it('should not return any propagator type', () => {
         expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).selected_tracing_propagators).toEqual([])
@@ -1092,7 +1115,9 @@ describe('serializeRumConfiguration', () => {
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
-            // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
+            // The `remoteConfiguration` init option is covered by the legacy `remote_configuration_id`
+            // field. The `remote_configuration` telemetry field is unrelated: it carries the sync
+            // metadata of the applied version, which does not come from the init configuration.
             Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'sessionReplayCanvasRecording'
             ? never
             : CamelToSnakeCase<Key>
@@ -1103,6 +1128,7 @@ describe('serializeRumConfiguration', () => {
       | 'selected_tracing_propagators'
       | 'use_track_graph_ql_payload'
       | 'use_track_graph_ql_response_errors'
+      | 'remote_configuration'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
@@ -1130,6 +1156,7 @@ describe('serializeRumConfiguration', () => {
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
       remote_configuration_id: '123',
+      remote_configuration: undefined,
       use_remote_configuration_proxy: true,
       profiling_sample_rate: 42,
       track_resource_headers: 'default_headers',

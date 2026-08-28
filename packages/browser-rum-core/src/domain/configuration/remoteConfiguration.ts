@@ -7,6 +7,7 @@ import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
+import type { RemoteConfigurationMetadata } from './remoteConfigurationCache'
 import { CACHE_STATUS_TO_METRIC_MAP, createConfigurationCache } from './remoteConfigurationCache'
 
 export type RemoteConfiguration = RumSdkConfig
@@ -373,10 +374,20 @@ function doBackgroundCacheSync(
     })
 }
 
+export interface ResolvedRemoteConfiguration {
+  initConfiguration: RumInitConfiguration
+  /** Only set when a cached configuration was applied, and reported on configuration telemetry. */
+  metadata?: RemoteConfigurationMetadata
+}
+
+/**
+ * Returns `undefined` when RUM must not start, which only happens with `required: true` and no
+ * usable cache entry.
+ */
 export function getRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   supportedContextManagers: SupportedContextManagers
-): RumInitConfiguration | undefined {
+): ResolvedRemoteConfiguration | undefined {
   const configurationCache = createConfigurationCache({
     remoteConfigurationId: getRemoteConfigurationId(initConfiguration)!,
   })
@@ -389,12 +400,21 @@ export function getRemoteConfiguration(
   doBackgroundCacheSync(initConfiguration, configurationCache, metrics)
 
   if (cacheResult.status === 'hit') {
-    return applyRemoteConfiguration(initConfiguration, cacheResult.config, supportedContextManagers, metrics)
+    return {
+      // Stamping is synchronous, so it always lands before the background sync above can write.
+      metadata: configurationCache.stampFirstApplied(cacheResult),
+      initConfiguration: applyRemoteConfiguration(
+        initConfiguration,
+        cacheResult.config,
+        supportedContextManagers,
+        metrics
+      ),
+    }
   }
 
   if (initConfiguration.remoteConfiguration?.required) {
     return
   }
 
-  return initConfiguration
+  return { initConfiguration }
 }

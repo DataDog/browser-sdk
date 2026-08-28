@@ -21,6 +21,7 @@ import type { SdkName } from '../contexts/defaultContext'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 import { getRemoteConfigurationId } from './remoteConfiguration'
+import type { RemoteConfigurationMetadata } from './remoteConfigurationCache'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_SETUP__: string
@@ -722,7 +723,11 @@ function getTrackResourceHeadersTelemetryValue(
   }
 }
 
-export function serializeRumConfiguration(configuration: RumInitConfiguration, sdkName?: SdkName) {
+export function serializeRumConfiguration(
+  configuration: RumInitConfiguration,
+  sdkName?: SdkName,
+  remoteConfigurationMetadata?: RemoteConfigurationMetadata
+) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
   // `use_` prefix is for telemetry options that track usage of a configuration option as a boolean to avoid capturing customer data
@@ -753,6 +758,12 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration, s
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     remote_configuration_id: getRemoteConfigurationId(configuration),
+    remote_configuration: remoteConfigurationMetadata && {
+      last_modified: remoteConfigurationMetadata.lastModified,
+      last_synced: remoteConfigurationMetadata.lastSynced,
+      first_applied: remoteConfigurationMetadata.firstApplied,
+      sync_id: remoteConfigurationMetadata.syncId,
+    },
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),

@@ -1,4 +1,5 @@
 import { ONE_MINUTE } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { DefaultPrivacyLevel, display, setCookie, deleteCookie, createContextManager } from '@datadog/browser-core'
 import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
@@ -898,7 +899,7 @@ describe('remoteConfiguration', () => {
 
       const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
-      expect(result).toBe(initConfiguration)
+      expect(result!.initConfiguration).toBe(initConfiguration)
       await flushBackgroundSync()
     })
 
@@ -909,8 +910,30 @@ describe('remoteConfiguration', () => {
       const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
       expect(result).toBeDefined()
-      expect(result!.applicationId).toBe('cached-app')
-      expect(result!.clientToken).toBe('xxx')
+      expect(result!.initConfiguration.applicationId).toBe('cached-app')
+      expect(result!.initConfiguration.clientToken).toBe('xxx')
+      await flushBackgroundSync()
+    })
+
+    it('should return the applied metadata on cache hit', async () => {
+      withCachedEntry(CACHED_RUM_CONFIG)
+      withFetchSuccess()
+
+      const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+      expect(result!.metadata!.lastSynced).toEqual(1000 as TimeStamp)
+      expect(result!.metadata!.syncId).toBe('sync-id')
+      // exact stamping behaviour is covered in remoteConfigurationCache.spec.ts
+      expect(result!.metadata!.firstApplied!).toBeGreaterThan(0)
+      await flushBackgroundSync()
+    })
+
+    it('should not return metadata on cache miss', async () => {
+      withFetchSuccess()
+
+      const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+      expect(result!.metadata).toBeUndefined()
       await flushBackgroundSync()
     })
 
@@ -920,7 +943,7 @@ describe('remoteConfiguration', () => {
 
       const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
-      expect(result).toBe(initConfiguration)
+      expect(result!.initConfiguration).toBe(initConfiguration)
       expect(localStorage.getItem(CACHE_KEY)).toBeNull()
       await flushBackgroundSync()
     })
@@ -993,7 +1016,7 @@ describe('remoteConfiguration', () => {
         const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
         expect(result).toBeDefined()
-        expect(result!.applicationId).toBe('cached-app')
+        expect(result!.initConfiguration.applicationId).toBe('cached-app')
         await flushBackgroundSync()
       })
 
