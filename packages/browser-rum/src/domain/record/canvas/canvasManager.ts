@@ -43,6 +43,7 @@ export function createCanvasManager(): CanvasManager {
       dirtyVersions.delete(canvas)
       previousHashes.delete(canvas)
       inFlightCaptures.delete(canvas)
+      taintedCanvases.delete(canvas)
     },
     getCapturableCanvases: () => {
       const capturableCanvases: HTMLCanvasElement[] = []

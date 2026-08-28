@@ -234,7 +234,7 @@ export interface RumInitConfiguration extends InitConfiguration {
         maxFramesPerSecond?: number | undefined
 
         /**
-         * The maximum width or height, in pixels, of the image used for canvas change detection.
+         * The maximum width or height, in pixels, of the image used for canvas change detection, between 1 and 100.
          * Images are downscaled proportionally to fit within this bound and smaller images are not upscaled.
          *
          * @defaultValue 100
@@ -242,7 +242,7 @@ export interface RumInitConfiguration extends InitConfiguration {
         hashingMaxDimension?: number | undefined
 
         /**
-         * The maximum width or height, in pixels, of recorded canvas images. Images are downscaled proportionally
+         * The maximum width or height, in pixels, of recorded canvas images, between 1 and 1000. Images are downscaled proportionally
          * to fit within this bound and smaller images are not upscaled.
          *
          * @defaultValue 1000

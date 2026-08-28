@@ -93,7 +93,7 @@ describe('CanvasManager', () => {
     expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
-  it('forgets capture state when a canvas node is removed without forgetting its taint state', () => {
+  it('forgets capture and taint state when a canvas node is removed', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
@@ -108,7 +108,7 @@ describe('CanvasManager', () => {
     expect(canvasManager.getPreviousHash(canvas)).toBeUndefined()
     expect(canvasManager.isCanvasCaptureInFlight(canvas, captureId)).toBeFalse()
     canvasManager.markCanvasDirty(canvas)
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
   it('resets capture hashes without forgetting tainted canvases', () => {
