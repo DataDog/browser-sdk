@@ -1,4 +1,4 @@
-import type { Context, ContextManager } from '@datadog/browser-core'
+import type { Context, ContextManager, DebugIdEntry } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { combine } from '@datadog/js-core/util'
 import {
@@ -21,6 +21,7 @@ export interface LogsMessage {
   message: string
   status: StatusType
   context?: Context
+  debugIds?: DebugIdEntry[]
 }
 
 export const HandlerType = {
@@ -65,6 +66,7 @@ export class Logger {
     callMonitored(() => {
       const sanitizedMessageContext = sanitize(messageContext) as Context
       let context: Context
+      let debugIds: DebugIdEntry[] | undefined
 
       if (error !== undefined && error !== null) {
         const rawError = computeRawError({
@@ -74,6 +76,8 @@ export class Logger {
           handling: ErrorHandling.HANDLED,
           startClocks: clocksNow(),
         })
+
+        debugIds = rawError.debugIds
 
         context = combine(
           {
@@ -91,6 +95,7 @@ export class Logger {
           message: sanitize(message)!,
           context,
           status,
+          ...(debugIds ? { debugIds } : {}),
         },
         this,
         handlingStack

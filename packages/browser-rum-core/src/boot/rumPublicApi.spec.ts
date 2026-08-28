@@ -673,7 +673,12 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView('foo')
       const calls = await collectAsyncCalls(startViewSpy, 1)
-      expect(calls.argsFor(0)[0]).toEqual({ name: 'foo', handlingStack: jasmine.any(String) })
+      expect(calls.argsFor(0)[0]).toEqual({
+        name: 'foo',
+        service: undefined,
+        version: undefined,
+        handlingStack: jasmine.any(String),
+      })
     })
 
     it('should call RUM results startView with the view options', async () => {
@@ -693,6 +698,51 @@ describe('rum public api', () => {
         context: { foo: 'bar' },
         handlingStack: jasmine.any(String),
       })
+    })
+
+    it('should ignore a non-string name and warn', async () => {
+      const displaySpy = spyOn(display, 'warn')
+      const startViewSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          startView: startViewSpy,
+        },
+      })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startView({ name: { name: 'test' } } as any)
+      const calls = await collectAsyncCalls(startViewSpy, 1)
+      expect(calls.argsFor(0)[0].name).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalled()
+    })
+
+    it('should ignore a numeric name and warn', async () => {
+      const displaySpy = spyOn(display, 'warn')
+      const startViewSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          startView: startViewSpy,
+        },
+      })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startView({ name: 123 } as any)
+      const calls = await collectAsyncCalls(startViewSpy, 1)
+      expect(calls.argsFor(0)[0].name).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalled()
+    })
+
+    it('should ignore a null name and warn', async () => {
+      const displaySpy = spyOn(display, 'warn')
+      const startViewSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          startView: startViewSpy,
+        },
+      })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startView({ name: null } as any)
+      const calls = await collectAsyncCalls(startViewSpy, 1)
+      expect(calls.argsFor(0)[0].name).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalled()
     })
   })
 
@@ -1148,6 +1198,16 @@ describe('rum public api', () => {
       await collectAsyncCalls(setViewNameSpy, 1)
 
       expect(setViewNameSpy).toHaveBeenCalledWith('foo')
+    })
+
+    it('should ignore a non-string name and warn', async () => {
+      const displaySpy = spyOn(display, 'warn')
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.setViewName({ foo: 'bar' } as any)
+      await collectAsyncCalls(setViewNameSpy, 1)
+
+      expect(setViewNameSpy).toHaveBeenCalledWith(undefined as any)
+      expect(displaySpy).toHaveBeenCalled()
     })
   })
 

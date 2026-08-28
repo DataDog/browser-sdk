@@ -1,7 +1,5 @@
 # RUM Browser Monitoring - Vue integration
 
-**Note**: This integration is in Preview. Features and configuration are subject to change.
-
 ## Overview
 
 The Datadog RUM Vue integration provides framework-specific instrumentation to help you monitor and debug Vue 3 applications. This integration adds:

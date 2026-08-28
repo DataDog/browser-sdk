@@ -116,6 +116,7 @@ export type Change =
   | [11, ...AddRoleAnnotatedStringsChange[]]
   | [12, ...InputValueChange[]]
   | [13, ...InputSelectionChange[]]
+  | [14]
 /**
  * Browser-specific. Schema representing the addition of a string to the string table, annotated as belonging to the default string role.
  */

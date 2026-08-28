@@ -1,8 +1,8 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 import type { ElementsScrollPositions } from './elementsScrollPositions'
-import { createEventIds, createNodeIds, createStringIds, createStyleSheetIds } from './itemIds'
-import type { EventIds, NodeIds, StringIds, StyleSheetIds } from './itemIds'
+import { createEventIds, createNodeIds, createStringIds, createStyleSheetIds } from './encoding'
+import type { EventIds, NodeIds, StringIds, StyleSheetIds } from './encoding'
 import type { ShadowRootsController } from './shadowRootsController'
 import type { CanvasManager } from './canvas/canvasManager'
 

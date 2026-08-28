@@ -11,6 +11,7 @@ import {
 import { appendElement } from '@datadog/browser-rum-core/test'
 import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
 import type { ScrollPositions } from '../elementsScrollPositions'
+import type { RoleAnnotatedAttributeAssignment } from '../encoding'
 import { getCssRulesString, serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind } from './serializationTransaction'
@@ -239,7 +240,7 @@ describe('serializeDOMAttributes', () => {
 
       for (const privacyLevel of PRIVACY_LEVELS) {
         const attributes = serializeDOMAttributes(element, privacyLevel, transaction)
-        const actual = attributes[attribute.name] as boolean | string | undefined
+        const actual = valueOfAttribute(attributes, attribute.name) as boolean | string | undefined
         const expected = expectedValueForPrivacyLevel(testCase, element, attribute, privacyLevel)
         expect(actual).withContext(`${testCase.html} for ${privacyLevel}`).toEqual(expected)
       }
@@ -324,9 +325,15 @@ describe('serializeDOMAttributes', () => {
     // behavior; it shouldn't behave differently because Element#tagName is lowercase.
     ;(element as any).selected = true
     const attributes = serializeDOMAttributes(element, NodePrivacyLevel.ALLOW, transaction)
-    expect(attributes['selected']).toBe('')
+    expect(valueOfAttribute(attributes, 'selected')).toBe('')
   })
 })
+
+/** The value that was assigned to the named attribute, or undefined if it wasn't serialized. */
+function valueOfAttribute(attributes: RoleAnnotatedAttributeAssignment[], name: string): string | undefined {
+  const assignment = attributes.find(([attributeName]) => attributeName.string === name)
+  return assignment?.[1].string
+}
 
 describe('serializeVirtualAttributes', () => {
   let stats: SerializationStats

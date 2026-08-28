@@ -1,6 +1,7 @@
+import { globalObject } from '@datadog/js-core/util'
 import type { Subscription } from '@datadog/browser-core'
 import { ONE_MINUTE } from '@datadog/js-core/time'
-import { deleteCookie, globalObject, setCookie } from '@datadog/browser-core'
+import { deleteCookie, setCookie } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
