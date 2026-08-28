@@ -1,5 +1,5 @@
-import type { TimeoutId } from '../timer'
-import { setTimeout, clearTimeout } from '../timer'
+import { setTimeout, clearTimeout } from '@datadog/js-core/util'
+import type { TimeoutId } from '@datadog/js-core/util'
 
 // use lodash API
 export function throttle<T extends (...args: any[]) => void>(

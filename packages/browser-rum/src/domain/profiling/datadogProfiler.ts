@@ -1,12 +1,10 @@
-import { globalObject, mockable } from '@datadog/js-core/util'
+import { globalObject, mockable, clearTimeout, setTimeout } from '@datadog/js-core/util'
 import type { Profiler } from '@datadog/js-core/util'
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
   canUseEventBridge,
-  clearTimeout,
-  setTimeout,
   DOM_EVENT,
   display,
   isSampled,

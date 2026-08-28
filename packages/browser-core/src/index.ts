@@ -119,7 +119,6 @@ export { createPageMayExitObservable, PageExitReason, isPageExitReason } from '.
 export * from './browser/addEventListener'
 export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
-export * from './tools/timer'
 export * from './tools/thenable'
 export type { ConsoleLog } from './domain/console/consoleObservable'
 export { initConsoleObservable } from './domain/console/consoleObservable'

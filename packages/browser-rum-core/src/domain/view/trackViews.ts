@@ -17,13 +17,10 @@ import {
   generateUUID,
   throttle,
   display,
-  setInterval,
-  clearInterval,
-  setTimeout,
   Observable,
   createContextManager,
 } from '@datadog/browser-core'
-import { mockable } from '@datadog/js-core/util'
+import { mockable, setInterval, clearInterval, setTimeout } from '@datadog/js-core/util'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

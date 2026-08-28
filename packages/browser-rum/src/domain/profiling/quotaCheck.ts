@@ -1,4 +1,5 @@
-import { fetch, setTimeout, clearTimeout } from '@datadog/browser-core'
+import { fetch } from '@datadog/browser-core'
+import { setTimeout, clearTimeout } from '@datadog/js-core/util'
 import { buildEndpointUrl } from '@datadog/js-core/transport'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 

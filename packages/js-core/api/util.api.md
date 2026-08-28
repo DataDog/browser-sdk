@@ -16,6 +16,14 @@ export interface BrowserWindowWithZoneJs {
 export function buildUrl(url: string, base?: string): URL;
 
 // @public
+function clearInterval_2(timeoutId: TimeoutId | undefined): void;
+export { clearInterval_2 as clearInterval }
+
+// @public
+function clearTimeout_2(timeoutId: TimeoutId | undefined): void;
+export { clearTimeout_2 as clearTimeout }
+
+// @public
 export function combine<A, B>(a: A, b: B): Combined<A, B>;
 
 // @public (undocumented)
@@ -315,6 +323,17 @@ export interface SampleBufferFullEvent extends Event {
 
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
+
+// @public
+function setInterval_2(callback: () => void, delay?: number): TimeoutId;
+export { setInterval_2 as setInterval }
+
+// @public
+function setTimeout_2(callback: () => void, delay?: number): TimeoutId;
+export { setTimeout_2 as setTimeout }
+
+// @public
+export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
 
 // @public
 export interface Uint8ArrayBuffer extends Uint8Array {
