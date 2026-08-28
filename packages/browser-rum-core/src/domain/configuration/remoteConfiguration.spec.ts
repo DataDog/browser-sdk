@@ -818,7 +818,10 @@ describe('remoteConfiguration', () => {
     let displaySpy: jasmine.Spy
 
     function withCachedEntry(config: RemoteConfiguration) {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ version: CACHE_VERSION, config, fetchedAt: 1000 }))
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({ version: CACHE_VERSION, config, metadata: { lastSynced: 1000, syncId: 'sync-id' } })
+      )
     }
 
     function withFetchSuccess(config: RemoteConfiguration = FRESH_RUM_CONFIG) {
