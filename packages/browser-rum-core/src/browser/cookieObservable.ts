@@ -1,13 +1,6 @@
-import { globalObject, Observable } from '@datadog/js-core/util'
+import { globalObject, Observable, addEventListener, DOM_EVENT } from '@datadog/js-core/util'
 import { ONE_SECOND } from '@datadog/js-core/time'
-import {
-  setInterval,
-  clearInterval,
-  addEventListener,
-  DOM_EVENT,
-  getCookie,
-  isCookieStoreSupported,
-} from '@datadog/browser-core'
+import { setInterval, clearInterval, getCookie, isCookieStoreSupported } from '@datadog/browser-core'
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 

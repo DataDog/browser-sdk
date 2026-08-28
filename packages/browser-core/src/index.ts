@@ -113,7 +113,6 @@ export type {
 export { initWebSocketObservable } from './browser/webSocketObservable'
 export type { PageMayExitEvent } from './browser/pageMayExitObservable'
 export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
-export * from './browser/addEventListener'
 export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
 export * from './tools/timer'

@@ -1,7 +1,7 @@
+import { addEventListener, DOM_EVENT, isEventSupported, setAllowUntrustedEvents } from '@datadog/js-core/util'
 import { createNewEvent, mockZoneJs, registerCleanupTask } from '../../test'
 import type { MockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
-import { addEventListener, DOM_EVENT, isEventSupported, setAllowUntrustedEvents } from './addEventListener'
 
 describe('addEventListener', () => {
   describe('Zone.js support', () => {

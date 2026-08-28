@@ -1,5 +1,5 @@
 import { stopMonitorErrorCollection } from '@datadog/js-core/monitor'
-import { setDebugMode } from '@datadog/js-core/util'
+import { setDebugMode, resetAllowUntrustedEvents } from '@datadog/js-core/util'
 import { resetManageResourceTimingBufferFull } from '../../browser-rum-core/src/browser/performanceObservable'
 import { resetExperimentalFeatures } from '../src/tools/experimentalFeatures'
 import { resetValueHistoryGlobals } from '../src/tools/valueHistory'
@@ -12,7 +12,6 @@ import { resetReplayStats } from '../../browser-rum/src/domain/replayStats'
 import { resetInteractionCountPolyfill } from '../../browser-rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
 import { resetTelemetry } from '../src/domain/telemetry'
 import { resetSampleDecisionCache } from '../src/domain/sampler'
-import { resetAllowUntrustedEvents } from '../src/browser/addEventListener'
 import { startLeakDetection } from './leakDetection'
 ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
 

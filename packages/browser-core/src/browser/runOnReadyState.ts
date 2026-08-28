@@ -1,5 +1,5 @@
+import { DOM_EVENT, addEventListener } from '@datadog/js-core/util'
 import { noop } from '../tools/utils/functionUtils'
-import { DOM_EVENT, addEventListener } from './addEventListener'
 
 export function runOnReadyState(
   expectedReadyState: 'complete' | 'interactive',

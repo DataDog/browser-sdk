@@ -1,6 +1,5 @@
-import { Observable } from '@datadog/js-core/util'
+import { Observable, addEventListener } from '@datadog/js-core/util'
 import { generateUUID } from '../../../tools/utils/stringUtils'
-import { addEventListener } from '../../../browser/addEventListener'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { isSessionInNotStartedState, toSessionString, toSessionState } from '../sessionState'

@@ -1,4 +1,5 @@
-import { DOM_EVENT, throttle, addEventListener } from '@datadog/browser-core'
+import { throttle } from '@datadog/browser-core'
+import { DOM_EVENT, addEventListener } from '@datadog/js-core/util'
 import { getScrollX, getScrollY, getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import { getEventTarget } from '../eventsUtils'
 import { IncrementalSource } from '../../../types'

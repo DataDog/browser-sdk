@@ -1,8 +1,52 @@
-import type { CookieStore, CookieStoreEventMap } from '@datadog/js-core/util'
-import { monitor } from '@datadog/js-core/monitor'
-import { getZoneJsOriginalValue } from '@datadog/js-core/util'
-import { noop } from '../tools/utils/functionUtils'
-import type { VisualViewport, VisualViewportEventMap } from './browser.types'
+import { monitor } from '../entries/monitor'
+import type { CookieStore, CookieStoreEventMap } from './globalObject'
+import { globalObject } from './globalObject'
+import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+function noop() {}
+
+/**
+ * Those types come from the official TypeScript DOM library, but are not included in our minimal
+ * supported TS version.
+ * https://github.com/microsoft/TypeScript/blob/13c374a868c926f6a907666a5599992c1351b777/src/lib/dom.generated.d.ts#L15399-L15418
+ */
+export interface VisualViewportEventMap {
+  resize: Event
+  scroll: Event
+}
+
+export interface VisualViewport extends EventTarget {
+  readonly height: number
+  readonly offsetLeft: number
+  readonly offsetTop: number
+  onresize: ((this: VisualViewport, ev: Event) => any) | null
+  onscroll: ((this: VisualViewport, ev: Event) => any) | null
+  readonly pageLeft: number
+  readonly pageTop: number
+  readonly scale: number
+  readonly width: number
+  addEventListener<K extends keyof VisualViewportEventMap>(
+    type: K,
+    listener: (this: VisualViewport, ev: VisualViewportEventMap[K]) => any,
+    options?: boolean | AddEventListenerOptions
+  ): void
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ): void
+  removeEventListener<K extends keyof VisualViewportEventMap>(
+    type: K,
+    listener: (this: VisualViewport, ev: VisualViewportEventMap[K]) => any,
+    options?: boolean | EventListenerOptions
+  ): void
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions
+  ): void
+}
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
 
@@ -134,8 +178,9 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   const options = passive ? { capture, passive } : capture
 
   // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
+  const window = globalObject.window as { EventTarget: typeof EventTarget } | undefined
   const listenerTarget =
-    window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
+    window?.EventTarget && eventTarget instanceof window.EventTarget ? window.EventTarget.prototype : eventTarget
 
   const add = getZoneJsOriginalValue(listenerTarget, 'addEventListener')
   eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))

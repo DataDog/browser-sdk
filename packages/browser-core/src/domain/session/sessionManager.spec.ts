@@ -1,4 +1,5 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
+import { DOM_EVENT } from '@datadog/js-core/util'
 import {
   collectAsyncCalls,
   createFakeSessionStoreStrategy,
@@ -13,7 +14,6 @@ import {
   waitNextMicrotask,
 } from '../../../test'
 import type { Clock } from '../../../test'
-import { DOM_EVENT } from '../../browser/addEventListener'
 import { display } from '../../tools/display'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'

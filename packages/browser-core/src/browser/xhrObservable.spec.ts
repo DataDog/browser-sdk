@@ -1,9 +1,9 @@
 import type { Subscription } from '@datadog/js-core/util'
+import { setAllowUntrustedEvents } from '@datadog/js-core/util'
 import { withXhr, mockXhr } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
 import { initXhrObservable, resetXhrObservable } from './xhrObservable'
-import { setAllowUntrustedEvents } from './addEventListener'
 
 describe('xhr observable', () => {
   let requestsTrackingSubscription: Subscription

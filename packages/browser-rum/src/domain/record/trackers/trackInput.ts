@@ -1,4 +1,5 @@
-import { instrumentSetter, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
+import { instrumentSetter, noop } from '@datadog/browser-core'
+import { DOM_EVENT, addEventListeners } from '@datadog/js-core/util'
 import { timeStampNow } from '@datadog/js-core/time'
 import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { InputSelectionState, StringRole } from '../../../types'

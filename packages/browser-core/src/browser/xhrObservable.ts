@@ -1,9 +1,8 @@
 import { elapsed, timeStampNow, clocksNow } from '@datadog/js-core/time'
 import type { Duration, ClocksState } from '@datadog/js-core/time'
-import { normalizeUrl, globalObject, Observable } from '@datadog/js-core/util'
+import { normalizeUrl, globalObject, Observable, addEventListener } from '@datadog/js-core/util'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
   state: 'open'

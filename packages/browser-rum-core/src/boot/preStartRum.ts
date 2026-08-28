@@ -1,4 +1,4 @@
-import { isWorkerEnvironment, mockable, BufferedObservable } from '@datadog/js-core/util'
+import { isWorkerEnvironment, mockable, BufferedObservable, setAllowUntrustedEvents } from '@datadog/js-core/util'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
@@ -25,7 +25,6 @@ import {
   TelemetryService,
   startTelemetrySessionContext,
   addTelemetryDebug,
-  setAllowUntrustedEvents,
   isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'

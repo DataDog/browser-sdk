@@ -1,4 +1,4 @@
-import { DOM_EVENT } from '@datadog/browser-core'
+import { DOM_EVENT } from '@datadog/js-core/util'
 import { createNewEvent } from '../../../browser-core/test'
 
 export function mockDocumentReadyState() {
