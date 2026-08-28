@@ -1,6 +1,7 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
 import { clocksNow, clocksOrigin } from '@datadog/js-core/time'
-import { noop, Observable } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'

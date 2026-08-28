@@ -1,12 +1,5 @@
-import type {
-  Observable,
-  DeflateEncoderStreamId,
-  Encoder,
-  BufferedData,
-  BufferedObservable,
-  Telemetry,
-  SessionManager,
-} from '@datadog/browser-core'
+import type { DeflateEncoderStreamId, Encoder, BufferedData, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { Observable, BufferedObservable } from '@datadog/js-core/util'
 import {
   sendToExtension,
   createPageMayExitObservable,

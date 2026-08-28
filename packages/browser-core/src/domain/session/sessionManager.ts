@@ -16,9 +16,9 @@ import {
   clearTimeout,
   setInterval,
   setTimeout,
+  Observable,
 } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
-import { Observable } from '../../tools/observable'
 import { createValueHistory } from '../../tools/valueHistory'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { noop, throttle } from '../../tools/utils/functionUtils'

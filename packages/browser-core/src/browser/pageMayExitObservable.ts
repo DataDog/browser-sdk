@@ -1,5 +1,4 @@
-import { globalObject } from '@datadog/js-core/util'
-import { Observable } from '../tools/observable'
+import { globalObject, Observable } from '@datadog/js-core/util'
 import { objectValues } from '../tools/utils/polyfills'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 

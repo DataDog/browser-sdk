@@ -1,5 +1,6 @@
 import type { BufferedData } from '@datadog/browser-core'
-import { ErrorSource, display, BufferedObservable, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
+import { ErrorSource, display, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
+import { BufferedObservable } from '@datadog/js-core/util'
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,

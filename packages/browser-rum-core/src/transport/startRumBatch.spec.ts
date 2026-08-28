@@ -1,4 +1,4 @@
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { FlushEvent } from '@datadog/browser-core/src/transport/flushController'
 
 import type { AssembledRumEvent } from '../rawRumEvent.types'

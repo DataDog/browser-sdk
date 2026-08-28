@@ -1,4 +1,4 @@
-import type { Observable } from '@datadog/browser-core'
+import type { Observable } from '@datadog/js-core/util'
 import { toServerDuration } from '@datadog/js-core/time'
 import type { Duration, ServerDuration } from '@datadog/js-core/time'
 import { getTimeZone, isEmptyObject, mapValues } from '@datadog/browser-core'

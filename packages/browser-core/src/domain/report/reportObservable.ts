@@ -1,7 +1,7 @@
 import { clocksNow } from '@datadog/js-core/time'
 import { monitor } from '@datadog/js-core/monitor'
+import { mergeObservables, Observable } from '@datadog/js-core/util'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
-import { mergeObservables, Observable } from '../../tools/observable'
 import { addEventListener, DOM_EVENT, isEventSupported } from '../../browser/addEventListener'
 import { safeTruncate } from '../../tools/utils/stringUtils'
 import type { RawError } from '../error/error.types'

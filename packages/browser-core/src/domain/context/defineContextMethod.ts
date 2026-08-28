@@ -1,7 +1,7 @@
 import { monitor } from '@datadog/js-core/monitor'
+import type { BufferedObservable } from '@datadog/js-core/util'
 import type { RawTelemetryUsage, RawTelemetryUsageFeature } from '../telemetry'
 import { addTelemetryUsage } from '../telemetry'
-import type { BufferedObservable } from '../../tools/observable'
 import type { ContextManager } from './contextManager'
 import type { ContextManagerMethod, CustomerContextKey } from './contextConstants'
 

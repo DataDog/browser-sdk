@@ -1,5 +1,5 @@
 import { globalObject } from '@datadog/js-core/util'
-import type { Subscription } from '@datadog/browser-core'
+import type { Subscription } from '@datadog/js-core/util'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import { deleteCookie, setCookie } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'

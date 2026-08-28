@@ -1,4 +1,5 @@
-import type { Observable, WebSocketContext } from '@datadog/browser-core'
+import type { WebSocketContext } from '@datadog/browser-core'
+import type { Observable } from '@datadog/js-core/util'
 import { generateUUID, initWebSocketObservable, sanitize } from '@datadog/browser-core'
 import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { clocksNow, elapsed } from '@datadog/js-core/time'

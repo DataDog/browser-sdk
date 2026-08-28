@@ -1,7 +1,8 @@
 import { ONE_SECOND, elapsed, relativeNow } from '@datadog/js-core/time'
 import type { Duration, ClocksState } from '@datadog/js-core/time'
 import { monitor } from '@datadog/js-core/monitor'
-import { Observable, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
 

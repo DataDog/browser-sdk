@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import type { Observable } from '@datadog/browser-core'
+import type { Observable } from '@datadog/js-core/util'
 import { toServerDuration, addDuration } from '@datadog/js-core/time'
 import { noop } from '@datadog/browser-core'
 import { SKIPPED } from '@datadog/js-core/assembly'

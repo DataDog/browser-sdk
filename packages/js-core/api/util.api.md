@@ -12,6 +12,16 @@ export interface BrowserWindowWithZoneJs {
     };
 }
 
+// @public (undocumented)
+export class BufferedObservable<T> extends Observable<T> {
+    constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
+    // (undocumented)
+    notify(data: T): void;
+    // (undocumented)
+    subscribe(observer: Observer<T>): Subscription;
+    unbuffer(): void;
+}
+
 // @public
 export function buildUrl(url: string, base?: string): URL;
 
@@ -211,6 +221,9 @@ export function jsonStringify(value: unknown, replacer?: Array<string | number>,
 // @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
+// @public (undocumented)
+export function mergeObservables<T>(...observables: Array<Observable<T>>): Observable<T>;
+
 // @public
 export function mockable<T>(value: T): T;
 
@@ -247,6 +260,21 @@ export function normalizeUrl(url: string): string;
 export interface ObjectWithToJsonMethod {
     // (undocumented)
     toJSON?: () => unknown;
+}
+
+// @public (undocumented)
+export class Observable<T> {
+    constructor(onFirstSubscribe?: ((observable: Observable<T>) => (() => void) | void) | undefined);
+    // (undocumented)
+    protected addObserver(observer: Observer<T>): void;
+    // (undocumented)
+    notify(data: T): void;
+    // (undocumented)
+    protected observers: Array<Observer<T>>;
+    // (undocumented)
+    protected removeObserver(observer: Observer<T>): void;
+    // (undocumented)
+    subscribe(observer: Observer<T>): Subscription;
 }
 
 // @public
@@ -312,6 +340,10 @@ export interface ProfilerTrace {
 }
 
 // @public
+function queueMicrotask_2(callback: () => void): void;
+export { queueMicrotask_2 as queueMicrotask }
+
+// @public
 export type RecursivePartial<T> = {
     [P in keyof T]?: T[P] extends Array<infer U> ? Array<RecursivePartial<U>> : T[P] extends object | undefined ? RecursivePartial<T[P]> : T[P];
 };
@@ -331,6 +363,12 @@ export { setInterval_2 as setInterval }
 // @public
 function setTimeout_2(callback: () => void, delay?: number): TimeoutId;
 export { setTimeout_2 as setTimeout }
+
+// @public (undocumented)
+export interface Subscription {
+    // (undocumented)
+    unsubscribe: () => void;
+}
 
 // @public
 export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;

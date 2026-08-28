@@ -1,5 +1,5 @@
-import type { BandwidthStats, HttpRequestEvent, Observable, Telemetry } from '@datadog/browser-core'
-import type { Context } from '@datadog/js-core/util'
+import type { BandwidthStats, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import type { Observable, Context } from '@datadog/js-core/util'
 import { TelemetryMetrics, addTelemetryMetrics, noop } from '@datadog/browser-core'
 import type { ReplayPayload } from './buildReplayPayload'
 

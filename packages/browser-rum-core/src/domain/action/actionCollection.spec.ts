@@ -1,6 +1,6 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import { addDuration } from '@datadog/js-core/time'
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'

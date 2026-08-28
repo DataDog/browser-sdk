@@ -1,6 +1,5 @@
 import { ONE_MINUTE, ONE_SECOND, dateNow } from '@datadog/js-core/time'
-import { globalObject, mockable, setInterval, clearInterval } from '@datadog/js-core/util'
-import { Observable } from '../tools/observable'
+import { globalObject, mockable, setInterval, clearInterval, Observable } from '@datadog/js-core/util'
 import { display } from '../tools/display'
 import { generateUUID } from '../tools/utils/stringUtils'
 import { addTelemetryDebug } from '../domain/telemetry'

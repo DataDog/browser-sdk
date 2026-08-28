@@ -1,9 +1,8 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
-import { isWorkerEnvironment, clearTimeout, setTimeout } from '@datadog/js-core/util'
+import { isWorkerEnvironment, clearTimeout, setTimeout, Observable } from '@datadog/js-core/util'
 import type { TimeoutId } from '@datadog/js-core/util'
 import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObservable'
-import { Observable } from '../tools/observable'
 import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 export type UrgentFlushReason = PageExitReason

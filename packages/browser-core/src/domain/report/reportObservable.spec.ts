@@ -1,3 +1,4 @@
+import type { Subscription } from '@datadog/js-core/util'
 import type { MockCspEventListener, MockReportingObserver } from '../../../test'
 import {
   mockReportingObserver,
@@ -5,7 +6,6 @@ import {
   mockSourceCodeContext,
   FAKE_CSP_VIOLATION_EVENT,
 } from '../../../test'
-import type { Subscription } from '../../tools/observable'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import type { RawReportError } from './reportObservable'
 import { initReportObservable, RawReportType } from './reportObservable'

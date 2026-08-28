@@ -7,10 +7,9 @@ import type {
   FetchResolveContext,
   ContextManager,
   SessionManager,
-  Observable,
   BufferedData,
-  Subscription,
 } from '@datadog/browser-core'
+import type { Observable, Subscription } from '@datadog/js-core/util'
 import {
   RequestType,
   ResponseBodyAction,
