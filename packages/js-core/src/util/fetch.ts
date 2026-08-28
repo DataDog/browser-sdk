@@ -1,4 +1,5 @@
-import { globalObject, getZoneJsOriginalValue } from '@datadog/js-core/util'
+import { globalObject } from './globalObject'
+import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
 
 /**
  * Make a fetch request using the native implementation, bypassing Zone.js patching.

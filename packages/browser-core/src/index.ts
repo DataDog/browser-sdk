@@ -113,7 +113,6 @@ export type {
   WebSocketClosedContext,
 } from './browser/webSocketObservable'
 export { initWebSocketObservable } from './browser/webSocketObservable'
-export { fetch } from './browser/fetch'
 export type { PageMayExitEvent } from './browser/pageMayExitObservable'
 export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
 export * from './browser/addEventListener'

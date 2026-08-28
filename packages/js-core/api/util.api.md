@@ -161,6 +161,10 @@ export interface Display {
 export const DOCS_ORIGIN = "https://docs.datadoghq.com";
 
 // @public
+function fetch_2(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+export { fetch_2 as fetch }
+
+// @public
 export function getDebugMode(): boolean;
 
 // @public

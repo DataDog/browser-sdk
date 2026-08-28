@@ -1,5 +1,5 @@
+import { fetch } from '@datadog/js-core/util'
 import { type MockZoneJs, mockZoneJs } from '../../test'
-import { fetch } from './fetch'
 
 describe('fetch', () => {
   let zoneJs: MockZoneJs
