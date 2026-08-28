@@ -30,7 +30,7 @@ export const initShadowRootsController = (
       }
       const mutationTracker = trackMutation(shadowRoot, emitRecord, emitStats, scope)
       // The change event does not bubble up across the shadow root, we have to listen on the shadow root
-      const inputTracker = trackInput(shadowRoot, emitRecord, scope)
+      const inputTracker = trackInput(shadowRoot, emitRecord, emitStats, scope)
       // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root
       const scrollTracker = trackScroll(shadowRoot, emitRecord, scope)
       controllerByShadowRoot.set(shadowRoot, {

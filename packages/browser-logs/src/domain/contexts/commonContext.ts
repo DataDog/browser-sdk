@@ -1,4 +1,4 @@
-import { isWorkerEnvironment } from '@datadog/browser-core'
+import { isWorkerEnvironment } from '@datadog/js-core/util'
 import type { CommonContext } from '../../rawLogsEvent.types'
 
 export function buildCommonContext(): CommonContext {

@@ -20,6 +20,56 @@
 
 ---
 
+## v7.10.0
+
+**Public Changes:**
+
+- ✨ [PANA-8797] Allow session replay to clear its string table ([#4988](https://github.com/DataDog/browser-sdk/pull/4988))
+- ✨ [PANA-8578] Assign roles to strings in session replay recordings ([#4983](https://github.com/DataDog/browser-sdk/pull/4983))
+- ✨ [RUM-18253] attach debug_ids to logs events ([#4982](https://github.com/DataDog/browser-sdk/pull/4982))
+- ✨ Feature Flags tab — all Datadog sites, with overrides scoped per site ([#4965](https://github.com/DataDog/browser-sdk/pull/4965))
+- 🐛 Sanitize and validate name in startView/setViewName ([#4969](https://github.com/DataDog/browser-sdk/pull/4969))
+- 🐛 Resolve document-relative URLs against document.baseURI in normalizeUrl ([#4943](https://github.com/DataDog/browser-sdk/pull/4943))
+- 🐛 use global URL constructor and fall back to pristine iframe only when needed ([#4967](https://github.com/DataDog/browser-sdk/pull/4967))
+- ⚗️ Add canvas change detection for Session Replay ([#4949](https://github.com/DataDog/browser-sdk/pull/4949))
+
+**Internal Changes:**
+
+- 👷 [PANA-8797] Bump rum-events-format and regenerate schema types ([#4987](https://github.com/DataDog/browser-sdk/pull/4987))
+- 👷 Bump chrome to 152.0.7977.64-1 ([#4985](https://github.com/DataDog/browser-sdk/pull/4985))
+- 👷 Update all non-major dependencies ([#4971](https://github.com/DataDog/browser-sdk/pull/4971))
+- 👷 [PANA-8578] Update schema to support session replay string roles ([#4968](https://github.com/DataDog/browser-sdk/pull/4968))
+- 👷 Update dependency eslint-plugin-unicorn to v73 ([#4954](https://github.com/DataDog/browser-sdk/pull/4954))
+- 👷 Build test apps outside Git repositories ([#4962](https://github.com/DataDog/browser-sdk/pull/4962))
+- 👷 fix staging CI scripts git pull failing with no tracking info ([#4975](https://github.com/DataDog/browser-sdk/pull/4975))
+- 👷 fix staging-reset git pull failing with no tracking info ([#4973](https://github.com/DataDog/browser-sdk/pull/4973))
+- ♻️ [PANA-8578] Record form input using change operations ([#4977](https://github.com/DataDog/browser-sdk/pull/4977))
+- ✅ Add Salesforce Experience Cloud Head Markup E2E ([#4945](https://github.com/DataDog/browser-sdk/pull/4945))
+- ✅ [RUM-17233] Add Shopify checkout views and actions e2e test ([#4941](https://github.com/DataDog/browser-sdk/pull/4941))
+- 🚨 Prevent re-exporting values from @datadog/js-core ([#4970](https://github.com/DataDog/browser-sdk/pull/4970))
+
+## v7.9.0
+
+**Public Changes:**
+
+- ✨ [FFL-2857] Feature Flags tab — team filtering + token revocation (stacked PR 4 of 4) ([#4932](https://github.com/DataDog/browser-sdk/pull/4932))
+- ✨ add @datadog/js-core/sample sub-path with performDraw ([#4844](https://github.com/DataDog/browser-sdk/pull/4844))
+- ✨ Add plugin router version telemetry ([#4928](https://github.com/DataDog/browser-sdk/pull/4928))
+- ✨ [FFL-2596] Feature Flags tab — overrides (stacked PR 3 of 4) ([#4912](https://github.com/DataDog/browser-sdk/pull/4912))
+- ✨ [RUM-17934] support arbitrary custom url protocols in stack trace parsing ([#4930](https://github.com/DataDog/browser-sdk/pull/4930))
+- 🐛 Fix Shopify Custom Pixel actions being marked as background events, flatten ui_extension_errored context ([#4946](https://github.com/DataDog/browser-sdk/pull/4946))
+- 🐛 Report CDN bundles as CDN SDK setup ([#4934](https://github.com/DataDog/browser-sdk/pull/4934))
+- 📝 Fix propagateTraceBaggage TSDoc @defaultValue (false → true) ([#4933](https://github.com/DataDog/browser-sdk/pull/4933))
+- ⚗️ Add canvas recording init configuration ([#4947](https://github.com/DataDog/browser-sdk/pull/4947))
+
+**Internal Changes:**
+
+- 👷 Update dependency eslint-plugin-jsdoc to v64 ([#4953](https://github.com/DataDog/browser-sdk/pull/4953))
+- 👷 Update all non-major dependencies ([#4952](https://github.com/DataDog/browser-sdk/pull/4952))
+- 👷 Update all non-major dependencies ([#4935](https://github.com/DataDog/browser-sdk/pull/4935))
+- 👷 Update actions/stale action to v11 ([#4937](https://github.com/DataDog/browser-sdk/pull/4937))
+- 👷 Update dependency @playwright/test to v1.62.1 ([#4936](https://github.com/DataDog/browser-sdk/pull/4936))
+
 ## v7.8.0
 
 **Public Changes:**

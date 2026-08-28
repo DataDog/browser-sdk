@@ -6,7 +6,8 @@
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/tracing/live_debugger/)
  */
 
-import { defineGlobal, globalObject, makePublicApi, mockable } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
+import { defineGlobal, makePublicApi, mockable } from '@datadog/browser-core'
 import type { PublicApi } from '@datadog/browser-core'
 import type { Site } from '@datadog/js-core/transport'
 import { initDebuggerTransport, onEntry, onReturn, onThrow } from '../domain/api'

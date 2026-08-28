@@ -26,7 +26,7 @@ runMain(async () => {
   initGitConfig(REPOSITORY)
   command`git fetch --no-tags origin ${MAIN_BRANCH} ${CURRENT_STAGING_BRANCH}`.run()
   command`git checkout ${MAIN_BRANCH} -f`.run()
-  command`git pull`.run()
+  command`git pull origin ${MAIN_BRANCH}`.run()
 
   const isNewBranch = CURRENT_STAGING_BRANCH !== NEW_STAGING_BRANCH
   if (isNewBranch) {

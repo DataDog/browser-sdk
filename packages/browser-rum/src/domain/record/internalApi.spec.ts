@@ -2,7 +2,7 @@ import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecor
 import { ChangeType, RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../browser-rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
-import { createChangeDecoder } from './serialization'
+import { createChangeDecoder } from './encoding'
 
 describe('takeFullSnapshot', () => {
   it('should produce Meta, Focus, and FullSnapshot records', () => {

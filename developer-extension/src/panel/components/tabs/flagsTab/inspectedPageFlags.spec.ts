@@ -5,8 +5,26 @@ import {
   clearAllOverrides,
   deleteOverride,
   readFlagState,
+  siteOverridesKey,
+  syncSiteOverrides,
   writeOverride,
 } from './inspectedPageFlags'
+
+const STAGING = 'datad0g.com'
+const US1 = 'datadoghq.com'
+
+function clearSiteStores() {
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i)
+    if (key?.startsWith(`${OVERRIDES_KEY}.`)) {
+      localStorage.removeItem(key)
+    }
+  }
+}
+
+function stored(key: string): unknown {
+  return JSON.parse(localStorage.getItem(key) || 'null')
+}
 
 describe('inspectedPageFlags read/write against page localStorage', () => {
   beforeEach(() => {
@@ -29,10 +47,12 @@ describe('inspectedPageFlags read/write against page localStorage', () => {
     }
     localStorage.removeItem(OVERRIDES_KEY)
     localStorage.removeItem(DEVTOOLS_MARKER_KEY)
+    clearSiteStores()
     registerCleanupTask(() => {
       ;(globalThis as any).chrome = previousChrome
       localStorage.removeItem(OVERRIDES_KEY)
       localStorage.removeItem(DEVTOOLS_MARKER_KEY)
+      clearSiteStores()
     })
   })
 
@@ -108,5 +128,80 @@ describe('inspectedPageFlags read/write against page localStorage', () => {
     const storedValue = (await readFlagState())?.overrides['json-flag'].value as Record<string, unknown>
     expect(Object.prototype.hasOwnProperty.call(storedValue, '__proto__')).toBe(true)
     expect(storedValue['__proto__']).toEqual({ enabled: true })
+  })
+
+  describe('site scoping', () => {
+    const override = { type: 'BOOLEAN', value: true } as const
+
+    it("keeps a site's overrides in its own store and mirrors them into the key the wrapper reads", async () => {
+      await writeOverride('dark-mode', override, STAGING)
+
+      expect(stored(siteOverridesKey(STAGING))).toEqual({ 'dark-mode': override })
+      expect(stored(OVERRIDES_KEY)).toEqual({ 'dark-mode': override })
+    })
+
+    it('reads only the connected site when given one', async () => {
+      await writeOverride('dark-mode', override, STAGING)
+      await syncSiteOverrides(US1)
+
+      expect((await readFlagState(STAGING))?.overrides).toEqual({ 'dark-mode': override })
+      expect((await readFlagState(US1))?.overrides).toEqual({})
+    })
+
+    it('reports every stored override when signed out, even one the page has not reloaded away from', async () => {
+      await writeOverride('dark-mode', override, STAGING)
+      // Switching empties the projection, but the page keeps applying staging's until it reloads —
+      // so the signed-out notice must still offer to clear it.
+      await syncSiteOverrides(US1)
+
+      expect((await readFlagState())?.overrides).toEqual({ 'dark-mode': override })
+    })
+
+    it("stops one site's override from applying on another", async () => {
+      await writeOverride('dark-mode', override, STAGING)
+
+      const result = await syncSiteOverrides(US1)
+
+      // The page would otherwise still be running staging's value under US1.
+      expect(stored(OVERRIDES_KEY)).toEqual({})
+      expect(result?.changed).toBe(true)
+      // Staging keeps its own copy, so switching back restores it.
+      expect(stored(siteOverridesKey(STAGING))).toEqual({ 'dark-mode': override })
+    })
+
+    it('reports no change when the page is already running this site, so no reload is demanded', async () => {
+      await writeOverride('dark-mode', override, STAGING)
+      expect((await syncSiteOverrides(STAGING))?.changed).toBe(false)
+    })
+
+    it('drops overrides left in the wrapper key by a build without per-site stores', async () => {
+      localStorage.setItem(OVERRIDES_KEY, JSON.stringify({ legacy: override }))
+
+      const result = await syncSiteOverrides(STAGING)
+
+      expect(stored(OVERRIDES_KEY)).toEqual({})
+      expect(result?.changed).toBe(true)
+    })
+
+    it("clearing while connected leaves the other sites' overrides alone", async () => {
+      await writeOverride('dark-mode', override, STAGING)
+      await writeOverride('other-flag', override, US1)
+
+      await clearAllOverrides(US1)
+
+      expect(stored(siteOverridesKey(US1))).toEqual({})
+      expect(stored(siteOverridesKey(STAGING))).toEqual({ 'dark-mode': override })
+    })
+
+    it('clearing while signed out wipes every store, so nothing reappears on reconnect', async () => {
+      await writeOverride('dark-mode', override, STAGING)
+      await writeOverride('other-flag', override, US1)
+
+      await clearAllOverrides()
+
+      expect(stored(OVERRIDES_KEY)).toEqual({})
+      expect(localStorage.getItem(siteOverridesKey(STAGING))).toBeNull()
+      expect(localStorage.getItem(siteOverridesKey(US1))).toBeNull()
+    })
   })
 })

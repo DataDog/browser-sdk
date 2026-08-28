@@ -1,9 +1,22 @@
-import { ActionIcon, Box, Button, Code, CopyButton, Group, Loader, Space, Text, Tooltip } from '@mantine/core'
+import {
+  ActionIcon,
+  Anchor,
+  Box,
+  Button,
+  Code,
+  CopyButton,
+  Group,
+  Loader,
+  Space,
+  Stack,
+  Text,
+  Tooltip,
+} from '@mantine/core'
 import { IconArrowBackUp, IconCopy } from '@tabler/icons-react'
-import React, { type ReactNode } from 'react'
+import React, { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { CatalogFlag } from './flagsRequests'
 import { useFlagsContext } from './flagsContext'
-import { validateOverrideValue } from './flagTypes'
+import { flagTypeLabel, validateOverrideValue } from './flagTypes'
 import { getOverride, type FlagOverride } from './inspectedPageFlags'
 
 export function FlagCatalogBody() {
@@ -29,7 +42,7 @@ export function FlagCatalogBody() {
       <Space h="xs" />
       <FlagList
         flags={bottomFlags}
-        borderColor="var(--mantine-color-gray-2)"
+        borderColor="var(--mantine-color-default-border)"
         // `bottomFlags` is the page minus overridden flags (those are pinned above). Only call it "no
         // match" when the server total is 0; otherwise this page's flags are all overridden.
         emptyMessage={
@@ -41,9 +54,8 @@ export function FlagCatalogBody() {
 }
 
 /**
- * The always-visible "Local overrides" section shown above the paginated catalog. Lists every
- * overridden flag (regardless of which catalog page it's on), so overrides are never buried by
- * pagination. The overridden flags' catalog data comes from the context (see useOverriddenFlags).
+ * Pinned above the paginated catalog, listing every overridden flag regardless of which page it's
+ * on, so overrides are never buried by pagination.
  */
 export function OverridesSection() {
   const { overriddenFlags } = useFlagsContext()
@@ -57,14 +69,15 @@ export function OverridesSection() {
         Local overrides ({overriddenFlags.length})
       </Text>
       <Space h="xs" />
-      <FlagList flags={overriddenFlags} borderColor="var(--mantine-color-violet-2)" />
+      <FlagList flags={overriddenFlags} borderColor="var(--mantine-color-violet-outline)" />
     </>
   )
 }
 
-// Renders a bordered list of flag rows, or `emptyMessage` when there are none. Shared by the catalog
-// body and the "Local overrides" section — they differ only in border color and empty copy. Reads
-// the override state + actions from context so each row's wiring stays identical.
+/**
+ * A bordered list of flag rows, shared by the catalog body and the "Local overrides" section — they
+ * differ only in border color and empty copy.
+ */
 function FlagList({
   flags,
   borderColor,
@@ -108,25 +121,45 @@ function FlagRow({
   onRevert: (flagKey: string) => void
 }) {
   const overridden = override !== undefined
+  // The wrapper rejects a mismatched type, so this override won't apply.
+  const typeMismatch = overridden && override.type !== flag.type
 
   return (
     <Group
       justify="space-between"
       wrap="nowrap"
-      align="center"
+      // Keeps the variant buttons beside the name/key rather than centred on a long description.
+      align="flex-start"
       px="sm"
-      py="xs"
+      py="sm"
       style={{
-        borderBottom: '1px solid var(--mantine-color-gray-1)',
-        backgroundColor: overridden ? 'var(--mantine-color-violet-0)' : undefined,
+        borderBottom: '1px solid var(--mantine-color-default-border)',
+        backgroundColor: typeMismatch
+          ? 'var(--mantine-color-red-light)'
+          : overridden
+            ? 'var(--mantine-color-violet-light)'
+            : undefined,
       }}
     >
-      <Box style={{ minWidth: 0, flex: 1 }}>
+      <Stack gap={6} style={{ minWidth: 0, flex: 1 }}>
         <Text size="sm" fw={600} truncate>
           {flag.name}
         </Text>
         <FlagKey value={flag.key} />
-      </Box>
+        {flag.description && <FlagDescription description={flag.description} />}
+        {override && typeMismatch && (
+          <Text size="xs" c="red" fw={600}>
+            Type mismatch: stored as {flagTypeLabel(override.type)}, but this flag is {flagTypeLabel(flag.type)}. It
+            won&apos;t apply until you clear it.
+          </Text>
+        )}
+        {/* Not an error: the override still works, the flag just left the catalog. */}
+        {flag.unresolved && (
+          <Text size="xs" c="dimmed">
+            No active flag with this key on this site — it may have been archived or deleted.
+          </Text>
+        )}
+      </Stack>
       <Group gap="xs" wrap="wrap" justify="flex-end" style={{ flexShrink: 0, maxWidth: '55%' }}>
         {overridden && (
           <Tooltip label="Revert override">
@@ -141,11 +174,10 @@ function FlagRow({
           </Text>
         ) : (
           flag.variants.map((variant) => {
-            const isActive = overridden && valuesEqual(override.value, variant.value)
-            // The catalog falls back to the raw string when a variant doesn't parse as its
-            // declared type (see parseVariantValue) — writing that through would violate the
-            // same contract validateOverrideValue enforces for manual overrides. `allowNull` keeps
-            // a legitimate JSON `null` variant applyable (a raw-string type mismatch still fails).
+            const isActive = overridden && !typeMismatch && valuesEqual(override.value, variant.value)
+            // The catalog keeps an unparseable variant as its raw string (see parseVariantValue), and
+            // writing that through would break the override type contract. `allowNull` keeps a
+            // legitimate JSON `null` variant applyable.
             const validationError = validateOverrideValue(flag.type, variant.value, { allowNull: true })
             return (
               <Button
@@ -169,6 +201,51 @@ function FlagRow({
   )
 }
 
+/**
+ * Clamps a long description to one line behind a "Show more" toggle. The toggle appears only when
+ * the clamp actually hides something — measured rather than guessed from length, since a short
+ * description can still wrap and a long one might fit.
+ */
+function FlagDescription({ description }: { description: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const [overflowing, setOverflowing] = useState(false)
+  const textRef = useRef<HTMLParagraphElement>(null)
+
+  // Skipped while expanded: the clamp is off then, so a measurement would read as "fits" and wrongly
+  // hide the toggle. The ResizeObserver re-measures when the panel width changes.
+  useLayoutEffect(() => {
+    const el = textRef.current
+    if (!el || expanded) {
+      return
+    }
+    const measure = () => setOverflowing(el.scrollHeight > el.clientHeight)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [description, expanded])
+
+  return (
+    <Box mt={4}>
+      <Text ref={textRef} size="xs" lineClamp={expanded ? undefined : 1}>
+        {description}
+      </Text>
+      {overflowing && (
+        <Anchor
+          component="button"
+          type="button"
+          fz={10}
+          c="violet"
+          onClick={() => setExpanded((value) => !value)}
+          style={{ display: 'inline-block', marginTop: 0 }}
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </Anchor>
+      )}
+    </Box>
+  )
+}
+
 function FlagKey({ value }: { value: string }) {
   return (
     <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -179,6 +256,9 @@ function FlagKey({ value }: { value: string }) {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
+          // Negates the chip's own padding so the key lines up with the flag name above.
+          paddingInline: 6,
+          marginLeft: -6,
         }}
       >
         {value}
@@ -186,7 +266,13 @@ function FlagKey({ value }: { value: string }) {
       <CopyButton value={value}>
         {({ copied, copy }) => (
           <Tooltip label={copied ? 'Copied' : 'Copy key'} withArrow>
-            <ActionIcon size="xs" variant="subtle" color="gray" onClick={copy} style={{ flexShrink: 0 }}>
+            <ActionIcon
+              size="xs"
+              variant="subtle"
+              color={copied ? 'violet' : 'gray'}
+              onClick={copy}
+              style={{ flexShrink: 0 }}
+            >
               <IconCopy size={12} />
             </ActionIcon>
           </Tooltip>

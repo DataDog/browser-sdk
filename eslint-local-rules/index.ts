@@ -9,6 +9,7 @@ import disallowGenericUtils from './disallowGenericUtils.ts'
 import disallowNonScripts from './disallowNonScripts.ts'
 import enforceProdDepsImports from './enforceProdDepsImports.ts'
 import secureCommandExecution from './secureCommandExecution.ts'
+import disallowReExportsFromOtherPackages from './disallowReExportsFromOtherPackages.ts'
 import monitorUntilCommentRules from './monitorUntilCommentRules.ts'
 
 // Declare the local rules used by the Browser SDK
@@ -30,6 +31,7 @@ export default {
   'disallow-generic-utils': disallowGenericUtils,
   'disallow-non-scripts': disallowNonScripts,
   'enforce-prod-deps-imports': enforceProdDepsImports,
+  'disallow-re-exports-from-other-packages': disallowReExportsFromOtherPackages,
   'secure-command-execution': secureCommandExecution,
   ...monitorUntilCommentRules,
 }

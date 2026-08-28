@@ -44,6 +44,9 @@ export type NodeType = (typeof NodeType)[keyof typeof NodeType]
 // otherwise, it triggers a compile-time error.
 type ChangeTypeId<Id, Data> = [Id, ...Data[]] extends SessionReplay.Change ? Id : never
 
+// DatalessChangeTypeId is ChangeTypeId for changes which carry no data.
+type DatalessChangeTypeId<Id> = [Id] extends SessionReplay.Change ? Id : never
+
 export const ChangeType: {
   AddString: ChangeTypeId<0, SessionReplay.AddStringChange>
   AddNode: ChangeTypeId<1, SessionReplay.AddNodeChange>
@@ -56,6 +59,10 @@ export const ChangeType: {
   AttachedStyleSheets: ChangeTypeId<8, SessionReplay.AttachedStyleSheetsChange>
   MediaPlaybackState: ChangeTypeId<9, SessionReplay.MediaPlaybackStateChange>
   VisualViewport: ChangeTypeId<10, SessionReplay.VisualViewportChange>
+  AddRoleAnnotatedStrings: ChangeTypeId<11, SessionReplay.AddRoleAnnotatedStringsChange>
+  InputValue: ChangeTypeId<12, SessionReplay.InputValueChange>
+  InputSelection: ChangeTypeId<13, SessionReplay.InputSelectionChange>
+  ClearStrings: DatalessChangeTypeId<14>
 } = {
   AddString: 0,
   AddNode: 1,
@@ -68,9 +75,53 @@ export const ChangeType: {
   AttachedStyleSheets: 8,
   MediaPlaybackState: 9,
   VisualViewport: 10,
+  AddRoleAnnotatedStrings: 11,
+  InputValue: 12,
+  InputSelection: 13,
+  ClearStrings: 14,
 } as const
 
 export type ChangeType = (typeof ChangeType)[keyof typeof ChangeType]
+
+/**
+ * The role that a string in the string table plays on the page. A role says what kind of data the
+ * string holds, which lets the intake store strings with similar content together, and lets it
+ * redact them according to their kind.
+ */
+export const StringRole: {
+  Default: SessionReplay.StringRoleDefault
+  NodeName: SessionReplay.StringRoleNodeName
+  AttributeName: SessionReplay.StringRoleAttributeName
+  AttributeValue: SessionReplay.StringRoleAttributeValue
+  TextContent: SessionReplay.StringRoleTextContent
+  FormInput: SessionReplay.StringRoleFormInput
+  Css: SessionReplay.StringRoleCSS
+  Url: SessionReplay.StringRoleURL
+} = {
+  Default: 0,
+  NodeName: 1,
+  AttributeName: 2,
+  AttributeValue: 3,
+  TextContent: 4,
+  FormInput: 5,
+  Css: 6,
+  Url: 7,
+} as const
+
+export type StringRole = (typeof StringRole)[keyof typeof StringRole]
+
+/** The selection state of a checkbox, radio button, or `<option>`. */
+export const InputSelectionState: {
+  Selected: SessionReplay.InputSelectionStateSelected
+  Deselected: SessionReplay.InputSelectionStateDeselected
+  Indeterminate: SessionReplay.InputSelectionStateIndeterminate
+} = {
+  Selected: 0,
+  Deselected: 1,
+  Indeterminate: 2,
+} as const
+
+export type InputSelectionState = (typeof InputSelectionState)[keyof typeof InputSelectionState]
 
 export const PlaybackState: {
   Playing: SessionReplay.PlaybackStatePlaying

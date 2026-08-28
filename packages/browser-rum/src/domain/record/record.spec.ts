@@ -7,18 +7,17 @@ import type {
   AddNodeChange,
   BrowserChangeRecord,
   BrowserIncrementalSnapshotRecord,
-  BrowserMutationData,
   BrowserRecord,
   Change,
   ScrollData,
 } from '../../types'
-import { ChangeType, RecordType, IncrementalSource, SnapshotFormat } from '../../types'
+import { ChangeType, InputSelectionState, RecordType, IncrementalSource, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../browser-rum-core/test'
 import { getReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
 import type { EmitRecordCallback } from './record.types'
-import { createChangeDecoder } from './serialization'
+import { createChangeDecoder } from './encoding'
 
 describe('record', () => {
   let recordApi: RecordAPI
@@ -71,6 +70,38 @@ describe('record', () => {
       jasmine.objectContaining({ removes: [{ index: 0 }] }),
       jasmine.objectContaining({ adds: [{ rule: 'body { color: #ccc; }', index: undefined }] }),
     ])
+  })
+
+  describe('canvas mutation tracking', () => {
+    it('instruments canvas drawing when canvas recording is enabled', () => {
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording({ sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 1 } })
+
+      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).not.toBe(
+        originalFillRect
+      )
+    })
+
+    it('does not instrument canvas drawing when canvas recording is disabled', () => {
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording()
+
+      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
+        originalFillRect
+      )
+    })
+
+    it('does not instrument canvas drawing when the maximum frame rate is zero', () => {
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording({ sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 0 } })
+
+      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
+        originalFillRect
+      )
+    })
   })
 
   it('flushes pending mutation records before taking a full snapshot', async () => {
@@ -181,11 +212,10 @@ describe('record', () => {
 
       recordApi.flushMutations()
 
-      const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData & { isChecked: boolean }>(
-        getEmittedRecords(),
-        IncrementalSource.Input
-      )
-      expect(innerMutationData.isChecked).toBe(true)
+      expect(getLastChangeOfType(ChangeType.InputSelection, getEmittedRecords())).toEqual([
+        ChangeType.InputSelection,
+        [InputSelectionState.Selected, jasmine.any(Number)],
+      ])
     })
 
     it('should record the change event inside a shadow root only once, regardless if the DOM is serialized multiple times', () => {
@@ -199,7 +229,8 @@ describe('record', () => {
       radio.dispatchEvent(createNewEvent('change', { target: radio, composed: false }))
 
       const inputRecords = getEmittedRecords().filter(
-        (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.Input
+        (record) =>
+          record.type === RecordType.Change && record.data.some((change) => change[0] === ChangeType.InputSelection)
       )
 
       expect(inputRecords.length).toBe(1)
@@ -339,8 +370,9 @@ describe('record', () => {
       input.value = 'newValue'
       input.dispatchEvent(createNewEvent('input', { target: input }))
 
-      expect(getEmittedRecords()[0].type).toBe(RecordType.IncrementalSnapshot)
-      expect((getEmittedRecords()[0] as BrowserIncrementalSnapshotRecord).data.source).toBe(IncrementalSource.Input)
+      const record = emitSpy.calls.mostRecent().args[0]
+      expect(record.type).toBe(RecordType.Change)
+      expect((record as BrowserChangeRecord).data.map((change) => change[0])).toContain(ChangeType.InputValue)
     })
 
     it('media interaction', () => {
@@ -374,12 +406,12 @@ describe('record', () => {
     })
   })
 
-  function startRecording() {
+  function startRecording(configuration: Partial<RumConfiguration> = {}) {
     lifeCycle = new LifeCycle()
     recordApi = record({
       emitRecord: emitSpy,
       emitStats: noop,
-      configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
+      configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW, ...configuration } as RumConfiguration,
       lifeCycle,
       viewHistory: {
         findView: () => ({ id: FAKE_VIEW_ID, startClocks: {} }),

@@ -1,9 +1,10 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 import type { ElementsScrollPositions } from './elementsScrollPositions'
-import { createEventIds, createNodeIds, createStringIds, createStyleSheetIds } from './itemIds'
-import type { EventIds, NodeIds, StringIds, StyleSheetIds } from './itemIds'
+import { createEventIds, createNodeIds, createStringIds, createStyleSheetIds } from './encoding'
+import type { EventIds, NodeIds, StringIds, StyleSheetIds } from './encoding'
 import type { ShadowRootsController } from './shadowRootsController'
+import type { CanvasManager } from './canvas/canvasManager'
 
 /**
  * State associated with a stream of session replay records. When a new stream of records
@@ -14,6 +15,7 @@ import type { ShadowRootsController } from './shadowRootsController'
 export interface RecordingScope {
   resetIds(): void
 
+  canvasManager: CanvasManager
   configuration: RumConfiguration
   elementsScrollPositions: ElementsScrollPositions
   eventIds: EventIds
@@ -24,6 +26,7 @@ export interface RecordingScope {
 }
 
 export function createRecordingScope(
+  canvasManager: CanvasManager,
   configuration: RumConfiguration,
   elementsScrollPositions: ElementsScrollPositions,
   shadowRootsController: ShadowRootsController
@@ -41,6 +44,7 @@ export function createRecordingScope(
       scope.styleSheetIds.clear()
     },
 
+    canvasManager,
     configuration,
     elementsScrollPositions,
     eventIds,

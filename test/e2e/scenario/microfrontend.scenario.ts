@@ -534,6 +534,68 @@ test.describe('microfrontend', () => {
       })
   })
 
+  test.describe('Logs debug_id attribution', () => {
+    createTest('runtime errors should have debug_id from source code context')
+      .withLogs()
+      .withSetup(microfrontendSetup)
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, baseUrl }) => {
+        await page.click('#app1-runtime-error')
+        await page.click('#app2-runtime-error')
+        await flushEvents()
+
+        expect(intakeRegistry.logsEvents).toHaveLength(2)
+
+        // Stacks are browser-dependent and Firefox reports more frames/chunks, adding more debug_ids entries.
+        // We assert the chunk with arrayContaining instead of toEqual to allow those extras.
+
+        // frame 0 -> app1 expose chunk (app1.ts + common.ts).
+        expect(intakeRegistry.logsEvents[0]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([{ url: `${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`, id: APP1_DEBUG_ID }])
+        )
+        // frame 0 -> app2 expose chunk (app2.ts + common.ts)
+        expect(intakeRegistry.logsEvents[1]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([{ url: `${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`, id: APP2_DEBUG_ID }])
+        )
+
+        withBrowserLogs((browserLogs) => {
+          expect(browserLogs).toHaveLength(2)
+        })
+      })
+
+    createTest('errors spanning multiple chunks should have a debug_id for each chunk in the stack')
+      .withLogs()
+      .withSetup(microfrontendSetup)
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, baseUrl }) => {
+        await page.click('#app1-nested-error')
+        await page.click('#app2-nested-error')
+        await flushEvents()
+
+        expect(intakeRegistry.logsEvents).toHaveLength(2)
+
+        // Stacks are browser-dependent and Firefox reports more frames/chunks, adding more debug_ids entries.
+        // We assert the chunk with arrayContaining instead of toEqual to allow those extras.
+
+        // frame 0 (throw) -> shared lib chunk (boom), frame 1 (caller) -> app1 expose chunk
+        expect(intakeRegistry.logsEvents[0]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([
+            { url: `${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`, id: LIB_DEBUG_ID },
+            { url: `${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`, id: APP1_DEBUG_ID },
+          ])
+        )
+        // same shared lib debug ID, merged with app2's own chunk
+        expect(intakeRegistry.logsEvents[1]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([
+            { url: `${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`, id: LIB_DEBUG_ID },
+            { url: `${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`, id: APP2_DEBUG_ID },
+          ])
+        )
+
+        withBrowserLogs((browserLogs) => {
+          expect(browserLogs).toHaveLength(2)
+        })
+      })
+  })
+
   test.describe('RUM profiling debug_id attribution', () => {
     test.beforeEach(({ browserName }) => {
       test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')

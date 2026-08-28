@@ -1,9 +1,8 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { registerCleanupTask } from '../../../../../../packages/browser-core/test'
-import type { CatalogFlag } from './flagsRequests'
 import type { FlagAuthState } from './useFlagAuth'
-import { useOverriddenFlags } from './useOverriddenFlags'
+import { useOverriddenFlags, type OverriddenFlagsState } from './useOverriddenFlags'
 
 // useOverriddenFlags only reads isConnected + site off the auth object.
 const AUTH = { isConnected: true, site: 'datad0g.com' } as FlagAuthState
@@ -28,7 +27,7 @@ describe('useOverriddenFlags', () => {
   function mountHook(keys: string[]) {
     const container = document.createElement('div')
     const root = createRoot(container)
-    let latest: CatalogFlag[] = []
+    let latest: OverriddenFlagsState = { flags: [], missingKeys: new Set() }
     function Probe() {
       latest = useOverriddenFlags(AUTH, keys)
       return null
@@ -57,7 +56,22 @@ describe('useOverriddenFlags', () => {
     await flush()
 
     expect(fetchSpy).toHaveBeenCalledTimes(2)
-    expect(get().map((flag) => flag.key)).toEqual(jasmine.arrayWithExactContents(['flag-a', 'flag-b']))
+    expect(get().flags.map((flag) => flag.key)).toEqual(jasmine.arrayWithExactContents(['flag-a', 'flag-b']))
+    expect(get().missingKeys.size).toBe(0)
+  })
+
+  it('reports a key the catalog has no match for as missing', async () => {
+    spyOn(globalThis, 'fetch').and.callFake((input: RequestInfo | URL) => {
+      const key = new URL(input as string).searchParams.get('key')
+      const data = key === 'gone' ? [] : [{ attributes: { key, name: `Name ${key}`, value_type: 'STRING' } }]
+      return Promise.resolve(new Response(JSON.stringify({ data })))
+    })
+
+    const get = mountHook(['flag-a', 'gone'])
+    await flush()
+
+    expect(get().flags.map((flag) => flag.key)).toEqual(['flag-a'])
+    expect(Array.from(get().missingKeys)).toEqual(['gone'])
   })
 
   it('does not fetch when there are no overridden keys', async () => {
@@ -65,18 +79,16 @@ describe('useOverriddenFlags', () => {
     const get = mountHook([])
     await flush()
     expect(fetchSpy).not.toHaveBeenCalled()
-    expect(get()).toEqual([])
+    expect(get().flags).toEqual([])
   })
 
-  it('returns no flags when a key lookup fails (non-blocking)', async () => {
-    // The failure is expected here; the hook logs it via console.error — swallow it so the CI
-    // unexpected-error-log reporter doesn't flag the intentional log.
-    spyOn(console, 'error')
+  it('does not report a key as missing when its lookup failed', async () => {
     spyOn(globalThis, 'fetch').and.returnValue(
       Promise.resolve(new Response('nope', { status: 500, statusText: 'Server Error' }))
     )
     const get = mountHook(['flag-a'])
     await flush()
-    expect(get()).toEqual([])
+    expect(get().flags).toEqual([])
+    expect(get().missingKeys.size).toBe(0)
   })
 })

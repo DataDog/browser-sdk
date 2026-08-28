@@ -1,4 +1,4 @@
-import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from '@datadog/js-core/util'
+import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from './urlPolyfill'
 
 describe('normalize url', () => {
   it('should resolve absolute paths', () => {
@@ -28,6 +28,36 @@ describe('normalize url', () => {
     // As we should follow the browser behavior, having one or the other doesn't matter too much, so
     // let's check for both.
     expect(['file:///my/path', 'file://foo.com/my/path']).toContain(normalizeUrl('file://foo.com/my/path'))
+  })
+
+  describe('with a <base href> differing from the current path', () => {
+    // The browser resolves document-relative request URLs against the document base URI, not the
+    // page location. normalizeUrl must match that so the recorded URL pairs with its
+    // PerformanceResourceTiming entry.
+    let base: HTMLBaseElement
+
+    beforeEach(() => {
+      history.pushState({}, '', '/deep/route')
+      base = document.createElement('base')
+      base.href = '/'
+      document.head.appendChild(base)
+    })
+
+    afterEach(() => {
+      base.remove()
+    })
+
+    it('should resolve document-relative paths against the base URI', () => {
+      expect(normalizeUrl('api/foo')).toEqual(`${location.origin}/api/foo`)
+    })
+
+    it('should still resolve root-relative paths against the origin', () => {
+      expect(normalizeUrl('/api/foo')).toEqual(`${location.origin}/api/foo`)
+    })
+
+    it('should keep absolute urls unchanged', () => {
+      expect(normalizeUrl('https://foo.com/my/path')).toEqual('https://foo.com/my/path')
+    })
   })
 })
 

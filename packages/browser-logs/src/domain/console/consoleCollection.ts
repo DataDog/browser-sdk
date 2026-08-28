@@ -40,6 +40,7 @@ export function startConsoleCollection(
         message: log.message,
         origin: ErrorSource.CONSOLE,
         error: log.error && createErrorFieldFromRawError(log.error),
+        _dd: log.error && { debug_ids: log.error.debugIds },
         status: LogStatusForApi[log.api],
       },
       messageContext: log.error?.context,

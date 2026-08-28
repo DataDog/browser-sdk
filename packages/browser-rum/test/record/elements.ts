@@ -47,8 +47,9 @@ function getElementIdsFromFullSnapshotChange(rawRecord: BrowserFullSnapshotChang
         default: {
           const [, , ...attributeAssignments] = addedNode as AddElementNodeChange
           for (const [name, value] of attributeAssignments) {
-            if (name === 'id') {
-              elementIds.set(String(value), id)
+            // Attribute names and values are always literal strings in a decoded record.
+            if (name === 'id' && typeof value === 'string') {
+              elementIds.set(value, id)
             }
           }
         }

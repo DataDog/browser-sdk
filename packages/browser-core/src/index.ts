@@ -78,12 +78,9 @@ export {
 export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'
 export { createIdentityEncoder } from './tools/encoder'
-export { normalizeUrl, isValidUrl, getPathName, buildUrl, getPristineWindow } from '@datadog/js-core/util'
 export * from './tools/utils/arrayUtils'
 
 export * from './tools/serialisation/sanitize'
-export { globalObject, isWorkerEnvironment } from '@datadog/js-core/util'
-export type { GlobalObject } from '@datadog/js-core/util'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'
@@ -96,6 +93,7 @@ export { instrumentMethod, instrumentConstructor, instrumentSetter } from './too
 export {
   computeRawError,
   getFileFromStackTraceString,
+  getStackTraceUrls,
   isError,
   NO_ERROR_STACK_PRESENT_MESSAGE,
 } from './domain/error/error'
@@ -106,22 +104,6 @@ export type { Context, ContextArray, ContextValue } from './tools/serialisation/
 export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
 export { isCookieStoreSupported } from './browser/cookieAccess'
 export type { WeakRef, WeakRefConstructor } from './browser/browser.types'
-export type {
-  CookieStore,
-  NetworkInformation,
-  Navigator,
-  NetworkInterface,
-  NetworkEffectiveType,
-  Profiler,
-  ProfilerConstructor,
-  ProfilerTrace,
-  ProfilerInitOptions,
-  ProfilerFrame,
-  ProfilerStack,
-  ProfilerSample,
-  ProfilerResource,
-  SampleBufferFullEvent,
-} from '@datadog/js-core/util'
 export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'

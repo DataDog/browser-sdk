@@ -7,6 +7,13 @@ describe('flagTypeLabel', () => {
     // An API value_type we don't model yet must not crash — fall back to the raw type.
     expect(flagTypeLabel('MYSTERY' as FlagType)).toBe('MYSTERY')
   })
+
+  it('always returns a string, so a malformed stored type cannot crash the row rendering it', () => {
+    expect(flagTypeLabel({} as unknown as FlagType)).toBe('[object Object]')
+    expect(flagTypeLabel(undefined as unknown as FlagType)).toBe('undefined')
+    // Finds Object.prototype.toString rather than a config, so `label` is what must be checked.
+    expect(flagTypeLabel('toString' as FlagType)).toBe('toString')
+  })
 })
 
 describe('validateOverrideValue', () => {

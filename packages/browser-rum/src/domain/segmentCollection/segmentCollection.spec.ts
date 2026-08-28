@@ -158,9 +158,10 @@ describe('startSegmentCollection', () => {
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
       }
 
-      it('uses `httpRequest.sendOnExit` when sending the segment', () => {
+      it('uses `httpRequest.send` when sending the segment', () => {
         addRecordAndFlushSegment(emulatePageHidden)
-        expect(httpRequestSpy.sendOnExit).toHaveBeenCalled()
+        expect(httpRequestSpy.send).toHaveBeenCalled()
+        expect(httpRequestSpy.sendOnExit).not.toHaveBeenCalled()
       })
 
       it('next segment is created because of visibility hidden event', async () => {

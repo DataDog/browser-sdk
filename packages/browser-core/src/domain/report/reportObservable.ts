@@ -6,6 +6,7 @@ import { addEventListener, DOM_EVENT, isEventSupported } from '../../browser/add
 import { safeTruncate } from '../../tools/utils/stringUtils'
 import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
+import { buildDebugIdByUrl } from '../sourceCodeContext'
 import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
 
 export const RawReportType = {
@@ -80,6 +81,7 @@ function buildRawReportErrorFromReport(report: DeprecationReport | InterventionR
     message: `${type}: ${body.message}`,
     originalError: report,
     stack: buildStack(body.id, body.message, body.sourceFile, body.lineNumber, body.columnNumber),
+    debugIds: body.sourceFile ? buildDebugIdByUrl([body.sourceFile]) : undefined,
   })
 }
 
@@ -101,6 +103,7 @@ function buildRawReportErrorFromCspViolation(event: SecurityPolicyViolationEvent
       event.lineNumber,
       event.columnNumber
     ),
+    debugIds: event.sourceFile ? buildDebugIdByUrl([event.sourceFile]) : undefined,
   })
 }
 

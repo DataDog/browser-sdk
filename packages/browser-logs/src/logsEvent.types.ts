@@ -160,6 +160,24 @@ export interface LogsEvent {
     name?: string
     [k: string]: unknown
   }
+  /**
+   * Internal properties
+   */
+  _dd?: {
+    /**
+     * Mapping of source file URLs to their debug IDs for source map deobfuscation
+     */
+    debug_ids?: Array<{
+      /**
+       * URL of the source file
+       */
+      url: string
+      /**
+       * Debug ID (UUID) for the source file
+       */
+      id: string
+    }>
+  }
 
   [k: string]: unknown
 }

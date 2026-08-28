@@ -1,4 +1,5 @@
-import { addTelemetryError, display, DOCS_ORIGIN } from '@datadog/browser-core'
+import { DOCS_ORIGIN } from '@datadog/js-core/util'
+import { addTelemetryError, display } from '@datadog/browser-core'
 
 export function reportScriptLoadingError({
   configuredUrl,

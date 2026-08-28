@@ -5,6 +5,7 @@ import { ChangeType, PlaybackState } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { ScrollPositions } from '../elementsScrollPositions'
 import { serializeHtml } from '../test/serializeHtml.specHelper'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { SerializationKind } from './serializationTransaction'
 
 describe('serializeNode for DOM nodes', () => {
@@ -117,6 +118,24 @@ describe('serializeNode for DOM nodes', () => {
           [null, 'DIV', ['foo', 'bar'], ['data-foo', 'data-bar'], ['class', 'zog'], ['style', 'width: 10px;']],
         ],
       ])
+    })
+
+    it('serializes attributes whose names are inherited from Object.prototype', async () => {
+      const record = await serializeHtml('<div __proto__="a" constructor="b"></div>')
+      expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'DIV', ['__proto__', 'a'], ['constructor', 'b']]]])
+    })
+
+    it('marks nested canvases dirty when their subtree is serialized', async () => {
+      const scope = createRecordingScopeForTesting()
+
+      await serializeHtml('<div><canvas></canvas><div><canvas></canvas></div></div>', {
+        scope,
+        after: (target) => {
+          expect(scope.canvasManager.getDirtyCanvases()).toEqual(
+            Array.from((target as Element).querySelectorAll('canvas'))
+          )
+        },
+      })
     })
   })
 

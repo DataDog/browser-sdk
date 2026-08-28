@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-nuxt",
-  "version": "7.8.0",
+  "version": "7.10.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -17,9 +17,9 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.8.0",
-    "@datadog/browser-rum-core": "7.8.0",
-    "@datadog/js-core": "0.0.9"
+    "@datadog/browser-core": "7.10.0",
+    "@datadog/browser-rum-core": "7.10.0",
+    "@datadog/js-core": "0.0.11"
   },
   "peerDependencies": {
     "nuxt": "3 || 4",
@@ -44,7 +44,7 @@
     }
   },
   "devDependencies": {
-    "vue": "3.5.40",
+    "vue": "3.5.41",
     "vue-router": "5.2.0"
   },
   "repository": {

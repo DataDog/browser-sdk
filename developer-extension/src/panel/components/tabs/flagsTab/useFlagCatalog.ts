@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createLogger } from '../../../../common/logger'
+import { toErrorMessage } from '../../../../common/toErrorMessage'
 import type { CatalogFlag, FlagCatalogRequest } from './flagsRequests'
 import { fetchFlagCatalog } from './flagsRequests'
 import { getValidAccessToken } from './oauth'
@@ -66,7 +67,7 @@ export function useFlagCatalog(auth: FlagAuthState, request: FlagCatalogRequest)
           logger.error('Error while fetching flag catalog:', err)
           setFlags([])
           setTotal(0)
-          setError(err instanceof Error ? err.message : String(err))
+          setError(toErrorMessage(err))
         }
       })
       .finally(() => {
