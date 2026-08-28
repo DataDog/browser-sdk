@@ -1,4 +1,4 @@
-import { addEventListeners, DOM_EVENT } from '@datadog/js-core/util'
+import { addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, MouseInteractionType } from '../../../types'

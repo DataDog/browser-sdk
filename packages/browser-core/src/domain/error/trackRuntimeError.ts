@@ -1,5 +1,6 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { globalObject, Observable, DOM_EVENT, isEventSupported } from '@datadog/js-core/util'
+import { globalObject, Observable } from '@datadog/js-core/util'
+import { DOM_EVENT, isEventSupported } from '@datadog/js-core/dom'
 import { instrumentMethod } from '../../tools/instrumentMethod'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTraceFromOnErrorMessage } from '../../tools/stackTrace/computeStackTrace'

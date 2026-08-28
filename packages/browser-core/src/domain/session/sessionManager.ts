@@ -9,14 +9,8 @@ import {
   relativeNow,
 } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
-import {
-  isWorkerEnvironment,
-  mockable,
-  Observable,
-  addEventListener,
-  addEventListeners,
-  DOM_EVENT,
-} from '@datadog/js-core/util'
+import { isWorkerEnvironment, mockable, Observable } from '@datadog/js-core/util'
+import { addEventListener, addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { monitorError } from '@datadog/js-core/monitor'
 import { createValueHistory } from '../../tools/valueHistory'
 import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'

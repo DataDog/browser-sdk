@@ -1,6 +1,6 @@
 import type { ClocksState, RelativeTime } from '@datadog/js-core/time'
 import { noop } from '@datadog/browser-core'
-import { addEventListeners, DOM_EVENT } from '@datadog/js-core/util'
+import { addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 
 export type FirstHidden = ReturnType<typeof trackFirstHidden>

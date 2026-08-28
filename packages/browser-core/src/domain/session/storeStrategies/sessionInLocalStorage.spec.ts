@@ -1,4 +1,4 @@
-import type { TrustableEvent } from '@datadog/js-core/util'
+import type { TrustableEvent } from '@datadog/js-core/dom'
 import { registerCleanupTask } from '../../../../test'
 import type { SessionState } from '../sessionState'
 import { toSessionString } from '../sessionState'

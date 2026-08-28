@@ -1,5 +1,5 @@
 import type { DeflateEncoderStreamId, Encoder, BufferedData, Telemetry, SessionManager } from '@datadog/browser-core'
-import type { Observable, BufferedObservable } from '@datadog/js-core/util'
+import type { Observable, BufferedObservable } from '@datadog/js-core/dom'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -14,7 +14,7 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
-import { createDOMMutationObservable } from '@datadog/js-core/util'
+import { createDOMMutationObservable } from '@datadog/js-core/dom'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'

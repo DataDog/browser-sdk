@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { clocksOrigin } from '@datadog/js-core/time'
-import { DOM_EVENT } from '@datadog/js-core/util'
+import { DOM_EVENT } from '@datadog/js-core/dom'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   setPageVisibility,

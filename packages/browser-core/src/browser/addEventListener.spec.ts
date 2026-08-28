@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT, isEventSupported, setAllowUntrustedEvents } from '@datadog/js-core/util'
+import { addEventListener, DOM_EVENT, isEventSupported, setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { createNewEvent, mockZoneJs, registerCleanupTask } from '../../test'
 import type { MockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'

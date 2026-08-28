@@ -1,5 +1,5 @@
 import type { Subscription } from '@datadog/js-core/util'
-import { setAllowUntrustedEvents } from '@datadog/js-core/util'
+import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { withXhr, mockXhr } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'

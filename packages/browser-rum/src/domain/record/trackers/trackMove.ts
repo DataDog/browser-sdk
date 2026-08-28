@@ -1,5 +1,5 @@
 import { throttle } from '@datadog/browser-core'
-import { addEventListeners, DOM_EVENT } from '@datadog/js-core/util'
+import { addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import type { BrowserIncrementalSnapshotRecord, MousemoveData, MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'
 import { getEventTarget, isTouchEvent } from '../eventsUtils'

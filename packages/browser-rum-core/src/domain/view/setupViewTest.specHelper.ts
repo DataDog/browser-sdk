@@ -1,5 +1,5 @@
 import { Observable, deepClone } from '@datadog/js-core/util'
-import type { RumMutationRecord } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 import { mockRumConfiguration, setupLocationObserver } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

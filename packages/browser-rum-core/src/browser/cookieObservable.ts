@@ -1,4 +1,5 @@
-import { globalObject, Observable, addEventListener, DOM_EVENT } from '@datadog/js-core/util'
+import { globalObject, Observable } from '@datadog/js-core/util'
+import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import { setInterval, clearInterval, getCookie, isCookieStoreSupported } from '@datadog/browser-core'
 

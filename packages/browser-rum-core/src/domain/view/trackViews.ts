@@ -8,7 +8,8 @@ import {
   isRelativeTime,
 } from '@datadog/js-core/time'
 import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
-import type { Subscription, Context, ContextValue, RumMutationRecord } from '@datadog/js-core/util'
+import type { Subscription, Context, ContextValue } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 import {
   noop,
   PageExitReason,

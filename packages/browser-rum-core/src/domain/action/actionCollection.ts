@@ -1,5 +1,6 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import type { Observable, RumMutationRecord } from '@datadog/js-core/util'
+import type { Observable } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 import { toServerDuration, addDuration } from '@datadog/js-core/time'
 import { noop } from '@datadog/browser-core'
 import { SKIPPED } from '@datadog/js-core/assembly'

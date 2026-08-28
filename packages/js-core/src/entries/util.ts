@@ -43,27 +43,7 @@ export { getZoneJsOriginalValue } from '../util/getZoneJsOriginalValue'
 export type { BrowserWindowWithZoneJs } from '../util/getZoneJsOriginalValue'
 export type { TimeoutId } from '../util/timer'
 export { setTimeout, clearTimeout, setInterval, clearInterval } from '../util/timer'
-export { fetch } from '../util/fetch'
 export type { Subscription } from '../util/observable'
 export { Observable, BufferedObservable, mergeObservables } from '../util/observable'
 export { queueMicrotask } from '../util/queueMicrotask'
-// eslint-disable-next-line import-x/no-cycle
-export type { TrustableEvent } from '../util/addEventListener'
-
-export { DOM_EVENT } from '../util/addEventListener'
-
-export {
-  addEventListener,
-  addEventListeners,
-  isEventSupported,
-  setAllowUntrustedEvents,
-  resetAllowUntrustedEvents,
-} from '../util/addEventListener'
 export { noop } from '../util/noop'
-export { createDOMMutationObservable, getMutationObserverConstructor } from '../util/domMutationObservable'
-export type {
-  RumMutationRecord,
-  RumCharacterDataMutationRecord,
-  RumAttributesMutationRecord,
-  RumChildListMutationRecord,
-} from '../util/domMutationObservable'

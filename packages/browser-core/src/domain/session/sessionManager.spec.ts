@@ -1,5 +1,5 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
-import { DOM_EVENT } from '@datadog/js-core/util'
+import { DOM_EVENT } from '@datadog/js-core/dom'
 import {
   collectAsyncCalls,
   createFakeSessionStoreStrategy,

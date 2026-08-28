@@ -1,5 +1,6 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
-import type { Observable, RumMutationRecord } from '@datadog/js-core/util'
+import type { Observable } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 import { elapsed } from '@datadog/js-core/time'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'

@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/js-core/util'
-import { DOM_EVENT } from '@datadog/js-core/util'
+import { DOM_EVENT } from '@datadog/js-core/dom'
 import { createNewEvent } from '../../../test'
 import { storeContextManager, buildStorageKey, removeStorageListeners } from './storeContextManager'
 import { CustomerDataType } from './contextConstants'

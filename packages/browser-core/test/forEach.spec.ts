@@ -1,5 +1,6 @@
 import { stopMonitorErrorCollection } from '@datadog/js-core/monitor'
-import { setDebugMode, resetAllowUntrustedEvents } from '@datadog/js-core/util'
+import { setDebugMode } from '@datadog/js-core/util'
+import { resetAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { resetManageResourceTimingBufferFull } from '../../browser-rum-core/src/browser/performanceObservable'
 import { resetExperimentalFeatures } from '../src/tools/experimentalFeatures'
 import { resetValueHistoryGlobals } from '../src/tools/valueHistory'

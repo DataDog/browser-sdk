@@ -1,5 +1,5 @@
 import type { Subscription } from '@datadog/js-core/util'
-import { setAllowUntrustedEvents } from '@datadog/js-core/util'
+import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { registerCleanupTask } from '../../test'
 import type { WebSocketContext } from './webSocketObservable'
 import { initWebSocketObservable, resetWebSocketObservable } from './webSocketObservable'

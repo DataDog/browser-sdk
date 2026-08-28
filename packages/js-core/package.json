@@ -24,6 +24,11 @@
       "require": "./cjs/entries/util.js",
       "types": "./cjs/entries/util.d.ts"
     },
+    "./dom": {
+      "import": "./esm/entries/dom.mjs",
+      "require": "./cjs/entries/dom.js",
+      "types": "./cjs/entries/dom.d.ts"
+    },
     "./transport": {
       "import": "./esm/entries/transport.mjs",
       "require": "./cjs/entries/transport.js",

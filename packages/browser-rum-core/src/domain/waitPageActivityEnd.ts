@@ -1,5 +1,6 @@
 import type { TimeoutId } from '@datadog/browser-core'
-import type { Subscription, RumMutationRecord } from '@datadog/js-core/util'
+import type { Subscription } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 import { timeStampNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { monitor } from '@datadog/js-core/monitor'

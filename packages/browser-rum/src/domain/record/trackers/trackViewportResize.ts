@@ -1,5 +1,5 @@
 import { throttle, noop } from '@datadog/browser-core'
-import { DOM_EVENT, addEventListeners } from '@datadog/js-core/util'
+import { DOM_EVENT, addEventListeners } from '@datadog/js-core/dom'
 import { timeStampNow } from '@datadog/js-core/time'
 import type { ViewportDimension } from '@datadog/browser-rum-core'
 import { initViewportObservable } from '@datadog/browser-rum-core'

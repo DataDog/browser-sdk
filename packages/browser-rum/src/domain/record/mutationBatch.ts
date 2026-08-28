@@ -1,5 +1,5 @@
 import { noop, throttle, requestIdleCallback } from '@datadog/browser-core'
-import type { RumMutationRecord } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 
 /**
  * Maximum duration to wait before processing mutations. If the browser is idle, mutations will be

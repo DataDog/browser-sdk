@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import { findLast } from '@datadog/browser-core'
-import { DOM_EVENT, addEventListeners } from '@datadog/js-core/util'
+import { DOM_EVENT, addEventListeners } from '@datadog/js-core/dom'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { findLcpResourceEntry, getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'

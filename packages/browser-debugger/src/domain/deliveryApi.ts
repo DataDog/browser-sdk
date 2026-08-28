@@ -1,4 +1,5 @@
-import { globalObject, mockable, fetch } from '@datadog/js-core/util'
+import { globalObject, mockable } from '@datadog/js-core/util'
+import { fetch } from '@datadog/js-core/dom'
 import type { TimeoutId } from '@datadog/browser-core'
 import { dateNow } from '@datadog/js-core/time'
 import { addTelemetryDebug, isServerError, setInterval, clearInterval } from '@datadog/browser-core'

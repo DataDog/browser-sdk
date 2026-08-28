@@ -1,4 +1,3 @@
-// eslint-disable-next-line import-x/no-cycle
 import { createDisplay, getDebugMode } from './util'
 import type { Display } from './util'
 

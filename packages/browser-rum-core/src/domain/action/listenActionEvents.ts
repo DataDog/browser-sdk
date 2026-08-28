@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT } from '@datadog/js-core/util'
+import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import type { RelativeTime } from '@datadog/js-core/time'
 
 export interface ExtraPointerEventFields {

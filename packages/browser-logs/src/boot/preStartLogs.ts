@@ -21,7 +21,8 @@ import {
   startTelemetrySessionContext,
   isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
-import { BufferedObservable, mockable, setAllowUntrustedEvents } from '@datadog/js-core/util'
+import { BufferedObservable, mockable } from '@datadog/js-core/util'
+import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'

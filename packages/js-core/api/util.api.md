@@ -4,21 +4,6 @@
 
 ```ts
 
-// @public
-function addEventListener_2<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target, eventName: EventName, listener: (event: EventMapFor<Target>[EventName] & {
-    type: EventName;
-}) => void, options?: AddEventListenerOptions_2): {
-    stop: () => void;
-};
-export { addEventListener_2 as addEventListener }
-
-// @public
-export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target, eventNames: EventName[], listener: (event: EventMapFor<Target>[EventName] & {
-    type: EventName;
-}) => void, input?: AddEventListenerOptions_2): {
-    stop: () => void;
-};
-
 // @internal
 export interface BrowserWindowWithZoneJs {
     // (undocumented)
@@ -162,9 +147,6 @@ export interface CookieStoreItem {
 // @public
 export function createDisplay(prefix: string): Display;
 
-// @public (undocumented)
-export function createDOMMutationObservable(): Observable<RumMutationRecord[]>;
-
 // @public
 export function deepClone<T>(value: T): T;
 
@@ -188,89 +170,8 @@ export interface Display {
 // @public
 export const DOCS_ORIGIN = "https://docs.datadoghq.com";
 
-// @public (undocumented)
-export const enum DOM_EVENT {
-    // (undocumented)
-    BEFORE_UNLOAD = "beforeunload",
-    // (undocumented)
-    BLUR = "blur",
-    // (undocumented)
-    CHANGE = "change",
-    // (undocumented)
-    CLICK = "click",
-    // (undocumented)
-    CONTEXT_MENU = "contextmenu",
-    // (undocumented)
-    DBL_CLICK = "dblclick",
-    // (undocumented)
-    DOM_CONTENT_LOADED = "DOMContentLoaded",
-    // (undocumented)
-    FOCUS = "focus",
-    // (undocumented)
-    FREEZE = "freeze",
-    // (undocumented)
-    HASH_CHANGE = "hashchange",
-    // (undocumented)
-    INPUT = "input",
-    // (undocumented)
-    KEY_DOWN = "keydown",
-    // (undocumented)
-    LOAD = "load",
-    // (undocumented)
-    MOUSE_DOWN = "mousedown",
-    // (undocumented)
-    MOUSE_MOVE = "mousemove",
-    // (undocumented)
-    MOUSE_UP = "mouseup",
-    // (undocumented)
-    PAGE_HIDE = "pagehide",
-    // (undocumented)
-    PAGE_SHOW = "pageshow",
-    // (undocumented)
-    PAUSE = "pause",
-    // (undocumented)
-    PLAY = "play",
-    // (undocumented)
-    POINTER_CANCEL = "pointercancel",
-    // (undocumented)
-    POINTER_DOWN = "pointerdown",
-    // (undocumented)
-    POINTER_UP = "pointerup",
-    // (undocumented)
-    POP_STATE = "popstate",
-    // (undocumented)
-    RESIZE = "resize",
-    // (undocumented)
-    RESUME = "resume",
-    // (undocumented)
-    SCROLL = "scroll",
-    // (undocumented)
-    SECURITY_POLICY_VIOLATION = "securitypolicyviolation",
-    // (undocumented)
-    SELECTION_CHANGE = "selectionchange",
-    // (undocumented)
-    STORAGE = "storage",
-    // (undocumented)
-    TOUCH_END = "touchend",
-    // (undocumented)
-    TOUCH_MOVE = "touchmove",
-    // (undocumented)
-    TOUCH_START = "touchstart",
-    // (undocumented)
-    UNHANDLED_REJECTION = "unhandledrejection",
-    // (undocumented)
-    VISIBILITY_CHANGE = "visibilitychange"
-}
-
-// @public
-function fetch_2(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
-export { fetch_2 as fetch }
-
 // @public
 export function getDebugMode(): boolean;
-
-// @public (undocumented)
-export function getMutationObserverConstructor(): MutationObserverConstructor;
 
 // @public
 export function getPathName(url: string): string;
@@ -298,9 +199,6 @@ export interface GlobalObject extends Omit<typeof globalThis, 'navigator' | 'que
 
 // @public
 export const globalObject: GlobalObject;
-
-// @public (undocumented)
-export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target | undefined, eventName: EventName): boolean;
 
 // @public
 export function isIndexableObject(value: unknown): value is Record<any, unknown>;
@@ -453,53 +351,10 @@ export type RecursivePartial<T> = {
     [P in keyof T]?: T[P] extends Array<infer U> ? Array<RecursivePartial<U>> : T[P] extends object | undefined ? RecursivePartial<T[P]> : T[P];
 };
 
-// @public (undocumented)
-export function resetAllowUntrustedEvents(): void;
-
-// @public (undocumented)
-export interface RumAttributesMutationRecord {
-    // (undocumented)
-    attributeName: string;
-    // (undocumented)
-    oldValue: string | null;
-    // (undocumented)
-    target: Element;
-    // (undocumented)
-    type: 'attributes';
-}
-
-// @public (undocumented)
-export interface RumCharacterDataMutationRecord {
-    // (undocumented)
-    oldValue: string | null;
-    // (undocumented)
-    target: Node;
-    // (undocumented)
-    type: 'characterData';
-}
-
-// @public (undocumented)
-export interface RumChildListMutationRecord {
-    // (undocumented)
-    addedNodes: NodeList;
-    // (undocumented)
-    removedNodes: NodeList;
-    // (undocumented)
-    target: Node;
-    // (undocumented)
-    type: 'childList';
-}
-
-// @public (undocumented)
-export type RumMutationRecord = RumCharacterDataMutationRecord | RumAttributesMutationRecord | RumChildListMutationRecord;
-
 // @public
 export interface SampleBufferFullEvent extends Event {
     readonly target: Profiler;
 }
-
-// @public (undocumented)
-export function setAllowUntrustedEvents(value: boolean | undefined): void;
 
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
@@ -520,11 +375,6 @@ export interface Subscription {
 
 // @public
 export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
-
-// @public (undocumented)
-export type TrustableEvent<E extends Event = Event> = E & {
-    __ddIsTrusted?: boolean;
-};
 
 // @public
 export interface Uint8ArrayBuffer extends Uint8Array {

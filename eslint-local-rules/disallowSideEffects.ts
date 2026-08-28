@@ -50,6 +50,7 @@ const packagesWithoutSideEffect = new Set([
   '@datadog/js-core/assembly',
   '@datadog/js-core/time',
   '@datadog/js-core/util',
+  '@datadog/js-core/dom',
   '@datadog/js-core/monitor',
   '@datadog/js-core/transport',
   '@datadog/js-core/sample',

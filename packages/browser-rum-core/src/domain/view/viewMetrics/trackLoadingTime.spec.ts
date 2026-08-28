@@ -4,7 +4,7 @@ import { noop } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
-import type { RumMutationRecord } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import {
   createMutationRecord,

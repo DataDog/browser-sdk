@@ -1,12 +1,6 @@
 import { ONE_MINUTE, ONE_SECOND, dateNow } from '@datadog/js-core/time'
-import {
-  globalObject,
-  mockable,
-  Observable,
-  addEventListener,
-  DOM_EVENT,
-  isEventSupported,
-} from '@datadog/js-core/util'
+import { globalObject, mockable, Observable } from '@datadog/js-core/util'
+import { addEventListener, DOM_EVENT, isEventSupported } from '@datadog/js-core/dom'
 import { setInterval, clearInterval } from '../tools/timer'
 import { display } from '../tools/display'
 import { generateUUID } from '../tools/utils/stringUtils'
