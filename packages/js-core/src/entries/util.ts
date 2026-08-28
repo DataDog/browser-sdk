@@ -46,3 +46,4 @@ export { setTimeout, clearTimeout, setInterval, clearInterval } from '../util/ti
 export type { Subscription } from '../util/observable'
 export { Observable, BufferedObservable, mergeObservables } from '../util/observable'
 export { queueMicrotask } from '../util/queueMicrotask'
+export { noop } from '../util/noop'

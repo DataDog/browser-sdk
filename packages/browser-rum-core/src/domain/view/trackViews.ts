@@ -9,6 +9,7 @@ import {
 } from '@datadog/js-core/time'
 import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { Subscription, Context, ContextValue } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 import {
   noop,
   PageExitReason,
@@ -26,7 +27,6 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'

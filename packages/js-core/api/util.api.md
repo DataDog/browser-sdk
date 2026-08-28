@@ -253,6 +253,9 @@ export interface NetworkInformation {
 // @public
 export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 'wifi' | 'wimax' | 'other' | 'unknown';
 
+// @public (undocumented)
+export function noop(): void;
+
 // @public
 export function normalizeUrl(url: string): string;
 

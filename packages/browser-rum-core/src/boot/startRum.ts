@@ -14,7 +14,7 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
-import { createDOMMutationObservable } from '../browser/domMutationObservable'
+import { createDOMMutationObservable } from '@datadog/js-core/dom'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'

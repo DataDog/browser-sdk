@@ -20,6 +20,9 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 };
 
 // @public (undocumented)
+export function createDOMMutationObservable(): Observable<RumMutationRecord[]>;
+
+// @public (undocumented)
 export const enum DOM_EVENT {
     // (undocumented)
     BEFORE_UNLOAD = "beforeunload",
@@ -98,10 +101,50 @@ function fetch_2(input: RequestInfo | URL, init?: RequestInit): Promise<Response
 export { fetch_2 as fetch }
 
 // @public (undocumented)
+export function getMutationObserverConstructor(): MutationObserverConstructor;
+
+// @public (undocumented)
 export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target | undefined, eventName: EventName): boolean;
 
 // @public (undocumented)
 export function resetAllowUntrustedEvents(): void;
+
+// @public (undocumented)
+export interface RumAttributesMutationRecord {
+    // (undocumented)
+    attributeName: string;
+    // (undocumented)
+    oldValue: string | null;
+    // (undocumented)
+    target: Element;
+    // (undocumented)
+    type: 'attributes';
+}
+
+// @public (undocumented)
+export interface RumCharacterDataMutationRecord {
+    // (undocumented)
+    oldValue: string | null;
+    // (undocumented)
+    target: Node;
+    // (undocumented)
+    type: 'characterData';
+}
+
+// @public (undocumented)
+export interface RumChildListMutationRecord {
+    // (undocumented)
+    addedNodes: NodeList;
+    // (undocumented)
+    removedNodes: NodeList;
+    // (undocumented)
+    target: Node;
+    // (undocumented)
+    type: 'childList';
+}
+
+// @public (undocumented)
+export type RumMutationRecord = RumCharacterDataMutationRecord | RumAttributesMutationRecord | RumChildListMutationRecord;
 
 // @public (undocumented)
 export function setAllowUntrustedEvents(value: boolean | undefined): void;

@@ -1,4 +1,5 @@
 import type { Subscription } from '@datadog/js-core/util'
+import type { RumMutationRecord } from '@datadog/js-core/dom'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
@@ -12,7 +13,6 @@ import {
 } from '../../test'
 import type { RumPerformanceEntry } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
-import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
