@@ -59,3 +59,11 @@ export {
   setAllowUntrustedEvents,
   resetAllowUntrustedEvents,
 } from '../util/addEventListener'
+export { noop } from '../util/noop'
+export { createDOMMutationObservable, getMutationObserverConstructor } from '../util/domMutationObservable'
+export type {
+  RumMutationRecord,
+  RumCharacterDataMutationRecord,
+  RumAttributesMutationRecord,
+  RumChildListMutationRecord,
+} from '../util/domMutationObservable'

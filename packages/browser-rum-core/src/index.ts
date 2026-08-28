@@ -33,13 +33,6 @@ export type { ViewCreatedEvent, ViewOptions } from './domain/view/trackViews'
 export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistory'
 export { startViewHistory } from './domain/contexts/viewHistory'
 export type { SessionManager } from '@datadog/browser-core'
-export { getMutationObserverConstructor } from './browser/domMutationObservable'
-export type {
-  RumMutationRecord,
-  RumAttributesMutationRecord,
-  RumChildListMutationRecord,
-  RumCharacterDataMutationRecord,
-} from './browser/domMutationObservable'
 export type { ViewportDimension } from './browser/viewportObservable'
 export { initViewportObservable, getViewportDimension } from './browser/viewportObservable'
 export { getScrollX, getScrollY } from './browser/scroll'

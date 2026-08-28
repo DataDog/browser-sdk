@@ -162,6 +162,9 @@ export interface CookieStoreItem {
 // @public
 export function createDisplay(prefix: string): Display;
 
+// @public (undocumented)
+export function createDOMMutationObservable(): Observable<RumMutationRecord[]>;
+
 // @public
 export function deepClone<T>(value: T): T;
 
@@ -266,6 +269,9 @@ export { fetch_2 as fetch }
 // @public
 export function getDebugMode(): boolean;
 
+// @public (undocumented)
+export function getMutationObserverConstructor(): MutationObserverConstructor;
+
 // @public
 export function getPathName(url: string): string;
 
@@ -348,6 +354,9 @@ export interface NetworkInformation {
 
 // @public
 export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 'wifi' | 'wimax' | 'other' | 'unknown';
+
+// @public (undocumented)
+export function noop(): void;
 
 // @public
 export function normalizeUrl(url: string): string;
@@ -446,6 +455,43 @@ export type RecursivePartial<T> = {
 
 // @public (undocumented)
 export function resetAllowUntrustedEvents(): void;
+
+// @public (undocumented)
+export interface RumAttributesMutationRecord {
+    // (undocumented)
+    attributeName: string;
+    // (undocumented)
+    oldValue: string | null;
+    // (undocumented)
+    target: Element;
+    // (undocumented)
+    type: 'attributes';
+}
+
+// @public (undocumented)
+export interface RumCharacterDataMutationRecord {
+    // (undocumented)
+    oldValue: string | null;
+    // (undocumented)
+    target: Node;
+    // (undocumented)
+    type: 'characterData';
+}
+
+// @public (undocumented)
+export interface RumChildListMutationRecord {
+    // (undocumented)
+    addedNodes: NodeList;
+    // (undocumented)
+    removedNodes: NodeList;
+    // (undocumented)
+    target: Node;
+    // (undocumented)
+    type: 'childList';
+}
+
+// @public (undocumented)
+export type RumMutationRecord = RumCharacterDataMutationRecord | RumAttributesMutationRecord | RumChildListMutationRecord;
 
 // @public
 export interface SampleBufferFullEvent extends Event {

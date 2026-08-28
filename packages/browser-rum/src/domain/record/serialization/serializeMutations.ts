@@ -1,5 +1,6 @@
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { NodePrivacyLevelCache, RumMutationRecord } from '@datadog/browser-rum-core'
+import type { NodePrivacyLevelCache } from '@datadog/browser-rum-core'
+import type { RumMutationRecord } from '@datadog/js-core/util'
 import {
   isNodeShadowHost,
   getParentNode,

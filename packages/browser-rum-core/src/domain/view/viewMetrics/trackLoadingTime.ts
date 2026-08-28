@@ -1,11 +1,10 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
-import type { Observable } from '@datadog/js-core/util'
+import type { Observable, RumMutationRecord } from '@datadog/js-core/util'
 import { elapsed } from '@datadog/js-core/time'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
-import type { RumMutationRecord } from '../../../browser/domMutationObservable'
 import { trackFirstHidden } from './trackFirstHidden'
 
 /**

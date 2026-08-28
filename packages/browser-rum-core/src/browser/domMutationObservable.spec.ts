@@ -1,6 +1,6 @@
 import type { MockZoneJs } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockZoneJs } from '@datadog/browser-core/test'
-import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
+import { createDOMMutationObservable, getMutationObserverConstructor } from '@datadog/js-core/util'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
 // We want to wait for a few event loop executions to potentially collect multiple mutation events.
