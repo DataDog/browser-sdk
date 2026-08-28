@@ -1,7 +1,6 @@
+import type { BrowserWindowWithZoneJs } from '@datadog/js-core/util'
+import { getZoneJsOriginalValue } from '@datadog/js-core/util'
 import { mockZoneJs } from '../../test'
-
-import type { BrowserWindowWithZoneJs } from './getZoneJsOriginalValue'
-import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
 import { noop } from './utils/functionUtils'
 
 describe('getZoneJsOriginalValue', () => {

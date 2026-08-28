@@ -85,7 +85,6 @@ export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState, asyncRunOnReadyState } from './browser/runOnReadyState'
-export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export type { InstrumentedMethodCall, InstrumentedConstructorCall } from './tools/instrumentMethod'
 export { instrumentMethod, instrumentConstructor, instrumentSetter } from './tools/instrumentMethod'
 export {
