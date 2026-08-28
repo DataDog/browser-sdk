@@ -1,6 +1,5 @@
 'use client'
 
-import { useLayoutEffect } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import { mockable } from '@datadog/browser-core'
 import { setNextjsViewName } from '../nextjsPlugin'
@@ -11,9 +10,7 @@ export function DatadogAppRouter() {
   const params = mockable(useParams)()
   const viewName = computeViewNameFromParams(pathname, params)
 
-  useLayoutEffect(() => {
-    setNextjsViewName(viewName, pathname)
-  }, [pathname, viewName])
+  setNextjsViewName(viewName, pathname)
 
   return null
 }
