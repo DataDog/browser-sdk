@@ -90,6 +90,7 @@ describe('remoteConfiguration', () => {
             defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
           },
         },
+        lastModified: undefined,
       })
     })
 
@@ -126,7 +127,47 @@ describe('remoteConfiguration', () => {
       )
 
       const fetchResult = await fetchRemoteConfiguration(configuration)
-      expect(fetchResult).toEqual({ ok: true, value: { profiling: { sampleRate: 10 } } })
+      expect(fetchResult).toEqual({ ok: true, value: { profiling: { sampleRate: 10 } }, lastModified: undefined })
+    })
+
+    describe('last-modified header', () => {
+      function withFetchReturningHeaders(headers: Record<string, string>) {
+        interceptor.withFetch(() =>
+          Promise.resolve({
+            ok: true,
+            headers: new Headers(headers),
+            json: () => Promise.resolve({ profiling: { sampleRate: 10 } }),
+          })
+        )
+      }
+
+      it('should expose the publish time as epoch milliseconds', async () => {
+        withFetchReturningHeaders({ 'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT' })
+
+        const fetchResult = await fetchRemoteConfiguration(configuration)
+
+        expect(fetchResult).toEqual({
+          ok: true,
+          value: { profiling: { sampleRate: 10 } },
+          lastModified: 1445412480000,
+        })
+      })
+
+      it('should be undefined when the header is absent', async () => {
+        withFetchReturningHeaders({})
+
+        const fetchResult = await fetchRemoteConfiguration(configuration)
+
+        expect((fetchResult as { lastModified?: number }).lastModified).toBeUndefined()
+      })
+
+      it('should be undefined when the header is not a valid date', async () => {
+        withFetchReturningHeaders({ 'last-modified': 'not-a-date' })
+
+        const fetchResult = await fetchRemoteConfiguration(configuration)
+
+        expect((fetchResult as { lastModified?: number }).lastModified).toBeUndefined()
+      })
     })
 
     it('should return an error if the remote config does not contain rum or profiling', async () => {
@@ -893,6 +934,22 @@ describe('remoteConfiguration', () => {
       const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
       expect(stored.config).toEqual(FRESH_RUM_CONFIG)
       expect(stored.version).toBe(CACHE_VERSION)
+    })
+
+    it('should store the publish time from the background fetch response', async () => {
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          headers: new Headers({ 'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT' }),
+          json: () => Promise.resolve(FRESH_RUM_CONFIG),
+        })
+      )
+
+      getRemoteConfiguration(initConfiguration, supportedContextManagers)
+      await flushBackgroundSync()
+
+      const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
+      expect(stored.metadata.lastModified).toBe(1445412480000)
     })
 
     it('should not overwrite cache when background fetch fails', async () => {
