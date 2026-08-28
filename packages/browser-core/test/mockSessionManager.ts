@@ -1,6 +1,6 @@
 import { timeStampNow } from '@datadog/js-core/time'
+import { Observable } from '@datadog/js-core/util'
 import type { SessionManager, startSessionManager } from '@datadog/browser-core'
-import { Observable } from '../src/tools/observable'
 import { noop } from '../src/tools/utils/functionUtils'
 import { LOW_HASH_UUID } from './sampling'
 

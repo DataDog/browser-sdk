@@ -1,5 +1,5 @@
+import { Observable } from '@datadog/js-core/util'
 import { generateUUID } from '../../../tools/utils/stringUtils'
-import { Observable } from '../../../tools/observable'
 import { addEventListener } from '../../../browser/addEventListener'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'

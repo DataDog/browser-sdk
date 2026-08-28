@@ -1,6 +1,7 @@
 import { timeStampNow, addDuration, clocksNow, relativeNow } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
-import { DefaultPrivacyLevel, Observable, PageExitReason } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, PageExitReason } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'

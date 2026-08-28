@@ -1,5 +1,5 @@
+import type { Subscription } from '@datadog/js-core/util'
 import { withXhr, mockXhr } from '../../test'
-import type { Subscription } from '../tools/observable'
 import { noop } from '../tools/utils/functionUtils'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
 import { initXhrObservable, resetXhrObservable } from './xhrObservable'

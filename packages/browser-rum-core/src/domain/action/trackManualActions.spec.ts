@@ -1,5 +1,5 @@
 import type { Duration, ServerDuration } from '@datadog/js-core/time'
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'

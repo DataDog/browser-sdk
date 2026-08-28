@@ -1,4 +1,5 @@
-import { Observable, throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { throttle, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 
 export interface ViewportDimension {
   height: number

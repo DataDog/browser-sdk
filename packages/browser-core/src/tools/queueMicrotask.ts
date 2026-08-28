@@ -1,4 +1,4 @@
-import { globalObject } from '@datadog/js-core/util'
+import { queueMicrotask as jsCoreQueueMicrotask } from '@datadog/js-core/util'
 import { monitor } from '@datadog/js-core/monitor'
 
 export function queueMicrotask(callback: () => void) {
@@ -7,12 +7,5 @@ export function queueMicrotask(callback: () => void) {
   // 'queueMicrotask called on an object that does not implement interface Window'. Calling it as an
   // unbound method is fine, as the proper global object will be used implicitly.
   // See https://github.com/mozilla/geckodriver/issues/1798
-  const nativeImplementation = globalObject.queueMicrotask
-
-  if (typeof nativeImplementation === 'function') {
-    nativeImplementation(monitor(callback))
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- the callback is monitored, so it'll never throw
-    Promise.resolve().then(monitor(callback))
-  }
+  jsCoreQueueMicrotask(monitor(callback))
 }

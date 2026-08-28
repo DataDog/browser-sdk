@@ -1,5 +1,5 @@
+import { BufferedObservable, mergeObservables, Observable } from '@datadog/js-core/util'
 import { waitNextMicrotask } from '../../test'
-import { BufferedObservable, mergeObservables, Observable } from './observable'
 
 describe('observable', () => {
   let observable: Observable<void>

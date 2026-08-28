@@ -1,7 +1,7 @@
+import type { Observable } from '@datadog/js-core/util'
 import type { CookieOptions } from '../../../browser/cookie'
 import type { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import type { Observable } from '../../../tools/observable'
 
 export const SESSION_STORE_KEY = '_dd_s_v2'
 export const LEGACY_SESSION_STORE_KEY = '_dd_s'
