@@ -4,6 +4,14 @@
 
 ```ts
 
+// @internal
+export interface BrowserWindowWithZoneJs {
+    // (undocumented)
+    Zone?: {
+        __symbol__?: (name: string) => string;
+    };
+}
+
 // @public
 export function buildUrl(url: string, base?: string): URL;
 
@@ -155,6 +163,9 @@ export function getPristineWindow(): Pick<Window & typeof globalThis, "URL">;
 
 // @public
 export function getType(value: unknown): "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function" | "null" | "array";
+
+// @internal
+export function getZoneJsOriginalValue<Target, Name extends keyof Target & string>(target: Target, name: Name): Target[Name];
 
 // @public
 export const globalConsole: Console;
