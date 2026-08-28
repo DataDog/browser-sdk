@@ -1,8 +1,9 @@
-import { clearInterval, globalObject, mockable, noop, setInterval } from '@datadog/browser-core'
+import { clearInterval, mockable, noop, setInterval } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
-import type { NodeId } from '../itemIds'
+import { globalObject } from '@datadog/js-core/util'
 import type { RecordingScope } from '../recordingScope'
+import type { NodeId } from '../encoding'
 import type { Tracker } from './tracker.types'
 
 export interface CanvasCapture {

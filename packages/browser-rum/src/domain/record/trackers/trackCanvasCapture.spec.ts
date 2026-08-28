@@ -1,4 +1,4 @@
-import { globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
 import { registerCleanupTask, mockClock, replaceMockable, waitAfterNextPaint } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
