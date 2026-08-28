@@ -1,21 +1,26 @@
-import type { GlobalObject } from '@datadog/js-core/util'
-import { getZoneJsOriginalValue, globalObject } from '@datadog/js-core/util'
+import type { TimeoutId } from '@datadog/js-core/util'
+import {
+  setTimeout as jsCoreSetTimeout,
+  setInterval as jsCoreSetInterval,
+  clearTimeout as jsCoreClearTimeout,
+  clearInterval as jsCoreClearInterval,
+} from '@datadog/js-core/util'
 import { monitor } from '@datadog/js-core/monitor'
 
-export type TimeoutId = ReturnType<GlobalObject['setTimeout']>
+export type { TimeoutId }
 
 export function setTimeout(callback: () => void, delay?: number): TimeoutId {
-  return getZoneJsOriginalValue(globalObject, 'setTimeout')(monitor(callback), delay)
+  return jsCoreSetTimeout(monitor(callback), delay)
 }
 
 export function clearTimeout(timeoutId: TimeoutId | undefined) {
-  getZoneJsOriginalValue(globalObject, 'clearTimeout')(timeoutId)
+  jsCoreClearTimeout(timeoutId)
 }
 
 export function setInterval(callback: () => void, delay?: number): TimeoutId {
-  return getZoneJsOriginalValue(globalObject, 'setInterval')(monitor(callback), delay)
+  return jsCoreSetInterval(monitor(callback), delay)
 }
 
 export function clearInterval(timeoutId: TimeoutId | undefined) {
-  getZoneJsOriginalValue(globalObject, 'clearInterval')(timeoutId)
+  jsCoreClearInterval(timeoutId)
 }
