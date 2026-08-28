@@ -234,7 +234,7 @@ export interface RumInitConfiguration extends InitConfiguration {
         maxFramesPerSecond?: number | undefined
 
         /**
-         * The maximum width or height, in pixels, of the grayscale image used for canvas change detection.
+         * The maximum width or height, in pixels, of the image used for canvas change detection.
          * Images are downscaled proportionally to fit within this bound and smaller images are not upscaled.
          *
          * @defaultValue 100

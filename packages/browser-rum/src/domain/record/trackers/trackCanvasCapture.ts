@@ -1,4 +1,4 @@
-import { clearInterval, noop, setInterval } from '@datadog/browser-core'
+import { clearInterval, globalObject, noop, setInterval } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { NodeId } from '../itemIds'
@@ -22,15 +22,15 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
     return { stop: noop }
   }
 
-  const previousHashes = new WeakMap<HTMLCanvasElement, string>()
-  const inFlightCaptures = new WeakSet<HTMLCanvasElement>()
   let stopped = false
   const captureIntervalId = setInterval(captureDirtyCanvases, ONE_SECOND / maxFramesPerSecond)
 
   function captureDirtyCanvases() {
-    const dirtyCanvases = canvasManager.getDirtyCanvases()
-    dirtyCanvases.forEach((canvas) => {
-      if (inFlightCaptures.has(canvas)) {
+    const capturableCanvases = canvasManager.getCapturableCanvases()
+    capturableCanvases.forEach((canvas) => {
+      const nodeId = scope.nodeIds.get(canvas)
+      if (nodeId === undefined) {
+        canvasManager.markCanvasClean(canvas)
         return
       }
 
@@ -40,60 +40,62 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         return // Do not read pixels from privacy levels other than allow
       }
 
-      let hash: string | undefined
-      try {
-        hash = computeImageHash(canvas, configuration?.hashingMaxDimension ?? 100)
-      } catch {
-        return // capture failed; leave it dirty
-      }
-
-      if (hash === undefined) {
-        return // capture failed; leave it dirty
-      }
-      if (hash === previousHashes.get(canvas)) {
-        canvasManager.markCanvasClean(canvas)
-        return // unchanged: no capture/output; thumbnail is discarded naturally
-      }
-
-      const nodeId = scope.nodeIds.get(canvas)
-      if (nodeId === undefined) {
-        canvasManager.markCanvasClean(canvas)
+      const captureId = canvasManager.markCanvasCaptureStarted(canvas)
+      if (captureId === undefined) {
         return
       }
 
-      inFlightCaptures.add(canvas)
-      // Clear the dirty state before the asynchronous capture. A draw occurring while the
-      // capture is in flight will mark the canvas dirty again and will be handled by the next tick.
-      canvasManager.markCanvasClean(canvas)
+      let hashPromise: Promise<string | undefined>
+      try {
+        hashPromise = computeImageHash(canvas, configuration?.hashingMaxDimension ?? 100)
+      } catch {
+        canvasManager.markCanvasTainted(canvas)
+        canvasManager.markCanvasCaptureFinished(canvas, captureId)
+        return
+      }
 
-      captureCanvasImage(canvas, configuration?.maxImageDimension ?? 1000)
-        .then((image) => {
-          if (stopped) {
+      hashPromise
+        .then((hash) => {
+          if (stopped || !canvasManager.isCanvasCaptureInFlight(canvas, captureId)) {
             return
           }
 
-          if (!image) {
-            canvasManager.markCanvasDirty(canvas)
-            return
+          if (hash === undefined) {
+            return // capture failed; leave it dirty
+          }
+          if (hash === canvasManager.getPreviousHash(canvas)) {
+            canvasManager.markCanvasCleanIfUnchanged(canvas, captureId)
+            return // unchanged: no capture/output; thumbnail is discarded naturally
           }
 
-          const currentNodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
-          if (currentNodePrivacyLevel !== NodePrivacyLevel.ALLOW) {
-            canvasManager.markCanvasClean(canvas)
-            return // Do not emit pixels if the canvas became privacy level other than allow during capture
-          }
+          // Clear the dirty state before the asynchronous capture. A draw occurring while the
+          // capture is in flight will mark the canvas dirty again and will be handled by the next tick.
+          canvasManager.markCanvasCleanIfUnchanged(canvas, captureId)
 
-          onCanvasCapture({ nodeId, changeHash: hash, image })
-          previousHashes.set(canvas, hash)
+          return captureCanvasImage(canvas, configuration?.maxImageDimension ?? 1000).then((image) => {
+            if (stopped || !canvasManager.isCanvasCaptureInFlight(canvas, captureId)) {
+              return
+            }
+
+            if (!image) {
+              canvasManager.markCanvasDirty(canvas)
+              return
+            }
+
+            onCanvasCapture({ nodeId, changeHash: hash, image })
+            if (canvasManager.isCanvasCaptureInFlight(canvas, captureId)) {
+              canvasManager.setPreviousHash(canvas, hash)
+            }
+          })
         })
         .catch(() => {
           // Leave the canvas dirty so it can be retried on the next interval.
-          if (!stopped) {
+          if (!stopped && canvasManager.isCanvasCaptureInFlight(canvas, captureId)) {
             canvasManager.markCanvasDirty(canvas)
           }
         })
         .finally(() => {
-          inFlightCaptures.delete(canvas)
+          canvasManager.markCanvasCaptureFinished(canvas, captureId)
         })
     })
   }
@@ -106,7 +108,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
   }
 }
 
-function computeImageHash(canvas: HTMLCanvasElement, maxHashDimension: number): string | undefined {
+function computeImageHash(canvas: HTMLCanvasElement, maxHashDimension: number): Promise<string | undefined> {
   const scale = Math.min(1, maxHashDimension / Math.max(canvas.width, canvas.height))
   const width = Math.max(1, Math.round(canvas.width * scale))
   const height = Math.max(1, Math.round(canvas.height * scale))
@@ -117,13 +119,18 @@ function computeImageHash(canvas: HTMLCanvasElement, maxHashDimension: number): 
 
   const context = thumbnail.getContext('2d')
   if (!context) {
-    return undefined
+    return Promise.resolve(undefined)
   }
   context.imageSmoothingQuality = 'low'
-  context.filter = 'grayscale(1)'
   context.drawImage(canvas, 0, 0, width, height)
 
-  return fnv1aHash(context.getImageData(0, 0, width, height).data)
+  const data = context.getImageData(0, 0, width, height).data
+  const subtleCrypto = globalObject.crypto?.subtle
+  if (!subtleCrypto) {
+    return Promise.reject(new Error('SubtleCrypto is not supported'))
+  }
+
+  return subtleCrypto.digest('SHA-256', data).then(arrayBufferToHex)
 }
 
 function captureCanvasImage(canvas: HTMLCanvasElement, maxImageDimension: number): Promise<Blob | undefined> {
@@ -140,26 +147,40 @@ function captureCanvasImage(canvas: HTMLCanvasElement, maxImageDimension: number
     return Promise.resolve(undefined)
   }
 
-  context.drawImage(canvas, 0, 0, width, height)
+  const createImageBitmap = globalObject.createImageBitmap
+  if (!createImageBitmap) {
+    return Promise.resolve(undefined)
+  }
 
+  try {
+    return createImageBitmap(canvas, {
+      resizeHeight: height,
+      resizeQuality: 'low',
+      resizeWidth: width,
+    }).then((imageBitmap) => {
+      try {
+        context.drawImage(imageBitmap, 0, 0)
+      } finally {
+        imageBitmap.close()
+      }
+
+      return canvasToBlob(imageCanvas)
+    })
+  } catch {
+    return Promise.resolve(undefined)
+  }
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | undefined> {
   return new Promise((resolve) => {
     try {
-      imageCanvas.toBlob((blob) => resolve(blob ?? undefined), 'image/png')
+      canvas.toBlob((blob) => resolve(blob ?? undefined), 'image/png')
     } catch {
       resolve(undefined)
     }
   })
 }
 
-/* eslint-disable no-bitwise */
-function fnv1aHash(data: ArrayLike<number>): string {
-  let hash = 0x811c9dc5
-
-  for (let index = 0; index < data.length; index += 1) {
-    hash ^= data[index]
-    hash = Math.imul(hash, 0x01000193)
-  }
-
-  return (hash >>> 0).toString(16).padStart(8, '0')
+function arrayBufferToHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
-/* eslint-enable no-bitwise */

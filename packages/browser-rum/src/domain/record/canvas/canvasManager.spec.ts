@@ -64,6 +64,35 @@ describe('CanvasManager', () => {
     expect(canvasManager.getDirtyCanvases()).toEqual([])
     expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
   })
+
+  it('does not return tainted canvases for capture', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvasTainted(canvas)
+
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    canvasManager.markCanvasDirty(canvas)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
+
+  it('resets capture hashes without forgetting tainted canvases', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvasDirty(canvas)
+    const captureId = canvasManager.markCanvasCaptureStarted(canvas)!
+    canvasManager.setPreviousHash(canvas, 'hash')
+    canvasManager.markCanvasCaptureFinished(canvas, captureId)
+    canvasManager.markCanvasTainted(canvas)
+
+    canvasManager.reset()
+
+    expect(canvasManager.getPreviousHash(canvas)).toBeUndefined()
+    canvasManager.markCanvasDirty(canvas)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
 })
 
 function appendCanvas(): HTMLCanvasElement {
