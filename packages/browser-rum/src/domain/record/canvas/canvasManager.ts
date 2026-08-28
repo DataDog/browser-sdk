@@ -1,10 +1,12 @@
 export interface CanvasManager {
   clearDirtyCanvases: () => void
+  forgetCanvasNode: (canvas: HTMLCanvasElement) => void
   getCapturableCanvases: () => HTMLCanvasElement[]
   getDirtyCanvases: () => HTMLCanvasElement[]
   getPreviousHash: (canvas: HTMLCanvasElement) => string | undefined
   isCanvasCaptureInFlight: (canvas: HTMLCanvasElement, captureId: number) => boolean
   isCanvasDirty: (canvas: HTMLCanvasElement) => boolean
+  markCanvasBitmapReset: (canvas: HTMLCanvasElement) => void
   markCanvasCaptureFinished: (canvas: HTMLCanvasElement, captureId: number) => void
   markCanvasCaptureStarted: (canvas: HTMLCanvasElement) => number | undefined
   markCanvasClean: (canvas: HTMLCanvasElement) => void
@@ -27,8 +29,21 @@ export function createCanvasManager(): CanvasManager {
     return dirtyVersions.get(canvas) ?? 0
   }
 
+  function markCanvasDirty(canvas: HTMLCanvasElement) {
+    if (canvas.isConnected && !taintedCanvases.has(canvas)) {
+      dirtyCanvases.add(canvas)
+      dirtyVersions.set(canvas, getDirtyVersion(canvas) + 1)
+    }
+  }
+
   return {
     clearDirtyCanvases: () => dirtyCanvases.clear(),
+    forgetCanvasNode: (canvas) => {
+      dirtyCanvases.delete(canvas)
+      dirtyVersions.delete(canvas)
+      previousHashes.delete(canvas)
+      inFlightCaptures.delete(canvas)
+    },
     getCapturableCanvases: () => {
       const capturableCanvases: HTMLCanvasElement[] = []
 
@@ -79,12 +94,13 @@ export function createCanvasManager(): CanvasManager {
         dirtyCanvases.delete(canvas)
       }
     },
-    markCanvasDirty: (canvas) => {
-      if (canvas.isConnected && !taintedCanvases.has(canvas)) {
-        dirtyCanvases.add(canvas)
-        dirtyVersions.set(canvas, getDirtyVersion(canvas) + 1)
-      }
+    markCanvasBitmapReset: (canvas) => {
+      taintedCanvases.delete(canvas)
+      previousHashes.delete(canvas)
+      inFlightCaptures.delete(canvas)
+      markCanvasDirty(canvas)
     },
+    markCanvasDirty,
     markCanvasTainted: (canvas) => {
       taintedCanvases.add(canvas)
       dirtyCanvases.delete(canvas)

@@ -451,6 +451,7 @@ describe('trackMutation', () => {
         (sandbox) => {
           canvas = sandbox as HTMLCanvasElement
           expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+          canvasManager.setPreviousHash(canvas, 'hash')
 
           canvas.remove()
         },
@@ -458,6 +459,7 @@ describe('trackMutation', () => {
       )
 
       expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+      expect(canvasManager.getPreviousHash(canvas)).toBeUndefined()
     })
   })
 
@@ -578,13 +580,33 @@ describe('trackMutation', () => {
         '<canvas></canvas>',
         (sandbox) => {
           canvas = sandbox as HTMLCanvasElement
-          canvasManager.markCanvasClean(canvas)
+          canvasManager.markCanvasTainted(canvas)
           canvas.setAttribute('width', '101')
         },
         { scope }
       )
 
       expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+      expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+    })
+
+    it('marks a canvas bitmap as reset when a size attribute is assigned its current value', async () => {
+      const canvasManager = createCanvasManager()
+      const scope = createRecordingScopeForTesting({ canvasManager })
+      let canvas!: HTMLCanvasElement
+
+      const { mutation } = await recordMutationOf(
+        '<canvas width="101"></canvas>',
+        (sandbox) => {
+          canvas = sandbox as HTMLCanvasElement
+          canvasManager.markCanvasTainted(canvas)
+          canvas.setAttribute('width', '101')
+        },
+        { scope }
+      )
+
+      expect(mutation).toBeUndefined()
+      expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
     })
 
     it('does not mark a canvas dirty when an unrelated attribute changes', async () => {

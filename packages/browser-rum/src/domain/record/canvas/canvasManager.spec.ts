@@ -77,6 +77,40 @@ describe('CanvasManager', () => {
     expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
+  it('makes a tainted canvas capturable after its bitmap is reset', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvasDirty(canvas)
+    const captureId = canvasManager.markCanvasCaptureStarted(canvas)!
+    canvasManager.setPreviousHash(canvas, 'hash')
+    canvasManager.markCanvasTainted(canvas)
+
+    canvasManager.markCanvasBitmapReset(canvas)
+
+    expect(canvasManager.getPreviousHash(canvas)).toBeUndefined()
+    expect(canvasManager.isCanvasCaptureInFlight(canvas, captureId)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+  })
+
+  it('forgets capture state when a canvas node is removed without forgetting its taint state', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvasDirty(canvas)
+    const captureId = canvasManager.markCanvasCaptureStarted(canvas)!
+    canvasManager.setPreviousHash(canvas, 'hash')
+    canvasManager.markCanvasTainted(canvas)
+
+    canvasManager.forgetCanvasNode(canvas)
+
+    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getPreviousHash(canvas)).toBeUndefined()
+    expect(canvasManager.isCanvasCaptureInFlight(canvas, captureId)).toBeFalse()
+    canvasManager.markCanvasDirty(canvas)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
+
   it('resets capture hashes without forgetting tainted canvases', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()

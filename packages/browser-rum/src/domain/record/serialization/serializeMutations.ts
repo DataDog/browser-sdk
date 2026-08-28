@@ -113,7 +113,7 @@ function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransac
 
     forNodeAndDescendants(node, (node: Node) => {
       if (isCanvasElement(node)) {
-        transaction.scope.canvasManager.markCanvasClean(node)
+        transaction.scope.canvasManager.forgetCanvasNode(node)
       }
 
       if (isNodeShadowHost(node)) {
@@ -258,12 +258,13 @@ function processAttributeMutations(
 
     const change: AttributeChange = [nodeId]
     for (const [attributeName, oldValue] of attributeNames) {
-      if (node.getAttribute(attributeName) === oldValue) {
-        continue // No change since the last snapshot.
+      if (isCanvasElement(node) && isCanvasSizeAttribute(attributeName)) {
+        // Assigning either dimension resets the bitmap even when the attribute value does not change.
+        transaction.scope.canvasManager.markCanvasBitmapReset(node)
       }
 
-      if (isCanvasElement(node) && isCanvasSizeAttribute(attributeName)) {
-        transaction.scope.canvasManager.markCanvasDirty(node)
+      if (node.getAttribute(attributeName) === oldValue) {
+        continue // No change since the last snapshot.
       }
 
       if (attributeName === 'value') {
