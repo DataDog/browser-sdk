@@ -1,5 +1,5 @@
 import type { Context, EventRateLimiter } from '@datadog/browser-core'
-import { ErrorSource, buildTags, createEventRateLimiter } from '@datadog/browser-core'
+import { ErrorSource, buildTags, createEventRateLimiter, display, runBeforeSend } from '@datadog/browser-core'
 import { toRelativeTime } from '@datadog/js-core/time'
 import { DISCARDED } from '@datadog/js-core/assembly'
 import { combine } from '@datadog/js-core/util'
@@ -52,15 +52,23 @@ export function startLogsAssembly(
         }
       ) as LogsEvent & Context
 
-      if (
-        configuration.beforeSend?.(log, domainContext) === false ||
-        (log.origin !== ErrorSource.AGENT &&
-          (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
-      ) {
-        return
+      if (configuration.beforeSend) {
+        runBeforeSend(log, (event) => configuration.beforeSend!(event, domainContext), handleBeforeSendResult, display)
+      } else {
+        handleBeforeSendResult(undefined)
       }
 
-      lifeCycle.notify(LifeCycleEventType.LOG_COLLECTED, log)
+      function handleBeforeSendResult(beforeSendResult: unknown) {
+        if (
+          beforeSendResult === false ||
+          (log.origin !== ErrorSource.AGENT &&
+            (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
+        ) {
+          return
+        }
+
+        lifeCycle.notify(LifeCycleEventType.LOG_COLLECTED, log)
+      }
     }
   )
 }

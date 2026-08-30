@@ -1,5 +1,5 @@
 import { sanitize, objectEntries } from '@datadog/browser-core'
-import type { Context } from '@datadog/browser-core'
+import type { Context, BeforeSendModification } from '@datadog/browser-core'
 import { deepClone, getType } from '@datadog/js-core/util'
 
 export type ModifiableFieldPaths = Record<string, 'string' | 'object' | 'array'>
@@ -13,20 +13,21 @@ export type ModifiableFieldPaths = Record<string, 'string' | 'object' | 'array'>
  * This ensures consistent SDK behavior regardless of whether limitModification is called.
  * Only string fields are handled this way, object fields are sanitized regardless of whether the modifier function was called or not.
  */
-export function limitModification<T extends Context, Result>(
+export function limitModification<T extends Context>(
   object: T,
-  modifiableFieldPaths: ModifiableFieldPaths,
-  modifier: (object: T) => Result
-): Result | undefined {
+  modifiableFieldPaths: ModifiableFieldPaths
+): BeforeSendModification<T> {
   const clone = deepClone(object)
-  const result = modifier(clone)
 
-  objectEntries(modifiableFieldPaths).forEach(([fieldPath, fieldType]) =>
-    // Traverse both object and clone simultaneously up to the path and apply the modification from the clone to the original object when the type is valid
-    setValueAtPath(object, clone, fieldPath.split(/\.|(?=\[\])/), fieldType)
-  )
-
-  return result
+  return {
+    event: clone,
+    apply: () => {
+      objectEntries(modifiableFieldPaths).forEach(([fieldPath, fieldType]) =>
+        // Traverse both object and clone simultaneously up to the path and apply the modification from the clone to the original object when the type is valid
+        setValueAtPath(object, clone, fieldPath.split(/\.|(?=\[\])/), fieldType)
+      )
+    },
+  }
 }
 
 function setValueAtPath(

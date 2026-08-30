@@ -74,6 +74,10 @@ export function createBatchDispatcher(
   let batchHasFullView = false
   let viewUpdatesSinceCheckpoint = 0
 
+  // Tracks the latest document_version seen for each view ID, so stale updates arriving
+  // out of order (due to async beforeSend) can be discarded before any branch logic.
+  const viewVersions = new Map<string, number>()
+
   // On flush: advance batchBase to lastSentView (what the backend now has) and clear the flag.
   // lastSentView is set AFTER batch.upsert() in the new-view and checkpoint paths so that if
   // upsert() triggers a sync flush, the subscriber captures the previous view (what the backend
@@ -91,13 +95,15 @@ export function createBatchDispatcher(
         return
       }
 
-      if (!enableViewUpdates) {
-        // Feature OFF: existing behavior — upsert full view
-        batch.upsert(serverRumEvent, serverRumEvent.view.id)
+      const viewId = serverRumEvent.view.id
+
+      // Async beforeSend may deliver view events out of order — discard stale updates
+      // before any branch logic so they can't corrupt per-view state.
+      const lastVersion = viewVersions.get(viewId)
+      if (lastVersion !== undefined && serverRumEvent._dd.document_version < lastVersion) {
         return
       }
-
-      const viewId = serverRumEvent.view.id
+      viewVersions.set(viewId, serverRumEvent._dd.document_version)
 
       // View ended (is_active: false) — always send a full VIEW.
       // Checked before the new-view guard so that a stale view-end for an old view
@@ -131,6 +137,12 @@ export function createBatchDispatcher(
 
       // Intermediate update
       lastSentView = serverRumEvent
+
+      if (!enableViewUpdates) {
+        // Feature OFF: existing behavior — upsert full view
+        batch.upsert(serverRumEvent, viewId)
+        return
+      }
 
       if (batchHasFullView) {
         // Optimization 1: batch already has a full VIEW — replace it with the latest full view.
