@@ -288,7 +288,15 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
     header += setupExtension(options, servers)
   }
 
-  const { rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+
+  if (options.logs) {
+    header += html`<script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>`
+    header += html`<script type="text/javascript">
+      DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+      ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+    </script>`
+  }
 
   if (options.rum) {
     header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`

@@ -8,16 +8,17 @@ import {
   getTextContent,
   NodePrivacyLevel,
 } from '@datadog/browser-rum-core'
-import type { AttributeChange } from '../../../types'
+import { StringRole } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
-import type { NodeId, NodeIds } from '../itemIds'
+import type { NodeId, NodeIds, RoleAnnotatedAttributeChange } from '../encoding'
+import { createAttributeAssignment, createAttributeAssignmentOrDeletion, createString } from '../encoding'
 import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
 import { serializeNode } from './serializeNode'
 import { createChildInsertionCursor } from './insertionCursor'
-import { getElementInputValue } from './serializationUtils'
+import { getElementInputValue, normalizedTagName } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
 
 export function serializeMutations(
@@ -220,7 +221,7 @@ function processCharacterDataMutations(
     }
 
     const content = getTextContent(node, parentNodePrivacyLevel)
-    transaction.setText(nodeId, content)
+    transaction.setText(nodeId, createString(StringRole.TextContent, content))
   }
 }
 
@@ -256,30 +257,33 @@ function processAttributeMutations(
       continue // Mutations to this node should be ignored.
     }
 
-    const change: AttributeChange = [nodeId]
-    for (const [attributeName, oldValue] of attributeNames) {
-      if (node.getAttribute(attributeName) === oldValue) {
+    const tagName = normalizedTagName(node)
+
+    const change: RoleAnnotatedAttributeChange = [nodeId]
+    for (const [domAttributeName, oldValue] of attributeNames) {
+      if (node.getAttribute(domAttributeName) === oldValue) {
         continue // No change since the last snapshot.
       }
 
-      if (isCanvasElement(node) && isCanvasSizeAttribute(attributeName)) {
+      if (isCanvasElement(node) && isCanvasSizeAttribute(domAttributeName)) {
         transaction.scope.canvasManager.markCanvasDirty(node)
       }
 
-      if (attributeName === 'value') {
-        const attributeValue = getElementInputValue(node, privacyLevel)
-        if (attributeValue !== undefined) {
-          change.push([attributeName, attributeValue])
+      if (domAttributeName === 'value') {
+        const domAttributeValue = getElementInputValue(node, privacyLevel)
+        if (domAttributeValue !== undefined) {
+          change.push(createAttributeAssignment(tagName, domAttributeName, domAttributeValue))
         }
         continue
       }
 
-      const attributeValue = serializeAttribute(node, privacyLevel, attributeName, transaction.scope.configuration)
-      if (attributeValue === null) {
-        change.push([attributeName])
-      } else {
-        change.push([attributeName, attributeValue])
-      }
+      const domAttributeValue = serializeAttribute(
+        node,
+        privacyLevel,
+        domAttributeName,
+        transaction.scope.configuration
+      )
+      change.push(createAttributeAssignmentOrDeletion(tagName, domAttributeName, domAttributeValue))
     }
 
     if (change.length > 1) {

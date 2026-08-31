@@ -46,6 +46,7 @@ describe('trackReportError', () => {
       handling: ErrorHandling.UNHANDLED,
       type: 'NavigatorVibrate',
       originalError: FAKE_REPORT,
+      debugIds: undefined,
     })
   })
 
@@ -64,6 +65,7 @@ describe('trackReportError', () => {
       csp: {
         disposition: FAKE_CSP_VIOLATION_EVENT.disposition,
       },
+      debugIds: undefined,
     })
   })
 })

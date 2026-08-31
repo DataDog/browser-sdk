@@ -1,6 +1,6 @@
 {
   "name": "browser-sdk",
-  "version": "7.9.0",
+  "version": "7.10.0",
   "description": "browser SDK",
   "private": true,
   "workspaces": [
@@ -46,7 +46,7 @@
     "woke": "scripts/cli woke"
   },
   "devDependencies": {
-    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=83bd61b340539ed03e7e31ef16f3cf8b010c9779",
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=23d9dc99be96e73413eaec312d9b0b30db641279",
     "@eslint/js": "10.0.1",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
     "@microsoft/api-extractor": "7.58.12",

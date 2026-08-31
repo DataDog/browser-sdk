@@ -1,7 +1,5 @@
 # RUM Browser Monitoring - Angular integration
 
-> **Note**: This integration is in beta. Features and configuration may change.
-
 ## Overview
 
 With the Datadog RUM Angular integration, resolve performance issues quickly in Angular applications by:

@@ -33,6 +33,7 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
         message,
         origin: ErrorSource.REPORT,
         error,
+        _dd: { debug_ids: rawError.debugIds },
         status,
       },
     })

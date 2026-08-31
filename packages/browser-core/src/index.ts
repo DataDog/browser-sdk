@@ -93,6 +93,7 @@ export { instrumentMethod, instrumentConstructor, instrumentSetter } from './too
 export {
   computeRawError,
   getFileFromStackTraceString,
+  getStackTraceUrls,
   isError,
   NO_ERROR_STACK_PRESENT_MESSAGE,
 } from './domain/error/error'

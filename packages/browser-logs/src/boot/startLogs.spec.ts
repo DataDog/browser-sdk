@@ -113,6 +113,7 @@ describe('logs', () => {
         tab: {
           id: jasmine.any(String),
         },
+        _dd: {},
       })
     })
 

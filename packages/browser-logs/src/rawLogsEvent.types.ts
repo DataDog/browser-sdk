@@ -1,4 +1,4 @@
-import type { ErrorSource, RawErrorCause, ErrorHandling, RawWasmModule } from '@datadog/browser-core'
+import type { ErrorSource, RawErrorCause, ErrorHandling, RawWasmModule, DebugIdEntry } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { StatusType } from './domain/logger/isAuthorized'
 
@@ -21,12 +21,15 @@ interface Error {
   wasm_modules?: RawWasmModule[]
 }
 
-interface CommonRawLogsEvent {
+export interface CommonRawLogsEvent {
   date: TimeStamp
   message: string
   status: StatusType
   error?: Error
   origin: ErrorSource
+  _dd?: {
+    debug_ids?: DebugIdEntry[]
+  }
 }
 
 export interface RawConsoleLogsEvent extends CommonRawLogsEvent {

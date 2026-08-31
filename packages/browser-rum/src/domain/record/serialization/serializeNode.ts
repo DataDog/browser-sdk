@@ -11,12 +11,15 @@ import {
   getScrollY,
   isElementNode,
 } from '@datadog/browser-rum-core'
-import { MediaInteractionType } from '../../../types'
-import type { NodeId, StyleSheetId } from '../itemIds'
+import type { RoleAnnotatedStringLiteral } from '../../../types'
+import { MediaInteractionType, StringRole } from '../../../types'
+import type { NodeId, StyleSheetId } from '../encoding'
+import { createAttributeAssignment, createString } from '../encoding'
 import { isCanvasElement } from '../canvas/canvasUtils'
 import type { InsertionCursor } from './insertionCursor'
 import type { SerializationTransaction } from './serializationTransaction'
 import { serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'
+import { normalizedTagName } from './serializationUtils'
 
 export function serializeNode(
   cursor: InsertionCursor,
@@ -98,7 +101,7 @@ function serializeDocumentNode(
   transaction: SerializationTransaction
 ): void {
   const { nodeId, insertionPoint } = cursor.advance(document)
-  transaction.addNode(insertionPoint, '#document')
+  transaction.addNode(insertionPoint, createString(StringRole.NodeName, '#document'))
   transaction.setScrollPosition(nodeId, getScrollX(), getScrollY())
   serializeStyleSheets(document.adoptedStyleSheets, nodeId, transaction)
 }
@@ -111,11 +114,11 @@ function serializeDocumentFragmentNode(
   const { nodeId, insertionPoint } = cursor.advance(documentFragment)
   const isShadowRoot = isNodeShadowRoot(documentFragment)
   if (!isShadowRoot) {
-    transaction.addNode(insertionPoint, '#document-fragment')
+    transaction.addNode(insertionPoint, createString(StringRole.NodeName, '#document-fragment'))
     return
   }
 
-  transaction.addNode(insertionPoint, '#shadow-root')
+  transaction.addNode(insertionPoint, createString(StringRole.NodeName, '#shadow-root'))
   transaction.scope.shadowRootsController.addShadowRoot(documentFragment, transaction.scope)
   serializeStyleSheets(documentFragment.adoptedStyleSheets, nodeId, transaction)
 }
@@ -126,7 +129,13 @@ function serializeDocumentTypeNode(
   transaction: SerializationTransaction
 ): void {
   const { insertionPoint } = cursor.advance(documentType)
-  transaction.addNode(insertionPoint, '#doctype', documentType.name, documentType.publicId, documentType.systemId)
+  transaction.addNode(
+    insertionPoint,
+    createString(StringRole.NodeName, '#doctype'),
+    createString(StringRole.AttributeValue, documentType.name),
+    createString(StringRole.AttributeValue, documentType.publicId),
+    createString(StringRole.Url, documentType.systemId)
+  )
 }
 
 function serializeElementNode(
@@ -136,7 +145,7 @@ function serializeElementNode(
   transaction: SerializationTransaction
 ): void {
   const { nodeId, insertionPoint } = cursor.advance(element)
-  const domAttributes = Object.entries(serializeDOMAttributes(element, privacyLevel, transaction))
+  const domAttributes = serializeDOMAttributes(element, privacyLevel, transaction)
   transaction.addNode(insertionPoint, encodedElementName(element), ...domAttributes)
 
   if (isCanvasElement(element)) {
@@ -153,7 +162,7 @@ function serializeElementNode(
   const linkOrStyle = element as HTMLLinkElement | HTMLStyleElement
   if (cssText !== undefined && linkOrStyle.sheet) {
     const sheetId = transaction.scope.styleSheetIds.getOrInsert(linkOrStyle.sheet)
-    transaction.addStyleSheet(cssText)
+    transaction.addStyleSheet(createString(StringRole.Css, cssText))
     transaction.attachStyleSheets(nodeId, [sheetId])
   }
 
@@ -176,7 +185,11 @@ function serializeTextNode(
 ): void {
   const { insertionPoint } = cursor.advance(textNode)
   const textContent = getTextContent(textNode, privacyLevel)
-  transaction.addNode(insertionPoint, '#text', textContent)
+  transaction.addNode(
+    insertionPoint,
+    createString(StringRole.NodeName, '#text'),
+    createString(StringRole.TextContent, textContent)
+  )
 }
 
 function serializeCDataNode(
@@ -185,7 +198,7 @@ function serializeCDataNode(
   transaction: SerializationTransaction
 ): void {
   const { insertionPoint } = cursor.advance(cdataNode)
-  transaction.addNode(insertionPoint, '#cdata-section')
+  transaction.addNode(insertionPoint, createString(StringRole.NodeName, '#cdata-section'))
 }
 
 function serializeHiddenNodePlaceholder(
@@ -202,7 +215,11 @@ function serializeHiddenNodePlaceholder(
   }
 
   const { nodeId, insertionPoint } = cursor.advance(node)
-  transaction.addNode(insertionPoint, encodedElementName(node), [PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN])
+  transaction.addNode(
+    insertionPoint,
+    encodedElementName(node),
+    createAttributeAssignment(normalizedTagName(node), PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
+  )
   const { width, height } = node.getBoundingClientRect()
   transaction.setSize(nodeId, width, height)
 }
@@ -223,22 +240,23 @@ function serializeStyleSheets(
 }
 
 function serializeStyleSheet(sheet: CSSStyleSheet, transaction: SerializationTransaction): StyleSheetId {
-  const rules = Array.from(sheet.cssRules || sheet.rules, (rule) => rule.cssText)
-  const mediaList = sheet.media.length > 0 ? Array.from(sheet.media) : undefined
+  const rules = Array.from(sheet.cssRules || sheet.rules, (rule) => createString(StringRole.Css, rule.cssText))
+  const mediaList =
+    sheet.media.length > 0 ? Array.from(sheet.media).map((medium) => createString(StringRole.Css, medium)) : undefined
   transaction.addMetric(
     'cssText',
-    rules.reduce((totalLength, rule) => totalLength + rule.length, 0)
+    rules.reduce((totalLength, rule) => totalLength + rule.string.length, 0)
   )
   transaction.addStyleSheet(rules, mediaList, sheet.disabled)
   return transaction.scope.styleSheetIds.getOrInsert(sheet)
 }
 
-function encodedElementName(element: Element): Exclude<string, `#${string}`> {
+function encodedElementName(element: Element): RoleAnnotatedStringLiteral {
   const nodeName = element.nodeName
   if (isSVGElement(element)) {
-    return `svg>${nodeName}`
+    return createString(StringRole.NodeName, `svg>${nodeName}`)
   }
-  return nodeName
+  return createString(StringRole.NodeName, nodeName)
 }
 
 function isSVGElement(element: Element): element is SVGElement {

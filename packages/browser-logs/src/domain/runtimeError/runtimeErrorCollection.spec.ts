@@ -71,6 +71,7 @@ describe('runtime error collection', () => {
         fingerprint: undefined,
         message: undefined,
       },
+      _dd: { debug_ids: undefined },
       message: 'error!',
       status: StatusType.error,
       origin: ErrorSource.SOURCE,
@@ -125,6 +126,7 @@ describe('runtime error collection', () => {
         fingerprint: undefined,
         message: undefined,
       },
+      _dd: { debug_ids: undefined },
       message: 'High level error',
       status: StatusType.error,
       origin: ErrorSource.SOURCE,
@@ -164,6 +166,22 @@ describe('runtime error collection', () => {
       message: undefined,
       source_type: 'browser+wasm',
       wasm_modules: [],
+    })
+  })
+
+  it('should attach debug_ids from runtime errors', () => {
+    const { rawLogsEvents, bufferedDataObservable } = startRuntimeErrorCollectionWithDefaults()
+
+    bufferedDataObservable.notify({
+      type: BufferedDataType.RUNTIME_ERROR,
+      data: {
+        ...RAW_ERROR,
+        debugIds: [{ url: 'http://path/to/debug-id.js', id: '01234567-89ab-cdef-0123-456789abcdef' }],
+      },
+    })
+
+    expect(rawLogsEvents[0].rawLogsEvent._dd).toEqual({
+      debug_ids: [{ url: 'http://path/to/debug-id.js', id: '01234567-89ab-cdef-0123-456789abcdef' }],
     })
   })
 

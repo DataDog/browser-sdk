@@ -1,6 +1,6 @@
 import type { DeflateEncoder, HttpRequest, TimeoutId, SessionManager } from '@datadog/browser-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
-import { isPageExitReason, clearTimeout, setTimeout } from '@datadog/browser-core'
+import { isPageExitReason, PageExitReason, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
@@ -110,7 +110,11 @@ export function doStartSegmentCollection(
       state.segment.flush((metadata, stats, encoderResult) => {
         const payload = buildReplayPayload(encoderResult.output, metadata, stats, encoderResult.rawBytesCount)
 
-        if (isPageExitReason(flushReason)) {
+        // sendOnExit() is less reliable than send() since it doesn't retry. If the page is
+        // *really* about to close, sendOnExit() is still better, since it uses a mechanism
+        // that outlives the page itself; for PageExitReason.HIDDEN, though, the page is
+        // probably not actually closing, so we prefer send().
+        if (isPageExitReason(flushReason) && flushReason !== PageExitReason.HIDDEN) {
           httpRequest.sendOnExit(payload)
         } else {
           httpRequest.send(payload)

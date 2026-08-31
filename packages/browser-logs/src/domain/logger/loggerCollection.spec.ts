@@ -93,6 +93,21 @@ describe('logger collection', () => {
       expect(originalConsoleMethods.warn).not.toHaveBeenCalled()
       expect(originalConsoleMethods.debug).not.toHaveBeenCalled()
     })
+
+    it('does not leak debug ids into the console output', () => {
+      handleLog(
+        {
+          message: 'message',
+          status: StatusType.error,
+          debugIds: [{ url: 'http://path/to/debug-id.js', id: '01234567-89ab-cdef-0123-456789abcdef' }],
+        },
+        logger,
+        HANDLING_STACK,
+        COMMON_CONTEXT
+      )
+
+      expect(originalConsoleMethods.error).toHaveBeenCalledOnceWith('message', {})
+    })
   })
 
   describe('when handle type is set to "http"', () => {
@@ -116,6 +131,7 @@ describe('logger collection', () => {
           origin: ErrorSource.LOGGER,
           message: 'message',
           status: StatusType.error,
+          _dd: { debug_ids: undefined },
         },
         messageContext: {
           foo: 'from-logger',
@@ -146,6 +162,23 @@ describe('logger collection', () => {
       handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, HANDLING_STACK, COMMON_CONTEXT)
 
       expect(rawLogsEvents.length).toBe(0)
+    })
+
+    it('attaches debug ids to the raw log event', () => {
+      handleLog(
+        {
+          message: 'message',
+          status: StatusType.error,
+          debugIds: [{ url: 'http://path/to/debug-id.js', id: '01234567-89ab-cdef-0123-456789abcdef' }],
+        },
+        logger,
+        HANDLING_STACK,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0].rawLogsEvent._dd).toEqual({
+        debug_ids: [{ url: 'http://path/to/debug-id.js', id: '01234567-89ab-cdef-0123-456789abcdef' }],
+      })
     })
   })
 

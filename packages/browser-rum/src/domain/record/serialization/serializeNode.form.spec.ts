@@ -1,3 +1,4 @@
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import type { BrowserWindow } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
@@ -676,39 +677,38 @@ describe('serializeNode for form elements', () => {
     }
   })
 
-  /*
-  describe('<select>', () => {
-    it('serializes <select> elements value and selected state', async () => {
-      const select = document.createElement('select')
-      const option1 = document.createElement('option')
-      option1.value = 'foo'
-      select.appendChild(option1)
-      const option2 = document.createElement('option')
-      option2.value = 'bar'
-      select.appendChild(option2)
-      select.options.selectedIndex = 1
+  describe('<option>', () => {
+    it('serializes the value', async () => {
+      const record = await serializeHtml('<option value="secret"></option>')
+      expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'OPTION', ['value', 'secret']]]])
+    })
 
-      expect(await serializeHtmlNode(select, NodePrivacyLevel.ALLOW, transaction)).toEqual(
-        jasmine.objectContaining({
-          attributes: { value: 'bar' },
-          childNodes: [
-            jasmine.objectContaining({
-              attributes: {
-                value: 'foo',
-              },
-            }),
-            jasmine.objectContaining({
-              attributes: {
-                value: 'bar',
-                selected: '',
-              },
-            }),
-          ],
-        })
-      )
+    it('serializes no value at all when masked, rather than a masked one', async () => {
+      // getElementInputValue() declines to serialize a masked <option>'s value, on the grounds
+      // that it provides no benefit. The value declared in the DOM is not serialized in its
+      // place, not even in masked form.
+      const record = await serializeHtml('<option value="secret"></option>', {
+        configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK },
+      })
+      expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'OPTION']]])
+    })
+
+    it('serializes no value at all when it is in the SVG namespace', async () => {
+      // An <option> in the SVG namespace is an XML element, so Element#tagName is lowercase and
+      // getElementInputValue() doesn't recognize it as a form element, even though
+      // normalizedTagName() does. The value declared in the DOM is not serialized in its place.
+      const record = await serializeHtml('<div></div>', {
+        target: (node: Node) => {
+          const option = node.ownerDocument!.createElementNS('http://www.w3.org/2000/svg', 'option')
+          option.setAttribute('value', 'declared')
+          ;(option as unknown as HTMLOptionElement).value = 'from the property'
+          node.appendChild(option)
+          return option
+        },
+      })
+      expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'svg>option']]])
     })
   })
-  */
 
   describe('<textarea>', () => {
     it('serializes the value', async () => {
@@ -812,6 +812,22 @@ describe('serializeNode for form elements', () => {
           [1, '#text', 'xxxxxxxxxxxxxxxxxxx'],
         ],
       ])
+    })
+  })
+
+  describe('an element with no form behavior', () => {
+    it('serializes value, selected, and checked as the ordinary attributes they are', async () => {
+      const record = await serializeHtml('<div value="a" selected="b" checked="c"></div>')
+      expect(record?.data).toEqual([
+        [ChangeType.AddNode, [null, 'DIV', ['value', 'a'], ['selected', 'b'], ['checked', 'c']]],
+      ])
+    })
+
+    it('serializes none of them when the element declares none of them', async () => {
+      const record = await serializeHtml('<div></div>', {
+        configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK },
+      })
+      expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'DIV']]])
     })
   })
 })
