@@ -419,8 +419,6 @@ export const RUM_SCHEMA = {
   trackResources: { type: 'boolean', default: true, strict: false },
   trackLongTasks: { type: 'boolean', default: true, strict: false },
   trackViewsManually: { type: 'boolean', default: false, strict: false },
-  // No `default`: an unset option must stay distinguishable from an explicit `false` so
-  // `validateAndBuildRumConfiguration` can apply the conditional default below.
   betaEnableViewUpdates: { type: 'boolean' },
   betaTrackWebSockets: { type: 'boolean', default: false, strict: false },
   enablePrivacyForActionName: { type: 'boolean', default: true },
