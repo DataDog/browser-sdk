@@ -10,6 +10,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
+import type { NodeId } from '../encoding'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
 import type { CanvasCaptureCallback } from './trackCanvasCapture'
@@ -81,6 +82,14 @@ describe('trackCanvasCapture', () => {
     canvasContext.fillRect(0, 0, canvas.width, canvas.height)
   }
 
+  function replaceCanvasWithNewNodeId(): NodeId {
+    canvas.remove()
+    canvasManager.forgetCanvas(canvas)
+    scope.nodeIds.delete(canvas)
+    document.body.appendChild(canvas)
+    return scope.nodeIds.getOrInsert(canvas)
+  }
+
   function firstPixelOf(image: Blob) {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(image)
@@ -142,28 +151,6 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
-  it('captures a canvas when its content changes', async () => {
-    const onCanvasCapture = startTracking()
-
-    draw('red')
-    const firstCapture = collectAsyncCalls(onCanvasCapture, 1)
-    markCanvasDirtyAndWaitForCapture()
-    await firstCapture
-    // Wait for the capture promise to finish after the callback has been called. Otherwise the
-    // second interval tick can happen while the first capture is still marked as in flight.
-    await waitForCanvasCapture()
-
-    draw('blue')
-    const secondCapture = collectAsyncCalls(onCanvasCapture, 2)
-    markCanvasDirtyAndWaitForCapture()
-    await secondCapture
-
-    expect(onCanvasCapture).toHaveBeenCalledTimes(2)
-    const firstHash = onCanvasCapture.calls.argsFor(0)[0].changeHash
-    const secondHash = onCanvasCapture.calls.argsFor(1)[0].changeHash
-    expect(secondHash).not.toBe(firstHash)
-  })
-
   it('hashes and emits the same immutable canvas snapshot', async () => {
     let resolveFirstDigest!: () => void
     let isFirstDigest = true
@@ -207,40 +194,40 @@ describe('trackCanvasCapture', () => {
     expect(onCanvasCapture.calls.argsFor(1)[0].changeHash).not.toBe(onCanvasCapture.calls.argsFor(0)[0].changeHash)
   })
 
-  it('captures a canvas again after the recording scope is reset', async () => {
-    draw('red')
-    const onCanvasCapture = startTracking()
-    markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
+  const nodeIdentityChanges: Array<{ description: string; change: () => NodeId | undefined }> = [
+    {
+      description: 'after the recording scope is reset',
+      change: () => {
+        scope.resetIds()
+        scope.nodeIds.getOrInsert(canvas)
+        return undefined
+      },
+    },
+    {
+      description: 'when it receives a new node ID',
+      change: () => replaceCanvasWithNewNodeId(),
+    },
+  ]
 
-    scope.resetIds()
-    scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    clock.tick(1000)
-    await waitForCanvasCapture()
+  nodeIdentityChanges.forEach(({ description, change }) => {
+    it(`captures a canvas again ${description}`, async () => {
+      draw('red')
+      const onCanvasCapture = startTracking()
+      const previousNodeId = scope.nodeIds.get(canvas)!
+      markCanvasDirtyAndWaitForCapture()
+      await waitForCanvasCapture()
 
-    expect(onCanvasCapture).toHaveBeenCalledTimes(2)
-  })
+      const currentNodeId = change()
+      canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+      clock.tick(1000)
+      await waitForCanvasCapture()
 
-  it('captures a canvas again when it receives a new node ID', async () => {
-    draw('red')
-    const onCanvasCapture = startTracking()
-    const previousNodeId = scope.nodeIds.get(canvas)!
-    markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
-
-    canvas.remove()
-    canvasManager.forgetCanvas(canvas)
-    scope.nodeIds.delete(canvas)
-    document.body.appendChild(canvas)
-    const currentNodeId = scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    clock.tick(1000)
-    await waitForCanvasCapture()
-
-    expect(currentNodeId).not.toBe(previousNodeId)
-    expect(onCanvasCapture).toHaveBeenCalledTimes(2)
-    expect(onCanvasCapture.calls.argsFor(1)[0].nodeId).toBe(currentNodeId)
+      expect(onCanvasCapture).toHaveBeenCalledTimes(2)
+      if (currentNodeId !== undefined) {
+        expect(currentNodeId).not.toBe(previousNodeId)
+        expect(onCanvasCapture.calls.argsFor(1)[0].nodeId).toBe(currentNodeId)
+      }
+    })
   })
 
   it('does not capture a tainted canvas that is reset while detached and then reinserted', async () => {
@@ -261,7 +248,7 @@ describe('trackCanvasCapture', () => {
     expect(onCanvasCapture).not.toHaveBeenCalled()
   })
 
-  it('discards an in-flight capture when the canvas receives a new node ID', async () => {
+  function deferFirstDigest(): () => void {
     let resolveFirstDigest!: (value: ArrayBuffer) => void
     const firstDigestPromise = new Promise<ArrayBuffer>((resolve) => {
       resolveFirstDigest = resolve
@@ -275,34 +262,10 @@ describe('trackCanvasCapture', () => {
       return Promise.resolve(new ArrayBuffer(32))
     })
     replaceMockable(globalObject.crypto?.subtle, { digest: digestSpy } as unknown as SubtleCrypto)
+    return () => resolveFirstDigest(new ArrayBuffer(32))
+  }
 
-    draw('red')
-    const onCanvasCapture = startTracking()
-    markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
-
-    canvas.remove()
-    canvasManager.forgetCanvas(canvas)
-    scope.nodeIds.delete(canvas)
-    document.body.appendChild(canvas)
-    const currentNodeId = scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    resolveFirstDigest(new ArrayBuffer(32))
-    await waitForCanvasCapture()
-
-    expect(onCanvasCapture).not.toHaveBeenCalled()
-
-    clock.tick(1000)
-    await waitForCanvasCapture()
-
-    expect(onCanvasCapture).toHaveBeenCalledOnceWith({
-      nodeId: currentNodeId,
-      changeHash: jasmine.any(String),
-      image: jasmine.any(Blob),
-    })
-  })
-
-  it('discards an image being encoded when the canvas receives a new node ID', async () => {
+  function deferFirstBlob(): () => void {
     let resolveFirstBlob!: BlobCallback
     let isFirstBlob = true
     toBlobSpy.and.callFake((callback: BlobCallback) => {
@@ -313,30 +276,37 @@ describe('trackCanvasCapture', () => {
         callback(new Blob([], { type: 'image/png' }))
       }
     })
+    return () => resolveFirstBlob(new Blob([], { type: 'image/png' }))
+  }
 
-    draw('red')
-    const onCanvasCapture = startTracking()
-    markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
+  const nodeIdChangeCaptureStages: Array<{ description: string; deferCapture: () => () => void }> = [
+    { description: 'while hashing', deferCapture: deferFirstDigest },
+    { description: 'while encoding', deferCapture: deferFirstBlob },
+  ]
 
-    canvas.remove()
-    canvasManager.forgetCanvas(canvas)
-    scope.nodeIds.delete(canvas)
-    document.body.appendChild(canvas)
-    const currentNodeId = scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    resolveFirstBlob(new Blob([], { type: 'image/png' }))
-    await waitForCanvasCapture()
+  nodeIdChangeCaptureStages.forEach(({ description, deferCapture }) => {
+    it(`discards an in-flight capture when the canvas receives a new node ID ${description}`, async () => {
+      const resumeCapture = deferCapture()
+      draw('red')
+      const onCanvasCapture = startTracking()
+      markCanvasDirtyAndWaitForCapture()
+      await waitForCanvasCapture()
 
-    expect(onCanvasCapture).not.toHaveBeenCalled()
+      const currentNodeId = replaceCanvasWithNewNodeId()
+      canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+      resumeCapture()
+      await waitForCanvasCapture()
 
-    clock.tick(1000)
-    await waitForCanvasCapture()
+      expect(onCanvasCapture).not.toHaveBeenCalled()
 
-    expect(onCanvasCapture).toHaveBeenCalledOnceWith({
-      nodeId: currentNodeId,
-      changeHash: jasmine.any(String),
-      image: jasmine.any(Blob),
+      clock.tick(1000)
+      await waitForCanvasCapture()
+
+      expect(onCanvasCapture).toHaveBeenCalledOnceWith({
+        nodeId: currentNodeId,
+        changeHash: jasmine.any(String),
+        image: jasmine.any(Blob),
+      })
     })
   })
 
@@ -418,50 +388,30 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
-  it('emits the immutable snapshot taken before a canvas becomes masked while hashing', async () => {
-    let resolveDigest!: (value: ArrayBuffer) => void
-    const digestPromise = new Promise<ArrayBuffer>((resolve) => {
-      resolveDigest = resolve
+  const maskingCaptureStages: Array<{ description: string; deferCapture: () => () => void }> = [
+    { description: 'while hashing', deferCapture: deferFirstDigest },
+    { description: 'while encoding', deferCapture: deferFirstBlob },
+  ]
+
+  maskingCaptureStages.forEach(({ description, deferCapture }) => {
+    it(`emits the snapshot taken before the canvas becomes masked ${description}`, async () => {
+      const resumeCapture = deferCapture()
+      draw('red')
+      const onCanvasCapture = startTracking()
+      markCanvasDirtyAndWaitForCapture()
+      await waitForCanvasCapture()
+
+      canvas.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+      resumeCapture()
+      await waitForCanvasCapture()
+
+      expect(onCanvasCapture).toHaveBeenCalledOnceWith({
+        nodeId: jasmine.any(Number),
+        changeHash: jasmine.any(String),
+        image: jasmine.any(Blob),
+      })
+      expect(canvasManager.getCapturableCanvases()).toEqual([])
     })
-    const digestSpy = jasmine.createSpy().and.returnValue(digestPromise)
-    replaceMockable(globalObject.crypto?.subtle, { digest: digestSpy } as unknown as SubtleCrypto)
-
-    draw('red')
-    const onCanvasCapture = startTracking()
-    markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
-
-    expect(digestSpy).toHaveBeenCalled()
-    canvas.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
-    resolveDigest(new ArrayBuffer(32))
-    await waitForCanvasCapture()
-
-    expect(toBlobSpy).toHaveBeenCalled()
-    expect(onCanvasCapture).toHaveBeenCalled()
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
-  })
-
-  it('emits the snapshot that was taken before the canvas became masked while encoding', async () => {
-    let resolveToBlob: BlobCallback | undefined
-    toBlobSpy.and.callFake((callback) => {
-      resolveToBlob = callback
-    })
-
-    draw('red')
-    const onCanvasCapture = startTracking()
-    markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
-
-    canvas.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
-    resolveToBlob!(new Blob([], { type: 'image/png' }))
-    await waitForCanvasCapture()
-
-    expect(onCanvasCapture).toHaveBeenCalledOnceWith({
-      nodeId: jasmine.any(Number),
-      changeHash: jasmine.any(String),
-      image: jasmine.any(Blob),
-    })
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('stops capturing after the tracker is stopped', async () => {

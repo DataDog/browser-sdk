@@ -155,21 +155,6 @@ describe('CanvasManager', () => {
     expect(lastChangeHash).toBe('hash')
   })
 
-  it('taints the canvas when the attempt fails with a SecurityError', async () => {
-    const canvasManager = createCanvasManager()
-    const canvas = appendCanvas()
-    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-
-    await canvasManager.capture(canvas, (attempt) => {
-      attempt.fail(new DOMException('tainted', 'SecurityError'))
-      return Promise.resolve()
-    })
-
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
-    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
-  })
-
   it('leaves the canvas dirty when the attempt fails with a non-security error', async () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
@@ -183,16 +168,35 @@ describe('CanvasManager', () => {
     expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
-  it('taints the canvas when the run callback rejects with a SecurityError', async () => {
-    const canvasManager = createCanvasManager()
-    const canvas = appendCanvas()
-    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+  const securityErrorFailureModes: Array<{
+    description: string
+    run: (attempt: CanvasCaptureAttempt) => Promise<void>
+  }> = [
+    {
+      description: 'when the attempt fails with a SecurityError',
+      run: (attempt) => {
+        attempt.fail(new DOMException('tainted', 'SecurityError'))
+        return Promise.resolve()
+      },
+    },
+    {
+      description: 'when the run callback rejects with a SecurityError',
+      run: () => Promise.reject(new DOMException('tainted', 'SecurityError')),
+    },
+  ]
 
-    await canvasManager.capture(canvas, () => Promise.reject(new DOMException('tainted', 'SecurityError')))
+  securityErrorFailureModes.forEach(({ description, run }) => {
+    it(`taints the canvas ${description}`, async () => {
+      const canvasManager = createCanvasManager()
+      const canvas = appendCanvas()
+      canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
-    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
+      await canvasManager.capture(canvas, run)
+
+      expect(canvasManager.getCapturableCanvases()).toEqual([])
+      canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+      expect(canvasManager.getCapturableCanvases()).toEqual([])
+    })
   })
 
   it('discards the in-flight capture and the last hash when the bitmap is reset', async () => {

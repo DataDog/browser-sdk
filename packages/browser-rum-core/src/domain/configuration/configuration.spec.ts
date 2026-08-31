@@ -382,17 +382,22 @@ describe('validateAndBuildRumConfiguration', () => {
         })
       })
 
-      it('preserves the configured frame rate when disabled', () => {
+      it('preserves the configured options when disabled', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionReplayCanvasRecording: { enable: false, maxFramesPerSecond: 2.5 },
+          sessionReplayCanvasRecording: {
+            enable: false,
+            maxFramesPerSecond: 2.5,
+            hashingMaxDimension: 50,
+            maxImageDimension: 500,
+          },
         })!
 
         expect(configuration.sessionReplayCanvasRecording).toEqual({
           enable: false,
           maxFramesPerSecond: 2.5,
-          hashingMaxDimension: 100,
-          maxImageDimension: 1000,
+          hashingMaxDimension: 50,
+          maxImageDimension: 500,
         })
       })
 
