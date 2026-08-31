@@ -495,10 +495,7 @@ export const RUM_SCHEMA = {
   },
 } as const
 
-export type RumConfiguration = Omit<
-  InferredConfig<typeof RUM_SCHEMA>,
-  'allowedTracingUrls' | 'betaEnableViewUpdates'
-> & {
+export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedTracingUrls'> & {
   allowedTracingUrls: TracingOption[]
   betaEnableViewUpdates: boolean
   rulePsr: number | undefined
