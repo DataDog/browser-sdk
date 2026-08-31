@@ -2,16 +2,11 @@ import { mockable } from '@datadog/browser-core'
 import { globalObject } from '@datadog/js-core/util'
 import type { CanvasSnapshot } from './canvasSnapshot'
 
-/**
- * Hashes a snapshot to detect whether a canvas' content changed between captures. The hash is
- * computed on a thumbnail rather than on the full image so that the comparison stays cheap
- * regardless of the canvas size, and it includes the canvas dimensions so that a resize is
- * always considered a change.
- */
 export function computeImageHash(snapshot: CanvasSnapshot, maxHashDimension: number): Promise<string | undefined> {
-  const scale = Math.min(1, maxHashDimension / Math.max(snapshot.width, snapshot.height))
-  const width = Math.max(1, Math.round(snapshot.width * scale))
-  const height = Math.max(1, Math.round(snapshot.height * scale))
+  const { height: sourceHeight, width: sourceWidth } = snapshot.source
+  const scale = Math.min(1, maxHashDimension / Math.max(sourceWidth, sourceHeight))
+  const width = Math.max(1, Math.round(sourceWidth * scale))
+  const height = Math.max(1, Math.round(sourceHeight * scale))
 
   const thumbnail = document.createElement('canvas')
   thumbnail.width = width
@@ -25,11 +20,11 @@ export function computeImageHash(snapshot: CanvasSnapshot, maxHashDimension: num
   context.drawImage(snapshot.source, 0, 0, width, height)
 
   const data = context.getImageData(0, 0, width, height).data
+  // crypto.subtle is only exposed in secure contexts, so it is missing on plain HTTP pages.
   const subtleCrypto = mockable(globalObject.crypto?.subtle)
-  // TODO revisit fallback.
-  // if (!subtleCrypto) {
-  //   return Promise.resolve(createChangeHash(snapshot.canvasWidth, snapshot.canvasHeight, fnv1aHash(data)))
-  // }
+  if (!subtleCrypto) {
+    return Promise.resolve(createChangeHash(snapshot.canvasWidth, snapshot.canvasHeight, fnv1aHash(data)))
+  }
 
   return subtleCrypto.digest('SHA-256', data).then(
     (buffer) => createChangeHash(snapshot.canvasWidth, snapshot.canvasHeight, arrayBufferToHex(buffer)),

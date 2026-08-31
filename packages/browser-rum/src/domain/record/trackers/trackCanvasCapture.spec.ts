@@ -81,15 +81,25 @@ describe('trackCanvasCapture', () => {
     canvasContext.fillRect(0, 0, canvas.width, canvas.height)
   }
 
-  async function firstPixelOf(image: Blob) {
-    const bitmap = await createImageBitmap(image)
-    const decodeCanvas = document.createElement('canvas')
-    decodeCanvas.width = bitmap.width
-    decodeCanvas.height = bitmap.height
-    const context = decodeCanvas.getContext('2d')!
-    context.drawImage(bitmap, 0, 0)
-    bitmap.close()
-    return Array.from(context.getImageData(0, 0, 1, 1).data)
+  function firstPixelOf(image: Blob) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(image)
+      const element = new Image()
+      element.onload = () => {
+        const decodeCanvas = document.createElement('canvas')
+        decodeCanvas.width = element.naturalWidth
+        decodeCanvas.height = element.naturalHeight
+        const context = decodeCanvas.getContext('2d')!
+        context.drawImage(element, 0, 0)
+        URL.revokeObjectURL(url)
+        resolve(Array.from(context.getImageData(0, 0, 1, 1).data))
+      }
+      element.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(new Error('failed to decode the image'))
+      }
+      element.src = url
+    })
   }
 
   it('captures a dirty canvas the first time it is seen', async () => {
@@ -353,29 +363,26 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
-  // TODO revisit fallback. This one reaches the snapshot fallback by making createImageBitmap
-  // unavailable, so it goes away with the fallback.
-  // it('stops trying to capture a canvas when hashing throws', async () => {
-  //   replaceMockable<typeof globalObject.createImageBitmap | undefined>(globalObject.createImageBitmap, undefined)
-  //   const drawImageSpy = spyOn(CanvasRenderingContext2D.prototype, 'drawImage').and.callFake(() => {
-  //     throw new DOMException('canvas is tainted', 'SecurityError')
-  //   })
-  //   startTracking()
-  //
-  //   markCanvasDirtyAndWaitForCapture()
-  //   await waitForCanvasCapture()
-  //
-  //   expect(drawImageSpy).toHaveBeenCalledTimes(1)
-  //   expect(drawImageSpy.calls.argsFor(0).slice(0, 5)).toEqual([canvas, 0, 0, 2, 2])
-  //   expect(canvasManager.getCapturableCanvases()).toEqual([])
-  //
-  //   canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-  //   markCanvasDirtyAndWaitForCapture()
-  //   await waitForCanvasCapture()
-  //
-  //   expect(drawImageSpy).toHaveBeenCalledTimes(1)
-  //   expect(canvasManager.getCapturableCanvases()).toEqual([])
-  // })
+  it('stops trying to capture a canvas when taking the snapshot throws', async () => {
+    const drawImageSpy = spyOn(CanvasRenderingContext2D.prototype, 'drawImage').and.callFake(() => {
+      throw new DOMException('canvas is tainted', 'SecurityError')
+    })
+    startTracking()
+
+    markCanvasDirtyAndWaitForCapture()
+    await waitForCanvasCapture()
+
+    expect(drawImageSpy).toHaveBeenCalledTimes(1)
+    expect(drawImageSpy.calls.argsFor(0).slice(0, 5)).toEqual([canvas, 0, 0, 2, 2])
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    markCanvasDirtyAndWaitForCapture()
+    await waitForCanvasCapture()
+
+    expect(drawImageSpy).toHaveBeenCalledTimes(1)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
 
   for (const privacyLevel of privacyLevels) {
     it(`only captures canvases with the allow privacy level, when the privacy level is ${privacyLevel}`, async () => {

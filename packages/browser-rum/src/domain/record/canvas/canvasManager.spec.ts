@@ -80,8 +80,6 @@ describe('CanvasManager', () => {
           resolveFirst = resolve
         })
     )
-    // One microtask tick is enough for the pending `run` above to have been invoked and
-    // `resolveFirst` assigned, since capture() schedules it via a single `Promise.resolve().then()`.
     await Promise.resolve()
 
     expect(canvasManager.getCapturableCanvases()).toEqual([])

@@ -5,7 +5,6 @@ import type { RecordingScope } from '../recordingScope'
 import type { NodeId } from '../encoding'
 import type { CanvasCaptureAttempt } from '../canvas/canvasManager'
 import { CanvasStatus } from '../canvas/canvasManager'
-import type { CanvasSnapshot } from '../canvas/canvasSnapshot'
 import { captureCanvasImage, createCanvasSnapshot } from '../canvas/canvasSnapshot'
 import { computeImageHash } from '../canvas/canvasHash'
 import type { Tracker } from './tracker.types'
@@ -49,12 +48,8 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
   }
 
   async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId, attempt: CanvasCaptureAttempt) {
-    let snapshot: CanvasSnapshot | undefined
     try {
-      snapshot = await createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
-      if (stopped || !attempt.isCurrent()) {
-        return
-      }
+      const snapshot = createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
       if (!snapshot) {
         return // snapshot failed; leave it dirty
       }
@@ -86,8 +81,6 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       if (!stopped) {
         attempt.fail(error)
       }
-    } finally {
-      snapshot?.close()
     }
   }
 
