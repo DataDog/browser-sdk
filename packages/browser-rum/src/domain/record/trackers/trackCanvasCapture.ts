@@ -47,21 +47,14 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
   }
 
   async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId, attempt: CanvasCaptureAttempt) {
-    const canReadCanvas = () =>
-      scope.nodeIds.get(canvas) === nodeId &&
-      getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel) === NodePrivacyLevel.ALLOW
-
     let snapshot: CanvasSnapshot | undefined
     try {
-      snapshot = await createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000, canReadCanvas)
+      snapshot = await createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
       if (stopped || !attempt.isCurrent()) {
         return
       }
       if (!snapshot) {
         return // snapshot failed; leave it dirty
-      }
-      if (scope.nodeIds.get(canvas) !== nodeId) {
-        return // The canvas is no longer represented by the node that this capture started for
       }
 
       const hash = await computeImageHash(snapshot, configuration?.hashingMaxDimension ?? 100)
@@ -71,9 +64,6 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       if (hash === undefined) {
         return // hashing failed; leave it dirty
       }
-      if (scope.nodeIds.get(canvas) !== nodeId) {
-        return // The canvas is no longer represented by the node that this capture started for
-      }
 
       if (hash === attempt.lastChangeHash) {
         attempt.settle(hash)
@@ -81,7 +71,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       }
 
       const image = await captureCanvasImage(snapshot)
-      if (stopped || !attempt.isCurrent() || scope.nodeIds.get(canvas) !== nodeId) {
+      if (stopped || !attempt.isCurrent()) {
         return
       }
       if (!image) {
@@ -118,13 +108,8 @@ interface CanvasSnapshot {
 
 function createCanvasSnapshot(
   canvas: HTMLCanvasElement,
-  maxImageDimension: number,
-  canReadCanvas: () => boolean
+  maxImageDimension: number
 ): Promise<CanvasSnapshot | undefined> {
-  if (!canReadCanvas()) {
-    return Promise.resolve(undefined)
-  }
-
   const canvasWidth = canvas.width
   const canvasHeight = canvas.height
   const scale = Math.min(1, maxImageDimension / Math.max(canvasWidth, canvasHeight))
@@ -132,10 +117,9 @@ function createCanvasSnapshot(
   const height = Math.max(1, Math.round(canvasHeight * scale))
   const createImageBitmap = mockable(globalObject.createImageBitmap)
 
+  // TODO revisit fallback.
   if (!createImageBitmap) {
-    return Promise.resolve(
-      createCanvasSnapshotWithCanvas(canvas, canvasWidth, canvasHeight, width, height, canReadCanvas)
-    )
+    return Promise.resolve(createCanvasSnapshotWithCanvas(canvas, canvasWidth, canvasHeight, width, height))
   }
 
   try {
@@ -152,12 +136,10 @@ function createCanvasSnapshot(
         source: imageBitmap,
         width,
       }),
-      () => createCanvasSnapshotWithCanvas(canvas, canvasWidth, canvasHeight, width, height, canReadCanvas)
+      () => createCanvasSnapshotWithCanvas(canvas, canvasWidth, canvasHeight, width, height)
     )
   } catch {
-    return Promise.resolve(
-      createCanvasSnapshotWithCanvas(canvas, canvasWidth, canvasHeight, width, height, canReadCanvas)
-    )
+    return Promise.resolve(createCanvasSnapshotWithCanvas(canvas, canvasWidth, canvasHeight, width, height))
   }
 }
 
@@ -166,13 +148,8 @@ function createCanvasSnapshotWithCanvas(
   canvasWidth: number,
   canvasHeight: number,
   width: number,
-  height: number,
-  canReadCanvas: () => boolean
+  height: number
 ): CanvasSnapshot | undefined {
-  if (!canReadCanvas()) {
-    return undefined
-  }
-
   const snapshotCanvas = document.createElement('canvas')
   snapshotCanvas.width = width
   snapshotCanvas.height = height

@@ -86,18 +86,17 @@ export function createCanvasManager(): CanvasManager {
           markTainted(canvas)
           return
         default:
-          assertNever(status)
+          status satisfies never
+          return
       }
     },
 
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
       canvasStates.delete(canvas)
-      taintedCanvases.delete(canvas)
     },
 
     resetCanvasBitmap: (canvas) => {
-      taintedCanvases.delete(canvas)
       canvasStates.delete(canvas)
       markDirty(canvas)
     },
@@ -179,6 +178,7 @@ function isSecurityError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'SecurityError'
 }
 
+// remove
 function assertNever(value: never): never {
   throw new Error(`Unexpected CanvasStatus: ${String(value)}`)
 }

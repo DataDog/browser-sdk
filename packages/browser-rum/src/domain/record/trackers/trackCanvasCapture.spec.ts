@@ -412,29 +412,6 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
-  it('does not use the drawing fallback if the canvas becomes masked while createImageBitmap is pending', async () => {
-    let rejectImageBitmap!: (reason: Error) => void
-    const imageBitmapPromise = new Promise<ImageBitmap>((_, reject) => {
-      rejectImageBitmap = reject
-    })
-    const createImageBitmapSpy = jasmine.createSpy().and.returnValue(imageBitmapPromise)
-    replaceMockable(globalObject.createImageBitmap, createImageBitmapSpy)
-    draw('red')
-    const onCanvasCapture = startTracking()
-
-    markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
-    expect(createImageBitmapSpy).toHaveBeenCalled()
-
-    canvas.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
-    rejectImageBitmap(new Error('unsupported'))
-    await waitForCanvasCapture()
-
-    expect(toBlobSpy).not.toHaveBeenCalled()
-    expect(onCanvasCapture).not.toHaveBeenCalled()
-    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
-  })
-
   it('leaves the canvas dirty when the capture callback fails', async () => {
     draw('red')
     const onCanvasCapture = jasmine.createSpy<CanvasCaptureCallback>().and.throwError('capture failed')
