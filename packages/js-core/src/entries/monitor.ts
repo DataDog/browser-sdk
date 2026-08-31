@@ -1,4 +1,4 @@
-import { getDebugMode } from './util'
+import { createDisplay, getDebugMode } from './util'
 import type { Display } from './util'
 
 /** An isolated monitor, as returned by {@link createMonitor}. */
@@ -157,4 +157,68 @@ export function createMonitor(display: Display, onMonitorErrorCollected: (error:
     callMonitored,
     monitorError,
   }
+}
+
+// --- Global monitor -----------------------------------------------------------
+
+/**
+ * Display used by the global monitor. Debug output is only emitted when
+ * debug mode is enabled (see {@link setDebugMode}/{@link getDebugMode}); the prefix is cosmetic.
+ *
+ * Exposed so tests can spy on `monitorDisplay.error` to assert debug-mode output (the global
+ * monitor does not share a display instance with any specific SDK package).
+ */
+// eslint-disable-next-line local-rules/disallow-side-effects
+export const monitorDisplay = createDisplay('Datadog SDK:')
+
+/**
+ * Holds the error-collection callback registered by the SDK that claimed the global monitor.
+ *
+ * `undefined` until {@link startMonitorErrorCollection} is called. Kept in a mutable holder (rather
+ * than passed directly to {@link createMonitor}) so the callback can be wired lazily during SDK
+ * init while the monitor functions themselves are usable from import time.
+ */
+let onMonitorErrorCollected: ((error: unknown) => void) | undefined
+
+// eslint-disable-next-line local-rules/disallow-side-effects
+const { monitored, monitor, callMonitored, monitorError } = createMonitor(monitorDisplay, (error) =>
+  onMonitorErrorCollected?.(error)
+)
+
+export { monitored, monitor, callMonitored, monitorError }
+
+/**
+ * Registers the error-collection callback for the global monitor.
+ *
+ * **First-wins**: the first call claims the sink for the lifetime of the js-core module instance;
+ * subsequent calls are ignored and return `false`. This avoids a late-loading SDK silently
+ * hijacking an earlier SDK's internal-error telemetry.
+ *
+ * **Limitation / trade-off**: when several SDKs share the same js-core module instance, only the
+ * first SDK's callback receives internal errors caught by the global monitor — including errors
+ * raised by shared code (e.g. transport) on behalf of a later-loading SDK. Those errors are
+ * attributed to the first SDK's telemetry. There is no per-SDK attribution today; this is the
+ * pragmatic simplification chosen over threading monitor functions through every call site. We
+ * can revisit a per-SDK strategy (e.g. context-based attribution) in the future.
+ *
+ * @returns `true` if the callback was registered, `false` if a callback was already registered.
+ */
+export function startMonitorErrorCollection(onMonitorErrorCollectedCallback: (error: unknown) => void): boolean {
+  if (onMonitorErrorCollected) {
+    return false
+  }
+  onMonitorErrorCollected = onMonitorErrorCollectedCallback
+  return true
+}
+
+/**
+ * Clears the error-collection callback registered by {@link startMonitorErrorCollection}.
+ *
+ * This is the production detach path: after it returns, errors caught by the global monitor are
+ * dropped (no longer forwarded to telemetry). Intended for SDK teardown (`stop()`); does not
+ * affect debug mode. Tests that need a full reset should call this followed by
+ * `setDebugMode(false)`.
+ */
+export function stopMonitorErrorCollection() {
+  onMonitorErrorCollected = undefined
 }

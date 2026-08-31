@@ -1,7 +1,7 @@
-import { setDebugMode } from './util'
+import { setDebugMode, getDebugMode } from './util'
 import type { Display } from './util'
 import type { Monitor } from './monitor'
-import { createMonitor } from './monitor'
+import { createMonitor, startMonitorErrorCollection, stopMonitorErrorCollection, callMonitored } from './monitor'
 
 describe('monitor', () => {
   let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
@@ -171,6 +171,92 @@ describe('monitor', () => {
 
       expect(displayErrorSpy).toHaveBeenCalledWith('[MONITOR]', new Error('message'))
       expect(displayErrorSpy).toHaveBeenCalledWith('[MONITOR]', new Error('unexpected'))
+    })
+  })
+})
+
+describe('global monitor', () => {
+  let collectedErrors: unknown[]
+
+  beforeEach(() => {
+    stopMonitorErrorCollection()
+    setDebugMode(false)
+    collectedErrors = []
+  })
+
+  afterEach(() => {
+    stopMonitorErrorCollection()
+    setDebugMode(false)
+  })
+
+  describe('startMonitorErrorCollection', () => {
+    it('registers the callback and returns true on first call', () => {
+      const result = startMonitorErrorCollection((e) => collectedErrors.push(e))
+
+      expect(result).toBeTrue()
+
+      callMonitored(() => {
+        throw new Error('boom')
+      })
+
+      expect(collectedErrors).toEqual([new Error('boom')])
+    })
+
+    it('is first-wins: a second call is ignored and returns false', () => {
+      const first = startMonitorErrorCollection((e) => collectedErrors.push(e))
+      const second = startMonitorErrorCollection(() => {
+        collectedErrors.push('should not be called')
+      })
+
+      expect(first).toBeTrue()
+      expect(second).toBeFalse()
+
+      callMonitored(() => {
+        throw new Error('boom')
+      })
+
+      // the first callback still owns the sink; the second never ran
+      expect(collectedErrors).toEqual([new Error('boom')])
+    })
+  })
+
+  describe('stopMonitorErrorCollection', () => {
+    it('clears the registered callback so monitored errors are dropped', () => {
+      startMonitorErrorCollection((e) => collectedErrors.push(e))
+      stopMonitorErrorCollection()
+
+      callMonitored(() => {
+        throw new Error('dropped')
+      })
+
+      expect(collectedErrors).toEqual([])
+    })
+
+    it('does not reset debug mode', () => {
+      setDebugMode(true)
+      startMonitorErrorCollection(() => {
+        /* registered */
+      })
+      stopMonitorErrorCollection()
+
+      expect(getDebugMode()).toBeTrue()
+    })
+
+    it('allows a new callback to be registered after stopping', () => {
+      const first = startMonitorErrorCollection(() => {
+        /* registered */
+      })
+      stopMonitorErrorCollection()
+      const second = startMonitorErrorCollection((e) => collectedErrors.push(e))
+
+      expect(first).toBeTrue()
+      expect(second).toBeTrue()
+
+      callMonitored(() => {
+        throw new Error('after stop')
+      })
+
+      expect(collectedErrors).toEqual([new Error('after stop')])
     })
   })
 })

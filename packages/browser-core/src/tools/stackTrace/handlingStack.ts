@@ -1,4 +1,4 @@
-import { callMonitored } from '../monitor'
+import { callMonitored } from '@datadog/js-core/monitor'
 import type { StackTrace } from './computeStackTrace'
 import { computeStackTrace } from './computeStackTrace'
 

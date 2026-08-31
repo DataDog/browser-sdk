@@ -1,6 +1,7 @@
 import type { Context } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
+import { callMonitored } from '@datadog/js-core/monitor'
+import { createHandlingStack } from '@datadog/browser-core'
 import { onRumStart } from '../angularPlugin'
 
 /**

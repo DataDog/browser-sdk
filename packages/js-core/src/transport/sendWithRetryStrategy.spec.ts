@@ -1,7 +1,9 @@
-import { mockClock, setNavigatorOnLine } from '../../test'
-import type { Clock } from '../../test'
-import { Observable } from '../tools/observable'
-import { ONE_MEBI_BYTE } from '../tools/utils/byteUtils'
+import type { Clock } from '../../test/mockClock'
+import { mockClock } from '../../test/mockClock'
+import { setNavigatorOnLine } from '../../test/mockNavigator'
+import { Observable } from '../util/observable'
+import { ONE_MEBI_BYTE } from '../util/byteUtils'
+import type { Payload, HttpResponse, HttpRequestEvent } from './payload'
 import type { RetryState } from './sendWithRetryStrategy'
 import {
   newRetryState,
@@ -11,7 +13,6 @@ import {
   MAX_QUEUE_BYTES_COUNT,
   INITIAL_BACKOFF_TIME,
 } from './sendWithRetryStrategy'
-import type { Payload, HttpResponse, HttpRequestEvent } from './httpRequest'
 
 describe('sendWithRetryStrategy', () => {
   const ENDPOINT_TYPE = 'logs'
