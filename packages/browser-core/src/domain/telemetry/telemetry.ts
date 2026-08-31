@@ -28,6 +28,8 @@ import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
 import { noop } from '../../tools/utils/functionUtils'
+import { mockable } from '../../tools/mockable'
+import { getSdkSetup } from '../../tools/getSdkSetup'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -39,7 +41,6 @@ import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
-declare const __BUILD_ENV__SDK_SETUP__: string
 
 const ALLOWED_FRAME_URLS = [
   'https://www.datadoghq-browser-agent.com',
@@ -195,7 +196,7 @@ export function startTelemetryCollection(
       telemetry: combine(rawEvent, {
         runtime_env: runtimeEnvInfo,
         connectivity: getConnectivity(),
-        sdk_setup: __BUILD_ENV__SDK_SETUP__,
+        sdk_setup: mockable(getSdkSetup)(),
         sdk_name: sdkName,
       }) as TelemetryEvent['telemetry'],
       ddtags: buildTags(configuration).join(','),
