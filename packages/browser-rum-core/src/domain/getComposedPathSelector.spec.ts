@@ -309,15 +309,11 @@ describe('getSelectorFromComposedPath', () => {
 
       it('sorts href and aria-label together with the other safe attributes', () => {
         addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
-        const element = appendElementInIsolation(
-          '<a href="/foo" aria-label="Foo link" role="link"></a>'
-        )
+        const element = appendElementInIsolation('<a href="/foo" aria-label="Foo link" role="link"></a>')
 
         const result = getComposedPathSelector([element], defaultConfiguration)
 
-        expect(result).toBe(
-          `A[role="link"][aria-label="${CSS.escape('Foo link')}"][href="${CSS.escape('/foo')}"];`
-        )
+        expect(result).toBe(`A[role="link"][aria-label="${CSS.escape('Foo link')}"][href="${CSS.escape('/foo')}"];`)
       })
 
       it('masks href and aria-label at the mask privacy level', () => {
@@ -338,9 +334,7 @@ describe('getSelectorFromComposedPath', () => {
 
         const result = getComposedPathSelector([element], defaultConfiguration)
 
-        expect(result).toBe(
-          `A[aria-label="${CSS.escape('Visible label')}"][href="${CSS.escape('/foo')}"];`
-        )
+        expect(result).toBe(`A[aria-label="${CSS.escape('Visible label')}"][href="${CSS.escape('/foo')}"];`)
       })
 
       it('does not mask href or aria-label when enablePrivacyForActionName is false', () => {
@@ -352,9 +346,7 @@ describe('getSelectorFromComposedPath', () => {
           mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, enablePrivacyForActionName: false })
         )
 
-        expect(result).toBe(
-          `A[aria-label="${CSS.escape('Secret label')}"][href="${CSS.escape('/foo')}"];`
-        )
+        expect(result).toBe(`A[aria-label="${CSS.escape('Secret label')}"][href="${CSS.escape('/foo')}"];`)
       })
 
       it('preserves an allowlisted aria-label at the mask-unless-allowlisted privacy level', () => {
