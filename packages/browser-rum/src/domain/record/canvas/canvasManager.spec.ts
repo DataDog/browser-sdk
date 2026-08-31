@@ -197,7 +197,7 @@ describe('CanvasManager', () => {
     expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
-  it('makes a tainted canvas capturable after its bitmap is reset', async () => {
+  it('discards the in-flight capture and the last hash when the bitmap is reset', async () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
@@ -212,7 +212,6 @@ describe('CanvasManager', () => {
       })
     })
     await Promise.resolve()
-    canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
 
     canvasManager.resetCanvasBitmap(canvas)
 
@@ -227,7 +226,18 @@ describe('CanvasManager', () => {
     expect(lastChangeHash).toBeUndefined()
   })
 
-  it('forgets capture and taint state when a canvas node is removed', async () => {
+  it('keeps a tainted canvas tainted after its bitmap is reset', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
+
+    canvasManager.resetCanvasBitmap(canvas)
+
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
+
+  it('forgets capture state but keeps the taint when a canvas node is removed', async () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
@@ -249,11 +259,8 @@ describe('CanvasManager', () => {
     expect(attempt.isCurrent()).toBeFalse()
     expect(canvasManager.getCapturableCanvases()).toEqual([])
 
-    // forgetCanvas() clears the taint too: a canvas node removed from the DOM may come back
-    // as a fresh bitmap (e.g. a different <canvas> reused via key/id), so re-marking it dirty
-    // must make it capturable again.
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('resets capture hashes', async () => {

@@ -11,7 +11,7 @@ export interface CanvasSnapshot {
   canvasWidth: number
   close: () => void
   height: number
-  source: CanvasImageSource
+  source: ImageBitmap
   width: number
 }
 
@@ -43,9 +43,9 @@ export function createCanvasSnapshot(
     canvasHeight,
     canvasWidth,
     close: () => imageBitmap.close(),
-    height,
+    height: imageBitmap.height,
     source: imageBitmap,
-    width,
+    width: imageBitmap.width,
   }))
 }
 
@@ -74,20 +74,13 @@ export function createCanvasSnapshot(
 
 export function captureCanvasImage(snapshot: CanvasSnapshot): Promise<Blob | undefined> {
   const imageCanvas = document.createElement('canvas')
-  imageCanvas.width = snapshot.width
-  imageCanvas.height = snapshot.height
-
-  const context = imageCanvas.getContext('2d')
+  const context = imageCanvas.getContext('bitmaprenderer')
   if (!context) {
     return Promise.resolve(undefined)
   }
 
-  try {
-    context.drawImage(snapshot.source, 0, 0)
-    return canvasToBlob(imageCanvas)
-  } catch {
-    return Promise.resolve(undefined)
-  }
+  context.transferFromImageBitmap(snapshot.source)
+  return canvasToBlob(imageCanvas)
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | undefined> {

@@ -6,16 +6,16 @@ import { computeImageHash } from './canvasHash'
 
 describe('computeImageHash', () => {
   it('returns the same hash for the same content', async () => {
-    const first = await computeImageHash(createSnapshot('red'), 100)
-    const second = await computeImageHash(createSnapshot('red'), 100)
+    const first = await computeImageHash(await createSnapshot('red'), 100)
+    const second = await computeImageHash(await createSnapshot('red'), 100)
 
     expect(first).toBeDefined()
     expect(second).toBe(first)
   })
 
   it('returns a different hash when the content changes', async () => {
-    const red = await computeImageHash(createSnapshot('red'), 100)
-    const blue = await computeImageHash(createSnapshot('blue'), 100)
+    const red = await computeImageHash(await createSnapshot('red'), 100)
+    const blue = await computeImageHash(await createSnapshot('blue'), 100)
 
     expect(blue).not.toBe(red)
   })
@@ -23,14 +23,14 @@ describe('computeImageHash', () => {
   // Moved here from trackCanvasCapture.spec.ts: a resize must count as a change even when the
   // downscaled pixels are identical, which is why the canvas dimensions are part of the hash.
   it('returns a different hash when the canvas dimensions change but the downscaled pixels do not', async () => {
-    const small = await computeImageHash(createSnapshot('red', 2), 1)
-    const large = await computeImageHash(createSnapshot('red', 4), 1)
+    const small = await computeImageHash(await createSnapshot('red', 2), 1)
+    const large = await computeImageHash(await createSnapshot('red', 4), 1)
 
     expect(large).not.toBe(small)
   })
 
   it('returns undefined when no 2d context is available', async () => {
-    const snapshot = createSnapshot('red')
+    const snapshot = await createSnapshot('red')
     spyOn(HTMLCanvasElement.prototype, 'getContext').and.returnValue(null)
 
     expect(await computeImageHash(snapshot, 100)).toBeUndefined()
@@ -41,9 +41,9 @@ describe('computeImageHash', () => {
       digest: () => Promise.reject(new Error('unsupported')),
     } as unknown as SubtleCrypto)
 
-    const red = await computeImageHash(createSnapshot('red'), 100)
-    const sameRed = await computeImageHash(createSnapshot('red'), 100)
-    const blue = await computeImageHash(createSnapshot('blue'), 100)
+    const red = await computeImageHash(await createSnapshot('red'), 100)
+    const sameRed = await computeImageHash(await createSnapshot('red'), 100)
+    const blue = await computeImageHash(await createSnapshot('blue'), 100)
 
     expect(red).toBeDefined()
     expect(sameRed).toBe(red)
@@ -55,11 +55,11 @@ describe('computeImageHash', () => {
   // it('hashes the image when SubtleCrypto is unavailable', async () => {
   //   replaceMockable(globalObject.crypto?.subtle, undefined)
   //
-  //   expect(await computeImageHash(createSnapshot('red'), 100)).toBeDefined()
+  //   expect(await computeImageHash(await createSnapshot('red'), 100)).toBeDefined()
   // })
 })
 
-function createSnapshot(color: string, size = 2): CanvasSnapshot {
+async function createSnapshot(color: string, size = 2): Promise<CanvasSnapshot> {
   const canvas = document.createElement('canvas')
   canvas.width = size
   canvas.height = size
@@ -69,12 +69,15 @@ function createSnapshot(color: string, size = 2): CanvasSnapshot {
   document.body.appendChild(canvas)
   registerCleanupTask(() => canvas.remove())
 
+  const source = await createImageBitmap(canvas)
+  registerCleanupTask(() => source.close())
+
   return {
     canvasHeight: size,
     canvasWidth: size,
     close: noop,
     height: size,
-    source: canvas,
+    source,
     width: size,
   }
 }

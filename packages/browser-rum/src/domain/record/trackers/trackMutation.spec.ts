@@ -581,7 +581,7 @@ describe('trackMutation', () => {
         '<canvas></canvas>',
         (sandbox) => {
           canvas = sandbox as HTMLCanvasElement
-          canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
+          canvasManager.markCanvas(canvas, CanvasStatus.Clean)
           canvas.setAttribute('width', '101')
         },
         { scope }
@@ -599,7 +599,7 @@ describe('trackMutation', () => {
         '<canvas width="101"></canvas>',
         (sandbox) => {
           canvas = sandbox as HTMLCanvasElement
-          canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
+          canvasManager.markCanvas(canvas, CanvasStatus.Clean)
           canvas.setAttribute('width', '101')
         },
         { scope }

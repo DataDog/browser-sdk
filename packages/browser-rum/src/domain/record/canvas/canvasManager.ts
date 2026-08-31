@@ -21,9 +21,9 @@ export interface CanvasCaptureAttempt {
 export interface CanvasManager {
   /** Single entry point for the canvas status */
   markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
-  /** The node left the DOM: forget all capture and taint state */
+  /** The node left the DOM: forget its capture state, but not its taint */
   forgetCanvas: (canvas: HTMLCanvasElement) => void
-  /** width/height were assigned: the bitmap was cleared, so untaint and mark dirty */
+  /** width/height were assigned: the bitmap was cleared, so drop the last hash and mark dirty */
   resetCanvasBitmap: (canvas: HTMLCanvasElement) => void
   /** Dirty, connected, not tainted, no capture in flight (disconnected canvases are forgotten as a side effect) */
   getCapturableCanvases: () => HTMLCanvasElement[]

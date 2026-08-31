@@ -81,6 +81,17 @@ describe('trackCanvasCapture', () => {
     canvasContext.fillRect(0, 0, canvas.width, canvas.height)
   }
 
+  async function firstPixelOf(image: Blob) {
+    const bitmap = await createImageBitmap(image)
+    const decodeCanvas = document.createElement('canvas')
+    decodeCanvas.width = bitmap.width
+    decodeCanvas.height = bitmap.height
+    const context = decodeCanvas.getContext('2d')!
+    context.drawImage(bitmap, 0, 0)
+    bitmap.close()
+    return Array.from(context.getImageData(0, 0, 1, 1).data)
+  }
+
   it('captures a dirty canvas the first time it is seen', async () => {
     draw('red')
     const onCanvasCapture = startTracking()
@@ -161,6 +172,9 @@ describe('trackCanvasCapture', () => {
       return Promise.resolve(result)
     })
     replaceMockable(globalObject.crypto?.subtle, { digest: digestSpy } as unknown as SubtleCrypto)
+    // The emitted image is the assertion here, so it has to be a real PNG rather than the empty
+    // blob the suite stubs in.
+    toBlobSpy.and.callThrough()
 
     draw('red')
     const onCanvasCapture = startTracking()
@@ -171,18 +185,15 @@ describe('trackCanvasCapture', () => {
     draw('blue')
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     resolveFirstDigest()
-    await waitForCanvasCapture()
+    await collectAsyncCalls(onCanvasCapture, 1)
 
-    const firstImageCanvas = toBlobSpy.calls.mostRecent().object as HTMLCanvasElement
-    expect(Array.from(firstImageCanvas.getContext('2d')!.getImageData(0, 0, 1, 1).data)).toEqual([255, 0, 0, 255])
+    expect(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[0].image)).toEqual([255, 0, 0, 255])
     expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
 
     clock.tick(1000)
-    await waitForCanvasCapture()
+    await collectAsyncCalls(onCanvasCapture, 2)
 
-    const secondImageCanvas = toBlobSpy.calls.mostRecent().object as HTMLCanvasElement
-    expect(Array.from(secondImageCanvas.getContext('2d')!.getImageData(0, 0, 1, 1).data)).toEqual([0, 0, 255, 255])
-    expect(onCanvasCapture).toHaveBeenCalledTimes(2)
+    expect(await firstPixelOf(onCanvasCapture.calls.argsFor(1)[0].image)).toEqual([0, 0, 255, 255])
     expect(onCanvasCapture.calls.argsFor(1)[0].changeHash).not.toBe(onCanvasCapture.calls.argsFor(0)[0].changeHash)
   })
 
@@ -222,7 +233,7 @@ describe('trackCanvasCapture', () => {
     expect(onCanvasCapture.calls.argsFor(1)[0].nodeId).toBe(currentNodeId)
   })
 
-  it('captures a tainted canvas that is reset while detached and then reinserted', async () => {
+  it('does not capture a tainted canvas that is reset while detached and then reinserted', async () => {
     const onCanvasCapture = startTracking()
     canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
 
@@ -232,16 +243,12 @@ describe('trackCanvasCapture', () => {
     canvas.width = 4
     draw('red')
     document.body.appendChild(canvas)
-    const currentNodeId = scope.nodeIds.getOrInsert(canvas)
+    scope.nodeIds.getOrInsert(canvas)
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     clock.tick(1000)
     await waitForCanvasCapture()
 
-    expect(onCanvasCapture).toHaveBeenCalledOnceWith({
-      nodeId: currentNodeId,
-      changeHash: jasmine.any(String),
-      image: jasmine.any(Blob),
-    })
+    expect(onCanvasCapture).not.toHaveBeenCalled()
   })
 
   it('discards an in-flight capture when the canvas receives a new node ID', async () => {

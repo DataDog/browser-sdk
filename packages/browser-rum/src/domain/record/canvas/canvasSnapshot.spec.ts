@@ -84,19 +84,25 @@ describe('captureCanvasImage', () => {
 
   it('encodes an image with the dimensions of the snapshot', async () => {
     const canvas = createCanvas(4, 2)
-    const toBlobSpy = spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback) => {
-      callback(new Blob([], { type: 'image/png' }))
-    })
     const snapshot = await createSnapshot(canvas, 2)
 
-    await captureCanvasImage(snapshot)
+    const image = await captureCanvasImage(snapshot)
 
-    const imageCanvas = toBlobSpy.calls.mostRecent().object as HTMLCanvasElement
-    expect(imageCanvas.width).toBe(2)
-    expect(imageCanvas.height).toBe(1)
+    expect(await imageSize(image!)).toEqual([2, 1])
   })
 
-  it('does not encode an image when no 2d context is available', async () => {
+  it('downscales the whole canvas instead of cropping it', async () => {
+    // The canvas is red on its left half and blue on its right half, so a cropped image would be
+    // fully red. Drawing a snapshot whose bitmap was not resized produces exactly that.
+    const canvas = createCanvas(4, 2, ['red', 'blue'])
+    const snapshot = await createSnapshot(canvas, 2)
+
+    const image = await captureCanvasImage(snapshot)
+
+    expect(await imagePixels(image!)).toEqual([255, 0, 0, 255, 0, 0, 255, 255])
+  })
+
+  it('does not encode an image when the canvas cannot receive the snapshot', async () => {
     const canvas = createCanvas(2, 2)
     const snapshot = await createSnapshot(canvas, 1000)
     spyOn(HTMLCanvasElement.prototype, 'getContext').and.returnValue(null)
@@ -105,13 +111,16 @@ describe('captureCanvasImage', () => {
   })
 })
 
-function createCanvas(width: number, height: number): HTMLCanvasElement {
+function createCanvas(width: number, height: number, colors: string[] = ['red']): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
   const context = canvas.getContext('2d')!
-  context.fillStyle = 'red'
-  context.fillRect(0, 0, width, height)
+  const stripeWidth = width / colors.length
+  colors.forEach((color, index) => {
+    context.fillStyle = color
+    context.fillRect(index * stripeWidth, 0, stripeWidth, height)
+  })
   document.body.appendChild(canvas)
   registerCleanupTask(() => canvas.remove())
   return canvas
@@ -121,4 +130,26 @@ async function createSnapshot(canvas: HTMLCanvasElement, maxImageDimension: numb
   const snapshot = await createCanvasSnapshot(canvas, maxImageDimension)
   registerCleanupTask(() => snapshot?.close())
   return snapshot!
+}
+
+async function decodeImage(image: Blob): Promise<{ pixels: number[]; size: [number, number] }> {
+  const bitmap = await createImageBitmap(image)
+  const width = bitmap.width
+  const height = bitmap.height
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')!
+  context.drawImage(bitmap, 0, 0)
+  const pixels = Array.from(context.getImageData(0, 0, width, height).data)
+  bitmap.close()
+  return { pixels, size: [width, height] }
+}
+
+async function imageSize(image: Blob): Promise<[number, number]> {
+  return (await decodeImage(image)).size
+}
+
+async function imagePixels(image: Blob): Promise<number[]> {
+  return (await decodeImage(image)).pixels
 }
