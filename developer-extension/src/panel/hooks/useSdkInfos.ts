@@ -79,9 +79,12 @@ async function getInfos(): Promise<SdkInfos> {
           return JSON.parse(stringified)
         }
 
-        // SDK v7 renamed the session cookie from '_dd_s' to '_dd_s_v2'. Only prefer the
-        // new name when a v7 SDK is detected on the page, so a stale _dd_s_v2 left over
-        // from a previous v7 session doesn't shadow an active v6 session.
+        // SDK v7 renamed the session cookie from '_dd_s' to '_dd_s_v2'. The SDK's own
+        // version string can't be used to tell which name is active: local dev builds
+        // always report 'dev' regardless of which major is checked out, so a v6 dev
+        // build and a v7 dev build look identical. Instead, read both cookie names and
+        // keep whichever holds the more recently created valid session, since only an
+        // actively running SDK instance writes fresh data under its own cookie name.
         //
         // When multiple cookies share the same name (e.g. after changing
         // trackSessionAcrossSubdomains or usePartitionedCrossSiteSessionCookie), the SDK
@@ -89,13 +92,6 @@ async function getInfos(): Promise<SdkInfos> {
         // that formula here: c = ((domainCount << 1) | crossSite).toString(16).
         // SESSION_COOKIE_VERSION is omitted because it is currently 0 and contributes
         // nothing to the value.
-        function findCookieValue(name) {
-          return document.cookie
-            .split(';')
-            .map(c => c.match(/(\\S*?)=(.*)/)?.slice(1) || [])
-            .find(([cookieName]) => cookieName === name)
-            ?.[1]
-        }
         function findMatchingCookieValue(name, config) {
           const domain = config?.domain
           const crossSite = config?.usePartitionedCrossSiteSessionCookie ? 1 : 0
@@ -115,9 +111,25 @@ async function getInfos(): Promise<SdkInfos> {
 
           return matches[0]
         }
-        const isV7 = window.DD_RUM?.version?.startsWith('7') || window.DD_LOGS?.version?.startsWith('7')
+        function parseSessionCookie(rawValue) {
+          if (!rawValue) {
+            return null
+          }
+          const entries = Object.fromEntries(rawValue.split('&').map((v) => v.split('=')))
+          // No 'id' means either an expired tombstone (isExpired=1) or malformed data.
+          return entries.id ? entries : null
+        }
+
         const sdkConfig = window.DD_RUM?.getInitConfiguration?.() ?? window.DD_LOGS?.getInitConfiguration?.()
-        const cookieRawValue = isV7 ? (findMatchingCookieValue('_dd_s_v2', sdkConfig) ?? findCookieValue('_dd_s')) : findCookieValue('_dd_s')
+        const v2RawValue = findMatchingCookieValue('_dd_s_v2', sdkConfig)
+        const v6RawValue = findMatchingCookieValue('_dd_s', sdkConfig)
+        const v2Session = parseSessionCookie(v2RawValue)
+        const v6Session = parseSessionCookie(v6RawValue)
+
+        const cookieRawValue =
+          v2Session && v6Session
+            ? (Number(v2Session.created) >= Number(v6Session.created) ? v2RawValue : v6RawValue)
+            : (v2RawValue ?? v6RawValue)
 
         const cookieEntries = cookieRawValue
           ? cookieRawValue.split('&').map((value) => value.split('='))
