@@ -1,5 +1,11 @@
 import { globalObject } from '@datadog/js-core/util'
-import { registerCleanupTask, mockClock, replaceMockable, waitAfterNextPaint } from '@datadog/browser-core/test'
+import {
+  collectAsyncCalls,
+  registerCleanupTask,
+  mockClock,
+  replaceMockable,
+  waitAfterNextPaint,
+} from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
@@ -119,11 +125,17 @@ describe('trackCanvasCapture', () => {
     const onCanvasCapture = startTracking()
 
     draw('red')
+    const firstCapture = collectAsyncCalls(onCanvasCapture, 1)
     markCanvasDirtyAndWaitForCapture()
+    await firstCapture
+    // Wait for the capture promise to finish after the callback has been called. Otherwise the
+    // second interval tick can happen while the first capture is still marked as in flight.
     await waitForCanvasCapture()
+
     draw('blue')
+    const secondCapture = collectAsyncCalls(onCanvasCapture, 2)
     markCanvasDirtyAndWaitForCapture()
-    await waitForCanvasCapture()
+    await secondCapture
 
     expect(onCanvasCapture).toHaveBeenCalledTimes(2)
     const firstHash = onCanvasCapture.calls.argsFor(0)[0].changeHash
