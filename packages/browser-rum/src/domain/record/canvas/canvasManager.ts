@@ -177,8 +177,3 @@ export function createCanvasManager(): CanvasManager {
 function isSecurityError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'SecurityError'
 }
-
-// remove
-function assertNever(value: never): never {
-  throw new Error(`Unexpected CanvasStatus: ${String(value)}`)
-}

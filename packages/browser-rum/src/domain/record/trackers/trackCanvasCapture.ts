@@ -118,9 +118,9 @@ function createCanvasSnapshot(
   const createImageBitmap = mockable(globalObject.createImageBitmap)
 
   // TODO revisit fallback.
-  if (!createImageBitmap) {
-    return Promise.resolve(createCanvasSnapshotWithCanvas(canvas, canvasWidth, canvasHeight, width, height))
-  }
+  // if (!createImageBitmap) {
+  //   return Promise.resolve(createCanvasSnapshotWithCanvas(canvas, canvasWidth, canvasHeight, width, height))
+  // }
 
   try {
     return createImageBitmap(canvas, {
@@ -183,9 +183,10 @@ function computeImageHash(snapshot: CanvasSnapshot, maxHashDimension: number): P
 
   const data = context.getImageData(0, 0, width, height).data
   const subtleCrypto = mockable(globalObject.crypto?.subtle)
-  if (!subtleCrypto) {
-    return Promise.resolve(createChangeHash(snapshot.canvasWidth, snapshot.canvasHeight, fnv1aHash(data)))
-  }
+  // TODO revisit fallback.
+  // if (!subtleCrypto) {
+  //   return Promise.resolve(createChangeHash(snapshot.canvasWidth, snapshot.canvasHeight, fnv1aHash(data)))
+  // }
 
   return subtleCrypto.digest('SHA-256', data).then(
     (buffer) => createChangeHash(snapshot.canvasWidth, snapshot.canvasHeight, arrayBufferToHex(buffer)),
