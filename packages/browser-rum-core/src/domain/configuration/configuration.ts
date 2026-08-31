@@ -6,11 +6,9 @@ import {
   TraceContextInjection,
   display,
   ExperimentalFeature,
-  getSdkSetup,
   isExperimentalFeatureEnabled,
   isNumber,
   isNonEmptyArray,
-  mockable,
   BROWSER_CORE_SCHEMA,
 } from '@datadog/browser-core'
 import { isIndexableObject, isMatchOption } from '@datadog/js-core/util'
@@ -21,6 +19,9 @@ import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 import { getRemoteConfigurationId } from './remoteConfiguration'
+
+// replaced at build time
+declare const __BUILD_ENV__SDK_SETUP__: 'npm' | 'cdn'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
@@ -514,7 +515,7 @@ export type RumConfiguration = Omit<
  * they opt in explicitly. An explicit `betaEnableViewUpdates` always takes precedence.
  */
 function isViewUpdatesEnabledByDefault(proxy: InitConfiguration['proxy']): boolean {
-  return mockable(getSdkSetup)() === 'cdn' && !proxy
+  return __BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy
 }
 
 export function validateAndBuildRumConfiguration(
@@ -739,8 +740,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
-    beta_enable_view_updates:
-      configuration.betaEnableViewUpdates ?? isViewUpdatesEnabledByDefault(configuration.proxy),
+    beta_enable_view_updates: configuration.betaEnableViewUpdates ?? isViewUpdatesEnabledByDefault(configuration.proxy),
     beta_track_web_sockets: configuration.betaTrackWebSockets,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration

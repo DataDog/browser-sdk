@@ -88,7 +88,6 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState, asyncRunOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { mockable } from './tools/mockable'
-export { getSdkSetup } from './tools/getSdkSetup'
 export type { InstrumentedMethodCall, InstrumentedConstructorCall } from './tools/instrumentMethod'
 export { instrumentMethod, instrumentConstructor, instrumentSetter } from './tools/instrumentMethod'
 export {
