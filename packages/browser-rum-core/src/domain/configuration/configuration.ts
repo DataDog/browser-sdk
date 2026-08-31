@@ -508,6 +508,9 @@ export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedT
  * Partial view updates are enabled by default for CDN users that do not go through a proxy: a
  * proxy may not forward the `view_update` event type yet, and npm users pin an SDK version so
  * they opt in explicitly. An explicit `betaEnableViewUpdates` always takes precedence.
+ *
+ * The CDN check is temporary, the next step is to default this to true unless `proxy` is set.
+ * TODO next major: remove the option.
  */
 function isViewUpdatesEnabledByDefault(proxy: InitConfiguration['proxy']): boolean {
   return __BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy
