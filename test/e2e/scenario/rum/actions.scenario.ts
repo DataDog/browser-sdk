@@ -785,6 +785,10 @@ test.describe('action collection with composed path selector', () => {
       enableExperimentalFeatures: ['composed_path_selector_attributes'],
     })
     .withBody(html`
+      <!-- a preceding sibling keeps the link's nth-child position fixed at 2 regardless of what
+           the test harness injects elsewhere in the body (ex: an init script appended after
+           </body>, which some setups reparent into <body> as a trailing sibling) -->
+      <span></span>
       <a
         id="my-link"
         href="/orders/8842/edit?token=secret#section"
@@ -803,7 +807,7 @@ test.describe('action collection with composed path selector', () => {
       // the query string, hash and numeric order id are stripped; aria-label is collected as-is
       // (spaces and slashes are CSS-escaped, like every other attribute value in this selector)
       expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
-        'A#my-link[aria-label="Edit\\ order"][href="\\/orders\\/\\?\\/edit"];'
+        'A#my-link[aria-label="Edit\\ order"][href="\\/orders\\/\\?\\/edit"]:nth-child(2);'
       )
     })
 })
