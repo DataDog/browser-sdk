@@ -4,7 +4,7 @@ import { normalizeUrl, globalObject } from '@datadog/js-core/util'
 import type { GlobalObject } from '@datadog/js-core/util'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { monitorError } from '../tools/monitor'
+import { monitorPromise } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import { readBytesFromStream } from '../tools/readBytesFromStream'
 import { tryToClone } from '../tools/utils/responseUtils'
@@ -112,7 +112,7 @@ function beforeSend(
   parameters[1] = context.init
 
   onPostCall((responsePromise) => {
-    afterSend(observable, responsePromise, context).catch(monitorError)
+    monitorPromise(afterSend(observable, responsePromise, context))
   })
 }
 

@@ -6,7 +6,7 @@ import {
   display,
   displayAlreadyInitializedError,
   initFeatureFlags,
-  monitorError,
+  monitorPromise,
   noop,
   buildAccountContextManager,
   CustomerContextKey,
@@ -117,8 +117,8 @@ export function createPreStartStrategy(
           ? startSessionManagerStub()
           : mockable(startSessionManager)(configuration, trackingConsentState)
 
-        void sessionManagerPromise
-          .then((newSessionManager) => {
+        monitorPromise(
+          sessionManagerPromise.then((newSessionManager) => {
             if (!newSessionManager) {
               return
             }
@@ -127,7 +127,7 @@ export function createPreStartStrategy(
             addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
             tryStartLogs()
           })
-          .catch(monitorError)
+        )
       })
     },
 

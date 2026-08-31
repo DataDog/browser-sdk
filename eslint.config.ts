@@ -215,7 +215,12 @@ export default defineConfig(
       '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
       '@typescript-eslint/no-floating-promises': [
         'error',
-        { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' }] },
+        {
+          allowForKnownSafeCalls: [
+            { from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' },
+            'monitorPromise',
+          ],
+        },
       ],
 
       // Those lints are triggering false positives

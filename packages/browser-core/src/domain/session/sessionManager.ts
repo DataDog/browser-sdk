@@ -22,7 +22,7 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { TelemetryMetrics, addTelemetryMetrics } from '../telemetry'
-import { monitorError } from '../../tools/monitor'
+import { monitorPromise } from '../../tools/monitor'
 import type { SessionState } from './sessionState'
 import {
   expandOnly,
@@ -99,9 +99,7 @@ export async function startSessionManager(
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
     sessionExpired = false
-    strategy
-      .setSessionState((state) => expandOrRenew(state, configuration), 'expandOrRenewOnActivity')
-      .catch(monitorError)
+    monitorPromise(strategy.setSessionState((state) => expandOrRenew(state, configuration), 'expandOrRenewOnActivity'))
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
@@ -113,8 +111,9 @@ export async function startSessionManager(
     stopped = true
   })
 
-  let initialState = await resolveInitialState().catch((error) =>
-    monitorError(new Error(`Error while resolving initial session state: ${error}`))
+  let initialState = await monitorPromise(
+    resolveInitialState(),
+    (error) => new Error(`Error while resolving initial session state: ${String(error)}`)
   )
   if (!initialState || stopped) {
     return
@@ -130,7 +129,7 @@ export async function startSessionManager(
     if (stopped) {
       return
     }
-    initialState = await resolveInitialState().catch(monitorError)
+    initialState = await monitorPromise(resolveInitialState())
     if (!initialState || stopped) {
       return
     }
@@ -172,8 +171,8 @@ export async function startSessionManager(
     if (expireDate) {
       const delay = expireDate - dateNow()
       expirationTimeoutId = setTimeout(() => {
-        strategy
-          .setSessionState((state) => {
+        monitorPromise(
+          strategy.setSessionState((state) => {
             if (isSessionInExpiredState(state)) {
               if (!trackingConsentState.isGranted()) {
                 delete state.anonymousId
@@ -184,7 +183,7 @@ export async function startSessionManager(
 
             return state
           }, 'expireOnTimeout')
-          .catch(monitorError)
+        )
       }, delay)
     }
   }
@@ -193,9 +192,9 @@ export async function startSessionManager(
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
         sessionExpired = false
-        strategy
-          .setSessionState((state) => expandOrRenew(state, configuration), 'expandOrRenewOnConsent')
-          .catch(monitorError)
+        monitorPromise(
+          strategy.setSessionState((state) => expandOrRenew(state, configuration), 'expandOrRenewOnConsent')
+        )
       } else {
         expire()
       }
@@ -209,13 +208,13 @@ export async function startSessionManager(
       })
       trackVisibility(() => {
         if (!sessionExpired) {
-          strategy.setSessionState((state) => expandOnly(state), 'expandOnVisibility').catch(monitorError)
+          monitorPromise(strategy.setSessionState((state) => expandOnly(state), 'expandOnVisibility'))
         }
       })
       trackResume(() => {
-        strategy
-          .setSessionState((state) => initializeSession(state, configuration), 'initializeOnResume')
-          .catch(monitorError)
+        monitorPromise(
+          strategy.setSessionState((state) => initializeSession(state, configuration), 'initializeOnResume')
+        )
       })
     }
   }
@@ -240,7 +239,7 @@ export async function startSessionManager(
       expireObservable,
       expire,
       updateSessionState: (partialState) => {
-        strategy.setSessionState((state) => ({ ...state, ...partialState }), 'updateState').catch(monitorError)
+        monitorPromise(strategy.setSessionState((state) => ({ ...state, ...partialState }), 'updateState'))
       },
     }
   }
@@ -283,14 +282,14 @@ export async function startSessionManager(
     }
     handleStateChange(expiredState)
     // Persist to storage asynchronously
-    strategy
-      .setSessionState((state) => {
+    monitorPromise(
+      strategy.setSessionState((state) => {
         if (!trackingConsentState.isGranted()) {
           delete state.anonymousId
         }
         return getExpiredSessionState(state, configuration)
       }, 'expire')
-      .catch(monitorError)
+    )
   }
 
   function buildSessionContext(sessionState: SessionState): SessionContext {

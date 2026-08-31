@@ -8,7 +8,7 @@ import {
   clearTimeout,
   setTimeout,
   DOM_EVENT,
-  monitorError,
+  monitorPromise,
   display,
   mockable,
   isSampled,
@@ -133,8 +133,8 @@ export function createRumProfiler(
     const checkGeneration = ++quotaCheckGeneration
     const sessionId = session.findTrackedSession()?.id
     if (sessionId) {
-      mockable(checkProfilingQuota)(configuration, sessionId)
-        .then((result) => {
+      monitorPromise(
+        mockable(checkProfilingQuota)(configuration, sessionId).then((result) => {
           if (checkGeneration !== quotaCheckGeneration) {
             return
           }
@@ -145,7 +145,7 @@ export function createRumProfiler(
             stopProfiling('quota_ko', result.reason)
           }
         })
-        .catch(monitorError)
+      )
     }
   }
 
@@ -275,9 +275,8 @@ export function createRumProfiler(
     const { startClocks, views, sessionId } = runningInstance
 
     // Stop current profiler to get trace
-    runningInstance.profiler
-      .stop()
-      .then((trace) => {
+    monitorPromise(
+      runningInstance.profiler.stop().then((trace) => {
         const endClocks = clocksNow()
         const duration = elapsed(startClocks.relative, endClocks.relative)
         const longTasks = longTaskHistory.findAll(startClocks.relative, duration)
@@ -311,7 +310,7 @@ export function createRumProfiler(
           sessionId
         )
       })
-      .catch(monitorError)
+    )
   }
 
   function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
@@ -343,7 +342,7 @@ export function createRumProfiler(
       clearTimeout(runningInstance.timeoutId)
       // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
       runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
-      void runningInstance.profiler.stop().catch(monitorError)
+      monitorPromise(runningInstance.profiler.stop())
     } else {
       // Collect and send profile data in background - doesn't block state transitions
       collectProfilerInstance(runningInstance)

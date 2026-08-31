@@ -5,7 +5,7 @@ import {
   getCookie,
   addTelemetryMetrics,
   TelemetryMetrics,
-  monitorError,
+  monitorPromise,
   fetch,
 } from '@datadog/browser-core'
 import { isIndexableObject } from '@datadog/js-core/util'
@@ -346,21 +346,22 @@ function doBackgroundCacheSync(
   cache: ReturnType<typeof createConfigurationCache>,
   metrics: ReturnType<typeof initMetrics>
 ) {
-  fetchRemoteConfiguration(initConfiguration)
-    .then((fetchResult) => {
-      if (!fetchResult.ok) {
-        metrics.increment('fetch', 'failure')
-        display.error(fetchResult.error)
-      } else {
-        metrics.increment('fetch', 'success')
-        cache.write(fetchResult.value)
-      }
-    })
-    .catch(monitorError)
-    .finally(() => {
-      // monitor-until: forever
-      addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics.get() })
-    })
+  monitorPromise(
+    fetchRemoteConfiguration(initConfiguration)
+      .then((fetchResult) => {
+        if (!fetchResult.ok) {
+          metrics.increment('fetch', 'failure')
+          display.error(fetchResult.error)
+        } else {
+          metrics.increment('fetch', 'success')
+          cache.write(fetchResult.value)
+        }
+      })
+      .finally(() => {
+        // monitor-until: forever
+        addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics.get() })
+      })
+  )
 }
 
 export function getRemoteConfiguration(
