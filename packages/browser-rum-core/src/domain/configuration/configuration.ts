@@ -6,9 +6,11 @@ import {
   TraceContextInjection,
   display,
   ExperimentalFeature,
+  getSdkSetup,
   isExperimentalFeatureEnabled,
   isNumber,
   isNonEmptyArray,
+  mockable,
   BROWSER_CORE_SCHEMA,
 } from '@datadog/browser-core'
 import { isIndexableObject, isMatchOption } from '@datadog/js-core/util'
@@ -350,6 +352,9 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enable partial view updates, which reduces bandwidth by sending only changed
    * fields instead of full view events on intermediate updates.
    *
+   * Enabled by default when the SDK is loaded from the CDN and no `proxy` is configured.
+   * Disabled by default otherwise, because a proxy may not forward the `view_update` event type.
+   *
    * @category Beta
    */
   betaEnableViewUpdates?: boolean | undefined
@@ -413,7 +418,9 @@ export const RUM_SCHEMA = {
   trackResources: { type: 'boolean', default: true, strict: false },
   trackLongTasks: { type: 'boolean', default: true, strict: false },
   trackViewsManually: { type: 'boolean', default: false, strict: false },
-  betaEnableViewUpdates: { type: 'boolean', default: false },
+  // No `default`: an unset option must stay distinguishable from an explicit `false` so
+  // `validateAndBuildRumConfiguration` can apply the conditional default below.
+  betaEnableViewUpdates: { type: 'boolean' },
   betaTrackWebSockets: { type: 'boolean', default: false, strict: false },
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
@@ -489,12 +496,25 @@ export const RUM_SCHEMA = {
   },
 } as const
 
-export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedTracingUrls'> & {
+export type RumConfiguration = Omit<
+  InferredConfig<typeof RUM_SCHEMA>,
+  'allowedTracingUrls' | 'betaEnableViewUpdates'
+> & {
   allowedTracingUrls: TracingOption[]
+  betaEnableViewUpdates: boolean
   rulePsr: number | undefined
   trackResourceHeaders: MatchHeader[]
   allowedGraphQlUrls: GraphQlUrlOption[]
   remoteConfigurationId: string | undefined
+}
+
+/**
+ * Partial view updates are enabled by default for CDN users that do not go through a proxy: a
+ * proxy may not forward the `view_update` event type yet, and npm users pin an SDK version so
+ * they opt in explicitly. An explicit `betaEnableViewUpdates` always takes precedence.
+ */
+function isViewUpdatesEnabledByDefault(proxy: InitConfiguration['proxy']): boolean {
+  return mockable(getSdkSetup)() === 'cdn' && !proxy
 }
 
 export function validateAndBuildRumConfiguration(
@@ -524,6 +544,7 @@ export function validateAndBuildRumConfiguration(
   return {
     ...config,
     sessionReplayCanvasRecording,
+    betaEnableViewUpdates: config.betaEnableViewUpdates ?? isViewUpdatesEnabledByDefault(config.proxy),
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
@@ -718,7 +739,8 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
-    beta_enable_view_updates: configuration.betaEnableViewUpdates,
+    beta_enable_view_updates:
+      configuration.betaEnableViewUpdates ?? isViewUpdatesEnabledByDefault(configuration.proxy),
     beta_track_web_sockets: configuration.betaTrackWebSockets,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration

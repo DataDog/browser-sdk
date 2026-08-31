@@ -4,6 +4,7 @@ import {
   DefaultPrivacyLevel,
   display,
   ExperimentalFeature,
+  getSdkSetup,
   TraceContextInjection,
 } from '@datadog/browser-core'
 import type {
@@ -11,7 +12,11 @@ import type {
   CamelToSnakeCase,
   MapInitConfigurationKey,
 } from '@datadog/browser-core/test'
-import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  replaceMockable,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import {
   DEFAULT_PROPAGATOR_TYPES,
@@ -486,6 +491,74 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('betaEnableViewUpdates', () => {
+    // Unit tests are bundled as a CDN build (see webpack.base.ts), so the npm cases mock
+    // `getSdkSetup`. `getSdkSetup.spec.ts` pins that 'cdn' assumption.
+
+    it('defaults to true on a CDN build without a proxy', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeTrue()
+    })
+
+    it('defaults to false on a CDN build with a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('defaults to false on a CDN build with a proxy function', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: () => 'https://proxy.example.com' })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('defaults to false on an npm build without a proxy', () => {
+      replaceMockable(getSdkSetup, () => 'npm' as const)
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeFalse()
+    })
+
+    it('defaults to false on an npm build with a proxy', () => {
+      replaceMockable(getSdkSetup, () => 'npm' as const)
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('honors an explicit false on a CDN build without a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('honors an explicit true on a CDN build with a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          betaEnableViewUpdates: true,
+          proxy: 'https://proxy.example.com',
+        })!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('honors an explicit true on an npm build', () => {
+      replaceMockable(getSdkSetup, () => 'npm' as const)
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })!
+          .betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('does not validate the configuration if it is not a boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: 'yes' as any })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"betaEnableViewUpdates" must be a boolean')
+    })
+  })
+
   describe('trackResourceHeaders', () => {
     describe('disabled', () => {
       it('defaults to empty array', () => {
@@ -919,6 +992,31 @@ describe('validateAndBuildRumConfiguration', () => {
 })
 
 describe('serializeRumConfiguration', () => {
+  describe('beta_enable_view_updates', () => {
+    it('reports the effective default on a CDN build without a proxy', () => {
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeTrue()
+    })
+
+    it('reports the effective default on a CDN build with a proxy', () => {
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+
+    it('reports the effective default on an npm build', () => {
+      replaceMockable(getSdkSetup, () => 'npm' as const)
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeFalse()
+    })
+
+    it('reports an explicitly disabled option', () => {
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+  })
+
   it('should serialize the configuration', () => {
     const exhaustiveRumInitConfiguration: Required<RumInitConfiguration> = {
       ...EXHAUSTIVE_INIT_CONFIGURATION,
