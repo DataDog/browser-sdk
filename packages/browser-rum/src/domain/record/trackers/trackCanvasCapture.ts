@@ -4,6 +4,8 @@ import { ONE_SECOND } from '@datadog/js-core/time'
 import { globalObject } from '@datadog/js-core/util'
 import type { RecordingScope } from '../recordingScope'
 import type { NodeId } from '../encoding'
+import type { CanvasCaptureAttempt } from '../canvas/canvasManager'
+import { CanvasStatus } from '../canvas/canvasManager'
 import type { Tracker } from './tracker.types'
 
 export interface CanvasCapture {
@@ -31,7 +33,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
     capturableCanvases.forEach((canvas) => {
       const nodeId = scope.nodeIds.get(canvas)
       if (nodeId === undefined) {
-        canvasManager.markCanvasClean(canvas)
+        canvasManager.markCanvas(canvas, CanvasStatus.Clean)
         return
       }
 
@@ -40,111 +42,61 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         return // Keep it dirty so it can be captured if its privacy level becomes allow
       }
 
-      const captureId = canvasManager.markCanvasCaptureStarted(canvas)
-      if (captureId === undefined) {
-        return
-      }
-
-      const canReadCanvas = () =>
-        scope.nodeIds.get(canvas) === nodeId &&
-        getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel) === NodePrivacyLevel.ALLOW
-
-      let snapshotPromise: Promise<CanvasSnapshot | undefined>
-      try {
-        snapshotPromise = createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000, canReadCanvas)
-      } catch (error) {
-        if (isSecurityError(error)) {
-          canvasManager.markCanvasTainted(canvas)
-        }
-        canvasManager.markCanvasCaptureFinished(canvas, captureId)
-        return
-      }
-
-      snapshotPromise
-        .then((snapshot) => {
-          if (stopped || !canvasManager.isCanvasCaptureInFlight(canvas, captureId)) {
-            snapshot?.close()
-            return
-          }
-
-          if (!snapshot) {
-            return // snapshot failed; leave it dirty
-          }
-
-          if (scope.nodeIds.get(canvas) !== nodeId) {
-            snapshot.close()
-            return // The canvas is no longer represented by the node that this capture started for
-          }
-
-          let hashPromise: Promise<string | undefined>
-          try {
-            hashPromise = computeImageHash(snapshot, configuration?.hashingMaxDimension ?? 100)
-          } catch (error) {
-            snapshot.close()
-            if (isSecurityError(error)) {
-              canvasManager.markCanvasTainted(canvas)
-            }
-            return
-          }
-
-          return hashPromise
-            .then((hash) => {
-              if (stopped || !canvasManager.isCanvasCaptureInFlight(canvas, captureId)) {
-                return
-              }
-
-              if (hash === undefined) {
-                return // hashing failed; leave it dirty
-              }
-
-              if (scope.nodeIds.get(canvas) !== nodeId) {
-                return // The canvas is no longer represented by the node that this capture started for
-              }
-
-              if (hash === canvasManager.getPreviousHash(canvas)) {
-                canvasManager.markCanvasCleanIfUnchanged(canvas, captureId)
-                return // unchanged: no capture/output
-              }
-
-              // Clear the dirty state before the asynchronous encoding. A draw occurring while the
-              // capture is in flight will mark the canvas dirty again and will be handled by the next tick.
-              canvasManager.markCanvasCleanIfUnchanged(canvas, captureId)
-
-              return captureCanvasImage(snapshot).then((image) => {
-                if (
-                  stopped ||
-                  !canvasManager.isCanvasCaptureInFlight(canvas, captureId) ||
-                  scope.nodeIds.get(canvas) !== nodeId
-                ) {
-                  return
-                }
-
-                if (!image) {
-                  canvasManager.markCanvasDirty(canvas)
-                  return
-                }
-
-                onCanvasCapture({ nodeId, changeHash: hash, image })
-                if (canvasManager.isCanvasCaptureInFlight(canvas, captureId)) {
-                  canvasManager.setPreviousHash(canvas, hash)
-                }
-              })
-            })
-            .finally(() => snapshot.close())
-        })
-        .catch((error) => {
-          if (!stopped && canvasManager.isCanvasCaptureInFlight(canvas, captureId)) {
-            if (isSecurityError(error)) {
-              canvasManager.markCanvasTainted(canvas)
-            } else {
-              canvasManager.markCanvasDirty(canvas)
-            }
-          }
-        })
-        .finally(() => {
-          canvasManager.markCanvasCaptureFinished(canvas, captureId)
-        })
+      void canvasManager.capture(canvas, (attempt) => captureCanvas(canvas, nodeId, attempt))
     })
+  }
+
+  async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId, attempt: CanvasCaptureAttempt) {
+    const canReadCanvas = () =>
+      scope.nodeIds.get(canvas) === nodeId &&
+      getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel) === NodePrivacyLevel.ALLOW
+
+    let snapshot: CanvasSnapshot | undefined
+    try {
+      snapshot = await createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000, canReadCanvas)
+      if (stopped || !attempt.isCurrent()) {
+        return
+      }
+      if (!snapshot) {
+        return // snapshot failed; leave it dirty
+      }
+      if (scope.nodeIds.get(canvas) !== nodeId) {
+        return // The canvas is no longer represented by the node that this capture started for
+      }
+
+      const hash = await computeImageHash(snapshot, configuration?.hashingMaxDimension ?? 100)
+      if (stopped || !attempt.isCurrent()) {
+        return
+      }
+      if (hash === undefined) {
+        return // hashing failed; leave it dirty
+      }
+      if (scope.nodeIds.get(canvas) !== nodeId) {
+        return // The canvas is no longer represented by the node that this capture started for
+      }
+
+      if (hash === attempt.lastChangeHash) {
+        attempt.settle(hash)
+        return // unchanged: no capture/output
+      }
+
+      const image = await captureCanvasImage(snapshot)
+      if (stopped || !attempt.isCurrent() || scope.nodeIds.get(canvas) !== nodeId) {
+        return
+      }
+      if (!image) {
+        return // encoding failed; leave it dirty
+      }
+
+      onCanvasCapture({ nodeId, changeHash: hash, image })
+      attempt.settle(hash)
+    } catch (error) {
+      if (!stopped) {
+        attempt.fail(error)
+      }
+    } finally {
+      snapshot?.close()
+    }
   }
 
   return {
@@ -312,7 +264,3 @@ function fnv1aHash(data: ArrayLike<number>): string {
   return (hash >>> 0).toString(16).padStart(8, '0')
 }
 /* eslint-enable no-bitwise */
-
-function isSecurityError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'SecurityError'
-}

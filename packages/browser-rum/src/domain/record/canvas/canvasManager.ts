@@ -1,117 +1,183 @@
+export const enum CanvasStatus {
+  /** The canvas is clean, meaning it has not been marked as dirty or tainted */
+  Clean,
+  /** The canvas is dirty, meaning it has been marked as dirty by a draw operation */
+  Dirty,
+  /** The canvas is tainted, meaning it has been marked as tainted by a SecurityError */
+  Tainted,
+}
+
+export interface CanvasCaptureAttempt {
+  /** changeHash emitted the last time this canvas was captured, taken when the attempt started */
+  readonly lastChangeHash: string | undefined
+  /** false if the canvas was forgotten/reset, or if another attempt took its place */
+  isCurrent: () => boolean
+  /** stores the changeHash and marks the canvas clean only if no draw happened since the attempt started */
+  settle: (changeHash: string) => void
+  /** SecurityError taints the canvas; any other error leaves it dirty for the next tick */
+  fail: (error: unknown) => void
+}
+
 export interface CanvasManager {
-  clearDirtyCanvases: () => void
-  forgetCanvasNode: (canvas: HTMLCanvasElement) => void
+  /** Single entry point for the canvas status */
+  markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
+  /** The node left the DOM: forget everything but the taint */
+  forgetCanvas: (canvas: HTMLCanvasElement) => void
+  /** width/height were assigned: the bitmap was cleared, so untaint and mark dirty */
+  resetCanvasBitmap: (canvas: HTMLCanvasElement) => void
+  /** Dirty, connected, not tainted, no capture in flight (disconnected canvases are forgotten as a side effect) */
   getCapturableCanvases: () => HTMLCanvasElement[]
-  getDirtyCanvases: () => HTMLCanvasElement[]
-  getPreviousHash: (canvas: HTMLCanvasElement) => string | undefined
-  isCanvasCaptureInFlight: (canvas: HTMLCanvasElement, captureId: number) => boolean
-  isCanvasDirty: (canvas: HTMLCanvasElement) => boolean
-  markCanvasBitmapReset: (canvas: HTMLCanvasElement) => void
-  markCanvasCaptureFinished: (canvas: HTMLCanvasElement, captureId: number) => void
-  markCanvasCaptureStarted: (canvas: HTMLCanvasElement) => number | undefined
-  markCanvasClean: (canvas: HTMLCanvasElement) => void
-  markCanvasCleanIfUnchanged: (canvas: HTMLCanvasElement, captureId: number) => void
-  markCanvasDirty: (canvas: HTMLCanvasElement) => void
-  markCanvasTainted: (canvas: HTMLCanvasElement) => void
+  /** Runs `run` with a capture attempt; the in-flight state is released only when the returned promise settles */
+  capture: (canvas: HTMLCanvasElement, run: (attempt: CanvasCaptureAttempt) => Promise<void>) => Promise<void>
+  /** New record stream: discards the per-stream state (not the taint) */
   reset: () => void
-  setPreviousHash: (canvas: HTMLCanvasElement, hash: string) => void
+}
+
+/** Identifies a specific capture() call so a stale attempt can tell it no longer owns the canvas */
+type CaptureToken = object
+
+interface CanvasState {
+  version: number
+  capture?: CaptureToken
+  lastChangeHash?: string
 }
 
 export function createCanvasManager(): CanvasManager {
   const dirtyCanvases = new Set<HTMLCanvasElement>()
   const taintedCanvases = new WeakSet<HTMLCanvasElement>()
-  let dirtyVersions = new WeakMap<HTMLCanvasElement, number>()
-  let previousHashes = new WeakMap<HTMLCanvasElement, string>()
-  let inFlightCaptures = new WeakMap<HTMLCanvasElement, { id: number; dirtyVersion: number }>()
-  let nextCaptureId = 0
+  let canvasStates = new WeakMap<HTMLCanvasElement, CanvasState>()
 
-  function getDirtyVersion(canvas: HTMLCanvasElement) {
-    return dirtyVersions.get(canvas) ?? 0
+  function getState(canvas: HTMLCanvasElement): CanvasState {
+    let state = canvasStates.get(canvas)
+    if (!state) {
+      state = { version: 0 }
+      canvasStates.set(canvas, state)
+    }
+    return state
   }
 
-  function markCanvasDirty(canvas: HTMLCanvasElement) {
-    if (canvas.isConnected && !taintedCanvases.has(canvas)) {
-      dirtyCanvases.add(canvas)
-      dirtyVersions.set(canvas, getDirtyVersion(canvas) + 1)
+  function markDirty(canvas: HTMLCanvasElement) {
+    if (!canvas.isConnected || taintedCanvases.has(canvas)) {
+      return
     }
+    getState(canvas).version++
+    dirtyCanvases.add(canvas)
+  }
+
+  function markClean(canvas: HTMLCanvasElement) {
+    dirtyCanvases.delete(canvas)
+  }
+
+  function markTainted(canvas: HTMLCanvasElement) {
+    taintedCanvases.add(canvas)
+    dirtyCanvases.delete(canvas)
   }
 
   return {
-    clearDirtyCanvases: () => dirtyCanvases.clear(),
-    forgetCanvasNode: (canvas) => {
-      dirtyCanvases.delete(canvas)
-      dirtyVersions.delete(canvas)
-      previousHashes.delete(canvas)
-      inFlightCaptures.delete(canvas)
-      taintedCanvases.delete(canvas)
+    markCanvas: (canvas, status) => {
+      switch (status) {
+        case CanvasStatus.Dirty:
+          markDirty(canvas)
+          return
+        case CanvasStatus.Clean:
+          markClean(canvas)
+          return
+        case CanvasStatus.Tainted:
+          markTainted(canvas)
+          return
+        default:
+          assertNever(status)
+      }
     },
+
+    forgetCanvas: (canvas) => {
+      dirtyCanvases.delete(canvas)
+      canvasStates.delete(canvas)
+    },
+
+    resetCanvasBitmap: (canvas) => {
+      taintedCanvases.delete(canvas)
+      canvasStates.delete(canvas)
+      markDirty(canvas)
+    },
+
     getCapturableCanvases: () => {
       const capturableCanvases: HTMLCanvasElement[] = []
 
       dirtyCanvases.forEach((canvas) => {
         if (!canvas.isConnected) {
           dirtyCanvases.delete(canvas)
-        } else if (!taintedCanvases.has(canvas) && !inFlightCaptures.has(canvas)) {
+        } else if (!taintedCanvases.has(canvas) && !canvasStates.get(canvas)?.capture) {
           capturableCanvases.push(canvas)
         }
       })
 
       return capturableCanvases
     },
-    getDirtyCanvases: () => {
-      const connectedCanvases: HTMLCanvasElement[] = []
 
-      dirtyCanvases.forEach((canvas) => {
-        if (canvas.isConnected) {
-          connectedCanvases.push(canvas)
-        } else {
-          dirtyCanvases.delete(canvas)
-        }
-      })
-
-      return connectedCanvases
-    },
-    getPreviousHash: (canvas) => previousHashes.get(canvas),
-    isCanvasCaptureInFlight: (canvas, captureId) => inFlightCaptures.get(canvas)?.id === captureId,
-    isCanvasDirty: (canvas) => dirtyCanvases.has(canvas),
-    markCanvasCaptureFinished: (canvas, captureId) => {
-      if (inFlightCaptures.get(canvas)?.id === captureId) {
-        inFlightCaptures.delete(canvas)
-      }
-    },
-    markCanvasCaptureStarted: (canvas) => {
-      if (taintedCanvases.has(canvas) || inFlightCaptures.has(canvas)) {
-        return undefined
+    capture: (canvas, run) => {
+      // getCapturableCanvases() already filters out tainted/in-flight canvases; these guards
+      // just make capture() safe to call directly (as the specs do) without going through it.
+      if (taintedCanvases.has(canvas)) {
+        return Promise.resolve()
       }
 
-      const captureId = nextCaptureId++
-      inFlightCaptures.set(canvas, { id: captureId, dirtyVersion: getDirtyVersion(canvas) })
-      return captureId
-    },
-    markCanvasClean: (canvas) => dirtyCanvases.delete(canvas),
-    markCanvasCleanIfUnchanged: (canvas, captureId) => {
-      const capture = inFlightCaptures.get(canvas)
-      if (capture?.id === captureId && capture.dirtyVersion === getDirtyVersion(canvas)) {
-        dirtyCanvases.delete(canvas)
+      const state = getState(canvas)
+      if (state.capture) {
+        return Promise.resolve()
       }
+
+      const startVersion = state.version
+      const token: CaptureToken = {}
+      state.capture = token
+
+      const isCurrent = () => canvasStates.get(canvas)?.capture === token
+
+      const attempt: CanvasCaptureAttempt = {
+        lastChangeHash: state.lastChangeHash,
+        isCurrent,
+        settle: (changeHash) => {
+          if (!isCurrent()) {
+            return
+          }
+          state.lastChangeHash = changeHash
+          if (state.version === startVersion) {
+            markClean(canvas)
+          }
+        },
+        fail: (error) => {
+          if (!isCurrent()) {
+            return
+          }
+          if (isSecurityError(error)) {
+            markTainted(canvas)
+          } else {
+            markDirty(canvas)
+          }
+        },
+      }
+
+      return Promise.resolve()
+        .then(() => run(attempt))
+        .catch((error: unknown) => attempt.fail(error))
+        .finally(() => {
+          if (state.capture === token) {
+            state.capture = undefined
+          }
+        })
     },
-    markCanvasBitmapReset: (canvas) => {
-      taintedCanvases.delete(canvas)
-      previousHashes.delete(canvas)
-      inFlightCaptures.delete(canvas)
-      markCanvasDirty(canvas)
-    },
-    markCanvasDirty,
-    markCanvasTainted: (canvas) => {
-      taintedCanvases.add(canvas)
-      dirtyCanvases.delete(canvas)
-    },
+
     reset: () => {
       dirtyCanvases.clear()
-      dirtyVersions = new WeakMap()
-      previousHashes = new WeakMap()
-      inFlightCaptures = new WeakMap()
+      canvasStates = new WeakMap()
     },
-    setPreviousHash: (canvas, hash) => previousHashes.set(canvas, hash),
   }
+}
+
+function isSecurityError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'SecurityError'
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unexpected CanvasStatus: ${String(value)}`)
 }

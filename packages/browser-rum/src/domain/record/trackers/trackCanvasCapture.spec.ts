@@ -9,7 +9,7 @@ import {
 import type { Clock } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
-import { createCanvasManager } from '../canvas/canvasManager'
+import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
 import type { CanvasCaptureCallback } from './trackCanvasCapture'
@@ -67,7 +67,7 @@ describe('trackCanvasCapture', () => {
   }
 
   function markCanvasDirtyAndWaitForCapture() {
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     clock.tick(1000)
   }
 
@@ -93,7 +93,7 @@ describe('trackCanvasCapture', () => {
       changeHash: jasmine.any(String),
       image: jasmine.any(Blob),
     })
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('looks up the node ID before reading canvas pixels', async () => {
@@ -105,7 +105,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(drawImageSpy).not.toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('discards an unchanged canvas and marks it clean', async () => {
@@ -118,7 +118,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).toHaveBeenCalledTimes(1)
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('captures a canvas when its content changes', async () => {
@@ -169,13 +169,13 @@ describe('trackCanvasCapture', () => {
 
     expect(digestSpy).toHaveBeenCalledTimes(1)
     draw('blue')
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     resolveFirstDigest()
     await waitForCanvasCapture()
 
     const firstImageCanvas = toBlobSpy.calls.mostRecent().object as HTMLCanvasElement
     expect(Array.from(firstImageCanvas.getContext('2d')!.getImageData(0, 0, 1, 1).data)).toEqual([255, 0, 0, 255])
-    expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
 
     clock.tick(1000)
     await waitForCanvasCapture()
@@ -210,7 +210,7 @@ describe('trackCanvasCapture', () => {
 
     scope.resetIds()
     scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     clock.tick(1000)
     await waitForCanvasCapture()
 
@@ -225,11 +225,11 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     canvas.remove()
-    canvasManager.forgetCanvasNode(canvas)
+    canvasManager.forgetCanvas(canvas)
     scope.nodeIds.delete(canvas)
     document.body.appendChild(canvas)
     const currentNodeId = scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     clock.tick(1000)
     await waitForCanvasCapture()
 
@@ -240,16 +240,16 @@ describe('trackCanvasCapture', () => {
 
   it('captures a tainted canvas that is reset while detached and then reinserted', async () => {
     const onCanvasCapture = startTracking()
-    canvasManager.markCanvasTainted(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
 
     canvas.remove()
-    canvasManager.forgetCanvasNode(canvas)
+    canvasManager.forgetCanvas(canvas)
     scope.nodeIds.delete(canvas)
     canvas.width = 4
     draw('red')
     document.body.appendChild(canvas)
     const currentNodeId = scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     clock.tick(1000)
     await waitForCanvasCapture()
 
@@ -281,11 +281,11 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     canvas.remove()
-    canvasManager.forgetCanvasNode(canvas)
+    canvasManager.forgetCanvas(canvas)
     scope.nodeIds.delete(canvas)
     document.body.appendChild(canvas)
     const currentNodeId = scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     resolveFirstDigest(new ArrayBuffer(32))
     await waitForCanvasCapture()
 
@@ -319,11 +319,11 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     canvas.remove()
-    canvasManager.forgetCanvasNode(canvas)
+    canvasManager.forgetCanvas(canvas)
     scope.nodeIds.delete(canvas)
     document.body.appendChild(canvas)
     const currentNodeId = scope.nodeIds.getOrInsert(canvas)
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     resolveFirstBlob(new Blob([], { type: 'image/png' }))
     await waitForCanvasCapture()
 
@@ -383,7 +383,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('captures a canvas when createImageBitmap is unavailable', async () => {
@@ -395,7 +395,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('falls back to drawing the canvas when createImageBitmap rejects', async () => {
@@ -409,7 +409,7 @@ describe('trackCanvasCapture', () => {
 
     expect(createImageBitmapSpy).toHaveBeenCalled()
     expect(onCanvasCapture).toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('does not use the drawing fallback if the canvas becomes masked while createImageBitmap is pending', async () => {
@@ -432,7 +432,7 @@ describe('trackCanvasCapture', () => {
 
     expect(toBlobSpy).not.toHaveBeenCalled()
     expect(onCanvasCapture).not.toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
   it('leaves the canvas dirty when the capture callback fails', async () => {
@@ -443,19 +443,19 @@ describe('trackCanvasCapture', () => {
     markCanvasDirtyAndWaitForCapture()
     await waitForCanvasCapture()
 
-    expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
   it('leaves the canvas dirty when hashing is unavailable', async () => {
     spyOn(HTMLCanvasElement.prototype, 'getContext').and.returnValue(null)
     const onCanvasCapture = startTracking()
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
     clock.tick(1000)
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).not.toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
   it('stops trying to capture a canvas when hashing throws', async () => {
@@ -470,14 +470,14 @@ describe('trackCanvasCapture', () => {
 
     expect(drawImageSpy).toHaveBeenCalledTimes(1)
     expect(drawImageSpy.calls.argsFor(0).slice(0, 5)).toEqual([canvas, 0, 0, 2, 2])
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
 
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     markCanvasDirtyAndWaitForCapture()
     await waitForCanvasCapture()
 
     expect(drawImageSpy).toHaveBeenCalledTimes(1)
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   for (const privacyLevel of privacyLevels) {
@@ -489,10 +489,10 @@ describe('trackCanvasCapture', () => {
 
       if (privacyLevel === NodePrivacyLevel.ALLOW) {
         expect(onCanvasCapture).toHaveBeenCalled()
-        expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+        expect(canvasManager.getCapturableCanvases()).toEqual([])
       } else {
         expect(onCanvasCapture).not.toHaveBeenCalled()
-        expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+        expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
       }
     })
   }
@@ -511,7 +511,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('emits the immutable snapshot taken before a canvas becomes masked while hashing', async () => {
@@ -534,7 +534,7 @@ describe('trackCanvasCapture', () => {
 
     expect(toBlobSpy).toHaveBeenCalled()
     expect(onCanvasCapture).toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('emits the snapshot that was taken before the canvas became masked while encoding', async () => {
@@ -557,7 +557,7 @@ describe('trackCanvasCapture', () => {
       changeHash: jasmine.any(String),
       image: jasmine.any(Blob),
     })
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('stops capturing after the tracker is stopped', async () => {
@@ -569,6 +569,6 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).not.toHaveBeenCalled()
-    expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 })

@@ -1,6 +1,6 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { CanvasManager } from '../canvas/canvasManager'
-import { createCanvasManager } from '../canvas/canvasManager'
+import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
 import { trackCanvasContent } from './trackCanvasContent'
@@ -8,7 +8,7 @@ import { trackCanvasContent } from './trackCanvasContent'
 describe('trackCanvasContent', () => {
   let canvas: HTMLCanvasElement
   let context: CanvasRenderingContext2D
-  let markCanvasDirtySpy: jasmine.Spy<(canvas: HTMLCanvasElement) => void>
+  let markCanvasDirtySpy: jasmine.Spy<CanvasManager['markCanvas']>
   let canvasManager: CanvasManager
   let tracker: Tracker | undefined
 
@@ -16,7 +16,7 @@ describe('trackCanvasContent', () => {
     canvas = document.createElement('canvas')
     context = canvas.getContext('2d')!
     markCanvasDirtySpy = jasmine.createSpy()
-    canvasManager = { ...createCanvasManager(), markCanvasDirty: markCanvasDirtySpy }
+    canvasManager = { ...createCanvasManager(), markCanvas: markCanvasDirtySpy }
 
     registerCleanupTask(() => tracker?.stop())
   })
@@ -64,7 +64,7 @@ describe('trackCanvasContent', () => {
       .forEach(({ draw }) => {
         markCanvasDirtySpy.calls.reset()
         draw()
-        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(canvas)
+        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(canvas, CanvasStatus.Dirty)
       })
   })
 

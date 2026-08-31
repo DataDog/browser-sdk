@@ -1,21 +1,22 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { createCanvasManager } from './canvasManager'
+import { CanvasStatus, createCanvasManager } from './canvasManager'
+import type { CanvasCaptureAttempt } from './canvasManager'
 
 describe('CanvasManager', () => {
-  it('tracks whether a canvas is dirty', () => {
+  it('tracks whether a canvas is capturable', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
 
-    canvasManager.markCanvasDirty(canvas)
-    expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
 
-    canvasManager.markCanvasClean(canvas)
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    canvasManager.markCanvas(canvas, CanvasStatus.Clean)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
 
-    canvasManager.markCanvasDirty(canvas)
-    expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
   it('tracks canvases independently', () => {
@@ -23,108 +24,267 @@ describe('CanvasManager', () => {
     const dirtyCanvas = appendCanvas()
     const cleanCanvas = appendCanvas()
 
-    canvasManager.markCanvasDirty(dirtyCanvas)
+    canvasManager.markCanvas(dirtyCanvas, CanvasStatus.Dirty)
 
-    expect(canvasManager.isCanvasDirty(dirtyCanvas)).toBeTrue()
-    expect(canvasManager.isCanvasDirty(cleanCanvas)).toBeFalse()
-  })
-
-  it('returns connected dirty canvases', () => {
-    const canvasManager = createCanvasManager()
-    const canvas = appendCanvas()
-
-    canvasManager.markCanvasDirty(canvas)
-
-    expect(canvasManager.getDirtyCanvases()).toEqual([canvas])
-
-    canvasManager.markCanvasClean(canvas)
-    expect(canvasManager.getDirtyCanvases()).toEqual([])
+    expect(canvasManager.getCapturableCanvases()).toEqual([dirtyCanvas])
+    expect(canvasManager.getCapturableCanvases().includes(cleanCanvas)).toBe(false)
   })
 
   it('does not retain detached canvases', () => {
     const canvasManager = createCanvasManager()
     const canvas = document.createElement('canvas')
 
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
-    expect(canvasManager.getDirtyCanvases()).toEqual([])
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
 
     document.body.appendChild(canvas)
     registerCleanupTask(() => canvas.remove())
-    expect(canvasManager.getDirtyCanvases()).toEqual([])
-  })
-
-  it('clears dirty canvases', () => {
-    const canvasManager = createCanvasManager()
-    const canvas = appendCanvas()
-    canvasManager.markCanvasDirty(canvas)
-
-    canvasManager.clearDirtyCanvases()
-
-    expect(canvasManager.getDirtyCanvases()).toEqual([])
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
   it('does not return tainted canvases for capture', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
-    canvasManager.markCanvasDirty(canvas)
-    canvasManager.markCanvasTainted(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
 
     expect(canvasManager.getCapturableCanvases()).toEqual([])
-    canvasManager.markCanvasDirty(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 
-  it('makes a tainted canvas capturable after its bitmap is reset', () => {
+  it('does not start a capture for a tainted canvas', async () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
-    canvasManager.markCanvasDirty(canvas)
-    const captureId = canvasManager.markCanvasCaptureStarted(canvas)!
-    canvasManager.setPreviousHash(canvas, 'hash')
-    canvasManager.markCanvasTainted(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
 
-    canvasManager.markCanvasBitmapReset(canvas)
+    const run = jasmine.createSpy().and.returnValue(Promise.resolve())
+    await canvasManager.capture(canvas, run)
 
-    expect(canvasManager.getPreviousHash(canvas)).toBeUndefined()
-    expect(canvasManager.isCanvasCaptureInFlight(canvas, captureId)).toBeFalse()
+    expect(run).not.toHaveBeenCalled()
+  })
+
+  it('does not start a second capture while one is in flight', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+    let resolveFirst!: () => void
+    const firstCapture = canvasManager.capture(
+      canvas,
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve
+        })
+    )
+    // One microtask tick is enough for the pending `run` above to have been invoked and
+    // `resolveFirst` assigned, since capture() schedules it via a single `Promise.resolve().then()`.
+    await Promise.resolve()
+
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+
+    const secondRun = jasmine.createSpy().and.returnValue(Promise.resolve())
+    await canvasManager.capture(canvas, secondRun)
+    expect(secondRun).not.toHaveBeenCalled()
+
+    resolveFirst()
+    await firstCapture
+  })
+
+  it('releases the in-flight capture once the attempt settles', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+    let attempt!: CanvasCaptureAttempt
+    await canvasManager.capture(canvas, (currentAttempt) => {
+      attempt = currentAttempt
+      return Promise.resolve()
+    })
+
+    expect(attempt.isCurrent()).toBeFalse()
     expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
-  it('forgets capture and taint state when a canvas node is removed', () => {
+  it('marks the canvas clean when the attempt settles without a draw in between', async () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
-    canvasManager.markCanvasDirty(canvas)
-    const captureId = canvasManager.markCanvasCaptureStarted(canvas)!
-    canvasManager.setPreviousHash(canvas, 'hash')
-    canvasManager.markCanvasTainted(canvas)
+    await canvasManager.capture(canvas, (attempt) => {
+      attempt.settle('hash')
+      return Promise.resolve()
+    })
 
-    canvasManager.forgetCanvasNode(canvas)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
 
-    expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
-    expect(canvasManager.getPreviousHash(canvas)).toBeUndefined()
-    expect(canvasManager.isCanvasCaptureInFlight(canvas, captureId)).toBeFalse()
-    canvasManager.markCanvasDirty(canvas)
+  it('keeps the canvas dirty when a draw happens while the attempt is in flight', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+    await canvasManager.capture(canvas, (attempt) => {
+      canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+      attempt.settle('hash')
+      return Promise.resolve()
+    })
+
     expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
   })
 
-  it('resets capture hashes without forgetting tainted canvases', () => {
+  it('exposes the changeHash emitted by the previous attempt', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+    await canvasManager.capture(canvas, (attempt) => {
+      expect(attempt.lastChangeHash).toBeUndefined()
+      attempt.settle('hash')
+      return Promise.resolve()
+    })
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    let lastChangeHash: string | undefined
+    await canvasManager.capture(canvas, (attempt) => {
+      lastChangeHash = attempt.lastChangeHash
+      return Promise.resolve()
+    })
+
+    expect(lastChangeHash).toBe('hash')
+  })
+
+  it('taints the canvas when the attempt fails with a SecurityError', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+    await canvasManager.capture(canvas, (attempt) => {
+      attempt.fail(new DOMException('tainted', 'SecurityError'))
+      return Promise.resolve()
+    })
+
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
+
+  it('leaves the canvas dirty when the attempt fails with a non-security error', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+    await canvasManager.capture(canvas, (attempt) => {
+      attempt.fail(new Error('boom'))
+      return Promise.resolve()
+    })
+
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+  })
+
+  it('taints the canvas when the run callback rejects with a SecurityError', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+    await canvasManager.capture(canvas, () => Promise.reject(new DOMException('tainted', 'SecurityError')))
+
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
+
+  it('makes a tainted canvas capturable after its bitmap is reset', async () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
-    canvasManager.markCanvasDirty(canvas)
-    const captureId = canvasManager.markCanvasCaptureStarted(canvas)!
-    canvasManager.setPreviousHash(canvas, 'hash')
-    canvasManager.markCanvasCaptureFinished(canvas, captureId)
-    canvasManager.markCanvasTainted(canvas)
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    let attempt!: CanvasCaptureAttempt
+    // Fire-and-forget: this capture is meant to stay in flight for the rest of the test.
+    void canvasManager.capture(canvas, (currentAttempt) => {
+      attempt = currentAttempt
+      attempt.settle('hash')
+      return new Promise(() => {
+        // never resolves: simulates a capture still in flight
+      })
+    })
+    await Promise.resolve()
+    canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
+
+    canvasManager.resetCanvasBitmap(canvas)
+
+    expect(attempt.isCurrent()).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+
+    let lastChangeHash: string | undefined
+    await canvasManager.capture(canvas, (currentAttempt) => {
+      lastChangeHash = currentAttempt.lastChangeHash
+      return Promise.resolve()
+    })
+    expect(lastChangeHash).toBeUndefined()
+  })
+
+  it('forgets capture state but keeps the taint when a canvas node is removed', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    let attempt!: CanvasCaptureAttempt
+    // Fire-and-forget: this capture is meant to stay in flight for the rest of the test.
+    void canvasManager.capture(canvas, (currentAttempt) => {
+      attempt = currentAttempt
+      attempt.settle('hash')
+      return new Promise(() => {
+        // never resolves: simulates a capture still in flight
+      })
+    })
+    await Promise.resolve()
+    canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
+
+    canvasManager.forgetCanvas(canvas)
+
+    expect(attempt.isCurrent()).toBeFalse()
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+
+    // The taint survives forgetCanvas(): a canvas removed and re-added to the DOM is still
+    // the same, cross-origin-tainted bitmap, so re-marking it dirty must not make it capturable.
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    expect(canvasManager.getCapturableCanvases()).toEqual([])
+  })
+
+  it('resets capture hashes', async () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    await canvasManager.capture(canvas, (attempt) => {
+      attempt.settle('hash')
+      return Promise.resolve()
+    })
 
     canvasManager.reset()
 
-    expect(canvasManager.getPreviousHash(canvas)).toBeUndefined()
-    canvasManager.markCanvasDirty(canvas)
+    let lastChangeHash: string | undefined
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    await canvasManager.capture(canvas, (attempt) => {
+      lastChangeHash = attempt.lastChangeHash
+      return Promise.resolve()
+    })
+    expect(lastChangeHash).toBeUndefined()
+  })
+
+  it('does not forget tainted canvases on reset', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
+
+    canvasManager.reset()
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     expect(canvasManager.getCapturableCanvases()).toEqual([])
   })
 })
