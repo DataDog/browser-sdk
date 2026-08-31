@@ -759,10 +759,9 @@ test.describe('custom actions with startAction/stopAction', () => {
 })
 
 test.describe('action collection with composed path selector', () => {
-  createTest('should return a composed_path_selector if flag is enabled')
+  createTest('should return a composed_path_selector for an auto-collected click action')
     .withRum({
       trackUserInteractions: true,
-      enableExperimentalFeatures: ['composed_path_selector'],
     })
     .withBody(html`
       <button>Click</button>
@@ -777,6 +776,33 @@ test.describe('action collection with composed path selector', () => {
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
         'BUTTON#my-button[data-test-id="test-btn"].bar.baz.foo:nth-child(2):nth-of-type(2);'
+      )
+    })
+
+  createTest('should include a sanitized href and aria-label when composed_path_selector_attributes is enabled')
+    .withRum({
+      trackUserInteractions: true,
+      enableExperimentalFeatures: ['composed_path_selector_attributes'],
+    })
+    .withBody(html`
+      <a
+        id="my-link"
+        href="/orders/8842/edit?token=secret#section"
+        aria-label="Edit order"
+        onclick="event.preventDefault()"
+        >Edit</a
+      >
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const link = page.locator('#my-link')
+      await link.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      // the query string, hash and numeric order id are stripped; aria-label is collected as-is
+      expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
+        'A#my-link[aria-label="Edit order"][href="/orders/?/edit"];'
       )
     })
 })
