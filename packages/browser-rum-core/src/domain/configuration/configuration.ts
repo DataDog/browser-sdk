@@ -21,7 +21,7 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 import { getRemoteConfigurationId } from './remoteConfiguration'
 
 // replaced at build time
-declare const __BUILD_ENV__SDK_SETUP__: 'npm' | 'cdn'
+declare const __BUILD_ENV__SDK_SETUP__: string
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
