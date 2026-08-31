@@ -21,7 +21,7 @@ export interface CanvasCaptureAttempt {
 export interface CanvasManager {
   /** Single entry point for the canvas status */
   markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
-  /** The node left the DOM: forget everything but the taint */
+  /** The node left the DOM: forget all capture and taint state */
   forgetCanvas: (canvas: HTMLCanvasElement) => void
   /** width/height were assigned: the bitmap was cleared, so untaint and mark dirty */
   resetCanvasBitmap: (canvas: HTMLCanvasElement) => void
@@ -93,6 +93,7 @@ export function createCanvasManager(): CanvasManager {
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
       canvasStates.delete(canvas)
+      taintedCanvases.delete(canvas)
     },
 
     resetCanvasBitmap: (canvas) => {
