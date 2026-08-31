@@ -29,7 +29,7 @@ describe('createCanvasSnapshot', () => {
   })
 
   it('is not affected by later draws on the canvas', async () => {
-    const canvas = createCanvas(2, 2, ['red'])
+    const canvas = createCanvas(1, 1, ['red'])
     const snapshot = createSnapshot(canvas, 1000)
 
     fill(canvas, 'blue')
