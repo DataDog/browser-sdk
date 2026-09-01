@@ -3,6 +3,7 @@ import type { RumPlugin } from '@datadog/browser-rum-core'
 import { patchSandboxedIframeApis } from '../boot/patchSandboxedIframeApis'
 import type { ShopifyAnalyticsApi } from './shopifyAnalytics'
 import { initShopifyBindings, isCheckoutPage } from './shopifyBindings'
+import { waitForPageViewedEvent } from './shopifyAnalytics'
 
 export interface ShopifyPluginConfiguration {
   shopifyAnalytics: ShopifyAnalyticsApi
@@ -17,46 +18,28 @@ export interface ShopifyPluginConfiguration {
 export function shopifyPlugin(configuration: ShopifyPluginConfiguration): RumPlugin {
   return {
     name: 'shopify',
-    onInit({ initConfiguration, publicApi }) {
+    async onInit({ initConfiguration, publicApi }) {
       const analytics = configuration.shopifyAnalytics
       if (!analytics) {
         return false
       }
 
-      return new Promise((resolve) => {
-        // Some page transitions in a Shopify store happen without a full page reload (for
-        // example, transitioning from Checkout to the Thank You page). In such cases, the
-        // `page_viewed` event may be emitted multiple times, which would otherwise trigger
-        // multiple `initShopifyBindings()` calls and duplicate subscriptions to the Shopify
-        // analytics events. This flag prevents that.
-        let isBindingsInstalled = false
+      const pageViewedEvent = await waitForPageViewedEvent(analytics)
 
-        analytics.subscribe('page_viewed', (event) => {
-          if (isBindingsInstalled) {
-            return
-          }
+      if (!isCheckoutPage(pageViewedEvent)) {
+        return false
+      }
 
-          if (!isCheckoutPage(event)) {
-            resolve(false)
-            return
-          }
+      mockable(patchSandboxedIframeApis)()
+      mockable(initShopifyBindings)(publicApi, analytics)
 
-          mockable(patchSandboxedIframeApis)()
-          mockable(initShopifyBindings)(publicApi, analytics)
-
-          isBindingsInstalled = true
-
-          initConfiguration.trackViewsManually = true // Views are started explicitly via startView()
-          initConfiguration.sessionReplaySampleRate = 0 // Session Replay is not usable in the Pixel sandbox iframe
-          initConfiguration.profilingSampleRate = 0 // Profiling is not usable in the Pixel sandbox iframe
-          initConfiguration.trackUserInteractions = false // Pixel sandbox iframe has no real DOM to interact with
-          initConfiguration.trackResources = false // Iframe resources are not meaningful
-          initConfiguration.trackLongTasks = false // PerformanceObserver tracks the empty iframe
-          initConfiguration.sessionPersistence = 'cookie'
-
-          resolve()
-        })
-      })
+      initConfiguration.trackViewsManually = true // Views are started explicitly via startView()
+      initConfiguration.sessionReplaySampleRate = 0 // Session Replay is not usable in the Pixel sandbox iframe
+      initConfiguration.profilingSampleRate = 0 // Profiling is not usable in the Pixel sandbox iframe
+      initConfiguration.trackUserInteractions = false // Pixel sandbox iframe has no real DOM to interact with
+      initConfiguration.trackResources = false // Iframe resources are not meaningful
+      initConfiguration.trackLongTasks = false // PerformanceObserver tracks the empty iframe
+      initConfiguration.sessionPersistence = 'cookie'
     },
   }
 }
