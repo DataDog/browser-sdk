@@ -1,5 +1,3 @@
-import { noop } from '@datadog/browser-core'
-import { mockClock } from '@datadog/browser-core/test'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { RumInitConfiguration } from './configuration'
 import type { RumPlugin } from './plugins'
@@ -92,16 +90,6 @@ describe('callPluginsOnInit', () => {
     await callPluginsOnInit([plugin1, plugin2], { initConfiguration, publicApi: {} as RumPublicApi })
 
     expect(clientTokenSeenByPlugin2).toBeUndefined()
-  })
-
-  it('rejects if a plugin onInit times out', async () => {
-    const clock = mockClock()
-    const plugin = { name: 'a', onInit: () => new Promise<void>(noop) } satisfies RumPlugin
-
-    const result = callPluginsOnInit([plugin], PARAMETER)
-    clock.tick(3_000)
-
-    await expectAsync(result).toBeRejectedWithError(/Plugin a onInit\(\) timed out after \d+ms/)
   })
 })
 

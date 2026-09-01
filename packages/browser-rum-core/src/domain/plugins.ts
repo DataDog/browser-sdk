@@ -1,4 +1,4 @@
-import { isTimeoutError, isThenable, waitForThenable } from '@datadog/browser-core'
+import { isThenable } from '@datadog/browser-core'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
@@ -42,8 +42,6 @@ export interface RumPlugin {
   onRumStart?(options: OnRumStartOptions): void
 }
 
-const DEFAULT_ON_INIT_TIMEOUT = 3000
-
 /**
  * Calls every plugin's `onInit` method concurrently, without waiting for one to resolve before
  * calling the next. Stays synchronous as long as no plugin returns a thenable.
@@ -60,16 +58,7 @@ export function callPluginsOnInit(
   const results = plugins.map((plugin) => plugin.onInit?.(parameter))
 
   if (results.some(isThenable)) {
-    return Promise.all(
-      results.map((result, index) =>
-        waitForThenable(Promise.resolve(result), DEFAULT_ON_INIT_TIMEOUT).catch((reason) => {
-          if (isTimeoutError(reason)) {
-            throw new Error(`Plugin ${plugins[index].name} onInit() timed out after ${DEFAULT_ON_INIT_TIMEOUT}ms`)
-          }
-          throw reason
-        })
-      )
-    ).then((results) => !results.includes(false))
+    return Promise.all(results.map((result) => Promise.resolve(result))).then((results) => !results.includes(false))
   }
 
   return !results.includes(false)
