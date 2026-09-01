@@ -11,7 +11,11 @@ import type {
   CamelToSnakeCase,
   MapInitConfigurationKey,
 } from '@datadog/browser-core/test'
-import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  mockEventBridge,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import {
   DEFAULT_PROPAGATOR_TYPES,
@@ -525,6 +529,20 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBeTrue()
     })
 
+    it('is false when the event bridge is used', () => {
+      // The bridge replaces the batch transport, so no view_update can ever be created.
+      mockEventBridge()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeFalse()
+    })
+
+    it('is false when the event bridge is used, even if the option is explicitly enabled', () => {
+      mockEventBridge()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
     it('does not validate the configuration if it is not a boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: 'yes' as any })
@@ -981,6 +999,19 @@ describe('serializeRumConfiguration', () => {
     it('reports an explicitly disabled option', () => {
       expect(
         serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+
+    it('reports false when the event bridge is used', () => {
+      mockEventBridge()
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeFalse()
+    })
+
+    it('reports false when the event bridge is used, even if the option is explicitly enabled', () => {
+      mockEventBridge()
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })
           .beta_enable_view_updates
       ).toBeFalse()
     })

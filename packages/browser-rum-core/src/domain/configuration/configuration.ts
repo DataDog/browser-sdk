@@ -1,5 +1,6 @@
 import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
+  canUseEventBridge,
   catchUserErrors,
   serializeConfiguration,
   DefaultPrivacyLevel,
@@ -505,15 +506,22 @@ export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedT
 }
 
 /**
- * Resolves whether partial view updates are enabled. An explicit `betaEnableViewUpdates` always
- * takes precedence. Otherwise it defaults to true for CDN users that do not go through a proxy:
- * a proxy may not forward the `view_update` event type yet, and npm users pin an SDK version so
- * they opt in explicitly.
+ * Resolves whether partial view updates are enabled. Never enabled when the event bridge is used.
+ * Otherwise an explicit `betaEnableViewUpdates` takes precedence, and it defaults to true for CDN
+ * users that do not go through a proxy: a proxy may not forward the `view_update` event type yet,
+ * and npm users pin an SDK version so they opt in explicitly.
  *
  * The CDN check is temporary, the next step is to default this to true unless `proxy` is set.
  * TODO next major: remove the option.
  */
 function isViewUpdatesEnabled(explicit: boolean | undefined, proxy: InitConfiguration['proxy']): boolean {
+  if (canUseEventBridge()) {
+    // The bridge replaces the batch transport, and `view_update` events are only created by the
+    // batch dispatcher, so partial updates never happen in a WebView. Ignore the explicit value
+    // too, otherwise telemetry reports updates that cannot be sent.
+    return false
+  }
+
   return explicit ?? (__BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy)
 }
 
