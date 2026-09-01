@@ -269,7 +269,7 @@ describe('getSelectorFromComposedPath', () => {
         expect(result).toBe(`A[href="${CSS.escape('/settings/profile')}"];`)
       })
 
-      it('strips the query string, hash and groups numeric path segments for an absolute href', () => {
+      it('drops the query string values, the hash, and groups numeric path segments for an absolute href', () => {
         addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
         const element = appendElementInIsolation(
           '<a href="https://app.example.com/orders/8842/edit?token=secret#section"></a>'
@@ -277,7 +277,18 @@ describe('getSelectorFromComposedPath', () => {
 
         const result = getComposedPathSelector([element], defaultConfiguration)
 
-        expect(result).toBe(`A[href="${CSS.escape('https://app.example.com/orders/?/edit')}"];`)
+        expect(result).toBe(`A[href="${CSS.escape('https://app.example.com/orders/?/edit?token')}"];`)
+      })
+
+      it('keeps query parameter names but drops their values and deduplicates repeated names', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        const element = appendElementInIsolation(
+          '<a href="/search?query=secret+stuff&query=other&tile_def=%7B%22a%22%3A1%7D"></a>'
+        )
+
+        const result = getComposedPathSelector([element], defaultConfiguration)
+
+        expect(result).toBe(`A[href="${CSS.escape('/search?query&tile_def')}"];`)
       })
 
       it('reduces a non-http(s) href to its scheme alone', () => {

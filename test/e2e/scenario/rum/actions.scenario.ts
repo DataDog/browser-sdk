@@ -804,10 +804,11 @@ test.describe('action collection with composed path selector', () => {
 
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
-      // the query string, hash and numeric order id are stripped; aria-label is collected as-is
-      // (spaces and slashes are CSS-escaped, like every other attribute value in this selector)
+      // the query value, hash and numeric order id are stripped, but the "token" param name is
+      // kept; aria-label is collected as-is (spaces and slashes are CSS-escaped, like every other
+      // attribute value in this selector)
       expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
-        'A#my-link[aria-label="Edit\\ order"][href="\\/orders\\/\\?\\/edit"]:nth-child(2);'
+        'A#my-link[aria-label="Edit\\ order"][href="\\/orders\\/\\?\\/edit\\?token"]:nth-child(2);'
       )
     })
 })

@@ -43,12 +43,12 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
 
 /**
  * Attributes that can help identify an element but may carry PII, so they need extra treatment
- * before being collected. `href` is reduced to its origin and a generated-segment-free path,
- * dropping the query string, hash and any non-http(s) payload (ex: `mailto:`, `data:`), so the
- * value is safe regardless of the privacy level in effect. `aria-label` is free-form text, so it
- * goes through the same masking pipeline as action names. Collected only behind the
- * `composed_path_selector_attributes` experimental flag while we validate cardinality and PII
- * exposure on real traffic.
+ * before being collected. `href` is reduced to its origin, a generated-segment-free path, and the
+ * names (not values) of its query parameters, dropping the hash and any non-http(s) payload (ex:
+ * `mailto:`, `data:`), so the value is safe regardless of the privacy level in effect. `aria-label`
+ * is free-form text, so it goes through the same masking pipeline as action names. Collected only
+ * behind the `composed_path_selector_attributes` experimental flag while we validate cardinality
+ * and PII exposure on real traffic.
  */
 const HREF_ATTRIBUTE = 'href'
 const ARIA_LABEL_ATTRIBUTE = 'aria-label'
@@ -231,13 +231,16 @@ function maskIfNeeded(
  * Returns a PII-safe representation of an element's `href`, or `undefined` if the element has no
  * `href` or it cannot be parsed as a URL.
  *
- * The query string, hash and any userinfo are always dropped. Non-http(s) schemes (`mailto:`,
- * `tel:`, `javascript:`, `data:`...) are reduced to the scheme alone, since their payload can
- * contain arbitrary PII (an email address, a phone number...). For http(s) URLs, path segments
- * that look generated (ex: containing a digit, following the same heuristic used for CSS ids and
- * classes in this file) are replaced by `?`, mirroring how the backend groups URL paths. The
- * origin is only included when the attribute itself was written as an absolute (or
- * protocol-relative) URL, to avoid implying a page navigates cross-origin when it doesn't.
+ * The hash and any userinfo are always dropped. Non-http(s) schemes (`mailto:`, `tel:`,
+ * `javascript:`, `data:`...) are reduced to the scheme alone, since their payload can contain
+ * arbitrary PII (an email address, a phone number...). For http(s) URLs, path segments that look
+ * generated (ex: containing a digit, following the same heuristic used for CSS ids and classes in
+ * this file) are replaced by `?`, mirroring how the backend groups URL paths. Query string values
+ * are dropped, but the (deduplicated) parameter names are kept, since they are typically static
+ * field names rather than user data, and knowing which parameters were present is useful for
+ * identifying the link without exposing what was in them. The origin is only included when the
+ * attribute itself was written as an absolute (or protocol-relative) URL, to avoid implying a page
+ * navigates cross-origin when it doesn't.
  */
 function getSanitizedHref(element: Element): string | undefined {
   const rawHref = element.getAttribute(HREF_ATTRIBUTE)
@@ -258,8 +261,10 @@ function getSanitizedHref(element: Element): string | undefined {
   }
 
   const groupedPath = groupUrlPath(url.pathname)
+  const searchParamNames = getSearchParamNamesString(url.searchParams)
+  const path = `${groupedPath}${searchParamNames}`
 
-  return ABSOLUTE_URL.test(rawHref) ? `${url.origin}${groupedPath}` : groupedPath
+  return ABSOLUTE_URL.test(rawHref) ? `${url.origin}${path}` : path
 }
 
 function groupUrlPath(pathname: string): string {
@@ -267,4 +272,14 @@ function groupUrlPath(pathname: string): string {
     .split('/')
     .map((segment) => (isGeneratedValue(segment) ? '?' : segment))
     .join('/')
+}
+
+function getSearchParamNamesString(searchParams: URLSearchParams): string {
+  const names: string[] = []
+  for (const name of searchParams.keys()) {
+    if (!names.includes(name)) {
+      names.push(name)
+    }
+  }
+  return names.length > 0 ? `?${names.join('&')}` : ''
 }
