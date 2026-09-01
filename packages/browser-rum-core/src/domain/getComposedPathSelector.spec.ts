@@ -481,15 +481,20 @@ describe('getSelectorFromComposedPath', () => {
         expect(result).toBe(`A[href="${CSS.escape('mailto:')}"];`)
       })
 
-      it('reveals the true origin of a backslash-led href instead of hiding it as same-origin', () => {
+      it('reveals the true origin of a root-relative href resolved against a cross-origin <base>', () => {
         addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
-        // Browsers treat "\" like "/" for http(s) URLs, so this resolves cross-origin even though
-        // it has no scheme and doesn't start with "//".
-        const element = appendElementInIsolation('<a href="\\\\evil.example/account/12345"></a>')
+        // The href below has no scheme and doesn't start with "//", but a <base> element makes the
+        // browser resolve it against a different origin than the current page's.
+        const base = document.createElement('base')
+        base.href = 'https://cdn.other-origin.example/'
+        document.head.appendChild(base)
+        registerCleanupTask(() => base.remove())
+
+        const element = appendElementInIsolation('<a href="/account/12345"></a>')
 
         const result = getComposedPathSelector([element], defaultConfiguration)
 
-        expect(result).toBe(`A[href="${CSS.escape('http://evil.example/account/?')}"];`)
+        expect(result).toBe(`A[href="${CSS.escape('https://cdn.other-origin.example/account/?')}"];`)
       })
     })
   })
