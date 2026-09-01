@@ -505,15 +505,16 @@ export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedT
 }
 
 /**
- * Partial view updates are enabled by default for CDN users that do not go through a proxy: a
- * proxy may not forward the `view_update` event type yet, and npm users pin an SDK version so
- * they opt in explicitly. An explicit `betaEnableViewUpdates` always takes precedence.
+ * Resolves whether partial view updates are enabled. An explicit `betaEnableViewUpdates` always
+ * takes precedence. Otherwise it defaults to true for CDN users that do not go through a proxy:
+ * a proxy may not forward the `view_update` event type yet, and npm users pin an SDK version so
+ * they opt in explicitly.
  *
  * The CDN check is temporary, the next step is to default this to true unless `proxy` is set.
  * TODO next major: remove the option.
  */
-function isViewUpdatesEnabledByDefault(proxy: InitConfiguration['proxy']): boolean {
-  return __BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy
+function isViewUpdatesEnabled(explicit: boolean | undefined, proxy: InitConfiguration['proxy']): boolean {
+  return explicit ?? (__BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy)
 }
 
 export function validateAndBuildRumConfiguration(
@@ -543,7 +544,7 @@ export function validateAndBuildRumConfiguration(
   return {
     ...config,
     sessionReplayCanvasRecording,
-    betaEnableViewUpdates: config.betaEnableViewUpdates ?? isViewUpdatesEnabledByDefault(config.proxy),
+    betaEnableViewUpdates: isViewUpdatesEnabled(config.betaEnableViewUpdates, config.proxy),
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
@@ -738,7 +739,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
-    beta_enable_view_updates: configuration.betaEnableViewUpdates ?? isViewUpdatesEnabledByDefault(configuration.proxy),
+    beta_enable_view_updates: isViewUpdatesEnabled(configuration.betaEnableViewUpdates, configuration.proxy),
     beta_track_web_sockets: configuration.betaTrackWebSockets,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
