@@ -1,4 +1,5 @@
 import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
+import { registerCleanupTask } from '../../../browser-core/test'
 import { appendElement, mockRumConfiguration } from '../../test'
 import { NodePrivacyLevel } from './privacyConstants'
 import { getComposedPathSelector, CHARACTER_LIMIT } from './getComposedPathSelector'
@@ -13,6 +14,14 @@ interface BrowserWindow extends Window {
 function appendElementInIsolation(html: string): HTMLElement {
   const wrapper = appendElement('<div></div>')
   return appendElement(html, wrapper)
+}
+
+/** Sets `$DD_ALLOW` and reliably restores it, even if the test fails before reaching the end. */
+function defineAllowList(allowList: Set<string> | undefined) {
+  ;(window as BrowserWindow).$DD_ALLOW = allowList
+  registerCleanupTask(() => {
+    ;(window as BrowserWindow).$DD_ALLOW = undefined
+  })
 }
 
 describe('getSelectorFromComposedPath', () => {
@@ -309,6 +318,56 @@ describe('getSelectorFromComposedPath', () => {
         expect(result).toBe('A;')
       })
 
+      it('resolves an empty href to the current document, instead of treating it as absent', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        const element = appendElementInIsolation('<a href=""></a>')
+
+        const result = getComposedPathSelector([element], defaultConfiguration)
+
+        // `getAttribute` returns `''` (present-but-empty), not `null`, so this must not be
+        // confused with a missing href.
+        expect(result).not.toBe('A;')
+      })
+
+      it('does not treat a percent-encoded non-ASCII path segment as generated', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        // "électronique" is percent-encoded by the URL parser to a byte sequence containing digits
+        // (ex: %C3%A9), which must not make the segment look "generated" the way an id like "8842"
+        // does — it should be kept (still percent-encoded, like the rest of the pathname), not
+        // replaced by "?".
+        const element = appendElementInIsolation('<a href="/produits/électronique"></a>')
+
+        const result = getComposedPathSelector([element], defaultConfiguration)
+
+        expect(result).toBe(`A[href="${CSS.escape('/produits/%C3%A9lectronique')}"];`)
+      })
+
+      it('never collects the raw href via the safe-attributes path, even if configured as the actionNameAttribute', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        const element = appendElementInIsolation('<a href="/reset-password?token=secret"></a>')
+
+        const result = getComposedPathSelector([element], mockRumConfiguration({ actionNameAttribute: 'href' }))
+
+        // Only the sanitized href (query values dropped) must appear, never the raw one — and only
+        // once, not duplicated between the safe-attributes and privacy-sensitive-attributes paths.
+        expect(result).toBe(`A[href="${CSS.escape('/reset-password?token')}"];`)
+      })
+
+      it('never duplicates aria-label via the safe-attributes path when configured as the actionNameAttribute', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        const element = appendElementInIsolation('<button aria-label="Secret label"></button>')
+
+        const result = getComposedPathSelector(
+          [element],
+          mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, actionNameAttribute: 'aria-label' })
+        )
+
+        // aria-label configured as the actionNameAttribute is exempt from masking, like any other
+        // actionNameAttribute (ex: `data-dd-action-name`) — but it must appear only once, not
+        // duplicated between the safe-attributes and privacy-sensitive-attributes paths.
+        expect(result).toBe(`BUTTON[aria-label="${CSS.escape('Secret label')}"];`)
+      })
+
       it('collects and normalizes aria-label', () => {
         addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
         const element = appendElementInIsolation('<button aria-label="  Close   dialog  "></button>')
@@ -376,7 +435,7 @@ describe('getSelectorFromComposedPath', () => {
 
       it('preserves an allowlisted aria-label at the mask-unless-allowlisted privacy level', () => {
         addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
-        ;(window as BrowserWindow).$DD_ALLOW = new Set(['allowed label'])
+        defineAllowList(new Set(['allowed label']))
         const element = appendElementInIsolation('<button aria-label="Allowed label"></button>')
 
         const result = getComposedPathSelector(
@@ -385,12 +444,11 @@ describe('getSelectorFromComposedPath', () => {
         )
 
         expect(result).toBe(`BUTTON[aria-label="${CSS.escape('Allowed label')}"];`)
-        delete (window as BrowserWindow).$DD_ALLOW
       })
 
       it('masks a non-allowlisted aria-label at the mask-unless-allowlisted privacy level', () => {
         addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
-        ;(window as BrowserWindow).$DD_ALLOW = new Set()
+        defineAllowList(new Set())
         const element = appendElementInIsolation('<button aria-label="Not allowed"></button>')
 
         const result = getComposedPathSelector(
@@ -399,7 +457,39 @@ describe('getSelectorFromComposedPath', () => {
         )
 
         expect(result).toBe(`BUTTON[aria-label="${CSS.escape('***')}"];`)
-        delete (window as BrowserWindow).$DD_ALLOW
+      })
+
+      it('masks aria-label unconditionally at the hidden privacy level, bypassing $DD_ALLOW', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        const element = appendElementInIsolation(
+          '<button data-dd-privacy="hidden" aria-label="Card ending 4242, John Doe"></button>'
+        )
+
+        const result = getComposedPathSelector([element], defaultConfiguration)
+
+        expect(result).toBe(`BUTTON[aria-label="${CSS.escape('***')}"];`)
+      })
+
+      it('does not leak the payload of a non-http(s) href with a leading control character', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        // A leading tab is invisible in markup but is trimmed by the URL parser before it detects
+        // the scheme, unlike a naive regex anchored on the raw string.
+        const element = appendElementInIsolation('<a href="\tmailto:jane@example.com?subject=secret"></a>')
+
+        const result = getComposedPathSelector([element], defaultConfiguration)
+
+        expect(result).toBe(`A[href="${CSS.escape('mailto:')}"];`)
+      })
+
+      it('reveals the true origin of a backslash-led href instead of hiding it as same-origin', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        // Browsers treat "\" like "/" for http(s) URLs, so this resolves cross-origin even though
+        // it has no scheme and doesn't start with "//".
+        const element = appendElementInIsolation('<a href="\\\\evil.example/account/12345"></a>')
+
+        const result = getComposedPathSelector([element], defaultConfiguration)
+
+        expect(result).toBe(`A[href="${CSS.escape('http://evil.example/account/?')}"];`)
       })
     })
   })

@@ -1,6 +1,12 @@
-import { safeTruncate, ONE_KIBI_BYTE, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
+import {
+  safeTruncate,
+  ONE_KIBI_BYTE,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  removeDuplicates,
+} from '@datadog/browser-core'
 import type { MatchOption } from '@datadog/browser-core'
-import { normalizeUrl, buildUrl } from '@datadog/js-core/util'
+import { normalizeUrl, buildUrl, globalObject } from '@datadog/js-core/util'
 import {
   STABLE_ATTRIBUTES,
   isGeneratedValue,
@@ -10,7 +16,7 @@ import {
   getAttributeValueSelector,
 } from './getSelectorFromElement'
 import type { RumConfiguration } from './configuration'
-import { getNodePrivacyLevel, shouldMaskAttribute, maskDisallowedTextContent } from './privacy'
+import { maskAttributeIfNeeded } from './privacy'
 import type { NodePrivacyLevelCache } from './privacy'
 import { CENSORED_STRING_MARK } from './privacyConstants'
 
@@ -59,10 +65,12 @@ const ARIA_LABEL_ATTRIBUTE = 'aria-label'
  */
 const ATTRIBUTE_VALUE_LIMIT = 100
 
-// Matches an explicit scheme (ex: "https:", "mailto:") or a protocol-relative prefix ("//").
-const ABSOLUTE_URL = /^[A-Za-z][A-Za-z0-9+.-]*:|^\/\//
 // Matches the scheme at the start of a URL, if any.
 const URL_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/
+// Matches an http(s) scheme exactly (case-insensitively).
+const HTTP_SCHEME = /^https?:$/i
+// Collapses whitespace runs, so a multi-line/indented aria-label reads as a single line.
+const WHITESPACE = /\s+/g
 
 /**
  * Extracts a selector string from a MouseEvent composedPath.
@@ -75,7 +83,8 @@ const URL_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/
  *
  * @param composedPath - The composedPath from a MouseEvent
  * @param configuration - The RUM configuration, used to resolve the action name attribute and the
- * privacy settings applied to the PII-sensitive attributes.
+ * privacy settings applied to `aria-label` (`href` is sanitized unconditionally, regardless of
+ * privacy settings; see `getSanitizedHref`).
  * @returns A selector string
  */
 export function getComposedPathSelector(composedPath: EventTarget[], configuration: RumConfiguration): string {
@@ -89,7 +98,14 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
   }
 
   const { actionNameAttribute } = configuration
-  const allowedAttributes = actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
+  // `href` and `aria-label` are excluded here even when configured as the customer's
+  // `actionNameAttribute`: they must always go through `extractPrivacySensitiveAttributesString`'s
+  // sanitization/masking below. Letting them through this list too would leak the raw,
+  // unsanitized value (bypassing sanitization for `href`, masking for `aria-label`) alongside the
+  // safe one.
+  const allowedAttributes = (
+    actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
+  ).filter((attribute) => attribute !== HREF_ATTRIBUTE && attribute !== ARIA_LABEL_ATTRIBUTE)
   // Shared across the whole composedPath: elements are visited target-first, and privacy levels
   // are derived from ancestors, so this cache turns most lookups into O(1) hits.
   const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
@@ -192,34 +208,21 @@ function extractPrivacySensitiveAttributesString(
 
   const ariaLabel = element.getAttribute(ARIA_LABEL_ATTRIBUTE)
   if (ariaLabel) {
-    const normalized = ariaLabel.replace(/\s+/g, ' ').trim()
+    const normalized = ariaLabel.replace(WHITESPACE, ' ').trim()
     if (normalized) {
-      const value = maskAriaLabelIfNeeded(element, normalized, configuration, nodePrivacyLevelCache)
+      const value = maskAttributeIfNeeded(
+        element,
+        ARIA_LABEL_ATTRIBUTE,
+        normalized,
+        configuration,
+        nodePrivacyLevelCache,
+        CENSORED_STRING_MARK
+      )
       result.push(getAttributeValueSelector(ARIA_LABEL_ATTRIBUTE, safeTruncate(value, ATTRIBUTE_VALUE_LIMIT)))
     }
   }
 
   return result.sort().join('')
-}
-
-/**
- * Masks an `aria-label` value when the element's privacy level requires it, mirroring how action
- * names are masked (`getActionNameFromStandardAttribute`).
- */
-function maskAriaLabelIfNeeded(
-  element: Element,
-  attributeValue: string,
-  configuration: RumConfiguration,
-  nodePrivacyLevelCache: NodePrivacyLevelCache
-): string {
-  if (!configuration.enablePrivacyForActionName) {
-    return attributeValue
-  }
-  const nodePrivacyLevel = getNodePrivacyLevel(element, configuration.defaultPrivacyLevel, nodePrivacyLevelCache)
-  if (shouldMaskAttribute(element.tagName, ARIA_LABEL_ATTRIBUTE, attributeValue, nodePrivacyLevel, configuration)) {
-    return maskDisallowedTextContent(attributeValue, CENSORED_STRING_MARK)
-  }
-  return attributeValue
 }
 
 /**
@@ -238,14 +241,12 @@ function maskAriaLabelIfNeeded(
  * navigates cross-origin when it doesn't.
  */
 function getSanitizedHref(element: Element): string | undefined {
+  // `getAttribute` returns `null` when the attribute is absent, but `''` when it's present-but-empty
+  // (ex: `href=""`), which resolves to the current document per HTML semantics — so only `null`
+  // should short-circuit here.
   const rawHref = element.getAttribute(HREF_ATTRIBUTE)
-  if (!rawHref) {
+  if (rawHref === null) {
     return undefined
-  }
-
-  const schemeMatch = URL_SCHEME.exec(rawHref)
-  if (schemeMatch && !/^https?:$/i.test(schemeMatch[0])) {
-    return schemeMatch[0].toLowerCase()
   }
 
   let url: URL
@@ -255,26 +256,48 @@ function getSanitizedHref(element: Element): string | undefined {
     return undefined
   }
 
+  // Checked on the *parsed* protocol, not the raw string: the URL parser trims leading/embedded
+  // whitespace and control characters before detecting the scheme, so a regex anchored on the raw
+  // string can miss a non-http(s) scheme (ex: a tab-prefixed "\tmailto:...") and let its whole
+  // payload (an email address, a phone number, a script) through unfiltered below.
+  if (!HTTP_SCHEME.test(url.protocol)) {
+    return url.protocol.toLowerCase()
+  }
+
   const groupedPath = groupUrlPath(url.pathname)
   const searchParamNames = getSearchParamNamesString(url.searchParams)
   const path = `${groupedPath}${searchParamNames}`
 
-  return ABSOLUTE_URL.test(rawHref) ? `${url.origin}${path}` : path
+  // The raw attribute can look relative (no scheme, no leading "//") while still resolving to a
+  // different origin than the current page: a backslash-led href (browsers treat "\" like "/" for
+  // http(s) URLs) or one with leading whitespace/control characters (trimmed by the URL parser)
+  // are both real examples. Comparing the resolved origin against the current one catches those
+  // cases too, so we never imply a same-origin link when the href actually navigates elsewhere.
+  const isAbsolute =
+    URL_SCHEME.test(rawHref) || rawHref.startsWith('//') || url.origin !== globalObject.location?.origin
+  return isAbsolute ? `${url.origin}${path}` : path
 }
 
 function groupUrlPath(pathname: string): string {
   return pathname
     .split('/')
-    .map((segment) => (isGeneratedValue(segment) ? '?' : segment))
+    .map((segment) => (isGeneratedValue(decodeSegment(segment)) ? '?' : segment))
     .join('/')
 }
 
-function getSearchParamNamesString(searchParams: URLSearchParams): string {
-  const names: string[] = []
-  for (const name of searchParams.keys()) {
-    if (!names.includes(name)) {
-      names.push(name)
-    }
+// Percent-encoded non-ASCII characters (ex: "%C3%A9" for "é") contain digits that don't reflect the
+// segment's actual content, which would make `isGeneratedValue` treat legitimate, non-English path
+// segments as "generated". Decoding before the check avoids that false positive; if the segment
+// isn't validly encoded, fall back to the raw segment rather than throwing.
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment
   }
+}
+
+function getSearchParamNamesString(searchParams: URLSearchParams): string {
+  const names = removeDuplicates(Array.from(searchParams.keys()))
   return names.length > 0 ? `?${names.join('&')}` : ''
 }
