@@ -31,6 +31,7 @@ function pageViewedEvent(url: string | undefined): ShopifyPixelEvent {
 describe('shopifyPlugin', () => {
   describe('when `shopifyAnalytics` is provided (Custom Pixel sandbox)', () => {
     it('does not patch or wire bindings until a checkout `page_viewed` event fires', () => {
+      mockClock()
       const patchSpy = replaceMockableWithSpy(patchSandboxedIframeApis)
       const initBindingsSpy = replaceMockableWithSpy(initShopifyBindings)
       const publicApi = {} as RumPublicApi
