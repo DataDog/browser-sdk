@@ -327,7 +327,7 @@ describe('getSelectorFromComposedPath', () => {
         expect(result).toBe(`A[role="link"][aria-label="${CSS.escape('Foo link')}"][href="${CSS.escape('/foo')}"];`)
       })
 
-      it('masks href and aria-label at the mask privacy level', () => {
+      it('masks aria-label but never href at the mask privacy level', () => {
         addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
         const element = appendElementInIsolation('<a href="/foo" aria-label="Secret label"></a>')
 
@@ -336,7 +336,21 @@ describe('getSelectorFromComposedPath', () => {
           mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK })
         )
 
-        expect(result).toBe(`A[aria-label="${CSS.escape('***')}"][href="${CSS.escape('***')}"];`)
+        // href is never masked: its own sanitization (dropping query values, hash, and any
+        // non-http(s) payload) is the only protection it gets, regardless of privacy level.
+        expect(result).toBe(`A[aria-label="${CSS.escape('***')}"][href="${CSS.escape('/foo')}"];`)
+      })
+
+      it('never masks href, even at the mask-unless-allowlisted privacy level', () => {
+        addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        const element = appendElementInIsolation('<a href="/foo" aria-label="Not allowed"></a>')
+
+        const result = getComposedPathSelector(
+          [element],
+          mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED })
+        )
+
+        expect(result).toBe(`A[aria-label="${CSS.escape('***')}"][href="${CSS.escape('/foo')}"];`)
       })
 
       it('does not mask href or aria-label at the default (mask-user-input) privacy level', () => {

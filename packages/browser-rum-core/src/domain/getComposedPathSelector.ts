@@ -45,10 +45,10 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
  * Attributes that can help identify an element but may carry PII, so they need extra treatment
  * before being collected. `href` is reduced to its origin, a generated-segment-free path, and the
  * names (not values) of its query parameters, dropping the hash and any non-http(s) payload (ex:
- * `mailto:`, `data:`), so the value is safe regardless of the privacy level in effect. `aria-label`
- * is free-form text, so it goes through the same masking pipeline as action names. Collected only
- * behind the `composed_path_selector_attributes` experimental flag while we validate cardinality
- * and PII exposure on real traffic.
+ * `mailto:`, `data:`); this sanitization is the only protection it gets, regardless of the privacy
+ * level in effect. `aria-label` is free-form text, so it goes through the same masking pipeline as
+ * action names. Collected only behind the `composed_path_selector_attributes` experimental flag
+ * while we validate cardinality and PII exposure on real traffic.
  */
 const HREF_ATTRIBUTE = 'href'
 const ARIA_LABEL_ATTRIBUTE = 'aria-label'
@@ -187,15 +187,14 @@ function extractPrivacySensitiveAttributesString(
 
   const sanitizedHref = getSanitizedHref(element)
   if (sanitizedHref !== undefined) {
-    const value = maskIfNeeded(element, HREF_ATTRIBUTE, sanitizedHref, configuration, nodePrivacyLevelCache)
-    result.push(getAttributeValueSelector(HREF_ATTRIBUTE, safeTruncate(value, ATTRIBUTE_VALUE_LIMIT)))
+    result.push(getAttributeValueSelector(HREF_ATTRIBUTE, safeTruncate(sanitizedHref, ATTRIBUTE_VALUE_LIMIT)))
   }
 
   const ariaLabel = element.getAttribute(ARIA_LABEL_ATTRIBUTE)
   if (ariaLabel) {
     const normalized = ariaLabel.replace(/\s+/g, ' ').trim()
     if (normalized) {
-      const value = maskIfNeeded(element, ARIA_LABEL_ATTRIBUTE, normalized, configuration, nodePrivacyLevelCache)
+      const value = maskAriaLabelIfNeeded(element, normalized, configuration, nodePrivacyLevelCache)
       result.push(getAttributeValueSelector(ARIA_LABEL_ATTRIBUTE, safeTruncate(value, ATTRIBUTE_VALUE_LIMIT)))
     }
   }
@@ -204,14 +203,11 @@ function extractPrivacySensitiveAttributesString(
 }
 
 /**
- * Masks an attribute value when the element's privacy level requires it, mirroring how action
- * names are masked (`getActionNameFromStandardAttribute`). `href` is always evaluated as if it
- * were on an anchor, since we want the same masking behavior regardless of the element carrying
- * it (ex: `area`, `link`, `use`).
+ * Masks an `aria-label` value when the element's privacy level requires it, mirroring how action
+ * names are masked (`getActionNameFromStandardAttribute`).
  */
-function maskIfNeeded(
+function maskAriaLabelIfNeeded(
   element: Element,
-  attributeName: string,
   attributeValue: string,
   configuration: RumConfiguration,
   nodePrivacyLevelCache: NodePrivacyLevelCache
@@ -220,8 +216,7 @@ function maskIfNeeded(
     return attributeValue
   }
   const nodePrivacyLevel = getNodePrivacyLevel(element, configuration.defaultPrivacyLevel, nodePrivacyLevelCache)
-  const tagName = attributeName === HREF_ATTRIBUTE ? 'A' : element.tagName
-  if (shouldMaskAttribute(tagName, attributeName, attributeValue, nodePrivacyLevel, configuration)) {
+  if (shouldMaskAttribute(element.tagName, ARIA_LABEL_ATTRIBUTE, attributeValue, nodePrivacyLevel, configuration)) {
     return maskDisallowedTextContent(attributeValue, CENSORED_STRING_MARK)
   }
   return attributeValue
