@@ -81,6 +81,8 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
 
   async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId) {
     const captureState = canvasManager.getCaptureState(canvas)
+    const cancelled = () => stopped || !captureState.isCurrent()
+
     try {
       const snapshot = createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
       if (!snapshot) {
@@ -90,7 +92,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
 
       const hash = await computeImageHash(snapshot, configuration?.hashingMaxDimension ?? 100)
 
-      if (stopped || !captureState.isCurrent()) {
+      if (cancelled()) {
         return
       }
       if (hash === undefined) {
@@ -103,7 +105,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       }
 
       const image = await captureCanvasImage(snapshot)
-      if (stopped || !captureState.isCurrent()) {
+      if (cancelled()) {
         return
       }
       if (!image) {
@@ -114,7 +116,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       onCanvasCapture({ nodeId, changeHash: hash, image })
       captureState.setLastChangeHash(hash)
     } catch (error) {
-      if (!stopped && captureState.isCurrent()) {
+      if (!cancelled()) {
         canvasManager.markCanvas(canvas, isSecurityError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)
       }
     }
