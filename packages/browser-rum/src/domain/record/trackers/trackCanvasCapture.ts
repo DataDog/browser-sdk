@@ -46,7 +46,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       await captureDirtyCanvases()
     } finally {
       const taskDuration = performance.now() - startTime
-      const nextDelay = captureInterval - Math.min(taskDuration, captureInterval * 0.5)
+      const nextDelay = Math.max(captureInterval - taskDuration, captureInterval * 0.5)
 
       scheduleNextCapture(nextDelay)
     }
