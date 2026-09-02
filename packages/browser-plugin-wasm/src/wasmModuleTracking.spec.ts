@@ -53,7 +53,7 @@ describe('startWasmModuleTracking', () => {
 
   it('records the build ID of modules instantiated from bytes', async () => {
     const wasmModule = new Uint8Array([
-      0, 97, 115, 109, 1, 0, 0, 0, 0, 12, 8, 98, 117, 105, 108, 100, 95, 105, 100, 2, 0xab, 0xcd,
+      0, 97, 115, 109, 1, 0, 0, 0, 0, 11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
     ])
 
     startWasmModuleTracking()
@@ -76,7 +76,7 @@ describe('startWasmModuleTracking', () => {
 
   it('records the build ID and URL of modules instantiated from a response', async () => {
     const wasmModule = new Uint8Array([
-      0, 97, 115, 109, 1, 0, 0, 0, 0, 12, 8, 98, 117, 105, 108, 100, 95, 105, 100, 2, 0xab, 0xcd,
+      0, 97, 115, 109, 1, 0, 0, 0, 0, 11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
     ])
     const module = new WebAssembly.Module(wasmModule)
     const response = { url: 'https://example.com/module.wasm' } as Response
