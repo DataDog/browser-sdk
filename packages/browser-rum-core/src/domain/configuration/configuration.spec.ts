@@ -11,7 +11,11 @@ import type {
   CamelToSnakeCase,
   MapInitConfigurationKey,
 } from '@datadog/browser-core/test'
-import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  mockEventBridge,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import {
   DEFAULT_PROPAGATOR_TYPES,
@@ -486,6 +490,89 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('betaEnableViewUpdates', () => {
+    // Unit tests are bundled as a CDN build (webpack.base.ts pins `setup: 'cdn'`), so the npm
+    // side of the default is only covered by e2e and by reading the code.
+
+    it('defaults to true on a CDN build without a proxy', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeTrue()
+    })
+
+    it('defaults to false on a CDN build with a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('defaults to false on a CDN build with a proxy function', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: () => 'https://proxy.example.com' })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('honors an explicit false on a CDN build without a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('honors an explicit true on a CDN build with a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          betaEnableViewUpdates: true,
+          proxy: 'https://proxy.example.com',
+        })!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('is false when the event bridge is used', () => {
+      // The bridge replaces the batch transport, so no view_update can ever be created.
+      mockEventBridge()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeFalse()
+    })
+
+    it('is false when the event bridge is used, even if the option is explicitly enabled', () => {
+      mockEventBridge()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('defaults to false for the Salesforce bundle', () => {
+      // The Salesforce bundle is a CDN build, but it is installed as a pinned static resource.
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce')!.betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('is true for the Salesforce bundle when the option is explicitly enabled', () => {
+      expect(
+        validateAndBuildRumConfiguration(
+          { ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true },
+          'rum-salesforce'
+        )!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('defaults to true for other CDN bundles', () => {
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-shopify')!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('does not validate the configuration if it is not a boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: 'yes' as any })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"betaEnableViewUpdates" must be a boolean')
+    })
+  })
+
   describe('trackResourceHeaders', () => {
     describe('disabled', () => {
       it('defaults to empty array', () => {
@@ -919,6 +1006,45 @@ describe('validateAndBuildRumConfiguration', () => {
 })
 
 describe('serializeRumConfiguration', () => {
+  describe('beta_enable_view_updates', () => {
+    it('reports the effective default on a CDN build without a proxy', () => {
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeTrue()
+    })
+
+    it('reports the effective default on a CDN build with a proxy', () => {
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+
+    it('reports an explicitly disabled option', () => {
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+
+    it('reports false when the event bridge is used', () => {
+      mockEventBridge()
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeFalse()
+    })
+
+    it('reports false for the Salesforce bundle', () => {
+      expect(
+        serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce').beta_enable_view_updates
+      ).toBeFalse()
+    })
+
+    it('reports false when the event bridge is used, even if the option is explicitly enabled', () => {
+      mockEventBridge()
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+  })
+
   it('should serialize the configuration', () => {
     const exhaustiveRumInitConfiguration: Required<RumInitConfiguration> = {
       ...EXHAUSTIVE_INIT_CONFIGURATION,
