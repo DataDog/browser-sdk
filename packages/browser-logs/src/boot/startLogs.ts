@@ -34,15 +34,10 @@ export function startLogs(
   sessionManager: SessionManager,
   getCommonContext: () => CommonContext,
   bufferedDataObservable: BufferedObservable<BufferedData>,
-  hooks: Hooks,
-  stopWasmModuleTracking?: () => void
+  hooks: Hooks
 ) {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
-
-  if (stopWasmModuleTracking) {
-    cleanupTasks.push(stopWasmModuleTracking)
-  }
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 

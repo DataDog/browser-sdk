@@ -69,15 +69,10 @@ export function startRum(
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
   hooks: Hooks,
-  sdkName?: SdkName,
-  stopWasmModuleTracking?: () => void
+  sdkName?: SdkName
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
-
-  if (stopWasmModuleTracking) {
-    cleanupTasks.push(stopWasmModuleTracking)
-  }
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 

@@ -1,14 +1,7 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
-import {
-  display,
-  DefaultPrivacyLevel,
-  ResourceType,
-  startTelemetry,
-  startSessionManager,
-  startWasmModuleTracking,
-} from '@datadog/browser-core'
+import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -1316,7 +1309,6 @@ function makeRumPublicApiWithDefaults({
   }))
   replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   replaceMockable(startSessionManager, createStartSessionManagerMock())
-  replaceMockable(startWasmModuleTracking, () => () => undefined)
   const rumPublicApi = makeRumPublicApi(
     { ...noopRecorderApi, ...recorderApi },
     { ...noopProfilerApi, ...profilerApi },

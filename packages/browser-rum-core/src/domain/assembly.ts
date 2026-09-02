@@ -1,10 +1,11 @@
 import type { EventRateLimiter } from '@datadog/browser-core'
 import { isEmptyObject, display, createEventRateLimiter, buildTags } from '@datadog/browser-core'
 import { DISCARDED } from '@datadog/js-core/assembly'
-import { combine } from '@datadog/js-core/util'
+import { combine, mergeInto } from '@datadog/js-core/util'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
+import type { RumErrorEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
@@ -88,6 +89,13 @@ export function startRumAssembly(
       const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, {
         ddtags: buildTags(configuration).join(','),
       }) as AssembledRumEvent
+
+      // Assemble hooks may provide error attributes (e.g. `source_type`, `wasm_modules`) that
+      // should take precedence over the values set when building the raw event. Re-apply them so
+      // plugins can override error fields such as `source_type`.
+      if (rawRumEvent.type === RumEventType.ERROR && defaultRumEventAttributes.error) {
+        mergeInto((serverRumEvent as RumErrorEvent).error, defaultRumEventAttributes.error)
+      }
 
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
         if (isEmptyObject(serverRumEvent.context!)) {

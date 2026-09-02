@@ -6,7 +6,6 @@ import {
   TrackingConsent,
   startTelemetry,
   startSessionManager,
-  startWasmModuleTracking,
 } from '@datadog/browser-core'
 import {
   collectAsyncCalls,
@@ -283,7 +282,6 @@ function makeLogsPublicApiWithDefaults({
 
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   replaceMockable(startSessionManager, createStartSessionManagerMock())
-  replaceMockable(startWasmModuleTracking, () => () => undefined)
 
   return {
     startLogsSpy,

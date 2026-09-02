@@ -4,7 +4,7 @@
 // Modules loaded lazily after the initial page load are captured automatically
 // — the hooks stay active for the lifetime of the page.
 
-import type { RawError } from '../error/error.types'
+import type { RawError } from '@datadog/browser-core'
 import { extractWasmBuildId } from './wasmBinaryParser'
 
 export interface RawWasmModule {

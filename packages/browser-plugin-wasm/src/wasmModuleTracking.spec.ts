@@ -1,5 +1,5 @@
-import type { RawError } from '../error/error.types'
-import { registerCleanupTask } from '../../../test'
+import type { RawError } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   getLoadedWasmModules,
   isWasmError,
