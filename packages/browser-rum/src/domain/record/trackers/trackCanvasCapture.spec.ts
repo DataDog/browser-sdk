@@ -215,13 +215,20 @@ describe('trackCanvasCapture', () => {
       draw('red')
       const onCanvasCapture = startTracking()
       const previousNodeId = scope.nodeIds.get(canvas)!
+
+      const firstCapture = collectAsyncCalls(onCanvasCapture, 1)
       markCanvasDirtyAndWaitForCapture()
+      await firstCapture
+      // The next timeout is scheduled in the previous capture task's `finally` block.
+      // Wait for that task to finish before changing the scope and advancing the clock.
       await waitForCanvasCapture()
 
       const currentNodeId = change()
       canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+      const secondCapture = collectAsyncCalls(onCanvasCapture, 2)
       clock.tick(1000)
-      await waitForCanvasCapture()
+      await secondCapture
 
       expect(onCanvasCapture).toHaveBeenCalledTimes(2)
       if (currentNodeId !== undefined) {
