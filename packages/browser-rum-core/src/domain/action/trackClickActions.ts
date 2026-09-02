@@ -18,6 +18,8 @@ import { getComposedPathSelector } from '../getComposedPathSelector'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import type { FrustrationIgnore } from './frustrationIgnore'
+import { getFrustrationIgnore } from './frustrationIgnore'
 import type { ActionNameSource } from './actionNameConstants'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
@@ -100,13 +102,14 @@ export function trackClickActions(
   function appendClickToClickChain(click: Click) {
     if (!currentClickChain?.tryAppend(click)) {
       const rageClick = click.clone()
-      currentClickChain = createClickChain(click, (clicks) => {
+      const clickChain = createClickChain(click, (clicks) => {
         finalizeClicks(clicks, rageClick)
-        // Clear the reference to allow garbage collection. Without this, the finalize callback
-        // retains a closure reference to the old click chain, preventing it from being cleaned up
-        // and causing a memory leak as click chains accumulate over time.
-        currentClickChain = undefined
+        // A newer chain may have started while this chain was waiting for its clicks to stop.
+        if (currentClickChain === clickChain) {
+          currentClickChain = undefined
+        }
       })
+      currentClickChain = clickChain
     }
   }
 
@@ -287,10 +290,12 @@ function newClick(
   actionTracker: EventTracker<ClickActionBase>,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
-  startEvent: MouseEventOnElement
+  startEvent: MouseEventOnElement,
+  frustrationIgnore?: FrustrationIgnore
 ) {
   const clickKey = generateUUID()
   const startClocks = relativeToClocks(startEvent.timeStamp)
+  const capturedFrustrationIgnore = frustrationIgnore ?? getFrustrationIgnore(getEventTarget(startEvent))
 
   const startedClickAction = actionTracker.start(clickKey, startClocks, clickActionBase, {
     isChildEvent: isActionChildEvent,
@@ -319,6 +324,7 @@ function newClick(
 
   return {
     event: startEvent,
+    frustrationIgnore: capturedFrustrationIgnore,
     stop,
     stopObservable,
 
@@ -339,7 +345,8 @@ function newClick(
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent),
+    clone: () =>
+      newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent, capturedFrustrationIgnore),
 
     validate: (domEvents?: Event[]) => {
       stop()

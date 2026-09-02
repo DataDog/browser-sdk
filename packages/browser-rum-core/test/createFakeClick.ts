@@ -2,6 +2,8 @@ import { clocksNow, timeStampNow } from '@datadog/js-core/time'
 import { Observable } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { Click } from '../src/domain/action/trackClickActions'
+import type { FrustrationIgnore } from '../src/domain/action/frustrationIgnore'
+import { getFrustrationIgnore } from '../src/domain/action/frustrationIgnore'
 import type { MouseEventOnElement, UserActivity } from '../src/domain/action/listenActionEvents'
 
 export type FakeClick = Readonly<ReturnType<typeof createFakeClick>>
@@ -11,17 +13,20 @@ export function createFakeClick({
   hasPageActivity = true,
   userActivity,
   event,
+  frustrationIgnore,
 }: {
   hasError?: boolean
   hasPageActivity?: boolean
   userActivity?: Partial<UserActivity>
   event?: Partial<MouseEventOnElement>
+  frustrationIgnore?: FrustrationIgnore
 } = {}) {
   const stopObservable = new Observable<void>()
   let isStopped = false
+  const capturedFrustrationIgnore = frustrationIgnore ?? getFrustrationIgnore(event?.target ?? document.body)
 
   function clone() {
-    return createFakeClick({ userActivity, event })
+    return createFakeClick({ userActivity, event, frustrationIgnore: capturedFrustrationIgnore })
   }
 
   return {
@@ -44,6 +49,7 @@ export function createFakeClick({
     }),
     addFrustration: jasmine.createSpy<Click['addFrustration']>(),
     clone: jasmine.createSpy<typeof clone>().and.callFake(clone),
+    frustrationIgnore: capturedFrustrationIgnore,
 
     event: createNewEvent('pointerup', {
       clientX: 100,

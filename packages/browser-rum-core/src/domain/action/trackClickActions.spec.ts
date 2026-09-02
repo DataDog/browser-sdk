@@ -372,6 +372,36 @@ describe('trackClickActions', () => {
         ])
       )
     })
+
+    it('captures the rage ignore state before the attribute changes', () => {
+      button.setAttribute('data-dd-ignore-frustration', '')
+      startClickActionsTracking()
+
+      emulateClick({ activity: {} })
+      emulateClick({ activity: {} })
+      emulateClick({ activity: {} })
+      button.removeAttribute('data-dd-ignore-frustration')
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events).toHaveSize(3)
+      events.forEach((event) => expect(event.frustrationTypes).not.toContain(FrustrationType.RAGE_CLICK))
+    })
+
+    it('keeps the current chain when a previous chain finalizes', () => {
+      button.setAttribute('data-dd-ignore-frustration', 'rage-click')
+      startClickActionsTracking()
+
+      emulateClick()
+      button.removeAttribute('data-dd-ignore-frustration')
+      emulateClick({ activity: { delay: 5 } })
+      emulateClick({ activity: { delay: 5 } })
+      emulateClick({ activity: { delay: 5 } })
+
+      clock.tick(EXPIRE_DELAY)
+      const rageActions = events.filter((event) => event.frustrationTypes.includes(FrustrationType.RAGE_CLICK))
+      expect(rageActions).toHaveSize(1)
+      expect(rageActions[0].events).toHaveSize(3)
+    })
   })
 
   describe('error clicks', () => {
@@ -384,6 +414,18 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
       expect(events[0].frustrationTypes).toEqual([FrustrationType.ERROR_CLICK])
+    })
+
+    it('does not consider an ignored error as an error click', () => {
+      button.setAttribute('data-dd-ignore-frustration', 'error-click')
+      startClickActionsTracking()
+
+      emulateClick({ activity: {} })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events).toHaveSize(1)
+      expect(events[0].frustrationTypes).not.toContain(FrustrationType.ERROR_CLICK)
     })
 
     it('considers a "click without activity" followed by an error as a click action with "error" (and "dead") frustration type', () => {
@@ -666,6 +708,37 @@ describe('trackClickActions', () => {
       expect(events.length).toBe(1)
       expect(events[0].target?.selector).toContain(SHADOW_DOM_MARKER)
       expect(events[0].target?.selector).toContain('BUTTON')
+    })
+
+    it('does not use an ignored click as the basis of a rage action', () => {
+      shadowButton.setAttribute('data-dd-ignore-frustration', 'rage-click')
+      const contributingButton = document.createElement('button')
+      contributingButton.textContent = 'Contributing Button'
+      shadowHost.shadowRoot!.appendChild(contributingButton)
+      startClickActionsTracking()
+
+      emulateShadowClick(shadowButton)
+      emulateShadowClick(contributingButton)
+      emulateShadowClick(contributingButton)
+      emulateShadowClick(contributingButton)
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events).toHaveSize(2)
+      expect(events[0].frustrationTypes).not.toContain(FrustrationType.RAGE_CLICK)
+      expect(events[1].frustrationTypes).toContain(FrustrationType.RAGE_CLICK)
+      expect(events[1].name).toBe('Contributing Button')
+      expect(events[1].events).toHaveSize(3)
+
+      function emulateShadowClick(target: HTMLButtonElement) {
+        emulateClick({
+          target: shadowHost,
+          activity: { delay: 5 },
+          eventProperty: {
+            composed: true,
+            composedPath: () => [target, shadowHost.shadowRoot, shadowHost, document.body, document],
+          },
+        })
+      }
     })
   })
 
