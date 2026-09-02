@@ -42,6 +42,11 @@ describe('trackRouteChangeViewMetrics', () => {
       value: 250 as RelativeTime,
       targetSelector: undefined,
       resourceUrl: undefined,
+      subParts: {
+        loadDelay: 0 as RelativeTime,
+        loadTime: 0 as RelativeTime,
+        renderDelay: 250 as RelativeTime,
+      },
     })
     expect(scheduleViewUpdate).toHaveBeenCalledTimes(1)
   })
@@ -188,6 +193,11 @@ describe('trackRouteChangeViewMetrics', () => {
       value: 250 as RelativeTime,
       targetSelector: '#soft-nav-lcp',
       resourceUrl: 'https://example.com/soft-nav-image.png',
+      subParts: {
+        loadDelay: 0 as RelativeTime,
+        loadTime: 0 as RelativeTime,
+        renderDelay: 250 as RelativeTime,
+      },
     })
   })
 
@@ -278,5 +288,44 @@ describe('trackRouteChangeViewMetrics', () => {
     ])
 
     expect(initialViewMetrics.largestContentfulPaint?.value).toBe(200 as RelativeTime)
+  })
+
+  describe('LCP subParts', () => {
+    it('should compute subParts using the soft-navigation start as the TTFB baseline', () => {
+      const { initialViewMetrics } = startTracking()
+      const resourceUrl = 'https://example.com/soft-nav-image.png'
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          name: resourceUrl,
+          startTime: 1200 as RelativeTime,
+          requestStart: 1200 as RelativeTime,
+          responseEnd: 1400 as RelativeTime,
+        }),
+      ])
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, {
+          startTime: 1000 as RelativeTime,
+          interactionId: 7,
+          getLargestInteractionContentfulPaint: () =>
+            createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
+              interactionId: 7,
+              largestContentfulPaint: createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+                startTime: 1500 as RelativeTime,
+                size: 100,
+                url: resourceUrl,
+              }),
+            }),
+        }),
+      ])
+
+      expect(initialViewMetrics.largestContentfulPaint?.value).toBe(500 as RelativeTime)
+      expect(initialViewMetrics.largestContentfulPaint?.subParts).toEqual({
+        loadDelay: 200 as RelativeTime, // 1200 (resource requestStart) - 1000 (soft nav start)
+        loadTime: 200 as RelativeTime, // 1400 (responseEnd) - 1200 (requestStart)
+        renderDelay: 100 as RelativeTime, // 1500 (LCP time) - 1400 (responseEnd)
+      })
+    })
   })
 })

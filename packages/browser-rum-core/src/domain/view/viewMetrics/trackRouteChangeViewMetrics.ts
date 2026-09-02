@@ -7,6 +7,7 @@ import type {
 } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
+import { computeLcpSubParts } from './trackLargestContentfulPaint'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
 
 /**
@@ -72,12 +73,14 @@ export function trackRouteChangeViewMetrics(configuration: RumConfiguration, sch
       }
       biggestIcpSize = entry.largestContentfulPaint.size
       const lcpEntry = entry.largestContentfulPaint
+      const resourceUrl = lcpEntry.url || undefined
       const largestContentfulPaint: LargestContentfulPaint = {
         value: (lcpEntry.startTime - softNavEntry.startTime) as RelativeTime,
         targetSelector: lcpEntry.element
           ? getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
           : undefined,
-        resourceUrl: lcpEntry.url || undefined,
+        resourceUrl,
+        subParts: computeLcpSubParts(resourceUrl, lcpEntry.startTime, softNavEntry.startTime),
       }
       initialViewMetrics.largestContentfulPaint = largestContentfulPaint
       scheduleViewUpdate()
