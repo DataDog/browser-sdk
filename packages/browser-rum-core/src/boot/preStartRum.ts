@@ -42,7 +42,7 @@ import {
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
-import { callPluginsMethod } from '../domain/plugins'
+import { callPluginsOnInit } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -242,31 +242,48 @@ export function createPreStartStrategy(
         return
       }
 
-      callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, { initConfiguration, publicApi })
 
-      const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
-
-      if (hasRemoteConfiguration) {
-        const supportedContextManagers = { user: userContext, context: globalContext }
-        const isSyncLoading = !!initConfiguration.remoteConfigurationId || !!initConfiguration.remoteConfiguration?.sync
-
-        if (isSyncLoading) {
-          fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
-            .then((resolvedInitConfiguration) => {
-              if (resolvedInitConfiguration) {
-                doInit(resolvedInitConfiguration, errorStack)
-              }
-            })
-            .catch(monitorError)
-        } else {
-          const resolvedInitConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
-
-          if (resolvedInitConfiguration) {
-            doInit(resolvedInitConfiguration, errorStack)
-          }
+      if (typeof shouldContinue === 'boolean') {
+        if (shouldContinue) {
+          proceedWithInit()
         }
       } else {
-        doInit(initConfiguration, errorStack)
+        shouldContinue
+          .then((result) => {
+            if (result) {
+              proceedWithInit()
+            }
+          })
+          .catch(monitorError)
+      }
+
+      function proceedWithInit() {
+        const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
+
+        if (hasRemoteConfiguration) {
+          const supportedContextManagers = { user: userContext, context: globalContext }
+          const isSyncLoading =
+            !!initConfiguration.remoteConfigurationId || !!initConfiguration.remoteConfiguration?.sync
+
+          if (isSyncLoading) {
+            fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
+              .then((resolvedInitConfiguration) => {
+                if (resolvedInitConfiguration) {
+                  doInit(resolvedInitConfiguration, errorStack)
+                }
+              })
+              .catch(monitorError)
+          } else {
+            const resolvedInitConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+            if (resolvedInitConfiguration) {
+              doInit(resolvedInitConfiguration, errorStack)
+            }
+          }
+        } else {
+          doInit(initConfiguration, errorStack)
+        }
       }
     },
 

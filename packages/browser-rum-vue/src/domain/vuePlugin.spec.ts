@@ -20,6 +20,7 @@ describe('vuePlugin', () => {
     const spy = jasmine.createSpy()
     const config = {}
     onRumInit(spy)
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
     expect(spy).toHaveBeenCalledOnceWith(config, PUBLIC_API)
   })
@@ -27,6 +28,7 @@ describe('vuePlugin', () => {
   it('calls callbacks immediately if onInit was already invoked', () => {
     const spy = jasmine.createSpy()
     const config = {}
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
     onRumInit(spy)
     expect(spy).toHaveBeenCalledOnceWith(config, PUBLIC_API)
@@ -34,12 +36,14 @@ describe('vuePlugin', () => {
 
   it('sets trackViewsManually when router is true', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     vuePlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('does not set trackViewsManually when router is false', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     vuePlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })

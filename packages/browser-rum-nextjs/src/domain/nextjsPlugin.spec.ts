@@ -25,6 +25,7 @@ function createPublicApi() {
 function initPlugin() {
   const { publicApi, startViewSpy } = createPublicApi()
   const plugin = nextjsPlugin()
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
   plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
   return { plugin, publicApi, startViewSpy }
 }
@@ -58,6 +59,7 @@ describe('nextjsPlugin', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
     const { publicApi } = createPublicApi()
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     nextjsPlugin().onInit({ publicApi, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
@@ -133,6 +135,7 @@ describe('nextjsPlugin', () => {
 
       expect(callbackSpy).not.toHaveBeenCalled()
 
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
       nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
@@ -146,6 +149,7 @@ describe('nextjsPlugin', () => {
       const callbackSpy = jasmine.createSpy()
       const { publicApi } = createPublicApi()
 
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
       nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,

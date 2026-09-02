@@ -1,19 +1,6 @@
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from './shopifyAnalytics'
+import { createFakeAnalytics } from '../../test/mockShopifyAnalytics'
 import { initShopifyBindings } from './shopifyBindings'
-
-function createFakeAnalytics() {
-  const subscribers = new Map<string, (event: ShopifyPixelEvent) => void>()
-  const analytics: ShopifyAnalyticsApi = {
-    subscribe: jasmine.createSpy('subscribe').and.callFake((eventName: string, callback) => {
-      subscribers.set(eventName, callback)
-    }),
-  }
-  return {
-    analytics,
-    emit: (eventName: string, event: ShopifyPixelEvent) => subscribers.get(eventName)?.(event),
-  }
-}
 
 function createFakeRumPublicApi() {
   const startView = jasmine.createSpy('startView')
@@ -64,31 +51,33 @@ describe('initShopifyBindings', () => {
       return startView
     }
 
-    it('does not start a view on storefront pages', () => {
-      expect(emitPageViewed('https://shop.example/products/foo')).not.toHaveBeenCalled()
+    it('starts a view on /checkout, /checkouts/*, and locale-prefixed checkout paths', () => {
+      const urls = [
+        'https://shop.example/checkout',
+        'https://shop.example/checkouts/abc123',
+        'https://shop.example/en-us/checkout',
+      ]
+
+      for (const url of urls) {
+        expect(emitPageViewed(url)).toHaveBeenCalledTimes(1)
+      }
     })
 
-    it('starts a view on /checkout and /checkouts/* pages', () => {
-      expect(emitPageViewed('https://shop.example/checkout')).toHaveBeenCalledTimes(1)
-      expect(emitPageViewed('https://shop.example/checkouts/abc123')).toHaveBeenCalledTimes(1)
-    })
+    it('does not start a view on storefront, /orders/*, Customer Account pages, or an undefined url', () => {
+      const urls = [
+        'https://shop.example/products/foo',
+        'https://shop.example/orders/abc123',
+        'https://shop.example/account/orders',
+        undefined,
+      ]
 
-    it('does not start a view on /orders/* pages (Order Status)', () => {
-      expect(emitPageViewed('https://shop.example/orders/abc123')).not.toHaveBeenCalled()
-    })
-
-    it('does not start a view on Customer Account pages', () => {
-      expect(emitPageViewed('https://shop.example/account/orders')).not.toHaveBeenCalled()
-    })
-
-    it('starts a view on locale-prefixed checkout paths', () => {
-      expect(emitPageViewed('https://shop.example/en-us/checkout')).toHaveBeenCalledTimes(1)
-    })
-
-    it('does not start a view when the url is undefined', () => {
-      expect(emitPageViewed(undefined)).not.toHaveBeenCalled()
+      for (const url of urls) {
+        expect(emitPageViewed(url)).not.toHaveBeenCalled()
+      }
     })
   })
+
+  const checkoutContext = { document: { location: { href: 'https://shop.example/checkout' } } }
 
   it('maps "clicked" to a zero-duration startAction/stopAction pair named after the element id', () => {
     const { rumPublicApi, startAction, stopAction } = createFakeRumPublicApi()
@@ -99,6 +88,7 @@ describe('initShopifyBindings', () => {
       name: 'clicked',
       id: '11',
       timestamp: '2026-07-06T00:00:00Z',
+      context: checkoutContext,
       data: { element: { id: 'add-to-cart-button', value: undefined, href: undefined } },
     })
 
@@ -115,11 +105,29 @@ describe('initShopifyBindings', () => {
       name: 'clicked',
       id: '12',
       timestamp: '2026-07-06T00:00:00Z',
+      context: checkoutContext,
       data: { element: {} },
     })
 
     expect(startAction).toHaveBeenCalledWith('element-without-id', { type: 'click' })
     expect(stopAction).toHaveBeenCalledWith('element-without-id', { type: 'click' })
+  })
+
+  it('does not report "clicked" outside a checkout page', () => {
+    const { rumPublicApi, startAction, stopAction } = createFakeRumPublicApi()
+    const { analytics, emit } = createFakeAnalytics()
+
+    initShopifyBindings(rumPublicApi, analytics)
+    emit('clicked', {
+      name: 'clicked',
+      id: '13',
+      timestamp: '2026-07-06T00:00:00Z',
+      context: { document: { location: { href: 'https://shop.example/products/foo' } } },
+      data: { element: { id: 'add-to-cart-button' } },
+    })
+
+    expect(startAction).not.toHaveBeenCalled()
+    expect(stopAction).not.toHaveBeenCalled()
   })
 
   it('maps "ui_extension_errored" to addError with the flattened extension context', () => {
@@ -131,6 +139,7 @@ describe('initShopifyBindings', () => {
       name: 'ui_extension_errored',
       id: '10',
       timestamp: '2026-07-06T00:00:00Z',
+      context: checkoutContext,
       data: {
         error: {
           message: 'Boom',
