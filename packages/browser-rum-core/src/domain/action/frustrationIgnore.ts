@@ -6,14 +6,21 @@ const RAGE_CLICK_IGNORE_VALUE = 'rage-click'
 const DEAD_CLICK_IGNORE_VALUE = 'dead-click'
 const ERROR_CLICK_IGNORE_VALUE = 'error-click'
 
-export interface FrustrationIgnore {
-  rageClick: boolean
-  deadClick: boolean
-  errorClick: boolean
+export const enum FrustrationIgnore {
+  NONE = 0,
+  RAGE_CLICK = 1,
+  DEAD_CLICK = 2,
+  ERROR_CLICK = 4,
+  ALL = 7,
+}
+
+export function shouldIgnore(ignore: FrustrationIgnore, frustration: number) {
+  // eslint-disable-next-line no-bitwise
+  return (ignore & frustration) !== 0
 }
 
 export function getFrustrationIgnore(element: Element): FrustrationIgnore {
-  const frustrationIgnore = { rageClick: false, deadClick: false, errorClick: false }
+  let frustrationIgnore = FrustrationIgnore.NONE
   let currentElement: Element | null = element
 
   while (currentElement) {
@@ -21,17 +28,23 @@ export function getFrustrationIgnore(element: Element): FrustrationIgnore {
     if (attributeValue !== null) {
       const values = attributeValue.split(/\s+/)
       const ignoreAll = attributeValue.trim() === '' || values.includes(ALL_FRUSTRATIONS_IGNORE_VALUE)
-      if (ignoreAll || values.includes(RAGE_CLICK_IGNORE_VALUE)) {
-        frustrationIgnore.rageClick = true
+      if (ignoreAll) {
+        return FrustrationIgnore.ALL
       }
-      if (ignoreAll || values.includes(DEAD_CLICK_IGNORE_VALUE)) {
-        frustrationIgnore.deadClick = true
+      if (values.includes(RAGE_CLICK_IGNORE_VALUE)) {
+        // eslint-disable-next-line no-bitwise
+        frustrationIgnore |= FrustrationIgnore.RAGE_CLICK
       }
-      if (ignoreAll || values.includes(ERROR_CLICK_IGNORE_VALUE)) {
-        frustrationIgnore.errorClick = true
+      if (values.includes(DEAD_CLICK_IGNORE_VALUE)) {
+        // eslint-disable-next-line no-bitwise
+        frustrationIgnore |= FrustrationIgnore.DEAD_CLICK
+      }
+      if (values.includes(ERROR_CLICK_IGNORE_VALUE)) {
+        // eslint-disable-next-line no-bitwise
+        frustrationIgnore |= FrustrationIgnore.ERROR_CLICK
       }
     }
-    if (frustrationIgnore.rageClick && frustrationIgnore.deadClick && frustrationIgnore.errorClick) {
+    if (frustrationIgnore === FrustrationIgnore.ALL) {
       break
     }
     currentElement = getParentElement(currentElement)

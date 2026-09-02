@@ -49,7 +49,7 @@ export function createFakeClick({
     }),
     addFrustration: jasmine.createSpy<Click['addFrustration']>(),
     clone: jasmine.createSpy<typeof clone>().and.callFake(clone),
-    frustrationIgnore: capturedFrustrationIgnore,
+    ignore: capturedFrustrationIgnore,
 
     event: createNewEvent('pointerup', {
       clientX: 100,

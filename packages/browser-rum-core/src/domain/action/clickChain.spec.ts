@@ -3,6 +3,7 @@ import { mockClock } from '@datadog/browser-core/test'
 import { createFakeClick } from '../../../test'
 import type { ClickChain } from './clickChain'
 import { MAX_DISTANCE_BETWEEN_CLICKS, MAX_DURATION_BETWEEN_CLICKS, createClickChain } from './clickChain'
+import { FrustrationIgnore } from './frustrationIgnore'
 
 describe('createClickChain', () => {
   let clickChain: ClickChain | undefined
@@ -81,29 +82,18 @@ describe('createClickChain', () => {
     })
 
     it('does not accept a click if its rage ignore state is different', () => {
-      clickChain = createClickChain(
-        createFakeClick({ frustrationIgnore: { rageClick: true, deadClick: false, errorClick: false } }),
-        onFinalizeSpy
-      )
+      clickChain = createClickChain(createFakeClick({ frustrationIgnore: FrustrationIgnore.RAGE_CLICK }), onFinalizeSpy)
 
-      expect(
-        clickChain.tryAppend(
-          createFakeClick({ frustrationIgnore: { rageClick: false, deadClick: false, errorClick: false } })
-        )
-      ).toBe(false)
+      expect(clickChain.tryAppend(createFakeClick({ frustrationIgnore: FrustrationIgnore.NONE }))).toBe(false)
     })
 
     it('accepts a click if only its dead or error ignore state is different', () => {
       clickChain = createClickChain(
-        createFakeClick({ frustrationIgnore: { rageClick: false, deadClick: true, errorClick: true } }),
+        createFakeClick({ frustrationIgnore: FrustrationIgnore.DEAD_CLICK + FrustrationIgnore.ERROR_CLICK }),
         onFinalizeSpy
       )
 
-      expect(
-        clickChain.tryAppend(
-          createFakeClick({ frustrationIgnore: { rageClick: false, deadClick: false, errorClick: false } })
-        )
-      ).toBe(true)
+      expect(clickChain.tryAppend(createFakeClick({ frustrationIgnore: FrustrationIgnore.NONE }))).toBe(true)
     })
 
     it('does not accept a click if its location is far from the previous one', () => {

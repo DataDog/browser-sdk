@@ -5,6 +5,7 @@ import { FrustrationType } from '../../rawRumEvent.types'
 import type { FakeClick } from '../../../test'
 import { appendElement, createFakeClick } from '../../../test'
 import { computeFrustration, isRage, isDead } from './computeFrustration'
+import { FrustrationIgnore } from './frustrationIgnore'
 
 describe('computeFrustration', () => {
   let clicks: FakeClick[]
@@ -48,19 +49,28 @@ describe('computeFrustration', () => {
 
     it('does not add an ignored error frustration to the rage click', () => {
       clicksConsideredAsRage = clicksConsideredAsRage.map(() =>
-        createFakeClick({ frustrationIgnore: { rageClick: false, deadClick: false, errorClick: true } })
+        createFakeClick({ frustrationIgnore: FrustrationIgnore.ERROR_CLICK })
       )
       rageClick = createFakeClick({
         hasError: true,
-        frustrationIgnore: { rageClick: false, deadClick: false, errorClick: true },
+        frustrationIgnore: FrustrationIgnore.ERROR_CLICK,
       })
       computeFrustration(clicksConsideredAsRage, rageClick)
       expect(getFrustrations(rageClick)).toEqual([FrustrationType.RAGE_CLICK])
     })
 
-    it('adds an error frustration when at least one click does not ignore errors', () => {
+    it('uses the initiating click policy for errors during the rage click lifetime', () => {
       clicksConsideredAsRage[0] = createFakeClick({
-        frustrationIgnore: { rageClick: false, deadClick: false, errorClick: true },
+        frustrationIgnore: FrustrationIgnore.ERROR_CLICK,
+      })
+      rageClick = createFakeClick({ hasError: true, frustrationIgnore: FrustrationIgnore.ERROR_CLICK })
+      computeFrustration(clicksConsideredAsRage, rageClick)
+      expect(getFrustrations(rageClick)).toEqual([FrustrationType.RAGE_CLICK])
+    })
+
+    it('does not use a later click policy for errors during the rage click lifetime', () => {
+      clicksConsideredAsRage[1] = createFakeClick({
+        frustrationIgnore: FrustrationIgnore.ERROR_CLICK,
       })
       rageClick = createFakeClick({ hasError: true })
       computeFrustration(clicksConsideredAsRage, rageClick)
