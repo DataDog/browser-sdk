@@ -141,7 +141,10 @@ describe('trackCanvasCapture', () => {
   it('discards an unchanged canvas and marks it clean', async () => {
     draw('red')
     const onCanvasCapture = startTracking()
+
+    const firstCapture = collectAsyncCalls(onCanvasCapture, 1)
     markCanvasDirtyAndWaitForCapture()
+    await firstCapture
     await waitForCanvasCapture()
 
     markCanvasDirtyAndWaitForCapture()
@@ -183,6 +186,7 @@ describe('trackCanvasCapture', () => {
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     resolveFirstDigest()
     await collectAsyncCalls(onCanvasCapture, 1)
+    await waitForCanvasCapture()
 
     expect(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[0].image)).toEqual([255, 0, 0, 255])
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
