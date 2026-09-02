@@ -17,6 +17,7 @@ import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
+import type { SdkName } from '../contexts/defaultContext'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 import { getRemoteConfigurationId } from './remoteConfiguration'
@@ -514,7 +515,11 @@ export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedT
  * The CDN check is temporary, the next step is to default this to true unless `proxy` is set.
  * TODO next major: remove the option.
  */
-function isViewUpdatesEnabled(explicit: boolean | undefined, proxy: InitConfiguration['proxy']): boolean {
+function isViewUpdatesEnabled(
+  explicit: boolean | undefined,
+  proxy: InitConfiguration['proxy'],
+  sdkName: SdkName | undefined
+): boolean {
   if (canUseEventBridge()) {
     // The bridge replaces the batch transport, and `view_update` events are only created by the
     // batch dispatcher, so partial updates never happen in a WebView. Ignore the explicit value
@@ -522,11 +527,15 @@ function isViewUpdatesEnabled(explicit: boolean | undefined, proxy: InitConfigur
     return false
   }
 
-  return explicit ?? (__BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy)
+  // The Salesforce bundle is a CDN build, but the supported install flow uploads it as a static
+  // resource, so publishing a new bundle does not roll those deployments back. Keep them out of
+  // the default, they can still opt in explicitly.
+  return explicit ?? (__BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy && sdkName !== 'rum-salesforce')
 }
 
 export function validateAndBuildRumConfiguration(
-  initConfiguration: RumInitConfiguration
+  initConfiguration: RumInitConfiguration,
+  sdkName?: SdkName
 ): RumConfiguration | undefined {
   const config = validateAndBuildConfiguration(
     initConfiguration as unknown as Record<string, unknown>,
@@ -552,7 +561,7 @@ export function validateAndBuildRumConfiguration(
   return {
     ...config,
     sessionReplayCanvasRecording,
-    betaEnableViewUpdates: isViewUpdatesEnabled(config.betaEnableViewUpdates, config.proxy),
+    betaEnableViewUpdates: isViewUpdatesEnabled(config.betaEnableViewUpdates, config.proxy, sdkName),
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
@@ -713,7 +722,7 @@ function getTrackResourceHeadersTelemetryValue(
   }
 }
 
-export function serializeRumConfiguration(configuration: RumInitConfiguration) {
+export function serializeRumConfiguration(configuration: RumInitConfiguration, sdkName?: SdkName) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
   // `use_` prefix is for telemetry options that track usage of a configuration option as a boolean to avoid capturing customer data
@@ -747,7 +756,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
-    beta_enable_view_updates: isViewUpdatesEnabled(configuration.betaEnableViewUpdates, configuration.proxy),
+    beta_enable_view_updates: isViewUpdatesEnabled(configuration.betaEnableViewUpdates, configuration.proxy, sdkName),
     beta_track_web_sockets: configuration.betaTrackWebSockets,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration

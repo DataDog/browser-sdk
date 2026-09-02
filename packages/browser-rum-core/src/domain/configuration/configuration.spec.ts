@@ -543,6 +543,28 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBeFalse()
     })
 
+    it('defaults to false for the Salesforce bundle', () => {
+      // The Salesforce bundle is a CDN build, but it is installed as a pinned static resource.
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce')!.betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('is true for the Salesforce bundle when the option is explicitly enabled', () => {
+      expect(
+        validateAndBuildRumConfiguration(
+          { ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true },
+          'rum-salesforce'
+        )!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('defaults to true for other CDN bundles', () => {
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-shopify')!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
     it('does not validate the configuration if it is not a boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: 'yes' as any })
@@ -1006,6 +1028,12 @@ describe('serializeRumConfiguration', () => {
     it('reports false when the event bridge is used', () => {
       mockEventBridge()
       expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeFalse()
+    })
+
+    it('reports false for the Salesforce bundle', () => {
+      expect(
+        serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce').beta_enable_view_updates
+      ).toBeFalse()
     })
 
     it('reports false when the event bridge is used, even if the option is explicitly enabled', () => {

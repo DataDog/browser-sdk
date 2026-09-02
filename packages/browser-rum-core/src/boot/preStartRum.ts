@@ -150,7 +150,7 @@ export function createPreStartStrategy(
       return
     }
 
-    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    const configuration = validateAndBuildRumConfiguration(initConfiguration, sdkName)
     if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
       return
     }
@@ -197,7 +197,7 @@ export function createPreStartStrategy(
           startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
             application: { id: configuration.applicationId },
           })
-          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName))
 
           tryStartRum()
         })
