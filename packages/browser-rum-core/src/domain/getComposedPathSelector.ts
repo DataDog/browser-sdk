@@ -1,12 +1,5 @@
-import {
-  safeTruncate,
-  ONE_KIBI_BYTE,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-  removeDuplicates,
-} from '@datadog/browser-core'
+import { safeTruncate, ONE_KIBI_BYTE } from '@datadog/browser-core'
 import type { MatchOption } from '@datadog/browser-core'
-import { normalizeUrl, buildUrl, globalObject } from '@datadog/js-core/util'
 import {
   STABLE_ATTRIBUTES,
   isGeneratedValue,
@@ -16,9 +9,7 @@ import {
   getAttributeValueSelector,
 } from './getSelectorFromElement'
 import type { RumConfiguration } from './configuration'
-import { maskAttributeIfNeeded } from './privacy'
-import type { NodePrivacyLevelCache } from './privacy'
-import { CENSORED_STRING_MARK } from './privacyConstants'
+import { HREF_ATTRIBUTE } from './urlSanitizer'
 
 const FILTERED_TAGNAMES = ['HTML', 'BODY']
 
@@ -48,29 +39,12 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
 ])
 
 /**
- * Attributes that can help identify an element but may carry PII, so they need extra treatment
- * before being collected. `href` is reduced to its origin, a generated-segment-free path, and the
- * names (not values) of its query parameters, dropping the hash and any non-http(s) payload (ex:
- * `mailto:`, `data:`); this sanitization is the only protection it gets, regardless of the privacy
- * level in effect. `aria-label` is free-form text, so it goes through the same masking pipeline as
- * action names. Collected only behind the `composed_path_selector_attributes` experimental flag
- * while we validate cardinality and PII exposure on real traffic.
+ * `href` and `aria-label` can help identify an element but may carry PII, so they're never
+ * collected in this string, even when configured as the customer's `actionNameAttribute`. They're
+ * collected instead, sanitized/masked, in the `getComposedPathAttributes` key→value map, so we
+ * don't duplicate the same PII-sensitive data across both fields.
  */
-const HREF_ATTRIBUTE = 'href'
 const ARIA_LABEL_ATTRIBUTE = 'aria-label'
-
-/**
- * Arbitrary value, consistent with the truncation applied to action names, to avoid a single
- * free-form attribute (ex: a long aria-label) consuming the whole selector character budget.
- */
-const ATTRIBUTE_VALUE_LIMIT = 100
-
-// Matches the scheme at the start of a URL, if any.
-const URL_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/
-// Matches an http(s) scheme exactly (case-insensitively).
-const HTTP_SCHEME = /^https?:$/i
-// Collapses whitespace runs, so a multi-line/indented aria-label reads as a single line.
-const WHITESPACE = /\s+/g
 
 /**
  * Extracts a selector string from a MouseEvent composedPath.
@@ -82,9 +56,7 @@ const WHITESPACE = /\s+/g
  * 4. Returns the selector string
  *
  * @param composedPath - The composedPath from a MouseEvent
- * @param configuration - The RUM configuration, used to resolve the action name attribute and the
- * privacy settings applied to `aria-label` (`href` is sanitized unconditionally, regardless of
- * privacy settings; see `getSanitizedHref`).
+ * @param configuration - The RUM configuration, used to resolve the action name attribute.
  * @returns A selector string
  */
 export function getComposedPathSelector(composedPath: EventTarget[], configuration: RumConfiguration): string {
@@ -106,13 +78,10 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
   const allowedAttributes = (
     actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
   ).filter((attribute) => attribute !== HREF_ATTRIBUTE && attribute !== ARIA_LABEL_ATTRIBUTE)
-  // Shared across the whole composedPath: elements are visited target-first, and privacy levels
-  // are derived from ancestors, so this cache turns most lookups into O(1) hits.
-  const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
 
   let result = ''
   for (const element of elements) {
-    const part = getSelectorStringFromElement(element, allowedAttributes, configuration, nodePrivacyLevelCache)
+    const part = getSelectorStringFromElement(element, allowedAttributes)
     result += part
     if (result.length >= CHARACTER_LIMIT) {
       return safeTruncate(result, CHARACTER_LIMIT)
@@ -124,20 +93,14 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
 /**
  * Extracts a selector string from an element.
  */
-function getSelectorStringFromElement(
-  element: Element,
-  allowedAttributes: MatchOption[],
-  configuration: RumConfiguration,
-  nodePrivacyLevelCache: NodePrivacyLevelCache
-): string {
+function getSelectorStringFromElement(element: Element, allowedAttributes: MatchOption[]): string {
   const tagName = getTagNameSelector(element)
   const id = getIDSelector(element)
   const classes = getElementClassesString(element)
   const attributes = extractSafeAttributesString(element, allowedAttributes)
-  const sensitiveAttributes = extractPrivacySensitiveAttributesString(element, configuration, nodePrivacyLevelCache)
   const positionData = computePositionDataString(element)
 
-  return `${tagName}${id || ''}${attributes}${sensitiveAttributes}${classes}${positionData};`
+  return `${tagName}${id || ''}${attributes}${classes}${positionData};`
 }
 
 function getElementClassesString(element: Element): string {
@@ -183,121 +146,4 @@ function extractSafeAttributesString(element: Element, allowedAttributes: MatchO
     }
   }
   return result.sort().join('')
-}
-
-/**
- * Extracts the PII-sensitive attributes (`href`, `aria-label`) from an element, sanitizing and/or
- * masking them as needed. Returns an empty string unless the `composed_path_selector_attributes`
- * experimental flag is enabled.
- */
-function extractPrivacySensitiveAttributesString(
-  element: Element,
-  configuration: RumConfiguration,
-  nodePrivacyLevelCache: NodePrivacyLevelCache
-): string {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES)) {
-    return ''
-  }
-
-  const result: string[] = []
-
-  const sanitizedHref = getSanitizedHref(element)
-  if (sanitizedHref !== undefined) {
-    result.push(getAttributeValueSelector(HREF_ATTRIBUTE, safeTruncate(sanitizedHref, ATTRIBUTE_VALUE_LIMIT)))
-  }
-
-  const ariaLabel = element.getAttribute(ARIA_LABEL_ATTRIBUTE)
-  if (ariaLabel) {
-    const normalized = ariaLabel.replace(WHITESPACE, ' ').trim()
-    if (normalized) {
-      const value = maskAttributeIfNeeded(
-        element,
-        ARIA_LABEL_ATTRIBUTE,
-        normalized,
-        configuration,
-        nodePrivacyLevelCache,
-        CENSORED_STRING_MARK
-      )
-      result.push(getAttributeValueSelector(ARIA_LABEL_ATTRIBUTE, safeTruncate(value, ATTRIBUTE_VALUE_LIMIT)))
-    }
-  }
-
-  return result.sort().join('')
-}
-
-/**
- * Returns a PII-safe representation of an element's `href`, or `undefined` if the element has no
- * `href` or it cannot be parsed as a URL.
- *
- * The hash and any userinfo are always dropped. Non-http(s) schemes (`mailto:`, `tel:`,
- * `javascript:`, `data:`...) are reduced to the scheme alone, since their payload can contain
- * arbitrary PII (an email address, a phone number...). For http(s) URLs, path segments that look
- * generated (ex: containing a digit, following the same heuristic used for CSS ids and classes in
- * this file) are replaced by `?`, mirroring how the backend groups URL paths. Query string values
- * are dropped, but the (deduplicated) parameter names are kept, since they are typically static
- * field names rather than user data, and knowing which parameters were present is useful for
- * identifying the link without exposing what was in them. The origin is only included when the
- * attribute itself was written as an absolute (or protocol-relative) URL, to avoid implying a page
- * navigates cross-origin when it doesn't.
- */
-function getSanitizedHref(element: Element): string | undefined {
-  // `getAttribute` returns `null` when the attribute is absent, but `''` when it's present-but-empty
-  // (ex: `href=""`), which resolves to the current document per HTML semantics — so only `null`
-  // should short-circuit here.
-  const rawHref = element.getAttribute(HREF_ATTRIBUTE)
-  if (rawHref === null) {
-    return undefined
-  }
-
-  let url: URL
-  try {
-    url = buildUrl(normalizeUrl(rawHref))
-  } catch {
-    return undefined
-  }
-
-  // Checked on the *parsed* protocol, not the raw string: the URL parser trims leading/embedded
-  // whitespace and control characters before detecting the scheme, so a regex anchored on the raw
-  // string can miss a non-http(s) scheme (ex: a tab-prefixed "\tmailto:...") and let its whole
-  // payload (an email address, a phone number, a script) through unfiltered below.
-  if (!HTTP_SCHEME.test(url.protocol)) {
-    return url.protocol.toLowerCase()
-  }
-
-  const groupedPath = groupUrlPath(url.pathname)
-  const searchParamNames = getSearchParamNamesString(url.searchParams)
-  const path = `${groupedPath}${searchParamNames}`
-
-  // The raw attribute can look relative (no scheme, no leading "//") while still resolving to a
-  // different origin than the current page: a backslash-led href (browsers treat "\" like "/" for
-  // http(s) URLs) or one with leading whitespace/control characters (trimmed by the URL parser)
-  // are both real examples. Comparing the resolved origin against the current one catches those
-  // cases too, so we never imply a same-origin link when the href actually navigates elsewhere.
-  const isAbsolute =
-    URL_SCHEME.test(rawHref) || rawHref.startsWith('//') || url.origin !== globalObject.location?.origin
-  return isAbsolute ? `${url.origin}${path}` : path
-}
-
-function groupUrlPath(pathname: string): string {
-  return pathname
-    .split('/')
-    .map((segment) => (isGeneratedValue(decodeSegment(segment)) ? '?' : segment))
-    .join('/')
-}
-
-// Percent-encoded non-ASCII characters (ex: "%C3%A9" for "é") contain digits that don't reflect the
-// segment's actual content, which would make `isGeneratedValue` treat legitimate, non-English path
-// segments as "generated". Decoding before the check avoids that false positive; if the segment
-// isn't validly encoded, fall back to the raw segment rather than throwing.
-function decodeSegment(segment: string): string {
-  try {
-    return decodeURIComponent(segment)
-  } catch {
-    return segment
-  }
-}
-
-function getSearchParamNamesString(searchParams: URLSearchParams): string {
-  const names = removeDuplicates(Array.from(searchParams.keys()))
-  return names.length > 0 ? `?${names.join('&')}` : ''
 }
