@@ -8,6 +8,7 @@ export function createCanvasSnapshot(canvas: HTMLCanvasElement, maxImageDimensio
   const canvasWidth = canvas.width
   const canvasHeight = canvas.height
   const scale = Math.min(1, maxImageDimension / Math.max(canvasWidth, canvasHeight))
+
   const width = Math.max(1, Math.round(canvasWidth * scale))
   const height = Math.max(1, Math.round(canvasHeight * scale))
 

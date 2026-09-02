@@ -123,7 +123,7 @@ describe('trackCanvasCapture', () => {
       changeHash: jasmine.any(String),
       image: jasmine.any(Blob),
     })
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
   it('looks up the node ID before reading canvas pixels', async () => {
@@ -135,7 +135,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(drawImageSpy).not.toHaveBeenCalled()
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
   it('discards an unchanged canvas and marks it clean', async () => {
@@ -148,7 +148,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).toHaveBeenCalledTimes(1)
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
   it('hashes and emits the same immutable canvas snapshot', async () => {
@@ -185,7 +185,8 @@ describe('trackCanvasCapture', () => {
     await collectAsyncCalls(onCanvasCapture, 1)
 
     expect(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[0].image)).toEqual([255, 0, 0, 255])
-    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
     clock.tick(1000)
     await collectAsyncCalls(onCanvasCapture, 2)
@@ -318,7 +319,7 @@ describe('trackCanvasCapture', () => {
     markCanvasDirtyAndWaitForCapture()
     await waitForCanvasCapture()
 
-    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
   it('leaves the canvas dirty when hashing is unavailable', async () => {
@@ -330,7 +331,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).not.toHaveBeenCalled()
-    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
   it('stops trying to capture a canvas when taking the snapshot throws', async () => {
@@ -344,14 +345,14 @@ describe('trackCanvasCapture', () => {
 
     expect(drawImageSpy).toHaveBeenCalledTimes(1)
     expect(drawImageSpy.calls.argsFor(0).slice(0, 5)).toEqual([canvas, 0, 0, 2, 2])
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     markCanvasDirtyAndWaitForCapture()
     await waitForCanvasCapture()
 
     expect(drawImageSpy).toHaveBeenCalledTimes(1)
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
   for (const privacyLevel of privacyLevels) {
@@ -363,10 +364,10 @@ describe('trackCanvasCapture', () => {
 
       if (privacyLevel === NodePrivacyLevel.ALLOW) {
         expect(onCanvasCapture).toHaveBeenCalled()
-        expect(canvasManager.getCapturableCanvases()).toEqual([])
+        expect(canvasManager.takeCapturableCanvases()).toEqual([])
       } else {
         expect(onCanvasCapture).not.toHaveBeenCalled()
-        expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+        expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
       }
     })
   }
@@ -385,7 +386,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).toHaveBeenCalled()
-    expect(canvasManager.getCapturableCanvases()).toEqual([])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
   const maskingCaptureStages: Array<{ description: string; deferCapture: () => () => void }> = [
@@ -410,7 +411,7 @@ describe('trackCanvasCapture', () => {
         changeHash: jasmine.any(String),
         image: jasmine.any(Blob),
       })
-      expect(canvasManager.getCapturableCanvases()).toEqual([])
+      expect(canvasManager.takeCapturableCanvases()).toEqual([])
     })
   })
 
@@ -423,6 +424,6 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(onCanvasCapture).not.toHaveBeenCalled()
-    expect(canvasManager.getCapturableCanvases()).toEqual([canvas])
+    expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 })

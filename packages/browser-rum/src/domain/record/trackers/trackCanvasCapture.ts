@@ -1,4 +1,5 @@
-import { clearInterval, noop, setInterval } from '@datadog/browser-core'
+import { clearTimeout, noop, setTimeout } from '@datadog/browser-core'
+import type { TimeoutId } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'
@@ -27,67 +28,108 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
   }
 
   let stopped = false
-  const captureIntervalId = setInterval(captureDirtyCanvases, ONE_SECOND / maxFramesPerSecond)
+  let captureTimeoutId: TimeoutId | undefined
+  const captureInterval = ONE_SECOND / maxFramesPerSecond
 
-  function captureDirtyCanvases() {
-    const capturableCanvases = canvasManager.getCapturableCanvases()
-    capturableCanvases.forEach((canvas) => {
-      const nodeId = scope.nodeIds.get(canvas)
-      if (nodeId === undefined) {
-        canvasManager.markCanvas(canvas, CanvasStatus.Clean)
-        return
-      }
-
-      const nodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
-      if (nodePrivacyLevel !== NodePrivacyLevel.ALLOW) {
-        return // Keep it dirty so it can be captured if its privacy level becomes allow
-      }
-
-      void canvasManager.capture(canvas, (attempt) => captureCanvas(canvas, nodeId, attempt))
-    })
+  function scheduleNextCapture(delay: number) {
+    if (!stopped) {
+      captureTimeoutId = setTimeout(() => {
+        void runCaptureTask()
+      }, delay)
+    }
   }
 
-  async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId, attempt: CanvasCaptureAttempt) {
+  async function runCaptureTask() {
+    const startTime = performance.now()
+
+    try {
+      await captureDirtyCanvases()
+    } finally {
+      const taskDuration = performance.now() - startTime
+      const nextDelay = captureInterval - Math.min(taskDuration, captureInterval * 0.5)
+
+      scheduleNextCapture(nextDelay)
+    }
+  }
+
+  async function captureDirtyCanvases() {
+    const capturableCanvases = canvasManager.takeCapturableCanvases()
+
+    await Promise.all(
+      capturableCanvases.map(async (canvas) => {
+        const nodeId = scope.nodeIds.get(canvas)
+        if (nodeId === undefined) {
+          canvasManager.forgetCanvas(canvas)
+          return
+        }
+        const nodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
+        if (nodePrivacyLevel !== NodePrivacyLevel.ALLOW) {
+          canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+          return
+        }
+
+        await captureCanvas(canvas, nodeId)
+      })
+    )
+  }
+
+  function markDirtyIfCurrent(captureState: CanvasCaptureAttempt, canvas: HTMLCanvasElement) {
+    if (captureState.isCurrent()) {
+      canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    }
+  }
+
+  async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId) {
+    const captureState = canvasManager.getCaptureState(canvas)
     try {
       const snapshot = createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
       if (!snapshot) {
+        markDirtyIfCurrent(captureState, canvas)
         return // snapshot failed; leave it dirty
       }
 
       const hash = await computeImageHash(snapshot, configuration?.hashingMaxDimension ?? 100)
-      if (stopped || !attempt.isCurrent()) {
+
+      if (stopped || !captureState.isCurrent()) {
         return
       }
       if (hash === undefined) {
+        markDirtyIfCurrent(captureState, canvas)
         return // hashing failed; leave it dirty
       }
 
-      if (hash === attempt.lastChangeHash) {
-        attempt.settle(hash)
+      if (hash === captureState.lastChangeHash) {
         return // unchanged: no capture/output
       }
 
       const image = await captureCanvasImage(snapshot)
-      if (stopped || !attempt.isCurrent()) {
+      if (stopped || !captureState.isCurrent()) {
         return
       }
       if (!image) {
+        markDirtyIfCurrent(captureState, canvas)
         return // encoding failed; leave it dirty
       }
 
       onCanvasCapture({ nodeId, changeHash: hash, image })
-      attempt.settle(hash)
+      captureState.setLastChangeHash(hash)
     } catch (error) {
-      if (!stopped) {
-        attempt.fail(error)
+      if (!stopped && captureState.isCurrent()) {
+        canvasManager.markCanvas(canvas, isSecurityError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)
       }
     }
   }
 
+  scheduleNextCapture(captureInterval)
+
   return {
     stop: () => {
       stopped = true
-      clearInterval(captureIntervalId)
+      clearTimeout(captureTimeoutId)
     },
   }
+}
+
+function isSecurityError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'SecurityError'
 }
