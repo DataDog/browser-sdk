@@ -58,7 +58,7 @@ export function callPluginsOnInit(
   const results = plugins.map((plugin) => plugin.onInit?.(parameter))
 
   if (results.some(isThenable)) {
-    return Promise.all(results.map((result) => Promise.resolve(result))).then((results) => !results.includes(false))
+    return Promise.all(results as Array<Promise<false | void>>).then((results) => !results.includes(false))
   }
 
   return !results.includes(false)

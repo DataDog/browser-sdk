@@ -2,31 +2,10 @@ import { TIMEOUT_ERROR_MESSAGE } from '@datadog/browser-core'
 import { mockClock, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { patchSandboxedIframeApis } from '../boot/patchSandboxedIframeApis'
-import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from './shopifyAnalytics'
+import { createFakeAnalytics, pageViewedEvent } from '../test/mockShopifyAnalytics'
+import type { ShopifyAnalyticsApi } from './shopifyAnalytics'
 import { initShopifyBindings } from './shopifyBindings'
 import { shopifyPlugin } from './shopifyPlugin'
-
-function createFakeAnalytics() {
-  const subscribers = new Map<string, (event: ShopifyPixelEvent) => void>()
-  const analytics: ShopifyAnalyticsApi = {
-    subscribe: jasmine.createSpy('subscribe').and.callFake((eventName: string, callback) => {
-      subscribers.set(eventName, callback)
-    }),
-  }
-  return {
-    analytics,
-    emit: (eventName: string, event: ShopifyPixelEvent) => subscribers.get(eventName)?.(event),
-  }
-}
-
-function pageViewedEvent(url: string | undefined): ShopifyPixelEvent {
-  return {
-    name: 'page_viewed',
-    id: '1',
-    timestamp: '2026-07-06T00:00:00Z',
-    context: { document: { location: { href: url } } },
-  }
-}
 
 describe('shopifyPlugin', () => {
   describe('when `shopifyAnalytics` is provided (Custom Pixel sandbox)', () => {
@@ -133,8 +112,10 @@ describe('shopifyPlugin', () => {
       const publicApi = {} as RumPublicApi
       const initConfiguration = { trackViewsManually: false } as unknown as RumInitConfiguration
 
-      // @ts-expect-error - shopifyAnalytics is required
-      const result = shopifyPlugin({}).onInit!({ initConfiguration, publicApi })
+      const result = shopifyPlugin({ shopifyAnalytics: undefined as unknown as ShopifyAnalyticsApi }).onInit!({
+        initConfiguration,
+        publicApi,
+      })
 
       await expectAsync(result).toBeResolvedTo(false)
       expect(patchSpy).not.toHaveBeenCalled()

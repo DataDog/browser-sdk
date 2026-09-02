@@ -1,19 +1,6 @@
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from './shopifyAnalytics'
+import { createFakeAnalytics } from '../test/mockShopifyAnalytics'
 import { initShopifyBindings } from './shopifyBindings'
-
-function createFakeAnalytics() {
-  const subscribers = new Map<string, (event: ShopifyPixelEvent) => void>()
-  const analytics: ShopifyAnalyticsApi = {
-    subscribe: jasmine.createSpy('subscribe').and.callFake((eventName: string, callback) => {
-      subscribers.set(eventName, callback)
-    }),
-  }
-  return {
-    analytics,
-    emit: (eventName: string, event: ShopifyPixelEvent) => subscribers.get(eventName)?.(event),
-  }
-}
 
 function createFakeRumPublicApi() {
   const startView = jasmine.createSpy('startView')
@@ -64,29 +51,29 @@ describe('initShopifyBindings', () => {
       return startView
     }
 
-    it('does not start a view on storefront pages', () => {
-      expect(emitPageViewed('https://shop.example/products/foo')).not.toHaveBeenCalled()
+    it('starts a view on /checkout, /checkouts/*, and locale-prefixed checkout paths', () => {
+      const urls = [
+        'https://shop.example/checkout',
+        'https://shop.example/checkouts/abc123',
+        'https://shop.example/en-us/checkout',
+      ]
+
+      for (const url of urls) {
+        expect(emitPageViewed(url)).toHaveBeenCalledTimes(1)
+      }
     })
 
-    it('starts a view on /checkout and /checkouts/* pages', () => {
-      expect(emitPageViewed('https://shop.example/checkout')).toHaveBeenCalledTimes(1)
-      expect(emitPageViewed('https://shop.example/checkouts/abc123')).toHaveBeenCalledTimes(1)
-    })
+    it('does not start a view on storefront, /orders/*, Customer Account pages, or an undefined url', () => {
+      const urls = [
+        'https://shop.example/products/foo',
+        'https://shop.example/orders/abc123',
+        'https://shop.example/account/orders',
+        undefined,
+      ]
 
-    it('does not start a view on /orders/* pages (Order Status)', () => {
-      expect(emitPageViewed('https://shop.example/orders/abc123')).not.toHaveBeenCalled()
-    })
-
-    it('does not start a view on Customer Account pages', () => {
-      expect(emitPageViewed('https://shop.example/account/orders')).not.toHaveBeenCalled()
-    })
-
-    it('starts a view on locale-prefixed checkout paths', () => {
-      expect(emitPageViewed('https://shop.example/en-us/checkout')).toHaveBeenCalledTimes(1)
-    })
-
-    it('does not start a view when the url is undefined', () => {
-      expect(emitPageViewed(undefined)).not.toHaveBeenCalled()
+      for (const url of urls) {
+        expect(emitPageViewed(url)).not.toHaveBeenCalled()
+      }
     })
   })
 
