@@ -1,63 +1,88 @@
-import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
+// PoC rewrite (phase 2 of the internal API plan, see /plan.md): the public API wires directly to
+// the RUM internal API, and preStartRum is gone. The internal API buffering replaces the
+// pre-start buffer: public API calls land immediately, and events are assembled and sent once the
+// session manager resolves. Corner-cuts, documented in /plan.md: tracking consent is assumed
+// granted, global / user / account contexts are not supported (no-op), automatic
+// instrumentation, telemetry and remote configuration are not started, and plugins 'onRumStart'
+// and the recorder / profiler integrations are not wired. Views are tracked by the phase 3a
+// trackViews port (trackViewsOnInternalApi.ts): real metrics, location-change / BFCache / session
+// renewal.
+
+import { clocksNow, elapsed, toServerDuration, timeStampToClocks } from '@datadog/js-core/time'
+import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { deepClone } from '@datadog/js-core/util'
-import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
   Context,
   DeflateWorker,
   DeflateEncoderStreamId,
-  DeflateEncoder,
   PublicApi,
-  ContextManager,
   TrackingConsent,
   User,
   Account,
   RumInternalContext,
-  Telemetry,
-  Encoder,
-  ResourceType,
   SessionManager,
+  Encoder,
+  DeflateEncoder,
+  Telemetry,
 } from '@datadog/browser-core'
 import {
-  ContextManagerMethod,
   addTelemetryUsage,
-  makePublicApi,
-  monitor,
+  canUseEventBridge,
   callMonitored,
+  computeRawError,
   createHandlingStack,
-  sanitize,
   createIdentityEncoder,
-  displayAlreadyInitializedError,
   createTrackingConsentState,
-  CustomerContextKey,
-  defineContextMethod,
-  startBufferingData,
-  mockable,
-  generateUUID,
   display,
+  displayAlreadyInitializedError,
+  ErrorHandling,
+  ErrorSource,
+  ResourceType,
+  initFeatureFlags,
+  isAllowedTrackingOrigins,
+  makePublicApi,
+  mockable,
+  monitor,
+  monitorError,
+  NonErrorPrefix,
+  noop,
+  sanitize,
+  setAllowUntrustedEvents,
+  startSessionManager,
+  startSessionManagerStub,
+  willSyntheticsInjectRum,
 } from '@datadog/browser-core'
-
-import type { LifeCycle } from '../domain/lifeCycle'
-import type { ViewHistory } from '../domain/contexts/viewHistory'
-import type { ReplayStats } from '../rawRumEvent.types'
-import { ActionType, VitalType } from '../rawRumEvent.types'
-import { DEFAULT_TRACKED_RESOURCE_HEADERS } from '../domain/configuration'
+import { DEFAULT_TRACKED_RESOURCE_HEADERS, validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
-import type { ViewOptions } from '../domain/view/trackViews'
+import { createRumInternalApi } from '../domain/internalApi/rumInternalApi'
+import type {
+  AddEventOptions,
+  BeforeSend,
+  NonViewEventHandle,
+  RumInternalApi,
+} from '../domain/internalApi/rumInternalApi'
+import { callPluginsMethod } from '../domain/plugins'
+import { ActionType, VitalType } from '../rawRumEvent.types'
+import type { ViewOptions } from '../domain/view/trackViewsOnInternalApi'
+import { trackViewsOnInternalApi } from '../domain/view/trackViewsOnInternalApi'
+import { createDOMMutationObservable } from '../browser/domMutationObservable'
+import { createLocationChangeObservable } from '../browser/locationChangeObservable'
+import { createWindowOpenObservable } from '../browser/windowOpenObservable'
+import type { ActionOptions } from '../domain/action/trackManualActions'
+import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import type {
   AddDurationVitalOptions,
   DurationVitalOptions,
-  OperationOptions,
   FeatureOperationOptions,
+  OperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
-import { callPluginsMethod } from '../domain/plugins'
+import { startInternalApiBatch } from '../transport/startInternalApiBatch'
+import type { LifeCycle } from '../domain/lifeCycle'
+import type { ViewHistory } from '../domain/contexts/viewHistory'
+import type { ReplayStats } from '../rawRumEvent.types'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
-import type { ActionOptions } from '../domain/action/trackManualActions'
-import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
-import { createPreStartStrategy } from './preStartRum'
-import type { StartRumResult } from './startRum'
-import { startRum } from './startRum'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -633,137 +658,71 @@ export interface RumPublicApiOptions {
   sdkName?: SdkName
 }
 
-export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi, errorStack?: string) => void
-  initConfiguration: RumInitConfiguration | undefined
-  getInternalContext: StartRumResult['getInternalContext']
-  stopSession: StartRumResult['stopSession']
-  addTiming: StartRumResult['addTiming']
-  setLoadingTime: StartRumResult['setLoadingTime']
-  startView: StartRumResult['startView']
-  setViewName: StartRumResult['setViewName']
-
-  setViewContext: StartRumResult['setViewContext']
-  setViewContextProperty: StartRumResult['setViewContextProperty']
-  getViewContext: StartRumResult['getViewContext']
-
-  globalContext: ContextManager
-  userContext: ContextManager
-  accountContext: ContextManager
-
-  addAction: StartRumResult['addAction']
-  startAction: StartRumResult['startAction']
-  stopAction: StartRumResult['stopAction']
-  startResource: StartRumResult['startResource']
-  stopResource: StartRumResult['stopResource']
-  addError: StartRumResult['addError']
-  addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
-  startDurationVital: StartRumResult['startDurationVital']
-  stopDurationVital: StartRumResult['stopDurationVital']
-  addDurationVital: StartRumResult['addDurationVital']
-  addOperationStepVital: StartRumResult['addOperationStepVital']
-}
-
+// PoC phase 2: the public API wires directly to the internal API. The corner-cuts are documented
+// at the top of this file and in /plan.md.
 export function makeRumPublicApi(
   recorderApi: RecorderApi,
-  profilerApi: ProfilerApi,
+  // PoC corner-cut: the profiler is not wired to the internal API (onRumStart is not called)
+  _profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedData = startBufferingData()
 
-  let strategy = createPreStartStrategy(
-    options,
-    trackingConsentState,
-    (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
-      const createEncoder =
-        deflateWorker && options.createDeflateEncoder
-          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(deflateWorker, streamId)
-          : createIdentityEncoder
-
-      const startRumResult = mockable(startRum)(
-        configuration,
-        sessionManager,
-        recorderApi,
-        profilerApi,
-        initialViewOptions,
-        createEncoder,
-        bufferedData.observable,
-        telemetry,
-        hooks,
-        options.sdkName
-      )
-
-      recorderApi.onRumStart(
-        startRumResult.lifeCycle,
-        configuration,
-        sessionManager,
-        startRumResult.viewHistory,
-        deflateWorker,
-        startRumResult.telemetry
-      )
-
-      profilerApi.onRumStart(
-        startRumResult.lifeCycle,
-        startRumResult.hooks,
-        configuration,
-        sessionManager,
-        startRumResult.viewHistory,
-        createEncoder
-      )
-
-      strategy = createPostStartStrategy(strategy, startRumResult)
-
-      callPluginsMethod(configuration.plugins, 'onRumStart', {
-        addEvent: startRumResult.addEvent,
-        addError: startRumResult.addError,
-      })
-
-      return startRumResult
-    }
-  )
-  const getStrategy = () => strategy
+  let initConfiguration: RumInitConfiguration | undefined
+  let configuration: RumConfiguration | undefined
+  let internalApi: RumInternalApi | undefined
+  let sessionManager: SessionManager | undefined
+  // PoC phase 3a: trackViews ported to the internal API (real view metrics, location-change and
+  // BFCache renewal, session renewal / expiry). See trackViewsOnInternalApi.ts.
+  let viewTracking: ReturnType<typeof trackViewsOnInternalApi> | undefined
+  const startedActions = new Map<string, NonViewEventHandle<'action'>>()
+  const startedResources = new Map<string, { handle: NonViewEventHandle<'resource'>; method?: string }>()
+  const startedDurationVitals = new Map<string, { handle: NonViewEventHandle<'vital'>; startClocks: ClocksState }>()
 
   const startView: {
     (name?: string): void
     (options: ViewOptions): void
-  } = (options?: string | ViewOptions) => {
+  } = (viewOptions?: string | ViewOptions) => {
     const handlingStack = createHandlingStack('view')
     callMonitored(() => {
-      const sanitizedOptions = typeof options === 'object' ? options : { name: options }
-      strategy.startView({
-        ...sanitizedOptions,
-        name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
-        service: sanitizeStringOption(sanitizedOptions.service, 'view service'),
-        version: sanitizeStringOption(sanitizedOptions.version, 'view version'),
-        handlingStack,
-      })
+      const sanitizedOptions = typeof viewOptions === 'object' ? viewOptions : { name: viewOptions }
+      viewTracking?.startView(
+        {
+          name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
+          service: sanitizeStringOption(sanitizedOptions.service, 'view service'),
+          version: sanitizeStringOption(sanitizedOptions.version, 'view version'),
+          handlingStack,
+        },
+        clocksNow()
+      )
       addTelemetryUsage({ feature: 'start-view' })
     })
   }
 
-  const startOperation: RumPublicApi['startOperation'] = (name, options) => {
+  const startOperation: RumPublicApi['startOperation'] = (name, operationOptions) => {
     const handlingStack = createHandlingStack('vital')
     callMonitored(() => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
-      strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
+      // PoC corner-cut: operations are wired as duration vitals (no step sub-parts)
+      doStartDurationVital(name, operationOptions, handlingStack)
     })
   }
 
-  const succeedOperation: RumPublicApi['succeedOperation'] = monitor((name, options) => {
+  const succeedOperation: RumPublicApi['succeedOperation'] = monitor((name, operationOptions) => {
     addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
-    strategy.addOperationStepVital(name, 'end', options)
+    doStopDurationVital(name, operationOptions)
   })
 
-  const failOperation: RumPublicApi['failOperation'] = monitor((name, failureReason, options) => {
+  const failOperation: RumPublicApi['failOperation'] = monitor((name, _failureReason, operationOptions) => {
     addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
-    strategy.addOperationStepVital(name, 'end', options, failureReason)
+    // PoC corner-cut: the failure reason is not part of the vital event
+    doStopDurationVital(name, operationOptions)
   })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: (initConfiguration) => {
       const errorStack = new Error().stack
-      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack))
+      callMonitored(() => doInit(initConfiguration, errorStack))
     },
 
     setTrackingConsent: monitor((trackingConsent) => {
@@ -772,260 +731,250 @@ export function makeRumPublicApi(
     }),
 
     setViewName: monitor((name: string) => {
-      strategy.setViewName(sanitizeStringOption(name, 'view name')!)
+      if (!assertStarted('setViewName') || !viewTracking) {
+        return
+      }
+      viewTracking.setViewName(sanitizeStringOption(name, 'view name')!)
       addTelemetryUsage({ feature: 'set-view-name' })
     }),
 
+    // The view context lives with trackViews (per-view state, throttled updates on change)
     setViewContext: monitor((context: Context) => {
-      strategy.setViewContext(context)
-      addTelemetryUsage({ feature: 'set-view-context' })
+      viewTracking?.setViewContext(context)
     }),
-
     setViewContextProperty: monitor((key: string, value: any) => {
-      strategy.setViewContextProperty(key, value)
-      addTelemetryUsage({ feature: 'set-view-context-property' })
+      viewTracking?.setViewContextProperty(key, value)
     }),
+    getViewContext: monitor(() => viewTracking?.getViewContext() ?? {}),
 
-    getViewContext: monitor(() => {
-      addTelemetryUsage({ feature: 'set-view-context-property' })
-      return strategy.getViewContext()
-    }),
+    getInternalContext: monitor(() => undefined as RumInternalContext | undefined),
 
-    getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
-
-    getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
+    getInitConfiguration: monitor(() => deepClone(initConfiguration)),
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')
-
       callMonitored(() => {
-        strategy.addAction({
-          name: sanitize(name)!,
-          context: sanitize(context) as Context,
-          startClocks: clocksNow(),
-          type: ActionType.CUSTOM,
-          handlingStack,
+        if (!assertStarted('addAction')) {
+          return
+        }
+        internalApi!.addEvent({
+          baseRumEvent: {
+            type: 'action',
+            action: { type: ActionType.CUSTOM, target: { name: sanitize(name)! } },
+            context: sanitize(context) as Context,
+          },
+          baggage: { domainContext: { handlingStack } },
         })
         addTelemetryUsage({ feature: 'add-action' })
       })
     },
 
-    startAction: monitor((name, options) => {
+    startAction: monitor((name, actionOptions) => {
       addTelemetryUsage({ feature: 'start-action' })
-      strategy.startAction(sanitize(name)!, {
-        type: sanitize(options?.type) as ActionType | undefined,
-        context: sanitize(options?.context) as Context,
-        actionKey: options?.actionKey,
-      })
+      if (!assertStarted('startAction')) {
+        return
+      }
+      const handlingStack = createHandlingStack('action')
+      startedActions.set(
+        actionKey(sanitize(name)!, actionOptions?.actionKey),
+        internalApi!.startEvent(
+          {
+            type: 'action',
+            action: { type: actionOptions?.type ?? ActionType.CUSTOM, target: { name: sanitize(name)! } },
+            context: sanitize(actionOptions?.context) as Context,
+          },
+          { domainContext: { handlingStack } }
+        )
+      )
     }),
 
-    stopAction: monitor((name, options) => {
+    stopAction: monitor((name, actionOptions) => {
       addTelemetryUsage({ feature: 'stop-action' })
-      strategy.stopAction(sanitize(name)!, {
-        type: sanitize(options?.type) as ActionType | undefined,
-        context: sanitize(options?.context) as Context,
-        actionKey: options?.actionKey,
+      const handle = startedActions.get(actionKey(sanitize(name)!, actionOptions?.actionKey))
+      if (!handle) {
+        return
+      }
+      startedActions.delete(actionKey(sanitize(name)!, actionOptions?.actionKey))
+      handle.stop({
+        action: { target: { name: sanitize(name)! } },
+        context: sanitize(actionOptions?.context) as Context,
       })
     }),
 
-    startResource: monitor((url, options) => {
+    startResource: monitor((url, resourceOptions) => {
       addTelemetryUsage({ feature: 'start-resource' })
-      strategy.startResource(sanitize(url)!, {
-        type: sanitize(options?.type) as ResourceType | undefined,
-        method: sanitize(options?.method) as string | undefined,
-        context: sanitize(options?.context) as Context,
-        resourceKey: options?.resourceKey,
+      if (!assertStarted('startResource')) {
+        return
+      }
+      startedResources.set(resourceKey(sanitize(url)!, resourceOptions?.resourceKey), {
+        handle: internalApi!.startEvent({
+          type: 'resource',
+          resource: { url: sanitize(url)! },
+          context: sanitize(resourceOptions?.context) as Context,
+        }),
+        method: sanitize(resourceOptions?.method) as string | undefined,
       })
     }),
 
-    stopResource: monitor((url, options) => {
+    stopResource: monitor((url, resourceOptions) => {
       addTelemetryUsage({ feature: 'stop-resource' })
-      strategy.stopResource(sanitize(url)!, {
-        type: sanitize(options?.type) as ResourceType | undefined,
-        statusCode: options?.statusCode,
-        size: options?.size,
-        context: sanitize(options?.context) as Context,
-        resourceKey: options?.resourceKey,
+      const key = resourceKey(sanitize(url)!, resourceOptions?.resourceKey)
+      const resource = startedResources.get(key)
+      if (!resource) {
+        return
+      }
+      startedResources.delete(key)
+      // PoC corner-cut: the resource type defaults to the start one or 'other'; tracing headers,
+      // graphql and size computations are not wired.
+      resource.handle.stop({
+        resource: {
+          url: sanitize(url)!,
+          type: resourceOptions?.type ?? ResourceType.OTHER,
+          method: resource.method,
+          status_code: resourceOptions?.statusCode,
+        },
+        context: sanitize(resourceOptions?.context) as Context,
       })
     }),
 
     addError: (error, context) => {
       const handlingStack = createHandlingStack('error')
       callMonitored(() => {
-        strategy.addError({
-          error, // Do not sanitize error here, it is needed unserialized by computeRawError()
+        if (!assertStarted('addError')) {
+          return
+        }
+        const startClocks = clocksNow()
+        const rawError = computeRawError({
+          originalError: error,
           handlingStack,
-          context: sanitize(context) as Context,
-          startClocks: clocksNow(),
+          componentStack: undefined,
+          startClocks,
+          nonErrorPrefix: NonErrorPrefix.PROVIDED,
+          source: ErrorSource.CUSTOM,
+          handling: ErrorHandling.HANDLED,
+        })
+        internalApi!.addEvent({
+          // Cast: some raw error fields (causes, debug ids) don't fit the kickoff Context shape
+          baseRumEvent: {
+            type: 'error',
+            error: {
+              message: rawError.message,
+              source: rawError.source,
+              stack: rawError.stack,
+              handling_stack: rawError.handlingStack,
+              type: rawError.type,
+              handling: rawError.handling,
+              causes: rawError.causes,
+              fingerprint: rawError.fingerprint,
+              csp: rawError.csp,
+            },
+            context: sanitize(context) as Context,
+            _dd: { debug_ids: rawError.debugIds },
+          } as unknown as AddEventOptions['baseRumEvent'],
+          baggage: {
+            startClocks,
+            domainContext: { error, handlingStack },
+            originalError: error,
+          },
         })
         addTelemetryUsage({ feature: 'add-error' })
       })
     },
 
     addTiming: monitor((name, time) => {
+      if (!assertStarted('addTiming') || !viewTracking) {
+        return
+      }
       // TODO: next major decide to drop relative time support or update its behaviour
-      strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
+      viewTracking.addTiming(sanitize(name)!, time as TimeStamp)
     }),
 
     setViewLoadingTime: monitor(() => {
-      const callTimestamp = timeStampNow()
-      strategy.setLoadingTime(callTimestamp)
+      if (!assertStarted('setViewLoadingTime') || !viewTracking) {
+        return
+      }
+      viewTracking.setLoadingTime()
       addTelemetryUsage({
         feature: 'addViewLoadingTime',
       })
     }),
 
-    setGlobalContext: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.globalContext,
-      ContextManagerMethod.setContext,
-      'set-global-context'
-    ),
-    getGlobalContext: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.globalContext,
-      ContextManagerMethod.getContext,
-      'get-global-context'
-    ),
-    setGlobalContextProperty: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.globalContext,
-      ContextManagerMethod.setContextProperty,
-      'set-global-context-property'
-    ),
-    removeGlobalContextProperty: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.globalContext,
-      ContextManagerMethod.removeContextProperty,
-      'remove-global-context-property'
-    ),
-    clearGlobalContext: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.globalContext,
-      ContextManagerMethod.clearContext,
-      'clear-global-context'
-    ),
+    // PoC corner-cut: context managers are not supported (the internal API does not assemble
+    // contexts yet); the methods stay in the public surface as no-ops.
+    setGlobalContext: monitor(noop),
+    getGlobalContext: monitor(() => ({})),
+    setGlobalContextProperty: monitor(noop),
+    removeGlobalContextProperty: monitor(noop),
+    clearGlobalContext: monitor(noop),
 
-    setUser: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.userContext,
-      ContextManagerMethod.setContext,
-      'set-user'
-    ),
-    getUser: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.userContext,
-      ContextManagerMethod.getContext,
-      'get-user'
-    ),
-    setUserProperty: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.userContext,
-      ContextManagerMethod.setContextProperty,
-      'set-user-property'
-    ),
-    removeUserProperty: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.userContext,
-      ContextManagerMethod.removeContextProperty,
-      'remove-user-property'
-    ),
-    clearUser: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.userContext,
-      ContextManagerMethod.clearContext,
-      'clear-user'
-    ),
+    setUser: monitor(noop),
+    getUser: monitor(() => ({})),
+    setUserProperty: monitor(noop),
+    removeUserProperty: monitor(noop),
+    clearUser: monitor(noop),
 
-    setAccount: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.accountContext,
-      ContextManagerMethod.setContext,
-      'set-account'
-    ),
-    getAccount: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.accountContext,
-      ContextManagerMethod.getContext,
-      'get-account'
-    ),
-    setAccountProperty: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.accountContext,
-      ContextManagerMethod.setContextProperty,
-      'set-account-property'
-    ),
-    removeAccountProperty: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.accountContext,
-      ContextManagerMethod.removeContextProperty,
-      'remove-account-property'
-    ),
-    clearAccount: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.accountContext,
-      ContextManagerMethod.clearContext,
-      'clear-account'
-    ),
+    setAccount: monitor(noop),
+    getAccount: monitor(() => ({})),
+    setAccountProperty: monitor(noop),
+    removeAccountProperty: monitor(noop),
+    clearAccount: monitor(noop),
 
     startView,
 
     stopSession: monitor(() => {
-      strategy.stopSession()
+      sessionManager?.expire()
       addTelemetryUsage({ feature: 'stop-session' })
     }),
 
-    addFeatureFlagEvaluation: monitor((key, value) => {
-      strategy.addFeatureFlagEvaluation(sanitize(key)!, sanitize(value))
+    // PoC corner-cut: feature flags are assembled by a context hook, not wired yet
+    addFeatureFlagEvaluation: monitor(() => {
       addTelemetryUsage({ feature: 'add-feature-flag-evaluation' })
     }),
 
+    // PoC corner-cut: the recorder is not wired to the internal API (onRumStart is not called)
     getSessionReplayLink: monitor(() => recorderApi.getSessionReplayLink()),
-
-    startSessionReplayRecording: monitor((options?: StartRecordingOptions) => {
-      recorderApi.start(options)
-      addTelemetryUsage({ feature: 'start-session-replay-recording', force: options?.force })
-    }),
-
-    stopSessionReplayRecording: monitor(() => recorderApi.stop()),
+    startSessionReplayRecording: monitor(noop),
+    stopSessionReplayRecording: monitor(noop),
 
     addDurationVital: (name, options) => {
       const handlingStack = createHandlingStack('vital')
       callMonitored(() => {
+        if (!assertStarted('addDurationVital')) {
+          return
+        }
         addTelemetryUsage({ feature: 'add-duration-vital' })
-        strategy.addDurationVital({
-          id: generateUUID(),
-          name: sanitize(name)!,
-          type: VitalType.DURATION,
-          startClocks: timeStampToClocks(options.startTime as TimeStamp),
-          duration: options.duration as Duration,
-          context: sanitize(options?.context) as Context,
-          description: sanitize(options?.description) as string | undefined,
-          handlingStack,
+        const startClocks = timeStampToClocks(options.startTime as TimeStamp)
+        internalApi!.addEvent({
+          baseRumEvent: {
+            type: 'vital',
+            vital: {
+              name: sanitize(name)!,
+              type: VitalType.DURATION,
+              duration: toServerDuration(options.duration as Duration),
+            },
+            context: sanitize(options?.context) as Context,
+            description: sanitize(options?.description) as string | undefined,
+          },
+          baggage: {
+            startClocks,
+            duration: options.duration as Duration,
+            domainContext: { handlingStack },
+          },
         })
       })
     },
 
-    startDurationVital: (name, options) => {
+    startDurationVital: (name, vitalOptions) => {
       const handlingStack = createHandlingStack('vital')
       callMonitored(() => {
         addTelemetryUsage({ feature: 'start-duration-vital' })
-        strategy.startDurationVital(sanitize(name)!, {
-          vitalKey: options?.vitalKey,
-          context: sanitize(options?.context) as Context,
-          description: sanitize(options?.description) as string | undefined,
-          handlingStack,
-        })
+        doStartDurationVital(name, vitalOptions, handlingStack)
       })
     },
 
-    stopDurationVital: monitor((name, options) => {
+    stopDurationVital: monitor((name, vitalOptions) => {
       addTelemetryUsage({ feature: 'stop-duration-vital' })
-      strategy.stopDurationVital(sanitize(name)!, {
-        vitalKey: options?.vitalKey,
-        context: sanitize(options?.context) as Context,
-        description: sanitize(options?.description) as string | undefined,
-      })
+      doStopDurationVital(name, vitalOptions)
     }),
 
     startOperation,
@@ -1042,6 +991,150 @@ export function makeRumPublicApi(
   })
 
   return rumPublicApi
+
+  //
+  // Init
+  //
+
+  function doInit(newInitConfiguration: RumInitConfiguration, errorStack?: string) {
+    if (!newInitConfiguration) {
+      display.error('Missing configuration')
+      return
+    }
+    // Set the experimental feature flags as early as possible, so we can use them in most places
+    initFeatureFlags(newInitConfiguration.enableExperimentalFeatures)
+    setAllowUntrustedEvents(newInitConfiguration.allowUntrustedEvents)
+
+    // If we are in a Synthetics test configured to automatically inject a RUM instance, we want
+    // to completely discard the customer application RUM instance by ignoring their init() call.
+    if (options.ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
+      return
+    }
+
+    callPluginsMethod(newInitConfiguration.plugins, 'onInit', {
+      initConfiguration: newInitConfiguration,
+      publicApi: rumPublicApi,
+    })
+
+    if (configuration) {
+      displayAlreadyInitializedError('DD_RUM', newInitConfiguration)
+      return
+    }
+
+    const newConfiguration = validateAndBuildRumConfiguration(newInitConfiguration)
+    if (!newConfiguration || !isAllowedTrackingOrigins(newConfiguration, errorStack ?? '')) {
+      return
+    }
+    // Set the local variables only after the configuration is valid
+    configuration = newConfiguration
+    initConfiguration = newInitConfiguration
+
+    trackingConsentState.tryToInit(configuration.trackingConsent)
+    // PoC corner-cut: tracking consent is assumed granted (see /plan.md): the session manager is
+    // started right away, no pre-start deferral.
+    trackingConsentState.update('granted')
+
+    const sessionManagerPromise = canUseEventBridge()
+      ? startSessionManagerStub()
+      : mockable(startSessionManager)(configuration, trackingConsentState)
+    void sessionManagerPromise
+      .then((newSessionManager) => {
+        sessionManager = newSessionManager
+      })
+      .catch(monitorError)
+
+    internalApi = createRumInternalApi({
+      sessionManager: sessionManagerPromise,
+      beforeSend: configuration.beforeSend as unknown as BeforeSend,
+    })
+
+    let deflateWorker: DeflateWorker | undefined
+    if (configuration.compressIntakeRequests && !canUseEventBridge() && options.startDeflateWorker) {
+      deflateWorker = options.startDeflateWorker(configuration, 'Datadog RUM', noop)
+      if (!deflateWorker) {
+        // `startDeflateWorker` should have logged an error message explaining the issue
+        return
+      }
+    }
+    const createEncoder =
+      deflateWorker && options.createDeflateEncoder
+        ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(deflateWorker, streamId)
+        : createIdentityEncoder
+
+    const { prepareUrgentFlushObservable } = startInternalApiBatch(
+      configuration,
+      internalApi,
+      sessionManagerPromise,
+      createEncoder
+    )
+
+    viewTracking = trackViewsOnInternalApi(
+      internalApi,
+      prepareUrgentFlushObservable,
+      createDOMMutationObservable(),
+      createWindowOpenObservable().observable,
+      configuration,
+      createLocationChangeObservable(),
+      !configuration.trackViewsManually
+    )
+  }
+
+  function assertStarted(method: string): boolean {
+    if (!internalApi) {
+      display.error(`DD_RUM.${method}() called before DD_RUM.init().`)
+      return false
+    }
+    return true
+  }
+
+  //
+  // Duration vitals (and operations, wired as duration vitals)
+  //
+
+  function doStartDurationVital(
+    name: string,
+    options: { vitalKey?: string; operationKey?: string; context?: Context; description?: string } | undefined,
+    handlingStack: string
+  ) {
+    if (!assertStarted('startDurationVital')) {
+      return
+    }
+    const startClocks = clocksNow()
+    const handle = internalApi!.startEvent(
+      {
+        type: 'vital',
+        vital: { name: sanitize(name)!, type: VitalType.DURATION },
+        context: sanitize(options?.context) as Context,
+        description: sanitize(options?.description) as string | undefined,
+      },
+      { startClocks, domainContext: { handlingStack } }
+    )
+    startedDurationVitals.set(vitalKey(sanitize(name)!, options?.vitalKey ?? options?.operationKey), {
+      handle,
+      startClocks,
+    })
+  }
+
+  function doStopDurationVital(
+    name: string,
+    options: { vitalKey?: string; operationKey?: string; context?: Context; description?: string } | undefined
+  ) {
+    const key = vitalKey(sanitize(name)!, options?.vitalKey ?? options?.operationKey)
+    const vital = startedDurationVitals.get(key)
+    if (!vital) {
+      return
+    }
+    startedDurationVitals.delete(key)
+    const endClocks = clocksNow()
+    vital.handle.stop(
+      {
+        vital: { duration: toServerDuration(elapsed(vital.startClocks.timeStamp, endClocks.timeStamp)) },
+        context: sanitize(options?.context) as Context,
+        description: sanitize(options?.description) as string | undefined,
+      },
+      { endClocks }
+    )
+  }
 }
 
 function sanitizeStringOption(value: unknown, label: string): string | undefined {
@@ -1055,17 +1148,14 @@ function sanitizeStringOption(value: unknown, label: string): string | undefined
   return sanitize(value)
 }
 
-function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {
-  return {
-    ...preStartStrategy,
-    init: (initConfiguration: RumInitConfiguration) => {
-      displayAlreadyInitializedError('DD_RUM', initConfiguration)
-    },
-    getInternalContext: startRumResult.getInternalContext,
-    stopSession: startRumResult.stopSession,
-    getViewContext: startRumResult.getViewContext,
-    globalContext: startRumResult.globalContext,
-    userContext: startRumResult.userContext,
-    accountContext: startRumResult.accountContext,
-  }
+function actionKey(name: string, actionKey: string | undefined) {
+  return `${name}::${actionKey ?? ''}`
+}
+
+function resourceKey(url: string, resourceKey: string | undefined) {
+  return `${url}::${resourceKey ?? ''}`
+}
+
+function vitalKey(name: string, key: string | undefined) {
+  return `${name}::${key ?? ''}`
 }

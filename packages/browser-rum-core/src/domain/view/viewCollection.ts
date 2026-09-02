@@ -168,7 +168,7 @@ function processViewUpdate(
   }
 }
 
-function computeViewPerformanceData(
+export function computeViewPerformanceData(
   { cumulativeLayoutShift, interactionToNextPaint }: CommonViewMetrics,
   { firstContentfulPaint, largestContentfulPaint }: InitialViewMetrics
 ): ViewPerformanceData {

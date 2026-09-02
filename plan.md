@@ -159,9 +159,60 @@ New module `packages/browser-rum-core/src/domain/internalApi/` (+ colocated spec
 Validate: unit tests for the module itself (throws, buffering, hierarchy, counters, incremental
 view versions, rate limit, beforeSend). `yarn typecheck`.
 
-## Phase 2 — wire into `rumPublicApi` / `preStartRum`
+## Phase 2 — wire into `rumPublicApi` / `preStartRum` — DONE
 
-This phase is the "maybe we can simplify this a bunch" experiment. Two options to explore:
+The experiment ended up more radical than the two options below: **`preStartRum` is deleted
+outright** and `rumPublicApi` wires public API calls directly to the internal API, created eagerly
+in `init()`. The internal API assembly buffering (session manager promise + view coverage)
+replaces `preStartRum`'s `bufferApiCalls` entirely, and the transport plugs on `event_collected`
+notifications (`startInternalApiBatch`, new: reuses `createBatchDispatcher` incl.
+`betaEnableViewUpdates`, session-expire flush, event-bridge path). `startRum` and the LifeCycle
+pipeline stay untouched for their own specs and later phases.
+
+Corner-cuts (per Benoit's decision; listed in the file headers):
+
+- Tracking consent assumed granted (the session manager starts right away, `onGrantedOnce` and
+  the consent-driven `tryStartRum` dance are gone; `setTrackingConsent` still updates the state the
+  session manager consults).
+- Context managers (global / user / account / view, feature flags) are no-ops: the internal API
+  doesn't assemble contexts yet.
+- No automatic instrumentation (no collectors: resources via fetch/xhr, long tasks, runtime
+  errors, vitals), no telemetry, no remote configuration, no plugins `onRumStart`, no
+  recorder/profiler wiring, no session-driven view renewal. `startView` replaces the previous
+  view by `stop()`ing it at the new view start time (throw-on-double-view makes the caller
+  sequence explicit). The automatic initial view starts at `clocksOrigin()` so it covers events
+  collected before the session manager resolves.
+- `trackEventCounts` is left broken (views no longer get counts fed by `RUM_EVENT_COLLECTED` for
+  migrated events) — the internal API owns counts; noted as duplication until phase 3.
+- Public API calls before `init()` now display an error and are dropped (previously buffered by
+  `preStartRum` and replayed — a real behavior loss of removing the pre-start buffer, accepted).
+
+Validation: `yarn typecheck` + eslint pass. New smoke spec
+`rumPublicApiInternalApi.spec.ts` proves the big lines: public calls collected before the session
+manager resolves are buffered by the internal API, assembled with view/action linkage once it
+resolves, batched, and flushed on session expiration; the event-bridge path works too. All other
+`browser-rum-core` specs pass (1406) except `rumPublicApi.spec.ts` (61/71 failing: buffered
+pre-start semantics, context getters, `startRum` spy expectations — the old spec tests the deleted
+`preStartRum` architecture).
+
+Findings so far:
+
+- **Views need an explicit initial assembly.** `startEvent` only registers + notifies
+  `event_started`; the view event is emitted on the first `update()`/`stop()`. Today the SDK sends
+  a VIEW event when the view starts, so the public API calls `update({})` right after `startEvent`,
+  and phase 3's `trackViews` port must emit on its first `VIEW_UPDATED`. **Open question for the
+  debrief**: should `startEvent` assemble the initial view version itself?
+- The internal API buffering composes well: events collected pre-consent/pre-view simply wait,
+  and `stopSession` (session expire) flushing the batch works through the same notification path —
+  no pre-start special casing was needed (`firstStartViewCall` is just gone with
+  `trackViewsManually` handled by the caller starting the view).
+- Pre-init calls being dropped loudly (error) instead of buffered silently is arguably better
+  DX than the old silent replay, but it is a behavior change to discuss in the debrief.
+- `batch.upsert` for view versions works off `event.view.id`, which the internal API owns — the
+  id space is unified in this architecture by construction (unlike the dual viewHistory/
+  internal-API history risk flagged when views keep flowing through the old pipeline).
+
+Original plan:
 
 - **(a) Status quo plumbing**: create the internal API inside `startRum`, once the session manager
   resolves. `preStartRum`'s `bufferApiCalls` keeps buffering public API calls. Low risk, but no
@@ -195,22 +246,83 @@ Deliverable: notes in this plan on which option is viable and what `preStartRum`
 
 ## Phase 3 — `trackViews` and `trackClickActions` on the internal API
 
-- `trackViews`:
-  - `newView` → `startEvent({type:'view', ...})` handle; metric/timing/context updates →
-    `handle.update()` (each update emits a new document version per step 0); view end → `stop()`;
-    BFCache restore and session renewal → `stop()` + new `startEvent`.
-  - `addTiming`, `setLoadingTime`, `setViewName`, view context setters stay in caller scope but
-    write through the handle.
-  - `startViewCollection`'s assembly (raw event building from ViewEvent) moves into the caller,
-    feeding `update()`; the internal API owns viewHistory (findEvents) and event counts.
-- `trackClickActions`:
-  - Each click → `startEvent({type:'action'})`; discard → `cancel()`; stop with page-activity
-    end → `stop({duration})`; rage-click chain and frustration computation unchanged (caller
-    logic); the internal API computes per-action counts (replaces `eventTracker`).
-  - Click start-time context (target/position/name) is kept by the caller and passed at
-    `stop()` — no `eventTracker`-style side API. Watch for friction here: if it hurts, that is
-    exactly the kind of evidence for revisiting `StartEventOptions`.
-  - `ACTION_STARTED`/`AUTO_ACTION_COMPLETED` lifecycle events are replaced by `notifications`.
+(Split in two, per Benoit's decision: 3a below is trackViews, 3b is trackClickActions.)
+
+### Phase 3a — `trackViews` — DONE
+
+Ported as a new module, `domain/view/trackViewsOnInternalApi.ts`, used by the phase 2 public API
+(`startInternalApiBatch` now exposes the batch's `prepareUrgentFlushObservable` for the final view
+update on page unloading). The old `trackViews` stays untouched for the startRum pipeline: migrating
+in place would have reddened its 1300-line spec plus startRum / viewCollection specs — a much
+noisier crash test than the interface learnings justify. The debrief will decide which one
+survives.
+
+Differences vs the old trackViews (documented in the module header):
+
+- Views are created with `internalApi.startEvent` and updated with `handle.update()`: the raw view
+  event building from viewCollection's `processViewUpdate` moved into the port, minus what the
+  internal API owns (view.id, `_dd.document_version`, event counts) and what contexts assemble
+  (session, referrer, `usr`, replay_stats). Event counts come from the internal API, so
+  `trackViewEventCounts` is gone and count changes no longer trigger view updates (metrics and the
+  session keep-alive do).
+- Session renewal / expiry come from `internalApi.notifications` instead of the LifeCycle.
+  `session_expired` carries no end clocks: the port uses `clocksNow()` at notification time, as the
+  startRum bridge does — noted: if callers need exact session end times, the notification should
+  carry them.
+- In manual mode, no initial view is created at init (the old trackViews relies on preStartRum's
+  `firstStartViewCall` dance to defer its start until the first public `startView`); view methods
+  before the first `startView` are dropped.
+- The metrics modules get a private, mostly idle LifeCycle: `waitPageActivityEnd`'s
+  REQUEST_STARTED/COMPLETED never flow (phase 2 corner-cut: no auto-instrumentation), so loading
+  time relies on the load event and DOM activity only.
+- The public API delegates `addTiming`, `setLoadingTime`, `setViewName`, `startView` and the view
+  context methods to the port — view context is real per-view state again (it was a no-op
+  corner-cut in phase 2).
+
+Interface findings:
+
+- **Throw-on-double-view collided with the start-at-previous-end pattern.** trackViews ends the
+  previous view exactly at the new view's start; with the inclusive activity bound, the
+  just-ended view still counted as active and `startEvent` threw, silently killing the new view
+  (found via a smoke test running under a frozen clock). Fixes, applied to the internal API: the
+  double-view check runs against the new view's start clocks (not "now"), and view / action
+  activity bounds are end-exclusive — a view ended at `t` is not active at `t`, matching
+  ValueHistory's `closeActive` semantics. `findEvents` keeps its inclusive query bounds.
+- **Views need the initial version emitted at start** (confirms the phase 2 open question): the
+  port calls `handle.update()` with the initial fields right after `startEvent`, as the old
+  pipeline sends a VIEW event on creation. `startEvent` itself only registers + notifies
+  `event_started`.
+- Document version ownership transfers cleanly: every `update()` assembly increments it, and
+  the batch `upsert` keeps only the latest version (smoke test: 3 versions assembled, one in the
+  flushed body, `is_active: false`, name carried through `setViewName`).
+
+Validation: `yarn typecheck` + eslint pass. The smoke spec (`rumPublicApiInternalApi.spec.ts`)
+grew to 4 tests: pre-session buffering + hierarchy linkage, automatic initial view + incremental
+updates + upsert, view replacement (old view ended, action linked to the right view), event
+bridge. All pass standalone and within the `boot` suite context. Full `browser-rum-core` delta
+unchanged from phase 2: 61 failures, all in the old `rumPublicApi.spec`; 1410 pass.
+(`trackNavigationTimings.spec` is a pre-existing flake in small-bundle runs — `relativeNow()` vs
+a hardcoded 123 at page-load time — it passes in the full-suite run.)
+
+### Phase 3b — `trackClickActions` — TODO
+
+- Each click → `startEvent({type:'action'})`; discard → `cancel()`; stop with page-activity
+  end → `stop({duration})`; rage-click chain and frustration computation unchanged (caller
+  logic); the internal API computes per-action counts (replaces `eventTracker`).
+- Click start-time context (target/position/name) is kept by the caller and passed at
+  `stop()` — no `eventTracker`-style side API. Watch for friction here: if it hurts, that is
+  exactly the kind of evidence for revisiting `StartEventOptions`.
+- `ACTION_STARTED`/`AUTO_ACTION_COMPLETED` lifecycle events are replaced by `notifications`.
+
+Original plan notes for phase 3:
+
+- `newView` → `startEvent({type:'view', ...})` handle; metric/timing/context updates →
+  `handle.update()` (each update emits a new document version per step 0); view end → `stop()`;
+  BFCache restore and session renewal → `stop()` + new `startEvent`.
+- `addTiming`, `setLoadingTime`, `setViewName`, view context setters stay in caller scope but
+  write through the handle.
+- `startViewCollection`'s assembly (raw event building from ViewEvent) moves into the caller,
+  feeding `update()`; the internal API owns viewHistory (findEvents) and event counts.
 - Fix/annotate broken specs; enumerate which ones failed and why.
 
 Validate: `yarn test:unit --spec packages/browser-rum-core/src/domain/view/*.spec.ts` (and action

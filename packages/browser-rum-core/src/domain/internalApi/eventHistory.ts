@@ -186,8 +186,11 @@ export function createEventHistory(): EventHistory {
   }
 
   function findViewAt(startTime: RelativeTime): InternalHistoryEntry | undefined {
+    // The end bound is exclusive: a view ended at t is not active at t (as ValueHistory's
+    // closeActive in the current implementation), so a new view can start exactly when the
+    // previous one ends, and events at that instant belong to the new view.
     return historyEntries.find(
-      (entry) => entry.value.event.type === 'view' && entry.startTime <= startTime && startTime <= entry.endTime
+      (entry) => entry.value.event.type === 'view' && entry.startTime <= startTime && startTime < entry.endTime
     )
   }
 
@@ -197,7 +200,7 @@ export function createEventHistory(): EventHistory {
     const lookupTime = eventType === 'long_task' ? addDuration(startTime, LONG_TASK_START_TIME_CORRECTION) : startTime
     return historyEntries
       .filter(
-        (entry) => entry.value.event.type === 'action' && entry.startTime <= lookupTime && lookupTime <= entry.endTime
+        (entry) => entry.value.event.type === 'action' && entry.startTime <= lookupTime && lookupTime < entry.endTime
       )
       .map((entry) => entry.eventId)
       .reverse() // chronological order, oldest action first

@@ -130,12 +130,16 @@ export function createRumInternalApi(options: RumInternalApiOptions): RumInterna
     if (!STARTABLE_EVENT_TYPES.includes(startOptions.type)) {
       throw new Error(`Cannot start a '${startOptions.type}' event.`)
     }
-    if (startOptions.type === 'view' && history.findViewAt(clocksNow().relative)) {
+    const startClocks = startBaggage?.startClocks ?? clocksNow()
+    // The double-view check runs against the new view start time, not the current time: callers
+    // typically end the previous view exactly when the new one starts (trackViews does), and
+    // views ended at that instant don't count as active (end-exclusive activity bound).
+    if (startOptions.type === 'view' && history.findViewAt(startClocks.relative)) {
       throw new Error('A view is already active. Stop the current view before starting a new one.')
     }
 
     const eventId = generateUUID()
-    const baggage: EventBaggage = { ...startBaggage, startClocks: startBaggage?.startClocks ?? clocksNow() }
+    const baggage: EventBaggage = { ...startBaggage, startClocks }
     // The start options are (a partial of) the base event: the same event shape flows through
     // startEvent(), update() and stop(). Cloned so caller-side mutations don't leak into the
     // event being built.
