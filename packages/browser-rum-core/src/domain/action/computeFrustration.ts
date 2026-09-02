@@ -1,6 +1,7 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
 import { FrustrationType } from '../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
+import { FrustrationIgnore, shouldIgnore } from './frustrationIgnore'
 
 const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
 
@@ -10,7 +11,8 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     if (clicks.some(isDead)) {
       rageClick.addFrustration(FrustrationType.DEAD_CLICK)
     }
-    if (rageClick.hasError && clicks.some((click) => !click.frustrationIgnore.errorClick)) {
+    // The rage action is represented by the initiating click, so its policy applies to the whole action lifetime.
+    if (rageClick.hasError && !shouldIgnore(rageClick.ignore, FrustrationIgnore.ERROR_CLICK)) {
       rageClick.addFrustration(FrustrationType.ERROR_CLICK)
     }
     return { isRage: true }
@@ -18,7 +20,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
 
   const hasSelectionChanged = clicks.some((click) => click.getUserActivity().selection)
   clicks.forEach((click) => {
-    if (click.hasError && !click.frustrationIgnore.errorClick) {
+    if (click.hasError && !shouldIgnore(click.ignore, FrustrationIgnore.ERROR_CLICK)) {
       click.addFrustration(FrustrationType.ERROR_CLICK)
     }
     if (
@@ -36,7 +38,9 @@ export function isRage(clicks: Click[]) {
   if (
     clicks.some(
       (click) =>
-        click.frustrationIgnore.rageClick || click.getUserActivity().selection || click.getUserActivity().scroll
+        shouldIgnore(click.ignore, FrustrationIgnore.RAGE_CLICK) ||
+        click.getUserActivity().selection ||
+        click.getUserActivity().scroll
     )
   ) {
     return false
@@ -69,7 +73,7 @@ const DEAD_CLICK_EXCLUDE_SELECTOR =
   'a[href] *'
 
 export function isDead(click: Click) {
-  if (click.frustrationIgnore.deadClick) {
+  if (shouldIgnore(click.ignore, FrustrationIgnore.DEAD_CLICK)) {
     return false
   }
 

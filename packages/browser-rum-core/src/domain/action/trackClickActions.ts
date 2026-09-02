@@ -68,11 +68,12 @@ export function trackClickActions(
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
+    ignore: FrustrationIgnore
     hadActivityOnPointerDown: () => boolean
   }>({
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
-    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
+    onPointerUp: ({ clickActionBase, ignore, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
       startClickAction(
         configuration,
         lifeCycle,
@@ -82,6 +83,7 @@ export function trackClickActions(
         stopObservable,
         appendClickToClickChain,
         clickActionBase,
+        ignore,
         startEvent,
         getUserActivity,
         hadActivityOnPointerDown
@@ -156,7 +158,11 @@ function processPointerDown(
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
 
-  return { clickActionBase, hadActivityOnPointerDown: () => hadActivityOnPointerDown }
+  return {
+    clickActionBase,
+    ignore: getFrustrationIgnore(getEventTarget(pointerDownEvent)),
+    hadActivityOnPointerDown: () => hadActivityOnPointerDown,
+  }
 }
 
 function startClickAction(
@@ -168,11 +174,12 @@ function startClickAction(
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
+  ignore: FrustrationIgnore,
   startEvent: MouseEventOnElement,
   getUserActivity: () => UserActivity,
   hadActivityOnPointerDown: () => boolean
 ) {
-  const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent)
+  const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, ignore, startEvent)
   appendClickToClickChain(click)
 
   const selector = clickActionBase?.target?.selector
@@ -290,12 +297,11 @@ function newClick(
   actionTracker: EventTracker<ClickActionBase>,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
-  startEvent: MouseEventOnElement,
-  frustrationIgnore?: FrustrationIgnore
+  ignore: FrustrationIgnore,
+  startEvent: MouseEventOnElement
 ) {
   const clickKey = generateUUID()
   const startClocks = relativeToClocks(startEvent.timeStamp)
-  const capturedFrustrationIgnore = frustrationIgnore ?? getFrustrationIgnore(getEventTarget(startEvent))
 
   const startedClickAction = actionTracker.start(clickKey, startClocks, clickActionBase, {
     isChildEvent: isActionChildEvent,
@@ -324,7 +330,7 @@ function newClick(
 
   return {
     event: startEvent,
-    frustrationIgnore: capturedFrustrationIgnore,
+    ignore,
     stop,
     stopObservable,
 
@@ -345,8 +351,7 @@ function newClick(
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () =>
-      newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent, capturedFrustrationIgnore),
+    clone: () => newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, ignore, startEvent),
 
     validate: (domEvents?: Event[]) => {
       stop()

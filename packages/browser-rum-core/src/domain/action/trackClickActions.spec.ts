@@ -428,6 +428,21 @@ describe('trackClickActions', () => {
       expect(events[0].frustrationTypes).not.toContain(FrustrationType.ERROR_CLICK)
     })
 
+    it('captures the ignore state from the pointer-down element', () => {
+      button.setAttribute('data-dd-ignore-frustration', 'error-click')
+      startClickActionsTracking()
+
+      emulateClick({
+        activity: {},
+        afterPointerDown: () => button.removeAttribute('data-dd-ignore-frustration'),
+      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events).toHaveSize(1)
+      expect(events[0].frustrationTypes).not.toContain(FrustrationType.ERROR_CLICK)
+    })
+
     it('considers a "click without activity" followed by an error as a click action with "error" (and "dead") frustration type', () => {
       startClickActionsTracking()
 
@@ -607,6 +622,7 @@ describe('trackClickActions', () => {
     target = button,
     activity,
     eventProperty,
+    afterPointerDown,
   }: {
     target?: HTMLElement
     activity?: {
@@ -614,6 +630,7 @@ describe('trackClickActions', () => {
       on?: 'pointerup' | 'click' | 'pointerdown'
     }
     eventProperty?: { [key: string]: any }
+    afterPointerDown?: () => void
   } = {}) {
     const targetPosition = target.getBoundingClientRect()
     const offsetX = targetPosition.width / 2
@@ -628,6 +645,7 @@ describe('trackClickActions', () => {
       ...eventProperty,
     }
     target.dispatchEvent(createNewEvent('pointerdown', { ...baseEventProperties, timeStamp: relativeNow() }))
+    afterPointerDown?.()
     emulateActivityIfNeeded('pointerdown')
     clock!.tick(EMULATED_CLICK_DURATION)
     target.dispatchEvent(createNewEvent('pointerup', { ...baseEventProperties, timeStamp: relativeNow() }))
