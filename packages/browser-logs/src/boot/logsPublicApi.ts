@@ -19,6 +19,7 @@ import type { HandlerType } from '../domain/logger'
 import type { StatusType } from '../domain/logger/isAuthorized'
 import { Logger } from '../domain/logger'
 import { buildCommonContext } from '../domain/contexts/commonContext'
+import { callPluginsMethod } from '../domain/plugins'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { StartLogsResult } from './startLogs'
 import { startLogs } from './startLogs'
@@ -258,7 +259,7 @@ export interface LogsPublicApi extends PublicApi {
 }
 
 export interface Strategy {
-  init: (initConfiguration: LogsInitConfiguration, errorStack?: string) => void
+  init: (initConfiguration: LogsInitConfiguration, publicApi?: LogsPublicApi, errorStack?: string) => void
   initConfiguration: LogsInitConfiguration | undefined
   globalContext: ContextManager
   accountContext: ContextManager
@@ -288,6 +289,9 @@ export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPubli
       )
 
       strategy = createPostStartStrategy(strategy, startLogsResult)
+      callPluginsMethod(configuration.plugins, 'onLogsStart', {
+        handleLog: startLogsResult.handleLog,
+      })
       return startLogsResult
     },
     options.sdkName
@@ -299,12 +303,12 @@ export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPubli
 
   const mainLogger = new Logger((...params) => strategy.handleLog(...params))
 
-  return makePublicApi<LogsPublicApi>({
+  const logsPublicApi: LogsPublicApi = makePublicApi<LogsPublicApi>({
     logger: mainLogger,
 
     init: (initConfiguration) => {
       const errorStack = new Error().stack
-      callMonitored(() => strategy.init(initConfiguration, errorStack))
+      callMonitored(() => strategy.init(initConfiguration, logsPublicApi, errorStack))
     },
 
     setTrackingConsent: monitor((trackingConsent) => {
@@ -399,6 +403,8 @@ export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPubli
       ContextManagerMethod.clearContext
     ),
   })
+
+  return logsPublicApi
 }
 
 function createPostStartStrategy(preStartStrategy: Strategy, startLogsResult: StartLogsResult): Strategy {

@@ -1,0 +1,50 @@
+{
+  "name": "@datadog/browser-plugin-wasm",
+  "version": "7.10.0",
+  "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.mjs",
+  "types": "cjs/index.d.ts",
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "yarn build"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "7.10.0",
+    "@datadog/browser-logs": "7.10.0",
+    "@datadog/browser-rum-core": "7.10.0",
+    "@datadog/js-core": "0.0.11"
+  },
+  "peerDependencies": {
+    "@datadog/browser-core": "7.10.0",
+    "@datadog/browser-logs": "7.10.0",
+    "@datadog/browser-rum-core": "7.10.0",
+    "@datadog/js-core": "0.0.11"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-logs": {
+      "optional": true
+    },
+    "@datadog/browser-rum-core": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/browser-plugin-wasm"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

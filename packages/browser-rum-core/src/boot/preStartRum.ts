@@ -242,7 +242,7 @@ export function createPreStartStrategy(
         return
       }
 
-      callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+      callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi, hooks })
 
       const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
 
