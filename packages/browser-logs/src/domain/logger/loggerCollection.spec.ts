@@ -1,6 +1,6 @@
 import type { TimeStamp } from '@datadog/js-core/time'
 import { timeStampNow } from '@datadog/js-core/time'
-import { ErrorSource } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource } from '@datadog/browser-core'
 import { ConsoleApiName, originalConsoleMethods } from '@datadog/js-core/util'
 import { mockClock } from '@datadog/browser-core/test'
 import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
@@ -143,6 +143,19 @@ describe('logger collection', () => {
         },
         ddtags: [],
       })
+    })
+
+    it('should expose a provided error on the raw event before assembly', () => {
+      const error = {
+        stack: 'RuntimeError: unreachable\n  at app.wasm:wasm-function[42]:0x10',
+        kind: 'RuntimeError',
+        message: 'unreachable',
+        handling: ErrorHandling.HANDLED,
+      }
+
+      handleLog({ message: 'message', status: StatusType.error, error }, logger, HANDLING_STACK, COMMON_CONTEXT)
+
+      expect(rawLogsEvents[0].rawLogsEvent.error).toEqual(error)
     })
 
     it('should send the saved date when present', () => {

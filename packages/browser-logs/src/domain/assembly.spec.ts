@@ -12,6 +12,7 @@ import type { LogsConfiguration } from './configuration'
 import { validateAndBuildLogsConfiguration } from './configuration'
 import { Logger } from './logger'
 import { StatusType } from './logger/isAuthorized'
+import { startLoggerCollection } from './logger/loggerCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { Hooks } from './hooks'
 import { createHooks } from './hooks'
@@ -457,5 +458,25 @@ describe('logs limitation', () => {
     expect(serverLogs[0].error?.source_type).toBe('browser+wasm')
     expect(serverLogs[0].error?.wasm_modules).toEqual([{ url: 'app.wasm', build_id: 'abcd' }])
     expect(serverLogs[0].error?.stack).toContain('wasm-function[42]')
+  })
+
+  it('lets an assemble hook enrich errors provided to a logger', () => {
+    hooks.assemble.register(({ rawLogsEvent }) =>
+      rawLogsEvent?.error && /wasm-function\[/.test(rawLogsEvent.error.stack ?? '')
+        ? { error: { source_type: 'browser+wasm', wasm_modules: [{ url: 'app.wasm', build_id: 'abcd' }] } }
+        : SKIPPED
+    )
+    const { handleLog } = startLoggerCollection(lifeCycle)
+    const logger = new Logger((...params) => handleLog(...params))
+    const error = new WebAssembly.RuntimeError('unreachable')
+    error.stack = 'RuntimeError: unreachable\n  at foo @ https://example.com/app.wasm:wasm-function[42]:0x10'
+
+    logger.error('WASM failure', { crash_type: 'wasm' }, error)
+
+    expect(serverLogs.length).toEqual(1)
+    expect(serverLogs[0].error?.source_type).toBe('browser+wasm')
+    expect(serverLogs[0].error?.wasm_modules).toEqual([{ url: 'app.wasm', build_id: 'abcd' }])
+    expect(serverLogs[0].error?.stack).toContain('wasm-function[42]')
+    expect(serverLogs[0].crash_type).toBe('wasm')
   })
 })
