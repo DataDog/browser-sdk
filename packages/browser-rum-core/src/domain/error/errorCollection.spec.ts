@@ -307,28 +307,6 @@ describe('error collection', () => {
       expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.csp?.disposition).toEqual('enforce')
     })
 
-    it('should identify WebAssembly errors', () => {
-      setupErrorCollection()
-
-      lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
-        error: {
-          message: 'unreachable',
-          source: ErrorSource.SOURCE,
-          stack: 'RuntimeError: unreachable\n  at foo (wasm://wasm/abc123:wasm-function[42]:0x10)',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-          originalError: new WebAssembly.RuntimeError('unreachable'),
-          handling: ErrorHandling.UNHANDLED,
-        },
-      })
-
-      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error).toEqual(
-        jasmine.objectContaining({
-          source_type: 'browser+wasm',
-          wasm_modules: [],
-        })
-      )
-    })
-
     it('should merge dd_context from the original error with addError context', () => {
       setupErrorCollection()
       const error = new Error('foo')

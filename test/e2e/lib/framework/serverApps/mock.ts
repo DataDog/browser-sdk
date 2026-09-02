@@ -16,7 +16,7 @@ import { rawDataToString } from '../../helpers/rawDataToString'
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 const WASM_MODULE_WITH_BUILD_ID = [
   0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 7, 7, 1, 3, 114, 117, 110, 0, 0, 10, 5, 1, 3, 0, 0, 11, 0,
-  11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
+  12, 8, 98, 117, 105, 108, 100, 95, 105, 100, 2, 0xab, 0xcd,
 ]
 
 export function createMockServerApp(servers: Servers, setup: string, setupOptions?: SetupOptions): MockServerApp {

@@ -473,7 +473,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/browser-logs":
+"@datadog/browser-logs@npm:7.10.0, @datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/browser-logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/browser-logs"
   dependencies:
@@ -483,6 +483,27 @@ __metadata:
     "@datadog/browser-rum": 7.10.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@datadog/browser-plugin-wasm@workspace:packages/browser-plugin-wasm":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-plugin-wasm@workspace:packages/browser-plugin-wasm"
+  dependencies:
+    "@datadog/browser-core": "npm:7.10.0"
+    "@datadog/browser-logs": "npm:7.10.0"
+    "@datadog/browser-rum-core": "npm:7.10.0"
+    "@datadog/js-core": "npm:0.0.11"
+  peerDependencies:
+    "@datadog/browser-core": 7.10.0
+    "@datadog/browser-logs": 7.10.0
+    "@datadog/browser-rum-core": 7.10.0
+    "@datadog/js-core": 0.0.11
+  peerDependenciesMeta:
+    "@datadog/browser-logs":
+      optional: true
+    "@datadog/browser-rum-core":
       optional: true
   languageName: unknown
   linkType: soft

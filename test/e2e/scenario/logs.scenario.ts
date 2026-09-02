@@ -2,7 +2,7 @@ import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-lo
 import { ONE_HOUR, ONE_MINUTE } from '@datadog/js-core/time'
 import { SESSION_EXPIRATION_DELAY } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'
-import { createTest, createWorker } from '../lib/framework'
+import { createTest, createWorker, npmSetup } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
@@ -10,6 +10,7 @@ const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 declare global {
   interface Window {
     myServiceWorker: ServiceWorkerRegistration
+    DD_WASM_PLUGIN?: () => { name: string }
   }
 }
 
@@ -288,9 +289,15 @@ test.describe('logs', () => {
     })
 
   createTest('send WebAssembly runtime errors with module metadata')
-    .withRum()
+    .withSetup(npmSetup)
     .withLogs({ forwardErrorsToLogs: true })
     .withWasmUnsafeEval()
+    .withLogsInit((configuration) => {
+      // The wasm plugin is only available in the npm setup, where the SDK and the plugin share
+      // the same browser-core instance (and thus the same wasm module registry).
+      configuration.plugins = [window.DD_WASM_PLUGIN!()]
+      window.DD_LOGS!.init(configuration)
+    })
     .run(async ({ baseUrl, intakeRegistry, flushEvents, page, withBrowserLogs }) => {
       test.skip(
         test.info().project.name === 'webkit' || test.info().project.name === 'chromium-pinned',
@@ -300,6 +307,8 @@ test.describe('logs', () => {
       await page.evaluate(async () => {
         const { instance } = await WebAssembly.instantiateStreaming(fetch('/test-module.wasm'))
 
+        // Schedule the trap outside page.evaluate() so it is reported through
+        // the browser's uncaught runtime-error path.
         setTimeout(() => (instance.exports.run as () => void)())
       })
 
@@ -309,9 +318,6 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].error?.source_type).toBe('browser+wasm')
       expect(intakeRegistry.logsEvents[0].error?.wasm_modules).toEqual(expectedWasmModules)
-      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
-      expect(intakeRegistry.rumErrorEvents[0].error.source_type).toBe('browser+wasm')
-      expect(intakeRegistry.rumErrorEvents[0].error.wasm_modules).toEqual(expectedWasmModules)
       withBrowserLogs((browserLogs) => {
         expect(browserLogs).toHaveLength(1)
       })

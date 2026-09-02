@@ -1,5 +1,5 @@
-import type { RawError } from '../error/error.types'
-import { registerCleanupTask } from '../../../test'
+import type { RawError } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   getLoadedWasmModules,
   isWasmError,
@@ -53,7 +53,7 @@ describe('startWasmModuleTracking', () => {
 
   it('records the build ID of modules instantiated from bytes', async () => {
     const wasmModule = new Uint8Array([
-      0, 97, 115, 109, 1, 0, 0, 0, 0, 11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
+      0, 97, 115, 109, 1, 0, 0, 0, 0, 12, 8, 98, 117, 105, 108, 100, 95, 105, 100, 2, 0xab, 0xcd,
     ])
 
     startWasmModuleTracking()
@@ -74,39 +74,23 @@ describe('startWasmModuleTracking', () => {
     expect(getLoadedWasmModules()).toEqual([{ url: '<wasm-compile-bytes>', build_id: '' }])
   })
 
-  it('waits for module metadata before resolving streaming instantiation', async () => {
+  it('records the build ID and URL of modules instantiated from a response', async () => {
     const wasmModule = new Uint8Array([
-      0, 97, 115, 109, 1, 0, 0, 0, 0, 11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
+      0, 97, 115, 109, 1, 0, 0, 0, 0, 12, 8, 98, 117, 105, 108, 100, 95, 105, 100, 2, 0xab, 0xcd,
     ])
-    let resolveArrayBuffer!: (buffer: ArrayBuffer) => void
-    const arrayBufferPromise = new Promise<ArrayBuffer>((resolve) => {
-      resolveArrayBuffer = resolve
-    })
-    const response = {
-      url: 'https://example.com/module.wasm',
-      clone: () => ({ arrayBuffer: () => arrayBufferPromise }),
-    } as Response
+    const module = new WebAssembly.Module(wasmModule)
+    const response = { url: 'https://example.com/module.wasm' } as Response
     const originalInstantiateStreaming = WebAssembly.instantiateStreaming
-    const instantiateStreamingSpy = jasmine.createSpy().and.resolveTo({})
+    const instantiateStreamingSpy = jasmine.createSpy().and.resolveTo({ module })
     WebAssembly.instantiateStreaming = instantiateStreamingSpy
 
-    const stopTracking = startWasmModuleTracking()
+    startWasmModuleTracking()
     try {
-      let isResolved = false
-      const instantiatePromise = WebAssembly.instantiateStreaming(response).then(() => {
-        isResolved = true
-      })
-      await new Promise((resolve) => setTimeout(resolve))
-
-      expect(instantiateStreamingSpy).toHaveBeenCalled()
-      expect(isResolved).toBe(false)
-
-      resolveArrayBuffer(wasmModule.buffer)
-      await instantiatePromise
+      await WebAssembly.instantiateStreaming(response)
 
       expect(getLoadedWasmModules()).toEqual([{ url: response.url, build_id: 'abcd' }])
     } finally {
-      stopTracking()
+      resetWasmModuleRegistryForTesting()
       if (originalInstantiateStreaming) {
         WebAssembly.instantiateStreaming = originalInstantiateStreaming
       } else {
@@ -115,16 +99,37 @@ describe('startWasmModuleTracking', () => {
     }
   })
 
-  it('keeps hooks installed until every tracking client stops', () => {
-    const originalCompile = WebAssembly.compile
-    const stopFirstClient = startWasmModuleTracking()
-    const trackedCompile = WebAssembly.compile
-    const stopSecondClient = startWasmModuleTracking()
+  it('forwards all compileStreaming arguments', async () => {
+    const module = new WebAssembly.Module(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]))
+    const response = { url: 'https://example.com/module.wasm' } as Response
+    const compileOptions = { builtins: ['js-string'] }
+    const originalCompileStreaming = WebAssembly.compileStreaming
+    const compileStreamingSpy = jasmine.createSpy().and.resolveTo(module)
+    WebAssembly.compileStreaming = compileStreamingSpy
 
-    expect(trackedCompile).not.toBe(originalCompile)
-    stopFirstClient()
+    startWasmModuleTracking()
+    try {
+      await (WebAssembly.compileStreaming as unknown as (...parameters: unknown[]) => Promise<WebAssembly.Module>)(
+        response,
+        compileOptions
+      )
+
+      expect(compileStreamingSpy).toHaveBeenCalledOnceWith(response, compileOptions)
+    } finally {
+      resetWasmModuleRegistryForTesting()
+      if (originalCompileStreaming) {
+        WebAssembly.compileStreaming = originalCompileStreaming
+      } else {
+        delete (WebAssembly as Partial<typeof WebAssembly>).compileStreaming
+      }
+    }
+  })
+
+  it('installs hooks only once', () => {
+    startWasmModuleTracking()
+    const trackedCompile = WebAssembly.compile
+    startWasmModuleTracking()
+
     expect(WebAssembly.compile).toBe(trackedCompile)
-    stopSecondClient()
-    expect(WebAssembly.compile).toBe(originalCompile)
   })
 })

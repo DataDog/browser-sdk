@@ -32,6 +32,8 @@ export function startLogsAssembly(
       const commonContext = savedCommonContext || getCommonContext()
       const defaultLogsEventAttributes = hook.trigger({
         startTime,
+        rawLogsEvent,
+        domainContext,
       })
 
       if (defaultLogsEventAttributes === DISCARDED) {
