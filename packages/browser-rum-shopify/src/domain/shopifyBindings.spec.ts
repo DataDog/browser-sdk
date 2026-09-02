@@ -1,5 +1,5 @@
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { createFakeAnalytics } from '../test/mockShopifyAnalytics'
+import { createFakeAnalytics } from '../../test/mockShopifyAnalytics'
 import { initShopifyBindings } from './shopifyBindings'
 
 function createFakeRumPublicApi() {

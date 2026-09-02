@@ -1,5 +1,5 @@
 import { TIMEOUT_ERROR_MESSAGE } from '@datadog/browser-core'
-import { createFakeAnalytics, pageViewedEvent } from '../test/mockShopifyAnalytics'
+import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
 import { waitForPageViewedEvent } from './shopifyAnalytics'
 
 describe('waitForPageViewedEvent', () => {

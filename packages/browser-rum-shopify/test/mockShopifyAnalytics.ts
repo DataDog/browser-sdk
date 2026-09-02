@@ -1,4 +1,4 @@
-import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from '../domain/shopifyAnalytics'
+import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from '../src/domain/shopifyAnalytics'
 
 export function createFakeAnalytics() {
   const subscribers = new Map<string, (event: ShopifyPixelEvent) => void>()
