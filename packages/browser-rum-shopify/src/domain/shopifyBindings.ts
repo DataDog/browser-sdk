@@ -1,5 +1,6 @@
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from './shopifyAnalytics'
+import { getPageUrl } from './shopifyAnalytics'
 
 export interface ElementData {
   id?: string
@@ -17,10 +18,12 @@ export interface ErrorData {
 }
 
 // Matches /checkouts/*, /checkout, including locale-prefixed paths.
-// Storefront pages never match, so init() is a no-op there: those pages
-// already get a `DD_RUM` instance from the Theme Liquid snippet, and initializing here too would
-// create a second, independent SDK instance double-tracking the same page view.
-const CHECKOUT_PATH = /\/(([a-z]{2}(-[a-z0-9]+)?)\/)?(checkouts?)(\/|$)/i
+export const CHECKOUT_PATH_PATTERN = /\/(([a-z]{2}(-[a-z0-9]+)?)\/)?(checkouts?)(\/|$)/i
+
+export function isCheckoutPage(event: ShopifyPixelEvent): boolean {
+  const url = getPageUrl(event)
+  return !!(url && CHECKOUT_PATH_PATTERN.test(url))
+}
 
 /**
  * Wires Shopify Web Pixel standard events to the RUM public API. `analytics` is the sandbox's
@@ -32,18 +35,20 @@ export function initShopifyBindings(rumPublicApi: RumPublicApi, analytics: Shopi
   }
 
   analytics.subscribe('page_viewed', (event) => {
-    const url = event.context?.document?.location?.href
-
-    if (!url || !CHECKOUT_PATH.test(url)) {
+    if (!isCheckoutPage(event)) {
       return
     }
 
     rumPublicApi.startView({
-      url,
+      url: getPageUrl(event),
     })
   })
 
   analytics.subscribe('clicked', (event: ShopifyPixelEvent<{ element?: ElementData }>) => {
+    if (!isCheckoutPage(event)) {
+      return
+    }
+
     const element = event.data?.element
     const name = element?.id ?? 'element-without-id'
     rumPublicApi.startAction(name, { type: 'click' })
@@ -52,6 +57,10 @@ export function initShopifyBindings(rumPublicApi: RumPublicApi, analytics: Shopi
 
   // Fires when a Shopify checkout UI extension crashes.
   analytics.subscribe('ui_extension_errored', (event: ShopifyPixelEvent<{ error?: ErrorData }>) => {
+    if (!isCheckoutPage(event)) {
+      return
+    }
+
     const error = event.data?.error
     const err = new Error(error?.message)
     err.stack = error?.trace

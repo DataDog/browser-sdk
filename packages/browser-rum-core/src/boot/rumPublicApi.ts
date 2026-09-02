@@ -50,7 +50,7 @@ import type {
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
-import { callPluginsMethod } from '../domain/plugins'
+import { callPluginsOnRumStart } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { ActionOptions } from '../domain/action/trackManualActions'
@@ -714,7 +714,7 @@ export function makeRumPublicApi(
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
-      callPluginsMethod(configuration.plugins, 'onRumStart', {
+      callPluginsOnRumStart(configuration.plugins, {
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
       })

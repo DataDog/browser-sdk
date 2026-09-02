@@ -32,6 +32,7 @@ describe('angularPlugin', () => {
 
     expect(callbackSpy).not.toHaveBeenCalled()
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
@@ -45,6 +46,7 @@ describe('angularPlugin', () => {
   it('calls callbacks immediately if onInit was already invoked', () => {
     const callbackSpy = jasmine.createSpy()
     const pluginConfiguration = {}
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
@@ -59,6 +61,7 @@ describe('angularPlugin', () => {
 
   it('enforce manual view tracking when router is enabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     angularPlugin({ router: true }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
@@ -66,6 +69,7 @@ describe('angularPlugin', () => {
 
   it('does not enforce manual view tracking when router is disabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     angularPlugin({ router: false }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBeUndefined()

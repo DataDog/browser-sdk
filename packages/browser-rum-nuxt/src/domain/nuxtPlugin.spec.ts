@@ -24,6 +24,7 @@ describe('nuxtRumPlugin', () => {
   it('sets trackViewsManually to true', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     nuxtRumPlugin({ router: makeRouter() }).onInit({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
