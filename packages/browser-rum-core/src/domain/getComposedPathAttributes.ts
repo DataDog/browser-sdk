@@ -1,18 +1,17 @@
 import { display, safeTruncate, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
-import { NodePrivacyLevel, CENSORED_STRING_MARK } from './privacyConstants'
+import { NodePrivacyLevel, CENSORED_STRING_MARK, PRIVACY_ATTR_NAME } from './privacyConstants'
 import type { RumConfiguration } from './configuration'
 import { getNodePrivacyLevel, maskAttributeIfNeeded } from './privacy'
 import type { NodePrivacyLevelCache } from './privacy'
-import { isGeneratedValue } from './getSelectorFromElement'
+import { isGeneratedValue, FILTERED_TAGNAMES } from './getSelectorFromElement'
 import { getSanitizedHref, HREF_ATTRIBUTE, ATTRIBUTE_VALUE_LIMIT } from './urlSanitizer'
 
-const FILTERED_TAGNAMES = ['HTML', 'BODY']
 const HREF_TAGNAMES = ['A', 'AREA']
 
 // Attributes masked through the same privacy pipeline as action names: free-form text that can
 // carry PII (a user's name, an email address...), already classified this way by
 // `shouldMaskAttribute` in `privacy.ts`.
-const MASKED_TEXT_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt']
+const MASKED_TEXT_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt', 'placeholder']
 
 // Structural/identification attributes: not part of `shouldMaskAttribute`'s masked set, so no
 // masking needed beyond the element-level HIDDEN/IGNORE check every attribute already gets.
@@ -115,6 +114,12 @@ export function getComposedPathAttributes(
     }
 
     for (const attribute of Array.from(element.attributes)) {
+      // `data-dd-privacy` is the SDK's own privacy-level override, not application content:
+      // collecting its value (`mask`, `allow`...) would leak an SDK implementation detail into
+      // this facet map instead of anything about the click target.
+      if (attribute.name === PRIVACY_ATTR_NAME) {
+        continue
+      }
       if (MASKED_TEXT_ATTRIBUTES.includes(attribute.name) || attribute.name.startsWith('data-')) {
         const maskedValue = maskAttributeIfNeeded(
           element,

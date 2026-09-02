@@ -779,10 +779,12 @@ test.describe('action collection with composed path selector', () => {
       )
     })
 
-  createTest('should include a sanitized href and aria-label when composed_path_selector_attributes is enabled')
+  createTest(
+    'should return a sanitized composed_path_selector and a composed path attributes map when composed_path_selector_attributes_map is enabled'
+  )
     .withRum({
       trackUserInteractions: true,
-      enableExperimentalFeatures: ['composed_path_selector_attributes'],
+      enableExperimentalFeatures: ['composed_path_selector_attributes_map'],
     })
     .withBody(html`
       <!-- a preceding sibling keeps the link's nth-child position fixed at 2 regardless of what
@@ -804,11 +806,17 @@ test.describe('action collection with composed path selector', () => {
 
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
-      // the query value, hash and numeric order id are stripped, but the "token" param name is
-      // kept; aria-label is collected as-is (spaces and slashes are CSS-escaped, like every other
-      // attribute value in this selector)
-      expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
-        'A#my-link[aria-label="Edit\\ order"][href="\\/orders\\/\\?\\/edit\\?token"]:nth-child(2);'
-      )
+      // href and aria-label are excluded from the selector string itself (see the
+      // `ARIA_LABEL_ATTRIBUTE` comment in getComposedPathSelector.ts) and collected instead,
+      // sanitized and masked, in the attributes map below.
+      expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe('A#my-link:nth-child(2);')
+      // the query value, hash and numeric order id are stripped from href, but the "token" param
+      // name is kept; aria-label and id are collected as-is (below the mask-user-input default
+      // privacy level, and containing no digit or email)
+      expect(actionEvents[0]._dd.action?.target?.attributes).toEqual({
+        href: '/orders/?/edit?token',
+        'aria-label': 'Edit order',
+        id: 'my-link',
+      })
     })
 })

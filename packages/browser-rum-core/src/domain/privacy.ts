@@ -196,9 +196,12 @@ export function shouldMaskAttribute(
 }
 
 /**
- * Masks an attribute's value when the element's privacy level and configuration require it,
- * mirroring how action names collected from standard attributes are masked
- * (`getActionNameFromStandardAttribute`).
+ * Masks an attribute's value when the element's privacy level requires it, using the same
+ * MASK/MASK_UNLESS_ALLOWLISTED classification as action names collected from standard attributes
+ * (`getActionNameFromStandardAttribute`). Unlike that function, this one is NOT gated behind
+ * `enablePrivacyForActionName`: that flag is scoped to the action `name` field, and callers of
+ * this function (ex: the composed-path attributes map) are a different, unrelated field — turning
+ * it off must not also turn off masking here.
  */
 export function maskAttributeIfNeeded(
   element: Element,
@@ -208,9 +211,6 @@ export function maskAttributeIfNeeded(
   nodePrivacyLevelCache: NodePrivacyLevelCache,
   fixedMask?: string
 ): string {
-  if (!configuration.enablePrivacyForActionName) {
-    return attributeValue
-  }
   const nodePrivacyLevel = getNodePrivacyLevel(element, configuration.defaultPrivacyLevel, nodePrivacyLevelCache)
   // `shouldMaskAttribute` only recognizes MASK and MASK_UNLESS_ALLOWLISTED: HIDDEN and IGNORE (the
   // strictest levels, meant to keep content out of Datadog entirely) must be enforced here,

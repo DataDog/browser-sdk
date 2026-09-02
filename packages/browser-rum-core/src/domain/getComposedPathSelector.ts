@@ -7,11 +7,10 @@ import {
   getTagNameSelector,
   getNthOfTypeSelector,
   getAttributeValueSelector,
+  FILTERED_TAGNAMES,
 } from './getSelectorFromElement'
 import type { RumConfiguration } from './configuration'
 import { HREF_ATTRIBUTE } from './urlSanitizer'
-
-const FILTERED_TAGNAMES = ['HTML', 'BODY']
 
 /**
  * arbitrary value, we want to truncate the selector if it exceeds the limit
@@ -71,10 +70,10 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
 
   const { actionNameAttribute } = configuration
   // `href` and `aria-label` are excluded here even when configured as the customer's
-  // `actionNameAttribute`: they must always go through `extractPrivacySensitiveAttributesString`'s
-  // sanitization/masking below. Letting them through this list too would leak the raw,
-  // unsanitized value (bypassing sanitization for `href`, masking for `aria-label`) alongside the
-  // safe one.
+  // `actionNameAttribute`: see the `ARIA_LABEL_ATTRIBUTE` comment above — they're collected
+  // instead, sanitized/masked, by `getComposedPathAttributes`. Letting them through this list too
+  // would leak the raw, unsanitized value (bypassing that sanitization/masking) alongside the safe
+  // one.
   const allowedAttributes = (
     actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
   ).filter((attribute) => attribute !== HREF_ATTRIBUTE && attribute !== ARIA_LABEL_ATTRIBUTE)

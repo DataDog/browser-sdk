@@ -79,6 +79,14 @@ describe('getComposedPathAttributes', () => {
       expect(result).toEqual({ name: '***', title: '***', alt: '***' })
     })
 
+    it('collects placeholder, masked the same way as aria-label', () => {
+      const element = appendElementInIsolation('<input placeholder="Enter your name" />')
+
+      const result = collect([element], mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK }))
+
+      expect(result).toEqual({ placeholder: '***' })
+    })
+
     it('collects a stable data-* attribute unmasked, even under the mask privacy level', () => {
       const element = appendElementInIsolation('<div data-testid="submit-button"></div>')
 
@@ -93,6 +101,12 @@ describe('getComposedPathAttributes', () => {
       const result = collect([element], mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK }))
 
       expect(result).toEqual({ 'data-user-email': '***' })
+    })
+
+    it('excludes the SDK privacy-override attribute (data-dd-privacy) from the wildcard data-* collection', () => {
+      const element = appendElementInIsolation('<div data-dd-privacy="mask" data-testid="submit"></div>')
+
+      expect(collect([element])).toEqual({ 'data-testid': 'submit' })
     })
 
     it('collects id and role unmasked regardless of privacy level', () => {

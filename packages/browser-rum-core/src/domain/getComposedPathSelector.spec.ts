@@ -114,6 +114,22 @@ describe('getSelectorFromComposedPath', () => {
       })
     })
 
+    describe('actionNameAttribute exclusions', () => {
+      it('excludes href from the selector even when configured as the actionNameAttribute', () => {
+        const element = appendElementInIsolation('<a href="/foo"></a>')
+        const configuration = mockRumConfiguration({ actionNameAttribute: 'href' })
+
+        expect(getComposedPathSelector([element], configuration)).toBe('A;')
+      })
+
+      it('excludes aria-label from the selector even when configured as the actionNameAttribute', () => {
+        const element = appendElementInIsolation('<a aria-label="Secret label"></a>')
+        const configuration = mockRumConfiguration({ actionNameAttribute: 'aria-label' })
+
+        expect(getComposedPathSelector([element], configuration)).toBe('A;')
+      })
+    })
+
     describe('nthChild and nthOfType', () => {
       it('does not include nthChild when element is the only child', () => {
         const element = appendElement(`<div>
