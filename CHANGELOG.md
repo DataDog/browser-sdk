@@ -20,6 +20,18 @@
 
 ---
 
+## v7.11.0
+
+**Public Changes:**
+
+- ✨ enable partial view updates by default for CDN users without a proxy ([#5000](https://github.com/DataDog/browser-sdk/pull/5000))
+- 🐛 [PANA-8819] Don't send segments with sendBeacon unless the page is really exiting ([#4990](https://github.com/DataDog/browser-sdk/pull/4990))
+- 📝 Remove beta note from Vue, Angular and Nuxt readme's ([#4996](https://github.com/DataDog/browser-sdk/pull/4996))
+
+**Internal Changes:**
+
+- 👷 skip telemetry error checks when no datacenter has credentials ([#4997](https://github.com/DataDog/browser-sdk/pull/4997))
+
 ## v7.10.0
 
 **Public Changes:**
