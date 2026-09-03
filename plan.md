@@ -65,7 +65,9 @@ pass. Findings from the implementation:
   functions (deferred to phase 4, where a consumer needs them).
 - Handle does not expose the event id: consumers that need it (ex: trackViews port will need the
   view id for viewHistory-like queries) must capture it from `event_started`. If that proves
-  awkward in phase 3, the handle should grow an `id` getter.
+  awkward in phase 3, the handle should grow an `id` getter. (Superseded in phase 3b: an `id`
+  getter was tried and dropped in favor of `handle.current()`, which exposes the live in-memory
+  state — event and counts — directly; consumers needing the id read it off the entry's event.)
 - `BaseRumEvent` is now a discriminated union of minimal kickoff fields per event type (views
   carry none; actions need `action.type`, errors `error.message`/`error.source`, resources
   `resource.url`/`resource.type`, long tasks `long_task.duration`, vitals `vital.name`/
@@ -304,15 +306,61 @@ unchanged from phase 2: 61 failures, all in the old `rumPublicApi.spec`; 1410 pa
 (`trackNavigationTimings.spec` is a pre-existing flake in small-bundle runs — `relativeNow()` vs
 a hardcoded 123 at page-load time — it passes in the full-suite run.)
 
-### Phase 3b — `trackClickActions` — TODO
+### Phase 3b — `trackClickActions` — DONE
 
-- Each click → `startEvent({type:'action'})`; discard → `cancel()`; stop with page-activity
-  end → `stop({duration})`; rage-click chain and frustration computation unchanged (caller
-  logic); the internal API computes per-action counts (replaces `eventTracker`).
-- Click start-time context (target/position/name) is kept by the caller and passed at
-  `stop()` — no `eventTracker`-style side API. Watch for friction here: if it hurts, that is
-  exactly the kind of evidence for revisiting `StartEventOptions`.
-- `ACTION_STARTED`/`AUTO_ACTION_COMPLETED` lifecycle events are replaced by `notifications`.
+Ported as `domain/action/trackClickActionsOnInternalApi.ts`, wired in the public API when
+`trackUserInteractions` is on (sharing the observables hoisted for trackViews). Same approach as
+3a: the old `trackClickActions` stays for the startRum pipeline. The click chain and the
+frustration / rage-click computation (`clickChain`, `computeFrustration`) are unchanged caller
+logic.
+
+- Each click: `startEvent` with only the kickoff (`action.type: 'click'`) and the interaction
+  timestamp; the click start-time context (name, target, position, name source) is kept by the
+  caller and passed at `stop()` — no `eventTracker`-style side API, as planned. The friction
+  predicted for `StartEventOptions` didn't materialize: the kickoff-only start is fine because
+  click context is only needed on the final event.
+- Discard → `handle.cancel()` (removes the history entry, so discarded clicks stop linking child
+  events, as `eventTracker.discard` does today). Stops with no activity end also cancel — the
+  old `stop()`-without-time semantics map to `eventTracker.discard`.
+- `ACTION_STARTED` / `AUTO_ACTION_COMPLETED` are replaced by `notifications` (`event_started`
+  fires synchronously at start; `event_collected` when the final version is assembled). The
+  click's stop-side values land at `stop()`, including `loading_time`, frustration types and
+  `_dd.action` details.
+- **Counts are solely owned by the internal API**, exposed on the events' current state and
+  history entries: view / action entries carry their live child `counts` (the count object the
+  internal API mutates). The click frustration computation reads them off its own handle
+  (`handle.current()`) — no duplicate count pass, no history query, no id correlation (initial
+  iterations re-counted from `event_collected`, then matched `findEvents` entries via an `id`
+  getter; corrected per Benoit's reviews).
+- **`event_updated` / `event_stopped` notifications added** (draft updated): they carry the
+  assembled event and fire as soon as an update / final assembly completes, regardless of rate
+  limiting and `beforeSend` (the event reached its final state even when dropped before being
+  sent). **"View end" is simply `event_stopped` for view events**: the click port stops the click
+  chain on it, replacing the initial iteration's "collected view event with `is_active: false`"
+  detection and the old VIEW_ENDED subscription. One-shot `addEvent` events notify
+  `event_stopped` too (they are born final); hook-discarded assemblies don't (no assembled
+  event).
+- **Two internal API bugs found while wiring the counts, fixed**:
+  - Final action events lost their child counts: `stop()` deleted the action counts before
+    assembling, so the final snapshot read zeros. The delete now happens after the assembly.
+  - One-shot actions (ex: public `addAction`) stayed un-ended in the history, so every later
+    child event linked to them forever. One-shot action entries now close at their start time
+    (a zero-length window, as instantaneous actions link nothing today).
+- **`handle.current()` added to the handles** (draft updated): the live in-memory state of the
+  event (the entry: its event is the same object the handle mutates; after the final assembly it
+  is the assembled event; views / actions carry their live child counts). Consumers reading
+  their own event state — the click frustration computation (`Click.hasError`) — use it instead
+  of correlating history entries (an `id` getter tried first was dropped for exactly that
+  indirection: the handle owns its state, querying the history for it was suboptimal).
+- The LifeCycle passed to `waitPageActivityEnd` is a private idle instance (same corner-cut as 3a:
+  request events don't flow, page activity relies on DOM mutations).
+
+Validation: two smoke tests added — a validated click (pointerdown/up + DOM activity + a child
+error → action event with the target name, `loading_time`, `_dd.action` details, view linkage,
+`error.count: 1` from the internal API's counts, `error_click` frustration) and a dead click
+without activity (cancelled, no action event sent). All 6 smoke tests pass; the full
+`browser-rum-core` delta is unchanged: 61 failures, all in the old `rumPublicApi.spec` (phase
+2), 1412 pass.
 
 Original plan notes for phase 3:
 

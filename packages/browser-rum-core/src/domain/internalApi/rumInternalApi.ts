@@ -62,6 +62,7 @@ const ONE_SHOT_EVENT_TYPES: ReadonlyArray<Exclude<InternalRumEventType, 'view'>>
 
 // The runtime shape of the event handle, before the per-event-type constraint is applied
 interface InternalEventHandle {
+  current(): RumEventHistoryEntry
   cancel(): void
   update(baseRumEvent: Context): void
   stop(baseRumEvent?: Context, options?: { endClocks?: ClocksState }): void
@@ -184,6 +185,10 @@ export function createRumInternalApi(options: RumInternalApiOptions): RumInterna
     }
 
     const internalHandle: InternalEventHandle = {
+      current() {
+        return historyEntry.value
+      },
+
       update(partial) {
         assertNotFinished()
         if (startOptions.type !== 'view') {
@@ -205,9 +210,6 @@ export function createRumInternalApi(options: RumInternalApiOptions): RumInterna
         assertKickoffFields(currentBase)
         const endClocks = stopOptions?.endClocks ?? clocksNow()
         history.closeEntry(historyEntry, endClocks.relative)
-        if (startOptions.type === 'action') {
-          history.deleteActionEntry(eventId)
-        }
         finished = true
         assembleAndNotify({
           baseRumEvent: currentBase,
@@ -216,6 +218,11 @@ export function createRumInternalApi(options: RumInternalApiOptions): RumInterna
           final: true,
           baggage: { ...baggage, duration: elapsed(baggage.startClocks.timeStamp, endClocks.timeStamp) },
         })
+        // The action child counts must still be in the map when the final assembly snapshots
+        // them onto the event (deleting before assembling zeroed them — bug found in 3b review)
+        if (startOptions.type === 'action') {
+          history.deleteActionEntry(eventId)
+        }
       },
 
       cancel() {
@@ -260,6 +267,12 @@ export function createRumInternalApi(options: RumInternalApiOptions): RumInterna
     )
     if (baggage.duration !== undefined) {
       history.closeEntry(historyEntry, addDuration(baggage.startClocks.relative, baggage.duration))
+    }
+    if (type === 'action') {
+      // One-shot actions (ex: public addAction) are instantaneous: close their window at their
+      // start time, so child events never link to them (they would otherwise stay open forever,
+      // as every entry starts un-ended)
+      history.closeEntry(historyEntry, baggage.startClocks.relative)
     }
     assembleAndNotify({ baseRumEvent: baseEvent, historyEntry, eventId, final: true, baggage })
   }

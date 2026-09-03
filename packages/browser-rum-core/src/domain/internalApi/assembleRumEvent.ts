@@ -124,6 +124,14 @@ export function assembleRumEvent(pipeline: AssemblyPipeline, pending: PendingAss
   // a limbo incomplete state.
   history.finalizeEntry(historyEntry, final, assembled, baggage)
 
+  // The event lifecycle notifications (`event_updated` on intermediate assemblies, `event_stopped`
+  // on final ones) fire as soon as the event is assembled, regardless of rate limiting and
+  // beforeSend: the event reached its final state even if it is dropped before being sent (ex:
+  // "on view end" work subscribes to `event_stopped` for views).
+  pipeline.notifications.notify(
+    final ? { type: 'event_stopped', event: assembled, baggage } : { type: 'event_updated', event: assembled, baggage }
+  )
+
   // Event counts are computed after hooks (so hooks can set `_dd.discarded` on resources, or
   // add action frustration types) and before rate limiting and beforeSend (so counts include
   // discarded events, as decided in the plan).

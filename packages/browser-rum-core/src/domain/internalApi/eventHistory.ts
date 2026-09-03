@@ -4,6 +4,7 @@ import { SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import type {
   AssembledRumEvent,
   EventBaggage,
+  EventCounts,
   FindEventsQuery,
   InternalRumEventType,
   RumEventHistoryEntry,
@@ -14,19 +15,7 @@ import type {
 const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
 const END_OF_TIMES = Infinity as RelativeTime
 
-export interface EventCounts {
-  errorCount: number
-  actionCount: number
-  longTaskCount: number
-  resourceCount: number
-  frustrationCount: number
-}
-
-export interface ActionChildCounts {
-  errorCount: number
-  longTaskCount: number
-  resourceCount: number
-}
+export type ActionChildCounts = EventCounts
 
 // Internal wrapper of an entry: the time bounds used by findEvents, and the internal event id
 // (the linkage id, stamped as view.id / action.id on the event).
@@ -49,9 +38,11 @@ export interface EventHistory {
   // Flip the entry to its complete form with the assembled event. No-op when `final` is false:
   // only the final assembly of an event completes its entry.
   finalizeEntry(entry: InternalHistoryEntry, final: boolean, event: AssembledRumEvent, baggage: EventBaggage): void
-  // Set up the per-event state of a newly started view / action (counts, document version).
-  initViewEntry(eventId: string): void
-  initActionEntry(eventId: string): void
+  // Set up the per-event state of a newly started view / action (counts, document version), and
+  // return the live counts object — history entries reference it, so consumers reading counts
+  // off entries always see the current values.
+  initViewEntry(eventId: string): EventCounts
+  initActionEntry(eventId: string): ActionChildCounts
   deleteActionEntry(eventId: string): void
   nextDocumentVersion(eventId: string): number
   getEventCounts(eventId: string): EventCounts
@@ -75,6 +66,14 @@ export function createEventHistory(): EventHistory {
   return {
     addEntry(value, startTime, eventId) {
       prune()
+      // Hierarchy owners (views / actions) carry their live child counts on the entry, so
+      // findEvents consumers can read them (see EventCounts). The count object is the one the
+      // maps hold: incrementCounts mutations are reflected on the entry.
+      if (value.event.type === 'view') {
+        value.counts = viewCounts.get(eventId)
+      } else if (value.event.type === 'action') {
+        value.counts = actionCounts.get(eventId)
+      }
       const entry: InternalHistoryEntry = { value, startTime, endTime: END_OF_TIMES, eventId }
       historyEntries.unshift(entry)
       return entry
@@ -90,17 +89,21 @@ export function createEventHistory(): EventHistory {
 
     finalizeEntry(entry, final, event, baggage) {
       if (final) {
-        entry.value = { complete: true, event, baggage }
+        entry.value = { complete: true, event, baggage, counts: entry.value.counts }
       }
     },
 
     initViewEntry(eventId) {
-      viewCounts.set(eventId, createEventCounts())
+      const counts = createEventCounts()
+      viewCounts.set(eventId, counts)
       documentVersions.set(eventId, 0)
+      return counts
     },
 
     initActionEntry(eventId) {
-      actionCounts.set(eventId, { errorCount: 0, longTaskCount: 0, resourceCount: 0 })
+      const counts: EventCounts = createEventCounts()
+      actionCounts.set(eventId, counts)
+      return counts
     },
 
     deleteActionEntry(eventId) {
@@ -118,7 +121,7 @@ export function createEventHistory(): EventHistory {
     },
 
     getActionChildCounts(eventId) {
-      return actionCounts.get(eventId) ?? { errorCount: 0, longTaskCount: 0, resourceCount: 0 }
+      return actionCounts.get(eventId) ?? createEventCounts()
     },
 
     incrementCounts(event, startTime) {

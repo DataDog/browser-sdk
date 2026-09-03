@@ -85,6 +85,12 @@ export interface AddEventOptions {
 // Only views can be updated: the event type makes `update` unavailable on other handles (and the
 // runtime throws too, if the type constraint is worked around).
 export interface ViewEventHandle {
+  // The current in-memory state of the event: the live entry (its event is the same object the
+  // handle mutates, so it always reflects the latest state; after the final assembly it is the
+  // assembled event; views / actions also carry their live child counts). Consumers reading their
+  // own event state (ex: the click frustration computation needs whether a click had child
+  // errors) don't need findEvents or `event_started` correlation for it.
+  current(): RumEventHistoryEntry
   // Throws if the event has already been stopped or cancelled, and if the event is a view (views
   // must be stopped, not cancelled).
   cancel(): void
@@ -105,6 +111,12 @@ export interface ViewEventHandle {
 // they can be provided at start or at stop(), and the accumulated event is validated at runtime
 // (per the throw-on-misuse policy).
 export interface NonViewEventHandle<T extends 'action' | 'resource' | 'vital'> {
+  // The current in-memory state of the event: the live entry (its event is the same object the
+  // handle mutates, so it always reflects the latest state; after the final assembly it is the
+  // assembled event; views / actions also carry their live child counts). Consumers reading their
+  // own event state (ex: the click frustration computation needs whether a click had child
+  // errors) don't need findEvents or `event_started` correlation for it.
+  current(): RumEventHistoryEntry
   // Throws if the event has already been stopped or cancelled, and if the event is a view (views
   // must be stopped, not cancelled).
   cancel(): void
@@ -129,17 +141,31 @@ export type AssembleHookCallback = (params: AssembleHookParams) => Context | typ
 
 export type BeforeSend = (event: AssembledRumEvent, domainContext: unknown) => boolean | void
 
+// Child event counts, solely owned and computed by the internal API: views count their error /
+// action / long_task / resource / frustration children, actions count their error / long_task /
+// resource children (the action / frustration counts stay 0 on actions). Exposed on history
+// entries so consumers can read the live counts of ongoing events (ex: the click frustration
+// computation needs whether a click had child errors).
+export interface EventCounts {
+  errorCount: number
+  actionCount: number
+  longTaskCount: number
+  resourceCount: number
+  frustrationCount: number
+}
+
 // An entry of the event history. Incomplete entries are events that have been started but not
 // finalized yet (ex: the active view, an ongoing vital, or any event while the session manager
 // promise has not resolved): their `event` is the base event being built — the same object the handle
 // mutates, so it always reflects the latest state. Complete entries carry the assembled event
-// (hierarchy fields, hook attributes and event counts applied). Both carry the event baggage.
+// (hierarchy fields, hook attributes applied). Both carry the event baggage, and the live child
+// counts when the event is a hierarchy owner (view / action).
 //
 // Note: `AssembledRumEvent` stands in for the schema-typed `RumEvent` until all contexts (ex:
 // session, user, display) are ported to hooks.
 export type RumEventHistoryEntry =
-  | { complete: true; event: AssembledRumEvent; baggage: EventBaggage }
-  | { complete: false; event: IncompleteBaseRumEvent; baggage: EventBaggage }
+  | { complete: true; event: AssembledRumEvent; baggage: EventBaggage; counts?: EventCounts }
+  | { complete: false; event: IncompleteBaseRumEvent; baggage: EventBaggage; counts?: EventCounts }
 
 export interface FindEventsQuery {
   type?: InternalRumEventType
@@ -155,6 +181,13 @@ export type RumInternalNotification =
   // Fired synchronously at startEvent(), before any assembly: Replay takes full snapshots on
   // view start, before any DOM mutation, and needs the view id immediately.
   | { type: 'event_started'; eventType: StartableRumEventType; eventId: string; baggage: EventBaggage }
+  // Fired when an update assembly completes (ex: each incremental view version), and when a
+  // final assembly completes (`stop()`, one-shot `addEvent`). Carries the assembled event, like
+  // `event_collected`, but fires regardless of rate limiting / beforeSend (the event reached its
+  // final state even if it is dropped before being sent). Consumers doing "on view end" work
+  // subscribe to `event_stopped` for view events.
+  | { type: 'event_updated'; event: AssembledRumEvent; baggage: EventBaggage }
+  | { type: 'event_stopped'; event: AssembledRumEvent; baggage: EventBaggage }
   | { type: 'event_collected'; event: AssembledRumEvent; baggage: EventBaggage }
   | { type: 'session_renewed' }
   | { type: 'session_expired' }

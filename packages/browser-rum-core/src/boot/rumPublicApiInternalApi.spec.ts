@@ -1,9 +1,12 @@
 import { startSessionManager } from '@datadog/browser-core'
+import { relativeNow } from '@datadog/js-core/time'
 import {
+  createNewEvent,
   createSessionManagerMock,
   interceptRequests,
   mockClock,
   mockEventBridge,
+  registerCleanupTask,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
@@ -130,6 +133,95 @@ describe('rum public api (internal api PoC)', () => {
     expect(firstViewAction?.view?.id).toBe(firstView?.view?.id)
   })
 
+  it('tracks click actions through the internal API', async () => {
+    const clock = mockClock()
+    setupSessionManager()
+    const { requests, waitForAllFetchCalls } = interceptRequests()
+
+    const button = document.createElement('button')
+    button.setAttribute('data-dd-action-name', 'Test Button')
+    document.body.appendChild(button)
+    registerCleanupTask(() => button.remove())
+
+    const rumPublicApi = makeRumPublicApi(noopRecorderApi, noopProfilerApi)
+    rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION }) // automatic views, trackUserInteractions default
+
+    const eventProperties = {
+      target: button,
+      clientX: 10,
+      clientY: 10,
+      isPrimary: true,
+    }
+
+    button.dispatchEvent(createNewEvent('pointerdown', { ...eventProperties, timeStamp: relativeNow() }))
+    clock.tick(80)
+    button.dispatchEvent(createNewEvent('pointerup', { ...eventProperties, timeStamp: relativeNow() }))
+    // DOM activity after the click, so the click is validated (otherwise it would be discarded)
+    button.setAttribute('data-dd-test', 'activity')
+    // A child error during the click: the internal API counts it, links it to the click, and the
+    // frustration computation flags the click as an error click
+    rumPublicApi.addError(new Error('boom'))
+
+    await waitForSessionManagerResolution() // let the MutationObserver microtask deliver
+    clock.tick(200) // PAGE_ACTIVITY_END_DELAY: activity ends -> the click stops
+    clock.tick(1000) // MAX_DURATION_BETWEEN_CLICKS: the click chain finalizes -> the click is sent
+
+    rumPublicApi.stopSession()
+    await waitForAllFetchCalls()
+
+    const events = parseRequestBody(requests)
+    const actionEvent = events.find((event) => event.type === 'action')
+    const viewEvent = events.find((event) => event.type === 'view')
+
+    expect(actionEvent?.action?.type).toBe('click')
+    expect(actionEvent?.action?.target?.name).toBe('Test Button')
+    expect(actionEvent?.action?.loading_time).toBeDefined()
+    expect(actionEvent?._dd?.action?.name_source).toBeDefined()
+    // The click is linked to the active view
+    expect(actionEvent?.view?.id).toBe(viewEvent?.view?.id)
+    // The child error is counted on the final action event (counts are solely computed by the
+    // internal API) and the click is flagged as an error click
+    expect(actionEvent?.action?.error?.count).toBe(1)
+    expect(actionEvent?.action?.frustration?.type).toContain('error_click')
+    const errorEvent = events.find((event) => event.type === 'error')
+    expect(errorEvent?.action?.id).toContain(actionEvent?.action?.id)
+  })
+
+  it('discards click actions without page activity', async () => {
+    const clock = mockClock()
+    setupSessionManager()
+    const { requests, waitForAllFetchCalls } = interceptRequests()
+
+    const button = document.createElement('button')
+    button.setAttribute('data-dd-action-name', 'Dead Button')
+    document.body.appendChild(button)
+    registerCleanupTask(() => button.remove())
+
+    const rumPublicApi = makeRumPublicApi(noopRecorderApi, noopProfilerApi)
+    rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION })
+
+    const eventProperties = {
+      target: button,
+      clientX: 10,
+      clientY: 10,
+      isPrimary: true,
+    }
+
+    button.dispatchEvent(createNewEvent('pointerdown', { ...eventProperties, timeStamp: relativeNow() }))
+    clock.tick(80)
+    button.dispatchEvent(createNewEvent('pointerup', { ...eventProperties, timeStamp: relativeNow() }))
+
+    await waitForSessionManagerResolution()
+    clock.tick(200) // no activity within the validation delay: the click is discarded
+    clock.tick(1000) // the click chain finalizes without sending anything
+
+    rumPublicApi.stopSession()
+    await waitForAllFetchCalls()
+
+    const events = parseRequestBody(requests)
+    expect(events.filter((event) => event.type === 'action')).toEqual([]) // discarded, not sent
+  })
+
   it('sends events through the event bridge', async () => {
     const clock = mockClock()
     const eventBridge = mockEventBridge()
@@ -156,7 +248,7 @@ describe('rum public api (internal api PoC)', () => {
 })
 
 function parseRequestBody(requests: Array<{ body: string }>) {
-  return (requests[0].body)
+  return requests[0].body
     .split('\n')
     .filter((line) => !!line)
     .map(
@@ -164,9 +256,16 @@ function parseRequestBody(requests: Array<{ body: string }>) {
         JSON.parse(line) as {
           type: string
           view?: { id: string; name: string; is_active: boolean; loading_type: string }
-          action?: { target?: { name: string } }
-          error?: { message: string }
-          _dd?: { document_version: number }
+          action?: {
+            target?: { name: string }
+            type?: string
+            loading_time?: number
+            id?: string
+            error?: { count: number }
+            frustration?: { type: string[] }
+          }
+          error?: { message: string; id?: string; action?: { id?: string[] } }
+          _dd?: { document_version: number; action?: { name_source?: string } }
         }
     )
 }

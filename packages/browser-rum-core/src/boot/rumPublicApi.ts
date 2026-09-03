@@ -65,6 +65,7 @@ import { callPluginsMethod } from '../domain/plugins'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { ViewOptions } from '../domain/view/trackViewsOnInternalApi'
 import { trackViewsOnInternalApi } from '../domain/view/trackViewsOnInternalApi'
+import { trackClickActionsOnInternalApi } from '../domain/action/trackClickActionsOnInternalApi'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -1068,15 +1069,31 @@ export function makeRumPublicApi(
       createEncoder
     )
 
+    const domMutationObservable = createDOMMutationObservable()
+    const { observable: windowOpenObservable } = createWindowOpenObservable()
+
     viewTracking = trackViewsOnInternalApi(
       internalApi,
       prepareUrgentFlushObservable,
-      createDOMMutationObservable(),
-      createWindowOpenObservable().observable,
+      domMutationObservable,
+      windowOpenObservable,
       configuration,
       createLocationChangeObservable(),
       !configuration.trackViewsManually
     )
+
+    // PoC phase 3b: click actions tracked through the internal API (startEvent / stop with the
+    // click context at activity end, cancel on discard; frustration computation unchanged). See
+    // trackClickActionsOnInternalApi.ts.
+    if (configuration.trackUserInteractions) {
+      trackClickActionsOnInternalApi(
+        internalApi,
+        prepareUrgentFlushObservable,
+        domMutationObservable,
+        windowOpenObservable,
+        configuration
+      )
+    }
   }
 
   function assertStarted(method: string): boolean {

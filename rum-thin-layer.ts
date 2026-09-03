@@ -108,6 +108,12 @@ type StartableRumEventType = 'view' | 'action' | 'resource' | 'vital'
 // Only views can be updated: the event type makes `update` unavailable on other handles (and
 // the runtime throws too, if the type constraint is worked around).
 interface ViewEventHandle {
+  // The current in-memory state of the event: the live entry (its event is the same object the
+  // handle mutates, so it always reflects the latest state; after the final assembly it is the
+  // assembled event; views / actions also carry their live child counts). Consumers reading their
+  // own event state (ex: the click frustration computation needs whether a click had child
+  // errors) don't need findEvents or `event_started` correlation for it.
+  current(): RumEventHistoryEntry
   // Throw if the event has already been stopped or cancelled, and if the event is a view (views
   // must be stopped, not cancelled).
   cancel(): void // cancel is useful for tracking click actions
@@ -128,6 +134,12 @@ interface ViewEventHandle {
 // they can be provided at start or at stop(), and the accumulated event is validated at runtime
 // (per the throw-on-misuse policy).
 interface NonViewEventHandle<T extends 'action' | 'resource' | 'vital'> {
+  // The current in-memory state of the event: the live entry (its event is the same object the
+  // handle mutates, so it always reflects the latest state; after the final assembly it is the
+  // assembled event; views / actions also carry their live child counts). Consumers reading their
+  // own event state (ex: the click frustration computation needs whether a click had child
+  // errors) don't need findEvents or `event_started` correlation for it.
+  current(): RumEventHistoryEntry
   // Throw if the event has already been stopped or cancelled, and if the event is a view (views
   // must be stopped, not cancelled).
   cancel(): void
@@ -186,8 +198,12 @@ interface RumInternalApi {
   // view covers the event start time (ex: before the initial view is started, as preStartRum
   // buffers calls collected before RUM starts), instead of being dropped.
   notifications: Observable<RumInternalNotification>
-  // Discarded events (rate limited, beforeSend returned false) are not notified: no consumer
-  // needs them, and reporting rate limiting to customers is handled internally.
+  // Lifecycle: `event_started` at startEvent(), `event_updated` / `event_stopped` when an update /
+  // final assembly completes (carrying the assembled event, regardless of rate limiting and
+  // beforeSend — "on view end" work subscribes to `event_stopped` for views). `event_collected`
+  // only fires for events that passed rate limiting and beforeSend (discarded events are not
+  // collected: no consumer needs them, and reporting rate limiting to customers is handled
+  // internally).
   // Note: event counters and `findEvents` include discarded events, since hierarchy lookups and
   // counts are computed before rate limiting.
 
@@ -199,7 +215,9 @@ interface RumInternalApi {
   // reference the event itself: started but uncollected events (ex: an ongoing vital) are findable
   // as incomplete entries, with their kickoff fields (ex: vital names) and the live state of the
   // event being built. Finalized events are complete entries carrying the assembled event and
-  // its baggage (including discarded ones, by design).
+  // its baggage (including discarded ones, by design). View / action entries carry their live
+  // child counts (`counts`), solely owned and computed by the internal API: consumers (ex: the
+  // click frustration computation) read them off the entry instead of re-computing.
   // Un-ended events (ex. the active view) match `endedAfter: t` for any t, so
   // `{ startedBefore: t, endedAfter: t }` means "active at t".
   findEvents(query: {
@@ -224,6 +242,13 @@ type RumInternalNotification =
   // Fired synchronously at startEvent(), before any assembly: Replay takes full snapshots
   // on view start, before any DOM mutation, and needs the view id immediately.
   | { type: 'event_started'; eventType: StartableRumEventType; eventId: string; baggage: EventBaggage }
+  // Fired when an update assembly completes (ex: each incremental view version), and when a
+  // final assembly completes (`stop()`, one-shot `addEvent`). Carries the assembled event, like
+  // `event_collected`, but fires regardless of rate limiting / beforeSend (the event reached
+  // its final state even if it is dropped before being sent). "View end" is simply
+  // `event_stopped` for view events.
+  | { type: 'event_updated'; event: AssembledRumEvent; baggage: EventBaggage }
+  | { type: 'event_stopped'; event: AssembledRumEvent; baggage: EventBaggage }
   | { type: 'event_collected'; event: AssembledRumEvent; baggage: EventBaggage }
   | { type: 'session_renewed' }
   | { type: 'session_expired' }
