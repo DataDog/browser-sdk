@@ -9,7 +9,7 @@ import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { STATUSES } from './logger'
-import type { Hooks } from './hooks'
+import type { Hooks, AssembleHookParams } from './hooks'
 
 export function startLogsAssembly(
   configuration: LogsConfiguration,
@@ -30,15 +30,17 @@ export function startLogsAssembly(
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext, ddtags = [] }) => {
       const startTime = toRelativeTime(rawLogsEvent.date)
       const commonContext = savedCommonContext || getCommonContext()
-      const assemblyParams = { startTime }
+      const assemblyParams: AssembleHookParams = {
+        startTime,
+        rawLogsEvent: rawLogsEvent as AssembleHookParams['rawLogsEvent'],
+        domainContext,
+      }
       const defaultLogsEventAttributes = hooks.assembleEventDefaults.trigger(assemblyParams)
-
       if (defaultLogsEventAttributes === DISCARDED) {
         return
       }
 
       const logsEventAttributes = hooks.assembleEvent.trigger(assemblyParams)!
-
       if (logsEventAttributes === DISCARDED) {
         return
       }

@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
-import type { Hooks } from '../hooks'
+import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startRUMInternalContext } from './rumInternalContext'
 
@@ -21,7 +21,9 @@ describe('startRUMInternalContext', () => {
     it('returns undefined if no RUM instance is present', () => {
       const defaultLogsEventAttributes = hooks.assembleEventDefaults.trigger({
         startTime: 0 as RelativeTime,
-      })
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
 
       expect(defaultLogsEventAttributes).toBeUndefined()
     })
@@ -30,7 +32,9 @@ describe('startRUMInternalContext', () => {
       window.DD_RUM = {} as any
       const defaultLogsEventAttributes = hooks.assembleEventDefaults.trigger({
         startTime: 0 as RelativeTime,
-      })
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
       expect(defaultLogsEventAttributes).toBeUndefined()
     })
 
@@ -40,7 +44,9 @@ describe('startRUMInternalContext', () => {
       }
       const defaultLogsEventAttributes = hooks.assembleEventDefaults.trigger({
         startTime: 0 as RelativeTime,
-      })
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
       expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
     })
 
@@ -55,7 +61,9 @@ describe('startRUMInternalContext', () => {
         }
         const defaultLogsEventAttributes = hooks.assembleEventDefaults.trigger({
           startTime: 0 as RelativeTime,
-        })
+          rawLogsEvent: {},
+          domainContext: undefined,
+        } as AssembleHookParams)
         expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
       })
     })
