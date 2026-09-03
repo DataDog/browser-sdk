@@ -1,7 +1,10 @@
 export type { RumPublicApi, RecorderApi, ProfilerApi, StartRecordingOptions } from './boot/rumPublicApi'
 export { makeRumPublicApi } from './boot/rumPublicApi'
+export { validateAndBuildRumConfiguration } from './domain/configuration'
+export { startInternalApiBatch } from './transport/startInternalApiBatch'
 export { formatErrorEvent } from './domain/internalApi/errorFormatter'
 export { createRumInternalApi } from './domain/internalApi/rumInternalApi'
+export type { BeforeSend } from './domain/internalApi/rumInternalApi'
 export type { RumEventHistoryEntry, EventCounts } from './domain/internalApi/rumInternalApi.types'
 export type {
   RumInternalApi,

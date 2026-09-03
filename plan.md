@@ -524,6 +524,80 @@ Remaining gaps for the debrief:
 - The old spec's fine-grained coverage (quota generation races, visibility transitions) would
   need porting before any rollout — the new spec covers the big lines only.
 
+## Bonus phase — browser-rum-shopify on the internal API — DONE
+
+`packages/browser-rum-shopify` used to be a thin wrapper around the FULL RUM public API: it
+built `makeRumPublicApi(makeRecorderApi(), makeProfilerApi())` with `sdkName: 'rum-shopify'`,
+wrapped `init()` to force sandbox-suited defaults (manual views, no auto-instrumentation, cookie
+persistence), and let the Shopify Web Pixel bindings drive it through the public surface
+(`startView` / `startAction`+`stopAction` / `addError`). The bonus phase replaces it with a
+standalone, minimal SDK instantiated directly on the internal API — the crash-test the thin
+layer was designed for: a real product variant with no auto-instrumentation at all.
+
+### What it is now
+
+- `src/entries/main.ts` defines a `DD_RUM` global whose only method is `init(config)` — the full
+  `RumPublicApi` (recorder, profiler, actions, contexts, telemetry) is not part of the bundle
+  anymore. `@datadog/browser-rum` is dropped from the package dependencies.
+- `src/boot/makeShopifyRumApi.ts` (replacing `makeShopifyRumPublicApi.ts`) is the whole SDK glue:
+  `validateAndBuildRumConfiguration` (forces `sessionPersistence: 'cookie'` — the sandboxed
+  iframe shares the parent cookie jar) → `startSessionManager` → `createRumInternalApi`
+  (session manager promise + `catchUserErrors`-wrapped beforeSend) → `startInternalApiBatch`
+  (identity encoder) → Shopify bindings. It mirrors the phase 2 `doInit` glue, minus everything
+  auto-instrumentation needs. New index exports in browser-rum-core to make this possible:
+  `validateAndBuildRumConfiguration`, `startInternalApiBatch`, `BeforeSend` — the interesting
+  debrief point: a minimal SDK needs ~4 exports on top of `createRumInternalApi` /
+  `formatErrorEvent`.
+- `src/domain/shopifyBindings.ts` builds RUM data from Shopify messages by driving the internal
+  API:
+  - `page_viewed` (checkout paths only, unchanged gating) → `startEvent({type:'view',
+view:{url}})` with throw-on-double-view (the previous handle stops at the new view's start
+    time) + an immediate `handle.update({})` for the initial view version — the react router
+    plugin pattern.
+  - `clicked` → a one-shot `addEvent` action (`action.type: 'click'`, element id as target
+    name) — equivalent to the replaced back-to-back `startAction`/`stopAction` (zero duration).
+  - `ui_extension_errored` → `formatErrorEvent` (the free formatter) + `addEvent` with the
+    flattened extension context as event context, same `source: 'custom'` /
+    `NonErrorPrefix.PROVIDED` semantics as the public `addError`.
+- `patchSandboxedIframeApis` is unchanged (cookieStore / navigator.locks / document.hasFocus
+  shims the session manager needs in the sandbox).
+
+### Bundle size (the PoC headline)
+
+`yarn workspace @datadog/browser-rum-shopify run build:bundle`, same repo, same config:
+
+- before (phase 5 tree, full RUM SDK): **159,422 bytes**
+- after (this phase, internal API only): **52,474 bytes** → **-67%**
+
+### Corner-cuts (recorded for the debrief)
+
+- The storefront path is removed: `init()` without `shopifyAnalytics` (the Theme Liquid snippet
+  context) warns and does nothing. In a real rollout, storefront pages would use `datadog-rum.js`
+  via Liquid, or the package keeps a second entry — out of PoC scope.
+- Tracking consent assumed granted, no intake compression (identity encoder, no deflate
+  worker), no input sanitization (the values come from Shopify events, not arbitrary customer
+  objects) — all mirroring the phase 2 public API corner-cuts.
+- Views are bare events: no view metrics machinery (`trackViews` is not started), no loading
+  type, no name (the replaced implementation passed only `{url}` too — the internal API does
+  not compute default view names).
+- Events inherit the PoC's `session.id` gap (no session context hook in the internal API yet).
+- The e2e live-store scenario (`test/e2e/scenario/shopify.scenario.ts`) is not adapted: its
+  storefront assertions rely on the removed full SDK; the checkout flow assertions should hold
+  (the bindings produce the same events) but could not be run against the live dev store.
+- `src/domain/getSessionReplayLink.ts` is unreferenced by the package entry (pre-existing);
+  kept as-is since it does not depend on the full SDK.
+
+### Validation
+
+- `yarn typecheck` + eslint pass.
+- Shopify unit specs rewritten and green: 19/19 (bindings on a fake internal API: view
+  lifecycle with handle stop/update, one-shot click actions, `formatErrorEvent` errors with
+  extension context, checkout-path gating unchanged; boot glue: sandbox patches, forced
+  cookie persistence, no `shopifyAnalytics` leak in the validated configuration, storefront
+  no-op, double-init guard, invalid-configuration guard).
+- browser-rum-core boot specs still pass (index export additions only).
+- The bundle builds (see sizes above).
+
 ## Phase 6 — debrief
 
 - Update `rum-thin-layer.ts` with everything learned (final interface).

@@ -1,20 +1,16 @@
+// PoC (bonus phase of the internal API plan, see /plan.md): the Shopify SDK bundle is a minimal
+// SDK built on the RUM internal API — the full RUM SDK (auto-instrumentation, recorder,
+// profiler) is not part of the bundle anymore. The DD_RUM global it defines only exposes
+// init(), taking the Custom Pixel sandbox's `analytics` global.
 import { globalObject } from '@datadog/js-core/util'
 import { defineGlobal } from '@datadog/browser-core'
-import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { makeRumPublicApi } from '@datadog/browser-rum-core'
-import { makeRecorderApi, makeProfilerApi } from '@datadog/browser-rum/internal'
-import { makeShopifyRumPublicApi } from '../boot/makeShopifyRumPublicApi'
+import { makeShopifyRumApi } from '../boot/makeShopifyRumApi'
+import type { ShopifyRumApi } from '../boot/makeShopifyRumApi'
 
 interface BrowserWindow {
-  DD_RUM?: RumPublicApi
+  DD_RUM?: ShopifyRumApi
 }
 
 const global = globalObject as BrowserWindow
 
-const datadogRum = makeShopifyRumPublicApi(
-  makeRumPublicApi(makeRecorderApi(), makeProfilerApi(), {
-    sdkName: 'rum-shopify',
-  })
-)
-
-defineGlobal(global, 'DD_RUM', datadogRum)
+defineGlobal(global, 'DD_RUM', makeShopifyRumApi())
