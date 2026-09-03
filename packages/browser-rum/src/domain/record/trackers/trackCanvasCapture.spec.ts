@@ -333,6 +333,19 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
+  it('does not mark the canvas as tainted when the capture callback throws a SecurityError', async () => {
+    draw('red')
+    const onCanvasCapture = jasmine
+      .createSpy<CanvasCaptureCallback>()
+      .and.throwError(new DOMException('capture callback failed', 'SecurityError'))
+    startTracking(onCanvasCapture)
+
+    markCanvasDirtyAndWaitForCapture()
+    await waitForCanvasCapture()
+
+    expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
+  })
+
   it('leaves the canvas dirty when hashing is unavailable', async () => {
     spyOn(HTMLCanvasElement.prototype, 'getContext').and.returnValue(null)
     const onCanvasCapture = startTracking()

@@ -55,22 +55,20 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
   async function captureDirtyCanvases() {
     const capturableCanvases = canvasManager.takeCapturableCanvases()
 
-    await Promise.all(
-      capturableCanvases.map(async (canvas) => {
-        const nodeId = scope.nodeIds.get(canvas)
-        if (nodeId === undefined) {
-          canvasManager.forgetCanvas(canvas)
-          return
-        }
-        const nodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
-        if (nodePrivacyLevel !== NodePrivacyLevel.ALLOW) {
-          canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-          return
-        }
+    for (const canvas of capturableCanvases) {
+      const nodeId = scope.nodeIds.get(canvas)
+      if (nodeId === undefined) {
+        canvasManager.forgetCanvas(canvas)
+        continue
+      }
+      const nodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
+      if (nodePrivacyLevel !== NodePrivacyLevel.ALLOW) {
+        canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+        continue
+      }
 
-        await captureCanvas(canvas, nodeId)
-      })
-    )
+      await captureCanvas(canvas, nodeId)
+    }
   }
 
   function markDirtyIfCurrent(captureState: CanvasCaptureAttempt, canvas: HTMLCanvasElement) {
@@ -113,7 +111,14 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         return // encoding failed; leave it dirty
       }
 
-      onCanvasCapture({ nodeId, changeHash: hash, image })
+      try {
+        onCanvasCapture({ nodeId, changeHash: hash, image })
+      } catch {
+        if (!cancelled()) {
+          canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+        }
+        return
+      }
       captureState.setLastChangeHash(hash)
     } catch (error) {
       if (!cancelled()) {
