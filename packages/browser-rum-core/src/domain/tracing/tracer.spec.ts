@@ -1,7 +1,7 @@
 import type { ContextManager, ContextValue } from '@datadog/browser-core'
 import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
-import { MID_HASH_UUID, MOCK_SESSION_ID, createSessionManagerMock } from '@datadog/browser-core/test'
+import { MID_HASH_UUID, MOCK_SESSION_ID, createSessionManagerMock, mockEventBridge } from '@datadog/browser-core/test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
@@ -108,6 +108,20 @@ describe('tracer', () => {
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
       expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
+    })
+
+    it('should not trace request in a WebView when the native sampling decision is unavailable', () => {
+      mockEventBridge()
+      const tracer = startTracerWithDefaults({
+        initConfiguration: { traceSampleRate: 100 },
+      })
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
+
+      expect(context.traceSampled).toBeUndefined()
+      expect(context.traceId).toBeUndefined()
+      expect(context.spanId).toBeUndefined()
+      expect(xhr.headers).toEqual({})
     })
 
     it("should trace request with priority '0' when not sampled and config set to all", () => {
@@ -681,6 +695,20 @@ describe('tracer', () => {
       expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
       expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
       expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+    })
+
+    it('should not trace request in a WebView when the native sampling decision is unavailable', () => {
+      mockEventBridge()
+      const tracer = startTracerWithDefaults({
+        initConfiguration: { traceSampleRate: 100 },
+      })
+      const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceFetch(context)
+
+      expect(context.traceSampled).toBeUndefined()
+      expect(context.traceId).toBeUndefined()
+      expect(context.spanId).toBeUndefined()
+      expect(context.init).toBeUndefined()
     })
 
     it('should add headers when trace not sampled and config set to all', () => {
