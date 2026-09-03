@@ -21,23 +21,18 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
-import { createDOMMutationObservable } from '../browser/domMutationObservable'
-import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startWebSocketCollection } from '../domain/resource/webSocketCollection'
-import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
-import { startViewCollection } from '../domain/view/viewCollection'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
-import type { ViewOptions } from '../domain/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
@@ -64,7 +59,6 @@ export function startRum(
   sessionManager: SessionManager,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
-  initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
@@ -112,7 +106,6 @@ export function startRum(
     configuration,
     sessionManager,
     recorderApi,
-    initialViewOptions,
     bufferedDataObservable,
     sdkName,
     reportError
@@ -142,17 +135,13 @@ export function startRumEventCollection(
   configuration: RumConfiguration,
   sessionManager: SessionManager,
   recorderApi: RecorderApi,
-  initialViewOptions: ViewOptions | undefined,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
   reportError: (message: string) => void
 ) {
   const cleanupTasks: Array<() => void> = []
 
-  const domMutationObservable = createDOMMutationObservable()
   const locationChangeObservable = createLocationChangeObservable()
-  const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
-  cleanupTasks.push(stopWindowOpen)
 
   const { assemble: assembleHook } = hooks
   startDefaultContext(assembleHook, configuration, sdkName)
@@ -170,15 +159,11 @@ export function startRumEventCollection(
   const userContext = startUserContext(assembleHook, configuration, sessionManager, 'rum')
   const accountContext = startAccountContext(assembleHook, configuration, 'rum')
 
-  const actionCollection = startActionCollection(
-    lifeCycle,
-    hooks,
-    domMutationObservable,
-    windowOpenObservable,
-    configuration
-  )
-  cleanupTasks.push(actionCollection.stop)
-
+  // PoC (phase 3 consolidation, see /plan.md): views and actions are tracked through the
+  // internal API by the phase 2 public API; the old startRum action / view glue is deleted.
+  // Consequently this pipeline no longer produces view events, and the sessionContext hook
+  // discards every collected event (it requires a view) — it is kept compiling for the
+  // collectors that later phases port, not as a working alternative.
   const eventCollection = startEventCollection(lifeCycle)
 
   const displayContext = startDisplayContext(assembleHook)
@@ -189,30 +174,7 @@ export function startRumEventCollection(
 
   startRumAssembly(configuration, lifeCycle, assembleHook, reportError)
 
-  const {
-    addTiming,
-    setLoadingTime,
-    startView,
-    setViewName,
-    setViewContext,
-    setViewContextProperty,
-    getViewContext,
-    stop: stopViewCollection,
-  } = startViewCollection(
-    lifeCycle,
-    hooks,
-    configuration,
-    domMutationObservable,
-    windowOpenObservable,
-    locationChangeObservable,
-    recorderApi,
-    viewHistory,
-    initialViewOptions
-  )
-
   startSourceCodeMfeContext(assembleHook)
-
-  cleanupTasks.push(stopViewCollection)
 
   const resourceCollection = startResourceCollection(lifeCycle, configuration)
   cleanupTasks.push(resourceCollection.stop)
@@ -238,26 +200,17 @@ export function startRumEventCollection(
     configuration.applicationId,
     sessionManager,
     viewHistory,
-    actionCollection.actionContexts,
+    // With the old action glue gone, no action ids are exposed (see the note above)
+    { findActionId: () => [] },
     urlContexts
   )
 
   return {
-    addAction: actionCollection.addAction,
-    startAction: actionCollection.startAction,
-    stopAction: actionCollection.stopAction,
     startResource: resourceCollection.startResource,
     stopResource: resourceCollection.stopResource,
     addEvent: eventCollection.addEvent,
     addError,
-    addTiming,
-    setLoadingTime,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
-    startView,
-    setViewContext,
-    setViewContextProperty,
-    getViewContext,
-    setViewName,
     viewHistory,
     sessionManager,
     stopSession: () => sessionManager.expire(),

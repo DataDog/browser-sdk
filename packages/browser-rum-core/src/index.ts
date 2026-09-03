@@ -29,7 +29,8 @@ export { ActionType, RumEventType, FrustrationType, RumLongTaskEntryType, VitalT
 export { startRum } from './boot/startRum'
 export type { RawRumEventCollectedData } from './domain/lifeCycle'
 export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
-export type { ViewCreatedEvent, ViewOptions } from './domain/view/trackViews'
+export type { ViewOptions } from './domain/view/trackViews'
+export type { ViewCreatedEvent, ViewEndedEvent } from './domain/contexts/viewHistory'
 export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistory'
 export { startViewHistory } from './domain/contexts/viewHistory'
 export type { SessionManager } from '@datadog/browser-core'
@@ -73,7 +74,7 @@ export type {
   FeatureOperationOptions,
   FailureReason,
 } from './domain/vital/vitalCollection'
-export type { ActionOptions } from './domain/action/trackManualActions'
+export type { ActionOptions } from './domain/action/trackClickActions'
 export type { ResourceOptions, ResourceStopOptions } from './domain/resource/trackManualResources'
 export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes } from './domain/hooks'
 export { createHooks } from './domain/hooks'

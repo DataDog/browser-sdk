@@ -5,23 +5,34 @@ import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { WebSocketCompleteEvent } from './resource/webSocketCollection'
-import type { AutoAction } from './action/actionCollection'
-import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
+import type { ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './contexts/viewHistory'
 import type { DurationVitalStart } from './vital/vitalCollection'
 import type { TrackedEventData } from './eventTracker'
-import type { ActionEventData } from './action/trackManualActions'
+
+// Moved from trackManualActions.ts (deleted): the data of the zombie ACTION_STARTED event (see
+// the note in LifeCycleEventType).
+export interface ActionEventData {
+  name: string
+  type?: RawRumEvent['type']
+  context?: Context
+}
 import type { SessionExpiredEvent } from './session/session.types'
 
 export const enum LifeCycleEventType {
   // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
   // It ensures the context is available during the non prefixed event callbacks
-  AUTO_ACTION_COMPLETED,
+  //
+  // PoC note (phase 3 consolidation, see /plan.md): the non-prefixed view events and the action
+  // events have no producer anymore — views and actions flow through the internal API. The
+  // prefixed events remain, fed by whatever notifies them (ex: tests) until the contexts are
+  // ported. VIEW_CREATED / VIEW_ENDED / ACTION_STARTED are zombie events kept for browser-rum's
+  // recorder and profiler (Replay migration is a non-goal of this PoC).
   BEFORE_VIEW_CREATED,
-  VIEW_CREATED,
   BEFORE_VIEW_UPDATED,
-  VIEW_UPDATED,
-  VIEW_ENDED,
   AFTER_VIEW_ENDED,
+  VIEW_CREATED,
+  VIEW_ENDED,
+  ACTION_STARTED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
   WEBSOCKET_COMPLETED,
@@ -42,7 +53,6 @@ export const enum LifeCycleEventType {
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
-  ACTION_STARTED,
   DURATION_VITAL_STARTED,
 }
 
@@ -60,14 +70,12 @@ export const enum LifeCycleEventType {
 // * https://github.com/DataDog/browser-sdk/issues/2208
 // * https://github.com/microsoft/TypeScript/issues/54152
 declare const LifeCycleEventTypeAsConst: {
-  ACTION_STARTED: LifeCycleEventType.ACTION_STARTED
-  AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
   BEFORE_VIEW_CREATED: LifeCycleEventType.BEFORE_VIEW_CREATED
-  VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
   BEFORE_VIEW_UPDATED: LifeCycleEventType.BEFORE_VIEW_UPDATED
-  VIEW_UPDATED: LifeCycleEventType.VIEW_UPDATED
-  VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
   AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
+  VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
+  VIEW_ENDED: LifeCycleEventType.VIEW_ENDED
+  ACTION_STARTED: LifeCycleEventType.ACTION_STARTED
   REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
   WEBSOCKET_COMPLETED: LifeCycleEventType.WEBSOCKET_COMPLETED
@@ -83,14 +91,12 @@ declare const LifeCycleEventTypeAsConst: {
 // Note: this interface needs to be exported even if it is not used outside of this module, else TS
 // fails to build the rum-core package with error TS4058
 export interface LifeCycleEventMap {
-  [LifeCycleEventTypeAsConst.ACTION_STARTED]: TrackedEventData<ActionEventData>
-  [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
   [LifeCycleEventTypeAsConst.BEFORE_VIEW_CREATED]: ViewCreatedEvent
-  [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.BEFORE_VIEW_UPDATED]: BeforeViewUpdateEvent
-  [LifeCycleEventTypeAsConst.VIEW_UPDATED]: ViewEvent
-  [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent
+  [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
+  [LifeCycleEventTypeAsConst.VIEW_ENDED]: ViewEndedEvent
+  [LifeCycleEventTypeAsConst.ACTION_STARTED]: TrackedEventData<ActionEventData>
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.WEBSOCKET_COMPLETED]: WebSocketCompleteEvent

@@ -5,8 +5,8 @@ import { clocksNow, relativeToClocks } from '@datadog/js-core/time'
 import { DISCARDED, createHook } from '@datadog/js-core/assembly'
 import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent } from '../view/trackViews'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
+import type { ViewCreatedEvent } from './viewHistory'
 import { startUrlContexts, type UrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {

@@ -1,20 +1,44 @@
-import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
-import { timeStampNow, timeStampToClocks, relativeToClocks } from '@datadog/js-core/time'
-import { Observable, generateUUID } from '@datadog/browser-core'
+// PoC (phase 3b of the internal API plan, see /plan.md): trackClickActions REPLACED by its
+// internal API port — there is a single trackClickActions implementation, used by the phase 2
+// public API. The old LifeCycle-based implementation and the startRum action glue
+// (actionCollection, trackManualActions) are gone. Differences vs the replaced implementation:
+// * Each click is an internal API action event: `startEvent` with only the kickoff
+//   (`action.type: 'click'`); the click start-time context (name, target, position, name source)
+//   is kept by the caller and passed at `stop()` — no eventTracker-style side API, as decided in
+//   the plan. `cancel()` discards clicks (removes the history entry, so discarded clicks no longer
+//   link child events, as eventTracker discards do today).
+// * ACTION_STARTED / AUTO_ACTION_COMPLETED lifecycle events are replaced by `notifications`:
+//   `event_started` fires synchronously at startEvent, `event_collected` when the final version
+//   is assembled.
+// * The click chain and the frustration / rage-click computation (clickChain, computeFrustration)
+//   are unchanged caller logic. `Click.hasError` reads the live child counts from
+//   `handle.current()`: counts are solely owned and computed by the internal API, exposed on
+//   the event's current state.
+// * VIEW_ENDED / PREPARE_URGENT_FLUSH come from `notifications` (`event_stopped` for view
+//   events) and the transport batch's `prepareUrgentFlushObservable`, instead of the LifeCycle.
+//   Caveat: the view end is only notified once its final assembly runs, so under session
+//   buffering, clicks stop on page activity end before the view end is visible.
+// * The LifeCycle passed to waitPageActivityEnd is a private instance: request events
+//   (REQUEST_STARTED / REQUEST_COMPLETED) never flow in this pipeline — a corner-cut of the
+//   phase 2 public API (no auto-instrumentation); page activity relies on DOM mutations.
+
+import { timeStampNow, timeStampToClocks, relativeToClocks, elapsed, toServerDuration } from '@datadog/js-core/time'
+import type { ClocksState, TimeStamp } from '@datadog/js-core/time'
+import { Observable } from '@datadog/browser-core'
+import type { PageExitReason } from '@datadog/browser-core'
+import { discardNegativeDuration } from '../discardNegativeDuration'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
-import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
+import type { RumConfiguration } from '../configuration'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import { LifeCycle } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPageActivityEnd'
 import { getSelectorFromElement } from '../getSelectorFromElement'
 import { getNodePrivacyLevel } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
-import type { RumConfiguration } from '../configuration'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { startEventTracker } from '../eventTracker'
-import type { StoppedEvent, DiscardedEvent, EventTracker } from '../eventTracker'
 import { getComposedPathSelector } from '../getComposedPathSelector'
+import type { RumInternalApi } from '../internalApi/rumInternalApi.types'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -23,17 +47,29 @@ import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
-import { isActionChildEvent } from './isActionChildEvent'
 
-interface ActionCounts {
-  errorCount: number
-  longTaskCount: number
-  resourceCount: number
+// Moved from trackManualActions.ts (deleted): options of the public manual action APIs.
+export interface ActionOptions {
+  /**
+   * Action Type
+   *
+   * @default 'custom'
+   */
+  type?: ActionType
+
+  /**
+   * Action context
+   */
+  context?: any
+
+  /**
+   * Action key
+   */
+  actionKey?: string
 }
 
-export interface ClickAction {
+export interface ClickActionBase {
   type: typeof ActionType.CLICK
-  id: string
   name: string
   nameSource: ActionNameSource
   target?: {
@@ -43,47 +79,60 @@ export interface ClickAction {
     height: number
   }
   position?: { x: number; y: number }
-  startClocks: ClocksState
-  duration?: Duration
-  counts: ActionCounts
-  event: MouseEventOnElement
-  frustrationTypes: FrustrationType[]
-  events: Event[]
 }
 
 export function trackClickActions(
-  lifeCycle: LifeCycle,
+  internalApi: RumInternalApi,
+  prepareUrgentFlushObservable: Observable<PageExitReason>,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  const actionTracker = startEventTracker<ClickActionBase>(lifeCycle)
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
+  // The LifeCycle only serves waitPageActivityEnd's REQUEST_STARTED / REQUEST_COMPLETED
+  // subscriptions, which never flow in this pipeline (see the notes at the top of this file).
+  const metricsLifeCycle = new LifeCycle()
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
-  lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, stopClickChain)
+  const notificationsSubscription = internalApi.notifications.subscribe((notification) => {
+    // The current view ended: stop the ongoing click chain, as the old VIEW_ENDED subscription
+    if (notification.type === 'event_stopped' && notification.event.type === 'view') {
+      stopClickChain()
+    }
+  })
+
+  // Page unloading: stop the ongoing click chain (and the clicks, in startClickAction)
+  const urgentFlushSubscription = prepareUrgentFlushObservable.subscribe(() => stopClickChain())
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
-    clickActionBase: ClickActionBase
+    clickActionBase: ClickActionBase | undefined
     hadActivityOnPointerDown: () => boolean
   }>({
     onPointerDown: (pointerDownEvent) =>
-      processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
-    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
-      startClickAction(
+      processPointerDown(
         configuration,
-        lifeCycle,
+        metricsLifeCycle,
         domMutationObservable,
-        windowOpenObservable,
-        actionTracker,
-        stopObservable,
-        appendClickToClickChain,
-        clickActionBase,
-        startEvent,
-        getUserActivity,
-        hadActivityOnPointerDown
-      )
+        pointerDownEvent,
+        windowOpenObservable
+      ),
+    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
+      if (clickActionBase) {
+        startClickAction(
+          internalApi,
+          prepareUrgentFlushObservable,
+          configuration,
+          metricsLifeCycle,
+          domMutationObservable,
+          windowOpenObservable,
+          stopObservable,
+          appendClickToClickChain,
+          clickActionBase,
+          startEvent,
+          getUserActivity,
+          hadActivityOnPointerDown
+        )
+      }
     },
   })
 
@@ -92,9 +141,9 @@ export function trackClickActions(
       stopClickChain()
       stopObservable.notify()
       stopActionEventsListener()
-      actionTracker.stopAll()
+      notificationsSubscription.unsubscribe()
+      urgentFlushSubscription.unsubscribe()
     },
-    findActionId: actionTracker.findId,
   }
 
   function appendClickToClickChain(click: Click) {
@@ -157,11 +206,12 @@ function processPointerDown(
 }
 
 function startClickAction(
+  internalApi: RumInternalApi,
+  prepareUrgentFlushObservable: Observable<PageExitReason>,
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  actionTracker: EventTracker<ClickActionBase>,
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
@@ -169,7 +219,7 @@ function startClickAction(
   getUserActivity: () => UserActivity,
   hadActivityOnPointerDown: () => boolean
 ) {
-  const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent)
+  const click = newClick(internalApi, clickActionBase, startEvent, getUserActivity)
   appendClickToClickChain(click)
 
   const selector = clickActionBase?.target?.selector
@@ -203,11 +253,9 @@ function startClickAction(
     CLICK_ACTION_MAX_DURATION
   )
 
-  const viewEndedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    click.stop(endClocks.timeStamp)
-  })
-
-  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
+  // Page unloading: stop the click so its final version makes it to the batch (as the old
+  // PREPARE_URGENT_FLUSH subscription)
+  const pageMayExitSubscription = prepareUrgentFlushObservable.subscribe(() => {
     click.stop(timeStampNow())
   })
 
@@ -216,14 +264,144 @@ function startClickAction(
   })
 
   click.stopObservable.subscribe(() => {
-    pageMayExitSubscription.unsubscribe()
-    viewEndedSubscription.unsubscribe()
     stopWaitPageActivityEnd()
+    pageMayExitSubscription.unsubscribe()
     stopSubscription.unsubscribe()
   })
 }
 
-export type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
+const enum ClickStatus {
+  // Initial state, the click is still ongoing.
+  ONGOING,
+  // The click is no more ongoing but still needs to be validated or discarded.
+  STOPPED,
+  // Final state, the click has been stopped and validated or discarded.
+  FINALIZED,
+}
+
+// The click shape, consumed unchanged by clickChain and computeFrustration (caller logic).
+export type Click = ReturnType<typeof newClick>
+
+function newClick(
+  internalApi: RumInternalApi,
+  clickActionBase: ClickActionBase,
+  startEvent: MouseEventOnElement,
+  getUserActivity: () => UserActivity
+) {
+  const startClocks = relativeToClocks(startEvent.timeStamp)
+  // The kickoff only carries the action type: the click start-time context (name, target,
+  // position, name source) is kept by the caller and passed at stop() — no eventTracker-style
+  // side API (see /plan.md). The click is an action event with a start time (the interaction
+  // timestamp), so child events are linked to it while it is ongoing.
+  const handle = internalApi.startEvent(
+    { type: 'action', action: { type: ActionType.CLICK } },
+    { startClocks, domainContext: { events: [startEvent] } }
+  )
+
+  let status = ClickStatus.ONGOING
+  let endClocks: ClocksState | undefined
+  const frustrationTypes: FrustrationType[] = []
+  const stopObservable = new Observable<void>()
+
+  function stop(activityEndTime?: TimeStamp) {
+    if (status !== ClickStatus.ONGOING) {
+      return
+    }
+
+    status = ClickStatus.STOPPED
+
+    if (activityEndTime !== undefined) {
+      endClocks = timeStampToClocks(activityEndTime)
+    } else {
+      // No activity end time: the click is discarded. Cancelling removes the history entry, so
+      // the discarded click no longer links child events, as eventTracker.discard does today.
+      handle.cancel()
+    }
+
+    stopObservable.notify()
+  }
+
+  return {
+    event: startEvent,
+    stop,
+    stopObservable,
+
+    // Frustration computation reads this after child events were assembled: the live child
+    // counts come from the handle's current state (counts are solely computed by the internal
+    // API)
+    get hasError() {
+      return (handle.current().counts?.errorCount ?? 0) > 0
+    },
+    get hasPageActivity(): boolean {
+      return status !== ClickStatus.ONGOING && endClocks !== undefined
+    },
+    getUserActivity,
+    addFrustration: (frustrationType: FrustrationType) => {
+      frustrationTypes.push(frustrationType)
+    },
+    get startClocks() {
+      return startClocks
+    },
+
+    isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
+
+    clone: () => newClick(internalApi, clickActionBase, startEvent, getUserActivity),
+
+    validate: () => {
+      stop()
+      if (status !== ClickStatus.STOPPED) {
+        return
+      }
+
+      if (!endClocks) {
+        return
+      }
+
+      const loadingTime = discardNegativeDuration(toServerDuration(elapsed(startClocks.timeStamp, endClocks.timeStamp)))
+
+      handle.stop(
+        {
+          action: {
+            target: { name: clickActionBase.name },
+            ...(loadingTime !== undefined && { loading_time: loadingTime }),
+            frustration: { type: frustrationTypes },
+          },
+          _dd: {
+            action: {
+              target: {
+                selector: clickActionBase.target?.selector || undefined,
+                width: clickActionBase.target?.width || undefined,
+                height: clickActionBase.target?.height || undefined,
+                composed_path_selector: clickActionBase.target?.composedPathSelector,
+              },
+              position: clickActionBase.position,
+              name_source: clickActionBase.nameSource,
+            },
+          },
+        },
+        { endClocks }
+      )
+      status = ClickStatus.FINALIZED
+    },
+
+    discard: () => {
+      stop()
+      status = ClickStatus.FINALIZED
+    },
+  }
+}
+
+export function finalizeClicks(clicks: Click[], rageClick: Click) {
+  const { isRage } = computeFrustration(clicks, rageClick)
+  if (isRage) {
+    clicks.forEach((click) => click.discard())
+    rageClick.stop(timeStampNow())
+    rageClick.validate()
+  } else {
+    rageClick.discard()
+    clicks.forEach((click) => click.validate())
+  }
+}
 
 function computeClickActionBase(
   event: MouseEventOnElement,
@@ -269,115 +447,4 @@ function getEventTarget(event: MouseEventOnElement): Element {
     }
   }
   return event.target
-}
-
-const enum ClickStatus {
-  // Initial state, the click is still ongoing.
-  ONGOING,
-  // The click is no more ongoing but still needs to be validated or discarded.
-  STOPPED,
-  // Final state, the click has been stopped and validated or discarded.
-  FINALIZED,
-}
-
-export type Click = ReturnType<typeof newClick>
-
-function newClick(
-  lifeCycle: LifeCycle,
-  actionTracker: EventTracker<ClickActionBase>,
-  getUserActivity: () => UserActivity,
-  clickActionBase: ClickActionBase,
-  startEvent: MouseEventOnElement
-) {
-  const clickKey = generateUUID()
-  const startClocks = relativeToClocks(startEvent.timeStamp)
-
-  const startedClickAction = actionTracker.start(clickKey, startClocks, clickActionBase, {
-    isChildEvent: isActionChildEvent,
-  })
-
-  lifeCycle.notify(LifeCycleEventType.ACTION_STARTED, startedClickAction)
-
-  let status = ClickStatus.ONGOING
-  let actionTrackerFinishedEvent: StoppedEvent<ClickActionBase> | DiscardedEvent<ClickActionBase> | undefined
-  const frustrationTypes: FrustrationType[] = []
-  const stopObservable = new Observable<void>()
-
-  function stop(activityEndTime?: TimeStamp) {
-    if (status !== ClickStatus.ONGOING) {
-      return
-    }
-
-    status = ClickStatus.STOPPED
-
-    actionTrackerFinishedEvent = activityEndTime
-      ? actionTracker.stop(clickKey, timeStampToClocks(activityEndTime))
-      : actionTracker.discard(clickKey)
-
-    stopObservable.notify()
-  }
-
-  return {
-    event: startEvent,
-    stop,
-    stopObservable,
-
-    get hasError() {
-      const currentCounts = actionTrackerFinishedEvent?.counts ?? actionTracker.getCounts(clickKey)
-      return currentCounts ? currentCounts.errorCount > 0 : false
-    },
-    get hasPageActivity() {
-      return actionTrackerFinishedEvent && 'duration' in actionTrackerFinishedEvent
-    },
-    getUserActivity,
-    addFrustration: (frustrationType: FrustrationType) => {
-      frustrationTypes.push(frustrationType)
-    },
-    get startClocks() {
-      return startClocks
-    },
-
-    isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
-
-    clone: () => newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent),
-
-    validate: (domEvents?: Event[]) => {
-      stop()
-      if (status !== ClickStatus.STOPPED) {
-        return
-      }
-
-      if (!actionTrackerFinishedEvent) {
-        return
-      }
-
-      const clickAction: ClickAction = {
-        frustrationTypes,
-        events: domEvents ?? [startEvent],
-        event: startEvent,
-        ...actionTrackerFinishedEvent,
-        counts: actionTrackerFinishedEvent.counts!, // This is needed to satisfy the type checker
-      }
-
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, clickAction)
-      status = ClickStatus.FINALIZED
-    },
-
-    discard: () => {
-      stop()
-      status = ClickStatus.FINALIZED
-    },
-  }
-}
-
-export function finalizeClicks(clicks: Click[], rageClick: Click) {
-  const { isRage } = computeFrustration(clicks, rageClick)
-  if (isRage) {
-    clicks.forEach((click) => click.discard())
-    rageClick.stop(timeStampNow())
-    rageClick.validate(clicks.map((click) => click.event))
-  } else {
-    rageClick.discard()
-    clicks.forEach((click) => click.validate())
-  }
 }

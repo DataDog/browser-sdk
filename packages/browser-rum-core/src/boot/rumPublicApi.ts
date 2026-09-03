@@ -5,7 +5,7 @@
 // granted, global / user / account contexts are not supported (no-op), automatic
 // instrumentation, telemetry and remote configuration are not started, and plugins 'onRumStart'
 // and the recorder / profiler integrations are not wired. Views are tracked by the phase 3a
-// trackViews port (trackViewsOnInternalApi.ts): real metrics, location-change / BFCache / session
+// trackViews port: real metrics, location-change / BFCache / session
 // renewal.
 
 import { clocksNow, elapsed, toServerDuration, timeStampToClocks } from '@datadog/js-core/time'
@@ -63,13 +63,13 @@ import type {
 } from '../domain/internalApi/rumInternalApi'
 import { callPluginsMethod } from '../domain/plugins'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import type { ViewOptions } from '../domain/view/trackViewsOnInternalApi'
-import { trackViewsOnInternalApi } from '../domain/view/trackViewsOnInternalApi'
-import { trackClickActionsOnInternalApi } from '../domain/action/trackClickActionsOnInternalApi'
+import type { ViewOptions } from '../domain/view/trackViews'
+import { trackViews } from '../domain/view/trackViews'
+import { trackClickActions } from '../domain/action/trackClickActions'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
-import type { ActionOptions } from '../domain/action/trackManualActions'
+import type { ActionOptions } from '../domain/action/trackClickActions'
 import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import type {
   AddDurationVitalOptions,
@@ -674,8 +674,8 @@ export function makeRumPublicApi(
   let internalApi: RumInternalApi | undefined
   let sessionManager: SessionManager | undefined
   // PoC phase 3a: trackViews ported to the internal API (real view metrics, location-change and
-  // BFCache renewal, session renewal / expiry). See trackViewsOnInternalApi.ts.
-  let viewTracking: ReturnType<typeof trackViewsOnInternalApi> | undefined
+  // BFCache renewal, session renewal / expiry).
+  let viewTracking: ReturnType<typeof trackViews> | undefined
   const startedActions = new Map<string, NonViewEventHandle<'action'>>()
   const startedResources = new Map<string, { handle: NonViewEventHandle<'resource'>; method?: string }>()
   const startedDurationVitals = new Map<string, { handle: NonViewEventHandle<'vital'>; startClocks: ClocksState }>()
@@ -1072,7 +1072,7 @@ export function makeRumPublicApi(
     const domMutationObservable = createDOMMutationObservable()
     const { observable: windowOpenObservable } = createWindowOpenObservable()
 
-    viewTracking = trackViewsOnInternalApi(
+    viewTracking = trackViews(
       internalApi,
       prepareUrgentFlushObservable,
       domMutationObservable,
@@ -1084,9 +1084,9 @@ export function makeRumPublicApi(
 
     // PoC phase 3b: click actions tracked through the internal API (startEvent / stop with the
     // click context at activity end, cancel on discard; frustration computation unchanged). See
-    // trackClickActionsOnInternalApi.ts.
+    // trackClickActions.ts.
     if (configuration.trackUserInteractions) {
-      trackClickActionsOnInternalApi(
+      trackClickActions(
         internalApi,
         prepareUrgentFlushObservable,
         domMutationObservable,

@@ -4,8 +4,7 @@ import { CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { BeforeViewUpdateEvent, ViewCreatedEvent } from '../view/trackViews'
-import type { ViewHistory } from './viewHistory'
+import type { BeforeViewUpdateEvent, ViewCreatedEvent, ViewHistory } from './viewHistory'
 import { startViewHistory, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewHistory'
 
 describe('ViewHistory', () => {

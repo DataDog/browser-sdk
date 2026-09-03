@@ -3,7 +3,32 @@ import type { Context } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { BeforeViewUpdateEvent, ViewCreatedEvent } from '../view/trackViews'
+
+// Moved from trackViews.ts: the view lifecycle payloads viewHistory subscribes to. Since the
+// internal API trackViews port, nothing produces them anymore — viewHistory entries are only
+// added by tests notifying the lifecycle manually, until the contexts are ported to the
+// internal API.
+export interface ViewCreatedEvent {
+  id: string
+  name?: string
+  service?: string
+  version?: string
+  context?: Context
+  startClocks: ClocksState
+  url?: string
+}
+
+export interface BeforeViewUpdateEvent {
+  id: string
+  name?: string
+  context?: Context
+  startClocks: ClocksState
+  sessionIsActive: boolean
+}
+
+export interface ViewEndedEvent {
+  endClocks: ClocksState
+}
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 

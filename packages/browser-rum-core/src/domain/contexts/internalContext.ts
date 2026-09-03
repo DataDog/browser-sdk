@@ -1,8 +1,13 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { RumInternalContext, SessionManager } from '@datadog/browser-core'
-import type { ActionContexts } from '../action/actionCollection'
 import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'
+
+// Moved from actionCollection.ts (deleted): the action lookup the internal context exposes.
+// With the old startRum action glue gone, the only live implementation returns no ids.
+export interface ActionContexts {
+  findActionId: (startTime?: RelativeTime) => string[]
+}
 
 /**
  * Internal context keep returning v1 format

@@ -1,95 +1,71 @@
+// PoC (phase 3a of the internal API plan, see /plan.md): trackViews REPLACED by its internal API
+// port — there is a single trackViews implementation, used by the phase 2 public API. The old
+// LifeCycle-based implementation and the startRum view glue (viewCollection) are gone; per
+// /plan.md, the old startRum pipeline is now inert for views (the sessionContext hook discards
+// events with no view) and is kept compiling only for the collectors that later phases port.
+//
+// Differences vs the replaced implementation:
+// * Views are created with `internalApi.startEvent` and updated with `handle.update()`: the raw
+//   view event building from viewCollection's `processViewUpdate` moved here, minus what the
+//   internal API owns (view.id, document versions, event counts) and what contexts assemble
+//   (session, referrer, usr, ... — corner-cuts documented in /plan.md).
+// * Session renewal / expiry come from `internalApi.notifications` instead of the LifeCycle.
+// * No `trackViewEventCounts`: the internal API computes view counts.
+// * `PREPARE_URGENT_FLUSH` (page unloading) comes from the transport batch instead of the
+//   LifeCycle: the final view update is upserted in the batch before it flushes.
+// * The LifeCycle passed to `trackCommonViewMetrics` is a private instance: request events
+//   (REQUEST_STARTED/REQUEST_COMPLETED, used by waitPageActivityEnd) never flow through it in
+//   this pipeline — a corner-cut of the phase 2 public API (no auto-instrumentation).
+
 import {
   ONE_MINUTE,
-  elapsed,
-  timeStampNow,
   clocksNow,
   clocksOrigin,
-  relativeToClocks,
+  elapsed,
   isRelativeTime,
+  relativeToClocks,
+  timeStampNow,
+  toServerDuration,
 } from '@datadog/js-core/time'
-import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
-import type { Subscription, Context, ContextValue } from '@datadog/browser-core'
+import type { ClocksState, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/js-core/time'
+import type { Context, ContextValue, Subscription } from '@datadog/browser-core'
 import {
-  noop,
-  PageExitReason,
-  shallowClone,
-  generateUUID,
-  throttle,
-  display,
-  setInterval,
-  clearInterval,
-  setTimeout,
   Observable,
+  PageExitReason,
+  clearInterval,
   createContextManager,
+  display,
+  getTimeZone,
+  isEmptyObject,
+  mapValues,
   mockable,
+  noop,
+  setInterval,
+  setTimeout,
+  shallowClone,
+  throttle,
 } from '@datadog/browser-core'
-import type { ViewCustomTimings } from '../../rawRumEvent.types'
+import type { ViewCustomTimings, ViewPerformanceData } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
-import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
-import type { EventCounts } from '../trackEventCounts'
+import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
-import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { trackViewEventCounts } from './trackViewEventCounts'
+import type { RumConfiguration, RumInitConfiguration } from '../configuration'
+import { LifeCycle } from '../lifeCycle'
+import type { PartialBaseRumEvent, RumInternalApi } from '../internalApi/rumInternalApi.types'
+import { onBFCacheRestore } from './bfCacheSupport'
+import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
-import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
-import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
-import { onBFCacheRestore } from './bfCacheSupport'
 import { trackBfcacheMetrics } from './viewMetrics/trackBfcacheMetrics'
-
-export interface ViewEvent {
-  id: string
-  name?: string
-  service?: string
-  version?: string
-  context?: Context
-  location: Readonly<Location>
-  handlingStack?: string
-  commonViewMetrics: CommonViewMetrics
-  initialViewMetrics: InitialViewMetrics
-  customTimings: ViewCustomTimings
-  eventCounts: EventCounts
-  documentVersion: number
-  startClocks: ClocksState
-  duration: Duration
-  isActive: boolean
-  sessionIsActive: boolean
-  loadingType: ViewLoadingType
-}
-
-export interface ViewCreatedEvent {
-  id: string
-  name?: string
-  service?: string
-  version?: string
-  context?: Context
-  startClocks: ClocksState
-  url?: string
-}
-
-export interface BeforeViewUpdateEvent {
-  id: string
-  name?: string
-  context?: Context
-  startClocks: ClocksState
-  sessionIsActive: boolean
-}
-
-export interface ViewEndedEvent {
-  endClocks: ClocksState
-}
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-// Some events or metrics can be captured after the end of the view. To avoid missing those;
-// an arbitrary delay is added for stopping their tracking after the view ends.
-//
-// Ideally, we would not stop and keep tracking events or metrics until the end of the session.
-// But this might have a small performance impact if there are many many views.
-// So let's have a fairly short delay improving the situation in most cases and avoid impacting performances too much.
+// Some events or metrics can be captured after the end of the view. To avoid missing those, an
+// arbitrary delay is added for stopping their tracking after the view ends. (Same constant and
+// rationale as trackViews.)
 export const KEEP_TRACKING_AFTER_VIEW_DELAY = 5 * ONE_MINUTE
 
 export interface ViewOptions {
@@ -102,7 +78,8 @@ export interface ViewOptions {
 }
 
 export function trackViews(
-  lifeCycle: LifeCycle,
+  internalApi: RumInternalApi,
+  prepareUrgentFlushObservable: Observable<PageExitReason>,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
@@ -111,7 +88,12 @@ export function trackViews(
   initialViewOptions?: ViewOptions
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
-  let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
+  // Unlike trackViews (always started once the initial view options are known, thanks to the
+  // preStartRum firstStartViewCall dance), this port may start before any view exists in manual
+  // mode: the first public startView call creates the initial view.
+  let currentView: ReturnType<typeof newView> | undefined = areViewsTrackedAutomatically
+    ? startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
+    : undefined
   let stopOnBFCacheRestore: (() => void) | undefined
 
   startViewLifeCycle()
@@ -120,7 +102,7 @@ export function trackViews(
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
     stopOnBFCacheRestore = onBFCacheRestore((pageshowEvent) => {
-      currentView.end()
+      currentView?.end()
       const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
       currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
     })
@@ -128,7 +110,8 @@ export function trackViews(
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
     const newlyCreatedView = newView(
-      lifeCycle,
+      internalApi,
+      prepareUrgentFlushObservable,
       domMutationObservable,
       windowOpenObservable,
       configuration,
@@ -144,25 +127,33 @@ export function trackViews(
   }
 
   function startViewLifeCycle() {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      currentView = startNewView(ViewLoadingType.SESSION_RENEWAL, undefined, {
-        // Renew view on session renewal
-        name: currentView.name,
-        service: currentView.service,
-        version: currentView.version,
-        context: currentView.contextManager.getContext(),
-      })
+    const subscription = internalApi.notifications.subscribe((notification) => {
+      if (notification.type === 'session_renewed') {
+        currentView = startNewView(
+          ViewLoadingType.SESSION_RENEWAL,
+          undefined,
+          currentView && {
+            // Renew view on session renewal
+            name: currentView.name,
+            service: currentView.service,
+            version: currentView.version,
+            context: currentView.contextManager.getContext(),
+          }
+        )
+      } else if (notification.type === 'session_expired') {
+        // The notification doesn't carry the session end clocks; use the current time, as the
+        // startRum pipeline does when bridging the session manager observable to the LifeCycle.
+        currentView?.end({ sessionIsActive: false, endClocks: clocksNow() })
+      }
     })
 
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, ({ endClocks }) => {
-      currentView.end({ sessionIsActive: false, endClocks })
-    })
+    return () => subscription.unsubscribe()
   }
 
-  function renewViewOnLocationChange(locationChangeObservable: Observable<LocationChange>) {
-    return locationChangeObservable.subscribe(({ oldLocation, newLocation }) => {
+  function renewViewOnLocationChange(renewViewOnLocation: Observable<LocationChange>) {
+    return renewViewOnLocation.subscribe(({ oldLocation, newLocation }) => {
       if (areDifferentLocation(oldLocation, newLocation)) {
-        currentView.end()
+        currentView?.end()
         currentView = startNewView(ViewLoadingType.ROUTE_CHANGE)
       }
     })
@@ -170,23 +161,25 @@ export function trackViews(
 
   return {
     addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
-      currentView.addTiming(name, time)
+      // In manual mode, calls before the first startView are dropped (the preStartRum buffer
+      // used to replay them)
+      currentView?.addTiming(name, time)
     },
-    setLoadingTime: (callTimestamp?: TimeStamp) => currentView.setLoadingTime(callTimestamp),
+    setLoadingTime: (callTimestamp?: TimeStamp) => currentView?.setLoadingTime(callTimestamp),
     startView: (options?: ViewOptions, startClocks?: ClocksState) => {
-      currentView.end({ endClocks: startClocks })
+      currentView?.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
     },
     setViewContext: (context: Context) => {
-      currentView.contextManager.setContext(context)
+      currentView?.contextManager.setContext(context)
     },
     setViewContextProperty: (key: string, value: ContextValue) => {
-      currentView.contextManager.setContextProperty(key, value)
+      currentView?.contextManager.setContextProperty(key, value)
     },
     setViewName: (name: string) => {
-      currentView.setViewName(name)
+      currentView?.setViewName(name)
     },
-    getViewContext: () => currentView.contextManager.getContext(),
+    getViewContext: () => currentView?.contextManager.getContext() ?? {},
 
     stop: () => {
       if (locationChangeSubscription) {
@@ -195,14 +188,15 @@ export function trackViews(
       if (stopOnBFCacheRestore) {
         stopOnBFCacheRestore()
       }
-      currentView.end()
+      currentView?.end()
       activeViews.forEach((view) => view.stop())
     },
   }
 }
 
 function newView(
-  lifeCycle: LifeCycle,
+  internalApi: RumInternalApi,
+  prepareUrgentFlushObservable: Observable<PageExitReason>,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
@@ -211,15 +205,12 @@ function newView(
   viewOptions?: ViewOptions
 ) {
   // Setup initial values
-  const id = generateUUID()
   const stopObservable = new Observable<void>()
   const customTimings: ViewCustomTimings = {}
-  let documentVersion = 0
   let endClocks: ClocksState | undefined
   const location = shallowClone(mockable(window.location))
   const contextManager = createContextManager()
 
-  let sessionIsActive = true
   let name = viewOptions?.name
   const service = viewOptions?.service || configuration.service
   const version = viewOptions?.version || configuration.version
@@ -230,22 +221,35 @@ function newView(
     contextManager.setContext(context)
   }
 
-  const viewCreatedEvent = {
-    id,
-    name,
-    startClocks,
-    service,
-    version,
-    context,
-    url: viewOptions?.url,
-  }
-  lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
+  // The view starts as a complete kickoff event: the internal API owns the id and stamps it on
+  // the event, so history entries (and findEvents) expose it from the start. Views are sent
+  // incrementally: each update assembles a new event version (`_dd.document_version` is owned by
+  // the internal API), and stop() sends the final version (`view.is_active: false`).
+  const handle = internalApi.startEvent(
+    {
+      type: 'view',
+      view: { url: viewOptions?.url ?? location.href, name },
+      service,
+      version,
+    },
+    {
+      startClocks,
+      domainContext: {
+        handlingStack,
+        location,
+      },
+    }
+  )
 
   // Update the view every time the measures are changing
   const { throttled, cancel: cancelScheduleViewUpdate } = throttle(triggerViewUpdate, THROTTLE_VIEW_UPDATE_PERIOD, {
     leading: false,
   })
+
+  // The LifeCycle passed to the metrics tracking modules only serves waitPageActivityEnd's
+  // REQUEST_STARTED / REQUEST_COMPLETED subscriptions, which never flow in this pipeline (no
+  // auto-instrumentation). See the notes at the top of this file.
+  const metricsLifeCycle = new LifeCycle()
 
   const {
     setLoadEvent,
@@ -255,7 +259,7 @@ function newView(
     getCommonViewMetrics,
     setLoadingTime,
   } = trackCommonViewMetrics(
-    lifeCycle,
+    metricsLifeCycle,
     domMutationObservable,
     windowOpenObservable,
     configuration,
@@ -274,12 +278,10 @@ function newView(
     trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
   }
 
-  const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
-
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
 
-  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
+  const pageMayExitSubscription = prepareUrgentFlushObservable.subscribe((reason) => {
     if (reason === PageExitReason.UNLOADING) {
       triggerViewUpdate()
     }
@@ -291,46 +293,89 @@ function newView(
   // View context update should always be throttled
   contextManager.changeObservable.subscribe(scheduleViewUpdate)
 
-  function triggerBeforeViewUpdate() {
-    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
-      id,
-      name,
-      context: contextManager.getContext(),
-      startClocks,
-      sessionIsActive,
-    })
-  }
-
   function scheduleViewUpdate() {
-    triggerBeforeViewUpdate()
     throttled()
   }
 
-  function triggerViewUpdate() {
-    cancelScheduleViewUpdate()
-    triggerBeforeViewUpdate()
-
-    documentVersion += 1
+  function buildUpdateEvent(final: boolean): PartialBaseRumEvent<'view'> {
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      customTimings,
-      documentVersion,
-      id,
+    const commonViewMetrics = getCommonViewMetrics()
+    const clsDevicePixelRatio = commonViewMetrics.cumulativeLayoutShift?.devicePixelRatio
+
+    // The raw view event building from viewCollection's processViewUpdate, minus what the
+    // internal API owns (view.id, document version, event counts) and what contexts assemble
+    // (session, referrer, usr, ...). The fields the partial type can't express directly are
+    // merged on the loosely typed view fields object first.
+    const viewFields = {
+      cumulative_layout_shift: commonViewMetrics.cumulativeLayoutShift?.value,
+      cumulative_layout_shift_time: toServerDuration(commonViewMetrics.cumulativeLayoutShift?.time),
+      cumulative_layout_shift_target_selector: commonViewMetrics.cumulativeLayoutShift?.targetSelector,
+      first_byte: toServerDuration(initialViewMetrics.navigationTimings?.firstByte),
+      dom_complete: toServerDuration(initialViewMetrics.navigationTimings?.domComplete),
+      dom_content_loaded: toServerDuration(initialViewMetrics.navigationTimings?.domContentLoaded),
+      dom_interactive: toServerDuration(initialViewMetrics.navigationTimings?.domInteractive),
+      first_contentful_paint: toServerDuration(initialViewMetrics.firstContentfulPaint),
+      interaction_to_next_paint: toServerDuration(commonViewMetrics.interactionToNextPaint?.value),
+      interaction_to_next_paint_time: toServerDuration(commonViewMetrics.interactionToNextPaint?.time),
+      interaction_to_next_paint_target_selector: commonViewMetrics.interactionToNextPaint?.targetSelector,
+      largest_contentful_paint: toServerDuration(initialViewMetrics.largestContentfulPaint?.value),
+      largest_contentful_paint_target_selector: initialViewMetrics.largestContentfulPaint?.targetSelector,
+      load_event: toServerDuration(initialViewMetrics.navigationTimings?.loadEvent),
+      loading_time: discardNegativeDuration(toServerDuration(commonViewMetrics.loadingTime)),
+      loading_type: loadingType,
+      time_spent: toServerDuration(elapsed(startClocks.timeStamp, currentEnd)),
+      performance: computeViewPerformanceData(commonViewMetrics, initialViewMetrics),
+      is_active: !final,
       name,
-      service,
-      version,
+      custom_timings: isEmptyObject(customTimings)
+        ? undefined
+        : mapValues(customTimings, toServerDuration as (duration: Duration) => ServerDuration),
+    }
+
+    return {
+      view: viewFields,
+      display: commonViewMetrics.scroll
+        ? {
+            scroll: {
+              max_depth: commonViewMetrics.scroll.maxDepth,
+              max_depth_scroll_top: commonViewMetrics.scroll.maxDepthScrollTop,
+              max_scroll_height: commonViewMetrics.scroll.maxScrollHeight,
+              max_scroll_height_time: toServerDuration(commonViewMetrics.scroll.maxScrollHeightTime),
+            },
+          }
+        : undefined,
+      privacy: {
+        replay_level: configuration.defaultPrivacyLevel,
+      },
+      device: {
+        locale: navigator.language,
+        locales: navigator.languages,
+        time_zone: getTimeZone(),
+      },
       context: contextManager.getContext(),
-      loadingType,
-      location,
-      handlingStack,
-      startClocks,
-      commonViewMetrics: getCommonViewMetrics(),
-      initialViewMetrics,
-      duration: elapsed(startClocks.timeStamp, currentEnd),
-      isActive: endClocks === undefined,
-      sessionIsActive,
-      eventCounts,
-    })
+      _dd: {
+        cls: clsDevicePixelRatio
+          ? {
+              device_pixel_ratio: clsDevicePixelRatio,
+            }
+          : undefined,
+        configuration: {
+          start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
+          remote_configuration_id: configuration.remoteConfigurationId,
+        },
+      },
+    } as unknown as PartialBaseRumEvent<'view'>
+    // Cast: some raw view fields (performance, device.locales) don't fit the kickoff Context
+    // type exactly; they merge fine at runtime.
+  }
+
+  function triggerViewUpdate() {
+    if (endClocks !== undefined) {
+      // The final version was sent by stop(); the handle would throw on further updates.
+      return
+    }
+    cancelScheduleViewUpdate()
+    handle.update(buildUpdateEvent(false))
   }
 
   return {
@@ -341,28 +386,27 @@ function newView(
     version,
     contextManager,
     stopObservable,
+    handle,
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {
         // view already ended
         return
       }
       endClocks = options.endClocks ?? clocksNow()
-      sessionIsActive = options.sessionIsActive ?? true
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
-      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
       setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()
       pageMayExitSubscription.unsubscribe()
-      triggerViewUpdate()
+      // The final version (is_active: false) is sent by stop(), and its end time is the view end
+      // clocks: the internal API computes the event duration from them for history queries.
+      handle.stop(buildUpdateEvent(true), { endClocks })
       setTimeout(() => {
         this.stop()
       }, KEEP_TRACKING_AFTER_VIEW_DELAY)
     },
     stop() {
       stopInitialViewMetricsTracking()
-      stopEventCountsTracking()
       stopINPTracking()
       stopObservable.notify()
     },
@@ -410,4 +454,45 @@ function isHashAnAnchor(hash: string) {
 function getPathFromHash(hash: string) {
   const index = hash.indexOf('?')
   return index < 0 ? hash : hash.slice(0, index)
+}
+
+// Moved from viewCollection.ts (deleted): computes the `view.performance` sub-fields.
+export function computeViewPerformanceData(
+  { cumulativeLayoutShift, interactionToNextPaint }: CommonViewMetrics,
+  { firstContentfulPaint, largestContentfulPaint }: InitialViewMetrics
+): ViewPerformanceData {
+  return {
+    cls: cumulativeLayoutShift && {
+      score: cumulativeLayoutShift.value,
+      timestamp: toServerDuration(cumulativeLayoutShift.time),
+      target_selector: cumulativeLayoutShift.targetSelector,
+      previous_rect: cumulativeLayoutShift.previousRect,
+      current_rect: cumulativeLayoutShift.currentRect,
+    },
+    fcp: firstContentfulPaint && { timestamp: toServerDuration(firstContentfulPaint) },
+    inp: interactionToNextPaint && {
+      duration: toServerDuration(interactionToNextPaint.value),
+      timestamp: toServerDuration(interactionToNextPaint.time),
+      target_selector: interactionToNextPaint.targetSelector,
+      sub_parts: interactionToNextPaint.subParts
+        ? {
+            input_delay: toServerDuration(interactionToNextPaint.subParts.inputDelay),
+            processing_duration: toServerDuration(interactionToNextPaint.subParts.processingDuration),
+            presentation_delay: toServerDuration(interactionToNextPaint.subParts.presentationDelay),
+          }
+        : undefined,
+    },
+    lcp: largestContentfulPaint && {
+      timestamp: toServerDuration(largestContentfulPaint.value),
+      target_selector: largestContentfulPaint.targetSelector,
+      resource_url: largestContentfulPaint.resourceUrl,
+      sub_parts: largestContentfulPaint.subParts
+        ? {
+            load_delay: toServerDuration(largestContentfulPaint.subParts.loadDelay),
+            load_time: toServerDuration(largestContentfulPaint.subParts.loadTime),
+            render_delay: toServerDuration(largestContentfulPaint.subParts.renderDelay),
+          }
+        : undefined,
+    },
+  }
 }

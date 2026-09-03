@@ -252,12 +252,14 @@ Deliverable: notes in this plan on which option is viable and what `preStartRum`
 
 ### Phase 3a — `trackViews` — DONE
 
-Ported as a new module, `domain/view/trackViewsOnInternalApi.ts`, used by the phase 2 public API
-(`startInternalApiBatch` now exposes the batch's `prepareUrgentFlushObservable` for the final view
-update on page unloading). The old `trackViews` stays untouched for the startRum pipeline: migrating
-in place would have reddened its 1300-line spec plus startRum / viewCollection specs — a much
-noisier crash test than the interface learnings justify. The debrief will decide which one
-survives.
+Ported IN PLACE — `trackViews.ts` is the internal API port now, used by the phase 2 public API
+(`startInternalApiBatch` exposes the batch's `prepareUrgentFlushObservable` for the final view
+update on page unloading). It started as a side module (`trackViewsOnInternalApi.ts`) with the old
+file kept for the startRum pipeline, and was consolidated per Benoit's review: two implementations
+of the same feature muddy exactly what the PoC tries to prove. The old startRum view glue is
+deleted with it (`viewCollection.ts` — its raw event building moved into the port,
+`trackViewEventCounts.ts`, `setupViewTest.specHelper`, and the specs of the old architecture:
+`trackViews.spec`, `viewCollection.spec`, `startRum.spec`, `rumPublicApi.spec`).
 
 Differences vs the old trackViews (documented in the module header):
 
@@ -301,18 +303,34 @@ Interface findings:
 Validation: `yarn typecheck` + eslint pass. The smoke spec (`rumPublicApiInternalApi.spec.ts`)
 grew to 4 tests: pre-session buffering + hierarchy linkage, automatic initial view + incremental
 updates + upsert, view replacement (old view ended, action linked to the right view), event
-bridge. All pass standalone and within the `boot` suite context. Full `browser-rum-core` delta
-unchanged from phase 2: 61 failures, all in the old `rumPublicApi.spec`; 1410 pass.
-(`trackNavigationTimings.spec` is a pre-existing flake in small-bundle runs — `relativeNow()` vs
-a hardcoded 123 at page-load time — it passes in the full-suite run.)
+bridge — all pass. After the consolidation (below), the whole `browser-rum-core` suite is green:
+1236 pass, 0 fail — the 61 failures of the old `rumPublicApi.spec` are gone with the
+preStartRum-era architecture it tested. (`trackNavigationTimings.spec` remains a pre-existing
+flake in small-bundle runs — `relativeNow()` vs a hardcoded 123 at page-load time; it passes in
+the full-suite run.)
+
+Consolidation consequences (recorded for the debrief):
+
+- **The old startRum pipeline is inert.** It no longer produces view events, and the
+  sessionContext hook discards every event it collects (it requires a view). It stays compiling
+  for the collectors later phases port (resources, errors, long tasks, vitals), not as a working
+  alternative.
+- **Zombie lifecycle events**: `VIEW_CREATED` / `VIEW_ENDED` / `ACTION_STARTED` and the prefixed
+  view events (`BEFORE_VIEW_CREATED` / `BEFORE_VIEW_UPDATED` / `AFTER_VIEW_ENDED`) have no
+  producer anymore. They stay in the enum for viewHistory (its consumers: sessionContext,
+  urlContexts, internalContext, webSocket collection — fed manually in their specs) and for
+  browser-rum's recorder and profiler (Replay migration is a non-goal of this PoC). The view
+  lifecycle payloads moved to `viewHistory.ts`.
 
 ### Phase 3b — `trackClickActions` — DONE
 
-Ported as `domain/action/trackClickActionsOnInternalApi.ts`, wired in the public API when
-`trackUserInteractions` is on (sharing the observables hoisted for trackViews). Same approach as
-3a: the old `trackClickActions` stays for the startRum pipeline. The click chain and the
-frustration / rage-click computation (`clickChain`, `computeFrustration`) are unchanged caller
-logic.
+Ported IN PLACE — `trackClickActions.ts` is the internal API port now (consolidated from a side
+module, like trackViews in 3a), wired in the public API when `trackUserInteractions` is on (sharing
+the observables hoisted for trackViews). The click chain and the frustration / rage-click
+computation (`clickChain`, `computeFrustration`) are unchanged caller logic. The old startRum
+action glue is deleted (`actionCollection.ts`, `trackManualActions.ts` + their specs;
+`ActionOptions` moved to `trackClickActions.ts`, `ActionContexts` to `internalContext.ts` — the
+internal context exposes no action ids anymore).
 
 - Each click: `startEvent` with only the kickoff (`action.type: 'click'`) and the interaction
   timestamp; the click start-time context (name, target, position, name source) is kept by the
@@ -358,9 +376,10 @@ logic.
 Validation: two smoke tests added — a validated click (pointerdown/up + DOM activity + a child
 error → action event with the target name, `loading_time`, `_dd.action` details, view linkage,
 `error.count: 1` from the internal API's counts, `error_click` frustration) and a dead click
-without activity (cancelled, no action event sent). All 6 smoke tests pass; the full
-`browser-rum-core` delta is unchanged: 61 failures, all in the old `rumPublicApi.spec` (phase
-2), 1412 pass.
+without activity (cancelled, no action event sent). After the consolidation, the whole
+`browser-rum-core` suite is green (1236 pass — the old `rumPublicApi.spec` failures are gone
+with the architecture it tested), and `browser-rum` passes 736 specs (its recorder / profiler
+specs notify the zombie lifecycle events manually, so they are unaffected).
 
 Original plan notes for phase 3:
 
