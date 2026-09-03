@@ -85,19 +85,6 @@ describe('startLogsAssembly', () => {
   })
 
   describe('contexts inclusion', () => {
-    it('should include message context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
-        view: { url: 'http://from-rum-context.com', id: 'view-id' },
-      })
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-        messageContext: { foo: 'from-message-context' },
-      })
-
-      expect(serverLogs[0].foo).toEqual('from-message-context')
-    })
-
     it('should include common context', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
@@ -223,15 +210,6 @@ describe('startLogsAssembly', () => {
 
       expect(serverLogs[0].message).toEqual('message')
     })
-
-    it('message context should take precedence over raw log', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-        messageContext: { message: 'from-message-context' },
-      })
-
-      expect(serverLogs[0].message).toEqual('from-message-context')
-    })
   })
 
   describe('ddtags', () => {
@@ -320,24 +298,17 @@ describe('logs limitation', () => {
     expect(serverLogs[1].message).toBe('bar')
   })
   ;[
-    { status: StatusType.error, messageContext: {}, message: 'Reached max number of errors by minute: 1' },
-    { status: StatusType.warn, messageContext: {}, message: 'Reached max number of warns by minute: 1' },
-    { status: StatusType.info, messageContext: {}, message: 'Reached max number of infos by minute: 1' },
-    { status: StatusType.debug, messageContext: {}, message: 'Reached max number of debugs by minute: 1' },
-    {
-      status: StatusType.debug,
-      messageContext: { status: 'unknown' }, // overrides the rawLogsEvent status
-      message: 'Reached max number of customs by minute: 1',
-    },
-  ].forEach(({ status, message, messageContext }) => {
+    { status: StatusType.error, message: 'Reached max number of errors by minute: 1' },
+    { status: StatusType.warn, message: 'Reached max number of warns by minute: 1' },
+    { status: StatusType.info, message: 'Reached max number of infos by minute: 1' },
+    { status: StatusType.debug, message: 'Reached max number of debugs by minute: 1' },
+  ].forEach(({ status, message }) => {
     it(`stops sending ${status} logs when reaching the limit (message: "${message}")`, () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
-        messageContext,
       })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status },
-        messageContext,
       })
 
       expect(serverLogs.length).toEqual(1)
@@ -354,19 +325,15 @@ describe('logs limitation', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'discard me', status },
-        messageContext,
       })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'discard me', status },
-        messageContext,
       })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'discard me', status },
-        messageContext,
       })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
-        messageContext,
       })
 
       expect(serverLogs.length).toEqual(1)
@@ -376,16 +343,13 @@ describe('logs limitation', () => {
     it(`allows to send new ${status}s after a minute (message: "${message}")`, () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
-        messageContext,
       })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status },
-        messageContext,
       })
       clock.tick(ONE_MINUTE)
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'baz', status },
-        messageContext,
       })
 
       expect(serverLogs.length).toEqual(2)
@@ -398,15 +362,12 @@ describe('logs limitation', () => {
       const otherLogStatus = status === StatusType.error ? StatusType.info : StatusType.error
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status },
-        messageContext,
       })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status },
-        messageContext,
       })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'baz', status: otherLogStatus },
-        ...{ ...messageContext, status: otherLogStatus },
       })
 
       expect(serverLogs.length).toEqual(2)
@@ -418,13 +379,11 @@ describe('logs limitation', () => {
 
   it('two different custom statuses are accounted by the same limit', () => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status: StatusType.info },
-      messageContext: { status: 'foo' },
+      rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'foo', status: 'foo' as StatusType },
     })
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-      rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status: StatusType.info },
-      messageContext: { status: 'bar' },
+      rawLogsEvent: { ...DEFAULT_MESSAGE, message: 'bar', status: 'bar' as StatusType },
     })
 
     expect(serverLogs.length).toEqual(1)
