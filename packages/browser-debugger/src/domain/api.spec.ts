@@ -1368,8 +1368,8 @@ describe('api', () => {
       expect(calls.length).toBe(3)
       expect(calls[1][0].debugger.snapshot.probe.id).toBe(nonSnapshotProbe.id)
       expect(calls[2][0].debugger.snapshot.captures.entry.arguments).toEqual({
-        type: 'object',
-        notCapturedReason: 'timeout',
+        x: { type: 'Object', notCapturedReason: 'timeout' },
+        this: { type: 'Object', notCapturedReason: 'timeout' },
       })
     })
 
@@ -1405,8 +1405,8 @@ describe('api', () => {
       const calls = mockBatchAdd.calls.allArgs()
       expect(calls.length).toBe(2)
       expect(calls[1][0].debugger.snapshot.captures.entry.arguments).toEqual({
-        type: 'object',
-        notCapturedReason: 'timeout',
+        x: { type: 'Object', notCapturedReason: 'timeout' },
+        this: { type: 'Object', notCapturedReason: 'timeout' },
       })
     })
   })

@@ -664,17 +664,27 @@ describe('capture timeout', () => {
     maxLength: 255,
   }
 
-  it('should return timeout value with real type when already timed out', () => {
+  it('should still capture cheap values when already timed out', () => {
     const ctx: CaptureContext = { deadline: 0, timedOut: true }
 
-    expect(capture({ a: 1 }, defaultOpts, ctx)).toEqual({ type: 'object', notCapturedReason: 'timeout' })
-    expect(capture('hello', defaultOpts, ctx)).toEqual({ type: 'string', notCapturedReason: 'timeout' })
-    expect(capture(42, defaultOpts, ctx)).toEqual({ type: 'number', notCapturedReason: 'timeout' })
-    expect(capture(null, defaultOpts, ctx)).toEqual({ type: 'null', notCapturedReason: 'timeout' })
-    expect(capture(undefined, defaultOpts, ctx)).toEqual({ type: 'undefined', notCapturedReason: 'timeout' })
+    expect(capture('hello', defaultOpts, ctx)).toEqual({ type: 'string', value: 'hello' })
+    expect(capture(42, defaultOpts, ctx)).toEqual({ type: 'number', value: '42' })
+    expect(capture(null, defaultOpts, ctx)).toEqual({ type: 'null', isNull: true })
+    expect(capture(undefined, defaultOpts, ctx)).toEqual({ type: 'undefined' })
+    expect(capture(new Date('2026-01-01T00:00:00.000Z'), defaultOpts, ctx)).toEqual({
+      type: 'Date',
+      value: '2026-01-01T00:00:00.000Z',
+    })
   })
 
-  it('should stop traversing object properties when deadline is exceeded', () => {
+  it('should return timeout values for traversable values when already timed out', () => {
+    const ctx: CaptureContext = { deadline: 0, timedOut: true }
+
+    expect(capture({ a: 1 }, defaultOpts, ctx)).toEqual({ type: 'Object', notCapturedReason: 'timeout' })
+    expect(capture([1, 2], defaultOpts, ctx)).toEqual({ type: 'Array', notCapturedReason: 'timeout' })
+  })
+
+  it('should preserve object fields and mark nested values when the deadline is exceeded', () => {
     let callCount = 0
     const originalNow = performance.now.bind(performance)
     spyOn(performance, 'now').and.callFake(() => {
@@ -688,17 +698,21 @@ describe('capture timeout', () => {
       return Infinity
     })
 
-    const obj: Record<string, number> = {}
+    const obj: Record<string, { nested: string }> = {}
     for (let i = 0; i < 20; i++) {
-      obj[`field${i}`] = i
+      obj[`field${i}`] = { nested: 'value' }
     }
 
     const ctx: CaptureContext = { deadline: performance.now() + 10, timedOut: false }
     const result = capture(obj, defaultOpts, ctx)
 
     expect(ctx.timedOut).toBe(true)
-    const capturedFieldCount = Object.keys((result as any).fields || {}).length
-    expect(capturedFieldCount).toBeLessThan(20)
+    const fields = (result as any).fields
+    expect(Object.keys(fields).length).toBe(20)
+    expect(Object.values(fields).filter((value: any) => value.notCapturedReason === 'timeout').length).toBeGreaterThan(
+      1
+    )
+    expect((result as any).notCapturedReason).toBe('timeout')
   })
 
   it('should stop traversing array elements when deadline is exceeded', () => {
@@ -717,9 +731,33 @@ describe('capture timeout', () => {
 
     expect(ctx.timedOut).toBe(true)
     expect((result as any).elements.length).toBeLessThan(50)
+    expect((result as any).notCapturedReason).toBe('timeout')
   })
 
-  it('should stop captureFields traversal when deadline is exceeded', () => {
+  it('should mark maps as timed out when the traversal deadline is exceeded', () => {
+    let callCount = 0
+    spyOn(performance, 'now').and.callFake(() => {
+      callCount++
+      if (callCount <= 4) {
+        return 100
+      }
+      return Infinity
+    })
+
+    const map = new Map<number, { nested: string }>()
+    for (let i = 0; i < 50; i++) {
+      map.set(i, { nested: 'value' })
+    }
+
+    const ctx: CaptureContext = { deadline: 200, timedOut: false }
+    const result = capture(map, defaultOpts, ctx)
+
+    expect(ctx.timedOut).toBe(true)
+    expect((result as any).entries.length).toBeLessThan(50)
+    expect((result as any).notCapturedReason).toBe('timeout')
+  })
+
+  it('should preserve field names and mark nested values when the deadline is exceeded', () => {
     let callCount = 0
     spyOn(performance, 'now').and.callFake(() => {
       callCount++
@@ -729,15 +767,16 @@ describe('capture timeout', () => {
       return Infinity
     })
 
-    const obj: Record<string, number> = {}
+    const obj: Record<string, { nested: string }> = {}
     for (let i = 0; i < 20; i++) {
-      obj[`field${i}`] = i
+      obj[`field${i}`] = { nested: 'value' }
     }
 
     const ctx: CaptureContext = { deadline: 200, timedOut: false }
     const result = captureFields(obj, defaultOpts, ctx)
 
     expect(ctx.timedOut).toBe(true)
-    expect(Object.keys(result).length).toBeLessThan(20)
+    expect(Object.keys(result).length).toBe(20)
+    expect(Object.values(result).filter((value) => value.notCapturedReason === 'timeout').length).toBeGreaterThan(1)
   })
 })
