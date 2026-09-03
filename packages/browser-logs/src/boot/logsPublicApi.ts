@@ -4,15 +4,14 @@ import {
   CustomerContextKey,
   addTelemetryUsage,
   makePublicApi,
-  monitor,
   sanitize,
   displayAlreadyInitializedError,
   createTrackingConsentState,
   defineContextMethod,
   startBufferingData,
-  callMonitored,
   mockable,
 } from '@datadog/browser-core'
+import { monitor, callMonitored } from '@datadog/js-core/monitor'
 import { deepClone } from '@datadog/js-core/util'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'

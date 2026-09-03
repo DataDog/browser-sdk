@@ -1,4 +1,5 @@
-import { monitor, noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
+import { monitor } from '@datadog/js-core/monitor'
+import { noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
 export interface RumCharacterDataMutationRecord {

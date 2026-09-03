@@ -1,5 +1,6 @@
 import { isWorkerEnvironment } from '@datadog/js-core/util'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
+import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
 import {
@@ -17,7 +18,6 @@ import {
   buildGlobalContextManager,
   buildUserContextManager,
   bufferContextCalls,
-  monitorError,
   sanitize,
   startSessionManager,
   startSessionManagerStub,

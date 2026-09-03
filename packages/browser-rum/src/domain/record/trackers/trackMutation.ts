@@ -1,4 +1,5 @@
-import { monitor, noop } from '@datadog/browser-core'
+import { monitor } from '@datadog/js-core/monitor'
+import { noop } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import type { RumMutationRecord } from '@datadog/browser-rum-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
