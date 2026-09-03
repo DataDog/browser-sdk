@@ -1,7 +1,32 @@
+// PoC (phase 5 of the internal API plan, see /plan.md): the profiler runs on the RUM internal API
+// instead of the LifeCycle. Differences vs the replaced implementation:
+// * longTaskHistory / actionHistory / vitalHistory are GONE: the profile enrichment queries
+//   `findEvents` on the internal API event history (time-window queries match the histories'
+//   `findAll` overlap semantics). Notes on the mapping:
+//   - Long tasks: `baggage.duration` (the relative duration, what profiles need — the old
+//     history stored it from the raw event payload) and `event.long_task.entry_type`.
+//   - Actions: the label is now `event.action.target.name` from the assembled event. The old
+//     history stored an always-empty label to account for customers redacting names in
+//     beforeSend; entries carry the assembled event (post-beforeSend mutations apply to the
+//     same object), so reading the name is consistent with that concern. Behavior change
+//     recorded in /plan.md.
+//   - Vitals: entries cover both one-shot and started-then-stopped vitals — ongoing ones are
+//     found as incomplete entries with an undefined duration, as the old history's started ones.
+// * View entries: `event_started` (view) notifications during a profiler instance, and the
+//   active view at start (`findEvents` "active at t"). Note: `event_started` carries only the
+//   event id, so the view name is resolved with a `findEvents` lookup — interface finding
+//   recorded in /plan.md (consumers needing kickoff fields must query the history).
+// * Session expiry / renewal: `session_expired` / `session_renewed` notifications instead of the
+//   LifeCycle events.
+// * The profiling transport's error reporting used to notify RAW_ERROR_COLLECTED on the LifeCycle
+//   (surfaced as a customer error event by the old pipeline); it now receives an idle LifeCycle
+//   instance — errors are not surfaced to customers (corner-cut recorded in /plan.md).
+
 import { globalObject } from '@datadog/js-core/util'
 import type { Profiler } from '@datadog/js-core/util'
-import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
+import { elapsed, clocksOrigin, clocksNow, addDuration, relativeNow } from '@datadog/js-core/time'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import {
   addEventListener,
   canUseEventBridge,
@@ -15,8 +40,8 @@ import {
   correctedChildSampleRate,
 } from '@datadog/browser-core'
 
-import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumInternalApi } from '@datadog/browser-rum-core'
+import { LifeCycle, RumLongTaskEntryType, RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
@@ -25,15 +50,13 @@ import type {
   RUMProfilerConfiguration,
   RumProfilerStoppedInstance,
   ProfilingPayload,
+  LongTaskContext,
 } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { createBridgeEmitter } from './transport/profilingBridge'
 import { createFormDataEmitter } from './transport/formDataEmitter'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { buildProfileEvent } from './transport/buildProfileEvent'
-import { createLongTaskHistory } from './longTaskHistory'
-import { createActionHistory } from './actionHistory'
-import { createVitalHistory } from './vitalHistory'
 import { checkProfilingQuota } from './quotaCheck'
 import type { QuotaReason } from './quotaCheck'
 import { buildProfilerDebugIds } from './profilerDebugIds'
@@ -45,53 +68,55 @@ export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
 }
 
 export function createRumProfiler(
+  internalApi: RumInternalApi,
   configuration: RumConfiguration,
-  lifeCycle: LifeCycle,
   session: SessionManager,
   profilingContextManager: ProfilingContextManager,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-  viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
+  // The transport's error reporting used to notify the RUM LifeCycle; it now gets an idle one (see
+  // the note at the top of this file).
   const emitPayload = canUseEventBridge()
     ? mockable(createBridgeEmitter)()
-    : mockable(createFormDataEmitter)(configuration, lifeCycle, createEncoder)
+    : mockable(createFormDataEmitter)(configuration, new LifeCycle(), createEncoder)
 
   let lastViewEntry: RumViewEntry | undefined
 
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
-  const longTaskHistory = mockable(createLongTaskHistory)(lifeCycle)
-  const actionHistory = mockable(createActionHistory)(lifeCycle)
-  const vitalHistory = mockable(createVitalHistory)(lifeCycle)
 
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
   let quotaCheckGeneration = 0
 
   // Stops the profiler when session expires
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-    stopProfiling('session-expired')
-  })
-
   // Start the profiler again when session is renewed
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    if (
-      instance.state === 'stopped' &&
-      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
-    ) {
-      const newSession = session.findTrackedSession()
+  const sessionNotificationsSubscription = internalApi.notifications.subscribe((notification) => {
+    if (notification.type === 'session_expired') {
+      stopProfiling('session-expired')
+    } else if (notification.type === 'session_renewed') {
       if (
-        !newSession ||
-        !isSampled(
-          newSession.id,
-          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-        )
+        instance.state === 'stopped' &&
+        (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
       ) {
-        return
+        const newSession = session.findTrackedSession()
+        if (
+          !newSession ||
+          !isSampled(
+            newSession.id,
+            correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+          )
+        ) {
+          return
+        }
+        start()
       }
-      start()
     }
   })
+  // Note: the session notifications subscription lives for the profiler's lifetime (as in the
+  // replaced implementation): stopping the profiler must not unsubscribe it, or session
+  // renewals could never restart it. There is no teardown hook — the profiler dies with the SDK.
+  void sessionNotificationsSubscription
 
   // Public API to start the profiler.
   function start(): void {
@@ -99,17 +124,11 @@ export function createRumProfiler(
       return
     }
 
-    const viewEntry = viewHistory.findView()
+    const viewEntry = findActiveViewEntry()
 
     // Add initial view
     // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
     lastViewEntry = viewEntry
-      ? {
-          startClocks: viewEntry.startClocks,
-          viewId: viewEntry.id,
-          viewName: getCustomOrDefaultViewName(viewEntry.name, document.location.pathname),
-        }
-      : undefined
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
     globalCleanupTasks.push(
@@ -120,6 +139,21 @@ export function createRumProfiler(
     // Start profiler instance
     startNextProfilerInstance()
     triggerQuotaCheck()
+  }
+
+  // The view active at the given time ("active at t" query)
+  function findActiveViewEntry(atTime: RelativeTime = relativeNow()): RumViewEntry | undefined {
+    const viewEntries = internalApi.findEvents({ type: 'view', startedBefore: atTime, endedAfter: atTime })
+    const viewEvent = viewEntries[viewEntries.length - 1]?.event as { view: { id: string; name?: string } } | undefined
+    if (!viewEvent) {
+      return undefined
+    }
+    return {
+      viewId: viewEvent.view.id,
+      // Note: `viewName` is only filled when users use manual view creation via `startView` method.
+      viewName: getCustomOrDefaultViewName(viewEvent.view.name, document.location.pathname),
+      startClocks: viewEntries[viewEntries.length - 1].baggage.startClocks,
+    }
   }
 
   function triggerQuotaCheck() {
@@ -181,13 +215,14 @@ export function createRumProfiler(
     // Store clean-up tasks for this instance (tasks to be executed when the Profiler is stopped or paused.)
     const cleanupTasks = []
 
-    // Whenever the View is updated, we add a views entry to the profiler instance.
-    const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-      const viewEntry = {
-        viewId: view.id,
-        // Note: `viewName` is only filled when users use manual view creation via `startView` method.
-        viewName: getCustomOrDefaultViewName(view.name, document.location.pathname),
-        startClocks: view.startClocks,
+    // Whenever a view starts, we add a views entry to the profiler instance.
+    const viewStartedSubscription = internalApi.notifications.subscribe((notification) => {
+      if (notification.type !== 'event_started' || notification.eventType !== 'view') {
+        return
+      }
+      const viewEntry = findViewEntryById(notification.eventId)
+      if (!viewEntry) {
+        return
       }
 
       collectViewEntry(viewEntry)
@@ -195,10 +230,26 @@ export function createRumProfiler(
       // Update last view entry
       lastViewEntry = viewEntry
     })
-    cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
+    cleanupTasks.push(() => viewStartedSubscription.unsubscribe())
 
     return {
       cleanupTasks,
+    }
+  }
+
+  function findViewEntryById(viewId: string): RumViewEntry | undefined {
+    const entry = internalApi
+      .findEvents({ type: 'view' })
+      .find((candidate) => (candidate.event as { view?: { id?: string } }).view?.id === viewId)
+    if (!entry) {
+      return undefined
+    }
+    const viewEvent = entry.event as { view: { id: string; name?: string } }
+    return {
+      viewId: viewEvent.view.id,
+      // Note: `viewName` is only filled when users use manual view creation via `startView` method.
+      viewName: getCustomOrDefaultViewName(viewEvent.view.name, document.location.pathname),
+      startClocks: entry.baggage.startClocks,
     }
   }
 
@@ -252,8 +303,8 @@ export function createRumProfiler(
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       views: [],
-      cleanupTasks,
       longTasks: [],
+      cleanupTasks,
       sessionId: session.findTrackedSession()?.id,
     }
 
@@ -280,14 +331,9 @@ export function createRumProfiler(
       .then((trace) => {
         const endClocks = clocksNow()
         const duration = elapsed(startClocks.relative, endClocks.relative)
-        const longTasks = longTaskHistory.findAll(startClocks.relative, duration)
-        const actions = actionHistory.findAll(startClocks.relative, duration)
-        const vitals = vitalHistory.findAll(startClocks.relative, duration).map((vital) => ({
-          id: vital.id,
-          label: vital.label,
-          startClocks: vital.startClocks,
-          duration: vital.duration,
-        }))
+        const longTasks = findLongTasksInWindow(startClocks.relative, duration)
+        const actions = findActionsInWindow(startClocks.relative, duration)
+        const vitals = findVitalsInWindow(startClocks.relative, duration)
         const isBelowDurationThreshold = duration < profilerConfiguration.minProfileDurationMs
 
         if (longTasks.length === 0 && isBelowDurationThreshold) {
@@ -312,6 +358,57 @@ export function createRumProfiler(
         )
       })
       .catch(monitorError)
+  }
+
+  // Events overlapping the profile window [startTime, startTime + duration] — same semantics as
+  // the histories' findAll.
+  function findEventsInWindow(eventType: 'long_task' | 'action' | 'vital', startTime: RelativeTime, duration: number) {
+    return internalApi.findEvents({
+      type: eventType,
+      startedBefore: addDuration(startTime, duration as Duration),
+      endedAfter: startTime,
+    })
+  }
+
+  function findLongTasksInWindow(startTime: RelativeTime, duration: number): LongTaskContext[] {
+    return findEventsInWindow('long_task', startTime, duration).map((entry) => {
+      const event = entry.event as {
+        long_task: { id: string; entry_type?: string; duration?: number }
+      }
+      return {
+        id: event.long_task.id,
+        startClocks: entry.baggage.startClocks,
+        duration: entry.baggage.duration!,
+        entryType:
+          event.long_task.entry_type === RumLongTaskEntryType.LONG_TASK
+            ? RumPerformanceEntryType.LONG_TASK
+            : RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      }
+    })
+  }
+
+  function findActionsInWindow(startTime: RelativeTime, duration: number) {
+    return findEventsInWindow('action', startTime, duration).map((entry) => {
+      const event = entry.event as { action: { id: string; target?: { name?: string } } }
+      return {
+        id: event.action.id,
+        label: event.action.target?.name ?? '',
+        startClocks: entry.baggage.startClocks,
+        duration: entry.baggage.duration ?? (0 as Duration),
+      }
+    })
+  }
+
+  function findVitalsInWindow(startTime: RelativeTime, duration: number) {
+    return findEventsInWindow('vital', startTime, duration).map((entry) => {
+      const event = entry.event as { vital: { id: string; name: string } }
+      return {
+        id: event.vital.id,
+        label: event.vital.name,
+        startClocks: entry.baggage.startClocks,
+        duration: entry.baggage.duration,
+      }
+    })
   }
 
   function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {

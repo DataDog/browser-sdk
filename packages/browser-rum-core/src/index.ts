@@ -1,6 +1,8 @@
 export type { RumPublicApi, RecorderApi, ProfilerApi, StartRecordingOptions } from './boot/rumPublicApi'
 export { makeRumPublicApi } from './boot/rumPublicApi'
 export { formatErrorEvent } from './domain/internalApi/errorFormatter'
+export { createRumInternalApi } from './domain/internalApi/rumInternalApi'
+export type { RumEventHistoryEntry, EventCounts } from './domain/internalApi/rumInternalApi.types'
 export type {
   RumInternalApi,
   ViewEventHandle,

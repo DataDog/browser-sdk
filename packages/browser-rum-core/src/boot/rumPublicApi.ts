@@ -78,7 +78,6 @@ import { startInternalApiBatch } from '../transport/startInternalApiBatch'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { ReplayStats } from '../rawRumEvent.types'
-import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 
 export interface StartRecordingOptions {
@@ -634,12 +633,12 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
+  // PoC phase 5 (see /plan.md): the profiler runs on the internal API, with the out-of-scope
+  // dependencies passed alongside (configuration, session manager, encoder).
   onRumStart: (
-    lifeCycle: LifeCycle,
-    hooks: Hooks,
+    internalApi: RumInternalApi,
     configuration: RumConfiguration,
     sessionManager: SessionManager,
-    viewHistory: ViewHistory,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) => void
 }
@@ -660,7 +659,7 @@ export interface RumPublicApiOptions {
 export function makeRumPublicApi(
   recorderApi: RecorderApi,
   // PoC corner-cut: the profiler is not wired to the internal API (onRumStart is not called)
-  _profilerApi: ProfilerApi,
+  profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
@@ -1101,6 +1100,16 @@ export function makeRumPublicApi(
         configuration
       )
     }
+
+    // PoC phase 5: the profiler runs on the internal API (findEvents for the histories,
+    // notifications for the session and view lifecycle). It needs a resolved session manager (it
+    // checks the session is tracked for its sampling decision), so it starts when the session
+    // manager resolves.
+    void sessionManagerPromise.then((newSessionManager) => {
+      if (newSessionManager) {
+        profilerApi.onRumStart(internalApi!, configuration!, newSessionManager, createEncoder)
+      }
+    })
   }
 
   function assertStarted(method: string): boolean {

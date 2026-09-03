@@ -1,4 +1,4 @@
-import type { Hooks, LifeCycle, ProfilerApi, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumInternalApi, ProfilerApi } from '@datadog/browser-rum-core'
 import type { DeflateEncoderStreamId, Encoder, SessionContext, SessionManager } from '@datadog/browser-core'
 import {
   BridgeCapability,
@@ -18,11 +18,9 @@ export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
 
   function onRumStart(
-    lifeCycle: LifeCycle,
-    hooks: Hooks,
+    internalApi: RumInternalApi,
     configuration: RumConfiguration,
     sessionManager: SessionManager,
-    viewHistory: ViewHistory,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) {
     const session = sessionManager.findTrackedSession() // Check if the session is tracked.
@@ -38,7 +36,7 @@ export function makeProfilerApi(): ProfilerApi {
     }
 
     // Listen to events and add the profiling context to them.
-    const profilingContextManager = startProfilingContext(hooks)
+    const profilingContextManager = startProfilingContext(internalApi)
 
     // Browser support check
     if (!mockable(isProfilingSupported)()) {
@@ -56,15 +54,7 @@ export function makeProfilerApi(): ProfilerApi {
           return
         }
 
-        profiler = createRumProfiler(
-          configuration,
-          lifeCycle,
-          sessionManager,
-          profilingContextManager,
-          createEncoder,
-          viewHistory,
-          undefined
-        )
+        profiler = createRumProfiler(internalApi, configuration, sessionManager, profilingContextManager, createEncoder)
         profiler.start()
       })
       .catch(monitorError)

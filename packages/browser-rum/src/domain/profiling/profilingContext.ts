@@ -1,5 +1,6 @@
 import { SKIPPED } from '@datadog/js-core/assembly'
-import type { Hooks, ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
+import type { Context } from '@datadog/browser-core'
+import type { ProfilingInternalContextSchema, RumInternalApi } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 
 export interface ProfilingContextManager {
@@ -7,12 +8,12 @@ export interface ProfilingContextManager {
   get: () => ProfilingInternalContextSchema | undefined
 }
 
-export function startProfilingContext(hooks: Hooks): ProfilingContextManager {
+export function startProfilingContext(internalApi: RumInternalApi): ProfilingContextManager {
   let currentContext: ProfilingInternalContextSchema = {
     status: 'starting',
   }
 
-  hooks.assemble.register(({ eventType }) => {
+  internalApi.registerHook(({ eventType }) => {
     if (
       eventType !== RumEventType.VIEW &&
       eventType !== RumEventType.LONG_TASK &&
@@ -27,7 +28,7 @@ export function startProfilingContext(hooks: Hooks): ProfilingContextManager {
       _dd: {
         profiling: currentContext,
       },
-    }
+    } as Context
   })
 
   return {

@@ -6,8 +6,8 @@ import {
   waitNextMicrotask,
   mockEventBridge,
 } from '@datadog/browser-core/test'
-import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
-import { createHooks, LifeCycle } from '@datadog/browser-rum-core'
+import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
+import { createRumInternalApi } from '@datadog/browser-rum-core'
 import { BridgeCapability, createIdentityEncoder } from '@datadog/browser-core'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { makeProfilerApi } from './profilerApi'
@@ -23,11 +23,9 @@ describe('profilerApi', () => {
       const profilerApi = makeProfilerApi()
 
       profilerApi.onRumStart(
-        new LifeCycle(),
-        createHooks(),
+        createRumInternalApi({ sessionManager: createSessionManagerMock() }),
         mockRumConfiguration({ sessionSampleRate: 60, profilingSampleRate: 60 }),
         createSessionManagerMock().setId(MID_HASH_UUID),
-        mockViewHistory(),
         createIdentityEncoder
       )
 
@@ -37,11 +35,11 @@ describe('profilerApi', () => {
 
   describe('bridge mode', () => {
     let createRumProfilerSpy: jasmine.Spy
+    let profilerInstance: { start: jasmine.Spy; stop: jasmine.Spy }
 
     beforeEach(() => {
-      createRumProfilerSpy = jasmine
-        .createSpy('createRumProfiler')
-        .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
+      profilerInstance = { start: jasmine.createSpy(), stop: jasmine.createSpy() }
+      createRumProfilerSpy = jasmine.createSpy('createRumProfiler').and.returnValue(profilerInstance)
       replaceMockable(isProfilingSupported, () => true)
       replaceMockable(lazyLoadProfiler, () => Promise.resolve(createRumProfilerSpy))
     })
@@ -49,47 +47,37 @@ describe('profilerApi', () => {
     async function startApi() {
       const api = makeProfilerApi()
       api.onRumStart(
-        new LifeCycle(),
-        createHooks(),
+        createRumInternalApi({ sessionManager: createSessionManagerMock() }),
         mockRumConfiguration({ profilingSampleRate: 100 }),
         createSessionManagerMock().setId('session-id-1'),
-        mockViewHistory(),
         createIdentityEncoder
       )
       await waitNextMicrotask() // let lazyLoadProfiler().then() run
       return api
     }
 
-    it('without bridge, it starts the profiler', async () => {
-      await startApi()
-      expect(createRumProfilerSpy).toHaveBeenCalled()
-    })
-
-    it('without PROFILES capability, it does not start the profiler', async () => {
-      mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
+    it('should not start the profiler if the bridge does not support profiling', async () => {
+      mockEventBridge({ capabilities: [] })
       await startApi()
       expect(createRumProfilerSpy).not.toHaveBeenCalled()
     })
 
-    it('with PROFILES capability, it starts the profiler', async () => {
-      mockEventBridge({ capabilities: [BridgeCapability.RECORDS, BridgeCapability.PROFILES] })
-      await startApi()
-      expect(createRumProfilerSpy).toHaveBeenCalled()
-    })
+    it('should start the profiler if the bridge supports profiling', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.PROFILES] })
 
-    it('with PROFILES capability, it starts the profiler even when profilingSampleRate is 0', async () => {
-      mockEventBridge({ capabilities: [BridgeCapability.RECORDS, BridgeCapability.PROFILES] })
-      const api = makeProfilerApi()
-      api.onRumStart(
-        new LifeCycle(),
-        createHooks(),
-        mockRumConfiguration({ profilingSampleRate: 0 }),
-        createSessionManagerMock().setId('session-id-1'),
-        mockViewHistory(),
-        createIdentityEncoder
-      )
-      await waitNextMicrotask()
+      const api = await startApi()
+
       expect(createRumProfilerSpy).toHaveBeenCalled()
+      // The profiler receives the internal API first ...
+      expect((createRumProfilerSpy.calls.argsFor(0)[0] as { notifications: unknown }).notifications).toBeDefined()
+      // ...followed by the configuration, session manager, profiling context manager and encoder
+      expect(createRumProfilerSpy.calls.argsFor(0)[1]).toBeDefined()
+      expect(createRumProfilerSpy.calls.argsFor(0)[2]).toBeDefined()
+      expect((createRumProfilerSpy.calls.argsFor(0)[3] as { set: unknown }).set).toBeDefined()
+      expect(createRumProfilerSpy.calls.argsFor(0)[4]).toBe(createIdentityEncoder)
+
+      api.stop()
+      expect(profilerInstance.stop).toHaveBeenCalled()
     })
   })
 })

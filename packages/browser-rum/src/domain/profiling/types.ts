@@ -1,17 +1,27 @@
 import type { Profiler } from '@datadog/js-core/util'
-import type { ClocksState } from '@datadog/js-core/time'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
 import type { TimeoutId } from '@datadog/browser-core'
+import type { RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace, RumViewEntry } from '../../types'
-import type { LongTaskContext } from './longTaskHistory'
 
+// Moved from longTaskHistory.ts (deleted in phase 5 of the internal API PoC, see /plan.md): the
+// long task shape attached to profiles, now read from internal API history entries.
+export interface LongTaskContext {
+  id: string
+  startClocks: ClocksState
+  duration: Duration
+  entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME | RumPerformanceEntryType.LONG_TASK
+}
+
+/**
+ * Additional data recorded during profiling session
+ */
 /**
  * Additional data recorded during profiling session
  */
 export interface RumProfilerEnrichmentData {
   /** List of detected long tasks */
   readonly longTasks: LongTaskContext[]
-  /** List of detected navigation entries */
-  readonly views: RumViewEntry[]
 }
 
 /**
@@ -35,6 +45,8 @@ export interface RumProfilerPausedInstance {
  */
 export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
   readonly state: 'running'
+  /** View entries collected during this instance */
+  readonly views: RumViewEntry[]
   /** Current profiler instance */
   readonly profiler: Profiler
   /** High resolution time when profiler session started */

@@ -464,23 +464,65 @@ domainContext})`. Check what `computeRawError` behavior is lost (forward-to-logs
   navigations are covered by phase 2 (b) buffering.
 - Update `packages/browser-rum-react/test/initializeReactPlugin.ts` and run the react package specs.
 
-## Phase 5 — Profiling
+## Phase 5 — Profiling — DONE
 
-`createRumProfiler` receives the `RumInternalApi` + the things that stay out of scope
-(`configuration`, `sessionManager`, `createEncoder`):
+`createRumProfiler` receives the `RumInternalApi` first, followed by the out-of-scope
+dependencies (`configuration`, `sessionManager`, `profilingContextManager`, `createEncoder`). The
+profiler is now WIRED in the phase 2 public API: it starts when the session manager resolves
+(`profilerApi.onRumStart` is called from `doInit`), where its sampling decision has a tracked
+session to check. The old `ProfilerApi` contract (LifeCycle, hooks, viewHistory) is replaced.
 
-- Try to **drop `longTaskHistory` / `actionHistory` / `vitalHistory` entirely** in favor of
-  `findEvents` (started/ended time-window queries). Subscribe to `event_collected` only where a
-  history query can't express what's needed (ex: vitals that started but are still ongoing —
-  `event_started` + `EventBaggage` should cover it). Any leftover history is a finding.
-- View entries (`datadogProfiler`) → `event_started` (view); session restart → `session_renewed` /
-  `session_expired`; `viewHistory.findView()` → `findEvents({ startedBefore: t, endedAfter: t })`.
-- `profilingContext` → `registerHook` (replaces `hooks.assemble.register`).
-- Check: `event_collected` is post-rate-limit/beforeSend. Long tasks are not rate-limited today,
-  but confirm discarded long tasks can't corrupt profile references (expected: dangling ids are
-  harmless).
+- **`longTaskHistory` / `actionHistory` / `vitalHistory` are gone entirely**: the profile
+  enrichment queries `findEvents` with time windows (`{ startedBefore: end, endedAfter: start }`
+  — same overlap semantics as the histories' `findAll`). No leftover history, and no
+  `event_collected` subscription was needed: ongoing vitals are found as incomplete entries
+  (undefined duration), as the old history's started ones. `LongTaskContext` moved to
+  `types.ts`; the old histories and their specs are deleted.
+- Mapping notes (behavior changes recorded):
+  - Long task durations come from `baggage.duration` (the relative duration) — the old history
+    read the raw event payload's duration.
+  - **Action labels are now `action.target.name`** from the assembled event. The old history
+    stored an always-empty label to account for customers redacting names in beforeSend;
+    entries carry the assembled event (post-beforeSend mutations apply to the same object), so
+    reading the name is consistent with that concern. Worth confirming with the backend team
+    before rollout.
+  - Discarded long tasks: entries of rate-limited/dismissed events complete too, so profile
+    references can point at events that were never sent — dangling ids, harmless as expected.
+- View entries: `event_started` (view) during a profiler instance, and the active view at start
+  (`findEvents` "active at t"). **Interface finding: `event_started` carries only the event id**,
+  so consumers needing kickoff fields (the view name) must run a `findEvents` lookup — the same
+  correlation problem `handle.id` / `handle.current()` addressed for click counts. The debrief
+  should consider carrying the kickoff (or a reference to the history entry) in `event_started`.
+- Session expiry / renewal: `session_expired` / `session_renewed` notifications. **Bug found while
+  porting**: the session notification subscription lives for the profiler's lifetime —
+  unsubscribing it on stop (as the per-instance cleanups do) breaks session-renewal restarts.
+- `profilingContext` → `internalApi.registerHook` (same event-type gating and `_dd.profiling`
+  attributes).
+- The profiling transport's error reporting used to notify `RAW_ERROR_COLLECTED` (surfaced as a
+  customer error event by the old pipeline); it now gets an idle LifeCycle — transport errors
+  are not surfaced to customers (corner-cut: the old pipeline is inert anyway).
+- Robustness note: passing a malformed `startClocks` to `addEvent` baggage creates NaN history
+  bounds that match every query — the internal API does not validate baggage shapes (found via a
+  spec bug; low priority, but worth a validation or a typed guard eventually).
 
-Validate: `browser-rum` unit tests (profiling specs). Deliverable: list of any remaining gaps.
+Validation: `yarn typecheck` + eslint pass. The old 1484-line LifeCycle-based
+`datadogProfiler.spec` is deleted with the architecture it tested (coverage inventory recorded:
+quota integration, visibility pause/resume, buffer-full/before-unload instance rotation,
+sampling and no-session cases); the remaining specs stay green untouched (quotaCheck,
+transport, debug ids, view name utils), the `profilingApi.spec` was adapted, `profilingContext`
+and `datadogProfiler` specs were rewritten on the internal API — profiles carry long tasks /
+actions / vitals from `findEvents` (with the internal API's own ids — they are owned by it),
+views from `event_started` + active-at-start with the default view name computation, session
+expiry stops and renewal restarts, and user-stopped profilers stay stopped. Whole `browser-rum`
+package: 674 pass, 0 fail.
+
+Remaining gaps for the debrief:
+
+- The long task / action / vital collectors themselves are not wired in the phase 2 public API
+  (auto-instrumentation corner-cut), so in the PoC pipeline profiles carry whatever the public
+  API collects manually — the enrichment code is the same either way.
+- The old spec's fine-grained coverage (quota generation races, visibility transitions) would
+  need porting before any rollout — the new spec covers the big lines only.
 
 ## Phase 6 — debrief
 
