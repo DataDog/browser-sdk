@@ -20,6 +20,12 @@
 
 ---
 
+## v7.12.0
+
+**Public Changes:**
+
+- 🐛 [Shopify] Defer plugin init until a checkout page view, fixing double session IDs ([#4981](https://github.com/DataDog/browser-sdk/pull/4981))
+
 ## v7.11.0
 
 **Public Changes:**
