@@ -689,9 +689,8 @@ describe('capture timeout', () => {
     const originalNow = performance.now.bind(performance)
     spyOn(performance, 'now').and.callFake(() => {
       callCount++
-      // First call is the deadline check at the start of captureValue,
-      // subsequent calls are from isTimedOut checks during property iteration.
-      // Return past-deadline after a few calls to simulate timeout mid-traversal.
+      // The first call sets the deadline, the second checks the root object, and
+      // the third allows the first nested object to be captured.
       if (callCount <= 3) {
         return originalNow()
       }
@@ -712,6 +711,13 @@ describe('capture timeout', () => {
     expect(Object.values(fields).filter((value: any) => value.notCapturedReason === 'timeout').length).toBeGreaterThan(
       1
     )
+    expect(fields.field0).toEqual({
+      type: 'Object',
+      fields: {
+        nested: { type: 'string', value: 'value' },
+      },
+    })
+    expect(fields.field1).toEqual({ type: 'Object', notCapturedReason: 'timeout' })
     expect((result as any).notCapturedReason).toBe('timeout')
   })
 
@@ -778,5 +784,12 @@ describe('capture timeout', () => {
     expect(ctx.timedOut).toBe(true)
     expect(Object.keys(result).length).toBe(20)
     expect(Object.values(result).filter((value) => value.notCapturedReason === 'timeout').length).toBeGreaterThan(1)
+    expect(result.field0).toEqual({
+      type: 'Object',
+      fields: {
+        nested: { type: 'string', value: 'value' },
+      },
+    })
+    expect(result.field2).toEqual({ type: 'Object', notCapturedReason: 'timeout' })
   })
 })
