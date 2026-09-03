@@ -14,9 +14,9 @@ export const enum FrustrationIgnore {
   ALL = 7,
 }
 
-export function shouldIgnore(ignore: FrustrationIgnore, frustration: number) {
+export function shouldIgnore(ignoredFrustrations: FrustrationIgnore, frustration: FrustrationIgnore) {
   // eslint-disable-next-line no-bitwise
-  return (ignore & frustration) !== 0
+  return (ignoredFrustrations & frustration) !== 0
 }
 
 export function getFrustrationIgnore(element: Element): FrustrationIgnore {
