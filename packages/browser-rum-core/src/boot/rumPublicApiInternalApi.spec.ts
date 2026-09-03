@@ -29,8 +29,11 @@ describe('rum public api (internal api PoC)', () => {
   }
 
   // Let the session manager promise resolve: the buffered events are assembled and land in the
-  // batch. mockClock only freezes timers, not microtasks, so a single await is enough.
+  // batch. mockClock only freezes timers, not microtasks, so awaiting microtasks is enough.
+  // Two hops: the public API resolves the internal API's deferred session manager promise when
+  // its session manager resolves, and the internal API attaches it one hop later.
   async function waitForSessionManagerResolution() {
+    await Promise.resolve()
     await Promise.resolve()
   }
 

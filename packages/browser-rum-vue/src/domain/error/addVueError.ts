@@ -1,7 +1,8 @@
 import type { ComponentInternalInstance, ComponentPublicInstance } from 'vue'
 import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
-import { onRumStart } from '../vuePlugin'
+import { ErrorSource, NonErrorPrefix, callMonitored, createHandlingStack } from '@datadog/browser-core'
+import { formatErrorEvent } from '@datadog/browser-rum-core'
+import { onRumInit } from '../vuePlugin'
 
 /**
  * Add a Vue error to the RUM session.
@@ -20,16 +21,30 @@ import { onRumStart } from '../vuePlugin'
 export function addVueError(error: unknown, instance: ComponentPublicInstance | null, info: string) {
   const handlingStack = createHandlingStack('vue error')
   const startClocks = clocksNow()
-  onRumStart((addError) => {
+  onRumInit((_configuration, _publicApi, internalApi) => {
     callMonitored(() => {
-      addError({
-        error,
+      const { baseRumEvent, rawError } = formatErrorEvent({
+        originalError: error,
         handlingStack,
         componentStack: buildComponentStack(instance, info),
+        nonErrorPrefix: NonErrorPrefix.PROVIDED,
+        source: ErrorSource.CUSTOM,
         startClocks,
-        context: {
-          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
-          framework: 'vue',
+      })
+      internalApi.addEvent({
+        baseRumEvent: {
+          ...baseRumEvent,
+          context: {
+            ...(typeof error === 'object' && error !== null
+              ? (error as { dd_context?: object }).dd_context
+              : undefined),
+            framework: 'vue',
+          },
+        },
+        baggage: {
+          startClocks: rawError.startClocks,
+          domainContext: { error, handlingStack },
+          originalError: error,
         },
       })
     })

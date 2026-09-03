@@ -179,8 +179,9 @@ Corner-cuts (per Benoit's decision; listed in the file headers):
 - Context managers (global / user / account / view, feature flags) are no-ops: the internal API
   doesn't assemble contexts yet.
 - No automatic instrumentation (no collectors: resources via fetch/xhr, long tasks, runtime
-  errors, vitals), no telemetry, no remote configuration, no plugins `onRumStart`, no
-  recorder/profiler wiring, no session-driven view renewal. `startView` replaces the previous
+  errors, vitals), no telemetry, no remote configuration, no recorder/profiler wiring, no
+  session-driven view renewal. (Plugins `onRumStart` was initially cut too, then replaced in
+  phase 4: the internal API is passed to plugins in `onInit` and `onRumStart` is removed.) `startView` replaces the previous
   view by `stop()`ing it at the new view start time (throw-on-double-view makes the caller
   sequence explicit). The automatic initial view starts at `clocksOrigin()` so it covers events
   collected before the session manager resolves.
@@ -395,10 +396,66 @@ Original plan notes for phase 3:
 Validate: `yarn test:unit --spec packages/browser-rum-core/src/domain/view/*.spec.ts` (and action
 specs); then the whole `browser-rum-core` suite, and record the delta.
 
-## Phase 4 — React plugin (errors + router)
+## Phase 4 — React plugin (errors + router) — DONE
+
+Wired as planned (and extended to all the framework plugins for compile compatibility — see
+below):
+
+- **`onInit` receives `{ initConfiguration, publicApi, internalApi }`, and `onRumStart` is
+  REMOVED** (per Benoit's review, superseding the initial wiring): there is no separate "RUM
+  start" moment anymore — the public API creates the internal API as soon as `init()` is called
+  (before configuration validation, so plugin `initConfiguration` mutations like
+  `trackViewsManually` still apply), and hands it to plugins right there. Its session manager
+  option is a deferred promise, resolved with the session manager value once validation passed
+  and the session manager started; events collected by plugins in the meantime (ex: a router
+  view at plugin init) are buffered by the internal API. `beforeSend` is wrapped with
+  `catchUserErrors` at creation, mirroring what validation does. Finding while wiring this: the
+  deferred must resolve with the session manager **value** (not the promise — adoption adds
+  microtask hops that reorder consumers), and the batch must subscribe its session flush on the
+  same deferred promise as the internal API — otherwise the internal API attaches its session
+  observables after the batch subscribed its flush, and a session expiry flushes the batch
+  before the final view version is upserted. Subscription order between consumers of the same
+  resolution is a real interface concern; worth an explicit guarantee (ex: documented order, or
+  the flush listening on a notification instead of the raw observable) in the debrief.
+- **`formatErrorEvent` free formatter added** (`domain/internalApi/errorFormatter.ts`, exported
+  from the package): the deferred phase 1 item. It runs browser-core's `computeRawError` and
+  formats the raw error as the error base event (kickoff + raw fields), returning the raw error so
+  callers build the baggage. Used by the public API's `addError` and every plugin. Found missing
+  while porting: `component_stack` was dropped from the formatting — errors would have lost their
+  framework component stacks.
+- Errors: `addReactError` (and `addVueError` / `addAngularError` / `reportNuxtError` /
+  `addNextjsError` — all five framework plugins got the same mechanical change, forced by the
+  `onInit`-receives-internalApi update) collect via `internalApi.addEvent` with the formatter + framework
+  context, carrying `originalError` and `handlingStack` in the baggage.
+  **Lost behavior noted**: the old `addError` notified `RAW_ERROR_COLLECTED` on the LifeCycle,
+  which the logs SDK consumes (`forwardErrorsToLogs`) — errors collected through the internal API
+  don't, so the RUM→logs forwarding is broken for them. The debrief must decide where raw-error
+  forwarding lives (a hook? a notification?).
+- Router: `startReactRouterView` / `startTanStackRouterView` start views with
+  `internalApi.startEvent({type:'view', view: {url, name}})`, explicitly `stop()`-ing the previous
+  handle at the new view's start time (throw-on-double-view makes the router contract explicit)
+  and emitting the initial version with `update({})` (phase 3a finding). With `onRumStart` gone,
+  the plugins' two-level subscriber pattern collapsed: router views and errors subscribe to the
+  plugin's single `onRumInit` queue and receive the internal API as an argument — pre-init calls
+  queue, pre-session ones are covered by the internal API buffering. The vue / angular / nuxt /
+  nextjs routers keep using `publicApi.startView` (still functional — it delegates to
+  trackViews/internalApi): react was the phase target, the others are compile compatibility.
+- `browser-rum-core` now exports the internal API types (`RumInternalApi`, handles, baggage,
+  `BaseRumEvent`, `AddEventOptions`, options), and a `createFakeInternalApi` test helper records
+  view names + spy handles. All `initialize*Plugin` test helpers take an `internalApi`. The e2e
+  plugin scenario was adapted (raw events go through `internalApi.addEvent`; the view-through-
+  addEvent case now throws and is swallowed by the scenario).
+
+Validation: all plugin suites green — react 166, vue 39, angular 26, nuxt 33, nextjs 34 —
+plus `browser-rum-core` 1236. Two spec assertions needed fixing to the formatter's actual output
+(the `Provided "..."` prefix for non-Error values). The react specs now also assert the explicit
+router contract: the previous view handle is stopped when a new view starts.
+
+Original plan:
 
 - `onRumStart` receives the `RumInternalApi` instance (keep `onInit({initConfiguration, publicApi})`
-  as-is: pre-init needs the public API and `trackViewsManually` mutation).
+  as-is: pre-init needs the public API and `trackViewsManually` mutation). (Superseded: the
+  internal API is now passed to `onInit` and `onRumStart` is removed — see above.)
 - Errors: `addReactError` → formatter free function + `api.addEvent({baseRumEvent, startClocks,
 domainContext})`. Check what `computeRawError` behavior is lost (forward-to-logs coupling) and
   note it.

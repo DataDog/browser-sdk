@@ -1,5 +1,6 @@
 import type { EnvironmentInjector } from '@angular/core'
 import { ErrorHandler, Injector, createEnvironmentInjector } from '@angular/core'
+import { createFakeInternalApi } from '../../../../browser-rum-core/test'
 import { initializeAngularPlugin } from '../../../test/initializeAngularPlugin'
 import { provideDatadogErrorHandler } from './provideDatadogErrorHandler'
 
@@ -10,14 +11,14 @@ function createErrorHandler(): ErrorHandler {
 
 describe('provideDatadogErrorHandler', () => {
   it('provides an ErrorHandler that reports errors to Datadog', () => {
-    const addErrorSpy = jasmine.createSpy()
-    initializeAngularPlugin({ addError: addErrorSpy })
+    const { internalApi, addEvent } = createFakeInternalApi()
+    initializeAngularPlugin({ internalApi })
 
     spyOn(console, 'error') // Mute console.errors
     const handler = createErrorHandler()
     handler.handleError(new Error('test error'))
 
-    expect(addErrorSpy).toHaveBeenCalled()
+    expect(addEvent).toHaveBeenCalledOnceWith(jasmine.objectContaining({ baggage: jasmine.objectContaining({}) }))
   })
 
   it('still logs the error to the console via default ErrorHandler', () => {

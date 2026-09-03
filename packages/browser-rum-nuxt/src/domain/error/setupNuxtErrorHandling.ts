@@ -1,7 +1,8 @@
-import type { StartRumResult } from '@datadog/browser-rum-core'
+import type { RumInternalApi } from '@datadog/browser-rum-core'
+import { ErrorSource, NonErrorPrefix, callMonitored, createHandlingStack } from '@datadog/browser-core'
+import { formatErrorEvent } from '@datadog/browser-rum-core'
 import type { ComponentInternalInstance, ComponentPublicInstance, App } from 'vue'
 import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
 
 export interface NuxtApp {
   vueApp: App
@@ -13,7 +14,7 @@ export interface NuxtApp {
 export type NuxtErrorReporter = (error: unknown, instance: ComponentPublicInstance | null, info: string) => void
 
 export function reportNuxtError(
-  addError: StartRumResult['addError'],
+  internalApi: RumInternalApi,
   error: unknown,
   instance: ComponentPublicInstance | null,
   info: string
@@ -22,14 +23,26 @@ export function reportNuxtError(
   const startClocks = clocksNow()
 
   callMonitored(() => {
-    addError({
-      error,
+    const { baseRumEvent, rawError } = formatErrorEvent({
+      originalError: error,
       handlingStack,
       componentStack: buildComponentStack(instance, info),
+      nonErrorPrefix: NonErrorPrefix.PROVIDED,
+      source: ErrorSource.CUSTOM,
       startClocks,
-      context: {
-        ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
-        framework: 'nuxt',
+    })
+    internalApi.addEvent({
+      baseRumEvent: {
+        ...baseRumEvent,
+        context: {
+          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
+          framework: 'nuxt',
+        },
+      },
+      baggage: {
+        startClocks: rawError.startClocks,
+        domainContext: { error, handlingStack },
+        originalError: error,
       },
     })
   })

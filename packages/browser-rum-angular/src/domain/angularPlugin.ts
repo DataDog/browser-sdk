@@ -1,16 +1,18 @@
 import { VERSION } from '@angular/core'
 import { toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumInternalApi, RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
 
-type InitSubscriber = (configuration: AngularPluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addError: StartRumResult['addError']) => void
+type InitSubscriber = (
+  configuration: AngularPluginConfiguration,
+  rumPublicApi: RumPublicApi,
+  internalApi: RumInternalApi
+) => void
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: AngularPluginConfiguration | undefined
-let globalAddError: StartRumResult['addError'] | undefined
+let globalInternalApi: RumInternalApi | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
-const onRumStartSubscribers: StartSubscriber[] = []
 
 /**
  * Angular plugin configuration.
@@ -46,22 +48,15 @@ export interface AngularPluginConfiguration {
 export function angularPlugin(configuration: AngularPluginConfiguration = {}): RumPlugin {
   return {
     name: 'angular',
-    onInit({ publicApi, initConfiguration }) {
+    onInit({ publicApi, initConfiguration, internalApi }) {
       globalPublicApi = publicApi
       globalConfiguration = configuration
+      globalInternalApi = internalApi
       for (const subscriber of onRumInitSubscribers) {
-        subscriber(globalConfiguration, globalPublicApi)
+        subscriber(globalConfiguration, globalPublicApi, internalApi)
       }
       if (configuration.router) {
         initConfiguration.trackViewsManually = true
-      }
-    },
-    onRumStart({ addError }) {
-      globalAddError = addError
-      if (addError) {
-        for (const subscriber of onRumStartSubscribers) {
-          subscriber(addError)
-        }
       }
     },
     getConfigurationTelemetry() {
@@ -75,25 +70,16 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
 }
 
 export function onRumInit(callback: InitSubscriber) {
-  if (globalConfiguration && globalPublicApi) {
-    callback(globalConfiguration, globalPublicApi)
+  if (globalConfiguration && globalPublicApi && globalInternalApi) {
+    callback(globalConfiguration, globalPublicApi, globalInternalApi)
   } else {
     onRumInitSubscribers.push(callback)
-  }
-}
-
-export function onRumStart(callback: StartSubscriber) {
-  if (globalAddError) {
-    callback(globalAddError)
-  } else {
-    onRumStartSubscribers.push(callback)
   }
 }
 
 export function resetAngularPlugin() {
   globalPublicApi = undefined
   globalConfiguration = undefined
-  globalAddError = undefined
+  globalInternalApi = undefined
   onRumInitSubscribers.length = 0
-  onRumStartSubscribers.length = 0
 }

@@ -51,7 +51,6 @@ export type {
   ResourceStopOptions,
   TracingOption,
   RumPlugin,
-  OnRumStartOptions,
   PropagatorType,
   FeatureFlagsForEvents,
   MatchHeader,

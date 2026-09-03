@@ -1,7 +1,8 @@
 import { version as reactVersion } from 'react'
 import { toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
-import { onRumInit, onRumStart, reactPlugin, resetReactPlugin, setReactRouterType } from './reactPlugin'
+import { createFakeInternalApi } from '../../../browser-rum-core/test'
+import { onRumInit, reactPlugin, resetReactPlugin, setReactRouterType } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
@@ -17,7 +18,6 @@ describe('reactPlugin', () => {
       jasmine.objectContaining({
         name: 'react',
         onInit: jasmine.any(Function),
-        onRumStart: jasmine.any(Function),
       })
     )
   })
@@ -29,22 +29,27 @@ describe('reactPlugin', () => {
 
     expect(callbackSpy).not.toHaveBeenCalled()
 
+    const { internalApi } = createFakeInternalApi()
     reactPlugin(pluginConfiguration).onInit({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
+      internalApi,
     })
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
     expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.calls.mostRecent().args[2]).toBe(internalApi)
   })
 
   it('calls callbacks immediately if onInit was already invoked', () => {
     const callbackSpy = jasmine.createSpy()
     const pluginConfiguration = {}
+    const { internalApi } = createFakeInternalApi()
     reactPlugin(pluginConfiguration).onInit({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
+      internalApi,
     })
 
     onRumInit(callbackSpy)
@@ -52,18 +57,27 @@ describe('reactPlugin', () => {
     expect(callbackSpy).toHaveBeenCalledTimes(1)
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
     expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.calls.mostRecent().args[2]).toBe(internalApi)
   })
 
   it('enforce manual view tracking when router is enabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    reactPlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    reactPlugin({ router: true }).onInit({
+      publicApi: PUBLIC_API,
+      initConfiguration,
+      internalApi: createFakeInternalApi().internalApi,
+    })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('does not enforce manual view tracking when router is disabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    reactPlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    reactPlugin({ router: false }).onInit({
+      publicApi: PUBLIC_API,
+      initConfiguration,
+      internalApi: createFakeInternalApi().internalApi,
+    })
 
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })
@@ -89,23 +103,14 @@ describe('reactPlugin', () => {
     })
   })
 
-  it('calls onRumStart subscribers during onRumStart', () => {
+  it('dispatches the internal API to onRumInit subscribers during onInit', () => {
     const callbackSpy = jasmine.createSpy()
-    const addErrorSpy = jasmine.createSpy()
-    onRumStart(callbackSpy)
+    const { internalApi } = createFakeInternalApi()
+    onRumInit(callbackSpy)
 
-    reactPlugin().onRumStart({ addError: addErrorSpy })
+    reactPlugin().onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION, internalApi })
 
-    expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
-  })
-
-  it('calls onRumStart subscribers immediately if already started', () => {
-    const addErrorSpy = jasmine.createSpy()
-    reactPlugin().onRumStart({ addError: addErrorSpy })
-
-    const callbackSpy = jasmine.createSpy()
-    onRumStart(callbackSpy)
-
-    expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
+    expect(callbackSpy).toHaveBeenCalledTimes(1)
+    expect(callbackSpy.calls.mostRecent().args[2]).toBe(internalApi)
   })
 })

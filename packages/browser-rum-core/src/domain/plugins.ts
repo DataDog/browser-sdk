@@ -1,22 +1,6 @@
 import type { RumPublicApi } from '../boot/rumPublicApi'
-import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
-
-/**
- * onRumStart plugin API options.
- *
- * @experimental
- */
-export interface OnRumStartOptions {
-  /**
-   * Add an event to the RUM browser SDK.
-   */
-  addEvent?: StartRumResult['addEvent']
-  /**
-   * Add a custom error to the RUM browser SDK.
-   */
-  addError?: StartRumResult['addError']
-}
+import type { RumInternalApi } from './internalApi/rumInternalApi.types'
 
 /**
  * Plugin interface of the RUM browser SDK.
@@ -30,11 +14,14 @@ export interface OnRumStartOptions {
 export interface RumPlugin {
   name: string
   getConfigurationTelemetry?(): Record<string, unknown>
-  onInit?(options: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }): void
-  onRumStart?(options: OnRumStartOptions): void
+  onInit?(options: {
+    initConfiguration: RumInitConfiguration
+    publicApi: RumPublicApi
+    internalApi: RumInternalApi
+  }): void
 }
 
-type MethodNames = 'onInit' | 'onRumStart'
+type MethodNames = 'onInit'
 type MethodParameter<MethodName extends MethodNames> = Parameters<NonNullable<RumPlugin[MethodName]>>[0]
 
 export function callPluginsMethod<MethodName extends MethodNames>(

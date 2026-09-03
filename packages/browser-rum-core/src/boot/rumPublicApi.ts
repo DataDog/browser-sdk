@@ -3,8 +3,9 @@
 // pre-start buffer: public API calls land immediately, and events are assembled and sent once the
 // session manager resolves. Corner-cuts, documented in /plan.md: tracking consent is assumed
 // granted, global / user / account contexts are not supported (no-op), automatic
-// instrumentation, telemetry and remote configuration are not started, and plugins 'onRumStart'
-// and the recorder / profiler integrations are not wired. Views are tracked by the phase 3a
+// instrumentation, telemetry and remote configuration are not started, and the recorder /
+// profiler integrations are not wired. Plugins receive the internal API in onInit. Views are
+// tracked by the phase 3a
 // trackViews port: real metrics, location-change / BFCache / session
 // renewal.
 
@@ -29,13 +30,12 @@ import {
   addTelemetryUsage,
   canUseEventBridge,
   callMonitored,
-  computeRawError,
+  catchUserErrors,
   createHandlingStack,
   createIdentityEncoder,
   createTrackingConsentState,
   display,
   displayAlreadyInitializedError,
-  ErrorHandling,
   ErrorSource,
   ResourceType,
   initFeatureFlags,
@@ -55,13 +55,9 @@ import {
 import { DEFAULT_TRACKED_RESOURCE_HEADERS, validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { createRumInternalApi } from '../domain/internalApi/rumInternalApi'
-import type {
-  AddEventOptions,
-  BeforeSend,
-  NonViewEventHandle,
-  RumInternalApi,
-} from '../domain/internalApi/rumInternalApi'
+import type { BeforeSend, NonViewEventHandle, RumInternalApi } from '../domain/internalApi/rumInternalApi'
 import { callPluginsMethod } from '../domain/plugins'
+import { formatErrorEvent } from '../domain/internalApi/errorFormatter'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { trackViews } from '../domain/view/trackViews'
@@ -673,6 +669,13 @@ export function makeRumPublicApi(
   let configuration: RumConfiguration | undefined
   let internalApi: RumInternalApi | undefined
   let sessionManager: SessionManager | undefined
+  // Resolves the internal API's session manager promise once the session manager started (see
+  // doInit: the internal API is created before validation, so plugins receive it in onInit). The
+  // batch also subscribes on this deferred promise, so the internal API attaches its session
+  // observables (ex: ending views on session expiry) before the batch subscribes its session
+  // flush — the order matters: the final view version must be upserted before the flush.
+  let internalApiSessionManagerPromise: Promise<SessionManager | undefined> | undefined
+  let resolveSessionManagerPromise: ((sessionManager: SessionManager | undefined) => void) | undefined
   // PoC phase 3a: trackViews ported to the internal API (real view metrics, location-change and
   // BFCache renewal, session renewal / expiry).
   let viewTracking: ReturnType<typeof trackViews> | undefined
@@ -845,33 +848,15 @@ export function makeRumPublicApi(
           return
         }
         const startClocks = clocksNow()
-        const rawError = computeRawError({
+        const { baseRumEvent } = formatErrorEvent({
           originalError: error,
           handlingStack,
-          componentStack: undefined,
-          startClocks,
           nonErrorPrefix: NonErrorPrefix.PROVIDED,
           source: ErrorSource.CUSTOM,
-          handling: ErrorHandling.HANDLED,
+          startClocks,
         })
         internalApi!.addEvent({
-          // Cast: some raw error fields (causes, debug ids) don't fit the kickoff Context shape
-          baseRumEvent: {
-            type: 'error',
-            error: {
-              message: rawError.message,
-              source: rawError.source,
-              stack: rawError.stack,
-              handling_stack: rawError.handlingStack,
-              type: rawError.type,
-              handling: rawError.handling,
-              causes: rawError.causes,
-              fingerprint: rawError.fingerprint,
-              csp: rawError.csp,
-            },
-            context: sanitize(context) as Context,
-            _dd: { debug_ids: rawError.debugIds },
-          } as unknown as AddEventOptions['baseRumEvent'],
+          baseRumEvent: { ...baseRumEvent, context: sanitize(context) as Context },
           baggage: {
             startClocks,
             domainContext: { error, handlingStack },
@@ -1012,9 +997,29 @@ export function makeRumPublicApi(
       return
     }
 
+    // PoC phase 4 (per Benoit's review): the internal API is created as soon as init() is called,
+    // before configuration validation, so plugins receive it in onInit — there is no separate
+    // "RUM start" moment anymore (onRumStart is gone). Its session manager promise is deferred:
+    // it resolves once validation passed and the session manager started, and events collected
+    // in the meantime are buffered by the internal API. beforeSend is wrapped with
+    // catchUserErrors, mirroring what validation does with it. A later init() call (ex: after a
+    // first invalid one) reuses the same instance.
+    if (!internalApi) {
+      internalApiSessionManagerPromise = new Promise<SessionManager | undefined>((resolve) => {
+        resolveSessionManagerPromise = resolve
+      })
+      internalApi = createRumInternalApi({
+        sessionManager: internalApiSessionManagerPromise,
+        beforeSend: newInitConfiguration.beforeSend
+          ? (catchUserErrors(newInitConfiguration.beforeSend, 'beforeSend threw an error:') as unknown as BeforeSend)
+          : undefined,
+      })
+    }
+
     callPluginsMethod(newInitConfiguration.plugins, 'onInit', {
       initConfiguration: newInitConfiguration,
       publicApi: rumPublicApi,
+      internalApi,
     })
 
     if (configuration) {
@@ -1041,13 +1046,13 @@ export function makeRumPublicApi(
     void sessionManagerPromise
       .then((newSessionManager) => {
         sessionManager = newSessionManager
+        // The internal API's deferred session manager promise (created at the top of doInit)
+        // resolves with the real session manager: its buffered events are assembled and sent
+        // from now on. Resolving with the value (not the promise) keeps the resolution a single
+        // microtask hop after the session manager resolves.
+        resolveSessionManagerPromise?.(newSessionManager)
       })
       .catch(monitorError)
-
-    internalApi = createRumInternalApi({
-      sessionManager: sessionManagerPromise,
-      beforeSend: configuration.beforeSend as unknown as BeforeSend,
-    })
 
     let deflateWorker: DeflateWorker | undefined
     if (configuration.compressIntakeRequests && !canUseEventBridge() && options.startDeflateWorker) {
@@ -1065,7 +1070,9 @@ export function makeRumPublicApi(
     const { prepareUrgentFlushObservable } = startInternalApiBatch(
       configuration,
       internalApi,
-      sessionManagerPromise,
+      // The deferred promise (not the raw session manager one), so session subscription order is
+      // deterministic — see the comment on internalApiSessionManagerPromise
+      internalApiSessionManagerPromise!,
       createEncoder
     )
 

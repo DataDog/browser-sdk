@@ -1,15 +1,17 @@
+import { createFakeInternalApi } from '../../../../browser-rum-core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { wrapCreateRouter } from './wrapCreateRouter'
 import type { AnyTanStackCreateRouter, AnyTanStackNavigationEvent, AnyTanStackRouterInstance } from './types'
 
 describe('wrapCreateRouter', () => {
-  let startViewSpy: jasmine.Spy<(name?: string | object) => void>
+  let viewNames: string[]
 
   beforeEach(() => {
-    startViewSpy = jasmine.createSpy()
+    const fakeInternalApi = createFakeInternalApi()
+    viewNames = fakeInternalApi.viewNames
     initializeReactPlugin({
       configuration: { router: true },
-      publicApi: { startView: startViewSpy },
+      internalApi: fakeInternalApi.internalApi,
     })
   })
 
@@ -21,16 +23,16 @@ describe('wrapCreateRouter', () => {
 
     triggerOnLoad({ type: 'onLoad', pathChanged: true, toLocation: { pathname: '/posts/42' } })
 
-    expect(startViewSpy).toHaveBeenCalledWith('/posts/$postId')
+    expect(viewNames).toContain('/posts/$postId')
   })
 
   it('should not start a new view when only query params change', () => {
     const { triggerOnLoad } = createFakeRouter([{ fullPath: '/', pathname: '/', params: {} }])
 
-    startViewSpy.calls.reset()
+    viewNames.length = 0
     triggerOnLoad({ type: 'onLoad', pathChanged: false, toLocation: { pathname: '/' } })
 
-    expect(startViewSpy).not.toHaveBeenCalled()
+    expect(viewNames).toEqual([])
   })
 
   it('should track the initial view via onLoad', () => {
@@ -38,7 +40,7 @@ describe('wrapCreateRouter', () => {
 
     triggerOnLoad({ type: 'onLoad', pathChanged: true, toLocation: { pathname: '/' } })
 
-    expect(startViewSpy).toHaveBeenCalledWith('/')
+    expect(viewNames).toContain('/')
   })
 
   it('should use the last match fullPath as view name', () => {
@@ -49,7 +51,7 @@ describe('wrapCreateRouter', () => {
 
     triggerOnLoad({ type: 'onLoad', pathChanged: true, toLocation: { pathname: '/users/1' } })
 
-    expect(startViewSpy).toHaveBeenCalledWith('/users/$userId')
+    expect(viewNames).toContain('/users/$userId')
   })
 
   it('should substitute splat routes with actual path', () => {
@@ -60,7 +62,7 @@ describe('wrapCreateRouter', () => {
 
     triggerOnLoad({ type: 'onLoad', pathChanged: true, toLocation: { pathname: '/files/deep/path' } })
 
-    expect(startViewSpy).toHaveBeenCalledWith('/files/deep/path')
+    expect(viewNames).toContain('/files/deep/path')
   })
 
   it('should return "/" for root route', () => {
@@ -71,7 +73,7 @@ describe('wrapCreateRouter', () => {
 
     triggerOnLoad({ type: 'onLoad', pathChanged: true, toLocation: { pathname: '/' } })
 
-    expect(startViewSpy).toHaveBeenCalledWith('/')
+    expect(viewNames).toContain('/')
   })
 })
 

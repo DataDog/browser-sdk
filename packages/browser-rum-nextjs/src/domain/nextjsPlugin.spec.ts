@@ -1,15 +1,8 @@
 import { globalObject } from '@datadog/js-core/util'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
-import { appendElement } from '../../../browser-rum-core/test'
-import {
-  nextjsPlugin,
-  startNextjsView,
-  onRumInit,
-  onRumStart,
-  onRouterTransitionStart,
-  resetNextjsPlugin,
-} from './nextjsPlugin'
+import { appendElement, createFakeInternalApi } from '../../../browser-rum-core/test'
+import { nextjsPlugin, startNextjsView, onRumInit, onRouterTransitionStart, resetNextjsPlugin } from './nextjsPlugin'
 
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
@@ -25,7 +18,11 @@ function createPublicApi() {
 function initPlugin() {
   const { publicApi, startViewSpy } = createPublicApi()
   const plugin = nextjsPlugin()
-  plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
+  plugin.onInit({
+    publicApi,
+    initConfiguration: { ...INIT_CONFIGURATION },
+    internalApi: createFakeInternalApi().internalApi,
+  })
   return { plugin, publicApi, startViewSpy }
 }
 
@@ -48,7 +45,6 @@ describe('nextjsPlugin', () => {
       jasmine.objectContaining({
         name: 'nextjs',
         onInit: jasmine.any(Function),
-        onRumStart: jasmine.any(Function),
         getConfigurationTelemetry: jasmine.any(Function),
       })
     )
@@ -58,7 +54,11 @@ describe('nextjsPlugin', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
     const { publicApi } = createPublicApi()
 
-    nextjsPlugin().onInit({ publicApi, initConfiguration })
+    nextjsPlugin().onInit({
+      publicApi,
+      initConfiguration,
+      internalApi: createFakeInternalApi().internalApi,
+    })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
@@ -129,6 +129,7 @@ describe('nextjsPlugin', () => {
     it('calls onRumInit subscribers during onInit', () => {
       const callbackSpy = jasmine.createSpy()
       const { publicApi } = createPublicApi()
+      const { internalApi } = createFakeInternalApi()
       onRumInit(callbackSpy)
 
       expect(callbackSpy).not.toHaveBeenCalled()
@@ -136,47 +137,30 @@ describe('nextjsPlugin', () => {
       nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
+        internalApi,
       })
 
       expect(callbackSpy).toHaveBeenCalledTimes(1)
       expect(callbackSpy.calls.mostRecent().args[0]).toBe(publicApi)
+      expect(callbackSpy.calls.mostRecent().args[1]).toBe(internalApi)
     })
 
     it('calls onRumInit subscriber immediately if already initialized', () => {
       const callbackSpy = jasmine.createSpy()
       const { publicApi } = createPublicApi()
+      const { internalApi } = createFakeInternalApi()
 
       nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
+        internalApi,
       })
 
       onRumInit(callbackSpy)
 
       expect(callbackSpy).toHaveBeenCalledTimes(1)
       expect(callbackSpy.calls.mostRecent().args[0]).toBe(publicApi)
-    })
-
-    it('calls onRumStart subscribers during onRumStart', () => {
-      const callbackSpy = jasmine.createSpy()
-      const mockAddError = jasmine.createSpy()
-      onRumStart(callbackSpy)
-
-      const { plugin } = initPlugin()
-      plugin.onRumStart({ addError: mockAddError })
-
-      expect(callbackSpy).toHaveBeenCalledWith(mockAddError)
-    })
-
-    it('calls onRumStart subscriber immediately if already started', () => {
-      const mockAddError = jasmine.createSpy()
-      const { plugin } = initPlugin()
-      plugin.onRumStart({ addError: mockAddError })
-
-      const callbackSpy = jasmine.createSpy()
-      onRumStart(callbackSpy)
-
-      expect(callbackSpy).toHaveBeenCalledWith(mockAddError)
+      expect(callbackSpy.calls.mostRecent().args[1]).toBe(internalApi)
     })
   })
 })

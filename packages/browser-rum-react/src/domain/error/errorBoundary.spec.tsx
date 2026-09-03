@@ -1,6 +1,7 @@
 import React, { act } from 'react'
 
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../browser-core/test'
+import { createFakeInternalApi } from '../../../../browser-rum-core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
@@ -84,9 +85,9 @@ describe('ErrorBoundary', () => {
   })
 
   it('reports the error through addReactError', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const { internalApi, addEvent } = createFakeInternalApi()
     initializeReactPlugin({
-      addError: addErrorSpy,
+      internalApi,
     })
     const originalError = new Error('error')
     const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
@@ -98,16 +99,21 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(
+    expect(addEvent).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({
-        error: originalError,
-        handlingStack: jasmine.any(String),
-        startClocks: jasmine.any(Object),
-        context: {
-          framework: 'react',
-        },
-        componentStack: jasmine.stringContaining('ComponentSpy'),
+        baseRumEvent: jasmine.objectContaining({
+          type: 'error',
+          error: jasmine.objectContaining({ message: 'error' }),
+          context: {
+            framework: 'react',
+          },
+        }),
+        baggage: jasmine.objectContaining({ originalError }),
       })
     )
+    expect(
+      (addEvent.calls.mostRecent().args[0] as { baseRumEvent: { error: { component_stack?: string } } }).baseRumEvent
+        .error.component_stack
+    ).toContain('ComponentSpy')
   })
 })

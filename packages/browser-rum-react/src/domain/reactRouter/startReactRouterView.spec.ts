@@ -9,6 +9,7 @@ import {
   type RouteObject as RouteObjectV7,
   type RouteMatch as RouteMatchV7,
 } from 'react-router-dom'
+import { createFakeInternalApi } from '../../../../browser-rum-core/test'
 import { registerCleanupTask } from '../../../../browser-core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { startReactRouterView, computeViewName } from './startReactRouterView'
@@ -29,14 +30,12 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
   describe(`startReactRouterView (${version})`, () => {
     describe('startReactRouterView', () => {
       it('creates a new view with the computed view name', () => {
-        const startViewSpy = jasmine.createSpy()
+        const { internalApi, viewNames } = createFakeInternalApi()
         initializeReactPlugin({
           configuration: {
             router: true,
           },
-          publicApi: {
-            startView: startViewSpy,
-          },
+          internalApi,
         })
 
         startReactRouterView([
@@ -45,7 +44,26 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
           { route: { path: ':id' } },
         ] as unknown as AnyRouteMatch[])
 
-        expect(startViewSpy).toHaveBeenCalledOnceWith('/user/:id')
+        expect(viewNames).toEqual(['/user/:id'])
+      })
+
+      it('stops the previous view when a new one is started', () => {
+        const { internalApi, viewNames, viewHandles } = createFakeInternalApi()
+        initializeReactPlugin({
+          configuration: {
+            router: true,
+          },
+          internalApi,
+        })
+
+        startReactRouterView([{ route: { path: '/first' } }] as unknown as AnyRouteMatch[])
+        startReactRouterView([{ route: { path: '/second' } }] as unknown as AnyRouteMatch[])
+
+        // The router contract is explicit: the previous view handle is stopped at the new view
+        // start time (throw-on-double-view would make a missing stop loud)
+        expect(viewHandles[0].stop).toHaveBeenCalled()
+        expect(viewHandles[1].stop).not.toHaveBeenCalled()
+        expect(viewNames).toEqual(['/first', '/second'])
       })
 
       it('displays a warning if the router integration is not enabled', () => {

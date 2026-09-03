@@ -2,6 +2,7 @@ import type { Router } from 'vue-router'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
+import { createFakeInternalApi } from '../../../browser-rum-core/test'
 import type { NuxtApp } from './error/setupNuxtErrorHandling'
 import { nuxtRumPlugin, resetNuxtPlugin } from './nuxtPlugin'
 
@@ -24,7 +25,11 @@ describe('nuxtRumPlugin', () => {
   it('sets trackViewsManually to true', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
 
-    nuxtRumPlugin({ router: makeRouter() }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    nuxtRumPlugin({ router: makeRouter() }).onInit({
+      publicApi: PUBLIC_API,
+      initConfiguration,
+      internalApi: createFakeInternalApi().internalApi,
+    })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })

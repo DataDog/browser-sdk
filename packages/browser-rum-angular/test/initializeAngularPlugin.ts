@@ -1,12 +1,12 @@
-import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import type { RumInitConfiguration, RumInternalApi, RumPublicApi } from '@datadog/browser-rum-core'
+import { createFakeInternalApi } from '../../browser-rum-core/test'
 import { angularPlugin, resetAngularPlugin } from '../src/domain/angularPlugin'
 import { registerCleanupTask } from '../../browser-core/test'
 
 export function initializeAngularPlugin({
-  addError = noop,
+  internalApi = createFakeInternalApi().internalApi,
 }: {
-  addError?: StartRumResult['addError']
+  internalApi?: RumInternalApi
 } = {}) {
   resetAngularPlugin()
   const plugin = angularPlugin()
@@ -14,8 +14,8 @@ export function initializeAngularPlugin({
   plugin.onInit!({
     publicApi: {} as RumPublicApi,
     initConfiguration: {} as RumInitConfiguration,
+    internalApi,
   })
-  plugin.onRumStart!({ addError })
 
   registerCleanupTask(() => {
     resetAngularPlugin()

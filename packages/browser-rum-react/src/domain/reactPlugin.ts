@@ -1,18 +1,20 @@
 import { version as reactVersion } from 'react'
 import { toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumInternalApi, RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
 
 type ReactRouterType = 'react-router-v6' | 'react-router-v7' | 'react-router-v8' | 'tanstack-router-v1'
-type InitSubscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addError: StartRumResult['addError']) => void
+type InitSubscriber = (
+  configuration: ReactPluginConfiguration,
+  rumPublicApi: RumPublicApi,
+  internalApi: RumInternalApi
+) => void
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined
-let globalAddError: StartRumResult['addError'] | undefined
+let globalInternalApi: RumInternalApi | undefined
 let routerType: ReactRouterType | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
-const onRumStartSubscribers: StartSubscriber[] = []
 
 /**
  * React plugin configuration.
@@ -60,22 +62,15 @@ export type ReactPlugin = Required<RumPlugin>
 export function reactPlugin(configuration: ReactPluginConfiguration = {}): ReactPlugin {
   return {
     name: 'react',
-    onInit({ publicApi, initConfiguration }) {
+    onInit({ publicApi, initConfiguration, internalApi }) {
       globalPublicApi = publicApi
       globalConfiguration = configuration
+      globalInternalApi = internalApi
       for (const subscriber of onRumInitSubscribers) {
-        subscriber(globalConfiguration, globalPublicApi)
+        subscriber(globalConfiguration, globalPublicApi, internalApi)
       }
       if (configuration.router) {
         initConfiguration.trackViewsManually = true
-      }
-    },
-    onRumStart({ addError }) {
-      globalAddError = addError
-      for (const subscriber of onRumStartSubscribers) {
-        if (addError) {
-          subscriber(addError)
-        }
       }
     },
     getConfigurationTelemetry() {
@@ -93,26 +88,17 @@ export function setReactRouterType(type: ReactRouterType) {
 }
 
 export function onRumInit(callback: InitSubscriber) {
-  if (globalConfiguration && globalPublicApi) {
-    callback(globalConfiguration, globalPublicApi)
+  if (globalConfiguration && globalPublicApi && globalInternalApi) {
+    callback(globalConfiguration, globalPublicApi, globalInternalApi)
   } else {
     onRumInitSubscribers.push(callback)
-  }
-}
-
-export function onRumStart(callback: StartSubscriber) {
-  if (globalAddError) {
-    callback(globalAddError)
-  } else {
-    onRumStartSubscribers.push(callback)
   }
 }
 
 export function resetReactPlugin() {
   globalPublicApi = undefined
   globalConfiguration = undefined
-  globalAddError = undefined
+  globalInternalApi = undefined
   routerType = undefined
   onRumInitSubscribers.length = 0
-  onRumStartSubscribers.length = 0
 }

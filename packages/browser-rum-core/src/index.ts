@@ -1,5 +1,15 @@
 export type { RumPublicApi, RecorderApi, ProfilerApi, StartRecordingOptions } from './boot/rumPublicApi'
 export { makeRumPublicApi } from './boot/rumPublicApi'
+export { formatErrorEvent } from './domain/internalApi/errorFormatter'
+export type {
+  RumInternalApi,
+  ViewEventHandle,
+  NonViewEventHandle,
+  EventBaggage,
+  BaseRumEvent,
+  AddEventOptions,
+  RumInternalApiOptions,
+} from './domain/internalApi/rumInternalApi.types'
 export type { StartRum, StartRumResult } from './boot/startRum'
 export type {
   RumEvent,
@@ -61,7 +71,7 @@ export { sanitizeIfLongDataUrl } from './domain/resource/resourceUtils'
 export * from './domain/privacy'
 export * from './domain/privacyConstants'
 export { SessionReplayState, computeSessionReplayState } from './domain/sessionReplayState'
-export type { RumPlugin, OnRumStartOptions } from './domain/plugins'
+export type { RumPlugin } from './domain/plugins'
 export type { MouseEventOnElement } from './domain/action/listenActionEvents'
 export { supportPerformanceTimingEvent } from './browser/performanceObservable'
 export { RumPerformanceEntryType } from './browser/performanceObservable'

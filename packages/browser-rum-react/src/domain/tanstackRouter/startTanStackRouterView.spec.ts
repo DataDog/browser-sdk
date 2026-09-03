@@ -1,18 +1,17 @@
 import { display } from '@datadog/browser-core'
+import { createFakeInternalApi } from '../../../../browser-rum-core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { startTanStackRouterView, computeViewName } from './startTanStackRouterView'
 import type { AnyTanStackRouteMatch } from './types'
 
 describe('startTanStackRouterView', () => {
   it('creates a new view with the computed view name', () => {
-    const startViewSpy = jasmine.createSpy()
+    const { internalApi, viewNames } = createFakeInternalApi()
     initializeReactPlugin({
       configuration: {
         router: true,
       },
-      publicApi: {
-        startView: startViewSpy,
-      },
+      internalApi,
     })
 
     startTanStackRouterView([
@@ -20,7 +19,7 @@ describe('startTanStackRouterView', () => {
       { fullPath: '/users/$userId', pathname: '/users/1', params: { userId: '1' } },
     ])
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith('/users/$userId')
+    expect(viewNames).toEqual(['/users/$userId'])
   })
 
   it('displays a warning if the router integration is not enabled', () => {

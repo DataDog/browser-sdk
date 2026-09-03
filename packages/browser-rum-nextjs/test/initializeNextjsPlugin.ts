@@ -1,16 +1,16 @@
-import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import type { RumInitConfiguration, RumInternalApi, RumPublicApi } from '@datadog/browser-rum-core'
+import { createFakeInternalApi } from '../../browser-rum-core/test'
 import { nextjsPlugin, resetNextjsPlugin } from '../src/domain/nextjsPlugin'
 import { registerCleanupTask } from '../../browser-core/test'
 
 export function initializeNextjsPlugin({
   initConfiguration = {},
   publicApi = {},
-  addError = noop,
+  internalApi = createFakeInternalApi().internalApi,
 }: {
   initConfiguration?: Partial<RumInitConfiguration>
   publicApi?: Partial<RumPublicApi>
-  addError?: StartRumResult['addError']
+  internalApi?: RumInternalApi
 } = {}) {
   resetNextjsPlugin()
   const plugin = nextjsPlugin()
@@ -18,9 +18,7 @@ export function initializeNextjsPlugin({
   plugin.onInit({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
-  })
-  plugin.onRumStart({
-    addError,
+    internalApi,
   })
 
   registerCleanupTask(() => {

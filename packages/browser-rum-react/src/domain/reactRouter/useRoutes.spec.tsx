@@ -5,6 +5,7 @@ import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import { ignoreConsoleLogs } from '../../../../browser-core/test'
+import { createFakeInternalApi } from '../../../../browser-rum-core/test'
 import type { AnyRouteObject } from './types'
 import { ignoreReactRouterDeprecationWarnings } from './reactRouter.specHelper'
 import { wrapUseRoutes } from './useRoutes'
@@ -46,19 +47,18 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
   }
 
   describe(`useRoutes (${version})`, () => {
-    let startViewSpy: jasmine.Spy<(name?: string | object) => void>
+    let viewNames: string[]
 
     beforeEach(() => {
       ignoreReactRouterDeprecationWarnings()
       initReactOldBrowsersSupport()
-      startViewSpy = jasmine.createSpy()
+      const fakeInternalApi = createFakeInternalApi()
+      viewNames = fakeInternalApi.viewNames
       initializeReactPlugin({
         configuration: {
           router: true,
         },
-        publicApi: {
-          startView: startViewSpy,
-        },
+        internalApi: fakeInternalApi.internalApi,
       })
     })
 
@@ -76,7 +76,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/foo')
+      expect(viewNames).toEqual(['/foo'])
     })
 
     it('renders the matching route', () => {
@@ -118,13 +118,13 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       appendComponent(<App />)
 
-      expect(startViewSpy).toHaveBeenCalledTimes(1)
+      expect(viewNames.length).toBe(1)
 
       act(() => {
         forceUpdate!()
       })
 
-      expect(startViewSpy).toHaveBeenCalledTimes(1)
+      expect(viewNames.length).toBe(1)
     })
 
     it('starts a new view on navigation', async () => {
@@ -147,13 +147,13 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      startViewSpy.calls.reset()
+      viewNames.length = 0
 
       await act(async () => {
         await navigate!('/bar')
       })
 
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/bar')
+      expect(viewNames).toEqual(['/bar'])
     })
 
     it('does not start a new view if the URL is the same', async () => {
@@ -171,13 +171,13 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      startViewSpy.calls.reset()
+      viewNames.length = 0
 
       await act(async () => {
         await navigate!('/foo')
       })
 
-      expect(startViewSpy).not.toHaveBeenCalled()
+      expect(viewNames).toEqual([])
     })
 
     it('does not start a new view if the path is the same but with different parameters', async () => {
@@ -195,13 +195,13 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      startViewSpy.calls.reset()
+      viewNames.length = 0
 
       await act(async () => {
         await navigate!('/foo?bar=baz')
       })
 
-      expect(startViewSpy).not.toHaveBeenCalled()
+      expect(viewNames).toEqual([])
     })
 
     it('does not start a new view if it does not match any route', () => {
@@ -214,7 +214,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      expect(startViewSpy).not.toHaveBeenCalled()
+      expect(viewNames).toEqual([])
     })
 
     it('allows passing a location object', () => {
@@ -224,7 +224,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/foo')
+      expect(viewNames).toEqual(['/foo'])
     })
 
     it('allows passing a location string', () => {
@@ -242,7 +242,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/foo')
+      expect(viewNames).toEqual(['/foo'])
     })
   })
 })

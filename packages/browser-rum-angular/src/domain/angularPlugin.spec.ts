@@ -2,7 +2,8 @@ import { VERSION } from '@angular/core'
 import { toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
-import { angularPlugin, onRumInit, onRumStart, resetAngularPlugin } from './angularPlugin'
+import { createFakeInternalApi } from '../../../browser-rum-core/test'
+import { angularPlugin, onRumInit, resetAngularPlugin } from './angularPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
@@ -20,7 +21,6 @@ describe('angularPlugin', () => {
       jasmine.objectContaining({
         name: 'angular',
         onInit: jasmine.any(Function),
-        onRumStart: jasmine.any(Function),
       })
     )
   })
@@ -32,22 +32,27 @@ describe('angularPlugin', () => {
 
     expect(callbackSpy).not.toHaveBeenCalled()
 
+    const { internalApi } = createFakeInternalApi()
     angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
+      internalApi,
     })
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
     expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.calls.mostRecent().args[2]).toBe(internalApi)
   })
 
   it('calls callbacks immediately if onInit was already invoked', () => {
     const callbackSpy = jasmine.createSpy()
     const pluginConfiguration = {}
+    const { internalApi } = createFakeInternalApi()
     angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
+      internalApi,
     })
 
     onRumInit(callbackSpy)
@@ -55,18 +60,27 @@ describe('angularPlugin', () => {
     expect(callbackSpy).toHaveBeenCalledTimes(1)
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
     expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.calls.mostRecent().args[2]).toBe(internalApi)
   })
 
   it('enforce manual view tracking when router is enabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    angularPlugin({ router: true }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
+    angularPlugin({ router: true }).onInit!({
+      publicApi: PUBLIC_API,
+      initConfiguration,
+      internalApi: createFakeInternalApi().internalApi,
+    })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('does not enforce manual view tracking when router is disabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    angularPlugin({ router: false }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
+    angularPlugin({ router: false }).onInit!({
+      publicApi: PUBLIC_API,
+      initConfiguration,
+      internalApi: createFakeInternalApi().internalApi,
+    })
 
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })
@@ -88,23 +102,14 @@ describe('angularPlugin', () => {
     })
   })
 
-  it('calls onRumStart subscribers during onRumStart', () => {
+  it('dispatches the internal API to onRumInit subscribers during onInit', () => {
     const callbackSpy = jasmine.createSpy()
-    const addErrorSpy = jasmine.createSpy()
-    onRumStart(callbackSpy)
+    const { internalApi } = createFakeInternalApi()
+    onRumInit(callbackSpy)
 
-    angularPlugin().onRumStart!({ addError: addErrorSpy })
+    angularPlugin().onInit!({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION, internalApi })
 
-    expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
-  })
-
-  it('calls onRumStart subscribers immediately if already started', () => {
-    const addErrorSpy = jasmine.createSpy()
-    angularPlugin().onRumStart!({ addError: addErrorSpy })
-
-    const callbackSpy = jasmine.createSpy()
-    onRumStart(callbackSpy)
-
-    expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
+    expect(callbackSpy).toHaveBeenCalledTimes(1)
+    expect(callbackSpy.calls.mostRecent().args[2]).toBe(internalApi)
   })
 })

@@ -1,7 +1,8 @@
 import type { Context } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
-import { onRumStart } from '../angularPlugin'
+import { ErrorSource, NonErrorPrefix, callMonitored, createHandlingStack } from '@datadog/browser-core'
+import { formatErrorEvent } from '@datadog/browser-rum-core'
+import { onRumInit } from '../angularPlugin'
 
 /**
  * Add an Angular error to the RUM session.
@@ -24,15 +25,29 @@ import { onRumStart } from '../angularPlugin'
 export function addAngularError(error: unknown) {
   const handlingStack = createHandlingStack('angular error')
   const startClocks = clocksNow()
-  onRumStart((addError) => {
+  onRumInit((_configuration, _publicApi, internalApi) => {
     callMonitored(() => {
-      addError({
-        error,
+      const { baseRumEvent, rawError } = formatErrorEvent({
+        originalError: error,
         handlingStack,
+        nonErrorPrefix: NonErrorPrefix.PROVIDED,
+        source: ErrorSource.CUSTOM,
         startClocks,
-        context: {
-          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: Context }).dd_context : undefined),
-          framework: 'angular',
+      })
+      internalApi.addEvent({
+        baseRumEvent: {
+          ...baseRumEvent,
+          context: {
+            ...(typeof error === 'object' && error !== null
+              ? (error as { dd_context?: Context }).dd_context
+              : undefined),
+            framework: 'angular',
+          },
+        },
+        baggage: {
+          startClocks: rawError.startClocks,
+          domainContext: { error, handlingStack },
+          originalError: error,
         },
       })
     })

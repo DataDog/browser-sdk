@@ -1,6 +1,7 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createMemoryRouter as createMemoryRouterV7 } from 'react-router-dom'
 import { createMemoryRouter as createMemoryRouterV6 } from 'react-router-dom-6'
+import { createFakeInternalApi } from '../../../../browser-rum-core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { resetReactPlugin } from '../reactPlugin'
 import { wrapCreateRouter } from './createRouter'
@@ -14,18 +15,17 @@ describe('createRouter', () => {
 
   for (const { label, createMemoryRouter } of versions) {
     describe(label, () => {
-      let startViewSpy: jasmine.Spy<(name?: string | object) => void>
+      let viewNames: string[]
       let router: ReturnType<typeof createMemoryRouter>
 
       beforeEach(() => {
-        startViewSpy = jasmine.createSpy()
+        const fakeInternalApi = createFakeInternalApi()
+        viewNames = fakeInternalApi.viewNames
         initializeReactPlugin({
           configuration: {
             router: true,
           },
-          publicApi: {
-            startView: startViewSpy,
-          },
+          internalApi: fakeInternalApi.internalApi,
         })
 
         router = createMemoryRouter(
@@ -41,40 +41,40 @@ describe('createRouter', () => {
       })
 
       it('creates a new view when the router is created', () => {
-        expect(startViewSpy).toHaveBeenCalledWith('/foo')
+        expect(viewNames).toContain('/foo')
       })
 
       it('creates a new view when the router navigates', async () => {
-        startViewSpy.calls.reset()
+        viewNames.length = 0
         await router.navigate('/bar')
-        expect(startViewSpy).toHaveBeenCalledWith('/bar')
+        expect(viewNames).toContain('/bar')
       })
 
       it('creates a new view when the router navigates to a nested route', async () => {
         await router.navigate('/bar')
-        startViewSpy.calls.reset()
+        viewNames.length = 0
         await router.navigate('/bar/nested')
-        expect(startViewSpy).toHaveBeenCalledWith('/bar/nested')
+        expect(viewNames).toContain('/bar/nested')
       })
 
       it('creates a new view with the fallback route', async () => {
-        startViewSpy.calls.reset()
+        viewNames.length = 0
         await router.navigate('/non-existent')
-        expect(startViewSpy).toHaveBeenCalledWith('/non-existent')
+        expect(viewNames).toContain('/non-existent')
       })
 
       it('does not create a new view when navigating to the same URL', async () => {
         await router.navigate('/bar')
-        startViewSpy.calls.reset()
+        viewNames.length = 0
         await router.navigate('/bar')
-        expect(startViewSpy).not.toHaveBeenCalled()
+        expect(viewNames).toEqual([])
       })
 
       it('does not create a new view when just changing query parameters', async () => {
         await router.navigate('/bar')
-        startViewSpy.calls.reset()
+        viewNames.length = 0
         await router.navigate('/bar?baz=1')
-        expect(startViewSpy).not.toHaveBeenCalled()
+        expect(viewNames).toEqual([])
       })
     })
   }

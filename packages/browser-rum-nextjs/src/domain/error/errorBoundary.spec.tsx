@@ -4,6 +4,7 @@ import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '@dat
 import { appendComponent } from '../../../../browser-rum-react/test/appendComponent'
 import { initReactOldBrowsersSupport } from '../../../../browser-rum-react/test/reactOldBrowsersSupport'
 import { initializeNextjsPlugin } from '../../../test/initializeNextjsPlugin'
+import { createFakeInternalApi } from '../../../../browser-rum-core/test'
 import { ErrorBoundary } from './errorBoundary'
 
 // Component behavior (renders children, fallback, resetError) is tested via createErrorBoundary
@@ -15,8 +16,8 @@ describe('NextjsErrorBoundary', () => {
     disableJasmineUncaughtExceptionTracking()
     initReactOldBrowsersSupport()
 
-    const addErrorSpy = jasmine.createSpy()
-    initializeNextjsPlugin({ addError: addErrorSpy })
+    const { internalApi, addEvent } = createFakeInternalApi()
+    initializeNextjsPlugin({ internalApi })
     const originalError = new Error('error')
     const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
     ;(ComponentSpy as any).displayName = 'ComponentSpy'
@@ -27,16 +28,21 @@ describe('NextjsErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(
+    expect(addEvent).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({
-        error: originalError,
-        handlingStack: jasmine.any(String),
-        startClocks: jasmine.any(Object),
-        context: jasmine.objectContaining({
-          framework: 'nextjs',
+        baseRumEvent: jasmine.objectContaining({
+          type: 'error',
+          error: jasmine.objectContaining({ message: 'error' }),
+          context: jasmine.objectContaining({
+            framework: 'nextjs',
+          }),
         }),
-        componentStack: jasmine.stringContaining('ComponentSpy'),
+        baggage: jasmine.objectContaining({ originalError }),
       })
     )
+    expect(
+      (addEvent.calls.mostRecent().args[0] as { baseRumEvent: { error: { component_stack?: string } } }).baseRumEvent
+        .error.component_stack
+    ).toContain('ComponentSpy')
   })
 })

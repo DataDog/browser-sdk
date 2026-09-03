@@ -1,6 +1,6 @@
 import type { ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import { test, expect } from '@playwright/test'
-import type { RumPlugin, AllowedRawRumEvent } from '@datadog/browser-rum-core'
+import type { AllowedRawRumEvent, RumPlugin } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType } from '@datadog/browser-rum-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { generateUUID } from '@datadog/browser-core'
@@ -8,15 +8,15 @@ import { createTest } from '../../lib/framework'
 
 declare global {
   interface Window {
-    TEST_PLUGIN: Parameters<NonNullable<RumPlugin['onRumStart']>>[0]
+    TEST_PLUGIN: Pick<Parameters<NonNullable<RumPlugin['onInit']>>[0], 'internalApi'>
   }
 }
 
 function createPlugin(): RumPlugin {
   return {
     name: 'test-plugin',
-    onRumStart: ({ addEvent }) => {
-      window.TEST_PLUGIN = { addEvent }
+    onInit: ({ internalApi }) => {
+      window.TEST_PLUGIN = { internalApi }
     },
   }
 }
@@ -94,7 +94,7 @@ test.describe('onRumStart', () => {
 
         await page.evaluate(
           ({ startClocks, event }) => {
-            window.TEST_PLUGIN.addEvent?.(startClocks.relative, event, {})
+            window.TEST_PLUGIN.internalApi.addEvent({ baseRumEvent: event as never, baggage: { startClocks } })
           },
           { startClocks, event: partialEvent }
         )
@@ -115,18 +115,24 @@ test.describe('onRumStart', () => {
 
       await page.evaluate(
         ({ startClocks, uuid }) => {
-          window.TEST_PLUGIN.addEvent?.(
-            startClocks.relative,
-            {
-              type: 'view',
-              date: startClocks.timeStamp,
-              view: {
-                id: uuid,
-                name: 'TrackedPage',
-              },
-            } as unknown as AllowedRawRumEvent,
-            {}
-          )
+          // PoC: the internal API throws on view events passed to addEvent ("views must go
+          // through startEvent"); swallow the expected error so the scenario asserts nothing is
+          // sent, not the throw itself.
+          try {
+            window.TEST_PLUGIN.internalApi.addEvent({
+              baseRumEvent: {
+                type: 'view',
+                date: startClocks.timeStamp,
+                view: {
+                  id: uuid,
+                  name: 'TrackedPage',
+                },
+              } as unknown as never,
+              baggage: { startClocks },
+            })
+          } catch {
+            // expected
+          }
         },
         { startClocks, uuid }
       )

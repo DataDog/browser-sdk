@@ -1,8 +1,9 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
+import { ErrorSource, NonErrorPrefix, callMonitored, createHandlingStack } from '@datadog/browser-core'
 import type { Context } from '@datadog/browser-core'
 import type { ErrorInfo } from 'react'
-import { onRumStart } from '../nextjsPlugin'
+import { formatErrorEvent } from '@datadog/browser-rum-core'
+import { onRumInit } from '../nextjsPlugin'
 
 /**
  * Add a Next.js error to the RUM session.
@@ -26,17 +27,29 @@ import { onRumStart } from '../nextjsPlugin'
 export function addNextjsError(error: Error & { digest?: string }, errorInfo?: ErrorInfo) {
   const handlingStack = createHandlingStack('nextjs error')
   const startClocks = clocksNow()
-  onRumStart((addError) => {
+  onRumInit((_rumPublicApi, internalApi) => {
     callMonitored(() => {
-      addError({
-        error,
+      const { baseRumEvent, rawError } = formatErrorEvent({
+        originalError: error,
         handlingStack,
         componentStack: errorInfo?.componentStack ?? undefined,
+        nonErrorPrefix: NonErrorPrefix.PROVIDED,
+        source: ErrorSource.CUSTOM,
         startClocks,
-        context: {
-          ...(error as Error & { dd_context?: Context }).dd_context,
-          ...(error.digest && { nextjs: { digest: error.digest } }),
-          framework: 'nextjs',
+      })
+      internalApi.addEvent({
+        baseRumEvent: {
+          ...baseRumEvent,
+          context: {
+            ...(error as Error & { dd_context?: Context }).dd_context,
+            ...(error.digest && { nextjs: { digest: error.digest } }),
+            framework: 'nextjs',
+          },
+        },
+        baggage: {
+          startClocks: rawError.startClocks,
+          domainContext: { error, handlingStack },
+          originalError: error,
         },
       })
     })

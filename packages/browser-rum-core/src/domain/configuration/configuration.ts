@@ -477,7 +477,6 @@ export const RUM_SCHEMA = {
         signature: undefined as RumPlugin['getConfigurationTelemetry'],
       },
       onInit: { type: 'function', strict: false, signature: undefined as RumPlugin['onInit'] },
-      onRumStart: { type: 'function', strict: false, signature: undefined as RumPlugin['onRumStart'] },
     },
   },
   trackFeatureFlagsForEvents: {
