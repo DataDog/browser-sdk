@@ -1,10 +1,10 @@
 import { globalObject } from '@datadog/js-core/util'
-import type { Batch, Context, ContextValue } from '@datadog/browser-core'
+import type { Batch, ContextValue } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { buildTag, generateUUID, mergeArrays } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
-import { capture, captureFields, createTimeoutCapturedValue } from './capture'
-import type { CaptureContext, TimeoutCapturedValue } from './capture'
+import { capture, captureFields } from './capture'
+import type { CaptureContext } from './capture'
 import type { InitializedProbe } from './probes'
 import {
   checkConditionErrorBudget,
@@ -297,7 +297,7 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
       }
     }
 
-    let throwArguments: Record<string, any> | TimeoutCapturedValue | undefined
+    let throwArguments: Record<string, any> | undefined
     if (probe.captureSnapshot) {
       throwArguments = captureArguments(args, self, probe.capture, captureCtx)
     }
@@ -371,7 +371,7 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
     },
   }
 
-  debuggerBatch.add(payload as unknown as Context)
+  debuggerBatch.add(payload)
   recordProbeEventSent(probe)
 }
 
@@ -380,11 +380,7 @@ function captureArguments(
   self: any,
   captureOptions: InitializedProbe['capture'],
   captureCtx: CaptureContext
-): Record<string, any> | TimeoutCapturedValue {
-  if (captureCtx.timedOut) {
-    return createTimeoutCapturedValue(args)
-  }
-
+): Record<string, any> {
   const fields = captureFields(args, captureOptions, captureCtx)
   if (self !== globalObject) {
     fields.this = capture(self, captureOptions, captureCtx)

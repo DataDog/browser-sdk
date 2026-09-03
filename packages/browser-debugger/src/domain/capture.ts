@@ -19,11 +19,6 @@ export interface CapturedValue {
   entries?: Array<[CapturedValue, CapturedValue]>
 }
 
-export interface TimeoutCapturedValue {
-  type: string
-  notCapturedReason: 'timeout'
-}
-
 /**
  * Mutable context threaded through the capture walker so that a single
  * `performance.now()` deadline can cooperatively abort deep traversals.
@@ -54,10 +49,6 @@ function isTimedOut(ctx: CaptureContext): boolean {
     return true
   }
   return false
-}
-
-export function createTimeoutCapturedValue(value: unknown): TimeoutCapturedValue {
-  return { type: value === null ? 'null' : typeof value, notCapturedReason: 'timeout' }
 }
 
 /**
@@ -119,10 +110,6 @@ function captureValue(
   maxLength: number,
   ctx: CaptureContext
 ): CapturedValue {
-  if (isTimedOut(ctx)) {
-    return createTimeoutCapturedValue(value)
-  }
-
   // Handle null first as typeof null === 'object'
   if (value === null) {
     return { type: 'null', isNull: true }
@@ -198,6 +185,9 @@ function captureFunction(
   if (depth >= maxReferenceDepth) {
     return { type: 'Function', notCapturedReason: 'depth' }
   }
+  if (isTimedOut(ctx)) {
+    return { type: 'Function', notCapturedReason: 'timeout' }
+  }
 
   return captureObjectProperties(
     fn as any,
@@ -224,7 +214,7 @@ function captureObject(
     return { type: getConstructorName(obj) ?? 'Object', notCapturedReason: 'depth' }
   }
 
-  // Built-in objects with specialized serialization
+  // Built-in leaf objects with cheap serialization
   if (obj instanceof Date) {
     try {
       return { type: 'Date', value: obj.toISOString() }
@@ -235,31 +225,9 @@ function captureObject(
   if (obj instanceof RegExp) {
     return { type: 'RegExp', value: obj.toString() }
   }
-  if (isError(obj)) {
-    return captureError(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
-  }
   if (obj instanceof Promise) {
     return { type: 'Promise', notCapturedReason: 'Promise state cannot be inspected' }
   }
-
-  // Collections
-  if (Array.isArray(obj)) {
-    return captureArray(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
-  }
-  if (obj instanceof Map) {
-    return captureMap(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
-  }
-  if (obj instanceof Set) {
-    return captureSet(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
-  }
-  if (obj instanceof WeakMap) {
-    return { type: 'WeakMap', notCapturedReason: 'WeakMap contents cannot be enumerated' }
-  }
-  if (obj instanceof WeakSet) {
-    return { type: 'WeakSet', notCapturedReason: 'WeakSet contents cannot be enumerated' }
-  }
-
-  // Binary data
   if (obj instanceof ArrayBuffer) {
     return captureArrayBuffer(obj)
   }
@@ -268,6 +236,12 @@ function captureObject(
   }
   if (obj instanceof DataView) {
     return captureDataView(obj)
+  }
+  if (obj instanceof WeakMap) {
+    return { type: 'WeakMap', notCapturedReason: 'WeakMap contents cannot be enumerated' }
+  }
+  if (obj instanceof WeakSet) {
+    return { type: 'WeakSet', notCapturedReason: 'WeakSet contents cannot be enumerated' }
   }
   if (ArrayBuffer.isView(obj) && !(obj instanceof DataView)) {
     return captureTypedArray(
@@ -279,6 +253,25 @@ function captureObject(
       maxLength,
       ctx
     )
+  }
+
+  // Keep cheap leaf serialization above this point, but stop before recursive/container capture.
+  if (isTimedOut(ctx)) {
+    return { type: getConstructorName(obj) ?? 'Object', notCapturedReason: 'timeout' }
+  }
+
+  // Potentially expensive objects with recursive serialization
+  if (isError(obj)) {
+    return captureError(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
+  }
+  if (Array.isArray(obj)) {
+    return captureArray(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
+  }
+  if (obj instanceof Map) {
+    return captureMap(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
+  }
+  if (obj instanceof Set) {
+    return captureSet(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   }
 
   // Custom objects
@@ -312,10 +305,6 @@ function captureObjectPropertiesFields(
 
   const fields: Record<string, CapturedValue> = {}
   for (const key of keysToCapture) {
-    if (isTimedOut(ctx)) {
-      break
-    }
-
     const keyStr = String(key)
     const keyName =
       typeof key === 'symbol' ? key.description || key.toString() : keyStr.includes('.') ? replaceDots(keyStr) : keyStr
@@ -362,7 +351,9 @@ function captureObjectProperties(
 
   const result: CapturedValue = { type: typeName, fields }
 
-  if (totalFields > maxFieldCount) {
+  if (ctx.timedOut) {
+    result.notCapturedReason = 'timeout'
+  } else if (totalFields > maxFieldCount) {
     result.notCapturedReason = 'fieldCount'
     result.size = totalFields
   }
@@ -392,7 +383,9 @@ function captureArray(
 
   const result: CapturedValue = { type: 'Array', elements }
 
-  if (totalSize > maxCollectionSize) {
+  if (ctx.timedOut) {
+    result.notCapturedReason = 'timeout'
+  } else if (totalSize > maxCollectionSize) {
     result.notCapturedReason = 'collectionSize'
     result.size = totalSize
   }
@@ -427,7 +420,9 @@ function captureMap(
 
   const result: CapturedValue = { type: 'Map', entries }
 
-  if (totalSize > maxCollectionSize) {
+  if (ctx.timedOut) {
+    result.notCapturedReason = 'timeout'
+  } else if (totalSize > maxCollectionSize) {
     result.notCapturedReason = 'collectionSize'
     result.size = totalSize
   }
@@ -459,7 +454,9 @@ function captureSet(
 
   const result: CapturedValue = { type: 'Set', elements }
 
-  if (totalSize > maxCollectionSize) {
+  if (ctx.timedOut) {
+    result.notCapturedReason = 'timeout'
+  } else if (totalSize > maxCollectionSize) {
     result.notCapturedReason = 'collectionSize'
     result.size = totalSize
   }
@@ -630,7 +627,9 @@ function captureTypedArray(
     },
   }
 
-  if (totalSize > maxCollectionSize) {
+  if (ctx.timedOut) {
+    result.notCapturedReason = 'timeout'
+  } else if (totalSize > maxCollectionSize) {
     result.notCapturedReason = 'collectionSize'
     result.size = totalSize
   }

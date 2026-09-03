@@ -1,22 +1,19 @@
 import type { StackFrame } from './stacktrace'
 import type { EvaluationError } from './condition'
 import type { Throwable } from './error'
-import type { TimeoutCapturedValue } from './capture'
 
 type CapturedFields = Record<string, any>
-type CapturedArguments = CapturedFields | TimeoutCapturedValue
 
 interface ActiveEntryThrowable {
   throwable?: Throwable
 }
 
 type ActiveEntryEntry =
-  | { arguments: CapturedArguments; captureExpressions?: never }
-  | { arguments?: never; captureExpressions: CapturedFields }
+  { arguments: CapturedFields; captureExpressions?: never } | { arguments?: never; captureExpressions: CapturedFields }
 
 type ActiveEntryReturn =
   | (ActiveEntryThrowable & {
-      arguments: CapturedArguments
+      arguments: CapturedFields
       locals?: CapturedFields
       captureExpressions?: never
     })
