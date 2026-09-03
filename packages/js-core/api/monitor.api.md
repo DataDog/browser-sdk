@@ -28,9 +28,6 @@ export interface Monitor {
 export const monitor: <T extends (...args: any[]) => unknown>(fn: T) => T;
 
 // @public
-export const monitored: <T extends (...params: any[]) => unknown>(_: any, __: string, descriptor: TypedPropertyDescriptor<T>) => void;
-
-// @public
 export const monitorError: (e: unknown) => void;
 
 // @public

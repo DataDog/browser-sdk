@@ -181,19 +181,6 @@ let onMonitorErrorCollected: ((error: unknown) => void) | undefined
 const globalMonitor = createMonitor(monitorDisplay, (error) => onMonitorErrorCollected?.(error))
 
 /**
- * TypeScript method decorator backed by the **global monitor**. See {@link Monitor.monitored} for
- * semantics and usage.
- *
- * @param _ - The class prototype (instance member) or constructor (static member) owning the
- * decorated method.
- * @param __ - The name of the decorated method.
- * @param descriptor - The property descriptor of the method; its `value` is replaced with the
- * monitored wrapper.
- * @returns void; replaces the method's descriptor value in place.
- */
-export const monitored = globalMonitor.monitored
-
-/**
  * Function wrapper backed by the **global monitor**. See {@link Monitor.monitor} for semantics and
  * usage.
  *
