@@ -31,7 +31,7 @@ import {
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
-import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import type { RemoteConfigurationMetadata, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 
 import {
   fetchAndApplyRemoteConfiguration,
@@ -136,7 +136,11 @@ export function createPreStartStrategy(
     bufferApiCalls.unbuffer()
   }
 
-  function doInit(initConfiguration: RumInitConfiguration, errorStack?: string) {
+  function doInit(
+    initConfiguration: RumInitConfiguration,
+    errorStack?: string,
+    remoteConfigurationMetadata?: RemoteConfigurationMetadata
+  ) {
     const eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
@@ -197,7 +201,7 @@ export function createPreStartStrategy(
           startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
             application: { id: configuration.applicationId },
           })
-          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName))
+          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata))
 
           tryStartRum()
         })
@@ -275,10 +279,10 @@ export function createPreStartStrategy(
               })
               .catch(monitorError)
           } else {
-            const resolvedInitConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+            const resolvedRemoteConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
-            if (resolvedInitConfiguration) {
-              doInit(resolvedInitConfiguration, errorStack)
+            if (resolvedRemoteConfiguration) {
+              doInit(resolvedRemoteConfiguration.initConfiguration, errorStack, resolvedRemoteConfiguration.metadata)
             }
           }
         } else {
