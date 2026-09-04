@@ -1,4 +1,4 @@
-import { mockableReplacements } from '../src/tools/mockable'
+import { mockableReplacements } from '@datadog/js-core/util'
 import { registerCleanupTask } from './registerCleanupTask'
 
 /**

@@ -1,4 +1,4 @@
-import { jsonStringify } from './jsonStringify'
+import { jsonStringify } from '@datadog/js-core/util'
 import { sanitize } from './sanitize'
 
 export function safeToString(value: unknown): string | undefined {

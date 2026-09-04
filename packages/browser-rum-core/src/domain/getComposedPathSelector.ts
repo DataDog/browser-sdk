@@ -1,4 +1,5 @@
-import { safeTruncate, ONE_KIBI_BYTE } from '@datadog/browser-core'
+import { safeTruncate } from '@datadog/browser-core'
+import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
 import {
   STABLE_ATTRIBUTES,

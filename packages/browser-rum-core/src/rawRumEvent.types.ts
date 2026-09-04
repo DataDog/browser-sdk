@@ -6,9 +6,9 @@ import type {
   RawErrorCause,
   DefaultPrivacyLevel,
   Csp,
-  Context,
   DebugIdEntry,
 } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
 import type {

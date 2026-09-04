@@ -3,7 +3,7 @@
 // secret), so PKCE is the only client proof. Tokens live in chrome.storage.session — never on disk.
 // See FFL-2596.
 
-import { mockable } from '../../../../../../packages/browser-core/src/tools/mockable'
+import { mockable } from '@datadog/js-core/util'
 
 // Separate registered clients. The prod one is replicated across all prod DCs, so every non-staging
 // site shares it. Both are public PKCE clients.

@@ -1,5 +1,5 @@
-import { buildUrl, globalObject } from '@datadog/js-core/util'
-import { mockable, toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
+import { buildUrl, globalObject, mockable } from '@datadog/js-core/util'
+import { toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart' | 'getConfigurationTelemetry'>

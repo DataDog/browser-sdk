@@ -1,5 +1,5 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
 import { ErrorSource, noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'

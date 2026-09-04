@@ -33,3 +33,9 @@ export type {
   ProfilerConstructor,
 } from '../util/globalObject'
 export { normalizeUrl, isValidUrl, getPathName, buildUrl, getPristineWindow } from '../util/urlPolyfill'
+export { ONE_KIBI_BYTE, ONE_MEBI_BYTE, computeBytesCount, concatBuffers } from '../util/byteUtils'
+export type { Uint8ArrayBuffer } from '../util/byteUtils'
+export type { Context, ContextValue, ContextArray } from '../util/context'
+export { mockable, mockableReplacements } from '../util/mockable'
+export { jsonStringify, detachToJsonMethod } from '../util/jsonStringify'
+export type { ObjectWithToJsonMethod } from '../util/jsonStringify'

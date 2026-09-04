@@ -1,7 +1,6 @@
-import { globalObject } from '@datadog/js-core/util'
+import { globalObject, mockable } from '@datadog/js-core/util'
 import { display } from '../tools/display'
 import { matchList } from '../tools/matchOption'
-import { mockable } from '../tools/mockable'
 import type { Configuration } from './configuration'
 import { isUnsupportedExtensionEnvironment } from './extension/extensionUtils'
 

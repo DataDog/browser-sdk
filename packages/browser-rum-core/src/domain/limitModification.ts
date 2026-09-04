@@ -1,5 +1,5 @@
 import { sanitize, objectEntries } from '@datadog/browser-core'
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { deepClone, getType } from '@datadog/js-core/util'
 
 export type ModifiableFieldPaths = Record<string, 'string' | 'object' | 'array'>

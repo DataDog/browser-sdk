@@ -1,4 +1,4 @@
-import { mockable } from '@datadog/browser-core'
+import { mockable } from '@datadog/js-core/util'
 import { reportScriptLoadingError } from '../domain/scriptLoadingError'
 import type { createRumProfiler } from '../domain/profiling/datadogProfiler'
 
