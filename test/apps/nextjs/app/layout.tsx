@@ -1,10 +1,15 @@
+import { Suspense } from 'react'
 import { DatadogAppRouter } from '@datadog/browser-rum-nextjs'
+import { DiscardedRenderProbe } from './discardedRenderProbe'
 
 export default function RootLayout({ children, sidebar }: { children: React.ReactNode; sidebar: React.ReactNode }) {
   return (
     <html lang="en">
       <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0 }}>
-        <DatadogAppRouter />
+        <Suspense fallback={null}>
+          <DatadogAppRouter />
+          <DiscardedRenderProbe />
+        </Suspense>
         <nav style={{ background: '#632ca6', padding: '1rem', marginBottom: '1rem' }}>
           <a href="/" style={{ color: 'white', textDecoration: 'none' }}>
             Home
