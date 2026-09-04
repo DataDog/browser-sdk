@@ -4,7 +4,7 @@
 real consumers onto it. Every migration removed more code than it added, a minimal-SDK variant
 built on it is 66% smaller, and the interface held its tight scope throughout — pre-init support
 included, absorbed as buffered events rather than replayed calls. We recommend iterating on the
-design: the remaining issues are integration-grade (contexts, rate-limit surfacing), not design
+design: the remaining issues are integration-grade (contexts, collectors), not design
 flaws.**
 
 - Branch: `benoit.zugmeyer/rum-internal-api` (throwaway PoC branch, not meant for production as-is)
@@ -23,7 +23,8 @@ tight scope — **event assembly, extensibility (hooks), observability (notifica
 that everything else (public API, collectors, Replay, Profiling, product variants) drives instead:
 
 - the API is created eagerly (unconfigured); `configure()` binds the validated configuration
-  (session manager promise, `beforeSend`, rate limits) at init,
+  (session manager promise, `beforeSend`) at init — rate limiting is internal, driven by a
+  default constant, not a configuration option,
 - `startEvent` / `addEvent` / handles build events respecting the hierarchy; the internal API
   owns event ids, counts and document versions,
 - open event handles live **on the history entries** (`findEvents({ open: true })`), the API
@@ -151,26 +152,20 @@ Ordered by risk:
 
 1. **Contexts** — session/user/global/view/feature-flag/geo/display attributes. Without
    `session.id` these are not RUM events. Biggest blocker.
-2. **Rate-limit reach and transport-error surfacing** — both no-op in the PoC (today's RUM
-   reports a customer-visible error event when it rate-limits); the wiring is a product behavior
-   decision. (Correction from review: an earlier revision of this list also claimed
-   `forwardErrorsToLogs` (RUM → logs) was broken on internal-API paths. That was wrong —
-   `forwardErrorsToLogs` is a Logs SDK init option, the Logs SDK collects its own errors
-   independently of RUM, and RUM's `RAW_ERROR_COLLECTED` notification had exactly one consumer:
-   RUM's own error event creation, the piece the internal API replaces. RUM never fed Logs, so
-   there was nothing to break; the raw error rides `domainContext` for any future consumer.)
-3. **Collectors + old pipeline teardown** — resources, long tasks, runtime errors, vitals must
+2. **Collectors + old pipeline teardown** — resources, long tasks, runtime errors, vitals must
    port for auto-instrumentation. The old startRum pipeline is kept compiling but inert; deleting
    it requires porting **Replay first** (it is the last consumer of the zombie lifecycle events
    and viewHistory).
-4. **View metrics completeness** — the metrics modules run on a private idle LifeCycle, so
+3. **View metrics completeness** — the metrics modules run on a private idle LifeCycle, so
    loading times don't see request activity until the collectors feed it again.
-5. **Interface hardening before freeze**: `beforeSend` re-wrapped in `limitModification`;
+4. **Interface hardening before freeze**: `beforeSend` re-wrapped in `limitModification`;
    baggage shape validation (malformed clocks create NaN history bounds that match every
-   `findEvents` query); `ddtags` / urlContexts granularity / `view.referrer`. (Two earlier
+   `findEvents` query); `ddtags` / urlContexts granularity / `view.referrer`; rate-limit reach
+   and transport-error surfacing (both no-op in the PoC — wiring details, not interface surface:
+   the limit itself is a default constant, overridable in tests as a mutable one). (Two earlier
    findings were already folded in: `event_started` carries the kickoff event — no `findEvents`
    correlation — and the initial view version is emitted at view start.)
-6. **Spec debt** (deliberate, inventoried per phase) — old-architecture specs were deleted with
+5. **Spec debt** (deliberate, inventoried per phase) — old-architecture specs were deleted with
    their architecture: trackViews, trackClickActions, the 1484-line profiler spec, rumPublicApi.
    Fine-grained coverage must be rebuilt on the new architecture before rollout. The internal API
    itself now has state-machine unit coverage; the consumers are smoke-level.
@@ -227,18 +222,18 @@ draft/promotion/supersede machine while unifying its handle types. The found iss
 addressable within the design. Suggested next steps, in order:
 
 1. **Contexts as default hooks + session stamping** (the rollout blocker).
-2. **Rate-limit reach and transport-error surfacing decisions** (affect product behavior).
-3. **Port one collector** — resources are the best exercise (start/stop pairs, tracing, request /
+2. **Port one collector** — resources are the best exercise (start/stop pairs, tracing, request /
    page-activity flow).
-4. **Rebuild the spec debt list** on the new architecture.
-5. **Replay as the final gate** — its migration is what allows deleting the old pipeline and the
+3. **Rebuild the spec debt list** on the new architecture.
+4. **Replay as the final gate** — its migration is what allows deleting the old pipeline and the
    zombie lifecycle events.
 
 ## Follow-ups (tracked items)
 
 - [ ] Decide context strategy: default hook set vs internal API owning the session stamp; define
       hook registration order.
-- [ ] Decide rate-limit reach and transport-error surfacing (currently no-op).
+- [ ] Wire rate-limit reach and transport-error surfacing (implementation details, not interface
+      surface — the limit is a default constant).
 - [ ] Re-wrap `beforeSend` in `limitModification`; add baggage shape validation.
 - [ ] Restore tracking consent sequencing (pre-init buffering already lives in the internal API).
 - [ ] Decide the view API sugar (`startEvent({type:'view'})` vs static `startView()`) — cosmetic.
@@ -251,6 +246,13 @@ addressable within the design. Suggested next steps, in order:
       always-empty labels stored today).
 - [ ] Re-measure bundle size for the full SDK once auto-instrumentation is ported (the −66% is for
       the minimal Shopify variant).
+
+A correction from review, for the record: an earlier revision of the "what's missing" list
+claimed `forwardErrorsToLogs` (RUM → logs) was broken on internal-API paths. That was wrong —
+`forwardErrorsToLogs` is a Logs SDK init option, the Logs SDK collects its own errors
+independently of RUM, and RUM's `RAW_ERROR_COLLECTED` notification only ever fed RUM's own
+error event creation, the piece the internal API replaces. RUM never fed Logs, so there was
+nothing to break; the raw error rides `domainContext` for any future consumer.
 
 ## Appendix — where to look
 
