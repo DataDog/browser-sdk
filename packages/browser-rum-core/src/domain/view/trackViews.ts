@@ -22,6 +22,8 @@ import {
   Observable,
   createContextManager,
   mockable,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
@@ -31,7 +33,9 @@ import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../browser/performanceObservable'
 import { trackViewEventCounts } from './trackViewEventCounts'
+import { trackRouteChangeViewMetrics } from './viewMetrics/trackRouteChangeViewMetrics'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
@@ -264,10 +268,17 @@ function newView(
     startClocks
   )
 
-  const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
-    loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate)
-      : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
+  const {
+    stop: stopInitialViewMetricsTracking,
+    initialViewMetrics,
+    setViewEnd: setRouteChangeViewEnd,
+  } = loadingType === ViewLoadingType.INITIAL_LOAD
+    ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
+    : loadingType === ViewLoadingType.ROUTE_CHANGE &&
+        isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
+        supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
+      ? trackRouteChangeViewMetrics(configuration, scheduleViewUpdate)
+      : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
 
   // Start BFCache-specific metrics when restoring from BFCache
   if (loadingType === ViewLoadingType.BF_CACHE) {
@@ -353,6 +364,7 @@ function newView(
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
       setViewEnd(endClocks.relative)
+      setRouteChangeViewEnd()
       stopCommonViewMetricsTracking()
       pageMayExitSubscription.unsubscribe()
       triggerViewUpdate()

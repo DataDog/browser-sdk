@@ -174,6 +174,26 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
       }
       break
 
+    case RumPerformanceEntryType.SOFT_NAVIGATION:
+      entry = {
+        entryType: RumPerformanceEntryType.SOFT_NAVIGATION,
+        name: 'https://example.com/soft-nav',
+        startTime: 1000 as RelativeTime,
+        interactionId: 42,
+        getLargestInteractionContentfulPaint: () => null,
+      }
+      break
+
+    case RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT:
+      entry = {
+        entryType: RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT,
+        interactionId: 42,
+        largestContentfulPaint: createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+          startTime: 1200 as RelativeTime,
+        }),
+      }
+      break
+
     case RumPerformanceEntryType.LAYOUT_SHIFT:
       entry = {
         entryType: RumPerformanceEntryType.LAYOUT_SHIFT,
