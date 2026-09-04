@@ -11,16 +11,13 @@ import { computeLcpSubParts } from './trackLargestContentfulPaint'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
 
 /**
- * Tracks the Largest Contentful Paint (LCP) for a `route_change` view using Chrome's Soft
- * Navigation API. Only called when `ExperimentalFeature.SOFT_NAVIGATION` is enabled and the
- * browser supports the `soft-navigation` performance entry type (see trackViews.ts).
+ * Tracks LCP for a `route_change` view via Chrome's Soft Navigation API (gated behind
+ * ExperimentalFeature.SOFT_NAVIGATION + browser support, see trackViews.ts).
  *
- * One instance of this tracker is created per route_change view (see the spec's "Per-view vs
- * global subscription" section for why). The soft-navigation entry for this view's interaction
- * arrives asynchronously (after Chrome confirms the paint), so `setViewEnd` MUST be called
- * (synchronously, when the view ends) to stop listening for new soft-navigation entries -- ICP
- * entries keep being tracked until `stop()`, since by then this tracker's `interactionId` is
- * already known and used to filter them.
+ * The soft-navigation entry arrives asynchronously, so `setViewEnd` must unsubscribe from it
+ * immediately when the view ends -- otherwise an ended view could steal the next view's entry.
+ * ICP entries keep being tracked until `stop()`, since by then the `interactionId` to filter on
+ * is already known.
  */
 export function trackRouteChangeViewMetrics(configuration: RumConfiguration, scheduleViewUpdate: () => void) {
   const initialViewMetrics: InitialViewMetrics = {}
