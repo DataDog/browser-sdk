@@ -1,23 +1,25 @@
-// PoC v2 (plan-v2.md, phase C): trackViews does not own view events anymore — the internal API
-// does (startEvent promotes the draft / supersedes the active view; expiry endings are owned by
-// the API). trackViews is a metrics enricher:
+// PoC v3 (plan-v3.md, phase B): trackViews is a metrics enricher — views are owned by the
+// consumers (the public API starts the initial view unconditionally; the view-tracking policy
+// — stop the open view(s) at the new view's start — lives in the shared startViewSuperseding
+// helper):
 // * it attaches per-view metrics on `event_started` (views) and schedules their cleanup on
-//   `event_stopped`,
-// * it drives the automatic view starts (initial view, location change, BFCache restore, session
-//   renewal) through `internalApi.startEvent`,
+//   `event_stopped`, and catches up on the open views when it starts (the initial view was
+//   started before init: its `event_started` fired before this subscription — the history is
+//   the source of truth, notifications are live updates),
+// * it drives the automatic view starts (location change, BFCache restore, session renewal)
+// through the supersede helper,
 // * it sends the freshest metrics before every view ending (the last-update slot: before a
-//   superseding startEvent, and during the `session_expired` notify — the internal API assembles
+//   superseding start, and during the `session_expired` notify — the internal API assembles
 //   the final version after it).
 // View mutations from the public API (setViewName, view context, custom timings) ride the view
-// event directly through the internal API current view handle — they are not trackViews' concern.
+// event directly through its handle — they are not trackViews' concern.
 //
-// Differences vs the v1 port (see /plan.md) it replaces:
-// * No `newView` object, no current-view bookkeeping: metrics bundles are keyed by view id and
-//   driven by the event notifications.
-// * `is_active` / final `time_spent` are owned by the internal API (derived endings), and
-//   `name` / `context` / `custom_timings` ride the event: the update payloads only carry metrics
-//   and the static view fields.
-// * Corner-cuts carried over from v1: the metrics modules' LifeCycle is a private instance
+// Differences vs the v2 port (see /plan.md) it replaces:
+// * Metrics updates go through the view's live handle (on its history entry), looked up by view
+//   id — no current-view coupling on the internal API.
+// * The initial view is NOT started here anymore: the public API started it before init; the
+//   metrics attach is the catch-up described above.
+// * Corner-cuts carried over: the metrics modules' LifeCycle is a private instance
 //   (REQUEST_STARTED / REQUEST_COMPLETED never flow through it — no auto-instrumentation), and
 //   view context updates are no longer throttled (they assemble a version each).
 
@@ -43,6 +45,7 @@ import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import { LifeCycle } from '../lifeCycle'
 import type { PartialBaseRumEvent, RumInternalApi } from '../internalApi/rumInternalApi.types'
+import { startViewSuperseding } from './startViewSuperseding'
 import { onBFCacheRestore } from './bfCacheSupport'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
@@ -101,24 +104,18 @@ export function trackViews(
         break
       }
       case 'session_renewed': {
-        // Renew the view, carrying over its identity (the previous view was ended at expiry)
-        const previousEvent = internalApi.currentView.current().event as {
-          view?: { name?: string }
-          service?: string
-          version?: string
-          context?: Context
-        }
-        internalApi.startEvent({
-          type: 'view',
-          view: {
-            url: shallowClone(mockable(window.location)).href,
-            name: previousEvent.view?.name,
-            loading_type: ViewLoadingType.SESSION_RENEWAL,
-          },
-          service: previousEvent.service,
-          version: previousEvent.version,
-          context: previousEvent.context,
-        })
+        // Renew the view, carrying over its identity (the previous view was ended at expiry).
+        // The previous view is the most recent one in the history (ended views included).
+        const previousViews = internalApi.findEvents({ type: 'view' })
+        const previousEvent = previousViews[previousViews.length - 1]?.event as
+          | {
+              view?: { name?: string }
+              service?: string
+              version?: string
+              context?: Context
+            }
+          | undefined
+        startViewEvent(ViewLoadingType.SESSION_RENEWAL, previousEvent)
         break
       }
       case 'session_expired': {
@@ -129,6 +126,17 @@ export function trackViews(
       }
     }
   })
+
+  // Catch up on the open views (the initial view was started by the public API before init, and
+  // pre-init startView calls adopt it): their `event_started` fired before the subscription
+  // above. The history is the source of truth; notifications are live updates.
+  for (const entry of internalApi.findEvents({ type: 'view', open: true })) {
+    const viewId = (entry.event as { view?: { id?: string } }).view?.id
+    if (viewId !== undefined) {
+      currentViewId = viewId
+      attachViewMetrics(viewId, entry.baggage.startClocks, readViewLoadingType(entry.event))
+    }
+  }
 
   if (areViewsTrackedAutomatically) {
     stopAutoTracking = startAutomaticViewTracking()
@@ -155,9 +163,8 @@ export function trackViews(
   //
 
   function startAutomaticViewTracking() {
-    // The initial view: starting it promotes the internal API draft (initial_load is stamped by
-    // the API, start at the clock origin).
-    startViewEvent(undefined)
+    // The initial view was already started by the public API (clock origin): trackViews only
+    // attached metrics to it (the catch-up at construction) — there is no view to start here.
 
     const locationChangeSubscription = locationChangeObservable.subscribe(({ oldLocation, newLocation }) => {
       if (areDifferentLocation(oldLocation, newLocation)) {
@@ -175,18 +182,23 @@ export function trackViews(
     }
   }
 
-  // Start (or promote / supersede — the internal API decides) a view with a minimal kickoff:
-  // url, service and version come from the configuration / location, the loading type from the
-  // start context (undefined for the initial view: the internal API stamps initial_load).
-  function startViewEvent(loadingType: ViewLoadingType | undefined) {
-    internalApi.startEvent({
+  // Start a view through the shared policy helper (stop the open view(s) at the new view's
+  // start): url, service and version come from the configuration / location, the loading type
+  // from the start context. `previousEvent` carries over the identity on session renewal.
+  function startViewEvent(
+    loadingType: ViewLoadingType,
+    previousEvent?: { view?: { name?: string }; service?: string; version?: string; context?: Context }
+  ) {
+    startViewSuperseding(internalApi, {
       type: 'view',
       view: {
         url: shallowClone(mockable(window.location)).href,
         loading_type: loadingType,
+        name: previousEvent?.view?.name,
       },
-      service: configuration.service,
-      version: configuration.version,
+      service: previousEvent?.service ?? configuration.service,
+      version: previousEvent?.version ?? configuration.version,
+      context: previousEvent?.context,
     })
   }
 
@@ -269,25 +281,24 @@ export function trackViews(
   }
 
   function updateViewMetrics(viewId: string) {
-    // The update goes through the internal API current view: it targets this view only (a
-    // scheduled update of a superseded view is dropped; the supersede already assembled its
-    // final version with the last-update slot).
-    const currentEntry = internalApi.currentView.current()
-    if ((currentEntry.event as { view?: { id?: string } }).view?.id !== viewId) {
+    // The update goes through the view's live handle, on its history entry: it targets this
+    // view only (a scheduled update of an ended view is dropped; its final version was already
+    // assembled with the last-update slot).
+    const entry = internalApi
+      .findEvents({ type: 'view', open: true })
+      .find((candidate) => (candidate.event as { view?: { id?: string } }).view?.id === viewId)
+    if (!entry || entry.complete) {
       return
     }
     const bundle = activeViews.get(viewId)
     if (!bundle) {
       return
     }
-    if (currentEntry.complete) {
-      return
-    }
-    internalApi.currentView.update(buildViewMetricsUpdate(bundle))
+    entry.handle?.update(buildViewMetricsUpdate(bundle))
   }
 
-  // The view ended (superseded or expired — the internal API assembled the final version):
-  // stop scheduling updates immediately, keep listening for late metrics for a while.
+  // The view ended (consumer stop — the supersede policy — or expiry; the final version was
+  // assembled): stop scheduling updates immediately, keep listening for late metrics for a while.
   function onViewEnded(endedViewId: string | undefined) {
     if (endedViewId === undefined) {
       return

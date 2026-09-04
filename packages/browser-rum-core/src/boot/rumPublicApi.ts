@@ -1,7 +1,8 @@
-// PoC v2 rewrite (see plan-v2.md): the public API wires directly to the RUM internal API, and
-// preStartRum is gone. The internal API is created eagerly (unconfigured): calls made before
-// init() flow into it directly and buffer as events — draft view updates and held assemblies,
-// with their true call-time timestamps — no call replay, no pre-init wrapper. init() binds the
+// PoC rewrite (see plan.md / plan-v2.md / plan-v3.md): the public API wires directly to the
+// RUM internal API, and preStartRum is gone. The internal API is created eagerly
+// (unconfigured): calls made before init() flow into it directly and buffer as events — the
+// initial view's updates and held assemblies, with their true call-time timestamps — no call
+// replay, no pre-init wrapper. init() binds the
 // validated configuration via configure(); events are assembled and sent once the session
 // manager resolves. Corner-cuts, documented in /plan.md: tracking consent is assumed
 // granted, global / user / account contexts are not supported (no-op), automatic
@@ -13,6 +14,7 @@
 
 import {
   clocksNow,
+  clocksOrigin,
   elapsed,
   isRelativeTime,
   timeStampNow,
@@ -65,12 +67,8 @@ import {
 import { DEFAULT_TRACKED_RESOURCE_HEADERS, validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { createRumInternalApi } from '../domain/internalApi/rumInternalApi'
-import type {
-  BeforeSend,
-  NonViewEventHandle,
-  PartialBaseRumEvent,
-  RumInternalApi,
-} from '../domain/internalApi/rumInternalApi'
+import type { BeforeSend, EventHandle, PartialBaseRumEvent, RumInternalApi } from '../domain/internalApi/rumInternalApi'
+import { startViewSuperseding } from '../domain/view/startViewSuperseding'
 import { callPluginsMethod } from '../domain/plugins'
 import { formatErrorEvent } from '../domain/internalApi/errorFormatter'
 import { ActionType, ViewLoadingType, VitalType } from '../rawRumEvent.types'
@@ -682,19 +680,35 @@ export function makeRumPublicApi(
   let initConfiguration: RumInitConfiguration | undefined
   let configuration: RumConfiguration | undefined
   let sessionManager: SessionManager | undefined
-  // PoC v2 (plan-v2.md): the internal API is created eagerly, unconfigured. Calls made before
-  // init() — and every call after — flow into it directly: events buffer in it (draft view
-  // updates, held assemblies) with their true call-time timestamps. doInit binds the validated
-  // configuration with configure() once validation passed. Views are driven by the internal
-  // API current view handle: `startEvent` promotes the draft / supersedes the active view.
+  // PoC v3 (plan-v3.md): the internal API is created eagerly, unconfigured. Calls made before
+  // init() — and every call after — flow into it directly: events buffer in it (held
+  // assemblies) with their true call-time timestamps. doInit binds the validated configuration
+  // with configure() once validation passed.
+  //
+  // The single-view policy lives HERE, not in the internal API: the initial view is started
+  // unconditionally at the clock origin (bare kickoff: current location + initial_load — so
+  // the first view always covers early child events), and currentViewHandle is the one
+  // consumer-side view policy variable: view mutations route through it, startView adopts it
+  // (first call) or supersedes it (startViewSuperseding).
   const internalApi = createRumInternalApi()
+  let currentViewHandle: EventHandle<'view'> = internalApi.startEvent(
+    {
+      type: 'view',
+      view: { url: shallowClone(mockable(window.location)).href, loading_type: ViewLoadingType.INITIAL_LOAD },
+    },
+    { startClocks: clocksOrigin() }
+  )
+  // Whether a startView call adopted the initial view (the user kickoff merged into it — it
+  // stays THE initial view: start at the clock origin, initial_load). Corner-cut: an adopted
+  // initial view ships an extra document version (the bare origin version, then the named one).
+  let initialViewAdopted = false
   // PoC phase 3a: trackViews ported to the internal API (real view metrics, location-change and
   // BFCache renewal, session renewal / expiry). In v2 it only attaches view metrics and drives
   // automatic view starts — view events themselves are owned by the internal API.
   let viewTracking: ReturnType<typeof trackViews> | undefined
-  const startedActions = new Map<string, NonViewEventHandle<'action'>>()
-  const startedResources = new Map<string, { handle: NonViewEventHandle<'resource'>; method?: string }>()
-  const startedDurationVitals = new Map<string, { handle: NonViewEventHandle<'vital'>; startClocks: ClocksState }>()
+  const startedActions = new Map<string, EventHandle<'action'>>()
+  const startedResources = new Map<string, { handle: EventHandle<'resource'>; method?: string }>()
+  const startedDurationVitals = new Map<string, { handle: EventHandle<'vital'>; startClocks: ClocksState }>()
 
   const startView: {
     (name?: string): void
@@ -703,22 +717,46 @@ export function makeRumPublicApi(
     const handlingStack = createHandlingStack('view')
     callMonitored(() => {
       const sanitizedOptions = typeof viewOptions === 'object' ? viewOptions : { name: viewOptions }
-      internalApi.startEvent(
-        {
-          type: 'view',
+      // The single-view policy (plan-v3.md): the first startView ADOPTS the still-open initial
+      // view — before init() (any mode: the uniform pre-init rule) or in manual mode (the
+      // user's first view IS the initial view: start at the clock origin, main's
+      // startView({name}) precedence). Deep-merge overwrites primitives, so the user's
+      // url / name / service / version / context win over the bare origin kickoff;
+      // loading_type is left untouched (the initial view stays an initial_load). Later calls
+      // supersede through the shared policy helper.
+      const adoptsInitialView =
+        !initialViewAdopted &&
+        !currentViewHandle.current().complete &&
+        (configuration === undefined || configuration.trackViewsManually)
+      if (adoptsInitialView) {
+        initialViewAdopted = true
+        currentViewHandle.update({
           view: {
             url: sanitizedOptions.url ?? shallowClone(mockable(window.location)).href,
             name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
-            // Subsequent views are route changes; if this call promotes the draft, the internal
-            // API stamps initial_load over it (the initial view is always an initial_load)
-            loading_type: ViewLoadingType.ROUTE_CHANGE,
           },
           service: sanitizeStringOption(sanitizedOptions.service, 'view service'),
           version: sanitizeStringOption(sanitizedOptions.version, 'view version'),
           context: sanitizedOptions.context,
-        },
-        { domainContext: { handlingStack, location: shallowClone(mockable(window.location)) } }
-      )
+        })
+      } else {
+        currentViewHandle = startViewSuperseding(
+          internalApi,
+          {
+            type: 'view',
+            view: {
+              url: sanitizedOptions.url ?? shallowClone(mockable(window.location)).href,
+              name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
+              // Subsequent views are route changes
+              loading_type: ViewLoadingType.ROUTE_CHANGE,
+            },
+            service: sanitizeStringOption(sanitizedOptions.service, 'view service'),
+            version: sanitizeStringOption(sanitizedOptions.version, 'view version'),
+            context: sanitizedOptions.context,
+          },
+          { domainContext: { handlingStack, location: shallowClone(mockable(window.location)) } }
+        )
+      }
       addTelemetryUsage({ feature: 'start-view' })
     })
   }
@@ -754,9 +792,10 @@ export function makeRumPublicApi(
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
     }),
 
-    // PoC v2: view mutations go through the internal API current view handle — the draft before
-    // the first view (they buffer as part of the eventual kickoff state), the active view
-    // afterwards. An ended view (expired, before the renewal view starts) drops them, as today.
+    // PoC v3: view mutations go through the current view handle (the single-view policy variable,
+    // see makeRumPublicApi) — the initial view before the first startView (they buffer as events,
+    // with their true call-time timestamps), the active view afterwards. An ended view (expired,
+    // before the renewal view starts) drops them, as today.
     setViewName: monitor((name: string) => {
       updateCurrentView({ view: { name: sanitizeStringOption(name, 'view name') } })
       addTelemetryUsage({ feature: 'set-view-name' })
@@ -770,7 +809,7 @@ export function makeRumPublicApi(
     setViewContextProperty: monitor((key: string, value: any) => {
       updateCurrentView({ context: { [key]: value } })
     }),
-    getViewContext: monitor(() => (internalApi.currentView.current().event as { context?: Context }).context ?? {}),
+    getViewContext: monitor(() => (currentViewHandle.current().event as { context?: Context }).context ?? {}),
 
     getInternalContext: monitor(() => undefined as RumInternalContext | undefined),
 
@@ -877,7 +916,7 @@ export function makeRumPublicApi(
     },
 
     addTiming: monitor((name, time) => {
-      const currentEntry = internalApi.currentView.current()
+      const currentEntry = currentViewHandle.current()
       if (currentEntry.complete) {
         return // the current view has been ended: drop, as today
       }
@@ -1045,7 +1084,7 @@ export function makeRumPublicApi(
       .catch(monitorError)
 
     // PoC v2: bind the internal API configuration FIRST — it subscribes the session manager
-    // observables (ex: ending the current view on expiry, before the transport flush) before the
+    // observables (ex: ending the open views on expiry, before the transport flush) before the
     // batch below subscribes its expiry flush on the same promise. The raw session manager
     // promise is enough: the ordering is structural (configure before batch), no deferred dance.
     internalApi.configure({
@@ -1054,6 +1093,13 @@ export function makeRumPublicApi(
         ? (catchUserErrors(newInitConfiguration.beforeSend, 'beforeSend threw an error:') as unknown as BeforeSend)
         : undefined,
     })
+
+    // The initial view was started before init() (no configuration existed yet): apply the
+    // configuration identity — unless a pre-init startView already adopted the view with its
+    // own kickoff (the user's values win).
+    if (!initialViewAdopted) {
+      currentViewHandle.update({ service: configuration.service, version: configuration.version })
+    }
 
     let deflateWorker: DeflateWorker | undefined
     if (configuration.compressIntakeRequests && !canUseEventBridge() && options.startDeflateWorker) {
@@ -1114,13 +1160,14 @@ export function makeRumPublicApi(
     })
   }
 
-  // PoC v2: route a view mutation to the internal API current view. Drops it when the current
-  // view has been ended (session expiry, before the renewal view starts), as today.
+  // PoC v3: route a view mutation to the current view handle (the single-view policy variable).
+  // Drops it when the current view has been ended (session expiry, before the renewal view
+  // starts), as today.
   function updateCurrentView(partial: PartialBaseRumEvent<'view'>) {
-    if (internalApi.currentView.current().complete) {
+    if (currentViewHandle.current().complete) {
       return
     }
-    internalApi.currentView.update(partial)
+    currentViewHandle.update(partial)
   }
 
   //

@@ -1,5 +1,6 @@
 import { clocksNow } from '@datadog/js-core/time'
 import { display } from '@datadog/browser-core'
+import { startViewSuperseding } from '@datadog/browser-rum-core'
 import { onRumInit } from '../reactPlugin'
 import type { AnyRouteMatch } from './types'
 
@@ -9,12 +10,13 @@ export function startReactRouterView(routeMatches: AnyRouteMatch[]) {
       display.warn('`router: true` is missing from the react plugin configuration, the view will not be tracked.')
       return
     }
-    // v2 (plan-v2.md): starting a view supersedes the previous one (the internal API closes its
-    // activity window at the new view's start and assembles its final version), and the initial
-    // version is emitted by the API itself — no stop boilerplate, no update({}) dance. The view
-    // starts as soon as the plugin initializes (even before the session manager resolves): the
-    // internal API buffers it.
-    internalApi.startEvent(
+    // v3 (plan-v3.md): the view-tracking policy (stop the open view at the new view's start)
+    // lives in the shared supersede helper — the internal API itself is agnostic of the
+    // single-view rule. The initial version is emitted by the API itself: no handle bookkeeping,
+    // no update({}) dance. The view starts as soon as the plugin initializes (even before the
+    // session manager resolves): the internal API buffers it.
+    startViewSuperseding(
+      internalApi,
       { type: 'view', view: { url: location.href, name: computeViewName(routeMatches) } },
       { startClocks: clocksNow() }
     )

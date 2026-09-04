@@ -4,12 +4,12 @@ export { validateAndBuildRumConfiguration } from './domain/configuration'
 export { startInternalApiBatch } from './transport/startInternalApiBatch'
 export { formatErrorEvent } from './domain/internalApi/errorFormatter'
 export { createRumInternalApi } from './domain/internalApi/rumInternalApi'
+export { startViewSuperseding } from './domain/view/startViewSuperseding'
 export type { BeforeSend } from './domain/internalApi/rumInternalApi'
 export type { RumEventHistoryEntry, EventCounts } from './domain/internalApi/rumInternalApi.types'
 export type {
   RumInternalApi,
-  ViewEventHandle,
-  NonViewEventHandle,
+  EventHandle,
   EventBaggage,
   BaseRumEvent,
   AddEventOptions,
