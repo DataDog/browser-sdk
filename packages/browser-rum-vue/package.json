@@ -42,10 +42,10 @@
     }
   },
   "devDependencies": {
-    "@vue/compiler-dom": "3.5.41",
-    "@vue/test-utils": "2.4.11",
-    "vue": "3.5.41",
-    "vue-router": "5.2.0"
+    "@vue/compiler-dom": "3.5.42",
+    "@vue/test-utils": "2.5.0",
+    "vue": "3.5.42",
+    "vue-router": "5.3.0"
   },
   "repository": {
     "type": "git",
