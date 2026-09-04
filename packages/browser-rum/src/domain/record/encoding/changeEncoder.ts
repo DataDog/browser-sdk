@@ -280,6 +280,7 @@ function createRunChangeEncoder(stringIds: StringIds): RunChangeEncoder {
       ChangeType.AttachedStyleSheets,
       ChangeType.MediaPlaybackState,
       ChangeType.VisualViewport,
+      ChangeType.ImageContent,
     ].forEach((changeType: ChangeType): void => {
       const change = pendingChanges[changeType]
       if (change) {
