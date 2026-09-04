@@ -19,46 +19,46 @@ export interface CanvasCaptureAttempt {
 export interface CanvasManager {
   /** Single entry point for the canvas status */
   markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
-  /** The node left the DOM: forget its capture state, but not its taint */
+  /** The node left the DOM: forget its tracking state, but not its taint */
   forgetCanvas: (canvas: HTMLCanvasElement) => void
   /** width/height were assigned: the bitmap was cleared, so drop the last hash and mark dirty */
   resetCanvasBitmap: (canvas: HTMLCanvasElement) => void
   /** Takes dirty, connected, non-tainted canvases and clears their dirty state */
   takeCapturableCanvases: () => HTMLCanvasElement[]
-  /** Gets the capture state for a canvas */
-  getCaptureState: (canvas: HTMLCanvasElement) => CanvasCaptureAttempt
-  /** New record stream: discards the per-stream state (not the taint) */
+  /** Starts a capture attempt for a canvas */
+  startCaptureAttempt: (canvas: HTMLCanvasElement) => CanvasCaptureAttempt
+  /** New record stream: discards the per-stream tracking states (not the taint) */
   reset: () => void
 }
 
-interface CanvasState {
+interface CanvasTrackingState {
   lastChangeHash?: string
 }
 
 export function createCanvasManager(): CanvasManager {
   const dirtyCanvases = new Set<HTMLCanvasElement>()
   const taintedCanvases = new WeakSet<HTMLCanvasElement>()
-  let canvasStates = new WeakMap<HTMLCanvasElement, CanvasState>()
+  let canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
 
-  function getState(canvas: HTMLCanvasElement): CanvasState {
-    let state = canvasStates.get(canvas)
-    if (!state) {
-      state = {}
-      canvasStates.set(canvas, state)
+  function getTrackingState(canvas: HTMLCanvasElement): CanvasTrackingState {
+    let trackingState = canvasTrackingStates.get(canvas)
+    if (!trackingState) {
+      trackingState = {}
+      canvasTrackingStates.set(canvas, trackingState)
     }
-    return state
+    return trackingState
   }
 
-  function getCaptureState(canvas: HTMLCanvasElement): CanvasCaptureAttempt {
-    const state = getState(canvas)
-    const isCurrent = () => canvasStates.get(canvas) === state
+  function startCaptureAttempt(canvas: HTMLCanvasElement): CanvasCaptureAttempt {
+    const trackingState = getTrackingState(canvas)
+    const isCurrent = () => canvasTrackingStates.get(canvas) === trackingState
 
     return {
-      lastChangeHash: state.lastChangeHash,
+      lastChangeHash: trackingState.lastChangeHash,
       isCurrent,
       setLastChangeHash: (changeHash) => {
         if (isCurrent()) {
-          state.lastChangeHash = changeHash
+          trackingState.lastChangeHash = changeHash
         }
       },
     }
@@ -100,11 +100,11 @@ export function createCanvasManager(): CanvasManager {
 
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
-      canvasStates.delete(canvas)
+      canvasTrackingStates.delete(canvas)
     },
 
     resetCanvasBitmap: (canvas) => {
-      canvasStates.delete(canvas)
+      canvasTrackingStates.delete(canvas)
       markDirty(canvas)
     },
 
@@ -123,11 +123,11 @@ export function createCanvasManager(): CanvasManager {
       return capturableCanvases
     },
 
-    getCaptureState,
+    startCaptureAttempt,
 
     reset: () => {
       dirtyCanvases.clear()
-      canvasStates = new WeakMap()
+      canvasTrackingStates = new WeakMap()
     },
   }
 }

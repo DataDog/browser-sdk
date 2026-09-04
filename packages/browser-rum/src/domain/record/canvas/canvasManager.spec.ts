@@ -72,45 +72,45 @@ describe('CanvasManager', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
-    const captureState = canvasManager.getCaptureState(canvas)
-    expect(captureState.lastChangeHash).toBeUndefined()
+    const captureAttempt = canvasManager.startCaptureAttempt(canvas)
+    expect(captureAttempt.lastChangeHash).toBeUndefined()
 
-    captureState.setLastChangeHash('hash')
+    captureAttempt.setLastChangeHash('hash')
 
-    expect(canvasManager.getCaptureState(canvas).lastChangeHash).toBe('hash')
-    expect(captureState.isCurrent()).toBe(true)
+    expect(canvasManager.startCaptureAttempt(canvas).lastChangeHash).toBe('hash')
+    expect(captureAttempt.isCurrent()).toBe(true)
   })
 
-  it('invalidates the capture state when the bitmap is reset', () => {
+  it('invalidates the capture attempt when the bitmap is reset', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    const captureState = canvasManager.getCaptureState(canvas)
-    captureState.setLastChangeHash('hash')
+    const captureAttempt = canvasManager.startCaptureAttempt(canvas)
+    captureAttempt.setLastChangeHash('hash')
 
     canvasManager.resetCanvasBitmap(canvas)
 
-    expect(captureState.isCurrent()).toBe(false)
-    expect(canvasManager.getCaptureState(canvas).lastChangeHash).toBeUndefined()
+    expect(captureAttempt.isCurrent()).toBe(false)
+    expect(canvasManager.startCaptureAttempt(canvas).lastChangeHash).toBeUndefined()
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
-  it('forgets the capture state when a canvas is forgotten', () => {
+  it('forgets the tracking state when a canvas is forgotten', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    const captureState = canvasManager.getCaptureState(canvas)
-    captureState.setLastChangeHash('hash')
+    const captureAttempt = canvasManager.startCaptureAttempt(canvas)
+    captureAttempt.setLastChangeHash('hash')
 
     canvasManager.forgetCanvas(canvas)
 
-    expect(captureState.isCurrent()).toBe(false)
+    expect(captureAttempt.isCurrent()).toBe(false)
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    expect(canvasManager.getCaptureState(canvas).lastChangeHash).toBeUndefined()
+    expect(canvasManager.startCaptureAttempt(canvas).lastChangeHash).toBeUndefined()
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
@@ -118,13 +118,13 @@ describe('CanvasManager', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
 
-    const captureState = canvasManager.getCaptureState(canvas)
-    captureState.setLastChangeHash('hash')
+    const captureAttempt = canvasManager.startCaptureAttempt(canvas)
+    captureAttempt.setLastChangeHash('hash')
 
     canvasManager.reset()
 
-    expect(captureState.isCurrent()).toBe(false)
-    expect(canvasManager.getCaptureState(canvas).lastChangeHash).toBeUndefined()
+    expect(captureAttempt.isCurrent()).toBe(false)
+    expect(canvasManager.startCaptureAttempt(canvas).lastChangeHash).toBeUndefined()
   })
 
   it('keeps a tainted canvas tainted after its bitmap is reset', () => {

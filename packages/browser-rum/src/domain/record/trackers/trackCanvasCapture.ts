@@ -71,20 +71,20 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
     }
   }
 
-  function markDirtyIfCurrent(captureState: CanvasCaptureAttempt, canvas: HTMLCanvasElement) {
-    if (captureState.isCurrent()) {
+  function markDirtyIfCurrent(captureAttempt: CanvasCaptureAttempt, canvas: HTMLCanvasElement) {
+    if (captureAttempt.isCurrent()) {
       canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     }
   }
 
   async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId) {
-    const captureState = canvasManager.getCaptureState(canvas)
-    const cancelled = () => stopped || !captureState.isCurrent()
+    const captureAttempt = canvasManager.startCaptureAttempt(canvas)
+    const cancelled = () => stopped || !captureAttempt.isCurrent()
 
     try {
       const snapshot = createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
       if (!snapshot) {
-        markDirtyIfCurrent(captureState, canvas)
+        markDirtyIfCurrent(captureAttempt, canvas)
         return // snapshot failed; leave it dirty
       }
 
@@ -94,11 +94,11 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         return
       }
       if (hash === undefined) {
-        markDirtyIfCurrent(captureState, canvas)
+        markDirtyIfCurrent(captureAttempt, canvas)
         return // hashing failed; leave it dirty
       }
 
-      if (hash === captureState.lastChangeHash) {
+      if (hash === captureAttempt.lastChangeHash) {
         return // unchanged: no capture/output
       }
 
@@ -107,7 +107,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         return
       }
       if (!image) {
-        markDirtyIfCurrent(captureState, canvas)
+        markDirtyIfCurrent(captureAttempt, canvas)
         return // encoding failed; leave it dirty
       }
 
@@ -119,7 +119,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         }
         return
       }
-      captureState.setLastChangeHash(hash)
+      captureAttempt.setLastChangeHash(hash)
     } catch (error) {
       if (!cancelled()) {
         canvasManager.markCanvas(canvas, isSecurityError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)
