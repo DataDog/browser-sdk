@@ -14,6 +14,7 @@ import type {
   InputValueChange,
   StyleSheetRules,
   TextChange,
+  ImageContentChange,
 } from '../../../types'
 import type { StringTable } from './stringTable'
 import { createStringTable } from './stringTable'
@@ -171,6 +172,16 @@ function decodeChangeRecord(
         const decoded: [typeof ChangeType.AddStyleSheet, ...AddStyleSheetChange[]] = [ChangeType.AddStyleSheet]
         for (let i = 1; i < change.length; i++) {
           decoded.push(decodeAddStyleSheetChange(change[i] as AddStyleSheetChange, stringTable))
+        }
+        decodedData.push(decoded)
+        break
+      }
+
+      case ChangeType.ImageContent: {
+        const decoded: [typeof ChangeType.ImageContent, ...ImageContentChange[]] = [ChangeType.ImageContent]
+        for (let i = 1; i < change.length; i++) {
+          const imageContentChange = change[i] as ImageContentChange
+          decoded.push([imageContentChange[0], stringTable.decodeAnnotated(imageContentChange[1])])
         }
         decodedData.push(decoded)
         break
