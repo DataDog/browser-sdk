@@ -251,6 +251,8 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Enables automatic collection of users actions.
    *
+   * Add `data-dd-ignore-frustration` without a value, or set it to `all`, to ignore all frustration signals for an element and its descendants. To ignore specific signals, use a space-separated list of `rage-click`, `dead-click`, and `error-click`.
+   *
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
    *
    * @category Data Collection
