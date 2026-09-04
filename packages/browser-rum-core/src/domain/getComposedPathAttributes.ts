@@ -11,7 +11,7 @@ const HREF_TAGNAMES = ['A', 'AREA']
 // Attributes masked through the same privacy pipeline as action names: free-form text that can
 // carry PII (a user's name, an email address...), already classified this way by
 // `shouldMaskAttribute` in `privacy.ts`.
-const MASKED_TEXT_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt', 'placeholder']
+const MASKED_TEXT_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt']
 
 // Structural/identification attributes: not part of `shouldMaskAttribute`'s masked set, so no
 // masking needed beyond the element-level HIDDEN/IGNORE check every attribute already gets.

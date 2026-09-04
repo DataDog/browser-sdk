@@ -79,12 +79,10 @@ describe('getComposedPathAttributes', () => {
       expect(result).toEqual({ name: '***', title: '***', alt: '***' })
     })
 
-    it('collects placeholder, masked the same way as aria-label', () => {
+    it('does not collect placeholder', () => {
       const element = appendElementInIsolation('<input placeholder="Enter your name" />')
 
-      const result = collect([element], mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK }))
-
-      expect(result).toEqual({ placeholder: '***' })
+      expect(collect([element])).toBeUndefined()
     })
 
     it('collects a stable data-* attribute unmasked, even under the mask privacy level', () => {
