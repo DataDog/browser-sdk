@@ -1,8 +1,7 @@
 import { instrumentMethod, noop } from '@datadog/browser-core'
 import type { RecordingScope } from '../recordingScope'
+import { CanvasStatus } from '../canvas/canvasManager'
 import type { Tracker } from './tracker.types'
-
-export type MarkCanvasDirty = (canvas: HTMLCanvasElement) => void
 
 const CANVAS_2D_DRAWING_METHODS = [
   'clearRect',
@@ -34,7 +33,7 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
       instrumentMethod(CanvasRenderingContext2D.prototype, method, ({ target: context, onPostCall }) => {
         onPostCall(() => {
           if (scope.nodeIds.get(context.canvas) !== undefined) {
-            scope.canvasManager.markCanvasDirty(context.canvas)
+            scope.canvasManager.markCanvas(context.canvas, CanvasStatus.Dirty)
           }
         })
       })

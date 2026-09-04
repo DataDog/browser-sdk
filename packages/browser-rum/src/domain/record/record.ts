@@ -16,6 +16,7 @@ import {
   trackViewportResize,
   trackVisualViewportResize,
   trackCanvasContent,
+  trackCanvasCapture,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -83,6 +84,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackVisualViewportResize(processRecord),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
     trackCanvasContent(scope),
+    trackCanvasCapture(scope),
   ]
 
   return {

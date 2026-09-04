@@ -237,6 +237,22 @@ export interface RumInitConfiguration extends InitConfiguration {
          * @defaultValue 1
          */
         maxFramesPerSecond?: number | undefined
+
+        /**
+         * The maximum width or height, in pixels, of the image used for canvas change detection, between 1 and 100.
+         * Images are downscaled proportionally to fit within this bound and smaller images are not upscaled.
+         *
+         * @defaultValue 100
+         */
+        hashingMaxDimension?: number | undefined
+
+        /**
+         * The maximum width or height, in pixels, of recorded canvas images, between 1 and 1000. Images are downscaled proportionally
+         * to fit within this bound and smaller images are not upscaled.
+         *
+         * @defaultValue 1000
+         */
+        maxImageDimension?: number | undefined
       }
     | undefined
 
@@ -431,6 +447,8 @@ export const RUM_SCHEMA = {
     schema: {
       enable: { type: 'boolean', required: true },
       maxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
+      hashingMaxDimension: { type: 'number', min: 1, max: 100, default: 100 },
+      maxImageDimension: { type: 'number', min: 1, max: 1000, default: 1000 },
     },
   },
 
