@@ -29,16 +29,24 @@ const MAX_ATTRIBUTE_KEY_COUNT = 20
 const EMAIL_PATTERN = /[^\s@]+@[^\s@]+\.[^\s@]+/
 
 /**
- * A last-resort content check applied to every collected value, on top of the existing
- * privacy-level masking: `maskAttributeIfNeeded` only masks free-form text under `MASK`/
- * `MASK_UNLESS_ALLOWLISTED`, so at `ALLOW`/`MASK_USER_INPUT` (the default) a raw attribute value
- * would otherwise pass straight through, digits and email addresses included. Dropping any value
- * that contains an email or a digit (`isGeneratedValue`, the same heuristic already used to
- * exclude generated ids/classes/URL path segments elsewhere in this domain) keeps this facet map
- * free of user identifiers regardless of the privacy level in effect.
+ * A last-resort content check applied on top of the existing privacy-level masking:
+ * `maskAttributeIfNeeded` only masks free-form text under `MASK`/`MASK_UNLESS_ALLOWLISTED`, so at
+ * `ALLOW`/`MASK_USER_INPUT` (the default) a raw attribute value would otherwise pass straight
+ * through, email addresses included. The email check applies to every attribute.
+ *
+ * The digit check (`isGeneratedValue`, the same heuristic already used to exclude generated
+ * ids/classes/URL path segments elsewhere in this domain) only applies to `MASKED_TEXT_ATTRIBUTES`
+ * (free-form, human-authored text most likely to embed a raw identifier such as a phone number
+ * when unmasked). It's intentionally not applied to `id`, `role`, or `data-*`: those are
+ * structural/identifier-style attributes where digits are the common, wanted case (product ids,
+ * SKUs, test ids), and dropping them entirely would throw away exactly the values customers asked
+ * for this feature to expose.
  */
-function isSafeToCollect(value: string): boolean {
-  return !EMAIL_PATTERN.test(value) && !isGeneratedValue(value)
+function isSafeToCollect(value: string, checkDigits: boolean): boolean {
+  if (EMAIL_PATTERN.test(value)) {
+    return false
+  }
+  return !checkDigits || !isGeneratedValue(value)
 }
 
 /**
@@ -49,9 +57,11 @@ function isSafeToCollect(value: string): boolean {
  * Elements are visited target-first (composedPath's natural order), and the first (closest) value
  * seen for a given key wins — farther ancestors are ignored for that key once it's set.
  *
- * Every value is dropped if it contains an email address or any digit (see `isSafeToCollect`),
- * regardless of privacy level or attribute type, so this map never carries a numeric identifier or
- * an email address.
+ * Every value is dropped if it contains an email address, regardless of privacy level or attribute
+ * type. Values of `aria-label`, `name`, `title`, and `alt` are additionally dropped if they contain
+ * a digit, since those are free-form text that can carry a raw identifier when unmasked (see
+ * `isSafeToCollect`). `id`, `role`, and `data-*` are exempt from the digit check: digits are the
+ * common, wanted case there (product ids, SKUs, test ids).
  *
  * Returns `undefined` unless the `composed_path_selector_attributes_map` experimental flag is
  * enabled, or if the resulting map ends up empty.
@@ -73,11 +83,11 @@ export function getComposedPathAttributes(
   let collectedKeyCount = 0
   let hasReachedMaxKeyCount = false
 
-  function addAttribute(key: string, rawValue: string) {
+  function addAttribute(key: string, rawValue: string, checkDigits: boolean) {
     if (key in result) {
       return
     }
-    if (!isSafeToCollect(rawValue)) {
+    if (!isSafeToCollect(rawValue, checkDigits)) {
       return
     }
     if (collectedKeyCount >= MAX_ATTRIBUTE_KEY_COUNT) {
@@ -102,14 +112,14 @@ export function getComposedPathAttributes(
     if (HREF_TAGNAMES.includes(element.tagName)) {
       const sanitizedHref = getSanitizedHref(element)
       if (sanitizedHref !== undefined) {
-        addAttribute(HREF_ATTRIBUTE, sanitizedHref)
+        addAttribute(HREF_ATTRIBUTE, sanitizedHref, false)
       }
     }
 
     for (const attributeName of PASSTHROUGH_ATTRIBUTES) {
       const value = element.getAttribute(attributeName)
       if (value) {
-        addAttribute(attributeName, value)
+        addAttribute(attributeName, value, false)
       }
     }
 
@@ -120,7 +130,8 @@ export function getComposedPathAttributes(
       if (attribute.name === PRIVACY_ATTR_NAME) {
         continue
       }
-      if (MASKED_TEXT_ATTRIBUTES.includes(attribute.name) || attribute.name.startsWith('data-')) {
+      const isMaskedTextAttribute = MASKED_TEXT_ATTRIBUTES.includes(attribute.name)
+      if (isMaskedTextAttribute || attribute.name.startsWith('data-')) {
         const maskedValue = maskAttributeIfNeeded(
           element,
           attribute.name,
@@ -130,7 +141,7 @@ export function getComposedPathAttributes(
           CENSORED_STRING_MARK
         )
         if (maskedValue) {
-          addAttribute(attribute.name, maskedValue)
+          addAttribute(attribute.name, maskedValue, isMaskedTextAttribute)
         }
       }
     }

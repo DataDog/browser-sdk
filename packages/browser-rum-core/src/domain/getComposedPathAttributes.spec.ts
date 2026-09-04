@@ -134,28 +134,28 @@ describe('getComposedPathAttributes', () => {
         expect(collect([element])).toBeUndefined()
       })
 
-      it('drops a non-stable data-* attribute containing a digit, even at the default privacy level', () => {
+      it('collects a non-stable data-* attribute containing a digit: digits are exempt from the content check for data-* attributes', () => {
         const element = appendElementInIsolation('<div data-user-id="12345"></div>')
 
-        expect(collect([element])).toBeUndefined()
+        expect(collect([element])).toEqual({ 'data-user-id': '12345' })
       })
 
-      it('drops an id containing a digit', () => {
+      it('collects an id containing a digit: digits are exempt from the content check for id', () => {
         const element = appendElementInIsolation('<div id="user-12345"></div>')
 
-        expect(collect([element])).toBeUndefined()
+        expect(collect([element])).toEqual({ id: 'user-12345' })
       })
 
-      it('drops a stable data-* attribute containing a digit, even though it is exempt from masking', () => {
+      it('collects a stable data-* attribute containing a digit', () => {
         const element = appendElementInIsolation('<div data-testid="submit-button-2"></div>')
 
-        expect(collect([element])).toBeUndefined()
+        expect(collect([element])).toEqual({ 'data-testid': 'submit-button-2' })
       })
 
       it('does not drop other keys collected on the same element when one value is unsafe', () => {
-        const element = appendElementInIsolation('<div id="user-12345" role="button"></div>')
+        const element = appendElementInIsolation('<div id="user-id" aria-label="Contact jane@example.com"></div>')
 
-        expect(collect([element])).toEqual({ role: 'button' })
+        expect(collect([element])).toEqual({ id: 'user-id' })
       })
     })
 
