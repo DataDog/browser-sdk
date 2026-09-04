@@ -19,12 +19,12 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.12.0",
-    "@datadog/browser-rum-core": "7.12.0",
-    "@datadog/js-core": "0.0.13"
+    "@datadog/browser-core": "workspace:*",
+    "@datadog/browser-rum-core": "workspace:*",
+    "@datadog/js-core": "workspace:*"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "7.12.0"
+    "@datadog/browser-logs": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-logs": {
