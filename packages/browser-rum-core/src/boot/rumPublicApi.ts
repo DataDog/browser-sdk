@@ -687,11 +687,13 @@ export function makeRumPublicApi(
   //
   // The single-view policy lives HERE, not in the internal API: the initial view is started
   // unconditionally at the clock origin (bare kickoff: current location + initial_load — so
-  // the first view always covers early child events), and currentViewHandle is the one
-  // consumer-side view policy variable: view mutations route through it, startView adopts it
-  // (first call) or supersedes it (startViewSuperseding).
+  // the first view always covers early child events), and the current view is always looked up
+  // from the event history (findCurrentViewHandle): views are started by BOTH the public API
+  // (startView) and the automatic view tracking (trackViews: route changes, BFCache, session
+  // renewal), so a cached handle would go stale after an automatic view change and route view
+  // mutations to an ended view (review finding).
   const internalApi = createRumInternalApi()
-  let currentViewHandle: EventHandle<'view'> = internalApi.startEvent(
+  internalApi.startEvent(
     {
       type: 'view',
       view: { url: shallowClone(mockable(window.location)).href, loading_type: ViewLoadingType.INITIAL_LOAD },
@@ -724,13 +726,14 @@ export function makeRumPublicApi(
       // url / name / service / version / context win over the bare origin kickoff;
       // loading_type is left untouched (the initial view stays an initial_load). Later calls
       // supersede through the shared policy helper.
+      const openViewHandle = findCurrentViewHandle()
       const adoptsInitialView =
         !initialViewAdopted &&
-        !currentViewHandle.current().complete &&
+        openViewHandle !== undefined &&
         (configuration === undefined || configuration.trackViewsManually)
       if (adoptsInitialView) {
         initialViewAdopted = true
-        currentViewHandle.update({
+        openViewHandle.update({
           view: {
             url: sanitizedOptions.url ?? shallowClone(mockable(window.location)).href,
             name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
@@ -740,7 +743,7 @@ export function makeRumPublicApi(
           context: sanitizedOptions.context,
         })
       } else {
-        currentViewHandle = startViewSuperseding(
+        startViewSuperseding(
           internalApi,
           {
             type: 'view',
@@ -809,7 +812,9 @@ export function makeRumPublicApi(
     setViewContextProperty: monitor((key: string, value: any) => {
       updateCurrentView({ context: { [key]: value } })
     }),
-    getViewContext: monitor(() => (currentViewHandle.current().event as { context?: Context }).context ?? {}),
+    getViewContext: monitor(
+      () => (findCurrentViewHandle()?.current().event as { context?: Context } | undefined)?.context ?? {}
+    ),
 
     getInternalContext: monitor(() => undefined as RumInternalContext | undefined),
 
@@ -916,9 +921,13 @@ export function makeRumPublicApi(
     },
 
     addTiming: monitor((name, time) => {
-      const currentEntry = currentViewHandle.current()
+      const currentView = findCurrentViewHandle()
+      if (!currentView) {
+        return // no open view (expired, before the renewal view starts): drop, as today
+      }
+      const currentEntry = currentView.current()
       if (currentEntry.complete) {
-        return // the current view has been ended: drop, as today
+        return // defense: an open view entry cannot be complete
       }
       // TODO: next major decide to drop relative time support or update its behaviour
       const startClocks = currentEntry.baggage.startClocks
@@ -1098,7 +1107,7 @@ export function makeRumPublicApi(
     // configuration identity — unless a pre-init startView already adopted the view with its
     // own kickoff (the user's values win).
     if (!initialViewAdopted) {
-      currentViewHandle.update({ service: configuration.service, version: configuration.version })
+      findCurrentViewHandle()?.update({ service: configuration.service, version: configuration.version })
     }
 
     let deflateWorker: DeflateWorker | undefined
@@ -1160,14 +1169,22 @@ export function makeRumPublicApi(
     })
   }
 
-  // PoC v3: route a view mutation to the current view handle (the single-view policy variable).
-  // Drops it when the current view has been ended (session expiry, before the renewal view
-  // starts), as today.
-  function updateCurrentView(partial: PartialBaseRumEvent<'view'>) {
-    if (currentViewHandle.current().complete) {
-      return
+  // The current view handle: the open view, looked up from the event history every time (see
+  // makeRumPublicApi). The single-view policy guarantees exactly one; with several open, the
+  // most recently started one wins (the same tie-break as the internal API hierarchy lookups).
+  function findCurrentViewHandle(): EventHandle<'view'> | undefined {
+    const openViews = internalApi.findEvents({ type: 'view', open: true })
+    const entry = openViews[openViews.length - 1]
+    if (entry === undefined || entry.complete) {
+      return undefined
     }
-    currentViewHandle.update(partial)
+    return entry.handle
+  }
+
+  // PoC v3: route a view mutation to the current view handle. Drops it when there is no open
+  // view (session expiry, before the renewal view starts), as today.
+  function updateCurrentView(partial: PartialBaseRumEvent<'view'>) {
+    findCurrentViewHandle()?.update(partial)
   }
 
   //

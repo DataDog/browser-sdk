@@ -74,9 +74,12 @@ smoke spec covering the big lines of the new pipeline.
   handle types unified (`ViewEventHandle`/`NonViewEventHandle` are one `EventHandle` family),
   and multi-view is representable — a possible future model instead of a redesign.
 - **The public API owns the policy.** The initial view is started unconditionally at the clock
-  origin (bare kickoff: current location + `initial_load`), a local `currentViewHandle` variable
-  routes view mutations, and the first `startView` adopts the initial view (update-merge: the
-  user's kickoff wins over the bare origin kickoff). trackViews attaches metrics by catching up
+  origin (bare kickoff: current location + `initial_load`), the current view is looked up from
+  the history on every mutation (`findEvents({ type: 'view', open: true })` — no cached handle:
+  views are started by both the public API and the automatic tracking, and a cached handle went
+  stale after an automatic route change — a review finding, fixed with a regression spec), and
+  the first `startView` adopts the initial view (update-merge: the user's kickoff wins over the
+  bare origin kickoff). trackViews attaches metrics by catching up
   on the open views at init (`findEvents({ open: true })`) — the history is the source of truth,
   notifications are live updates.
 - **The transport-flush ordering became structural.** The final view version must be upserted
@@ -183,11 +186,13 @@ Ordered by risk:
    not necessarily a misuse).
 4. **The public API owns the policy** — the initial view is started unconditionally at the
    clock origin (bare kickoff: current location + `initial_load`, so the first view always
-   covers early child events), a local `currentViewHandle` variable routes view mutations, and
-   the first `startView` ADOPTS the initial view (update-merge: the user's kickoff wins over the
-   bare origin kickoff, main's `startView({name})` precedence; loading_type untouched). Later
-   calls supersede. Deviation accepted: an adopted initial view ships an extra document version,
-   and a manual-mode session with no `startView` ever still has a bare initial view.
+   covers early child events), the current view is looked up from the history on every mutation
+   (no cached handle — a cached one went stale after an automatic route change, a review
+   finding), and the first `startView` ADOPTS the initial view (update-merge: the user's kickoff
+   wins over the bare origin kickoff, main's `startView({name})` precedence; loading_type
+   untouched). Later calls supersede. Deviation accepted: an adopted initial view ships an extra
+   document version, and a manual-mode session with no `startView` ever still has a bare
+   initial view.
 5. **The API derives view finals** — `is_active: false` and `time_spent` are computed at
    assembly from the activity bounds when the stop payload doesn't provide them; only views get
    this (their endings are derivable — non-view final data genuinely belongs to the stop call).

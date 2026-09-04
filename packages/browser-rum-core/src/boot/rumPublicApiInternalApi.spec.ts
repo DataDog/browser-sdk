@@ -169,6 +169,45 @@ describe('rum public api (internal api PoC)', () => {
     expect(firstViewAction?.view?.id).toBe(firstView?.view?.id)
   })
 
+  it('routes view mutations to the current view after an automatic view change', async () => {
+    const clock = mockClock()
+    setupSessionManager()
+    const { requests, waitForAllFetchCalls } = interceptRequests()
+    const originalPath = location.pathname
+
+    const rumPublicApi = makeRumPublicApi(noopRecorderApi, noopProfilerApi)
+    rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION }) // automatic views
+    clock.tick(10)
+    await waitForSessionManagerResolution()
+
+    // An automatic route change: trackViews starts a new view through the shared supersede
+    // helper. The public API must route view mutations to it — it looks up the open view from
+    // the history on every call, since a cached handle would go stale after an automatic view
+    // change (review finding).
+    history.pushState({}, '', '/new-route')
+    clock.tick(10)
+    registerCleanupTask(() => history.pushState({}, '', originalPath))
+
+    rumPublicApi.setViewName('renamed after route change')
+    clock.tick(10)
+
+    rumPublicApi.stopSession()
+    await waitForAllFetchCalls()
+
+    const events = parseRequestBody(requests)
+    const viewEvents = events.filter((event) => event.type === 'view')
+    const newRouteView = viewEvents.find((event) => event.view?.url?.endsWith('/new-route'))
+    const initialView = viewEvents.find((event) => !event.view?.url?.endsWith('/new-route'))
+
+    // setViewName applied to the current (new) view, not to the ended one
+    expect(newRouteView?.view?.name).toBe('renamed after route change')
+    expect(initialView?.view?.name).toBeUndefined()
+    // The route change ended the initial view; the expiry ended the new one
+    expect(initialView?.view?.is_active).toBe(false)
+    expect(newRouteView?.view?.is_active).toBe(false)
+    expect(newRouteView?.view?.loading_type).toBe('route_change')
+  })
+
   it('tracks click actions through the internal API', async () => {
     const clock = mockClock()
     setupSessionManager()
@@ -291,7 +330,7 @@ function parseRequestBody(requests: Array<{ body: string }>) {
       (line) =>
         JSON.parse(line) as {
           type: string
-          view?: { id: string; name: string; is_active: boolean; loading_type: string }
+          view?: { id: string; name: string; url: string; is_active: boolean; loading_type: string }
           action?: {
             target?: { name: string }
             type?: string

@@ -789,13 +789,17 @@ the core. The single-view policy is written once, in a shared `startViewSupersed
 (stop the open view(s) at the new start, then startEvent) used by the public API `startView`,
 trackViews automatic starts, both router plugins and the Shopify bindings.
 
-The public API owns the policy variables: the initial view is started unconditionally at the
-clock origin (bare kickoff: current location + `initial_load`), `currentViewHandle` routes view
-mutations, and the first `startView` ADOPTS the initial view (update-merge: primitives overwrite,
-so the user's url/name/service/version win; loading_type untouched; the config identity is
-applied at init when not adopted). trackViews attaches metrics by catching up on the open
-views at construction (`findEvents({ open: true })` — the initial view's `event_started` fired
-before its subscription) and updates them through the views' live handles, looked up by id.
+The public API owns the policy: the initial view is started unconditionally at the clock origin
+(bare kickoff: current location + `initial_load`), the current view is looked up from the
+history on every mutation (`findEvents({ type: 'view', open: true })` — no cached handle: views
+are started by BOTH the public API and the automatic tracking, and a cached handle went stale
+after an automatic route change, dropping setViewName/context/timings on an ended view —
+review finding, fixed with a regression spec), and the first `startView` ADOPTS the initial
+view (update-merge: primitives overwrite, so the user's url/name/service/version win;
+loading_type untouched; the config identity is applied at init when not adopted). trackViews
+attaches metrics by catching up on the open views at construction (`findEvents({ open: true })`
+— the initial view's `event_started` fired before its subscription) and updates them through
+the views' live handles, looked up by id.
 
 ### v3 validation
 
