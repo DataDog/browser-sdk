@@ -129,6 +129,18 @@ test.describe('bridge present', () => {
       expect(xhrResources[0]._dd?.trace_id).toBeUndefined()
     })
 
+  createTest('do not trace when bridge does not provide a sampling decision')
+    .withRum({ service: 'service', traceSampleRate: 100, allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .withEventBridge()
+    .run(async ({ flushEvents, intakeRegistry, sendXhr }) => {
+      await sendXhr('/headers')
+      await flushEvents()
+
+      const xhrResources = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'xhr')
+      expect(xhrResources).toHaveLength(1)
+      expect(xhrResources[0]._dd?.trace_id).toBeUndefined()
+    })
+
   createTest('do not send records when the recording is stopped')
     .withRum()
     .withEventBridge()

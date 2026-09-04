@@ -136,13 +136,11 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const fallbackTraceSampled = isSampled(
-    session.id,
-    correctedChildSampleRate(configuration.sessionSampleRate, configuration.traceSampleRate)
-  )
+  // The native SDK owns the sampling decision in a WebView. If its decision is not available,
+  // do not fall back to an independent Browser SDK decision because the two decisions can differ.
   const traceSampled = canUseEventBridge()
-    ? (getEventBridge()?.getIsTraceSampled() ?? fallbackTraceSampled)
-    : fallbackTraceSampled
+    ? (getEventBridge()?.getIsTraceSampled() ?? false)
+    : isSampled(session.id, correctedChildSampleRate(configuration.sessionSampleRate, configuration.traceSampleRate))
 
   const shouldInjectHeaders = traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
   if (!shouldInjectHeaders) {
