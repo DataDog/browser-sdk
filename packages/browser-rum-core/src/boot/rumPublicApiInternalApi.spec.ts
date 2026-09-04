@@ -37,6 +37,39 @@ describe('rum public api (internal api PoC)', () => {
     await Promise.resolve()
   }
 
+  it('buffers public API calls made before init() and replays them when init succeeds', async () => {
+    const clock = mockClock()
+    setupSessionManager()
+    const { requests, waitForAllFetchCalls } = interceptRequests()
+
+    const rumPublicApi = makeRumPublicApi(noopRecorderApi, noopProfilerApi)
+
+    // Calls made before init(): buffered (no loud error), not executed yet
+    rumPublicApi.startView('early manual view')
+    rumPublicApi.addAction('early action')
+    rumPublicApi.addError(new Error('early boom'))
+
+    rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: true })
+    clock.tick(10)
+
+    // The buffered calls were replayed in call order at init: their events are held by the
+    // internal API until the session manager resolves. The replayed startView creates the
+    // initial (manual) view, and the replayed action and error link to it.
+    await waitForSessionManagerResolution()
+    rumPublicApi.stopSession()
+    await waitForAllFetchCalls()
+
+    const events = parseRequestBody(requests)
+    const viewEvent = events.find((event) => event.type === 'view')
+    const actionEvent = events.find((event) => event.type === 'action')
+    const errorEvent = events.find((event) => event.type === 'error')
+    expect(viewEvent?.view?.name).toBe('early manual view')
+    expect(actionEvent?.action?.target?.name).toBe('early action')
+    expect(errorEvent?.error?.message).toBe('early boom')
+    expect(actionEvent?.view?.id).toBe(viewEvent?.view?.id)
+    expect(errorEvent?.view?.id).toBe(viewEvent?.view?.id)
+  })
+
   it('sends public API events collected before the session manager resolves', async () => {
     const clock = mockClock()
     setupSessionManager()

@@ -1,7 +1,8 @@
 // PoC rewrite (phase 2 of the internal API plan, see /plan.md): the public API wires directly to
 // the RUM internal API, and preStartRum is gone. The internal API buffering replaces the
 // pre-start buffer: public API calls land immediately, and events are assembled and sent once the
-// session manager resolves. Corner-cuts, documented in /plan.md: tracking consent is assumed
+// session manager resolves. Calls made before init() are buffered by the public API itself and
+// replayed when init() succeeds (the behavior preStartRum used to provide). Corner-cuts, documented in /plan.md: tracking consent is assumed
 // granted, global / user / account contexts are not supported (no-op), automatic
 // instrumentation, telemetry and remote configuration are not started, and the recorder /
 // profiler integrations are not wired. Plugins receive the internal API in onInit. Views are
@@ -27,6 +28,7 @@ import type {
   Telemetry,
 } from '@datadog/browser-core'
 import {
+  addTelemetryDebug,
   addTelemetryUsage,
   canUseEventBridge,
   callMonitored,
@@ -681,6 +683,13 @@ export function makeRumPublicApi(
   const startedActions = new Map<string, NonViewEventHandle<'action'>>()
   const startedResources = new Map<string, { handle: NonViewEventHandle<'resource'>; method?: string }>()
   const startedDurationVitals = new Map<string, { handle: NonViewEventHandle<'vital'>; startClocks: ClocksState }>()
+  // PoC follow-up (debrief feedback, see /plan.md): public API calls made before init() are
+  // buffered and replayed once the SDK started — the behavior preStartRum used to provide.
+  // `init`, `setTrackingConsent` and `onReady` are exempt (they drive the start), and so are
+  // `get*` methods: they read (optionally-chained) state that is meaningful before init.
+  const PRE_INIT_CALLS_LIMIT = 500
+  const preInitCalls: Array<{ method: keyof RumPublicApi; args: unknown[] }> = []
+  let started = false
 
   const startView: {
     (name?: string): void
@@ -975,6 +984,40 @@ export function makeRumPublicApi(
     DEFAULT_TRACKED_RESOURCE_HEADERS,
   })
 
+  // The pre-init call buffer: each method (see the exemptions above) is wrapped so calls made
+  // before init() are recorded and replayed when init() succeeds (see doInit). The wrapper stays
+  // in place afterwards and just delegates.
+  for (const method of Object.keys(rumPublicApi) as Array<keyof RumPublicApi>) {
+    // The original method is stored to be called standalone below; public API methods don't use
+    // `this` (they are closures), and the wrapper supplies `rumPublicApi` as the receiver anyway.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const original = rumPublicApi[method] as unknown as (this: void, ...args: unknown[]) => unknown
+    if (
+      typeof original !== 'function' ||
+      method === 'init' ||
+      method === 'setTrackingConsent' ||
+      method === 'onReady' ||
+      method.startsWith('get')
+    ) {
+      continue
+    }
+    ;(rumPublicApi as unknown as Record<string, (this: void, ...args: unknown[]) => unknown>)[method] = (
+      ...args: unknown[]
+    ) => {
+      if (!started) {
+        if (preInitCalls.length < PRE_INIT_CALLS_LIMIT) {
+          preInitCalls.push({ method, args })
+        } else {
+          // Same limit and telemetry as the preStartRum buffer used to have
+          // monitor-until: 2026-10-14
+          addTelemetryDebug('rum public api pre-init buffer full, dropping call', { method })
+        }
+        return undefined
+      }
+      return original(...args)
+    }
+  }
+
   return rumPublicApi
 
   //
@@ -1110,6 +1153,14 @@ export function makeRumPublicApi(
         profilerApi.onRumStart(internalApi!, configuration!, newSessionManager, createEncoder)
       }
     })
+
+    // Public API calls made before init() were buffered (see the wrapper after makePublicApi):
+    // replay them now, in call order. Their events land on the internal API, which holds them
+    // until the session manager resolves — mirroring the preStartRum replay-at-start behavior.
+    started = true
+    for (const { method, args } of preInitCalls.splice(0)) {
+      ;(rumPublicApi[method] as (this: void, ...args: unknown[]) => unknown)(...args)
+    }
   }
 
   function assertStarted(method: string): boolean {

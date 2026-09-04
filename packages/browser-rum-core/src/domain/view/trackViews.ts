@@ -161,8 +161,9 @@ export function trackViews(
 
   return {
     addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
-      // In manual mode, calls before the first startView are dropped (the preStartRum buffer
-      // used to replay them)
+      // In manual mode, calls before the first startView are dropped. The public API buffers and
+      // replays its pre-init calls (see rumPublicApi.ts), so this only happens between init()
+      // and the first startView.
       currentView?.addTiming(name, time)
     },
     setLoadingTime: (callTimestamp?: TimeStamp) => currentView?.setLoadingTime(callTimestamp),

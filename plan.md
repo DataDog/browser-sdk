@@ -209,8 +209,9 @@ Findings so far:
   and `stopSession` (session expire) flushing the batch works through the same notification path —
   no pre-start special casing was needed (`firstStartViewCall` is just gone with
   `trackViewsManually` handled by the caller starting the view).
-- Pre-init calls being dropped loudly (error) instead of buffered silently is arguably better
-  DX than the old silent replay, but it is a behavior change to discuss in the debrief.
+- Pre-init calls being dropped loudly (error) instead of buffered silently was rejected in the
+  debrief: the old behavior (buffer calls made before init(), replay them when init succeeds,
+  500-call limit) was restored on the public API — see the phase 6 follow-up commit.
 - `batch.upsert` for view versions works off `event.view.id`, which the internal API owns — the
   id space is unified in this architecture by construction (unlike the dual viewHistory/
   internal-API history risk flagged when views keep flowing through the old pipeline).
@@ -654,15 +655,17 @@ surface stays guarded by `catchUserErrors`/`callMonitored` as today.
 
 **Yes, more than planned.** It was deleted outright (not shrunk): the internal API's assembly
 buffering (session manager promise + view coverage) generalized the pre-start buffer to _all_
-events, not just public calls. `bufferApiCalls`, the `firstStartViewCall` dance, the pre-init
-replay and the "is RUM started" state machine are gone; plugin pre-init calls queue once and
-pre-session events buffer. The two behavior changes to decide at rollout:
+events, not just public calls. `bufferApiCalls`, the `firstStartViewCall` dance and the "is RUM
+started" state machine are gone; plugin pre-init calls queue once and pre-session events buffer.
 
-- public calls before `init()` now error loudly instead of being silently replayed (arguably
-  better DX, but a change),
-- tracking consent is assumed granted in the PoC — the consent→session manager sequencing must
-  be restored, and the internal API already supports it (the promise shape is exactly what
-  `onGrantedOnce` would produce).
+One behavior deviation was rejected after review: the PoC first made pre-init public calls error
+loudly instead of silently replaying them. The old behavior is the required one and was restored
+in a follow-up commit — the public API buffers calls made before `init()` (500-call limit, like
+preStartRum) and replays them in call order when init succeeds; their events then land on the
+internal API's own buffering until the session manager resolves. The remaining rollout decision:
+tracking consent is assumed granted in the PoC — the consent→session manager sequencing must be
+restored, and the internal API already supports it (the promise shape is exactly what
+`onGrantedOnce` would produce).
 
 The one _new_ fragility: subscription order on the session manager promise (phase 4) — the batch
 must not flush before the final view version is upserted. Encoded as an ordering guarantee in the

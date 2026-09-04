@@ -84,8 +84,10 @@ surface stays guarded as today.
 
 ### Did `preStartRum` actually simplify?
 
-**Yes, more than planned.** Two behavior changes to decide at rollout: public calls before
-`init()` now error loudly instead of being silently replayed (arguably better DX), and tracking
+**Yes, more than planned.** One behavior deviation was caught in debrief review and restored:
+the PoC first made public calls before `init()` error loudly instead of buffering them — the
+old behavior (buffer pre-init calls, replay them when init succeeds, 500-call limit) is the
+required one and was re-implemented on the public API. The remaining rollout decision: tracking
 consent is assumed granted in the PoC (the interface's session-manager-promise shape already
 supports the real consent sequencing). One new fragility found and encoded as a guarantee:
 **subscription order on the session manager promise** — the transport must not flush the batch on
@@ -144,8 +146,8 @@ addressable within the design. Suggested next steps, in order:
 - [ ] Encode the three interface adjustments (kickoff on `event_started`, initial view version at
       `startEvent`, transport flushing on `session_expired`).
 - [ ] Re-wrap `beforeSend` in `limitModification`; add baggage shape validation.
-- [ ] Decide pre-init public-call behavior (loud error vs silent replay) and restore tracking
-      consent sequencing.
+- [ ] Restore tracking consent sequencing (pre-init public-call buffering was restored in the
+      PoC after review, matching preStartRum's behavior).
 - [ ] Port collectors (resources first), then vitals / long tasks / runtime errors.
 - [ ] Port Replay; delete the old startRum pipeline and the zombie lifecycle events.
 - [ ] Rebuild fine-grained spec coverage (views, clicks, profiler quota/visibility, public API).
