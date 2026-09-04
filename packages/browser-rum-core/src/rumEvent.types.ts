@@ -309,6 +309,7 @@ export type RumErrorEvent = CommonProperties &
       readonly source_type?:
         | 'android'
         | 'browser'
+        | 'browser+wasm'
         | 'ios'
         | 'react-native'
         | 'flutter'
@@ -422,6 +423,20 @@ export type RumErrorEvent = CommonProperties &
          * CPU architecture from the library.
          */
         readonly arch?: string
+        [k: string]: unknown
+      }[]
+      /**
+       * WebAssembly modules available for stack trace symbolication.
+       */
+      readonly wasm_modules?: {
+        /**
+         * URL identifying the WebAssembly module.
+         */
+        readonly url: string
+        /**
+         * Build ID used to identify the WebAssembly debug symbols.
+         */
+        readonly build_id: string
         [k: string]: unknown
       }[]
       /**

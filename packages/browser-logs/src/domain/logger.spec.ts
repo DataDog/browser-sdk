@@ -55,6 +55,7 @@ describe('Logger', () => {
             fingerprint: undefined,
           },
         })
+        expect(getLoggedMessage(0).error).toEqual(getLoggedMessage(0).context?.error)
       })
 
       it(`'logger.${status}' should create an handling stack`, () => {
@@ -108,6 +109,14 @@ describe('Logger', () => {
 
       expect(getLoggedMessage(0)).toEqual({
         message: 'message',
+        error: {
+          message: 'Provided "My Error"',
+          stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+          kind: undefined,
+          causes: undefined,
+          handling: ErrorHandling.HANDLED,
+          fingerprint: undefined,
+        },
         context: {
           error: {
             message: 'Provided "My Error"',
@@ -159,6 +168,27 @@ describe('Logger', () => {
         expect(getLoggedMessage(0)).toEqual({
           message: 'Logging message',
           status: 'error',
+          error: {
+            stack: 'Error: High level error',
+            kind: 'Error',
+            message: 'High level error',
+            handling: ErrorHandling.HANDLED,
+            causes: [
+              {
+                message: 'Mid level error',
+                source: 'logger',
+                type: 'Error',
+                stack: 'Error: Mid level error',
+              },
+              {
+                message: 'Low level error',
+                source: 'logger',
+                type: 'TypeError',
+                stack: 'TypeError: Low level error',
+              },
+            ],
+            fingerprint: undefined,
+          },
           context: {
             error: {
               stack: 'Error: High level error',

@@ -473,7 +473,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/browser-logs":
+"@datadog/browser-logs@npm:7.11.0, @datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/browser-logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/browser-logs"
   dependencies:
@@ -483,6 +483,27 @@ __metadata:
     "@datadog/browser-rum": 7.12.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@datadog/browser-plugin-wasm@workspace:packages/browser-plugin-wasm":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-plugin-wasm@workspace:packages/browser-plugin-wasm"
+  dependencies:
+    "@datadog/browser-core": "npm:7.11.0"
+    "@datadog/browser-logs": "npm:7.11.0"
+    "@datadog/browser-rum-core": "npm:7.11.0"
+    "@datadog/js-core": "npm:0.0.12"
+  peerDependencies:
+    "@datadog/browser-core": 7.11.0
+    "@datadog/browser-logs": 7.11.0
+    "@datadog/browser-rum-core": 7.11.0
+    "@datadog/js-core": 0.0.12
+  peerDependenciesMeta:
+    "@datadog/browser-logs":
+      optional: true
+    "@datadog/browser-rum-core":
       optional: true
   languageName: unknown
   linkType: soft
@@ -712,10 +733,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/rum-events-format@DataDog/rum-events-format#commit=c6b13a3e00dd323c48240bacb6d8e7699b4e8b7f":
+"@datadog/rum-events-format@DataDog/rum-events-format#commit=23d9dc99be96e73413eaec312d9b0b30db641279":
   version: 0.0.0
-  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=c6b13a3e00dd323c48240bacb6d8e7699b4e8b7f"
-  checksum: 10c0/01f36a55946b1d9267cc24dcf1a7eba2faad1666ec22cbf997d5ea6bfd1e2f85d97c42d5628005bfd095fa49950dc5a27ed3b666dda3ed567c4ee5f2aa4af803
+  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=23d9dc99be96e73413eaec312d9b0b30db641279"
+  checksum: 10c0/01849059652ce46258a40918f0c7de51e79dbb817c82688592f77d1f309393a6cbb4457162bfede76a14de96433b94c67cbe82da7484fe83c576794d5f0d5dfe
   languageName: node
   linkType: hard
 
@@ -6098,7 +6119,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "browser-sdk@workspace:."
   dependencies:
-    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=c6b13a3e00dd323c48240bacb6d8e7699b4e8b7f"
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=23d9dc99be96e73413eaec312d9b0b30db641279"
     "@eslint/js": "npm:10.0.1"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@microsoft/api-extractor": "npm:7.58.12"
@@ -8983,10 +9004,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:17.11.0, globals@npm:^17.7.0":
+"globals@npm:17.11.0":
   version: 17.11.0
   resolution: "globals@npm:17.11.0"
   checksum: 10c0/5e1be3d816e04d4d0d01b1cdd40e46b5fb6b5e9f15aece9a5919b060e0fb1b3f1b9e7327dce97ef19e05513a6d65872e0834999ddea251557556dddd0f5fde30
+  languageName: node
+  linkType: hard
+
+"globals@npm:^17.7.0":
+  version: 17.9.0
+  resolution: "globals@npm:17.9.0"
+  checksum: 10c0/776116bffb916e462d548c26a44c9a5d8f4e551935a883991e9f5d68cbcb21b63e4c688e36bbc564f97d3025e304d8b2bb0a611ecf944825aeee164898dcfbdd
   languageName: node
   linkType: hard
 
@@ -15438,7 +15466,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:8.10.0, undici@npm:^8.4.1, undici@npm:^8.5.0":
+"undici@npm:8.10.0":
   version: 8.10.0
   resolution: "undici@npm:8.10.0"
   checksum: 10c0/37ae2b1db8f65c3a003504e2040e96887b99f9db16ba07dcf49c37ed8b7f8c72f4452f2d46f52f7c9e49518fe8325e3b5e7e02ac3a2424886bd67d4b62a0ecab
@@ -15456,6 +15484,13 @@ __metadata:
   version: 7.29.0
   resolution: "undici@npm:7.29.0"
   checksum: 10c0/85ea96e91e7f3de24de678cbbc54230fdd641a3b0643005f2aef044af1f1a2db8fbecb88b28e6fa78bb41ffeafda4479b57075b6b6ab92beac4b7b5ab53f9b10
+  languageName: node
+  linkType: hard
+
+"undici@npm:^8.4.1, undici@npm:^8.5.0":
+  version: 8.9.0
+  resolution: "undici@npm:8.9.0"
+  checksum: 10c0/e3d9fa35a9aa8360d9f56e66bd372f451ee053e25066a97fd9fab3816267035660f67870c6d709a58a5411551657af78c4475be5b31c113b04f70251309900d0
   languageName: node
   linkType: hard
 

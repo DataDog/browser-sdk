@@ -11,6 +11,7 @@ import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { InferredConfig } from '@datadog/js-core/configuration'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
+import type { LogsPlugin } from './plugins'
 
 /**
  * Init Configuration for the Logs browser SDK.
@@ -71,6 +72,15 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   forwardReports?: RawReportType[] | 'all' | undefined
+
+  /**
+   * List of plugins to enable. The plugins API is unstable and experimental, and may change without
+   * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
+   * using.
+   *
+   * @experimental
+   */
+  plugins?: LogsPlugin[] | undefined
 }
 
 /**
@@ -98,6 +108,22 @@ export const LOGS_SCHEMA = {
     multiple: true,
     allowAll: true,
     default: [] as RawReportType[],
+  },
+  plugins: {
+    type: 'schema',
+    multiple: true,
+    strict: false,
+    default: [] as LogsPlugin[],
+    schema: {
+      name: { type: 'string', required: true },
+      getConfigurationTelemetry: {
+        type: 'function',
+        strict: false,
+        signature: undefined as LogsPlugin['getConfigurationTelemetry'],
+      },
+      onInit: { type: 'function', strict: false, signature: undefined as LogsPlugin['onInit'] },
+      onLogsStart: { type: 'function', strict: false, signature: undefined as LogsPlugin['onLogsStart'] },
+    },
   },
 } as const
 
@@ -127,6 +153,10 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
     forward_errors_to_logs: configuration.forwardErrorsToLogs,
     forward_console_logs: configuration.forwardConsoleLogs,
     forward_reports: configuration.forwardReports,
+    plugins: configuration.plugins?.map((plugin) => ({
+      name: plugin.name,
+      ...plugin.getConfigurationTelemetry?.(),
+    })),
     ...baseSerializedInitConfiguration,
   } satisfies RawTelemetryConfiguration
 }
