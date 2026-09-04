@@ -4,12 +4,13 @@
 real consumers onto it. Every migration removed more code than it added, a minimal-SDK variant
 built on it is 66% smaller, and the interface held its tight scope throughout — pre-init support
 included, absorbed as buffered events rather than replayed calls. We recommend iterating on the
-design: the remaining issues are integration-grade (contexts, event forwarding), not design
+design: the remaining issues are integration-grade (contexts, rate-limit surfacing), not design
 flaws.**
 
 - Branch: `benoit.zugmeyer/rum-internal-api` (throwaway PoC branch, not meant for production as-is)
 - The proposed interface: [`rum-thin-layer.ts`](./rum-thin-layer.ts) (final revision)
 - The pre-init / view-lifecycle redesign plan: [`plan-v2.md`](./plan-v2.md)
+- The open-handles / no-single-view-rule redesign plan: [`plan-v3.md`](./plan-v3.md)
 - Full phase-by-phase journal with all findings and corner-cuts: [`plan.md`](./plan.md)
 - Each phase is a separate commit, so every claim below points at a diff (list at the end)
 
@@ -150,10 +151,14 @@ Ordered by risk:
 
 1. **Contexts** — session/user/global/view/feature-flag/geo/display attributes. Without
    `session.id` these are not RUM events. Biggest blocker.
-2. **Raw-error forwarding** — errors collected via the internal API no longer notify
-   `RAW_ERROR_COLLECTED`, so `forwardErrorsToLogs` (RUM → logs) is broken on those paths. Needs a
-   decision (a `raw_error_collected` notification, or a hook). Same class of decision: rate-limit
-   reach and transport-error surfacing (both no-op in the PoC).
+2. **Rate-limit reach and transport-error surfacing** — both no-op in the PoC (today's RUM
+   reports a customer-visible error event when it rate-limits); the wiring is a product behavior
+   decision. (Correction from review: an earlier revision of this list also claimed
+   `forwardErrorsToLogs` (RUM → logs) was broken on internal-API paths. That was wrong —
+   `forwardErrorsToLogs` is a Logs SDK init option, the Logs SDK collects its own errors
+   independently of RUM, and RUM's `RAW_ERROR_COLLECTED` notification had exactly one consumer:
+   RUM's own error event creation, the piece the internal API replaces. RUM never fed Logs, so
+   there was nothing to break; the raw error rides `domainContext` for any future consumer.)
 3. **Collectors + old pipeline teardown** — resources, long tasks, runtime errors, vitals must
    port for auto-instrumentation. The old startRum pipeline is kept compiling but inert; deleting
    it requires porting **Replay first** (it is the last consumer of the zombie lifecycle events
@@ -222,7 +227,7 @@ draft/promotion/supersede machine while unifying its handle types. The found iss
 addressable within the design. Suggested next steps, in order:
 
 1. **Contexts as default hooks + session stamping** (the rollout blocker).
-2. **Raw-error forwarding + rate-limit surfacing decisions** (affects product behavior).
+2. **Rate-limit reach and transport-error surfacing decisions** (affect product behavior).
 3. **Port one collector** — resources are the best exercise (start/stop pairs, tracing, request /
    page-activity flow).
 4. **Rebuild the spec debt list** on the new architecture.
@@ -233,8 +238,6 @@ addressable within the design. Suggested next steps, in order:
 
 - [ ] Decide context strategy: default hook set vs internal API owning the session stamp; define
       hook registration order.
-- [ ] Decide raw-error forwarding shape (`raw_error_collected` notification vs hook); restore
-      `forwardErrorsToLogs` on internal-API paths.
 - [ ] Decide rate-limit reach and transport-error surfacing (currently no-op).
 - [ ] Re-wrap `beforeSend` in `limitModification`; add baggage shape validation.
 - [ ] Restore tracking consent sequencing (pre-init buffering already lives in the internal API).

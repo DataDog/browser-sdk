@@ -428,10 +428,12 @@ below):
   `addNextjsError` — all five framework plugins got the same mechanical change, forced by the
   `onInit`-receives-internalApi update) collect via `internalApi.addEvent` with the formatter + framework
   context, carrying `originalError` and `handlingStack` in the baggage.
-  **Lost behavior noted**: the old `addError` notified `RAW_ERROR_COLLECTED` on the LifeCycle,
-  which the logs SDK consumes (`forwardErrorsToLogs`) — errors collected through the internal API
-  don't, so the RUM→logs forwarding is broken for them. The debrief must decide where raw-error
-  forwarding lives (a hook? a notification?).
+  **Lost behavior noted, later corrected**: the old `addError` notified `RAW_ERROR_COLLECTED` on
+  the LifeCycle, and this entry first claimed the logs SDK consumed it (`forwardErrorsToLogs`)
+  — investigation (debrief review) showed that was wrong: `forwardErrorsToLogs` is a Logs SDK
+  init option with its own error collectors, and `RAW_ERROR_COLLECTED`'s only consumer was RUM's
+  own error pipeline — the exact piece the internal API replaces. No RUM→logs forwarding ever
+  existed to break; the raw error rides `domainContext` for any future consumer.
 - Router: `startReactRouterView` / `startTanStackRouterView` start views with
   `internalApi.startEvent({type:'view', view: {url, name}})`, explicitly `stop()`-ing the previous
   handle at the new view's start time (throw-on-double-view makes the router contract explicit)
@@ -678,11 +680,12 @@ Ordered by risk:
 
 1. **Contexts** (Q1): session.id stamping, user/global/view/feature-flag/geo/display attributes.
    Everything else can be migrated piecemeal; without this the events are not RUM events.
-2. **Raw-error forwarding**: errors collected via the internal API no longer notify
-   `RAW_ERROR_COLLECTED`, so `forwardErrorsToLogs` is broken for them. Needs a decision: a
-   `raw_error_collected` notification (mirror of the old lifecycle event) or a dedicated hook.
-   Same question for rate-limit reach surfacing (today an error event is reported to customers;
-   the PoC rate limiters report with noop) and the profiling transport errors.
+2. **Rate-limit reach surfacing** (today an error event is reported to customers; the PoC rate
+   limiters report with noop) and the profiling transport errors. (Corrected: this list first
+   claimed `forwardErrorsToLogs` (RUM → logs) was broken by the internal API — wrong: it is a
+   Logs SDK option, the Logs SDK collects its own errors independently of RUM, and
+   `RAW_ERROR_COLLECTED`'s only consumer was RUM's own error pipeline. No RUM→logs forwarding
+   exists to break.)
 3. **Collectors + the old pipeline teardown**: resources (fetch/XHR), long tasks, runtime errors,
    vitals must port for auto-instrumentation; the old startRum pipeline is inert but kept
    compiling for them. Zombie lifecycle events (`VIEW_CREATED` & co) must go with it — Replay is
@@ -714,8 +717,8 @@ subscriber queue, the shopify full-SDK wrapper — and a -67% bundle for the min
 crash-test found integration-grade issues (ordering, contexts, forwarding), all addressable
 within the design rather than pointing at a flaw in it.
 
-Suggested next steps, in order: (1) contexts as default hooks + session stamping, (2) raw-error
-forwarding + rate-limit surfacing decisions, (3) port one collector (resources — it exercises
+Suggested next steps, in order: (1) contexts as default hooks + session stamping, (2) rate-limit
+surfacing decisions, (3) port one collector (resources — it exercises
 start/stop pairs, tracing and the request/activity flow), (4) re-run the spec debt list,
 (5) then Replay as the gate for deleting the old pipeline.
 
@@ -773,7 +776,9 @@ router plugins, Shopify, profiler specs).
 - trackViews session renewal copies the previous view's name/service/version/context from the
   ended view's event — the per-view context manager is gone.
 - Deferred `configure()`-time bindings unchanged from the v1 list: contexts/session.id stamping
-  (the #1 gap), raw-error forwarding, rate-limit surfacing, tracking-consent sequencing.
+  (the #1 gap), rate-limit surfacing, tracking-consent sequencing. (The raw-error forwarding
+  item was dropped from this list after review: `forwardErrorsToLogs` is a Logs SDK option, the
+  Logs SDK collects its own errors, and no RUM→logs forwarding exists to break.)
 
 ## v3 — open handles in the history, no single-view rule in the internal API (plan-v3.md)
 
@@ -812,7 +817,7 @@ the final assembly clones.
 
 A second review pass trimmed two surface items: `originalError` left the event baggage — it was
 write-only (no reader in the pipeline) and every writer already carries the same raw error in
-`domainContext`, which is where the future raw-error forwarding (forwardErrorsToLogs) will read
+`domainContext`, which is where any future consumer needing the derived-from value will read
 it; and `eventRateLimit` left `ConfigureOptions` — no caller ever passed it, so rate limiting now
 uses browser-core's default (3000 events by type and by minute). Tests needing a low limit will
 override a mutable constant, as SEGMENT_BYTES_LIMIT in segmentCollection.ts.
@@ -843,5 +848,5 @@ override a mutable constant, as SEGMENT_BYTES_LIMIT in segmentCollection.ts.
   still read the navigation timings, so the initial view metrics are complete).
 - The v2 corner-cuts still standing: `setViewContext` merge-not-replace, pre-init
   `setViewLoadingTime` dropped, `stopSession` pre-init no-op, unthrottled context updates,
-  approximate metrics view-end times, contexts/session.id stamping (#1 gap), raw-error
-  forwarding, rate-limit surfacing, tracking-consent sequencing.
+  approximate metrics view-end times, contexts/session.id stamping (#1 gap), rate-limit
+  surfacing, tracking-consent sequencing.
