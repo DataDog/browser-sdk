@@ -12,7 +12,7 @@ flaws.**
 - The pre-init / view-lifecycle redesign plan: [`plan-v2.md`](./plan-v2.md)
 - The open-handles / no-single-view-rule redesign plan: [`plan-v3.md`](./plan-v3.md)
 - Full phase-by-phase journal with all findings and corner-cuts: [`plan.md`](./plan.md)
-- Each phase is a separate commit, so every claim below points at a diff (list at the end)
+- Pull request (one commit per phase): [#5015](https://github.com/DataDog/browser-sdk/pull/5015)
 
 ## What this was about
 
@@ -246,41 +246,3 @@ addressable within the design. Suggested next steps, in order:
       always-empty labels stored today).
 - [ ] Re-measure bundle size for the full SDK once auto-instrumentation is ported (the −66% is for
       the minimal Shopify variant).
-
-A correction from review, for the record: an earlier revision of the "what's missing" list
-claimed `forwardErrorsToLogs` (RUM → logs) was broken on internal-API paths. That was wrong —
-`forwardErrorsToLogs` is a Logs SDK init option, the Logs SDK collects its own errors
-independently of RUM, and RUM's `RAW_ERROR_COLLECTED` notification only ever fed RUM's own
-error event creation, the piece the internal API replaces. RUM never fed Logs, so there was
-nothing to break; the raw error rides `domainContext` for any future consumer.
-
-## Appendix — where to look
-
-All commits on the PoC branch (the middle ones are the iteration history; the last ones are the
-final shape):
-
-| Commit     | What it contains                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------- |
-| `893fcf04` | first implementation of the internal API                                                          |
-| `d6c8211f` | public API wired to the internal API + first trackViews port                                      |
-| `e0882ec3` | trackClickActions port                                                                            |
-| `5f191231` | in-place replacement of the old view/action glue                                                  |
-| `ca01f642` | plugins on `onInit({internalApi})`, `formatErrorEvent`, router views                              |
-| `318cb5ca` | profiler on the internal API (histories → `findEvents`)                                           |
-| `e0f16077` | browser-rum-shopify standalone minimal SDK                                                        |
-| `7e324706` | this debrief (first version) + interface revision                                                 |
-| `f4287d93` | pre-init call replay on the public API (later replaced by buffering events in the internal API)   |
-| `3a24b8d5` | pre-init & view-lifecycle redesign plan (plan-v2.md)                                              |
-| `ad29e2ca` | `rum-thin-layer.ts` revision (draft view, supersede, `configure()`)                               |
-| `0aebf8bc` | internal API core: draft/promotion/supersede/expiry + state machine unit specs                    |
-| `74c36040` | consumers on the revised API: public API, trackViews metrics enricher, plugins, Shopify, profiler |
-| `e1f1ce4e` | validation results + corner-cuts recorded in plan.md                                              |
-| `0bb9e947` | view-rule iteration plan (plan-v3.md: open handles, no single-view rule in the API)               |
-| `fef5e759` | `rum-thin-layer.ts` final revision (open handles in history, unified EventHandle)                 |
-| `51f25c12` | internal API final core: unified handles in history, plain starts, expiry ends all open views     |
-| `3d0d8676` | consumers on the final API: public API owns the single-view policy, shared supersede helper       |
-| `3d836cd8` | validation results + corner-cuts recorded in plan.md (this debrief reflects the final shape)      |
-
-The final shape (last five rows, plan-v3.md): the single-view rule moved to the consumers, open
-handles live in the history, and the draft/promotion/supersede machine was deleted from the API
-core. The interface proposal file (`rum-thin-layer.ts`) matches it.
