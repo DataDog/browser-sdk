@@ -13,7 +13,7 @@ export type {
   EventBaggage,
   BaseRumEvent,
   AddEventOptions,
-  RumInternalApiOptions,
+  ConfigureOptions,
 } from './domain/internalApi/rumInternalApi.types'
 export type { StartRum, StartRumResult } from './boot/startRum'
 export type {
