@@ -127,6 +127,7 @@ describe('trackClickActions', () => {
           width: 100,
           height: 100,
           composedPathSelector: jasmine.any(String),
+          composedPathAttributes: undefined,
         },
         position: { x: 50, y: 50 },
         events: [domEvent],

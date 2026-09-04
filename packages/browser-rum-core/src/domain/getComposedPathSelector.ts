@@ -7,9 +7,10 @@ import {
   getTagNameSelector,
   getNthOfTypeSelector,
   getAttributeValueSelector,
+  FILTERED_TAGNAMES,
 } from './getSelectorFromElement'
-
-const FILTERED_TAGNAMES = ['HTML', 'BODY']
+import type { RumConfiguration } from './configuration'
+import { HREF_ATTRIBUTE } from './urlSanitizer'
 
 /**
  * arbitrary value, we want to truncate the selector if it exceeds the limit
@@ -37,6 +38,14 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
 ])
 
 /**
+ * `href` and `aria-label` can help identify an element but may carry PII, so they're never
+ * collected in this string, even when configured as the customer's `actionNameAttribute`. They're
+ * collected instead, sanitized/masked, in the `getComposedPathAttributes` key→value map, so we
+ * don't duplicate the same PII-sensitive data across both fields.
+ */
+const ARIA_LABEL_ATTRIBUTE = 'aria-label'
+
+/**
  * Extracts a selector string from a MouseEvent composedPath.
  *
  * This function:
@@ -46,9 +55,10 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
  * 4. Returns the selector string
  *
  * @param composedPath - The composedPath from a MouseEvent
+ * @param configuration - The RUM configuration, used to resolve the action name attribute.
  * @returns A selector string
  */
-export function getComposedPathSelector(composedPath: EventTarget[], actionNameAttribute: string | undefined): string {
+export function getComposedPathSelector(composedPath: EventTarget[], configuration: RumConfiguration): string {
   // Filter to only include Element nodes
   const elements = composedPath.filter(
     (el): el is Element => el instanceof Element && !FILTERED_TAGNAMES.includes(el.tagName)
@@ -58,7 +68,15 @@ export function getComposedPathSelector(composedPath: EventTarget[], actionNameA
     return ''
   }
 
-  const allowedAttributes = actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
+  const { actionNameAttribute } = configuration
+  // `href` and `aria-label` are excluded here even when configured as the customer's
+  // `actionNameAttribute`: see the `ARIA_LABEL_ATTRIBUTE` comment above — they're collected
+  // instead, sanitized/masked, by `getComposedPathAttributes`. Letting them through this list too
+  // would leak the raw, unsanitized value (bypassing that sanitization/masking) alongside the safe
+  // one.
+  const allowedAttributes = (
+    actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
+  ).filter((attribute) => attribute !== HREF_ATTRIBUTE && attribute !== ARIA_LABEL_ATTRIBUTE)
 
   let result = ''
   for (const element of elements) {
