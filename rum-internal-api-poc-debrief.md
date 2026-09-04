@@ -25,48 +25,60 @@ that everything else (public API, collectors, Replay, Profiling, product variant
   (session manager promise, `beforeSend`, rate limits) at init,
 - `startEvent` / `addEvent` / handles build events respecting the hierarchy; the internal API
   owns event ids, counts and document versions,
-- the current view is exposed as a handle from creation (a **draft** before the first view
-  starts), and views are never stopped by callers: starting a view **supersedes** the active
-  one, and session-expiry endings are owned by the API,
+- open event handles live **on the history entries** (`findEvents({ open: true })`), the API
+  encodes no "single view at a time" rule — the view-tracking policy is written once in a
+  consumer helper (`startViewSuperseding`), and only session-expiry endings are owned by the
+  API (all open views are ended),
 - `registerHook` extends assembly; `notifications` (one observable) exposes the event lifecycle;
   `findEvents` queries the event history by time window,
 - pre-init support falls out of this shape: calls made before `init()` flow into the API
-  directly and buffer **as events** (draft view updates, held assemblies) with their true
-  call-time timestamps — nothing is replayed.
+  directly and buffer **as events** (the initial view's updates, held assemblies) with their
+  true call-time timestamps — nothing is replayed.
 
 The PoC's purpose was to find gaps early and cheaply: implement the interface, port real consumers
 to it, and let the migrations (not new specs) be the test.
 
 ## What we did
 
-| Phase                     | Consumer migrated                | What it proved / deleted                                                                                                                                                                                                                                                                           |
-| ------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| implement                 | the internal API itself          | Assembly + buffering + history in ~5 focused modules; throw-on-misuse, discriminated-union kickoff types; the draft/promotion/supersede/expiry state machine                                                                                                                                       |
-| public API                | `rumPublicApi`                   | `preStartRum` **deleted outright**: no per-call buffer, no `firstStartViewCall` dance, no "is RUM started" state machine. `configure()` at init; transport plugs on `event_collected`                                                                                                              |
-| views                     | `trackViews` (in place)          | viewCollection / trackViewEventCounts / the startRum view glue deleted. **trackViews stopped owning view events entirely** — it is a pure metrics enricher (per-view metrics attached on `event_started`, cleanup on `event_stopped`, automatic view starts via `startEvent`)                      |
-| clicks                    | `trackClickActions` (in place)   | actionCollection / trackManualActions deleted. Frustration reads `handle.current().counts` — no duplicate count pass                                                                                                                                                                               |
-| plugins                   | react/vue/angular/nuxt/nextjs    | `onRumStart` deleted; plugins get `internalApi` in `onInit`. Errors via a new `formatErrorEvent` free formatter. Routers start views through the API — the stop-previous boilerplate and the initial `update({})` dance are gone (supersede + API-emitted initial version cover them)              |
-| profiling                 | the RUM profiler                 | **Its three histories (longTask/action/vital) are gone entirely**, replaced by `findEvents` time-window queries — the experiment the interface was partly designed for                                                                                                                             |
-| pre-init & view lifecycle | the internal API + its consumers | Pre-init support absorbed **into the internal API**: eager creation, draft view, held assemblies. The public-API call buffer (the instinctive rebuild of `preStartRum`) was deleted in favor of buffering events — more concrete, true timestamps, and the `firstStartViewCall` problem stays dead |
-| Shopify (bonus)           | `browser-rum-shopify`            | The full RUM SDK removed from the bundle: a standalone minimal SDK (~init + Shopify bindings) built directly on the internal API                                                                                                                                                                   |
+| Phase                     | Consumer migrated                | What it proved / deleted                                                                                                                                                                                                                                                                                                                           |
+| ------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| implement                 | the internal API itself          | Assembly + buffering + history in ~5 focused modules; throw-on-misuse, discriminated-union kickoff types; one unified handle family with live handles on history entries and API-owned expiry endings                                                                                                                                              |
+| public API                | `rumPublicApi`                   | `preStartRum` **deleted outright**: no per-call buffer, no `firstStartViewCall` dance, no "is RUM started" state machine. `configure()` at init; transport plugs on `event_collected`                                                                                                                                                              |
+| views                     | `trackViews` (in place)          | viewCollection / trackViewEventCounts / the startRum view glue deleted. **trackViews stopped owning view events entirely** — it is a pure metrics enricher (per-view metrics attached on `event_started`, cleanup on `event_stopped`, automatic view starts via `startEvent`)                                                                      |
+| clicks                    | `trackClickActions` (in place)   | actionCollection / trackManualActions deleted. Frustration reads `handle.current().counts` — no duplicate count pass                                                                                                                                                                                                                               |
+| plugins                   | react/vue/angular/nuxt/nextjs    | `onRumStart` deleted; plugins get `internalApi` in `onInit`. Errors via a new `formatErrorEvent` free formatter. Routers start views through the API — the stop-previous boilerplate and the initial `update({})` dance are gone (the shared supersede helper + API-emitted initial version cover them)                                            |
+| profiling                 | the RUM profiler                 | **Its three histories (longTask/action/vital) are gone entirely**, replaced by `findEvents` time-window queries — the experiment the interface was partly designed for                                                                                                                                                                             |
+| pre-init & view lifecycle | the internal API + its consumers | Pre-init support absorbed **into the internal API**: eager creation, held assemblies. The public-API call buffer (the instinctive rebuild of `preStartRum`) was deleted in favor of buffering events — more concrete, true timestamps, and the `firstStartViewCall` problem stays dead. The single-view rule also moved out of the API (see below) |
+| Shopify (bonus)           | `browser-rum-shopify`            | The full RUM SDK removed from the bundle: a standalone minimal SDK (~init + Shopify bindings) built directly on the internal API                                                                                                                                                                                                                   |
 
 Everything runs green where it applies: `yarn typecheck`, eslint, and the unit suites of every
-touched package (browser-rum-core 1247 — including 10 unit specs pinning the draft/promotion/
-supersede/expiry state machine, browser-rum 674, all five plugin packages + Shopify 269), plus a
+touched package (browser-rum-core 1248 — including 11 unit specs pinning the handle/stop/
+expiry state machine, browser-rum 674, react 166 + vue 39 + angular 26 + nuxt 33 + nextjs 34 +
+shopify 19), plus a
 smoke spec covering the big lines of the new pipeline.
 
 ## Headline results
 
 - **`preStartRum` deleted**, not shrunk — and pre-init support ended up **inside the internal
   API**: the public API creates the instance eagerly and binds the configuration with
-  `configure()` at init; calls made before init buffer as events (draft view updates, held
-  assemblies) with their true call-time timestamps. Two-buffer designs and call replay are gone.
-- **Views never stop.** Starting a view supersedes the active one (the API closes its activity
-  window at the new start and assembles its final version — `is_active: false`, `time_spent`
-  derived), and session-expiry endings are owned by the API. Consequences: the stop-previous
-  boilerplate disappeared from every view consumer (trackViews, both router plugins, Shopify),
-  the double-view misuse class became unrepresentable, and view `stop()`/`cancel()` left the
-  interface entirely — less surface than the original draft.
+  `configure()` at init; calls made before init buffer as events (the initial view's updates,
+  held assemblies) with their true call-time timestamps. Two-buffer designs and call replay are
+  gone.
+- **The API encodes no "single view at a time" rule.** Views are plain started events with a
+  live handle on their history entry; consumers stop them explicitly — the supersede policy
+  (stop the open view at the new view's start, end pinned) is written once, in the shared
+  `startViewSuperseding` helper used by the public API, trackViews, both router plugins and
+  Shopify. The API still derives the final view fields (`is_active: false`, `time_spent`) at
+  assembly and owns the session-expiry endings (all open views, after a last-update slot).
+  Consequences: the stop-previous boilerplate did not come back (the helper is one call), the
+  handle types unified (`ViewEventHandle`/`NonViewEventHandle` are one `EventHandle` family),
+  and multi-view is representable — a possible future model instead of a redesign.
+- **The public API owns the policy.** The initial view is started unconditionally at the clock
+  origin (bare kickoff: current location + `initial_load`), a local `currentViewHandle` variable
+  routes view mutations, and the first `startView` adopts the initial view (update-merge: the
+  user's kickoff wins over the bare origin kickoff). trackViews attaches metrics by catching up
+  on the open views at init (`findEvents({ open: true })`) — the history is the source of truth,
+  notifications are live updates.
 - **The transport-flush ordering became structural.** The final view version must be upserted
   before the batch flushes on session expiry; since the API originates the expiry notification
   and ends the view itself (after giving consumers a synchronous last-update slot), no
@@ -108,8 +120,10 @@ the state-machine unit specs). The two lessons:
   frozen-clock smoke test caught it. SDK-internal callers must guard their start sequences
   (`callMonitored`); the public surface stays guarded as today.
 - when a misuse class is structural (a caller forgetting to stop the previous view), the better
-  fix is to make it unrepresentable — that is exactly what supersede semantics do: views
-  hand over implicitly, and the throw (plus its silent-failure risk) is gone.
+  fix is to make it unrepresentable or cheap to get right — the shared supersede helper is that
+  fix for view hand-over: consumers stop the previous view through one call, and the double-view
+  misuse became a telemetry debug rather than a silent throw (overlap is a possible future
+  model, not necessarily a misuse).
 
 ### Did `preStartRum` actually simplify?
 
@@ -118,8 +132,9 @@ per-call buffering and the `firstStartViewCall` dance are gone. The design discu
 three shapes for pre-init support: loud errors (best DX for misuse, but a behavior break),
 replaying buffered calls on the public API (faithful to the old behavior, but calls are a
 concrete-less buffering unit — and replay executes them at replay time, losing timestamps),
-and buffering events in the internal API (the winner): a draft view absorbs early view
-mutations, early child events are held assemblies with true call-time timestamps, and
+and buffering events in the internal API (the winner): the initial view (started eagerly at
+the clock origin) absorbs early view mutations, early child events are held assemblies with
+true call-time timestamps, and
 `configure()` is the single "RUM actually starts" moment. The remaining rollout decision:
 tracking consent is assumed granted in the PoC — the session-manager-promise shape already
 supports the real consent sequencing.
@@ -155,41 +170,49 @@ Ordered by risk:
 1. **Eager creation + deferred configuration** — `configure()` binds the validated
    configuration at init; events collected before are held, like events before the session
    manager resolves.
-2. **Draft view** — `currentView` exists from creation: pre-assigned id, history entry at the
-   clock origin, `update()` accepted immediately, no `event_started` and no assembly until
-   promotion. Early `setViewName` / view context / `addTiming` / `setViewLoadingTime` buffer for
-   free.
-3. **First view always starts at origin**, no matter when the promotion call happens; early
-   child events link to it.
-4. **Promotion kickoff wins** over buffered draft updates (main's `startView({name})`
-   precedence).
-5. **Supersede** — starting a view while one is active closes the previous activity window at
-   the new start (end-exclusive) and assembles its final version.
-6. **API-owned expiry endings** — notify `session_expired` (synchronous last-update slot), then
-   assemble the final view version before any consumer can react; the transport's expiry flush
-   subscribes after and cannot race it.
-7. **Uniform pre-init `startView`** — promotes the draft as the initial view in both automatic
-   and manual modes (main's auto-mode "extra view" was already a misuse; deviation accepted).
-8. **`loading_type`** — always `initial_load` for the initial view (stamped by the API);
-   subsequent views carry it in the kickoff (ROUTE_CHANGE / SESSION_RENEWAL / BF_CACHE).
-9. **The draft is visible in `findEvents`** — a never-promoted draft (manual views, no
-   `startView` ever) stays visible-but-incomplete forever; its held children never assemble,
-   matching "RUM does not start".
-10. **`stopSession()` before init is a no-op** (accepted deviation).
-11. **Non-view events keep `stop()`/`cancel()`** — their final data genuinely belongs to the
-    stop call (resource status codes, action loading time); only views' endings are derivable,
-    which is exactly why only views lost their stop.
+2. **One handle family, live handles in the history** — every started event gets an
+   `EventHandle { current, update, stop(finalEvent, { endClocks }) }` (the former
+   view/non-view split is gone), and the handle is exposed on its history entry while the event
+   is open (`findEvents({ open: true })`). The history is the source of truth; notifications are
+   live updates — late subscribers catch up by querying (trackViews attaches metrics to the
+   initial view at init that way).
+3. **No single-view rule in the API** — views are plain started events; consumers stop them
+   explicitly. The supersede policy (stop the open view(s) at the new view's start,
+   end-exclusive) is written once, in the shared `startViewSuperseding` helper. Starting a view
+   while another is open logs a telemetry debug (no throw: overlap is a possible future model,
+   not necessarily a misuse).
+4. **The public API owns the policy** — the initial view is started unconditionally at the
+   clock origin (bare kickoff: current location + `initial_load`, so the first view always
+   covers early child events), a local `currentViewHandle` variable routes view mutations, and
+   the first `startView` ADOPTS the initial view (update-merge: the user's kickoff wins over the
+   bare origin kickoff, main's `startView({name})` precedence; loading_type untouched). Later
+   calls supersede. Deviation accepted: an adopted initial view ships an extra document version,
+   and a manual-mode session with no `startView` ever still has a bare initial view.
+5. **The API derives view finals** — `is_active: false` and `time_spent` are computed at
+   assembly from the activity bounds when the stop payload doesn't provide them; only views get
+   this (their endings are derivable — non-view final data genuinely belongs to the stop call).
+6. **API-owned expiry endings** — notify `session_expired` (synchronous last-update slot),
+   then end ALL open views and assemble their final versions before any consumer can react; the
+   transport's expiry flush subscribes after and cannot race it.
+7. **`loading_type`** is the caller's — `initial_load` on the eager initial view (public API),
+   ROUTE_CHANGE / SESSION_RENEWAL / BF_CACHE on subsequent kickoffs (view tracking); the API
+   stamps nothing.
+8. **The view-coverage assembly gate stays** (child events assemble once a started view covers
+   their start) — a consumer-guaranteed invariant today, and the single relaxation point if a
+   no-view model materializes.
+9. **`stopSession()` before init is a no-op** (accepted deviation).
 
 Open questions left to the team: the `startEvent({type:'view'})` vs static `startView()` sugar
 (cosmetic — both shapes converged to the same design), and `setViewContext` replace-vs-merge
-semantics (draft contexts currently deep-merge; the public contract is a REPLACE).
+semantics (view contexts currently deep-merge; the public contract is a REPLACE).
 
 ## Recommendation
 
 **Iterate the interface; don't rethink it.** Across six consumer kinds it needed only additive
 changes, nothing was reverted, each port was net-negative in code — and the pre-init redesign
-_absorbed_ a whole subsystem (`preStartRum`) while removing API surface (view `stop()`/
-`cancel()`). The found issues are addressable within the design. Suggested next steps, in order:
+_absorbed_ a whole subsystem (`preStartRum`), then the view-rule redesign deleted the API's
+draft/promotion/supersede machine while unifying its handle types. The found issues are
+addressable within the design. Suggested next steps, in order:
 
 1. **Contexts as default hooks + session stamping** (the rollout blocker).
 2. **Raw-error forwarding + rate-limit surfacing decisions** (affects product behavior).
@@ -209,7 +232,7 @@ _absorbed_ a whole subsystem (`preStartRum`) while removing API surface (view `s
 - [ ] Re-wrap `beforeSend` in `limitModification`; add baggage shape validation.
 - [ ] Restore tracking consent sequencing (pre-init buffering already lives in the internal API).
 - [ ] Decide the view API sugar (`startEvent({type:'view'})` vs static `startView()`) — cosmetic.
-- [ ] Decide `setViewContext` replace-vs-merge semantics (draft contexts currently deep-merge).
+- [ ] Decide `setViewContext` replace-vs-merge semantics (view contexts currently deep-merge).
 - [ ] Port collectors (resources first), then vitals / long tasks / runtime errors.
 - [ ] Port Replay; delete the old startRum pipeline and the zombie lifecycle events.
 - [ ] Rebuild fine-grained spec coverage (views, clicks, profiler quota/visibility, public API).
@@ -224,19 +247,28 @@ _absorbed_ a whole subsystem (`preStartRum`) while removing API surface (view `s
 All commits on the PoC branch (the middle ones are the iteration history; the last ones are the
 final shape):
 
-| Commit     | What it contains                                                                                    |
-| ---------- | --------------------------------------------------------------------------------------------------- |
-| `893fcf04` | first implementation of the internal API                                                            |
-| `d6c8211f` | public API wired to the internal API + first trackViews port                                        |
-| `e0882ec3` | trackClickActions port                                                                              |
-| `5f191231` | in-place replacement of the old view/action glue                                                    |
-| `ca01f642` | plugins on `onInit({internalApi})`, `formatErrorEvent`, router views                                |
-| `318cb5ca` | profiler on the internal API (histories → `findEvents`)                                             |
-| `e0f16077` | browser-rum-shopify standalone minimal SDK                                                          |
-| `7e324706` | this debrief (first version) + interface revision                                                   |
-| `f4287d93` | pre-init call replay on the public API (later replaced by buffering events in the internal API)     |
-| `3a24b8d5` | pre-init & view-lifecycle redesign plan (plan-v2.md)                                                |
-| `ad29e2ca` | `rum-thin-layer.ts` final revision (draft view, supersede, `configure()`)                           |
-| `0aebf8bc` | internal API final core: draft/promotion/supersede/expiry + state machine unit specs                |
-| `74c36040` | all consumers on the final API: public API, trackViews metrics enricher, plugins, Shopify, profiler |
-| `e1f1ce4e` | validation results + corner-cuts recorded in plan.md                                                |
+| Commit     | What it contains                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------- |
+| `893fcf04` | first implementation of the internal API                                                          |
+| `d6c8211f` | public API wired to the internal API + first trackViews port                                      |
+| `e0882ec3` | trackClickActions port                                                                            |
+| `5f191231` | in-place replacement of the old view/action glue                                                  |
+| `ca01f642` | plugins on `onInit({internalApi})`, `formatErrorEvent`, router views                              |
+| `318cb5ca` | profiler on the internal API (histories → `findEvents`)                                           |
+| `e0f16077` | browser-rum-shopify standalone minimal SDK                                                        |
+| `7e324706` | this debrief (first version) + interface revision                                                 |
+| `f4287d93` | pre-init call replay on the public API (later replaced by buffering events in the internal API)   |
+| `3a24b8d5` | pre-init & view-lifecycle redesign plan (plan-v2.md)                                              |
+| `ad29e2ca` | `rum-thin-layer.ts` revision (draft view, supersede, `configure()`)                               |
+| `0aebf8bc` | internal API core: draft/promotion/supersede/expiry + state machine unit specs                    |
+| `74c36040` | consumers on the revised API: public API, trackViews metrics enricher, plugins, Shopify, profiler |
+| `e1f1ce4e` | validation results + corner-cuts recorded in plan.md                                              |
+| `0bb9e947` | view-rule iteration plan (plan-v3.md: open handles, no single-view rule in the API)               |
+| `fef5e759` | `rum-thin-layer.ts` final revision (open handles in history, unified EventHandle)                 |
+| `51f25c12` | internal API final core: unified handles in history, plain starts, expiry ends all open views     |
+| `3d0d8676` | consumers on the final API: public API owns the single-view policy, shared supersede helper       |
+| `3d836cd8` | validation results + corner-cuts recorded in plan.md (this debrief reflects the final shape)      |
+
+The final shape (last five rows, plan-v3.md): the single-view rule moved to the consumers, open
+handles live in the history, and the draft/promotion/supersede machine was deleted from the API
+core. The interface proposal file (`rum-thin-layer.ts`) matches it.
