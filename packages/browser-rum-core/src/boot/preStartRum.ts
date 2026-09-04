@@ -389,6 +389,9 @@ export function createPreStartStrategy(
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {
   return {
     ...initConfiguration,
+    // Resolve the service default here, while the web application id is still available: the
+    // placeholder below would otherwise be used, and it is shared by every bridge session.
+    service: initConfiguration.service || initConfiguration.applicationId,
     applicationId: '00000000-aaaa-0000-aaaa-000000000000',
     clientToken: 'empty',
     sessionSampleRate: 100,

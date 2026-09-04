@@ -81,6 +81,16 @@ export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
 
   /**
+   * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * `allowedTracingUrls` still requires an explicitly configured service.
+   *
+   * @category Data Collection
+   * @defaultValue the `applicationId`
+   */
+  service?: string | undefined | null
+
+  /**
    * Whether to propagate user and account IDs in the baggage header of trace requests.
    *
    * @category Tracing
@@ -560,6 +570,7 @@ export function validateAndBuildRumConfiguration(
 
   return {
     ...config,
+    service: config.service || config.applicationId,
     sessionReplayCanvasRecording,
     betaEnableViewUpdates: isViewUpdatesEnabled(config.betaEnableViewUpdates, config.proxy, sdkName),
     allowedTracingUrls,

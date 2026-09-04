@@ -2,7 +2,7 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 
 export function mockRumConfiguration(partialConfig: Partial<RumConfiguration> = {}): RumConfiguration {
-  const FAKE_APP_ID = 'appId'
+  const FAKE_APP_ID = 'app-id'
   const baseConfig: RumConfiguration = {
     ...validateAndBuildRumConfiguration({
       clientToken: 'xxx',

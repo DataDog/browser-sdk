@@ -117,6 +117,21 @@ describe('preStartRum', () => {
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
+      it('should default the service to the web application id rather than the bridge placeholder', () => {
+        mockEventBridge()
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, applicationId: 'my-web-app-id' }, PUBLIC_API)
+        expect(strategy.initConfiguration?.service).toEqual('my-web-app-id')
+      })
+
+      it('should keep the service provided in the init configuration', () => {
+        mockEventBridge()
+        strategy.init(
+          { ...DEFAULT_INIT_CONFIGURATION, applicationId: 'my-web-app-id', service: 'my-service' },
+          PUBLIC_API
+        )
+        expect(strategy.initConfiguration?.service).toEqual('my-service')
+      })
+
       it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
