@@ -55,6 +55,10 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
   async function captureDirtyCanvases() {
     const capturableCanvases = canvasManager.takeCapturableCanvases()
 
+    if (stopped) {
+      return
+    }
+
     for (const canvas of capturableCanvases) {
       const nodeId = scope.nodeIds.get(canvas)
       if (nodeId === undefined) {
@@ -80,6 +84,10 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
   async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId) {
     const captureAttempt = canvasManager.startCaptureAttempt(canvas)
     const cancelled = () => stopped || !captureAttempt.isCurrent()
+
+    if (cancelled()) {
+      return
+    }
 
     try {
       const snapshot = createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
