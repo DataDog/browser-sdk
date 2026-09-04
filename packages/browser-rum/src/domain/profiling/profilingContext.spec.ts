@@ -13,7 +13,7 @@ describe('Profiling Context', () => {
     profilingContextManager.set({ status: 'running' })
 
     for (const eventType of [RumEventType.VIEW, RumEventType.LONG_TASK, RumEventType.ACTION, RumEventType.VITAL]) {
-      const eventAttributes = hooks.assemble.trigger({
+      const eventAttributes = hooks.assembleEventDefaults.trigger({
         eventType,
         startTime: relativeTime,
       } as AssembleHookParams)
@@ -28,7 +28,7 @@ describe('Profiling Context', () => {
     }
 
     for (const eventType of [RumEventType.ERROR, RumEventType.RESOURCE]) {
-      const eventAttributes = hooks.assemble.trigger({
+      const eventAttributes = hooks.assembleEventDefaults.trigger({
         eventType,
         startTime: relativeTime,
       } as AssembleHookParams)

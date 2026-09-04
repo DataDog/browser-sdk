@@ -42,6 +42,7 @@ export type {
   TracingOption,
   RumPlugin,
   OnRumStartOptions,
+  RumPluginOnInitOptions,
   PropagatorType,
   FeatureFlagsForEvents,
   MatchHeader,

@@ -9,12 +9,12 @@ import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { STATUSES } from './logger'
-import type { AssembleHook } from './hooks'
+import type { Hooks, AssembleHookParams } from './hooks'
 
 export function startLogsAssembly(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
-  hook: AssembleHook,
+  hooks: Hooks,
   getCommonContext: () => CommonContext,
   reportError: (message: string) => void,
   eventRateLimit?: number
@@ -30,11 +30,18 @@ export function startLogsAssembly(
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext, ddtags = [] }) => {
       const startTime = toRelativeTime(rawLogsEvent.date)
       const commonContext = savedCommonContext || getCommonContext()
-      const defaultLogsEventAttributes = hook.trigger({
+      const assemblyParams: AssembleHookParams = {
         startTime,
-      })
-
+        rawLogsEvent: rawLogsEvent as AssembleHookParams['rawLogsEvent'],
+        domainContext,
+      }
+      const defaultLogsEventAttributes = hooks.assembleEventDefaults.trigger(assemblyParams)
       if (defaultLogsEventAttributes === DISCARDED) {
+        return
+      }
+
+      const logsEventAttributes = hooks.assembleEvent.trigger(assemblyParams)!
+      if (logsEventAttributes === DISCARDED) {
         return
       }
 
@@ -47,6 +54,7 @@ export function startLogsAssembly(
         defaultLogsEventAttributes,
         rawLogsEvent,
         messageContext,
+        logsEventAttributes,
         {
           ddtags: defaultDdtags.concat(ddtags).join(','),
         }

@@ -594,10 +594,12 @@ describe('preStartRum', () => {
         const initConfiguration: RumInitConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
         strategy.init(initConfiguration, PUBLIC_API)
 
-        expect(plugin.onInit).toHaveBeenCalledWith({
-          initConfiguration,
-          publicApi: PUBLIC_API,
-        })
+        expect(plugin.onInit).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            initConfiguration,
+            publicApi: PUBLIC_API,
+          })
+        )
       })
 
       it('plugins can edit the init configuration prior to validation', async () => {

@@ -1,6 +1,6 @@
 import { TIMEOUT_ERROR_MESSAGE } from '@datadog/browser-core'
 import { mockClock, replaceMockableWithSpy } from '@datadog/browser-core/test'
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
 import { patchSandboxedIframeApis } from '../boot/patchSandboxedIframeApis'
 import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
 import type { ShopifyAnalyticsApi } from './shopifyAnalytics'
@@ -17,7 +17,10 @@ describe('shopifyPlugin', () => {
       const { analytics } = createFakeAnalytics()
       const initConfiguration = { clientToken: 'token', applicationId: 'app-id' } as RumInitConfiguration
 
-      void shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({ initConfiguration, publicApi })
+      void shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({
+        initConfiguration,
+        publicApi,
+      } as RumPluginOnInitOptions)
 
       expect(patchSpy).not.toHaveBeenCalled()
       expect(initBindingsSpy).not.toHaveBeenCalled()
@@ -30,7 +33,10 @@ describe('shopifyPlugin', () => {
       const { analytics, emit } = createFakeAnalytics()
       const initConfiguration = { clientToken: 'token', applicationId: 'app-id' } as RumInitConfiguration
 
-      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({ initConfiguration, publicApi })
+      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({
+        initConfiguration,
+        publicApi,
+      } as RumPluginOnInitOptions)
       emit('page_viewed', pageViewedEvent('https://shop.example/checkout'))
       await result
 
@@ -45,7 +51,10 @@ describe('shopifyPlugin', () => {
       const { analytics, emit } = createFakeAnalytics()
       const initConfiguration = { trackViewsManually: false } as unknown as RumInitConfiguration
 
-      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({ initConfiguration, publicApi })
+      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({
+        initConfiguration,
+        publicApi,
+      } as RumPluginOnInitOptions)
       emit('page_viewed', pageViewedEvent('https://shop.example/checkout'))
       await result
 
@@ -69,7 +78,10 @@ describe('shopifyPlugin', () => {
       const { analytics, emit } = createFakeAnalytics()
       const initConfiguration = { clientToken: 'token', applicationId: 'app-id' } as RumInitConfiguration
 
-      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({ initConfiguration, publicApi })
+      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({
+        initConfiguration,
+        publicApi,
+      } as RumPluginOnInitOptions)
       emit('page_viewed', pageViewedEvent('https://shop.example/products/foo'))
 
       expect(patchSpy).not.toHaveBeenCalled()
@@ -84,7 +96,10 @@ describe('shopifyPlugin', () => {
       const { analytics, emit } = createFakeAnalytics()
       const initConfiguration = { clientToken: 'token', applicationId: 'app-id' } as RumInitConfiguration
 
-      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({ initConfiguration, publicApi })
+      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({
+        initConfiguration,
+        publicApi,
+      } as RumPluginOnInitOptions)
       emit('page_viewed', pageViewedEvent('https://shop.example/checkout'))
       emit('page_viewed', pageViewedEvent('https://shop.example/checkout'))
       await result
@@ -98,7 +113,10 @@ describe('shopifyPlugin', () => {
       const { analytics } = createFakeAnalytics()
       const initConfiguration = { clientToken: 'token', applicationId: 'app-id' } as RumInitConfiguration
 
-      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({ initConfiguration, publicApi })
+      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({
+        initConfiguration,
+        publicApi,
+      } as RumPluginOnInitOptions)
       clock.tick(1_000)
 
       await expectAsync(result).toBeRejectedWithError(TIMEOUT_ERROR_MESSAGE)
@@ -115,7 +133,7 @@ describe('shopifyPlugin', () => {
       const result = shopifyPlugin({ shopifyAnalytics: undefined as unknown as ShopifyAnalyticsApi }).onInit!({
         initConfiguration,
         publicApi,
-      })
+      } as RumPluginOnInitOptions)
 
       await expectAsync(result).toBeResolvedTo(false)
       expect(patchSpy).not.toHaveBeenCalled()
