@@ -774,3 +774,54 @@ router plugins, Shopify, profiler specs).
   ended view's event — the per-view context manager is gone.
 - Deferred `configure()`-time bindings unchanged from the v1 list: contexts/session.id stamping
   (the #1 gap), raw-error forwarding, rate-limit surfacing, tracking-consent sequencing.
+
+## v3 — open handles in the history, no single-view rule in the internal API (plan-v3.md)
+
+The follow-up challenge: v2 still hardcodes "single view at a time, always a view active" in
+the internal API (`currentView`, draft→promotion, supersede). The RUM model may evolve toward
+multiple simultaneous views or events without any view — those futures should not require
+redesigning the API. v3 moves the rule to the consumers: open handles live on history entries
+(`RumEventHistoryEntry.handle`, findable via `findEvents({ open: true })`), views are plain started
+events (one unified `EventHandle` family — the ViewEventHandle/NonViewEventHandle split is gone,
+views regained `stop(finalEvent, { endClocks })` with API-derived finals), expiry endings are
+API-owned for ALL open views, and the whole draft/promotion/supersede machine evaporated from
+the core. The single-view policy is written once, in a shared `startViewSuperseding` helper
+(stop the open view(s) at the new start, then startEvent) used by the public API `startView`,
+trackViews automatic starts, both router plugins and the Shopify bindings.
+
+The public API owns the policy variables: the initial view is started unconditionally at the
+clock origin (bare kickoff: current location + `initial_load`), `currentViewHandle` routes view
+mutations, and the first `startView` ADOPTS the initial view (update-merge: primitives overwrite,
+so the user's url/name/service/version win; loading_type untouched; the config identity is
+applied at init when not adopted). trackViews attaches metrics by catching up on the open
+views at construction (`findEvents({ open: true })` — the initial view's `event_started` fired
+before its subscription) and updates them through the views' live handles, looked up by id.
+
+### v3 validation
+
+- Suites: browser-rum-core 1248 (11 state-machine specs rewritten for v3), browser-rum 674,
+  react 166 + vue 39 + angular 26 + nuxt 33 + nextjs 34 + shopify 19 — all green on the first
+  run after the migration; typecheck + eslint clean. The smoke spec passed unchanged: behavior
+  parity held without touching it.
+- Shopify bundle: 54,533 → 54,126 bytes (the removed draft/supersede machinery costs a bit more
+  than the added helper + entry handles; still −66% vs the full-SDK wrapper's 159,422).
+
+### v3 corner-cuts / behavior deviations (recorded, by design or deferred)
+
+- An ADOPTED initial view ships an extra document version (the bare origin version, then the
+  named one) — the price of adopting instead of re-kicking off.
+- Automatic-mode initial view url is read at API-creation time (module load), not at init time
+  as in v2 — identical unless the SPA routed between SDK load and init().
+- Manual mode with no `startView` ever: a bare initial view now EXISTS (url from location,
+  `initial_load`, no name) — v2 kept an invisible draft and main shipped no view. Accepted
+  consequence of "create the first view unconditionally".
+- The Shopify SDK does NOT start an eager initial view (its checkout-only filter would
+  double-track storefront pages): the first `page_viewed` starts the first view.
+- The overlap guard is a telemetry debug (monitor-until 2026-10-14), not asserted in specs —
+  the mockable-wrap for `addTelemetryDebug` was not done.
+- trackViews metrics catch up at init: metrics are observed from init onward (loading times
+  still read the navigation timings, so the initial view metrics are complete).
+- The v2 corner-cuts still standing: `setViewContext` merge-not-replace, pre-init
+  `setViewLoadingTime` dropped, `stopSession` pre-init no-op, unthrottled context updates,
+  approximate metrics view-end times, contexts/session.id stamping (#1 gap), raw-error
+  forwarding, rate-limit surfacing, tracking-consent sequencing.
