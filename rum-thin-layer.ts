@@ -1,22 +1,27 @@
-// PROPOSAL v2 — revised after the v2 design discussion (plan-v2.md), on top of the PoC-validated
-// v1 (debrief in plan.md, phase 6). Validated by porting the public API, trackViews,
-// trackClickActions, the five framework plugins, the profiler and a minimal Shopify SDK onto
-// this interface. Not actual SDK code.
+// PROPOSAL v3 — revised after the open-handles design discussion (plan-v3.md), on top of the
+// PoC-validated v2. Validated by porting the public API, trackViews, trackClickActions, the
+// five framework plugins, the profiler and a minimal Shopify SDK onto this interface. Not
+// actual SDK code.
 //
 // The RUM internal API ("thin layer") has a strong focus on event assembly: assembling events
 // respecting the RUM event hierarchy, and offering extendability (hooks) and observability
 // (notifications, queries) APIs.
 //
-// v2 moves pre-init support inside the API: it is created eagerly (unconfigured), buffers
-// events — not calls — until configured, and exposes the current view as a draft from creation.
-// Views are never stopped by callers: starting a view supersedes the previous one, and session
-// expiry endings are owned by the API.
+// The API is created eagerly (unconfigured) and buffers events — not calls — until configured,
+// so public API calls made before init() flow into it directly. v3 removes the "single view at
+// a time, always a view active" rule from the API itself: open event handles live in the
+// history (`RumEventHistoryEntry.handle`), views are started and stopped by consumers (the
+// public API creates the initial view unconditionally, starting at the clock origin), and only
+// session-expiry endings are owned by the API (all open views are ended). Multiple
+// simultaneous views are representable; a no-view model is one assembly-gate relaxation away.
 //
 // Invalid usages of startEvent/addEvent and of the returned event handles always throw (ex:
-// updating a non-view event, reusing a finished handle, promoting the draft without `view.url`).
+// updating a non-view event, reusing a finished handle, starting a view without `view.url`).
 // Misuses fail loudly during development rather than producing silently-wrong events. We could
 // reflect some of these constraints in types too, but it would complexify the API surface, so we
-// rely on runtime errors for now.
+// rely on runtime errors for now. One deliberate exception: starting a view while another is
+// open is NOT a throw — the multi-view model is a possible future, not necessarily a misuse —
+// it logs a telemetry debug (no user-visible event).
 //
 // Out of scope (provided to consumers separately from the RumInternalApi instance, when needed):
 // * session state mutation (`sessionManager` instance is shared; the API only reacts to its
@@ -39,17 +44,28 @@ type AssembledRumEvent = any // a fully assembled RUM event, ready to be sent
 type InternalRumEventType = any // 'view' | 'action' | 'resource' | 'error' | 'long_task' | 'vital'
 
 // An entry of the event history. Incomplete entries are events that have been started but not
-// finalized yet (ex: the draft, the active view, an ongoing vital, or any event held while the
-// API is not configured or the session manager has not resolved): their `event` is the base
-// event being built — the same object the handle mutates, so it always reflects the latest
-// state. Complete entries carry the assembled event (hierarchy fields, hook attributes and
-// event counts applied). Both carry the event baggage.
+// finalized yet (ex: an open view, an ongoing vital, or any event held while the API is not
+// configured or the session manager has not resolved): their `event` is the base event being
+// built — the same object the handle mutates, so it always reflects the latest state — and
+// they carry the live `handle` (cleared on stop/cancel: complete entries have none). Complete
+// entries carry the assembled event (hierarchy fields, hook attributes and event counts
+// applied). Both carry the event baggage.
+//
+// The history is the source of truth, notifications are live updates: consumers needing
+// "the open view(s)" — including subscribers that attach after the events started, ex: view
+// metrics at init() for an initial view started before init() — query findEvents({ open: true })
+// instead of trusting notification timing.
 //
 // Note: `AssembledRumEvent` stands in for the schema-typed `RumEvent` until all contexts (ex:
 // session, user, display) are ported to hooks.
 type RumEventHistoryEntry =
   | { complete: true; event: AssembledRumEvent; baggage: EventBaggage }
-  | { complete: false; event: IncompleteBaseRumEvent; baggage: EventBaggage }
+  | {
+      complete: false
+      event: IncompleteBaseRumEvent
+      baggage: EventBaggage
+      handle: EventHandle<StartableRumEventType>
+    }
 type SessionContext = any // from browser-core
 type Context = any // from browser-core
 type RecursivePartial<T> = any // from js-core/util
@@ -61,8 +77,9 @@ type ServerDuration = any // from js-core/time
 
 // Created eagerly, with no options: the instance exists from the start (ex: at makeRumPublicApi
 // time), so public API calls made before init() flow into it directly and buffer as events
-// (draft view updates, held assemblies) rather than replayed calls. The validated configuration
-// is bound later, by configure().
+// (held assemblies) rather than replayed calls. The public API starts the initial view right
+// after this call (bare kickoff, clock origin): it buffers like any other event until
+// configure() + session resolution. The validated configuration is bound later, by configure().
 declare function createRumInternalApi(): RumInternalApi
 
 // BaseRumEvent is the minimal set of RUM event properties to kickstart an event: the fields
@@ -74,8 +91,8 @@ declare function createRumInternalApi(): RumInternalApi
 // raw event schema here. Internal fields (the event ids — view.id, action.id, error.id,
 // resource.id, long_task.id, vital.id — plus event counts and _dd.document_version) are owned
 // by the internal API: ids are stamped when the event enters the history (startEvent()/addEvent()
-// time; the draft's at creation — history entries and consumers need them from the start, ex:
-// Replay reads the current view id), the others are set at assembly time. Free functions are
+// time — history entries and consumers need them from the start, ex: Replay reads the current
+// view id), the others are set at assembly time. Free functions are
 // exported to format
 // inputs the RUM way (ex: turn an unknown error into a RUM error event), so that callers don't
 // have to reimplement RUM formatting rules.
@@ -97,56 +114,43 @@ type BaseRumEvent =
 type PartialBaseRumEvent<T extends string> = RecursivePartial<Extract<BaseRumEvent, { type: T }>> & Context
 
 // An incomplete BaseRumEvent: any event field (incl. kickoff fields) may be partially provided.
-// The same event shape flows through startEvent(), update() and stop(). Views start incomplete
-// as the draft (see RumInternalApi.currentView): their hierarchy fields (view.url, view.name,
-// service, version) are provided by the promotion kickoff and applied to all child events from
-// then on — child events collected before promotion are held and only assembled afterwards.
-// Non-view events start as partials: their kickoff fields (ex: resource.type, computed from stop
-// options) may not be known at start, so they can be provided at start or at stop()
-// (completeness is validated at runtime, per the throw-on-misuse policy). Incomplete history
-// entries hold one.
+// The same event shape flows through update() and stop(). Views start complete (a `view.url`
+// kickoff is required: the caller always has one — ex: the public API passes the page location
+// when it starts the initial view; their other fields arrive via update()); non-view events
+// start as partials: their kickoff fields (ex: resource.type, computed from stop options) may
+// not be known at start, so they can be provided at start or at stop() (completeness is
+// validated at runtime, per the throw-on-misuse policy). Incomplete history entries hold one.
 type IncompleteBaseRumEvent = PartialBaseRumEvent<InternalRumEventType>
 
 type StartableRumEventType = 'view' | 'action' | 'resource' | 'vital'
 
-// View handles never stop: only `current()` and `update()`. Endings (supersede, session expiry)
-// are owned by the internal API, which assembles the final version (`is_active: false`,
-// `time_spent` derived from the activity bounds) on its own. Only views can be updated: the
-// event type makes `update` unavailable on other handles (and the runtime throws too, if the
-// type constraint is worked around).
-interface ViewEventHandle {
+// One handle family for every started event type (the former ViewEventHandle /
+// NonViewEventHandle split is gone). Views are mutable documents (update()); the other started
+// events own one-shot stop-side data and can be discarded mid-flight (cancel()). These members
+// are type-constrained per event type and runtime-enforced (throw-on-misuse) when worked around.
+interface EventHandle<T extends StartableRumEventType> {
   // The current in-memory state of the event: the live entry (its event is the same object the
   // handle mutates, so it always reflects the latest state; after the final assembly it is the
-  // assembled event; views also carry their live child counts). Consumers reading their own
-  // event state (ex: the click frustration computation needs whether a click had child errors)
-  // don't need findEvents or `event_started` correlation for it.
+  // assembled event; views and actions also carry their live child counts). Consumers reading
+  // their own event state (ex: the click frustration computation needs whether a click had
+  // child errors) don't need findEvents or `event_started` correlation for it.
   current(): RumEventHistoryEntry
-  // Deep-merges the given properties into the event, then assembles it (hooks, hierarchy, rate
-  // limiting, beforeSend) and notifies `event_collected`. Views are sent incrementally: each
-  // update emits a new event version, with `_dd.document_version` incremented (owned by the
-  // internal API; the backend keeps the latest version). Accepted before the view is started
-  // (draft updates buffer as part of the eventual kickoff state, with true call-time
-  // timestamps); throws once the view has been ended (superseded or expired).
+  // Views only: deep-merges the given properties into the event, then assembles it (hooks,
+  // hierarchy, rate limiting, beforeSend) and notifies `event_collected`. Views are sent
+  // incrementally: each update emits a new event version, with `_dd.document_version`
+  // incremented (owned by the internal API; the backend keeps the latest version). Throws once
+  // the view has been stopped.
   update(baseRumEvent: PartialBaseRumEvent<'view'>): void
-}
-
-// Non-view started events cannot be updated, so their kickoff fields must be complete by stop:
-// they can be provided at start or at stop(), and the accumulated event is validated at runtime
-// (per the throw-on-misuse policy).
-interface NonViewEventHandle<T extends 'action' | 'resource' | 'vital'> {
-  // The current in-memory state of the event: the live entry (its event is the same object the
-  // handle mutates, so it always reflects the latest state; after the final assembly it is the
-  // assembled event; actions also carry their live child counts). Consumers reading their own
-  // event state (ex: the click frustration computation needs whether a click had child errors)
-  // don't need findEvents or `event_started` correlation for it.
-  current(): RumEventHistoryEntry
-  // Throw if the event has already been stopped or cancelled. (Views go through
-  // ViewEventHandle, which has no cancel — their endings are owned by the API.)
+  // Non-views only: discard the event without a final assembly. (A started view is a fact: it
+  // can only be stopped — cancelling it would orphan its child events.)
   cancel(): void
   // Finish assembling the event and notify `event_collected` with the final version. The
-  // caller computes stop-side values (ex: resource type from stopOptions). `endClocks` lets the
-  // caller control the event end time. Throws if the event has already been stopped or
-  // cancelled, and if kickoff fields are missing.
+  // caller computes stop-side values (ex: resource type from stopOptions). `endClocks` lets
+  // the caller control the event end time — for views, the view-tracking policy pins it to the
+  // next view's start (supersede is a consumer now). For views, the API derives the final
+  // `is_active: false` and `time_spent` from the activity bounds when the stop payload doesn't
+  // provide them (the only view-specific assembly behavior left). Throws if the event has
+  // already been stopped or cancelled, and if kickoff fields are missing.
   stop(baseRumEvent?: PartialBaseRumEvent<T>, options?: { endClocks?: ClocksState }): void
 }
 
@@ -163,53 +167,42 @@ interface RumInternalApi {
   // both, so the transport keeps a dumb "just send" contract.
   //
   // ORDERING: session expiry handling is owned by this API — on expiry it notifies
-  // `session_expired` (synchronously, giving consumers a last-update slot), then assembles the
-  // current view's final version, before any consumer (ex: a transport flushing its batch on
-  // expiry) can react. The v1 first-subscriber ordering guarantee is therefore structural now:
-  // consumers subscribe on `notifications` and cannot race the view ending.
+  // `session_expired` (synchronously, giving consumers a last-update slot for their open
+  // views), then assembles ALL open views' final versions, before any consumer (ex: a transport
+  // flushing its batch on expiry) can react. The first-subscriber ordering guarantee is
+  // therefore structural: consumers subscribe on `notifications` and cannot race the view
+  // endings.
   configure(options: {
     sessionManager: SessionManager | Promise<SessionManager | undefined>
     beforeSend?: (event: AssembledRumEvent, domainContext: unknown) => boolean | void
   }): void
 
-  // The current view handle. From creation until the first view start it is the DRAFT: a real
-  // event id is pre-assigned, the history entry starts at the clock origin, and `update()` is
-  // accepted immediately — early view mutations (ex. setViewName / setViewContext / addTiming /
-  // setViewLoadingTime before init()) buffer as part of the eventual kickoff state. No
-  // `event_started` and no assembly until the draft is started (promoted): a never-promoted
-  // draft (manual views, no startView call ever) stays visible-but-incomplete in findEvents
-  // forever, and its buffered child events are never assembled. Afterwards, it is the
-  // currently active view.
-  currentView: ViewEventHandle
-
-  // Start an event that has a duration. While it is active, child events are linked to it (ex:
-  // errors and resources happening during an action get `action.id`; every event gets `view.id`,
-  // `view.name` and `view.url` of the active view). The optional baggage lets the caller control
-  // the event start time and carry domain context. Non-view events may be partial.
+  // Start an event that has a duration. While it is open, child events are linked to it (ex:
+  // errors and resources happening during an action get `action.id`; events get `view.id`,
+  // `view.name` and `view.url` of the view covering their start). The optional baggage lets the
+  // caller control the event start time and carry domain context. Non-view events may be
+  // partial.
   //
-  // Views: the FIRST view startEvent PROMOTES the draft — buffered draft updates are merged
-  // first, the promotion kickoff over them (the same precedence as main's startView({name})),
-  // the start clocks stay at the clock origin no matter when the call happens, `event_started`
-  // fires, and the initial version is assembled + notified with `loading_type: 'initial_load'`
-  // (no `update({})` dance: the PoC showed every view consumer emitting it — same boilerplate
-  // each time). A `view.url` must be provided at promotion (throw-on-misuse). A view startEvent
-  // while a view is active SUPERSEDES it: the previous view's activity window closes at the new
-  // view's start, and the API assembles its final version (`is_active: false`, `time_spent`
-  // derived). Subsequent views carry their `loading_type` (ROUTE_CHANGE / SESSION_RENEWAL /
-  // BF_CACHE) in the kickoff.
-  startEvent(options: Extract<BaseRumEvent, { type: 'view' }> & Context, baggage?: Partial<EventBaggage>): ViewEventHandle
+  // Views: a plain start — no promotion, no supersede, no single-view rule. `view.url` is
+  // required (throw-on-misuse); `loading_type` is the caller's (the public API stamps
+  // `initial_load` on the initial view it starts at the clock origin, view tracking passes
+  // ROUTE_CHANGE / SESSION_RENEWAL / BF_CACHE). Starting a view while another is open is
+  // allowed (multi-view is a possible future) but logs a telemetry debug, since today's
+  // consumers supersede explicitly: the view-tracking policy (stop the previous view, end
+  // pinned to the new start) lives in a consumer helper, not here.
+  startEvent(
+    options: Extract<BaseRumEvent, { type: 'view' }> & Context,
+    baggage?: Partial<EventBaggage>
+  ): EventHandle<'view'>
   startEvent(
     options: IncompleteBaseRumEvent & { type: 'action' },
     baggage?: Partial<EventBaggage>
-  ): NonViewEventHandle<'action'>
+  ): EventHandle<'action'>
   startEvent(
     options: IncompleteBaseRumEvent & { type: 'resource' },
     baggage?: Partial<EventBaggage>
-  ): NonViewEventHandle<'resource'>
-  startEvent(
-    options: IncompleteBaseRumEvent & { type: 'vital' },
-    baggage?: Partial<EventBaggage>
-  ): NonViewEventHandle<'vital'>
+  ): EventHandle<'resource'>
+  startEvent(options: IncompleteBaseRumEvent & { type: 'vital' }, baggage?: Partial<EventBaggage>): EventHandle<'vital'>
 
   // One-shot event assembly, when startEvent is not useful (ex: errors, long tasks, resources
   // notified after they are finished, one-shot vitals...). Views must go through startEvent:
@@ -236,40 +229,45 @@ interface RumInternalApi {
   // `event_collected` fires as soon as the event can be assembled and made it through the
   // pipeline: assemblies are held while the API is not configured yet, while the session
   // manager has not resolved yet, or while no view covers the event start time (ex: events
-  // collected before the draft is promoted, as preStartRum used to buffer calls collected
-  // before RUM starts), instead of being dropped.
+  // collected before RUM starts), instead of being dropped. The view-coverage gate is a
+  // consumer-guaranteed invariant today — the public API starts the initial view eagerly, so
+  // the coverage holds from the clock origin — and the single deliberate relaxation point if a
+  // no-view model materializes.
   notifications: Observable<RumInternalNotification>
-  // Lifecycle: `event_started` at startEvent() (view promotion included; never for the draft
-  // before promotion), `event_updated` / `event_stopped` when an update / final assembly
-  // completes (carrying the assembled event, regardless of rate limiting and beforeSend —
-  // "on view end" work subscribes to `event_stopped` for views: view endings are supersede and
-  // session expiry, both owned by the API). `event_collected` only fires for events that passed
-  // rate limiting and beforeSend (discarded events are not collected: no consumer needs them,
-  // and reporting rate limiting to customers is handled internally).
+  // Lifecycle: `event_started` at startEvent() (every type, views included — including the
+  // initial view, which the public API starts before init(): subscribers attaching later
+  // catch up by querying findEvents({ open: true }), the history being the source of truth),
+  // `event_updated` / `event_stopped` when an update / final assembly completes (carrying the
+  // assembled event, regardless of rate limiting and beforeSend). "View end" is simply
+  // `event_stopped` for a view event: consumer stops (manual startView, automatic view
+  // tracking) and the API-owned session expiry both fire it. `event_collected` only fires for
+  // events that passed rate limiting and beforeSend (discarded events are not collected: no
+  // consumer needs them, and reporting rate limiting to customers is handled internally).
   // Note: event counters and `findEvents` include discarded events, since hierarchy lookups and
   // counts are computed before rate limiting.
   //
-  // EXPIRY CONTRACT: `session_expired` notifies synchronously; consumers may send a last fresh
-  // update of the current view during the notify (the expiry slot); when notify returns, the
-  // API assembles the view's final version and closes its activity window. This makes the
-  // "final view version upserted before the batch flushes" ordering structural: the API ends
-  // the view before any consumer can react.
+  // EXPIRY CONTRACT: `session_expired` notifies synchronously; consumers may send last fresh
+  // updates of their open views during the notify (the expiry slot); when notify returns, the
+  // API assembles every open view's final version and closes its activity windows. This makes
+  // the "final view version upserted before the batch flushes" ordering structural: the API
+  // ends the views before any consumer can react.
 
   // Query the event history. Covers:
   // * hierarchy lookups done by the internal API itself (find the action active at a given time)
   // * consumer use-cases (Replay finding the current view, Profiling finding long tasks/actions
   //   that overlap a profile)
   // History entries are created at startEvent()/addEvent() time, NOT at collection time, and
-  // reference the event itself: started but uncollected events (ex: an ongoing vital) are findable
-  // as incomplete entries, with their kickoff fields (ex: vital names) and the live state of the
-  // event being built. Finalized events are complete entries carrying the assembled event and
-  // its baggage (including discarded ones, by design). View / action entries carry their live
-  // child counts (`counts`), solely owned and computed by the internal API: consumers (ex: the
-  // click frustration computation) read them off the entry instead of re-computing.
-  // Un-ended events (ex. the active view, or a never-promoted draft) match `endedAfter: t` for
-  // any t, so `{ startedBefore: t, endedAfter: t }` means "active at t".
+  // reference the event itself: open events (ex. an open view, an ongoing vital) are findable
+  // as incomplete entries with their live `handle`, their kickoff fields (ex: vital names) and
+  // the live state of the event being built. Finalized events are complete entries carrying
+  // the assembled event and its baggage (including discarded ones, by design). View / action
+  // entries carry their live child counts (`counts`), solely owned and computed by the
+  // internal API: consumers (ex: the click frustration computation) read them off the entry
+  // instead of re-computing. Un-ended events match `endedAfter: t` for any t, so
+  // `{ startedBefore: t, endedAfter: t }` means "active at t".
   findEvents(query: {
     type?: string
+    open?: boolean // only entries with a live handle — ex: "the open view(s)" catch-ups
     startedAfter?: RelativeTime
     startedBefore?: RelativeTime
     endedAfter?: RelativeTime
@@ -288,9 +286,10 @@ interface RumInternalApi {
 
 type RumInternalNotification =
   // Fired synchronously at startEvent(), before any assembly: Replay takes full snapshots
-  // on view start, before any DOM mutation, and needs the view id immediately. For views this
-  // is the promotion / supersede moment — never fired for the draft before it is started
-  // (nothing can record before init, and snapshots must happen at the real view start).
+  // on view start, before any DOM mutation, and needs the view id immediately. Note that the
+  // initial view fires it before init() (the public API starts the view eagerly): subscribers
+  // attaching later must not rely on having seen every `event_started` — they catch up on open
+  // events via findEvents({ open: true }).
   // The kickoff event (its type's id is already stamped by the internal API) rides along:
   // consumers needing kickoff fields (ex: the profiler reads the view name) must not have to
   // correlate an `event_started` with a `findEvents` lookup (PoC phase 5 finding — the same
@@ -304,8 +303,8 @@ type RumInternalNotification =
       baggage: EventBaggage
     }
   // Fired when an update assembly completes (ex: each incremental view version), and when a
-  // final assembly completes (`stop()`, one-shot `addEvent`, or the API-owned view endings:
-  // supersede / session expiry). Carries the assembled event, like `event_collected`, but fires
+  // final assembly completes (`stop()`, one-shot `addEvent`, or the API-owned session expiry
+  // endings). Carries the assembled event, like `event_collected`, but fires
   // regardless of rate limiting / beforeSend (the event reached its final state even if it is
   // dropped before being sent). "View end" is simply `event_stopped` for view events.
   | { type: 'event_updated'; event: AssembledRumEvent; baggage: EventBaggage }
