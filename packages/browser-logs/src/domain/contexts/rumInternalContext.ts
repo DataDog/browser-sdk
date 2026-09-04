@@ -17,7 +17,7 @@ interface BrowserWindow {
 export function startRUMInternalContext(hooks: Hooks) {
   const browserWindow = globalObject as BrowserWindow
 
-  hooks.assemble.register(({ startTime }) => {
+  hooks.assembleEventDefaults.register(({ startTime }) => {
     const internalContext = getRUMInternalContext(startTime)
     if (!internalContext) {
       return SKIPPED
