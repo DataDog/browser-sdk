@@ -598,18 +598,123 @@ view:{url}})` with throw-on-double-view (the previous handle stops at the new vi
 - browser-rum-core boot specs still pass (index export additions only).
 - The bundle builds (see sizes above).
 
-## Phase 6 — debrief
+## Phase 6 — debrief — DONE
 
-- Update `rum-thin-layer.ts` with everything learned (final interface).
-- Answer the questions this PoC exists for:
-  - Is the tight scope (assembly + extensibility + observability) the right call, or did consumers
-    keep needing out-of-scope escapes (`sessionManager`, `configuration`)?
-  - Was throw-on-misuse workable in real modules (views especially), or does it force awkward
-    caller code?
-  - Did `preStartRum` actually simplify (phase 2 deliverable)?
-  - What's missing before betting automatic instrumentation (resources, errors, vitals,
-    long tasks...) and Replay on it?
-- Recommend: iterate the interface, or rethink.
+`rum-thin-layer.ts` is updated to its final revision (event order guarantee, initial view
+version recommendation, `event_started` carrying the kickoff, baggage robustness note). The
+answers below are backed by the phase commits (each phase section above points at its diff,
+findings and corner-cuts).
+
+### Consumers the interface survived
+
+Six kinds of real consumers, all ports are net-negative in code (things deleted: preStartRum,
+viewCollection, actionCollection, trackViewEventCounts, trackManualActions, the profiler's three
+histories, the plugins' two-level subscriber pattern, the shopify full-SDK wrapper):
+
+1. the public API (phase 2, buffer/pre-start replacement),
+2. trackViews (3a) and trackClickActions (3b) — in place, not parallel ports,
+3. the five framework plugins (4), via `onInit({internalApi})`,
+4. the profiler (5) — the histories → findEvents experiment the interface was partly designed for,
+5. a minimal SDK (bonus phase) — browser-rum-shopify, -67% bundle.
+
+### Q1 — Is the tight scope (assembly + extensibility + observability) the right call?
+
+**Yes.** `sessionManager` and `configuration` are passed _alongside_ the internal API to the
+consumers that need them (profiler, shopify glue), as constructor dependencies — no consumer ever
+needed to reach into internals the API doesn't own. The bonus phase quantifies the scope claim: a
+minimal SDK needs `createRumInternalApi` + `formatErrorEvent` + four plumbing exports
+(`validateAndBuildRumConfiguration`, `startSessionManager`, `startInternalApiBatch`, `BeforeSend`)
+— none of which is internal-API surface. `findSession` covered the session reads; counts living in
+the API (exposed via `handle.current()` and history entries) removed the duplicate count pass.
+
+The scope hole the PoC exposed instead: **context assembly**. Session/user/global/view contexts
+and `session.id` stamping were corner-cut (out of the draft's scope, "provided by hooks") — but
+nobody registers those hooks in the PoC pipeline, so events ship **without `session.id`**. Before
+any rollout, contexts must become first-class: either the internal API owns the session stamp
+itself, or a contexts module ships as a default hook set with a documented registration order.
+This is the biggest "missing before betting" item.
+
+### Q2 — Was throw-on-misuse workable?
+
+**Yes, with one production lesson.** It forced the right caller contracts: routers now stop the
+previous view explicitly (`currentViewHandle?.stop(undefined, { endClocks: startClocks })` in three
+consumers), clicks cancel instead of being silently discarded, one-shot `addEvent` rejects views.
+And it caught real internal API bugs during the ports: the start-at-previous-end collision
+(fixed by end-exclusive activity bounds + checking the double-view against the new view's start
+clocks — silently killed new views before that), action counts deleted before the final assembly
+snapshot, one-shot actions never closed in history.
+
+The lesson: a throw inside caller flow (ex: trackViews' `startNewView`) fails _silently_ unless
+the caller guards it — the double-view throw ate the new view with no console trace until the
+frozen-clock smoke test caught it. SDK-internal callers should wrap their start sequences
+(callMonitored), and the throws are only a development-time contract for them; the public
+surface stays guarded by `catchUserErrors`/`callMonitored` as today.
+
+### Q3 — Did `preStartRum` actually simplify?
+
+**Yes, more than planned.** It was deleted outright (not shrunk): the internal API's assembly
+buffering (session manager promise + view coverage) generalized the pre-start buffer to _all_
+events, not just public calls. `bufferApiCalls`, the `firstStartViewCall` dance, the pre-init
+replay and the "is RUM started" state machine are gone; plugin pre-init calls queue once and
+pre-session events buffer. The two behavior changes to decide at rollout:
+
+- public calls before `init()` now error loudly instead of being silently replayed (arguably
+  better DX, but a change),
+- tracking consent is assumed granted in the PoC — the consent→session manager sequencing must
+  be restored, and the internal API already supports it (the promise shape is exactly what
+  `onGrantedOnce` would produce).
+
+The one _new_ fragility: subscription order on the session manager promise (phase 4) — the batch
+must not flush before the final view version is upserted. Encoded as an ordering guarantee in the
+final draft; consider making the transport flush on `session_expired` so the guarantee lives in
+one place.
+
+### Q4 — What's missing before betting auto-instrumentation and Replay?
+
+Ordered by risk:
+
+1. **Contexts** (Q1): session.id stamping, user/global/view/feature-flag/geo/display attributes.
+   Everything else can be migrated piecemeal; without this the events are not RUM events.
+2. **Raw-error forwarding**: errors collected via the internal API no longer notify
+   `RAW_ERROR_COLLECTED`, so `forwardErrorsToLogs` is broken for them. Needs a decision: a
+   `raw_error_collected` notification (mirror of the old lifecycle event) or a dedicated hook.
+   Same question for rate-limit reach surfacing (today an error event is reported to customers;
+   the PoC rate limiters report with noop) and the profiling transport errors.
+3. **Collectors + the old pipeline teardown**: resources (fetch/XHR), long tasks, runtime errors,
+   vitals must port for auto-instrumentation; the old startRum pipeline is inert but kept
+   compiling for them. Zombie lifecycle events (`VIEW_CREATED` & co) must go with it — Replay is
+   their last consumer, so Replay must port first (it is the largest viewHistory/lifecycle
+   consumer; the PoC's `findEvents` + notifications cover its documented needs but the migration
+   itself was a non-goal).
+4. **View metrics completeness**: the metrics modules currently run on a private idle LifeCycle —
+   `REQUEST_STARTED/COMPLETED` never flow, so loading times rely on the load event only. The
+   collectors must feed page activity again (or the metrics re-plumb onto notifications).
+5. **Interface adjustments before freeze** (all encoded in the final draft):
+   `event_started` carrying the kickoff event, initial view version emitted at `startEvent`,
+   the session promise ordering guarantee, `beforeSend` outside `limitModification` (must be
+   re-wrapped before rollout), baggage shape validation (NaN bounds match every query),
+   ddtags/urlContexts granularity/`view.referrer`.
+6. **Spec debt** (deliberate, recorded per phase): the old-architecture specs were deleted with
+   their architecture — trackViews (smoke-level coverage now), trackClickActions, the
+   1484-line profiler spec (quota races, visibility transitions), rumPublicApi. Fine-grained
+   coverage must be rebuilt on the new architecture before rollout; the e2e suite is unaffected
+   except the live-store shopify scenario (storefront assertions rely on the removed full-SDK
+   path).
+
+### Q5 — Iterate or rethink?
+
+**Iterate.** The interface needed only additive adjustments through six consumer kinds (baggage,
+`endClocks`, `handle.current()`, `event_updated`/`event_stopped`, `formatErrorEvent`); nothing
+was reverted, no parallel implementation survived review, and each port deleted more than it
+added (cumulatively: preStartRum, the collection glue, three profiler histories, the plugin
+subscriber queue, the shopify full-SDK wrapper — and a -67% bundle for the minimal variant). The
+crash-test found integration-grade issues (ordering, contexts, forwarding), all addressable
+within the design rather than pointing at a flaw in it.
+
+Suggested next steps, in order: (1) contexts as default hooks + session stamping, (2) raw-error
+forwarding + rate-limit surfacing decisions, (3) port one collector (resources — it exercises
+start/stop pairs, tracing and the request/activity flow), (4) re-run the spec debt list,
+(5) then Replay as the gate for deleting the old pipeline.
 
 ## Guardrails
 

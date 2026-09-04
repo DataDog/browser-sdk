@@ -1,4 +1,6 @@
-// DRAFT / PROPOSAL — not actual SDK code.
+// PROPOSAL — final revision after the PoC (debrief in plan.md, phase 6). Validated by porting
+// the public API, trackViews, trackClickActions, the five framework plugins, the profiler and a
+// minimal Shopify SDK onto this interface. Not actual SDK code.
 //
 // The RUM internal API ("thin layer") has a strong focus on event assembly: assembling events
 // respecting the RUM event hierarchy, and offering extendability (hooks) and observability
@@ -54,7 +56,19 @@ declare function createRumInternalApi(options: {
   // session store is initialized (ex: startSessionManager()). Events collected before it
   // resolves are assembled and notified when it does. If it resolves `undefined` (no storage
   // available), events are held and never assembled: as today, RUM does not start.
+  //
+  // ORDERING GUARANTEE (PoC phase 4 finding): the internal API subscribes the session manager
+  // observables (renew / expire) the moment the promise resolves, so its session notifications
+  // (`session_renewed` / `session_expired`) fire BEFORE any other consumer of the same
+  // resolution (ex: a transport that subscribes its session-expiry batch flush on the same
+  // promise — the final view version must be upserted before the flush). Consumers that react
+  // to session expiry must either subscribe to the `session_expired` notification or rely on
+  // this documented first-subscriber guarantee. (In the PoC, the public API routes the promise
+  // through a deferred it hands to both the internal API and the batch, precisely to preserve
+  // this order.)
   sessionManager: SessionManager | Promise<SessionManager | undefined>
+  // Catching user errors in beforeSend is the caller's responsibility (the public API wraps it
+  // with catchUserErrors before passing it).
   beforeSend?: (event: AssembledRumEvent, domainContext: unknown) => boolean | void
   // Rate limiting and beforeSend are handled internally, in order: hooks -> rate limiting ->
   // beforeSend. `notifications` (and the transport plugged on it) only see events that passed
@@ -157,6 +171,13 @@ interface RumInternalApi {
   // the event start time (ex: the initial view starts at the clock origin, click actions start at
   // the interaction timestamp) and carry domain context. Views must be complete at start (the
   // hierarchy fields are required); non-view events may be partial.
+  //
+  // INITIAL VIEW VERSION (PoC finding, phases 2/3a/4/bonus): every view consumer ends up
+  // emitting the initial view version right after the start (`handle.update({})`), because the
+  // SDK sends a VIEW event on creation. RECOMMENDATION for the final interface: starting a view
+  // assembles + notifies `event_collected` with the initial version itself, and the `update({})`
+  // dance disappears. (The PoC implemented the explicit dance in three consumers — same
+  // boilerplate each time, which is the evidence.)
   startEvent(options: Extract<BaseRumEvent, { type: 'view' }>, baggage?: Partial<EventBaggage>): ViewEventHandle
   startEvent(
     options: IncompleteBaseRumEvent & { type: 'action' },
@@ -241,7 +262,18 @@ interface RumInternalApi {
 type RumInternalNotification =
   // Fired synchronously at startEvent(), before any assembly: Replay takes full snapshots
   // on view start, before any DOM mutation, and needs the view id immediately.
-  | { type: 'event_started'; eventType: StartableRumEventType; eventId: string; baggage: EventBaggage }
+  // The kickoff event (its type's id is already stamped by the internal API) rides along:
+  // consumers needing kickoff fields (ex: the profiler reads the view name) must not have to
+  // correlate an `event_started` with a `findEvents` lookup (PoC phase 5 finding — the same
+  // correlation problem that produced `handle.current()` for click counts). The object is the
+  // live draft the handle mutates: read kickoff fields from it, don't hold on to it.
+  | {
+      type: 'event_started'
+      eventType: StartableRumEventType
+      eventId: string
+      event: IncompleteBaseRumEvent
+      baggage: EventBaggage
+    }
   // Fired when an update assembly completes (ex: each incremental view version), and when a
   // final assembly completes (`stop()`, one-shot `addEvent`). Carries the assembled event, like
   // `event_collected`, but fires regardless of rate limiting / beforeSend (the event reached
@@ -257,6 +289,10 @@ type RumInternalNotification =
 // notifications expose it so consumers (ex: Profiling) can build histories without subscribing to
 // raw event collection. `duration` is the relative event duration: history queries rely on it
 // (ex: Profiling computes long task windows), and the event's server duration field is lossy.
+//
+// Robustness note (PoC phase 5): the internal API does not validate baggage shapes — a malformed
+// `startClocks` creates NaN history bounds that match every `findEvents` query. Worth a runtime
+// validation or a branded `ClocksState` before rollout.
 interface EventBaggage {
   startClocks: ClocksState
   duration?: number
