@@ -89,6 +89,13 @@ export function trackRouteChangeViewMetrics(configuration: RumConfiguration, sch
     setViewEnd: () => {
       softNavStopped = true
       softNavSubscription.unsubscribe()
+      if (!softNavEntry) {
+        // This view's own interaction never produced a soft-navigation entry, and never will now
+        // that the subscription above is gone -- nothing left to correlate ICP entries against,
+        // so don't keep the ICP observer (and its buffer) alive for the rest of the 5-minute
+        // window until stop().
+        icpSubscription.unsubscribe()
+      }
     },
     stop: () => {
       if (!softNavStopped) {

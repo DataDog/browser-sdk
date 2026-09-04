@@ -8,9 +8,10 @@ import { trackRouteChangeViewMetrics } from './trackRouteChangeViewMetrics'
 describe('trackRouteChangeViewMetrics', () => {
   let scheduleViewUpdate: jasmine.Spy<() => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+  let activeObserverCount: (entryType: RumPerformanceEntryType) => number
 
   function startTracking() {
-    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    ;({ notifyPerformanceEntries, activeObserverCount } = mockPerformanceObserver())
     const tracker = trackRouteChangeViewMetrics(mockRumConfiguration(), scheduleViewUpdate)
     registerCleanupTask(() => tracker.stop())
     return tracker
@@ -253,6 +254,19 @@ describe('trackRouteChangeViewMetrics', () => {
     ])
 
     expect(initialViewMetrics.largestContentfulPaint?.value).toBe(300 as RelativeTime)
+  })
+
+  it('should stop observing ICP entries on setViewEnd when the view never got a soft-navigation entry', () => {
+    const { setViewEnd } = startTracking()
+
+    expect(activeObserverCount(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT)).toBe(1)
+
+    // This view's own interaction never produces a soft-navigation entry (e.g. a programmatic
+    // route change). Nothing will ever correlate against it, so the ICP observer -- and its
+    // buffer -- shouldn't be kept alive for the remaining 5 minutes until stop().
+    setViewEnd()
+
+    expect(activeObserverCount(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT)).toBe(0)
   })
 
   it('should stop applying ICP updates after stop()', () => {
