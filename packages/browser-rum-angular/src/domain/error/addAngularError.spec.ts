@@ -19,7 +19,9 @@ describe('addAngularError', () => {
             framework: 'angular',
           },
         }),
-        baggage: jasmine.objectContaining({ originalError }),
+        baggage: jasmine.objectContaining({
+          domainContext: { error: originalError, handlingStack: jasmine.any(String) },
+        }),
       })
     )
   })
@@ -41,7 +43,9 @@ describe('addAngularError', () => {
             param: 42,
           },
         }),
-        baggage: jasmine.objectContaining({ originalError }),
+        baggage: jasmine.objectContaining({
+          domainContext: { error: originalError, handlingStack: jasmine.any(String) },
+        }),
       })
     )
   })
@@ -59,7 +63,9 @@ describe('addAngularError', () => {
           error: jasmine.objectContaining({ message: 'Provided "string error"' }),
           context: { framework: 'angular' },
         }),
-        baggage: jasmine.objectContaining({ originalError: 'string error' }),
+        baggage: jasmine.objectContaining({
+          domainContext: { error: 'string error', handlingStack: jasmine.any(String) },
+        }),
       })
     )
   })

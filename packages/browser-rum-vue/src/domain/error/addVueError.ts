@@ -44,7 +44,6 @@ export function addVueError(error: unknown, instance: ComponentPublicInstance | 
         baggage: {
           startClocks: rawError.startClocks,
           domainContext: { error, handlingStack },
-          originalError: error,
         },
       })
     })

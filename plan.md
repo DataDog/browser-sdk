@@ -810,6 +810,13 @@ reads the click's own event fields, and the "delete the action counts before / a
 assembly" ordering hazard (a v1 bug class) is structurally gone — the counts live on the event
 the final assembly clones.
 
+A second review pass trimmed two surface items: `originalError` left the event baggage — it was
+write-only (no reader in the pipeline) and every writer already carries the same raw error in
+`domainContext`, which is where the future raw-error forwarding (forwardErrorsToLogs) will read
+it; and `eventRateLimit` left `ConfigureOptions` — no caller ever passed it, so rate limiting now
+uses browser-core's default (3000 events by type and by minute). Tests needing a low limit will
+override a mutable constant, as SEGMENT_BYTES_LIMIT in segmentCollection.ts.
+
 ### v3 validation
 
 - Suites: browser-rum-core 1248 (11 state-machine specs rewritten for v3), browser-rum 674,

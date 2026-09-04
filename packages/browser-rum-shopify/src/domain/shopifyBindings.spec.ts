@@ -218,7 +218,7 @@ describe('initShopifyBindings', () => {
         error: { message: string; source: string; stack: string }
         context: Record<string, string | undefined>
       }
-      baggage: { originalError: Error }
+      baggage: { domainContext: { error: unknown } }
     }
     expect(baseRumEvent.type).toBe('error')
     // The error is built through formatErrorEvent, so the raw stack goes through the same
@@ -233,6 +233,6 @@ describe('initShopifyBindings', () => {
       appName: 'my-app',
       appVersion: '1.2.3',
     })
-    expect(baggage.originalError).toBeInstanceOf(Error)
+    expect(baggage.domainContext.error).toBeInstanceOf(Error)
   })
 })

@@ -49,7 +49,6 @@ export function addNextjsError(error: Error & { digest?: string }, errorInfo?: E
         baggage: {
           startClocks: rawError.startClocks,
           domainContext: { error, handlingStack },
-          originalError: error,
         },
       })
     })

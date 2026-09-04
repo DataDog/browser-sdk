@@ -47,7 +47,6 @@ export function addAngularError(error: unknown) {
         baggage: {
           startClocks: rawError.startClocks,
           domainContext: { error, handlingStack },
-          originalError: error,
         },
       })
     })

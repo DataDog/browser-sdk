@@ -21,7 +21,8 @@ export interface FormatErrorEventOptions {
 
 // Computes the raw error (via browser-core's computeRawError) and formats it as the error base
 // event (kickoff + raw event fields, without the event id — the internal API owns it). Also
-// returns the raw error, so callers can build the event baggage (originalError, startClocks).
+// returns the raw error, so callers can build the event baggage (startClocks — the raw error
+// itself rides domainContext).
 export function formatErrorEvent(options: FormatErrorEventOptions): {
   baseRumEvent: AddEventOptions['baseRumEvent']
   rawError: RawError

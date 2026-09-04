@@ -21,7 +21,7 @@ describe('addNuxtError', () => {
           }),
           context: { framework: 'nuxt' },
         }),
-        baggage: jasmine.objectContaining({ originalError: error }),
+        baggage: jasmine.objectContaining({ domainContext: { error, handlingStack: jasmine.any(String) } }),
       })
     )
   })

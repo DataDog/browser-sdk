@@ -37,7 +37,9 @@ describe('NextjsErrorBoundary', () => {
             framework: 'nextjs',
           }),
         }),
-        baggage: jasmine.objectContaining({ originalError }),
+        baggage: jasmine.objectContaining({
+          domainContext: { error: originalError, handlingStack: jasmine.any(String) },
+        }),
       })
     )
     expect(

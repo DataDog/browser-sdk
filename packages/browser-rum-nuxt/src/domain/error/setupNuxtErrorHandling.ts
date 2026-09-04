@@ -42,7 +42,6 @@ export function reportNuxtError(
       baggage: {
         startClocks: rawError.startClocks,
         domainContext: { error, handlingStack },
-        originalError: error,
       },
     })
   })

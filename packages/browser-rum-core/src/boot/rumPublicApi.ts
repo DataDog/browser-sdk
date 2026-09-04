@@ -913,7 +913,6 @@ export function makeRumPublicApi(
           baggage: {
             startClocks,
             domainContext: { error, handlingStack },
-            originalError: error,
           },
         })
         addTelemetryUsage({ feature: 'add-error' })

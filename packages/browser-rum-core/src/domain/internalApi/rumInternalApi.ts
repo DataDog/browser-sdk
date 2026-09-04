@@ -420,10 +420,13 @@ export function createRumInternalApi(): RumInternalApi {
     configured = true
     pipeline.beforeSend = options.beforeSend
     pipeline.rateLimiters = {
-      // Rate limit reach is not surfaced to customers yet (see the PoC notes at the top)
-      error: createEventRateLimiter('error', noop, options.eventRateLimit),
-      action: createEventRateLimiter('action', noop, options.eventRateLimit),
-      vital: createEventRateLimiter('vital', noop, options.eventRateLimit),
+      // Rate limit reach is not surfaced to customers yet (see the PoC notes at the top). The
+      // limit is the default (browser-core's EVENT_RATE_LIMIT, 3000 events by type and by
+      // minute): it is an implementation detail, not a configuration option — tests needing a
+      // low limit will use a mutable constant, as SEGMENT_BYTES_LIMIT in segmentCollection.ts.
+      error: createEventRateLimiter('error', noop),
+      action: createEventRateLimiter('action', noop),
+      vital: createEventRateLimiter('vital', noop),
     }
     if (options.sessionManager instanceof Promise) {
       options.sessionManager

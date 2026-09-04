@@ -63,12 +63,12 @@ export type AssembledRumEvent = BaseRumEvent & { date: TimeStamp } & Context
 // notifications expose it so consumers (ex: Profiling) can build histories without subscribing to
 // raw event collection. `duration` is the relative event duration: history queries rely on it
 // (ex: Profiling computes long task windows), and the event's server duration field is lossy.
+// The value an event was derived from (ex: the original error instance) rides `domainContext`
+// — there is no dedicated field for it.
 export interface EventBaggage {
   startClocks: ClocksState
   duration?: Duration
   domainContext?: unknown
-  // The value the event was derived from, when relevant (ex: the original error instance)
-  originalError?: unknown
 }
 
 // An incomplete BaseRumEvent: any event field (incl. kickoff fields) may be partially provided.
@@ -213,8 +213,6 @@ export interface ConfigureOptions {
   // available), events are held forever: as today, RUM does not start.
   sessionManager: SessionManager | Promise<SessionManager | undefined>
   beforeSend?: BeforeSend
-  // Maximum number of events by type and by minute, for rate limited types (error, action, vital).
-  eventRateLimit?: number
 }
 
 export interface RumInternalApi {

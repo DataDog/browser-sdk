@@ -21,7 +21,6 @@ describe('addReactError', () => {
         }),
         baggage: jasmine.objectContaining({
           domainContext: { error: originalError, handlingStack: jasmine.any(String) },
-          originalError,
         }),
       })
     )

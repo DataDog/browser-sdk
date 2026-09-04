@@ -51,7 +51,6 @@ export function addReactError(error: unknown, info: ErrorInfo) {
         baggage: {
           startClocks: rawError.startClocks,
           domainContext: { error, handlingStack },
-          originalError: error,
         },
       })
     })

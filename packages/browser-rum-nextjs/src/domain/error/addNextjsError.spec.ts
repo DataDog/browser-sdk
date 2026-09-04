@@ -29,7 +29,9 @@ describe('addNextjsError', () => {
           }),
           context: { framework: 'nextjs' },
         }),
-        baggage: jasmine.objectContaining({ originalError }),
+        baggage: jasmine.objectContaining({
+          domainContext: { error: originalError, handlingStack: jasmine.any(String) },
+        }),
       })
     )
   })
@@ -51,7 +53,9 @@ describe('addNextjsError', () => {
             param: 123,
           },
         }),
-        baggage: jasmine.objectContaining({ originalError }),
+        baggage: jasmine.objectContaining({
+          domainContext: { error: originalError, handlingStack: jasmine.any(String) },
+        }),
       })
     )
   })

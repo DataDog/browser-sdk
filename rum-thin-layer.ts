@@ -208,8 +208,9 @@ interface RumInternalApi {
   // notified after they are finished, one-shot vitals...). Views must go through startEvent:
   // addEvent throws when passed a view event. Kickoff fields must be present: addEvent is
   // one-shot, there is no stop() to complete them. The optional baggage carries the event
-  // `startClocks` (defaults to now), `duration` (ex: long task durations, used by history queries),
-  // `domainContext` and `originalError`.
+  // `startClocks` (defaults to now), `duration` (ex: long task durations, used by history queries)
+  // and `domainContext` (which also carries the value the event was derived from, ex: the
+  // original error instance — there is no dedicated field for it).
   addEvent(options: {
     baseRumEvent: Exclude<BaseRumEvent, { type: 'view' }> & Context
     baggage?: Partial<EventBaggage>
@@ -327,6 +328,4 @@ interface EventBaggage {
   startClocks: ClocksState
   duration?: number
   domainContext?: unknown
-  // The value the event was derived from, when relevant (ex: the original error instance)
-  originalError?: unknown
 }

@@ -108,7 +108,9 @@ describe('ErrorBoundary', () => {
             framework: 'react',
           },
         }),
-        baggage: jasmine.objectContaining({ originalError }),
+        baggage: jasmine.objectContaining({
+          domainContext: { error: originalError, handlingStack: jasmine.any(String) },
+        }),
       })
     )
     expect(

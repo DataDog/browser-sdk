@@ -98,7 +98,7 @@ export function initShopifyBindings(internalApi: RumInternalApi, analytics: Shop
           appVersion: error?.appVersion,
         } as Context,
       },
-      baggage: { startClocks, originalError: err, domainContext: { error: err } },
+      baggage: { startClocks, domainContext: { error: err } },
     })
   })
 }

@@ -21,7 +21,7 @@ describe('addVueError', () => {
           }),
           context: { framework: 'vue' },
         }),
-        baggage: jasmine.objectContaining({ originalError: error }),
+        baggage: jasmine.objectContaining({ domainContext: { error, handlingStack: jasmine.any(String) } }),
       })
     )
   })
@@ -79,7 +79,9 @@ describe('addVueError', () => {
             param: 123,
           },
         }),
-        baggage: jasmine.objectContaining({ originalError }),
+        baggage: jasmine.objectContaining({
+          domainContext: { error: originalError, handlingStack: jasmine.any(String) },
+        }),
       })
     )
   })
