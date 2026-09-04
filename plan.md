@@ -727,3 +727,50 @@ start/stop pairs, tracing and the request/activity flow), (4) re-run the spec de
 - `yarn typecheck` after each phase; `yarn test:unit` for touched packages; no E2E requirement,
   optional manual sandbox check (`yarn dev`) at phase 3.
 - Keep each phase in separate commits so the debrief can point at concrete diffs.
+
+## v2 — pre-init support in the internal API, draft view, never-stop views (plan-v2.md)
+
+Executed per plan-v2.md (phases A–F). The internal API is created eagerly (unconfigured) and
+`configure()` binds the validated configuration at init: public API calls made before `init()`
+flow into it directly and buffer as events (draft view updates, held assemblies) with their true
+call-time timestamps — the pre-init call wrapper from the debrief follow-up is deleted. Views:
+a draft view exists from creation (id pre-assigned, history entry at the clock origin), the first
+`startEvent({type:'view'})` promotes it (kickoff wins, initial version emitted, always
+`initial_load`), later ones supersede the active view, and session-expiry endings are owned by
+the API (notify → last-update slot → final version assembled before any consumer can flush —
+the phase 4 ordering guarantee became structural).
+
+Commits: internal API v2 core + state machine unit specs (phase A), then all consumers at once
+(phases B–E, one commit: they only typecheck together — public API, trackViews restructure,
+router plugins, Shopify, profiler specs).
+
+### v2 validation
+
+- Suites: browser-rum-core 1247 (incl. 10 new `rumInternalApi.spec.ts` state machine specs),
+  browser-rum 674, react/vue/angular/nuxt/nextjs/shopify 269 — all green; typecheck + eslint.
+- The new specs caught one real bug before it shipped: draft-update clones were replayed after
+  promotion as later document versions (a stale snapshot became the "latest" view). Fixed by
+  dropping the promoted view's held assemblies at promotion (their content is subsumed in the
+  promoted base).
+- Shopify bundle: 52,474 → 54,533 bytes (+4%: the draft/supersede/expiry machinery costs a bit
+  more than the deleted stop boilerplate saved; still −66% vs the full-SDK wrapper).
+
+### v2 corner-cuts / behavior deviations (recorded, by design or deferred)
+
+- `setViewContext` on the draft uses the standard deep-merge, not the public REPLACE contract —
+  the replace-vs-merge semantics stay a deferred follow-up (plan-v2.md).
+- `setViewLoadingTime()` before init is dropped (metrics state does not exist yet); the old
+  preStartRum replayed it.
+- `stopSession()` before init is a no-op (decided in plan-v2.md).
+- Pre-init `startView` promotes the draft as the initial view in automatic mode too (uniform
+  rule, decided — main's behavior was "extra view").
+- View context updates are no longer throttled (each assembles a view version; v1 throttled via
+  the per-view context manager).
+- Shopify views stay bare kickoffs: subsequent (superseded) views carry no `loading_type` — the
+  minimal SDK doesn't provide one and the API only stamps `initial_load` at promotion.
+- Metrics view-end times use `relativeNow()` at `event_stopped` (v1 used the exact end clocks;
+  supersede/expiry both end at ~now, so loading-time windows are approximate).
+- trackViews session renewal copies the previous view's name/service/version/context from the
+  ended view's event — the per-view context manager is gone.
+- Deferred `configure()`-time bindings unchanged from the v1 list: contexts/session.id stamping
+  (the #1 gap), raw-error forwarding, rate-limit surfacing, tracking-consent sequencing.
