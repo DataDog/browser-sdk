@@ -92,9 +92,15 @@ const priorityStrategies: NameStrategy[] = [
       }
     }
   },
-  // BUTTON, LABEL or button-like element text
+  // BUTTON, LABEL, A or button/link-like element text
   (element, rumConfiguration, nodePrivacyLevelCache) => {
-    if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
+    if (
+      element.nodeName === 'BUTTON' ||
+      element.nodeName === 'LABEL' ||
+      element.nodeName === 'A' ||
+      element.getAttribute('role') === 'button' ||
+      element.getAttribute('role') === 'link'
+    ) {
       return getActionNameFromTextualContent(element, rumConfiguration, nodePrivacyLevelCache)
     }
   },
