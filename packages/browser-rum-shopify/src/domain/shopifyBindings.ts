@@ -6,8 +6,8 @@
 // Differences vs the replaced implementation (which went through the public API):
 // * `startView({ url })` → `internalApi.startEvent({ type: 'view', view: { url } })`: the view
 //   event is bare (no loading type, no name, no view metrics machinery — trackViews is not
-//   started). The initial version is emitted right away via handle.update(), mirroring the
-//   react router plugin.
+//   started; the initial version is emitted by the internal API itself, and starting a view
+//   supersedes the previous one, so no handle bookkeeping is needed here).
 // * `startAction()` + `stopAction()` back-to-back → a one-shot `addEvent` action (same zero
 //   duration result).
 // * `addError()` → `formatErrorEvent` (the free formatter) + `addEvent`.
@@ -16,7 +16,7 @@ import { clocksNow } from '@datadog/js-core/time'
 import { ErrorSource, NonErrorPrefix } from '@datadog/browser-core'
 import type { Context } from '@datadog/browser-core'
 import { ActionType, formatErrorEvent } from '@datadog/browser-rum-core'
-import type { RumInternalApi, ViewEventHandle } from '@datadog/browser-rum-core'
+import type { RumInternalApi } from '@datadog/browser-rum-core'
 import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from './shopifyAnalytics'
 
 export interface ElementData {
@@ -49,8 +49,6 @@ export function initShopifyBindings(internalApi: RumInternalApi, analytics: Shop
     return
   }
 
-  let currentViewHandle: ViewEventHandle | undefined
-
   analytics.subscribe('page_viewed', (event) => {
     const url = event.context?.document?.location?.href
 
@@ -58,14 +56,10 @@ export function initShopifyBindings(internalApi: RumInternalApi, analytics: Shop
       return
     }
 
-    const startClocks = clocksNow()
-    // Throw-on-double-view: stop the previous view at the new one's start time (router
-    // semantics, like the react router plugin).
-    currentViewHandle?.stop(undefined, { endClocks: startClocks })
-    currentViewHandle = internalApi.startEvent({ type: 'view', view: { url } }, { startClocks })
-    // Emit the initial view version right away: views are sent incrementally by the internal
-    // API (see /plan.md, phase 3a finding).
-    currentViewHandle.update({})
+    // Starting a view supersedes the previous one at the new start time (the internal API owns
+    // view endings), and the initial version is emitted by the API itself — no handle
+    // bookkeeping, no update({}) dance.
+    internalApi.startEvent({ type: 'view', view: { url } }, { startClocks: clocksNow() })
   })
 
   analytics.subscribe('clicked', (event: ShopifyPixelEvent<{ element?: ElementData }>) => {

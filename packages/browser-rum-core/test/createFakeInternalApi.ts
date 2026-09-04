@@ -4,16 +4,19 @@ import type { RumInternalApi, ViewEventHandle } from '../src/domain/internalApi/
 
 /**
  * A fake RUM internal API for plugin tests: `startEvent` records view names and returns spy
- * handles (so specs can assert the view lifecycle), `addEvent` is a plain spy.
+ * handles (so specs can assert view updates), `addEvent` is a plain spy.
+ *
+ * v2 (plan-v2.md): view handles only expose `current()` and `update()` — endings (supersede,
+ * expiry) are owned by the real internal API, so there is nothing to fake for them.
  */
 export function createFakeInternalApi(): {
   internalApi: RumInternalApi
   addEvent: jasmine.Spy
   viewNames: string[]
-  viewHandles: Array<{ update: jasmine.Spy; stop: jasmine.Spy; cancel: jasmine.Spy }>
+  viewHandles: Array<{ update: jasmine.Spy }>
 } {
   const viewNames: string[] = []
-  const viewHandles: Array<{ update: jasmine.Spy; stop: jasmine.Spy; cancel: jasmine.Spy }> = []
+  const viewHandles: Array<{ update: jasmine.Spy }> = []
   const internalApi = {
     startEvent: jasmine
       .createSpy('startEvent')
@@ -21,9 +24,7 @@ export function createFakeInternalApi(): {
         viewNames.push(options.view?.name ?? '')
         const handle: ViewEventHandle = {
           current: () => ({ complete: false, event: options, baggage: {} }) as never,
-          cancel: jasmine.createSpy('cancel'),
           update: jasmine.createSpy('update'),
-          stop: jasmine.createSpy('stop'),
         }
         viewHandles.push(handle as never)
         return handle

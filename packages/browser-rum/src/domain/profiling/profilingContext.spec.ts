@@ -6,7 +6,8 @@ import { startProfilingContext } from './profilingContext'
 // `_dd.profiling` to view, long task, action and vital events, and nothing to the others.
 describe('Profiling Context', () => {
   it('should add the profiling context to the event attributes only for the right event types', () => {
-    const internalApi = createRumInternalApi({ sessionManager: createSessionManagerMock() })
+    const internalApi = createRumInternalApi()
+    internalApi.configure({ sessionManager: createSessionManagerMock() })
     const profilingContextManager = startProfilingContext(internalApi)
 
     profilingContextManager.set({ status: 'running' })

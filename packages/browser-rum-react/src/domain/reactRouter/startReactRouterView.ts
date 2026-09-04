@@ -1,10 +1,7 @@
 import { clocksNow } from '@datadog/js-core/time'
 import { display } from '@datadog/browser-core'
-import type { ViewEventHandle } from '@datadog/browser-rum-core'
 import { onRumInit } from '../reactPlugin'
 import type { AnyRouteMatch } from './types'
-
-let currentViewHandle: ViewEventHandle | undefined
 
 export function startReactRouterView(routeMatches: AnyRouteMatch[]) {
   onRumInit((configuration, _publicApi, internalApi) => {
@@ -12,18 +9,15 @@ export function startReactRouterView(routeMatches: AnyRouteMatch[]) {
       display.warn('`router: true` is missing from the react plugin configuration, the view will not be tracked.')
       return
     }
-    const startClocks = clocksNow()
-    // Throw-on-double-view makes the router contract explicit: stop the previous view before
-    // starting the new one, at the new view's start time. The view starts as soon as the plugin
-    // initializes (even before the session manager resolves): the internal API buffers it.
-    currentViewHandle?.stop(undefined, { endClocks: startClocks })
-    currentViewHandle = internalApi.startEvent(
+    // v2 (plan-v2.md): starting a view supersedes the previous one (the internal API closes its
+    // activity window at the new view's start and assembles its final version), and the initial
+    // version is emitted by the API itself — no stop boilerplate, no update({}) dance. The view
+    // starts as soon as the plugin initializes (even before the session manager resolves): the
+    // internal API buffers it.
+    internalApi.startEvent(
       { type: 'view', view: { url: location.href, name: computeViewName(routeMatches) } },
-      { startClocks }
+      { startClocks: clocksNow() }
     )
-    // Views are sent incrementally: emit the initial version right away (see /plan.md, phase 3a
-    // finding)
-    currentViewHandle.update({})
   })
 }
 

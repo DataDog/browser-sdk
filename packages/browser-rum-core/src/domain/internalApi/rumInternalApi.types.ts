@@ -258,7 +258,10 @@ export interface RumInternalApi {
   // closes at the new view's start, and the API assembles its final version (`is_active:
   // false`, `time_spent` derived). Subsequent views carry their `loading_type` (ROUTE_CHANGE /
   // SESSION_RENEWAL / BF_CACHE) in the kickoff.
-  startEvent(options: Extract<BaseRumEvent, { type: 'view' }>, baggage?: Partial<EventBaggage>): ViewEventHandle
+  startEvent(
+    options: Extract<BaseRumEvent, { type: 'view' }> & Context,
+    baggage?: Partial<EventBaggage>
+  ): ViewEventHandle
   startEvent(
     options: IncompleteBaseRumEvent & { type: 'action' },
     baggage?: Partial<EventBaggage>

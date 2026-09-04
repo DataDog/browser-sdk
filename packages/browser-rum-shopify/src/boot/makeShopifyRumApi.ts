@@ -102,18 +102,22 @@ export function makeShopifyRumApi(): ShopifyRumApi {
         trackingConsentState
       )
 
-      // The internal API buffers events collected before the session manager resolves, so
-      // bindings can be wired right away.
-      const internalApi = createRumInternalApi({
+      // PoC v2: the internal API is created eagerly (unconfigured) and bindings are wired right
+      // away — events collected before configure (or before the session manager resolves) are
+      // held by the API and assembled once it is ready.
+      const internalApi = createRumInternalApi()
+
+      // Bind the configuration first: the internal API subscribes the session manager
+      // observables (ending the current view on expiry) before the batch subscribes its expiry
+      // flush on the same promise — the final view version is upserted before the flush,
+      // structurally.
+      internalApi.configure({
         sessionManager: sessionManagerPromise,
         beforeSend: initOptions.beforeSend
           ? (catchUserErrors(initOptions.beforeSend, 'beforeSend threw an error:') as unknown as BeforeSend)
           : undefined,
       })
 
-      // The transport batch subscribes the session flush on the same promise; the internal API
-      // attached its session observables first (it resolved the promise earlier), so the final
-      // view version is upserted before the session-expiry flush.
       mockable(startInternalApiBatch)(configuration, internalApi, sessionManagerPromise, createIdentityEncoder)
 
       initShopifyBindings(internalApi, analytics)

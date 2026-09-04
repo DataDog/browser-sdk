@@ -1,8 +1,9 @@
-// PoC rewrite (phase 2 of the internal API plan, see /plan.md): the public API wires directly to
-// the RUM internal API, and preStartRum is gone. The internal API buffering replaces the
-// pre-start buffer: public API calls land immediately, and events are assembled and sent once the
-// session manager resolves. Calls made before init() are buffered by the public API itself and
-// replayed when init() succeeds (the behavior preStartRum used to provide). Corner-cuts, documented in /plan.md: tracking consent is assumed
+// PoC v2 rewrite (see plan-v2.md): the public API wires directly to the RUM internal API, and
+// preStartRum is gone. The internal API is created eagerly (unconfigured): calls made before
+// init() flow into it directly and buffer as events — draft view updates and held assemblies,
+// with their true call-time timestamps — no call replay, no pre-init wrapper. init() binds the
+// validated configuration via configure(); events are assembled and sent once the session
+// manager resolves. Corner-cuts, documented in /plan.md: tracking consent is assumed
 // granted, global / user / account contexts are not supported (no-op), automatic
 // instrumentation, telemetry and remote configuration are not started, and the recorder /
 // profiler integrations are not wired. Plugins receive the internal API in onInit. Views are
@@ -10,8 +11,15 @@
 // trackViews port: real metrics, location-change / BFCache / session
 // renewal.
 
-import { clocksNow, elapsed, toServerDuration, timeStampToClocks } from '@datadog/js-core/time'
-import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
+import {
+  clocksNow,
+  elapsed,
+  isRelativeTime,
+  timeStampNow,
+  toServerDuration,
+  timeStampToClocks,
+} from '@datadog/js-core/time'
+import type { ClocksState, Duration, RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { deepClone } from '@datadog/js-core/util'
 import type {
   Context,
@@ -28,7 +36,6 @@ import type {
   Telemetry,
 } from '@datadog/browser-core'
 import {
-  addTelemetryDebug,
   addTelemetryUsage,
   canUseEventBridge,
   callMonitored,
@@ -50,6 +57,7 @@ import {
   noop,
   sanitize,
   setAllowUntrustedEvents,
+  shallowClone,
   startSessionManager,
   startSessionManagerStub,
   willSyntheticsInjectRum,
@@ -57,10 +65,15 @@ import {
 import { DEFAULT_TRACKED_RESOURCE_HEADERS, validateAndBuildRumConfiguration } from '../domain/configuration'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import { createRumInternalApi } from '../domain/internalApi/rumInternalApi'
-import type { BeforeSend, NonViewEventHandle, RumInternalApi } from '../domain/internalApi/rumInternalApi'
+import type {
+  BeforeSend,
+  NonViewEventHandle,
+  PartialBaseRumEvent,
+  RumInternalApi,
+} from '../domain/internalApi/rumInternalApi'
 import { callPluginsMethod } from '../domain/plugins'
 import { formatErrorEvent } from '../domain/internalApi/errorFormatter'
-import { ActionType, VitalType } from '../rawRumEvent.types'
+import { ActionType, ViewLoadingType, VitalType } from '../rawRumEvent.types'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { trackViews } from '../domain/view/trackViews'
 import { trackClickActions } from '../domain/action/trackClickActions'
@@ -668,28 +681,20 @@ export function makeRumPublicApi(
 
   let initConfiguration: RumInitConfiguration | undefined
   let configuration: RumConfiguration | undefined
-  let internalApi: RumInternalApi | undefined
   let sessionManager: SessionManager | undefined
-  // Resolves the internal API's session manager promise once the session manager started (see
-  // doInit: the internal API is created before validation, so plugins receive it in onInit). The
-  // batch also subscribes on this deferred promise, so the internal API attaches its session
-  // observables (ex: ending views on session expiry) before the batch subscribes its session
-  // flush — the order matters: the final view version must be upserted before the flush.
-  let internalApiSessionManagerPromise: Promise<SessionManager | undefined> | undefined
-  let resolveSessionManagerPromise: ((sessionManager: SessionManager | undefined) => void) | undefined
+  // PoC v2 (plan-v2.md): the internal API is created eagerly, unconfigured. Calls made before
+  // init() — and every call after — flow into it directly: events buffer in it (draft view
+  // updates, held assemblies) with their true call-time timestamps. doInit binds the validated
+  // configuration with configure() once validation passed. Views are driven by the internal
+  // API current view handle: `startEvent` promotes the draft / supersedes the active view.
+  const internalApi = createRumInternalApi()
   // PoC phase 3a: trackViews ported to the internal API (real view metrics, location-change and
-  // BFCache renewal, session renewal / expiry).
+  // BFCache renewal, session renewal / expiry). In v2 it only attaches view metrics and drives
+  // automatic view starts — view events themselves are owned by the internal API.
   let viewTracking: ReturnType<typeof trackViews> | undefined
   const startedActions = new Map<string, NonViewEventHandle<'action'>>()
   const startedResources = new Map<string, { handle: NonViewEventHandle<'resource'>; method?: string }>()
   const startedDurationVitals = new Map<string, { handle: NonViewEventHandle<'vital'>; startClocks: ClocksState }>()
-  // PoC follow-up (debrief feedback, see /plan.md): public API calls made before init() are
-  // buffered and replayed once the SDK started — the behavior preStartRum used to provide.
-  // `init`, `setTrackingConsent` and `onReady` are exempt (they drive the start), and so are
-  // `get*` methods: they read (optionally-chained) state that is meaningful before init.
-  const PRE_INIT_CALLS_LIMIT = 500
-  const preInitCalls: Array<{ method: keyof RumPublicApi; args: unknown[] }> = []
-  let started = false
 
   const startView: {
     (name?: string): void
@@ -698,14 +703,21 @@ export function makeRumPublicApi(
     const handlingStack = createHandlingStack('view')
     callMonitored(() => {
       const sanitizedOptions = typeof viewOptions === 'object' ? viewOptions : { name: viewOptions }
-      viewTracking?.startView(
+      internalApi.startEvent(
         {
-          name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
+          type: 'view',
+          view: {
+            url: sanitizedOptions.url ?? shallowClone(mockable(window.location)).href,
+            name: sanitizeStringOption(sanitizedOptions.name, 'view name'),
+            // Subsequent views are route changes; if this call promotes the draft, the internal
+            // API stamps initial_load over it (the initial view is always an initial_load)
+            loading_type: ViewLoadingType.ROUTE_CHANGE,
+          },
           service: sanitizeStringOption(sanitizedOptions.service, 'view service'),
           version: sanitizeStringOption(sanitizedOptions.version, 'view version'),
-          handlingStack,
+          context: sanitizedOptions.context,
         },
-        clocksNow()
+        { domainContext: { handlingStack, location: shallowClone(mockable(window.location)) } }
       )
       addTelemetryUsage({ feature: 'start-view' })
     })
@@ -742,22 +754,23 @@ export function makeRumPublicApi(
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
     }),
 
+    // PoC v2: view mutations go through the internal API current view handle — the draft before
+    // the first view (they buffer as part of the eventual kickoff state), the active view
+    // afterwards. An ended view (expired, before the renewal view starts) drops them, as today.
     setViewName: monitor((name: string) => {
-      if (!assertStarted('setViewName') || !viewTracking) {
-        return
-      }
-      viewTracking.setViewName(sanitizeStringOption(name, 'view name')!)
+      updateCurrentView({ view: { name: sanitizeStringOption(name, 'view name') } })
       addTelemetryUsage({ feature: 'set-view-name' })
     }),
 
-    // The view context lives with trackViews (per-view state, throttled updates on change)
     setViewContext: monitor((context: Context) => {
-      viewTracking?.setViewContext(context)
+      // PoC corner-cut (deferred follow-up): the standard deep-merge applies, but the public
+      // setViewContext contract is a REPLACE — the replace-vs-merge semantics are still open.
+      updateCurrentView({ context })
     }),
     setViewContextProperty: monitor((key: string, value: any) => {
-      viewTracking?.setViewContextProperty(key, value)
+      updateCurrentView({ context: { [key]: value } })
     }),
-    getViewContext: monitor(() => viewTracking?.getViewContext() ?? {}),
+    getViewContext: monitor(() => (internalApi.currentView.current().event as { context?: Context }).context ?? {}),
 
     getInternalContext: monitor(() => undefined as RumInternalContext | undefined),
 
@@ -766,10 +779,7 @@ export function makeRumPublicApi(
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')
       callMonitored(() => {
-        if (!assertStarted('addAction')) {
-          return
-        }
-        internalApi!.addEvent({
+        internalApi.addEvent({
           baseRumEvent: {
             type: 'action',
             action: { type: ActionType.CUSTOM, target: { name: sanitize(name)! } },
@@ -783,13 +793,10 @@ export function makeRumPublicApi(
 
     startAction: monitor((name, actionOptions) => {
       addTelemetryUsage({ feature: 'start-action' })
-      if (!assertStarted('startAction')) {
-        return
-      }
       const handlingStack = createHandlingStack('action')
       startedActions.set(
         actionKey(sanitize(name)!, actionOptions?.actionKey),
-        internalApi!.startEvent(
+        internalApi.startEvent(
           {
             type: 'action',
             action: { type: actionOptions?.type ?? ActionType.CUSTOM, target: { name: sanitize(name)! } },
@@ -815,11 +822,8 @@ export function makeRumPublicApi(
 
     startResource: monitor((url, resourceOptions) => {
       addTelemetryUsage({ feature: 'start-resource' })
-      if (!assertStarted('startResource')) {
-        return
-      }
       startedResources.set(resourceKey(sanitize(url)!, resourceOptions?.resourceKey), {
-        handle: internalApi!.startEvent({
+        handle: internalApi.startEvent({
           type: 'resource',
           resource: { url: sanitize(url)! },
           context: sanitize(resourceOptions?.context) as Context,
@@ -852,9 +856,6 @@ export function makeRumPublicApi(
     addError: (error, context) => {
       const handlingStack = createHandlingStack('error')
       callMonitored(() => {
-        if (!assertStarted('addError')) {
-          return
-        }
         const startClocks = clocksNow()
         const { baseRumEvent } = formatErrorEvent({
           originalError: error,
@@ -863,7 +864,7 @@ export function makeRumPublicApi(
           source: ErrorSource.CUSTOM,
           startClocks,
         })
-        internalApi!.addEvent({
+        internalApi.addEvent({
           baseRumEvent: { ...baseRumEvent, context: sanitize(context) as Context },
           baggage: {
             startClocks,
@@ -876,18 +877,24 @@ export function makeRumPublicApi(
     },
 
     addTiming: monitor((name, time) => {
-      if (!assertStarted('addTiming') || !viewTracking) {
-        return
+      const currentEntry = internalApi.currentView.current()
+      if (currentEntry.complete) {
+        return // the current view has been ended: drop, as today
       }
       // TODO: next major decide to drop relative time support or update its behaviour
-      viewTracking.addTiming(sanitize(name)!, time as TimeStamp)
+      const startClocks = currentEntry.baggage.startClocks
+      const relativeTime = isRelativeTime(time as RelativeTime | TimeStamp)
+        ? (time as RelativeTime)
+        : elapsed(startClocks.timeStamp, (time ?? timeStampNow()) as TimeStamp)
+      updateCurrentView({
+        view: { custom_timings: { [sanitizeTiming(sanitize(name) as string)]: relativeTime as number } },
+      })
     }),
 
     setViewLoadingTime: monitor(() => {
-      if (!assertStarted('setViewLoadingTime') || !viewTracking) {
-        return
-      }
-      viewTracking.setLoadingTime()
+      // PoC corner-cut: before init(), the loading time is metrics state that does not exist yet
+      // — the call is dropped (the old preStartRum replayed it)
+      viewTracking?.setLoadingTime()
       addTelemetryUsage({
         feature: 'addViewLoadingTime',
       })
@@ -933,12 +940,9 @@ export function makeRumPublicApi(
     addDurationVital: (name, options) => {
       const handlingStack = createHandlingStack('vital')
       callMonitored(() => {
-        if (!assertStarted('addDurationVital')) {
-          return
-        }
         addTelemetryUsage({ feature: 'add-duration-vital' })
         const startClocks = timeStampToClocks(options.startTime as TimeStamp)
-        internalApi!.addEvent({
+        internalApi.addEvent({
           baseRumEvent: {
             type: 'vital',
             vital: {
@@ -984,40 +988,6 @@ export function makeRumPublicApi(
     DEFAULT_TRACKED_RESOURCE_HEADERS,
   })
 
-  // The pre-init call buffer: each method (see the exemptions above) is wrapped so calls made
-  // before init() are recorded and replayed when init() succeeds (see doInit). The wrapper stays
-  // in place afterwards and just delegates.
-  for (const method of Object.keys(rumPublicApi) as Array<keyof RumPublicApi>) {
-    // The original method is stored to be called standalone below; public API methods don't use
-    // `this` (they are closures), and the wrapper supplies `rumPublicApi` as the receiver anyway.
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const original = rumPublicApi[method] as unknown as (this: void, ...args: unknown[]) => unknown
-    if (
-      typeof original !== 'function' ||
-      method === 'init' ||
-      method === 'setTrackingConsent' ||
-      method === 'onReady' ||
-      method.startsWith('get')
-    ) {
-      continue
-    }
-    ;(rumPublicApi as unknown as Record<string, (this: void, ...args: unknown[]) => unknown>)[method] = (
-      ...args: unknown[]
-    ) => {
-      if (!started) {
-        if (preInitCalls.length < PRE_INIT_CALLS_LIMIT) {
-          preInitCalls.push({ method, args })
-        } else {
-          // Same limit and telemetry as the preStartRum buffer used to have
-          // monitor-until: 2026-10-14
-          addTelemetryDebug('rum public api pre-init buffer full, dropping call', { method })
-        }
-        return undefined
-      }
-      return original(...args)
-    }
-  }
-
   return rumPublicApi
 
   //
@@ -1039,25 +1009,8 @@ export function makeRumPublicApi(
       return
     }
 
-    // PoC phase 4 (per Benoit's review): the internal API is created as soon as init() is called,
-    // before configuration validation, so plugins receive it in onInit — there is no separate
-    // "RUM start" moment anymore (onRumStart is gone). Its session manager promise is deferred:
-    // it resolves once validation passed and the session manager started, and events collected
-    // in the meantime are buffered by the internal API. beforeSend is wrapped with
-    // catchUserErrors, mirroring what validation does with it. A later init() call (ex: after a
-    // first invalid one) reuses the same instance.
-    if (!internalApi) {
-      internalApiSessionManagerPromise = new Promise<SessionManager | undefined>((resolve) => {
-        resolveSessionManagerPromise = resolve
-      })
-      internalApi = createRumInternalApi({
-        sessionManager: internalApiSessionManagerPromise,
-        beforeSend: newInitConfiguration.beforeSend
-          ? (catchUserErrors(newInitConfiguration.beforeSend, 'beforeSend threw an error:') as unknown as BeforeSend)
-          : undefined,
-      })
-    }
-
+    // PoC v2: the internal API was created eagerly (see makeRumPublicApi); plugins receive it in
+    // onInit — there is no separate "RUM start" moment anymore (onRumStart is gone).
     callPluginsMethod(newInitConfiguration.plugins, 'onInit', {
       initConfiguration: newInitConfiguration,
       publicApi: rumPublicApi,
@@ -1088,13 +1041,19 @@ export function makeRumPublicApi(
     void sessionManagerPromise
       .then((newSessionManager) => {
         sessionManager = newSessionManager
-        // The internal API's deferred session manager promise (created at the top of doInit)
-        // resolves with the real session manager: its buffered events are assembled and sent
-        // from now on. Resolving with the value (not the promise) keeps the resolution a single
-        // microtask hop after the session manager resolves.
-        resolveSessionManagerPromise?.(newSessionManager)
       })
       .catch(monitorError)
+
+    // PoC v2: bind the internal API configuration FIRST — it subscribes the session manager
+    // observables (ex: ending the current view on expiry, before the transport flush) before the
+    // batch below subscribes its expiry flush on the same promise. The raw session manager
+    // promise is enough: the ordering is structural (configure before batch), no deferred dance.
+    internalApi.configure({
+      sessionManager: sessionManagerPromise,
+      beforeSend: newInitConfiguration.beforeSend
+        ? (catchUserErrors(newInitConfiguration.beforeSend, 'beforeSend threw an error:') as unknown as BeforeSend)
+        : undefined,
+    })
 
     let deflateWorker: DeflateWorker | undefined
     if (configuration.compressIntakeRequests && !canUseEventBridge() && options.startDeflateWorker) {
@@ -1112,9 +1071,9 @@ export function makeRumPublicApi(
     const { prepareUrgentFlushObservable } = startInternalApiBatch(
       configuration,
       internalApi,
-      // The deferred promise (not the raw session manager one), so session subscription order is
-      // deterministic — see the comment on internalApiSessionManagerPromise
-      internalApiSessionManagerPromise!,
+      // Subscribed after internalApi.configure() above: the API's session-expiry view ending
+      // runs before the batch's expiry flush
+      sessionManagerPromise,
       createEncoder
     )
 
@@ -1150,25 +1109,18 @@ export function makeRumPublicApi(
     // manager resolves.
     void sessionManagerPromise.then((newSessionManager) => {
       if (newSessionManager) {
-        profilerApi.onRumStart(internalApi!, configuration!, newSessionManager, createEncoder)
+        profilerApi.onRumStart(internalApi, configuration!, newSessionManager, createEncoder)
       }
     })
-
-    // Public API calls made before init() were buffered (see the wrapper after makePublicApi):
-    // replay them now, in call order. Their events land on the internal API, which holds them
-    // until the session manager resolves — mirroring the preStartRum replay-at-start behavior.
-    started = true
-    for (const { method, args } of preInitCalls.splice(0)) {
-      ;(rumPublicApi[method] as (this: void, ...args: unknown[]) => unknown)(...args)
-    }
   }
 
-  function assertStarted(method: string): boolean {
-    if (!internalApi) {
-      display.error(`DD_RUM.${method}() called before DD_RUM.init().`)
-      return false
+  // PoC v2: route a view mutation to the internal API current view. Drops it when the current
+  // view has been ended (session expiry, before the renewal view starts), as today.
+  function updateCurrentView(partial: PartialBaseRumEvent<'view'>) {
+    if (internalApi.currentView.current().complete) {
+      return
     }
-    return true
+    internalApi.currentView.update(partial)
   }
 
   //
@@ -1180,11 +1132,8 @@ export function makeRumPublicApi(
     options: { vitalKey?: string; operationKey?: string; context?: Context; description?: string } | undefined,
     handlingStack: string
   ) {
-    if (!assertStarted('startDurationVital')) {
-      return
-    }
     const startClocks = clocksNow()
-    const handle = internalApi!.startEvent(
+    const handle = internalApi.startEvent(
       {
         type: 'vital',
         vital: { name: sanitize(name)!, type: VitalType.DURATION },
@@ -1219,6 +1168,16 @@ export function makeRumPublicApi(
       { endClocks }
     )
   }
+}
+
+// Timing name is used as facet path that must contain only letters, digits, or the characters - _ . @ $
+// (moved from trackViews: custom timings ride the view event directly in v2)
+function sanitizeTiming(name: string) {
+  const sanitized = name.replace(/[^a-zA-Z0-9-_.@$]/g, '_')
+  if (sanitized !== name) {
+    display.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
+  }
+  return sanitized
 }
 
 function sanitizeStringOption(value: unknown, label: string): string | undefined {

@@ -23,11 +23,11 @@
 //   of scope.
 // * View events are exempt from rate limiting and cannot be dismissed by `beforeSend`, as today.
 
-import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
+import type { ClocksState, RelativeTime } from '@datadog/js-core/time'
 import { addDuration, clocksNow, clocksOrigin, elapsed, toServerDuration } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
 import { deepClone, mergeInto } from '@datadog/js-core/util'
-import type { Context, EventRateLimiter, SessionContext, SessionManager } from '@datadog/browser-core'
+import type { Context, SessionContext, SessionManager } from '@datadog/browser-core'
 import { Observable, createEventRateLimiter, generateUUID, monitorError, noop } from '@datadog/browser-core'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import { assertKickoffFields, stampEventId } from './baseRumEvent'
@@ -41,7 +41,6 @@ import type {
   AssembleHookCallback,
   BaseRumEvent,
   AssembleHookParams,
-  BeforeSend,
   ConfigureOptions,
   EventBaggage,
   FindEventsQuery,
@@ -433,7 +432,7 @@ export function createRumInternalApi(): RumInternalApi {
         }
       },
     }
-    return handle as NonViewEventHandle<'action' | 'resource' | 'vital'>
+    return handle
   }
 
   function addEvent(addOptions: AddEventOptions) {

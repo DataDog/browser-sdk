@@ -27,14 +27,14 @@ describe('profiler (internal api PoC)', () => {
 
   function setupProfiler() {
     const sessionManager = createSessionManagerMock().setId('session-id-1')
-    const internalApi = createRumInternalApi({ sessionManager })
+    const internalApi = createRumInternalApi()
+    internalApi.configure({ sessionManager })
     const profilingContextManager: ProfilingContextManager = startProfilingContext(internalApi)
 
     // A view is needed for child events (long tasks, actions, vitals) to be assembled and
     // findable in the history. Its name exercises the default view name computation.
     history.pushState({}, '', '/user/123')
     const firstViewHandle = internalApi.startEvent({ type: 'view', view: { url: location.href, name: 'user view' } })
-    firstViewHandle.update({})
     const firstViewHandleRef = firstViewHandle // captured for view-replacement tests
 
     mockProfiler(deepClone(mockedTrace))
@@ -145,18 +145,17 @@ describe('profiler (internal api PoC)', () => {
 
   it('collects the active view at start and views started during the session', async () => {
     const clock = mockClock()
-    const { profiler, internalApi, firstViewHandle } = setupProfiler()
+    const { profiler, internalApi } = setupProfiler()
     replaceMockable(checkProfilingQuota, () => Promise.resolve({ decision: 'quota_ok' } as never))
 
     profiler.start()
     expect(profiler.isRunning()).toBeTrue()
 
     // A view started during the profile: its name goes through the default view name computation
-    // (event_started carries only the event id, the name is resolved from the history). The
-    // previous view is stopped first (router semantics: throw-on-double-view).
+    // (the profiler reads it from the event_started kickoff event). Starting a view supersedes
+    // the previous one — no stop boilerplate (v2, see plan-v2.md).
     history.pushState({}, '', '/v1/user/3A2/profile')
-    firstViewHandle.stop(undefined, { endClocks: clocksNow() })
-    internalApi.startEvent({ type: 'view', view: { url: location.href } }).update({})
+    internalApi.startEvent({ type: 'view', view: { url: location.href } })
 
     clock.tick(6000)
     profiler.stop()

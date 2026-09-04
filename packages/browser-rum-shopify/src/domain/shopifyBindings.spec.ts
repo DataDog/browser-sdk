@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/unbound-method */
-import type { RumInternalApi, ViewEventHandle } from '@datadog/browser-rum-core'
+import type { RumInternalApi } from '@datadog/browser-rum-core'
 import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from './shopifyAnalytics'
 import { initShopifyBindings } from './shopifyBindings'
 
@@ -23,13 +22,12 @@ function createFakeAnalytics(): {
 
 function createFakeInternalApiForShopify() {
   // The shared helper records view *names* while Shopify views carry a url; a local fake keeps
-  // the spec assertions straightforward (url + handle lifecycle + one-shot actions).
+  // the spec assertions straightforward (urls + one-shot actions). v2: view handles only expose
+  // current/update — endings are owned by the real internal API, nothing to fake.
   const startEvent = jasmine.createSpy('startEvent').and.callFake(() => {
     const handle = {
       current: () => ({}) as never,
-      cancel: jasmine.createSpy('cancel'),
       update: jasmine.createSpy('update'),
-      stop: jasmine.createSpy('stop'),
     }
     return handle
   })
@@ -47,7 +45,6 @@ function createFakeInternalApiForShopify() {
     internalApi,
     startEvent,
     addEvent,
-    viewHandles: () => startEvent.calls.all().map((call: { returnValue: ViewEventHandle }) => call.returnValue),
   }
 }
 
@@ -72,7 +69,7 @@ describe('initShopifyBindings', () => {
   })
 
   it('maps "page_viewed" to a view event with the url, when the page is a checkout page', () => {
-    const { internalApi, startEvent, viewHandles } = createFakeInternalApiForShopify()
+    const { internalApi, startEvent } = createFakeInternalApiForShopify()
     const { analytics, emit } = createFakeAnalytics()
 
     initShopifyBindings(internalApi, analytics)
@@ -85,8 +82,6 @@ describe('initShopifyBindings', () => {
 
     expect(startEvent).toHaveBeenCalledTimes(1)
     expect(startEvent.calls.argsFor(0)[0]).toEqual({ type: 'view', view: { url: 'https://shop.example/checkout' } })
-    // The initial view version is emitted right away (incremental view sending).
-    expect(viewHandles()[0].update).toHaveBeenCalledWith({})
   })
 
   describe('"page_viewed" checkout-path gating', () => {
@@ -131,8 +126,8 @@ describe('initShopifyBindings', () => {
     })
   })
 
-  it('stops the previous view when a new checkout page is viewed', () => {
-    const { internalApi, startEvent, viewHandles } = createFakeInternalApiForShopify()
+  it('starts a new view on each checkout page view (supersede is owned by the internal API)', () => {
+    const { internalApi, startEvent } = createFakeInternalApiForShopify()
     const { analytics, emit } = createFakeAnalytics()
 
     initShopifyBindings(internalApi, analytics)
@@ -149,11 +144,11 @@ describe('initShopifyBindings', () => {
       context: { document: { location: { href: 'https://shop.example/checkouts/second' } } },
     })
 
+    // Each page view starts a view; the previous one is superseded by the internal API (endings
+    // are API-owned), and the initial version is emitted by the API — no handle calls at all.
     expect(startEvent).toHaveBeenCalledTimes(2)
-    const [firstView, secondView] = viewHandles()
-    expect(firstView.stop).toHaveBeenCalledWith(undefined, { endClocks: jasmine.any(Object) })
-    // The second view is started and updated, the stopped first view is not updated anymore.
-    expect(secondView.update).toHaveBeenCalledWith({})
+    const urls = startEvent.calls.all().map((call) => (call.args[0] as { view: { url: string } }).view.url)
+    expect(urls).toEqual(['https://shop.example/checkouts/first', 'https://shop.example/checkouts/second'])
   })
 
   it('maps "clicked" to a one-shot click action named after the element id', () => {

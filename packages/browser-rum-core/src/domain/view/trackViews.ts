@@ -1,43 +1,33 @@
-// PoC (phase 3a of the internal API plan, see /plan.md): trackViews REPLACED by its internal API
-// port — there is a single trackViews implementation, used by the phase 2 public API. The old
-// LifeCycle-based implementation and the startRum view glue (viewCollection) are gone; per
-// /plan.md, the old startRum pipeline is now inert for views (the sessionContext hook discards
-// events with no view) and is kept compiling only for the collectors that later phases port.
+// PoC v2 (plan-v2.md, phase C): trackViews does not own view events anymore — the internal API
+// does (startEvent promotes the draft / supersedes the active view; expiry endings are owned by
+// the API). trackViews is a metrics enricher:
+// * it attaches per-view metrics on `event_started` (views) and schedules their cleanup on
+//   `event_stopped`,
+// * it drives the automatic view starts (initial view, location change, BFCache restore, session
+//   renewal) through `internalApi.startEvent`,
+// * it sends the freshest metrics before every view ending (the last-update slot: before a
+//   superseding startEvent, and during the `session_expired` notify — the internal API assembles
+//   the final version after it).
+// View mutations from the public API (setViewName, view context, custom timings) ride the view
+// event directly through the internal API current view handle — they are not trackViews' concern.
 //
-// Differences vs the replaced implementation:
-// * Views are created with `internalApi.startEvent` and updated with `handle.update()`: the raw
-//   view event building from viewCollection's `processViewUpdate` moved here, minus what the
-//   internal API owns (view.id, document versions, event counts) and what contexts assemble
-//   (session, referrer, usr, ... — corner-cuts documented in /plan.md).
-// * Session renewal / expiry come from `internalApi.notifications` instead of the LifeCycle.
-// * No `trackViewEventCounts`: the internal API computes view counts.
-// * `PREPARE_URGENT_FLUSH` (page unloading) comes from the transport batch instead of the
-//   LifeCycle: the final view update is upserted in the batch before it flushes.
-// * The LifeCycle passed to `trackCommonViewMetrics` is a private instance: request events
-//   (REQUEST_STARTED/REQUEST_COMPLETED, used by waitPageActivityEnd) never flow through it in
-//   this pipeline — a corner-cut of the phase 2 public API (no auto-instrumentation).
+// Differences vs the v1 port (see /plan.md) it replaces:
+// * No `newView` object, no current-view bookkeeping: metrics bundles are keyed by view id and
+//   driven by the event notifications.
+// * `is_active` / final `time_spent` are owned by the internal API (derived endings), and
+//   `name` / `context` / `custom_timings` ride the event: the update payloads only carry metrics
+//   and the static view fields.
+// * Corner-cuts carried over from v1: the metrics modules' LifeCycle is a private instance
+//   (REQUEST_STARTED / REQUEST_COMPLETED never flow through it — no auto-instrumentation), and
+//   view context updates are no longer throttled (they assemble a version each).
 
+import { ONE_MINUTE, elapsed, relativeNow, timeStampNow, toServerDuration } from '@datadog/js-core/time'
+import type { ClocksState, TimeStamp } from '@datadog/js-core/time'
+import type { Context, Observable } from '@datadog/browser-core'
 import {
-  ONE_MINUTE,
-  clocksNow,
-  clocksOrigin,
-  elapsed,
-  isRelativeTime,
-  relativeToClocks,
-  timeStampNow,
-  toServerDuration,
-} from '@datadog/js-core/time'
-import type { ClocksState, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/js-core/time'
-import type { Context, ContextValue, Subscription } from '@datadog/browser-core'
-import {
-  Observable,
   PageExitReason,
   clearInterval,
-  createContextManager,
-  display,
   getTimeZone,
-  isEmptyObject,
-  mapValues,
   mockable,
   noop,
   setInterval,
@@ -45,7 +35,7 @@ import {
   shallowClone,
   throttle,
 } from '@datadog/browser-core'
-import type { ViewCustomTimings, ViewPerformanceData } from '../../rawRumEvent.types'
+import type { ViewPerformanceData } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
@@ -65,7 +55,7 @@ export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 // Some events or metrics can be captured after the end of the view. To avoid missing those, an
 // arbitrary delay is added for stopping their tracking after the view ends. (Same constant and
-// rationale as trackViews.)
+// rationale as the v1 trackViews.)
 export const KEEP_TRACKING_AFTER_VIEW_DELAY = 5 * ONE_MINUTE
 
 export interface ViewOptions {
@@ -84,229 +74,246 @@ export function trackViews(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
-  areViewsTrackedAutomatically: boolean,
-  initialViewOptions?: ViewOptions
+  areViewsTrackedAutomatically: boolean
 ) {
-  const activeViews: Set<ReturnType<typeof newView>> = new Set()
-  // Unlike trackViews (always started once the initial view options are known, thanks to the
-  // preStartRum firstStartViewCall dance), this port may start before any view exists in manual
-  // mode: the first public startView call creates the initial view.
-  let currentView: ReturnType<typeof newView> | undefined = areViewsTrackedAutomatically
-    ? startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
-    : undefined
-  let stopOnBFCacheRestore: (() => void) | undefined
+  // The metrics bundles of the tracked (started) views, keyed by view id.
+  const activeViews = new Map<string, ViewMetricsBundle>()
+  let currentViewId: string | undefined
+  let stopAutoTracking: (() => void) | undefined
 
-  startViewLifeCycle()
+  internalApi.notifications.subscribe((notification) => {
+    switch (notification.type) {
+      case 'event_started': {
+        if (notification.eventType === 'view') {
+          currentViewId = notification.eventId
+          attachViewMetrics(
+            notification.eventId,
+            notification.baggage.startClocks,
+            readViewLoadingType(notification.event)
+          )
+        }
+        break
+      }
+      case 'event_stopped': {
+        if (notification.event.type === 'view') {
+          onViewEnded((notification.event as { view?: { id?: string } }).view?.id)
+        }
+        break
+      }
+      case 'session_renewed': {
+        // Renew the view, carrying over its identity (the previous view was ended at expiry)
+        const previousEvent = internalApi.currentView.current().event as {
+          view?: { name?: string }
+          service?: string
+          version?: string
+          context?: Context
+        }
+        internalApi.startEvent({
+          type: 'view',
+          view: {
+            url: shallowClone(mockable(window.location)).href,
+            name: previousEvent.view?.name,
+            loading_type: ViewLoadingType.SESSION_RENEWAL,
+          },
+          service: previousEvent.service,
+          version: previousEvent.version,
+          context: previousEvent.context,
+        })
+        break
+      }
+      case 'session_expired': {
+        // The expiry slot: send the freshest metrics during the notify — the internal API
+        // assembles the final view version once it returns.
+        activeViews.get(currentViewId as string)?.sendLastViewMetricsUpdate()
+        break
+      }
+    }
+  })
 
-  let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
-    locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
-    stopOnBFCacheRestore = onBFCacheRestore((pageshowEvent) => {
-      currentView?.end()
-      const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
-      currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
-    })
-  }
-
-  function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
-    const newlyCreatedView = newView(
-      internalApi,
-      prepareUrgentFlushObservable,
-      domMutationObservable,
-      windowOpenObservable,
-      configuration,
-      loadingType,
-      startClocks,
-      viewOptions
-    )
-    activeViews.add(newlyCreatedView)
-    newlyCreatedView.stopObservable.subscribe(() => {
-      activeViews.delete(newlyCreatedView)
-    })
-    return newlyCreatedView
-  }
-
-  function startViewLifeCycle() {
-    const subscription = internalApi.notifications.subscribe((notification) => {
-      if (notification.type === 'session_renewed') {
-        currentView = startNewView(
-          ViewLoadingType.SESSION_RENEWAL,
-          undefined,
-          currentView && {
-            // Renew view on session renewal
-            name: currentView.name,
-            service: currentView.service,
-            version: currentView.version,
-            context: currentView.contextManager.getContext(),
-          }
-        )
-      } else if (notification.type === 'session_expired') {
-        // The notification doesn't carry the session end clocks; use the current time, as the
-        // startRum pipeline does when bridging the session manager observable to the LifeCycle.
-        currentView?.end({ sessionIsActive: false, endClocks: clocksNow() })
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }
-
-  function renewViewOnLocationChange(renewViewOnLocation: Observable<LocationChange>) {
-    return renewViewOnLocation.subscribe(({ oldLocation, newLocation }) => {
-      if (areDifferentLocation(oldLocation, newLocation)) {
-        currentView?.end()
-        currentView = startNewView(ViewLoadingType.ROUTE_CHANGE)
-      }
-    })
+    stopAutoTracking = startAutomaticViewTracking()
   }
 
   return {
-    addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
-      // In manual mode, calls before the first startView are dropped. The public API buffers and
-      // replays its pre-init calls (see rumPublicApi.ts), so this only happens between init()
-      // and the first startView.
-      currentView?.addTiming(name, time)
+    // The manual loading time is metrics state: routed here from the public API (no-op before
+    // init: no metrics bundle exists yet — the old preStartRum replayed the call, corner-cut)
+    setLoadingTime: (callTimestamp?: TimeStamp) => {
+      activeViews.get(currentViewId as string)?.setLoadingTime(callTimestamp)
     },
-    setLoadingTime: (callTimestamp?: TimeStamp) => currentView?.setLoadingTime(callTimestamp),
-    startView: (options?: ViewOptions, startClocks?: ClocksState) => {
-      currentView?.end({ endClocks: startClocks })
-      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
-    },
-    setViewContext: (context: Context) => {
-      currentView?.contextManager.setContext(context)
-    },
-    setViewContextProperty: (key: string, value: ContextValue) => {
-      currentView?.contextManager.setContextProperty(key, value)
-    },
-    setViewName: (name: string) => {
-      currentView?.setViewName(name)
-    },
-    getViewContext: () => currentView?.contextManager.getContext() ?? {},
-
     stop: () => {
-      if (locationChangeSubscription) {
-        locationChangeSubscription.unsubscribe()
-      }
-      if (stopOnBFCacheRestore) {
-        stopOnBFCacheRestore()
-      }
-      currentView?.end()
-      activeViews.forEach((view) => view.stop())
+      stopAutoTracking?.()
+      activeViews.forEach((bundle) => {
+        bundle.stopScheduling()
+        bundle.stopMetrics()
+      })
+      activeViews.clear()
     },
   }
-}
 
-function newView(
-  internalApi: RumInternalApi,
-  prepareUrgentFlushObservable: Observable<PageExitReason>,
-  domMutationObservable: Observable<RumMutationRecord[]>,
-  windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration,
-  loadingType: ViewLoadingType,
-  startClocks: ClocksState = clocksNow(),
-  viewOptions?: ViewOptions
-) {
-  // Setup initial values
-  const stopObservable = new Observable<void>()
-  const customTimings: ViewCustomTimings = {}
-  let endClocks: ClocksState | undefined
-  const location = shallowClone(mockable(window.location))
-  const contextManager = createContextManager()
+  //
+  // Automatic view tracking (initial view, location change, BFCache)
+  //
 
-  let name = viewOptions?.name
-  const service = viewOptions?.service || configuration.service
-  const version = viewOptions?.version || configuration.version
-  const context = viewOptions?.context
-  const handlingStack = viewOptions?.handlingStack
+  function startAutomaticViewTracking() {
+    // The initial view: starting it promotes the internal API draft (initial_load is stamped by
+    // the API, start at the clock origin).
+    startViewEvent(undefined)
 
-  if (context) {
-    contextManager.setContext(context)
+    const locationChangeSubscription = locationChangeObservable.subscribe(({ oldLocation, newLocation }) => {
+      if (areDifferentLocation(oldLocation, newLocation)) {
+        activeViews.get(currentViewId as string)?.sendLastViewMetricsUpdate()
+        startViewEvent(ViewLoadingType.ROUTE_CHANGE)
+      }
+    })
+    const stopOnBFCacheRestore = onBFCacheRestore((_pageshowEvent) => {
+      activeViews.get(currentViewId as string)?.sendLastViewMetricsUpdate()
+      startViewEvent(ViewLoadingType.BF_CACHE)
+    })
+    return () => {
+      locationChangeSubscription.unsubscribe()
+      stopOnBFCacheRestore()
+    }
   }
 
-  // The view starts as a complete kickoff event: the internal API owns the id and stamps it on
-  // the event, so history entries (and findEvents) expose it from the start. Views are sent
-  // incrementally: each update assembles a new event version (`_dd.document_version` is owned by
-  // the internal API), and stop() sends the final version (`view.is_active: false`).
-  const handle = internalApi.startEvent(
-    {
+  // Start (or promote / supersede — the internal API decides) a view with a minimal kickoff:
+  // url, service and version come from the configuration / location, the loading type from the
+  // start context (undefined for the initial view: the internal API stamps initial_load).
+  function startViewEvent(loadingType: ViewLoadingType | undefined) {
+    internalApi.startEvent({
       type: 'view',
-      view: { url: viewOptions?.url ?? location.href, name },
-      service,
-      version,
-    },
-    {
-      startClocks,
-      domainContext: {
-        handlingStack,
-        location,
+      view: {
+        url: shallowClone(mockable(window.location)).href,
+        loading_type: loadingType,
       },
-    }
-  )
-
-  // Update the view every time the measures are changing
-  const { throttled, cancel: cancelScheduleViewUpdate } = throttle(triggerViewUpdate, THROTTLE_VIEW_UPDATE_PERIOD, {
-    leading: false,
-  })
-
-  // The LifeCycle passed to the metrics tracking modules only serves waitPageActivityEnd's
-  // REQUEST_STARTED / REQUEST_COMPLETED subscriptions, which never flow in this pipeline (no
-  // auto-instrumentation). See the notes at the top of this file.
-  const metricsLifeCycle = new LifeCycle()
-
-  const {
-    setLoadEvent,
-    setViewEnd,
-    stop: stopCommonViewMetricsTracking,
-    stopINPTracking,
-    getCommonViewMetrics,
-    setLoadingTime,
-  } = trackCommonViewMetrics(
-    metricsLifeCycle,
-    domMutationObservable,
-    windowOpenObservable,
-    configuration,
-    scheduleViewUpdate,
-    loadingType,
-    startClocks
-  )
-
-  const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
-    loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate)
-      : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
-
-  // Start BFCache-specific metrics when restoring from BFCache
-  if (loadingType === ViewLoadingType.BF_CACHE) {
-    trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
+      service: configuration.service,
+      version: configuration.version,
+    })
   }
 
-  // Session keep alive
-  const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
+  //
+  // Per-view metrics
+  //
 
-  const pageMayExitSubscription = prepareUrgentFlushObservable.subscribe((reason) => {
-    if (reason === PageExitReason.UNLOADING) {
-      triggerViewUpdate()
+  function attachViewMetrics(viewId: string, startClocks: ClocksState, loadingType: ViewLoadingType) {
+    // The LifeCycle passed to the metrics tracking modules only serves waitPageActivityEnd's
+    // REQUEST_STARTED / REQUEST_COMPLETED subscriptions, which never flow in this pipeline (no
+    // auto-instrumentation — corner-cut carried over from v1, see the notes at the top).
+    const metricsLifeCycle = new LifeCycle()
+    const { throttled, cancel: cancelScheduleViewUpdate } = throttle(
+      () => updateViewMetrics(viewId),
+      THROTTLE_VIEW_UPDATE_PERIOD,
+      { leading: false }
+    )
+    const {
+      setLoadEvent,
+      setViewEnd,
+      stop: stopCommonViewMetricsTracking,
+      stopINPTracking,
+      getCommonViewMetrics,
+      setLoadingTime,
+    } = trackCommonViewMetrics(
+      metricsLifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      configuration,
+      throttled,
+      loadingType,
+      startClocks
+    )
+    const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
+      loadingType === ViewLoadingType.INITIAL_LOAD
+        ? trackInitialViewMetrics(configuration, startClocks, setLoadEvent, throttled)
+        : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
+    if (loadingType === ViewLoadingType.BF_CACHE) {
+      trackBfcacheMetrics(startClocks, initialViewMetrics, throttled)
     }
-  })
 
-  // Initial view update
-  triggerViewUpdate()
+    // Session keep alive: keep emitting view versions while the view is active
+    const keepAliveIntervalId = setInterval(() => updateViewMetrics(viewId), SESSION_KEEP_ALIVE_INTERVAL)
+    // Final view update on page unloading, before the transport urgent flush
+    const pageMayExitSubscription = prepareUrgentFlushObservable.subscribe((reason) => {
+      if (reason === PageExitReason.UNLOADING) {
+        updateViewMetrics(viewId)
+      }
+    })
 
-  // View context update should always be throttled
-  contextManager.changeObservable.subscribe(scheduleViewUpdate)
-
-  function scheduleViewUpdate() {
-    throttled()
+    const bundle: ViewMetricsBundle = {
+      viewId,
+      startClocks,
+      loadingType,
+      sendLastViewMetricsUpdate: () => {
+        cancelScheduleViewUpdate()
+        updateViewMetrics(viewId)
+      },
+      setLoadingTime,
+      stopScheduling: () => {
+        cancelScheduleViewUpdate()
+        clearInterval(keepAliveIntervalId)
+        pageMayExitSubscription.unsubscribe()
+        setViewEnd(relativeNow())
+      },
+      stopMetrics: () => {
+        stopCommonViewMetricsTracking()
+        stopInitialViewMetricsTracking()
+        stopINPTracking()
+      },
+      getViewMetrics: () => ({
+        commonViewMetrics: getCommonViewMetrics(),
+        initialViewMetrics,
+      }),
+    }
+    activeViews.set(viewId, bundle)
+    // The kickoff version was already emitted by the internal API; send the first metrics update
+    // right away, like the v1 initial triggerViewUpdate.
+    updateViewMetrics(viewId)
   }
 
-  function buildUpdateEvent(final: boolean): PartialBaseRumEvent<'view'> {
-    const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
-    const commonViewMetrics = getCommonViewMetrics()
+  function updateViewMetrics(viewId: string) {
+    // The update goes through the internal API current view: it targets this view only (a
+    // scheduled update of a superseded view is dropped; the supersede already assembled its
+    // final version with the last-update slot).
+    const currentEntry = internalApi.currentView.current()
+    if ((currentEntry.event as { view?: { id?: string } }).view?.id !== viewId) {
+      return
+    }
+    const bundle = activeViews.get(viewId)
+    if (!bundle) {
+      return
+    }
+    if (currentEntry.complete) {
+      return
+    }
+    internalApi.currentView.update(buildViewMetricsUpdate(bundle))
+  }
+
+  // The view ended (superseded or expired — the internal API assembled the final version):
+  // stop scheduling updates immediately, keep listening for late metrics for a while.
+  function onViewEnded(endedViewId: string | undefined) {
+    if (endedViewId === undefined) {
+      return
+    }
+    const bundle = activeViews.get(endedViewId)
+    if (!bundle) {
+      return
+    }
+    bundle.stopScheduling()
+    activeViews.delete(endedViewId)
+    setTimeout(() => {
+      bundle.stopMetrics()
+    }, KEEP_TRACKING_AFTER_VIEW_DELAY)
+    if (endedViewId === currentViewId) {
+      currentViewId = undefined
+    }
+  }
+
+  function buildViewMetricsUpdate(bundle: ViewMetricsBundle): PartialBaseRumEvent<'view'> {
+    const { loadingType, startClocks } = bundle
+    const { commonViewMetrics, initialViewMetrics } = bundle.getViewMetrics()
     const clsDevicePixelRatio = commonViewMetrics.cumulativeLayoutShift?.devicePixelRatio
 
-    // The raw view event building from viewCollection's processViewUpdate, minus what the
-    // internal API owns (view.id, document version, event counts) and what contexts assemble
-    // (session, referrer, usr, ...). The fields the partial type can't express directly are
-    // merged on the loosely typed view fields object first.
+    // The raw view metrics fields, minus what others own: the internal API owns is_active and
+    // the final time_spent (derived endings), and the view identity (id, name), the public API
+    // owns the view context and custom timings — they all ride the event already.
     const viewFields = {
       cumulative_layout_shift: commonViewMetrics.cumulativeLayoutShift?.value,
       cumulative_layout_shift_time: toServerDuration(commonViewMetrics.cumulativeLayoutShift?.time),
@@ -324,13 +331,26 @@ function newView(
       load_event: toServerDuration(initialViewMetrics.navigationTimings?.loadEvent),
       loading_time: discardNegativeDuration(toServerDuration(commonViewMetrics.loadingTime)),
       loading_type: loadingType,
-      time_spent: toServerDuration(elapsed(startClocks.timeStamp, currentEnd)),
+      // The progressive time_spent on intermediate versions; the final one is derived by the
+      // internal API from the activity bounds (same value).
+      time_spent: toServerDuration(elapsed(startClocks.timeStamp, timeStampNow())),
       performance: computeViewPerformanceData(commonViewMetrics, initialViewMetrics),
-      is_active: !final,
-      name,
-      custom_timings: isEmptyObject(customTimings)
-        ? undefined
-        : mapValues(customTimings, toServerDuration as (duration: Duration) => ServerDuration),
+      device: {
+        locale: navigator.language,
+        locales: navigator.languages,
+        time_zone: getTimeZone(),
+      },
+      _dd: {
+        cls: clsDevicePixelRatio
+          ? {
+              device_pixel_ratio: clsDevicePixelRatio,
+            }
+          : undefined,
+        configuration: {
+          start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
+          remote_configuration_id: configuration.remoteConfigurationId,
+        },
+      },
     }
 
     return {
@@ -348,116 +368,32 @@ function newView(
       privacy: {
         replay_level: configuration.defaultPrivacyLevel,
       },
-      device: {
-        locale: navigator.language,
-        locales: navigator.languages,
-        time_zone: getTimeZone(),
-      },
-      context: contextManager.getContext(),
-      _dd: {
-        cls: clsDevicePixelRatio
-          ? {
-              device_pixel_ratio: clsDevicePixelRatio,
-            }
-          : undefined,
-        configuration: {
-          start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
-          remote_configuration_id: configuration.remoteConfigurationId,
-        },
-      },
     } as unknown as PartialBaseRumEvent<'view'>
     // Cast: some raw view fields (performance, device.locales) don't fit the kickoff Context
     // type exactly; they merge fine at runtime.
   }
-
-  function triggerViewUpdate() {
-    if (endClocks !== undefined) {
-      // The final version was sent by stop(); the handle would throw on further updates.
-      return
-    }
-    cancelScheduleViewUpdate()
-    handle.update(buildUpdateEvent(false))
-  }
-
-  return {
-    get name() {
-      return name
-    },
-    service,
-    version,
-    contextManager,
-    stopObservable,
-    handle,
-    end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
-      if (endClocks) {
-        // view already ended
-        return
-      }
-      endClocks = options.endClocks ?? clocksNow()
-
-      clearInterval(keepAliveIntervalId)
-      setViewEnd(endClocks.relative)
-      stopCommonViewMetricsTracking()
-      pageMayExitSubscription.unsubscribe()
-      // The final version (is_active: false) is sent by stop(), and its end time is the view end
-      // clocks: the internal API computes the event duration from them for history queries.
-      handle.stop(buildUpdateEvent(true), { endClocks })
-      setTimeout(() => {
-        this.stop()
-      }, KEEP_TRACKING_AFTER_VIEW_DELAY)
-    },
-    stop() {
-      stopInitialViewMetricsTracking()
-      stopINPTracking()
-      stopObservable.notify()
-    },
-    addTiming(name: string, time: RelativeTime | TimeStamp) {
-      if (endClocks) {
-        return
-      }
-      const relativeTime = isRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
-      customTimings[sanitizeTiming(name)] = relativeTime
-      scheduleViewUpdate()
-    },
-    setLoadingTime,
-    setViewName(updatedName: string) {
-      name = updatedName
-      triggerViewUpdate()
-    },
-  }
 }
 
-/**
- * Timing name is used as facet path that must contain only letters, digits, or the characters - _ . @ $
- */
-function sanitizeTiming(name: string) {
-  const sanitized = name.replace(/[^a-zA-Z0-9-_.@$]/g, '_')
-  if (sanitized !== name) {
-    display.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
-  }
-  return sanitized
+interface ViewMetricsBundle {
+  viewId: string
+  startClocks: ClocksState
+  loadingType: ViewLoadingType
+  // The freshest metrics update of the view (the last-update slot before a superseding
+  // startEvent, and during the session_expired notify)
+  sendLastViewMetricsUpdate: () => void
+  setLoadingTime: (callTimestamp?: TimeStamp) => void
+  // Called when the view ends: no more scheduled updates, but metrics keep listening for a while
+  stopScheduling: () => void
+  stopMetrics: () => void
+  getViewMetrics: () => { commonViewMetrics: CommonViewMetrics; initialViewMetrics: InitialViewMetrics }
 }
 
-function areDifferentLocation(currentLocation: Location, otherLocation: Location) {
-  return (
-    currentLocation.pathname !== otherLocation.pathname ||
-    (!isHashAnAnchor(otherLocation.hash) &&
-      getPathFromHash(otherLocation.hash) !== getPathFromHash(currentLocation.hash))
-  )
+function readViewLoadingType(event: unknown): ViewLoadingType {
+  const loadingType = (event as { view?: { loading_type?: ViewLoadingType } }).view?.loading_type
+  return loadingType ?? ViewLoadingType.INITIAL_LOAD
 }
 
-function isHashAnAnchor(hash: string) {
-  const correspondingId = hash.substring(1)
-  // check if the correspondingId is empty because on Firefox an empty string passed to getElementById() prints a consol warning
-  return correspondingId !== '' && !!document.getElementById(correspondingId)
-}
-
-function getPathFromHash(hash: string) {
-  const index = hash.indexOf('?')
-  return index < 0 ? hash : hash.slice(0, index)
-}
-
-// Moved from viewCollection.ts (deleted): computes the `view.performance` sub-fields.
+// Moved from viewCollection.ts (deleted in v1): computes the `view.performance` sub-fields.
 export function computeViewPerformanceData(
   { cumulativeLayoutShift, interactionToNextPaint }: CommonViewMetrics,
   { firstContentfulPaint, largestContentfulPaint }: InitialViewMetrics
@@ -496,4 +432,23 @@ export function computeViewPerformanceData(
         : undefined,
     },
   }
+}
+
+function areDifferentLocation(currentLocation: Location, otherLocation: Location) {
+  return (
+    currentLocation.pathname !== otherLocation.pathname ||
+    (!isHashAnAnchor(otherLocation.hash) &&
+      getPathFromHash(otherLocation.hash) !== getPathFromHash(currentLocation.hash))
+  )
+}
+
+function isHashAnAnchor(hash: string) {
+  const correspondingId = hash.substring(1)
+  // check if the correspondingId is empty because on Firefox an empty string passed to getElementById() prints a consol warning
+  return correspondingId !== '' && !!document.getElementById(correspondingId)
+}
+
+function getPathFromHash(hash: string) {
+  const index = hash.indexOf('?')
+  return index < 0 ? hash : hash.slice(0, index)
 }

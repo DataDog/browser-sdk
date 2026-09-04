@@ -22,8 +22,10 @@ describe('profilerApi', () => {
       const isProfilingSupportedSpy = replaceMockableWithSpy(isProfilingSupported)
       const profilerApi = makeProfilerApi()
 
+      const unsupportedInternalApi = createRumInternalApi()
+      unsupportedInternalApi.configure({ sessionManager: createSessionManagerMock() })
       profilerApi.onRumStart(
-        createRumInternalApi({ sessionManager: createSessionManagerMock() }),
+        unsupportedInternalApi,
         mockRumConfiguration({ sessionSampleRate: 60, profilingSampleRate: 60 }),
         createSessionManagerMock().setId(MID_HASH_UUID),
         createIdentityEncoder
@@ -46,8 +48,10 @@ describe('profilerApi', () => {
 
     async function startApi() {
       const api = makeProfilerApi()
+      const internalApi = createRumInternalApi()
+      internalApi.configure({ sessionManager: createSessionManagerMock() })
       api.onRumStart(
-        createRumInternalApi({ sessionManager: createSessionManagerMock() }),
+        internalApi,
         mockRumConfiguration({ profilingSampleRate: 100 }),
         createSessionManagerMock().setId('session-id-1'),
         createIdentityEncoder

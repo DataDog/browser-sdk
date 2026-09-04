@@ -47,8 +47,8 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
         expect(viewNames).toEqual(['/user/:id'])
       })
 
-      it('stops the previous view when a new one is started', () => {
-        const { internalApi, viewNames, viewHandles } = createFakeInternalApi()
+      it('starts a view per navigation (the previous one is superseded by the internal API)', () => {
+        const { internalApi, viewNames } = createFakeInternalApi()
         initializeReactPlugin({
           configuration: {
             router: true,
@@ -59,10 +59,11 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
         startReactRouterView([{ route: { path: '/first' } }] as unknown as AnyRouteMatch[])
         startReactRouterView([{ route: { path: '/second' } }] as unknown as AnyRouteMatch[])
 
-        // The router contract is explicit: the previous view handle is stopped at the new view
-        // start time (throw-on-double-view would make a missing stop loud)
-        expect(viewHandles[0].stop).toHaveBeenCalled()
-        expect(viewHandles[1].stop).not.toHaveBeenCalled()
+        // v2: no stop boilerplate in the plugin — starting a view supersedes the previous one
+        // (the internal API closes its activity window and assembles its final version), and
+        // the initial version is emitted by the API itself.
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(internalApi.startEvent).toHaveBeenCalledTimes(2)
         expect(viewNames).toEqual(['/first', '/second'])
       })
 
