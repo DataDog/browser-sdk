@@ -1,20 +1,22 @@
-// PoC v2 implementation of the RUM internal API ("thin layer"), described in /rum-thin-layer.ts
-// and plan-v2.md. This module is the orchestrator: it owns the configuration binding, the
-// assembly buffering and the view state machine. The other pieces live in the sibling modules:
-// the public types (rumInternalApi.types.ts), the draft event helpers (baseRumEvent.ts), the
-// event history (eventHistory.ts) and the assembly pipeline (assembleRumEvent.ts).
+// PoC v3 implementation of the RUM internal API ("thin layer"), described in /rum-thin-layer.ts
+// and plan-v3.md. This module is the orchestrator: it owns the configuration binding, the
+// assembly buffering and the session-expiry endings. The other pieces live in the sibling
+// modules: the public types (rumInternalApi.types.ts), the draft event helpers
+// (baseRumEvent.ts), the event history (eventHistory.ts) and the assembly pipeline
+// (assembleRumEvent.ts).
 //
-// v2 state machines, in short:
-// * Configuration: the API is created eagerly (unconfigured). configure() binds the validated
-//   configuration (beforeSend, rate limits, session manager promise) — assemblies collected
-//   before it are held, exactly like events collected before the session manager resolves. If
-//   configure never happens, nothing is ever assembled: RUM does not start.
-// * Views: a DRAFT view exists from creation (id pre-assigned, history entry at the clock
-//   origin, update()-accepting). The first startEvent({type:'view'}) promotes it (kickoff wins
-//   over buffered updates, initial version emitted). A view startEvent while a view is active
-//   SUPERSEDES it (previous activity closes at the new start, final version assembled). Views
-//   are never stopped by callers; session expiry endings are owned by the API (see
-//   onSessionExpired for the ordering contract).
+// v3 design, in short:
+// * Configuration: the API is created eagerly (unconfigured). configure() binds the
+//   validated configuration (beforeSend, rate limits, session manager promise) — assemblies
+//   collected before it are held, exactly like events collected before the session manager
+//   resolves. If configure never happens, nothing is ever assembled: RUM does not start.
+// * Views: plain started events — no draft, no promotion, no supersede, no single-view rule
+//   here. Consumers start/stop them (the view-tracking policy lives in a consumer helper);
+//   the API only owns the session-expiry endings (all open views, after the last-update slot)
+//   and derives the final view fields (is_active, time_spent) at assembly. Open handles are
+//   exposed on history entries, so consumers can catch up via findEvents({ open: true }).
+// * Starting a view while another is open logs a telemetry debug (not a throw: overlapping
+//   views are a possible future model, not necessarily a misuse).
 //
 // PoC notes / deviations from the current RUM behavior (v1 list, still true):
 // * Rate limit reach is not surfaced to customers yet (today it reports an error event): wiring
@@ -24,12 +26,18 @@
 // * View events are exempt from rate limiting and cannot be dismissed by `beforeSend`, as today.
 
 import type { ClocksState, RelativeTime } from '@datadog/js-core/time'
-import { addDuration, clocksNow, clocksOrigin, elapsed, toServerDuration } from '@datadog/js-core/time'
+import { addDuration, clocksNow, elapsed, toServerDuration } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
 import { deepClone, mergeInto } from '@datadog/js-core/util'
 import type { Context, SessionContext, SessionManager } from '@datadog/browser-core'
-import { Observable, createEventRateLimiter, generateUUID, monitorError, noop } from '@datadog/browser-core'
-import { ViewLoadingType } from '../../rawRumEvent.types'
+import {
+  Observable,
+  addTelemetryDebug,
+  createEventRateLimiter,
+  generateUUID,
+  monitorError,
+  noop,
+} from '@datadog/browser-core'
 import { assertKickoffFields, stampEventId } from './baseRumEvent'
 import type { DraftEvent } from './baseRumEvent'
 import { createEventHistory } from './eventHistory'
@@ -43,15 +51,14 @@ import type {
   AssembleHookParams,
   ConfigureOptions,
   EventBaggage,
+  EventHandle,
   FindEventsQuery,
   IncompleteBaseRumEvent,
   InternalRumEventType,
-  NonViewEventHandle,
   RumEventHistoryEntry,
   RumInternalApi,
   RumInternalNotification,
   StartableRumEventType,
-  ViewEventHandle,
 } from './rumInternalApi.types'
 
 export type * from './rumInternalApi.types'
@@ -69,19 +76,15 @@ const ONE_SHOT_EVENT_TYPES: ReadonlyArray<Exclude<InternalRumEventType, 'view'>>
   'vital',
 ]
 
-// The state of the current (or draft) view. The public ViewEventHandle closes over one of
-// these: updates go through the state even once the view is no longer current, and throw once
-// the view has been ended.
+// The state of an open view. The view handle closes over one of these: updates throw once the
+// view has been stopped.
 interface ViewState {
   eventId: string
-  // The view event being built: the live object `update()` merges into.
+  // The view event being built: the live object `update()` / `stop()` merges into.
   base: DraftEvent
   baggage: EventBaggage
   historyEntry: InternalHistoryEntry
-  handle: ViewEventHandle
-  // false for the draft, until promotion. View assemblies are held while false.
-  started: boolean
-  // Set at supersede / expiry — the activity window end. Set views reject updates.
+  // Set at stop / expiry — the activity window end. Stopped views reject updates.
   endedClocks: ClocksState | undefined
 }
 
@@ -104,19 +107,15 @@ export function createRumInternalApi(): RumInternalApi {
   let stopped = false
   let configured = false
 
-  // The draft view: created at API creation, promoted by the first view startEvent. Early view
-  // mutations (ex: public API setViewName before init()) land on it and buffer for free.
-  let currentView = createDraftView()
+  // The open views, for the API-owned expiry endings and the overlap telemetry guard. The
+  // single-view policy lives in the consumers (the public API); the API stays agnostic.
+  const openViewStates = new Set<ViewState>()
 
   return {
     startEvent,
     addEvent,
     registerHook,
     configure,
-    get currentView() {
-      assertNotStopped()
-      return currentView.handle
-    },
     get notifications() {
       return notificationsObservable
     },
@@ -129,99 +128,64 @@ export function createRumInternalApi(): RumInternalApi {
   // Views
   //
 
-  // The draft: an incomplete view event (no url yet — the promotion kickoff provides it) with a
-  // pre-assigned id, in the history from the clock origin (visible in findEvents, covering nothing
-  // until promoted: findViewAt skips un-started views).
-  function createDraftView(): ViewState {
-    const eventId = generateUUID()
-    const base = { type: 'view' } as DraftEvent
-    const baggage: EventBaggage = { startClocks: clocksOrigin() }
-    stampEventId(base, eventId)
-    history.initViewEntry(eventId)
-    const historyEntry = history.addEntry(
-      { complete: false, event: base, baggage },
-      baggage.startClocks.relative,
-      eventId
-    )
-    history.markViewUnstarted(eventId)
-    const view: ViewState = {
-      eventId,
-      base,
-      baggage,
-      historyEntry,
-      handle: undefined as unknown as ViewEventHandle,
-      started: false,
-      endedClocks: undefined,
-    }
-    view.handle = createViewHandle(view)
-    return view
-  }
-
-  function createStartedView(
-    kickoff: IncompleteBaseRumEvent & { type: 'view' } & Context,
-    startBaggage?: Partial<EventBaggage>
-  ): ViewState {
-    const startClocks = startBaggage?.startClocks ?? clocksNow()
-    const eventId = generateUUID()
-    const base = deepClone(kickoff) as DraftEvent
-    stampEventId(base, eventId)
-    history.initViewEntry(eventId)
-    const baggage: EventBaggage = { ...startBaggage, startClocks }
-    const historyEntry = history.addEntry({ complete: false, event: base, baggage }, startClocks.relative, eventId)
-    const view: ViewState = {
-      eventId,
-      base,
-      baggage,
-      historyEntry,
-      handle: undefined as unknown as ViewEventHandle,
-      started: true,
-      endedClocks: undefined,
-    }
-    view.handle = createViewHandle(view)
-    return view
-  }
-
-  function createViewHandle(view: ViewState): ViewEventHandle {
+  // The view handle: views are mutable documents (update), and stop() ends the activity window
+  // (the caller pins the end clocks — ex: the view-tracking policy pins it to the next view's
+  // start, since supersede is a consumer now). The final `is_active: false` / `time_spent` are
+  // derived by the API at assembly.
+  function createViewHandle(view: ViewState): EventHandle<'view'> {
     return {
       current: () => view.historyEntry.value,
       update(partial) {
         assertNotStopped()
         if (view.endedClocks !== undefined) {
-          throw new Error('The view has already been ended (superseded or expired).')
+          throw new Error('The view has already been stopped.')
         }
         mergeInto(view.base, partial)
-        // Draft updates are held by the assembly rules (isAssemblyReady), so the merge buffers
-        // as part of the eventual kickoff state.
         assembleViewState(view, { final: false })
+      },
+      cancel() {
+        // A started view is a fact: it can only be stopped — cancelling it would orphan its
+        // child events.
+        throw new Error('A view cannot be cancelled.')
+      },
+      stop(partial, stopOptions) {
+        assertNotStopped()
+        if (view.endedClocks !== undefined) {
+          throw new Error('The view has already been stopped.')
+        }
+        if (partial !== undefined) {
+          mergeInto(view.base, partial)
+        }
+        endView(view, stopOptions?.endClocks ?? clocksNow())
+        assembleViewState(view, { final: true })
       },
     }
   }
 
   // Public dispatcher: the overloads below mirror the RumInternalApi interface (the view one
-  // requires a complete kickoff at the type level; the runtime promotion check is a defense
-  // since the draft is what gets promoted). The implementation signature routes views to the
-  // state machine above and the rest to the start/stop pair below, keeping the runtime misuse
-  // guards.
+  // requires a complete kickoff at the type level; the runtime url check in startView is a
+  // defense against type-constraint workarounds). The implementation signature routes views
+  // and the rest to their start functions, keeping the runtime misuse guards.
   function startEvent(
     options: Extract<BaseRumEvent, { type: 'view' }>,
     baggage?: Partial<EventBaggage>
-  ): ViewEventHandle
+  ): EventHandle<'view'>
   function startEvent(
     options: IncompleteBaseRumEvent & { type: 'action' },
     baggage?: Partial<EventBaggage>
-  ): NonViewEventHandle<'action'>
+  ): EventHandle<'action'>
   function startEvent(
     options: IncompleteBaseRumEvent & { type: 'resource' },
     baggage?: Partial<EventBaggage>
-  ): NonViewEventHandle<'resource'>
+  ): EventHandle<'resource'>
   function startEvent(
     options: IncompleteBaseRumEvent & { type: 'vital' },
     baggage?: Partial<EventBaggage>
-  ): NonViewEventHandle<'vital'>
+  ): EventHandle<'vital'>
   function startEvent(
     startOptions: IncompleteBaseRumEvent & { type: StartableRumEventType },
     startBaggage?: Partial<EventBaggage>
-  ): ViewEventHandle | NonViewEventHandle<'action' | 'resource' | 'vital'> {
+  ): EventHandle<StartableRumEventType> {
     assertNotStopped()
     if (!STARTABLE_EVENT_TYPES.includes(startOptions.type)) {
       throw new Error(`Cannot start a '${startOptions.type}' event.`)
@@ -232,94 +196,70 @@ export function createRumInternalApi(): RumInternalApi {
     return startNonViewEvent(startOptions, startBaggage)
   }
 
+  // A view is a plain started event: no promotion, no supersede, no single-view rule — the
+  // view-tracking policy (stop the previous view, end pinned to the new start) lives in a
+  // consumer helper, not here. `event_started` fires before any assembly (Replay takes full
+  // snapshots on view start), the initial version is assembled + notified (held while not
+  // ready, like every assembly), and child events held for view coverage may become ready.
   function startView(
     kickoff: IncompleteBaseRumEvent & { type: 'view' } & Context,
     startBaggage?: Partial<EventBaggage>
-  ): ViewEventHandle {
+  ): EventHandle<'view'> {
     assertNotStopped()
-    if (!currentView.started) {
-      return promoteDraft(kickoff, startBaggage)
+    // The type requires a complete view kickoff; this runtime check is a defense against
+    // type-constraint workarounds.
+    if ((kickoff as { view?: { url?: string } }).view?.url === undefined) {
+      throw new Error("Missing kickoff field 'view.url': a view cannot be started without it.")
     }
-    if (currentView.endedClocks === undefined) {
-      return supersedeView(kickoff, startBaggage)
+    if (openViewStates.size > 0) {
+      // monitor-until: 2026-10-14
+      // Not a throw: overlapping views are a possible future model, not necessarily a misuse.
+      // Today's consumers supersede explicitly (the policy lives in a consumer helper).
+      addTelemetryDebug('A view was started while another one is still open.', { openViews: openViewStates.size })
     }
-    // The previous view already ended (session expiry): plain start, nothing to supersede.
-    const newView = createStartedView(kickoff, startBaggage)
-    currentView = newView
-    notifyEventStarted(newView)
-    assembleViewState(newView, { final: false })
-    tryFlushPendingAssemblies()
-    return newView.handle
-  }
-
-  // Promote the draft: the kickoff wins over buffered draft updates, the start stays at the
-  // clock origin (fixed at draft creation, no matter when the promotion happens) and the loading
-  // type is always initial_load. `event_started` fires and the initial version is assembled.
-  function promoteDraft(
-    kickoff: IncompleteBaseRumEvent & { type: 'view' } & Context,
-    startBaggage?: Partial<EventBaggage>
-  ): ViewEventHandle {
-    const view = currentView
-    mergeInto(view.base, kickoff)
-    if ((view.base.view as { url?: string } | undefined)?.url === undefined) {
-      throw new Error("Missing kickoff field 'view.url': the draft cannot be promoted without it.")
+    const startClocks = startBaggage?.startClocks ?? clocksNow()
+    const eventId = generateUUID()
+    const base = deepClone(kickoff) as DraftEvent
+    stampEventId(base, eventId)
+    history.initViewEntry(eventId)
+    const baggage: EventBaggage = { ...startBaggage, startClocks }
+    const historyEntry = history.addEntry({ complete: false, event: base, baggage }, startClocks.relative, eventId)
+    const view: ViewState = { eventId, base, baggage, historyEntry, endedClocks: undefined }
+    openViewStates.add(view)
+    const handle = createViewHandle(view)
+    if (!historyEntry.value.complete) {
+      historyEntry.value.handle = handle
     }
-    // Stamped after the kickoff merge, so the initial view is always an initial_load (decision:
-    // no kickoff can override it).
-    mergeInto(view.base, { view: { loading_type: ViewLoadingType.INITIAL_LOAD } })
-    mergeInto(view.baggage, { domainContext: startBaggage?.domainContext })
-    view.started = true
-    history.markViewStarted(view.eventId)
-    // Drop the draft's held update assemblies: they are stale clones (snapshots of the base at
-    // update time), and their merged content is already part of the promoted base — the initial
-    // version below is fresher than any of them. Replaying them after it would make a stale
-    // snapshot the latest document version (found by the phase A unit specs).
-    dropPendingAssemblies(view.eventId)
     notifyEventStarted(view)
     // The initial view version is emitted by the API (no update({}) dance in consumers)
     assembleViewState(view, { final: false })
-    // Child events collected before promotion are now covered (the view starts at the clock
-    // origin): their held assemblies may be ready.
+    // Child events held for view coverage may have become ready
     tryFlushPendingAssemblies()
-    return view.handle
-  }
-
-  // Supersede: the previous view's activity window closes at the new view's start (end-exclusive:
-  // events at that instant belong to the new view) and its final version is assembled by the API.
-  // `event_started` fires before any assembly (Replay takes full snapshots on view start).
-  function supersedeView(
-    kickoff: IncompleteBaseRumEvent & { type: 'view' } & Context,
-    startBaggage?: Partial<EventBaggage>
-  ): ViewEventHandle {
-    const superseded = currentView
-    const newView = createStartedView(kickoff, startBaggage)
-    endView(superseded, newView.baggage.startClocks)
-    currentView = newView
-    notifyEventStarted(newView)
-    assembleViewState(superseded, { final: true })
-    assembleViewState(newView, { final: false })
-    tryFlushPendingAssemblies()
-    return newView.handle
+    return handle
   }
 
   // Session expiry: the last-update slot is the synchronous `session_expired` notify — consumers
-  // may update the current view during it. Once it returns, the API ends the view and assembles
-  // its final version, BEFORE any consumer can react (the transport subscribes the session
-  // expiry flush after this API, see configure): the final version is upserted in the batch
-  // before it flushes, structurally.
+  // may update their open views during it. Once it returns, the API ends every open view and
+  // assembles its final version, BEFORE any consumer can react (the transport subscribes the
+  // session expiry flush after this API, see configure): the final version is upserted in the
+  // batch before it flushes, structurally. Today's consumers keep a single view; ending all of
+  // them keeps the API agnostic of that policy.
   function onSessionExpired() {
     notificationsObservable.notify({ type: 'session_expired' })
-    if (currentView.started && currentView.endedClocks === undefined) {
-      endView(currentView, clocksNow())
-      assembleViewState(currentView, { final: true })
+    // Copy first: endView mutates the set
+    for (const view of Array.from(openViewStates)) {
+      endView(view, clocksNow())
+      assembleViewState(view, { final: true })
     }
   }
 
-  // Close the view's activity window. The final version (is_active false, time_spent derived
-  // from the activity bounds) is assembled separately, so notification ordering stays explicit.
+  // Close the view's activity window and clear it from the open views. The final version
+  // (is_active false, time_spent derived from the activity bounds) is assembled separately, so
+  // notification ordering stays explicit.
   function endView(view: ViewState, endClocks: ClocksState) {
     history.closeEntry(view.historyEntry, endClocks.relative)
     view.endedClocks = endClocks
+    openViewStates.delete(view)
   }
 
   // Assemble a view version. The API owns the view lifecycle fields: is_active on every version,
@@ -328,7 +268,7 @@ export function createRumInternalApi(): RumInternalApi {
     if (options.final) {
       const endClocks = view.endedClocks
       if (endClocks === undefined) {
-        throw new Error('The final version of a view is assembled by the API only (supersede / expiry).')
+        throw new Error('The final version of a view is assembled after its activity window is closed (stop / expiry).')
       }
       mergeInto(view.base, {
         view: {
@@ -367,7 +307,7 @@ export function createRumInternalApi(): RumInternalApi {
   function startNonViewEvent(
     startOptions: IncompleteBaseRumEvent & { type: 'action' | 'resource' | 'vital' },
     startBaggage?: Partial<EventBaggage>
-  ): NonViewEventHandle<'action' | 'resource' | 'vital'> {
+  ): EventHandle<'action' | 'resource' | 'vital'> {
     const startClocks = startBaggage?.startClocks ?? clocksNow()
     const eventId = generateUUID()
     // The start options are (a partial of) the base event: the same event shape flows through
@@ -381,13 +321,6 @@ export function createRumInternalApi(): RumInternalApi {
       history.initActionEntry(eventId)
     }
     const historyEntry = history.addEntry({ complete: false, event: base, baggage }, startClocks.relative, eventId)
-    notificationsObservable.notify({
-      type: 'event_started',
-      eventType: startOptions.type,
-      eventId,
-      event: base as IncompleteBaseRumEvent,
-      baggage,
-    })
     let finished = false
 
     function assertNotFinished() {
@@ -398,9 +331,13 @@ export function createRumInternalApi(): RumInternalApi {
 
     // The handle carries all methods: the type-level constraints (kickoff fields required by
     // stop) are enforced at runtime, and exposed through the RumInternalApi.startEvent
-    // overloads.
-    const handle = {
+    // overloads. Only the members valid for the event type work; the others throw.
+    const handle: EventHandle<'action' | 'resource' | 'vital'> = {
       current: () => historyEntry.value,
+      update() {
+        // Only views are mutable documents
+        throw new Error('Only views can be updated.')
+      },
       cancel() {
         assertNotStopped()
         assertNotFinished()
@@ -432,6 +369,16 @@ export function createRumInternalApi(): RumInternalApi {
         }
       },
     }
+    if (!historyEntry.value.complete) {
+      historyEntry.value.handle = handle
+    }
+    notificationsObservable.notify({
+      type: 'event_started',
+      eventType: startOptions.type,
+      eventId,
+      event: base as IncompleteBaseRumEvent,
+      baggage,
+    })
     return handle
   }
 
@@ -529,18 +476,18 @@ export function createRumInternalApi(): RumInternalApi {
   // Assembly
   //
 
-  // An assembly is ready when the API is configured, the session manager has resolved, and:
-  // * for views: the view is started (draft updates wait for promotion — superseded views still
-  //   assemble their final version after their activity window closed, so the coverage lookup is
-  //   not used for them),
-  // * for other events: a started view covers the event start time.
-  function isAssemblyReady(baseRumEvent: DraftEvent, eventId: string, startTime: RelativeTime): boolean {
+  // An assembly is ready when the API is configured, the session manager has resolved, and a
+  // started view covers the event start time. Views cover themselves (they start complete, and
+  // stopped views still assemble their final version after their activity window closed, so
+  // the coverage lookup is not used for them): their assemblies are only gated on
+  // configuration + session.
+  function isAssemblyReady(baseRumEvent: DraftEvent, startTime: RelativeTime): boolean {
     if (!sessionManager) {
       // Covers unconfigured too: the session manager is only set by configure()
       return false
     }
     if (baseRumEvent.type === 'view') {
-      return history.isViewStarted(eventId)
+      return true
     }
     return history.findViewAt(startTime) !== undefined
   }
@@ -558,7 +505,7 @@ export function createRumInternalApi(): RumInternalApi {
     final: boolean
     baggage: EventBaggage
   }) {
-    if (!isAssemblyReady(baseRumEvent, eventId, baggage.startClocks.relative)) {
+    if (!isAssemblyReady(baseRumEvent, baggage.startClocks.relative)) {
       // Hold the assembly: it will run (hooks, hierarchy, counts, rate limiting, beforeSend,
       // notification) once it is ready. The base event is cloned because callers keep mutating it
       // (ex: view updates).
@@ -590,21 +537,13 @@ export function createRumInternalApi(): RumInternalApi {
     // subscribers) are buffered for the next flush instead of iterating a mutating array.
     const toAssemble = pendingAssemblies.splice(0, pendingAssemblies.length)
     for (const pending of toAssemble) {
-      if (isAssemblyReady(pending.baseRumEvent, pending.eventId, pending.baggage.startClocks.relative)) {
+      if (isAssemblyReady(pending.baseRumEvent, pending.baggage.startClocks.relative)) {
         assembleRumEvent(pipeline, pending)
       } else {
         stillPending.push(pending)
       }
     }
     pendingAssemblies.unshift(...stillPending)
-  }
-
-  function dropPendingAssemblies(eventId: string) {
-    for (let i = pendingAssemblies.length - 1; i >= 0; i--) {
-      if (pendingAssemblies[i].eventId === eventId) {
-        pendingAssemblies.splice(i, 1)
-      }
-    }
   }
 
   //

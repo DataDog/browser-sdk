@@ -31,22 +31,17 @@ export interface InternalHistoryEntry {
 // as its entry: view / action child event counts, and view document versions. Ended entries are
 // pruned after the same delay as ValueHistory (SESSION_TIME_OUT_DELAY).
 //
-// Views started through startEvent are active right away, but the draft view (see
-// rumInternalApi.ts) enters the history at creation and only becomes active — findViewAt and
-// hierarchy-wise — once promoted. Un-started views are still visible in findEvents (by design:
-// history entries exist from the moment the event enters the history), they just don't cover
-// time and don't assemble.
+// The history is the source of truth, notifications are live updates: open events are entries
+// with a live `handle` (cleared once the event ends), findable via the `open` query filter, so
+// consumers attaching after the events started can catch up without trusting notification
+// timing.
 export interface EventHistory {
   // The entry references the live event object given in `value` (callers keep mutating it).
   addEntry(value: RumEventHistoryEntry, startTime: RelativeTime, eventId: string): InternalHistoryEntry
   removeEntry(entry: InternalHistoryEntry): void
+  // Close the entry's activity window, and clear the live handle (the event is not open
+  // anymore: findEvents({ open: true }) stops returning it).
   closeEntry(entry: InternalHistoryEntry, endTime: RelativeTime): void
-  // Mark a view entry as started (active): the draft does it at promotion, real views at
-  // creation (they never enter the un-started set). Un-started view entries don't cover time
-  // (findViewAt skips them).
-  markViewUnstarted(eventId: string): void
-  markViewStarted(eventId: string): void
-  isViewStarted(eventId: string): boolean
   // Flip the entry to its complete form with the assembled event. No-op when `final` is false:
   // only the final assembly of an event completes its entry.
   finalizeEntry(entry: InternalHistoryEntry, final: boolean, event: AssembledRumEvent, baggage: EventBaggage): void
@@ -74,9 +69,6 @@ export function createEventHistory(): EventHistory {
   const viewCounts = new Map<string, EventCounts>()
   const actionCounts = new Map<string, ActionChildCounts>()
   const documentVersions = new Map<string, number>()
-  // The un-started view ids (the draft, before promotion). findViewAt skips them; findEvents
-  // doesn't (they are visible by design).
-  const unstartedViewIds = new Set<string>()
 
   return {
     addEntry(value, startTime, eventId) {
@@ -100,18 +92,10 @@ export function createEventHistory(): EventHistory {
 
     closeEntry(entry, endTime) {
       entry.endTime = endTime
-    },
-
-    markViewUnstarted(eventId) {
-      unstartedViewIds.add(eventId)
-    },
-
-    markViewStarted(eventId) {
-      unstartedViewIds.delete(eventId)
-    },
-
-    isViewStarted(eventId) {
-      return !unstartedViewIds.has(eventId)
+      // The event is not open anymore: clear the live handle (see RumEventHistoryEntry).
+      if (!entry.value.complete) {
+        delete entry.value.handle
+      }
     },
 
     finalizeEntry(entry, final, event, baggage) {
@@ -191,6 +175,9 @@ export function createEventHistory(): EventHistory {
           if (query.type !== undefined && entry.value.event.type !== query.type) {
             return false
           }
+          if (query.open && (entry.value.complete || entry.value.handle === undefined)) {
+            return false
+          }
           if (query.startedAfter !== undefined && entry.startTime < query.startedAfter) {
             return false
           }
@@ -218,16 +205,10 @@ export function createEventHistory(): EventHistory {
   function findViewAt(startTime: RelativeTime): InternalHistoryEntry | undefined {
     // The end bound is exclusive: a view ended at t is not active at t (as ValueHistory's
     // closeActive in the current implementation), so a new view can start exactly when the
-    // previous one ends, and events at that instant belong to the new view.
-    // Un-started views (the draft, before promotion) don't cover time: child events collected
-    // before promotion are held by the orchestrator, and only assemble once the promoted view
-    // covers them (it starts at the clock origin, so it covers them).
+    // previous one ends, and events at that instant belong to the new view. With overlapping
+    // views (not a usage of today's consumers), the most recently started one wins.
     return historyEntries.find(
-      (entry) =>
-        entry.value.event.type === 'view' &&
-        !unstartedViewIds.has(entry.eventId) &&
-        entry.startTime <= startTime &&
-        startTime < entry.endTime
+      (entry) => entry.value.event.type === 'view' && entry.startTime <= startTime && startTime < entry.endTime
     )
   }
 
@@ -249,7 +230,6 @@ export function createEventHistory(): EventHistory {
       if (entry.endTime !== END_OF_TIMES && entry.endTime < oldTimeThreshold) {
         viewCounts.delete(entry.eventId)
         documentVersions.delete(entry.eventId)
-        unstartedViewIds.delete(entry.eventId)
         return false
       }
       return true
