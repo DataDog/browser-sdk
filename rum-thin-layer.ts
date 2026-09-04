@@ -130,10 +130,10 @@ type StartableRumEventType = 'view' | 'action' | 'resource' | 'vital'
 // are type-constrained per event type and runtime-enforced (throw-on-misuse) when worked around.
 interface EventHandle<T extends StartableRumEventType> {
   // The current in-memory state of the event: the live entry (its event is the same object the
-  // handle mutates, so it always reflects the latest state; after the final assembly it is the
-  // assembled event; views and actions also carry their live child counts). Consumers reading
-  // their own event state (ex: the click frustration computation needs whether a click had
-  // child errors) don't need findEvents or `event_started` correlation for it.
+  // handle mutates, so it always reflects the latest state — child event counts included, they
+  // live directly on the event; after the final assembly it is the assembled event). Consumers
+  // reading their own event state (ex: the click frustration computation needs whether a click
+  // had child errors) don't need findEvents or `event_started` correlation for it.
   current(): RumEventHistoryEntry
   // Views only: deep-merges the given properties into the event, then assembles it (hooks,
   // hierarchy, rate limiting, beforeSend) and notifies `event_collected`. Views are sent
@@ -260,11 +260,13 @@ interface RumInternalApi {
   // reference the event itself: open events (ex. an open view, an ongoing vital) are findable
   // as incomplete entries with their live `handle`, their kickoff fields (ex: vital names) and
   // the live state of the event being built. Finalized events are complete entries carrying
-  // the assembled event and its baggage (including discarded ones, by design). View / action
-  // entries carry their live child counts (`counts`), solely owned and computed by the
-  // internal API: consumers (ex: the click frustration computation) read them off the entry
-  // instead of re-computing. Un-ended events match `endedAfter: t` for any t, so
-  // `{ startedBefore: t, endedAfter: t }` means "active at t".
+  // the assembled event and its baggage (including discarded ones, by design). Child event
+  // counts live directly on the event (view.error.count, view.action.count, ... action.error.count,
+  // ...), solely owned and computed by the internal API — seeded at start, incremented in place
+  // as children assemble, so the live event and every version carry them: consumers (ex: the
+  // click frustration computation) read them off the event instead of re-computing. Un-ended
+  // events match `endedAfter: t` for any t, so `{ startedBefore: t, endedAfter: t }` means
+  // "active at t".
   findEvents(query: {
     type?: string
     open?: boolean // only entries with a live handle — ex: "the open view(s)" catch-ups

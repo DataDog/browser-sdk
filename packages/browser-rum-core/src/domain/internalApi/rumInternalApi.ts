@@ -40,7 +40,7 @@ import {
 } from '@datadog/browser-core'
 import { assertKickoffFields, stampEventId } from './baseRumEvent'
 import type { DraftEvent } from './baseRumEvent'
-import { createEventHistory } from './eventHistory'
+import { createEventHistory, seedEventCounts } from './eventHistory'
 import type { InternalHistoryEntry } from './eventHistory'
 import { assembleRumEvent } from './assembleRumEvent'
 import type { AssemblyPipeline, PendingAssembly } from './assembleRumEvent'
@@ -221,6 +221,7 @@ export function createRumInternalApi(): RumInternalApi {
     const eventId = generateUUID()
     const base = deepClone(kickoff) as DraftEvent
     stampEventId(base, eventId)
+    seedEventCounts(base)
     history.initViewEntry(eventId)
     const baggage: EventBaggage = { ...startBaggage, startClocks }
     const historyEntry = history.addEntry({ complete: false, event: base, baggage }, startClocks.relative, eventId)
@@ -316,10 +317,8 @@ export function createRumInternalApi(): RumInternalApi {
     // the start.
     const base = deepClone(startOptions) as DraftEvent
     stampEventId(base, eventId)
+    seedEventCounts(base)
     const baggage: EventBaggage = { ...startBaggage, startClocks }
-    if (startOptions.type === 'action') {
-      history.initActionEntry(eventId)
-    }
     const historyEntry = history.addEntry({ complete: false, event: base, baggage }, startClocks.relative, eventId)
     let finished = false
 
@@ -342,9 +341,6 @@ export function createRumInternalApi(): RumInternalApi {
         assertNotStopped()
         assertNotFinished()
         history.removeEntry(historyEntry)
-        if (startOptions.type === 'action') {
-          history.deleteActionEntry(eventId)
-        }
         finished = true
       },
       stop(partial: Context, stopOptions?: { endClocks?: ClocksState }) {
@@ -362,11 +358,6 @@ export function createRumInternalApi(): RumInternalApi {
           final: true,
           baggage: { ...baggage, duration: elapsed(baggage.startClocks.timeStamp, endClocks.timeStamp) },
         })
-        // The action child counts must still be in the map when the final assembly snapshots
-        // them onto the event (deleting before assembling zeroed them — bug found in 3b review)
-        if (startOptions.type === 'action') {
-          history.deleteActionEntry(eventId)
-        }
       },
     }
     if (!historyEntry.value.complete) {
@@ -399,6 +390,7 @@ export function createRumInternalApi(): RumInternalApi {
     // the assembly runs (ex: Profiling reads long task ids).
     const baseEvent = deepClone(addOptions.baseRumEvent) as DraftEvent
     stampEventId(baseEvent, eventId)
+    seedEventCounts(baseEvent)
     const historyEntry = history.addEntry(
       { complete: false, event: baseEvent, baggage },
       baggage.startClocks.relative,

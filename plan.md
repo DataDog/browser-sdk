@@ -801,6 +801,15 @@ attaches metrics by catching up on the open views at construction (`findEvents({
 — the initial view's `event_started` fired before its subscription) and updates them through
 the views' live handles, looked up by id.
 
+A further review pass moved the child event counts off the history entries onto the events
+themselves: `view.error.count` / `view.action.count` / ... / `action.error.count` / ... are
+API-owned fields seeded at start and incremented in place as children assemble (every
+assembled version carries them, zeros included, as in main). Side effects: the counts maps, the
+`entry.counts` field and the `EventCounts` type are deleted, the click frustration computation
+reads the click's own event fields, and the "delete the action counts before / after the final
+assembly" ordering hazard (a v1 bug class) is structurally gone — the counts live on the event
+the final assembly clones.
+
 ### v3 validation
 
 - Suites: browser-rum-core 1248 (11 state-machine specs rewritten for v3), browser-rum 674,

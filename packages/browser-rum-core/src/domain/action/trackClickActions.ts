@@ -39,6 +39,7 @@ import { getNodePrivacyLevel } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
 import { getComposedPathSelector } from '../getComposedPathSelector'
 import type { RumInternalApi } from '../internalApi/rumInternalApi.types'
+import type { ActionEventCounts } from '../internalApi/eventHistory'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -327,10 +328,10 @@ function newClick(
     stopObservable,
 
     // Frustration computation reads this after child events were assembled: the live child
-    // counts come from the handle's current state (counts are solely computed by the internal
-    // API)
+    // counts are API-owned fields on the event itself (seeded at start, incremented in place
+    // as children assemble)
     get hasError() {
-      return (handle.current().counts?.errorCount ?? 0) > 0
+      return (handle.current().event as unknown as ActionEventCounts).action.error.count > 0
     },
     get hasPageActivity(): boolean {
       return status !== ClickStatus.ONGOING && endClocks !== undefined

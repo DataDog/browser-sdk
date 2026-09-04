@@ -50,19 +50,12 @@ export function assembleRumEvent(pipeline: AssemblyPipeline, pending: PendingAss
   }
 
   if (event.type === 'view') {
-    const counts = history.getEventCounts(eventId)
-    // view.id is stamped at start; view.name / view.url / service / version flow from the start
-    // options through the base event. Only the counts and the document version are merged here.
+    // view.id is stamped at start; view.name / view.url / service / version AND the child event
+    // counts flow from the start options through the base event (counts are API-owned fields
+    // seeded at start and incremented in place). Only the document version is merged here.
     mergeInto(event, {
       _dd: { document_version: history.nextDocumentVersion(eventId) },
-      view: {
-        id: eventId,
-        error: { count: counts.errorCount },
-        action: { count: counts.actionCount },
-        long_task: { count: counts.longTaskCount },
-        resource: { count: counts.resourceCount },
-        frustration: { count: counts.frustrationCount },
-      },
+      view: { id: eventId },
     })
   } else {
     const viewEntry = history.findViewAt(startTime)
@@ -87,17 +80,11 @@ export function assembleRumEvent(pipeline: AssemblyPipeline, pending: PendingAss
     })
 
     if (event.type === 'action') {
-      const counts = history.getActionChildCounts(eventId)
-      mergeInto(event, {
-        action: {
-          id: eventId,
-          error: { count: counts.errorCount },
-          long_task: { count: counts.longTaskCount },
-          resource: { count: counts.resourceCount },
-        },
-      })
+      // The child event counts flow from the base event (API-owned fields seeded at start);
+      // only the id is merged here.
+      mergeInto(event, { action: { id: eventId } })
     } else {
-      const actionIds = history.findActionIdsAt(startTime, event.type)
+      const actionIds = history.findActionEntriesAt(startTime, event.type).map((entry) => entry.eventId)
       if (actionIds.length > 0) {
         mergeInto(event, { action: { id: actionIds } })
       }
@@ -132,9 +119,10 @@ export function assembleRumEvent(pipeline: AssemblyPipeline, pending: PendingAss
     final ? { type: 'event_stopped', event: assembled, baggage } : { type: 'event_updated', event: assembled, baggage }
   )
 
-  // Event counts are computed after hooks (so hooks can set `_dd.discarded` on resources, or
-  // add action frustration types) and before rate limiting and beforeSend (so counts include
-  // discarded events, as decided in the plan).
+  // Event counts are incremented after hooks (so hooks can set `_dd.discarded` on resources,
+  // or add action frustration types) and before rate limiting and beforeSend (so counts include
+  // discarded events, as decided in the plan). The count fields live on the owner events
+  // (seeded at start), so the increments land on their live base and ride the next versions.
   history.incrementCounts(assembled, startTime)
 
   // Views are exempt from rate limiting, as in the current implementation

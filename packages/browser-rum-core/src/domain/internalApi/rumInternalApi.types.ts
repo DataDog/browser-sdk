@@ -134,36 +134,26 @@ export type AssembleHookCallback = (params: AssembleHookParams) => Context | typ
 
 export type BeforeSend = (event: AssembledRumEvent, domainContext: unknown) => boolean | void
 
-// Child event counts, solely owned and computed by the internal API: views count their error /
-// action / long_task / resource / frustration children, actions count their error / long_task /
-// resource children (the action / frustration counts stay 0 on actions). Exposed on history
-// entries so consumers can read the live counts of ongoing events (ex: the click frustration
-// computation needs whether a click had child errors).
-export interface EventCounts {
-  errorCount: number
-  actionCount: number
-  longTaskCount: number
-  resourceCount: number
-  frustrationCount: number
-}
-
 // An entry of the event history. Incomplete entries are events that have been started but not
 // finalized yet (ex: the draft, the active view, an ongoing vital, or any event held while the
 // API is not configured or the session manager has not resolved): their `event` is the base event
 // being built — the same object the handle mutates, so it always reflects the latest state.
 // Complete entries carry the assembled event (hierarchy fields, hook attributes applied). Both
-// carry the event baggage, and the live child counts when the event is a hierarchy owner
-// (view / action).
+// carry the event baggage.
+//
+// Child event counts live directly on the event (view.error.count, view.action.count, ...
+// action.error.count, ...), not on the entry: they are API-owned fields seeded at start and
+// incremented as children assemble, so the live event (ex: `handle.current().event`) and every
+// assembled version carry them.
 //
 // Note: `AssembledRumEvent` stands in for the schema-typed `RumEvent` until all contexts (ex:
 // session, user, display) are ported to hooks.
 export type RumEventHistoryEntry =
-  | { complete: true; event: AssembledRumEvent; baggage: EventBaggage; counts?: EventCounts }
+  | { complete: true; event: AssembledRumEvent; baggage: EventBaggage }
   | {
       complete: false
       event: IncompleteBaseRumEvent
       baggage: EventBaggage
-      counts?: EventCounts
       // The live handle while the event is open; cleared once it is ended (stop() / cancel() /
       // the API-owned expiry endings). Consumers needing "the open view(s)" — including
       // subscribers attaching after the events started, ex: view metrics at init() for an

@@ -1,11 +1,12 @@
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { addDuration, relativeNow } from '@datadog/js-core/time'
+import { mergeInto } from '@datadog/js-core/util'
 import { SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import type {
   AssembledRumEvent,
   EventBaggage,
-  EventCounts,
   FindEventsQuery,
+  IncompleteBaseRumEvent,
   InternalRumEventType,
   RumEventHistoryEntry,
 } from './rumInternalApi.types'
@@ -15,7 +16,46 @@ import type {
 const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
 const END_OF_TIMES = Infinity as RelativeTime
 
-export type ActionChildCounts = EventCounts
+// The child event count fields, as they live directly on the owner event (solely owned and
+// computed by the internal API): views count their error / action / long_task / resource /
+// frustration children, actions count their error / long_task / resource children.
+export interface ViewEventCounts {
+  view: {
+    error: { count: number }
+    action: { count: number }
+    long_task: { count: number }
+    resource: { count: number }
+    frustration: { count: number }
+  }
+}
+export interface ActionEventCounts {
+  action: {
+    error: { count: number }
+    long_task: { count: number }
+    resource: { count: number }
+  }
+}
+
+// Seed the API-owned count fields on a newly started view / action event: every assembled
+// version carries the counts (zeros included, as in the current implementation), and consumers
+// reading the live event (ex: the click frustration computation) see them increment.
+export function seedEventCounts(base: IncompleteBaseRumEvent) {
+  if (base.type === 'view') {
+    mergeInto(base, {
+      view: {
+        error: { count: 0 },
+        action: { count: 0 },
+        long_task: { count: 0 },
+        resource: { count: 0 },
+        frustration: { count: 0 },
+      },
+    })
+  } else if (base.type === 'action') {
+    mergeInto(base, {
+      action: { error: { count: 0 }, long_task: { count: 0 }, resource: { count: 0 } },
+    })
+  }
+}
 
 // Internal wrapper of an entry: the time bounds used by findEvents, and the internal event id
 // (the linkage id, stamped as view.id / action.id on the event).
@@ -27,9 +67,10 @@ export interface InternalHistoryEntry {
 }
 
 // The event history backs findEvents queries and the event hierarchy lookups (finding the view
-// or the actions active at a given time). It also owns the per-event state that must live as long
-// as its entry: view / action child event counts, and view document versions. Ended entries are
-// pruned after the same delay as ValueHistory (SESSION_TIME_OUT_DELAY).
+// or the actions active at a given time). It also owns the per-event state that must live as
+// long as its entry: view document versions. Child event counts live directly on the events
+// (see seedEventCounts). Ended entries are pruned after the same delay as ValueHistory
+// (SESSION_TIME_OUT_DELAY).
 //
 // The history is the source of truth, notifications are live updates: open events are entries
 // with a live `handle` (cleared once the event ends), findable via the `open` query filter, so
@@ -45,42 +86,28 @@ export interface EventHistory {
   // Flip the entry to its complete form with the assembled event. No-op when `final` is false:
   // only the final assembly of an event completes its entry.
   finalizeEntry(entry: InternalHistoryEntry, final: boolean, event: AssembledRumEvent, baggage: EventBaggage): void
-  // Set up the per-event state of a newly started view / action (counts, document version), and
-  // return the live counts object — history entries reference it, so consumers reading counts
-  // off entries always see the current values.
-  initViewEntry(eventId: string): EventCounts
-  initActionEntry(eventId: string): ActionChildCounts
-  deleteActionEntry(eventId: string): void
+  // Set up the per-event state of a newly started view (its document version counter).
+  initViewEntry(eventId: string): void
   nextDocumentVersion(eventId: string): number
-  getEventCounts(eventId: string): EventCounts
-  getActionChildCounts(eventId: string): ActionChildCounts
-  // Increment the view / action counts an event belongs to. Called from the assembly pipeline,
-  // after hooks and before rate limiting / beforeSend, so discarded events are counted too.
+  // Increment the child event counts on the owner events (the count fields live directly on
+  // them, see seedEventCounts). Called from the assembly pipeline, after hooks and before rate
+  // limiting / beforeSend, so discarded events are counted too.
   incrementCounts(event: AssembledRumEvent, startTime: RelativeTime): void
   findEvents(query: FindEventsQuery): RumEventHistoryEntry[]
   findViewAt(startTime: RelativeTime): InternalHistoryEntry | undefined
-  findActionIdsAt(startTime: RelativeTime, eventType: InternalRumEventType): string[]
+  findActionEntriesAt(startTime: RelativeTime, eventType: InternalRumEventType): InternalHistoryEntry[]
   clear(): void
 }
 
 export function createEventHistory(): EventHistory {
   // Entries are stored newest first.
   let historyEntries: InternalHistoryEntry[] = []
-  const viewCounts = new Map<string, EventCounts>()
-  const actionCounts = new Map<string, ActionChildCounts>()
   const documentVersions = new Map<string, number>()
 
   return {
     addEntry(value, startTime, eventId) {
       prune()
       // Hierarchy owners (views / actions) carry their live child counts on the entry, so
-      // findEvents consumers can read them (see EventCounts). The count object is the one the
-      // maps hold: incrementCounts mutations are reflected on the entry.
-      if (value.event.type === 'view') {
-        value.counts = viewCounts.get(eventId)
-      } else if (value.event.type === 'action') {
-        value.counts = actionCounts.get(eventId)
-      }
       const entry: InternalHistoryEntry = { value, startTime, endTime: END_OF_TIMES, eventId }
       historyEntries.unshift(entry)
       return entry
@@ -100,25 +127,12 @@ export function createEventHistory(): EventHistory {
 
     finalizeEntry(entry, final, event, baggage) {
       if (final) {
-        entry.value = { complete: true, event, baggage, counts: entry.value.counts }
+        entry.value = { complete: true, event, baggage }
       }
     },
 
     initViewEntry(eventId) {
-      const counts = createEventCounts()
-      viewCounts.set(eventId, counts)
       documentVersions.set(eventId, 0)
-      return counts
-    },
-
-    initActionEntry(eventId) {
-      const counts: EventCounts = createEventCounts()
-      actionCounts.set(eventId, counts)
-      return counts
-    },
-
-    deleteActionEntry(eventId) {
-      actionCounts.delete(eventId)
     },
 
     nextDocumentVersion(eventId) {
@@ -127,28 +141,14 @@ export function createEventHistory(): EventHistory {
       return version
     },
 
-    getEventCounts(eventId) {
-      return viewCounts.get(eventId) ?? createEventCounts()
-    },
-
-    getActionChildCounts(eventId) {
-      return actionCounts.get(eventId) ?? createEventCounts()
-    },
-
     incrementCounts(event, startTime) {
       const viewEntry = findViewAt(startTime)
       if (viewEntry) {
-        const counts = viewCounts.get(viewEntry.eventId)
-        if (counts) {
-          incrementViewCounts(counts, event)
-        }
+        incrementViewCounts((viewEntry.value.event as unknown as ViewEventCounts).view, event)
       }
       if (event.type === 'error' || event.type === 'resource' || event.type === 'long_task') {
-        for (const actionId of findActionIdsAt(startTime, event.type)) {
-          const counts = actionCounts.get(actionId)
-          if (counts) {
-            incrementActionCounts(counts, event)
-          }
+        for (const actionEntry of findActionEntriesAt(startTime, event.type)) {
+          incrementActionCounts((actionEntry.value.event as unknown as ActionEventCounts).action, event)
         }
       }
     },
@@ -157,12 +157,10 @@ export function createEventHistory(): EventHistory {
 
     findViewAt,
 
-    findActionIdsAt,
+    findActionEntriesAt,
 
     clear() {
       historyEntries = []
-      viewCounts.clear()
-      actionCounts.clear()
       documentVersions.clear()
     },
   }
@@ -212,7 +210,7 @@ export function createEventHistory(): EventHistory {
     )
   }
 
-  function findActionIdsAt(startTime: RelativeTime, eventType: InternalRumEventType): string[] {
+  function findActionEntriesAt(startTime: RelativeTime, eventType: InternalRumEventType): InternalHistoryEntry[] {
     // Long tasks triggered by interaction handlers can have a start time slightly before the
     // interaction timestamp (< 1ms), so compensate the lookup time.
     const lookupTime = eventType === 'long_task' ? addDuration(startTime, LONG_TASK_START_TIME_CORRECTION) : startTime
@@ -220,7 +218,6 @@ export function createEventHistory(): EventHistory {
       .filter(
         (entry) => entry.value.event.type === 'action' && entry.startTime <= lookupTime && lookupTime < entry.endTime
       )
-      .map((entry) => entry.eventId)
       .reverse() // chronological order, oldest action first
   }
 
@@ -228,7 +225,6 @@ export function createEventHistory(): EventHistory {
     const oldTimeThreshold = relativeNow() - SESSION_TIME_OUT_DELAY
     historyEntries = historyEntries.filter((entry) => {
       if (entry.endTime !== END_OF_TIMES && entry.endTime < oldTimeThreshold) {
-        viewCounts.delete(entry.eventId)
         documentVersions.delete(entry.eventId)
         return false
       }
@@ -237,47 +233,43 @@ export function createEventHistory(): EventHistory {
   }
 }
 
-function createEventCounts(): EventCounts {
-  return { errorCount: 0, actionCount: 0, longTaskCount: 0, resourceCount: 0, frustrationCount: 0 }
-}
-
-function incrementViewCounts(counts: EventCounts, event: AssembledRumEvent) {
-  const { errorCount, actionCount, longTaskCount, resourceCount, frustrationCount } = counts
+// The count fields are seeded at start (seedEventCounts), so the increments below can assume
+// them present on the owner event.
+function incrementViewCounts(viewCounts: ViewEventCounts['view'], event: AssembledRumEvent) {
   switch (event.type) {
     case 'error':
-      counts.errorCount = errorCount + 1
+      viewCounts.error.count += 1
       break
     case 'action': {
-      counts.actionCount = actionCount + 1
+      viewCounts.action.count += 1
       const frustrationTypes = (event.action as { frustration?: { type?: string[] } }).frustration?.type
-      counts.frustrationCount = frustrationCount + (frustrationTypes?.length ?? 0)
+      viewCounts.frustration.count += frustrationTypes?.length ?? 0
       break
     }
     case 'long_task':
-      counts.longTaskCount = longTaskCount + 1
+      viewCounts.long_task.count += 1
       break
     case 'resource':
       // Discarded resources (ex: tracing context discarded by sampling) are not counted, as in
       // the current implementation
       if (!(event as { _dd?: { discarded?: boolean } })._dd?.discarded) {
-        counts.resourceCount = resourceCount + 1
+        viewCounts.resource.count += 1
       }
       break
   }
 }
 
-function incrementActionCounts(counts: ActionChildCounts, event: AssembledRumEvent) {
-  const { errorCount, longTaskCount, resourceCount } = counts
+function incrementActionCounts(actionCounts: ActionEventCounts['action'], event: AssembledRumEvent) {
   switch (event.type) {
     case 'error':
-      counts.errorCount = errorCount + 1
+      actionCounts.error.count += 1
       break
     case 'long_task':
-      counts.longTaskCount = longTaskCount + 1
+      actionCounts.long_task.count += 1
       break
     case 'resource':
       if (!(event as { _dd?: { discarded?: boolean } })._dd?.discarded) {
-        counts.resourceCount = resourceCount + 1
+        actionCounts.resource.count += 1
       }
       break
   }
