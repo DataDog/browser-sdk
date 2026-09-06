@@ -10,7 +10,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     if (clicks.some(isDead)) {
       rageClick.addFrustration(FrustrationType.DEAD_CLICK)
     }
-    if (rageClick.hasError) {
+    if (rageClick.hasError && clicks.some((click) => !click.frustrationIgnore.errorClick)) {
       rageClick.addFrustration(FrustrationType.ERROR_CLICK)
     }
     return { isRage: true }
@@ -18,7 +18,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
 
   const hasSelectionChanged = clicks.some((click) => click.getUserActivity().selection)
   clicks.forEach((click) => {
-    if (click.hasError) {
+    if (click.hasError && !click.frustrationIgnore.errorClick) {
       click.addFrustration(FrustrationType.ERROR_CLICK)
     }
     if (
@@ -33,7 +33,12 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
 }
 
 export function isRage(clicks: Click[]) {
-  if (clicks.some((click) => click.getUserActivity().selection || click.getUserActivity().scroll)) {
+  if (
+    clicks.some(
+      (click) =>
+        click.frustrationIgnore.rageClick || click.getUserActivity().selection || click.getUserActivity().scroll
+    )
+  ) {
     return false
   }
   for (let i = 0; i < clicks.length - (MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE - 1); i += 1) {
@@ -64,6 +69,10 @@ const DEAD_CLICK_EXCLUDE_SELECTOR =
   'a[href] *'
 
 export function isDead(click: Click) {
+  if (click.frustrationIgnore.deadClick) {
+    return false
+  }
+
   if (click.hasPageActivity || click.getUserActivity().input || click.getUserActivity().scroll) {
     return false
   }

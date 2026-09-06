@@ -18,6 +18,8 @@ import { getComposedPathSelector } from '../getComposedPathSelector'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import type { FrustrationIgnore } from './frustrationIgnore'
+import { getFrustrationIgnore } from './frustrationIgnore'
 import type { ActionNameSource } from './actionNameConstants'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
@@ -287,10 +289,12 @@ function newClick(
   actionTracker: EventTracker<ClickActionBase>,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
-  startEvent: MouseEventOnElement
+  startEvent: MouseEventOnElement,
+  frustrationIgnore?: FrustrationIgnore
 ) {
   const clickKey = generateUUID()
   const startClocks = relativeToClocks(startEvent.timeStamp)
+  const capturedFrustrationIgnore = frustrationIgnore ?? getFrustrationIgnore(getEventTarget(startEvent))
 
   const startedClickAction = actionTracker.start(clickKey, startClocks, clickActionBase, {
     isChildEvent: isActionChildEvent,
@@ -319,6 +323,7 @@ function newClick(
 
   return {
     event: startEvent,
+    frustrationIgnore: capturedFrustrationIgnore,
     stop,
     stopObservable,
 
@@ -339,7 +344,8 @@ function newClick(
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent),
+    clone: () =>
+      newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent, capturedFrustrationIgnore),
 
     validate: (domEvents?: Event[]) => {
       stop()

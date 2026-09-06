@@ -80,6 +80,32 @@ describe('createClickChain', () => {
       expect(clickChain.tryAppend(createFakeClick({ event: { target: document.body } }))).toBe(false)
     })
 
+    it('does not accept a click if its rage ignore state is different', () => {
+      clickChain = createClickChain(
+        createFakeClick({ frustrationIgnore: { rageClick: true, deadClick: false, errorClick: false } }),
+        onFinalizeSpy
+      )
+
+      expect(
+        clickChain.tryAppend(
+          createFakeClick({ frustrationIgnore: { rageClick: false, deadClick: false, errorClick: false } })
+        )
+      ).toBe(false)
+    })
+
+    it('accepts a click if only its dead or error ignore state is different', () => {
+      clickChain = createClickChain(
+        createFakeClick({ frustrationIgnore: { rageClick: false, deadClick: true, errorClick: true } }),
+        onFinalizeSpy
+      )
+
+      expect(
+        clickChain.tryAppend(
+          createFakeClick({ frustrationIgnore: { rageClick: false, deadClick: false, errorClick: false } })
+        )
+      ).toBe(true)
+    })
+
     it('does not accept a click if its location is far from the previous one', () => {
       clickChain = createClickChain(createFakeClick({ event: { clientX: 100, clientY: 100 } }), onFinalizeSpy)
       expect(
