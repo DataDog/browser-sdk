@@ -102,13 +102,17 @@ export function trackClickActions(
   function appendClickToClickChain(click: Click) {
     if (!currentClickChain?.tryAppend(click)) {
       const rageClick = click.clone()
-      currentClickChain = createClickChain(click, (clicks) => {
+      const clickChain = createClickChain(click, (clicks) => {
         finalizeClicks(clicks, rageClick)
         // Clear the reference to allow garbage collection. Without this, the finalize callback
         // retains a closure reference to the old click chain, preventing it from being cleaned up
         // and causing a memory leak as click chains accumulate over time.
-        currentClickChain = undefined
+        // Only clear it if no newer chain has replaced it.
+        if (currentClickChain === clickChain) {
+          currentClickChain = undefined
+        }
       })
+      currentClickChain = clickChain
     }
   }
 

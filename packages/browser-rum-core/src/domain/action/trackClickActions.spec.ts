@@ -387,6 +387,19 @@ describe('trackClickActions', () => {
       events.forEach((event) => expect(event.frustrationTypes).not.toContain(FrustrationType.RAGE_CLICK))
     })
 
+    it('keeps the current chain when a previous chain finalizes', () => {
+      startClickActionsTracking()
+
+      emulateClick({ target: emptyElement })
+      emulateClick({ activity: { delay: 5 } })
+      emulateClick({ activity: { delay: 5 } })
+      emulateClick({ activity: { delay: 5 } })
+
+      clock.tick(EXPIRE_DELAY)
+      const rageActions = events.filter((event) => event.frustrationTypes.includes(FrustrationType.RAGE_CLICK))
+      expect(rageActions).toHaveSize(1)
+      expect(rageActions[0].events).toHaveSize(3)
+    })
   })
 
   describe('error clicks', () => {
