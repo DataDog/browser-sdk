@@ -21,11 +21,6 @@ import { createSerializationStats } from './serializationStats'
 
 const CSS_FILE_URL = '/base/packages/browser-rum/test/record/toto.css'
 
-// A base URL whose directory is '/client/', and a relative href that climbs one level out of
-// it to reach the stylesheet served at '/base/packages/...'.
-const RELATIVE_CSS_BASE_URL = `${location.origin}/client/new-quote`
-const RELATIVE_CSS_HREF = '../base/packages/browser-rum/test/record/relativeStylesheet.css'
-
 const PRIVACY_LEVELS = Object.keys({
   [NodePrivacyLevel.ALLOW]: true,
   [NodePrivacyLevel.HIDDEN]: true,
@@ -372,39 +367,6 @@ describe('serializeVirtualAttributes', () => {
       stats.cssText = { ...emptyStats }
     }
 
-    /**
-     * Appends a really loaded `<link rel="stylesheet">` whose `href` attribute is relative, in an
-     * isolated iframe so that changing the base URL can't affect the rest of the test run.
-     */
-    async function appendLinkWithRelativeHref(): Promise<{
-      link: HTMLLinkElement
-      sheet: CSSStyleSheet
-      setBaseUrl: (url: string) => void
-    }> {
-      const iframe = document.createElement('iframe')
-      registerCleanupTask(() => {
-        iframe.remove()
-      })
-
-      const loaded = new Promise((resolve) => iframe.addEventListener('load', resolve))
-      iframe.srcdoc = `
-        <base href="${RELATIVE_CSS_BASE_URL}">
-        <link rel="stylesheet" href="${RELATIVE_CSS_HREF}">
-      `
-      document.body.appendChild(iframe)
-      await loaded
-
-      const iframeDocument = iframe.contentDocument!
-      const link = iframeDocument.querySelector('link')!
-      expect(link.sheet).withContext('the stylesheet should have loaded').not.toBeNull()
-
-      return {
-        link,
-        sheet: link.sheet!,
-        setBaseUrl: (url: string) => iframeDocument.querySelector('base')!.setAttribute('href', url),
-      }
-    }
-
     it('handles link element stylesheets', async () => {
       const cssBlob = new Blob([cssText], { type: 'text/css' })
       const cssUrl = URL.createObjectURL(cssBlob)
@@ -435,16 +397,40 @@ describe('serializeVirtualAttributes', () => {
     })
 
     it('handles link element stylesheets with a relative href after the base URL changed', async () => {
-      const { link, sheet, setBaseUrl } = await appendLinkWithRelativeHref()
+      // A base URL whose directory is '/client/', and a relative href that climbs one level out
+      // of it to reach the stylesheet served at '/base/packages/...'.
+      const baseUrl = `${location.origin}/client/new-quote`
+      const relativeHref = '../base/packages/browser-rum/test/record/relativeStylesheet.css'
 
-      // Emulate a client-side navigation into a deeper directory. Only the document base
-      // URL changes; the stylesheet stays loaded and applied, as it does in the browser.
-      setBaseUrl(`${location.origin}/client/new-quote/personal-details`)
+      // Load the stylesheet for real, in an isolated iframe so that changing the base URL can't
+      // affect the rest of the test run.
+      const iframe = document.createElement('iframe')
+      registerCleanupTask(() => {
+        iframe.remove()
+      })
 
-      // HTMLLinkElement#href re-resolves the relative attribute against the new base URL,
-      // while CSSStyleSheet#href stays frozen at its load-time value. Matching the two is
-      // what used to lose the stylesheet (RUMS-6225).
-      expect(link.href).not.toBe(sheet.href!)
+      const loaded = new Promise((resolve) => iframe.addEventListener('load', resolve))
+      iframe.srcdoc = `
+        <base href="${baseUrl}">
+        <link rel="stylesheet" href="${relativeHref}">
+      `
+      document.body.appendChild(iframe)
+      await loaded
+
+      const iframeDocument = iframe.contentDocument!
+      const link = iframeDocument.querySelector('link')!
+      expect(link.sheet).withContext('the stylesheet should have loaded').not.toBeNull()
+
+      // Emulate a client-side navigation into a deeper directory. Only the document base URL
+      // changes; the stylesheet stays loaded and applied, as it does in the browser. `<base>` is
+      // used rather than `pushState`, which throws on a `srcdoc` document; both change
+      // `document.baseURI`, which is all `HTMLLinkElement#href` reads.
+      iframeDocument.querySelector('base')!.setAttribute('href', `${baseUrl}/personal-details`)
+
+      // HTMLLinkElement#href re-resolves the relative attribute against the new base URL, while
+      // CSSStyleSheet#href stays frozen at its load-time value. Matching the two is what used to
+      // lose the stylesheet (RUMS-6225).
+      expect(link.href).not.toBe(link.sheet!.href!)
 
       expectVirtualAttributes(link, { _cssText: cssText }, checkStats)
     })
