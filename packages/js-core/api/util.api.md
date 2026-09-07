@@ -4,14 +4,6 @@
 
 ```ts
 
-// @internal
-export interface BrowserWindowWithZoneJs {
-    // (undocumented)
-    Zone?: {
-        __symbol__?: (name: string) => string;
-    };
-}
-
 // @public (undocumented)
 export class BufferedObservable<T> extends Observable<T> {
     constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
@@ -181,9 +173,6 @@ export function getPristineWindow(): Pick<Window & typeof globalThis, "URL">;
 
 // @public
 export function getType(value: unknown): "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function" | "null" | "array";
-
-// @internal
-export function getZoneJsOriginalValue<Target, Name extends keyof Target & string>(target: Target, name: Name): Target[Name];
 
 // @public
 export const globalConsole: Console;
