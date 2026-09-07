@@ -57,13 +57,13 @@ test.describe('soft navigation', () => {
     .withRum({ enableExperimentalFeatures: ['soft_navigation'] })
     .withBody(NAV_BUTTON)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      // Runs on chromium-pinned (Chrome 120, genuinely lacks the API) plus firefox/webkit.
-      // Excludes only current chromium -- project.name (not browserName) is what distinguishes
-      // it from chromium-pinned, since both normalize to browserName 'chromium'.
-      test.skip(
-        test.info().project.name === 'chromium',
-        'This test validates behavior on browsers without soft-navigation API'
+      // Feature-detect instead of matching project names -- chromium, chromium-pinned, and
+      // android all normalize/alias differently (see the other tests in this file), and any of
+      // them could support or lack the API depending on the underlying engine version.
+      const supportsSoftNavigation = await page.evaluate(
+        () => 'PerformanceObserver' in window && PerformanceObserver.supportedEntryTypes.includes('soft-navigation')
       )
+      test.skip(supportsSoftNavigation, 'This test validates behavior on browsers without soft-navigation API')
 
       await page.locator('#nav-button').click()
       await flushEvents()
