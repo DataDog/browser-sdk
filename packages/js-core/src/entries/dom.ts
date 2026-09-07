@@ -2,10 +2,10 @@ export { fetch } from '../dom/fetch'
 
 export { createDOMMutationObservable, getMutationObserverConstructor } from '../dom/domMutationObservable'
 export type {
-  RumMutationRecord,
-  RumCharacterDataMutationRecord,
-  RumAttributesMutationRecord,
-  RumChildListMutationRecord,
+  MutationRecord,
+  CharacterDataMutationRecord,
+  AttributesMutationRecord,
+  ChildListMutationRecord,
 } from '../dom/domMutationObservable'
 
 export type { TrustableEvent } from '../dom/addEventListener'

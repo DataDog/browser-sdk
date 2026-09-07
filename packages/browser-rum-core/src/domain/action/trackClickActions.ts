@@ -2,7 +2,7 @@ import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { timeStampNow, timeStampToClocks, relativeToClocks } from '@datadog/js-core/time'
 import { generateUUID } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
-import type { RumMutationRecord } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -54,7 +54,7 @@ export interface ClickAction {
 
 export function trackClickActions(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
@@ -121,7 +121,7 @@ export function trackClickActions(
 function processPointerDown(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
@@ -160,7 +160,7 @@ function processPointerDown(
 function startClickAction(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   actionTracker: EventTracker<ClickActionBase>,
   stopObservable: Observable<void>,

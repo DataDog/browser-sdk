@@ -1,6 +1,6 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/js-core/util'
-import type { RumMutationRecord } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { elapsed } from '@datadog/js-core/time'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'
@@ -16,7 +16,7 @@ import { trackFirstHidden } from './trackFirstHidden'
 
 export function trackLoadingTime(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   loadType: ViewLoadingType,

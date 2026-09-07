@@ -9,7 +9,7 @@ import {
 } from '@datadog/js-core/time'
 import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { Subscription, Context, ContextValue } from '@datadog/js-core/util'
-import type { RumMutationRecord } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import {
   noop,
   PageExitReason,
@@ -99,7 +99,7 @@ export interface ViewOptions {
 
 export function trackViews(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
@@ -199,7 +199,7 @@ export function trackViews(
 
 function newView(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   loadingType: ViewLoadingType,

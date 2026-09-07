@@ -4,33 +4,32 @@ import { Observable } from '../util/observable'
 import { getZoneJsOriginalValue } from '../util/getZoneJsOriginalValue'
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
-export interface RumCharacterDataMutationRecord {
+export interface CharacterDataMutationRecord {
   type: 'characterData'
   target: Node
   oldValue: string | null
 }
 
-export interface RumAttributesMutationRecord {
+export interface AttributesMutationRecord {
   type: 'attributes'
   target: Element
   oldValue: string | null
   attributeName: string
 }
 
-export interface RumChildListMutationRecord {
+export interface ChildListMutationRecord {
   type: 'childList'
   target: Node
   addedNodes: NodeList
   removedNodes: NodeList
 }
 
-export type RumMutationRecord =
-  RumCharacterDataMutationRecord | RumAttributesMutationRecord | RumChildListMutationRecord
+export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRecord | ChildListMutationRecord
 
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
 
-  return new Observable<RumMutationRecord[]>((observable) => {
+  return new Observable<MutationRecord[]>((observable) => {
     const observer = new MutationObserver(monitor((records) => observable.notify(records)))
     observer.observe(document, {
       attributes: true,
@@ -42,7 +41,7 @@ export function createDOMMutationObservable() {
   })
 }
 
-type MutationObserverConstructor = new (callback: (records: RumMutationRecord[]) => void) => MutationObserver
+type MutationObserverConstructor = new (callback: (records: MutationRecord[]) => void) => MutationObserver
 
 export interface BrowserWindow extends Window {
   MutationObserver: MutationObserverConstructor

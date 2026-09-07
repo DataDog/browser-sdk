@@ -1,5 +1,5 @@
 import type { Observable } from '@datadog/js-core/util'
-import type { RumMutationRecord } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { toServerDuration } from '@datadog/js-core/time'
 import type { Duration, ServerDuration } from '@datadog/js-core/time'
 import { getTimeZone, isEmptyObject, mapValues } from '@datadog/browser-core'
@@ -23,7 +23,7 @@ export function startViewCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,

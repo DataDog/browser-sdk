@@ -20,7 +20,41 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 };
 
 // @public (undocumented)
-export function createDOMMutationObservable(): Observable<RumMutationRecord[]>;
+export interface AttributesMutationRecord {
+    // (undocumented)
+    attributeName: string;
+    // (undocumented)
+    oldValue: string | null;
+    // (undocumented)
+    target: Element;
+    // (undocumented)
+    type: 'attributes';
+}
+
+// @public (undocumented)
+export interface CharacterDataMutationRecord {
+    // (undocumented)
+    oldValue: string | null;
+    // (undocumented)
+    target: Node;
+    // (undocumented)
+    type: 'characterData';
+}
+
+// @public (undocumented)
+export interface ChildListMutationRecord {
+    // (undocumented)
+    addedNodes: NodeList;
+    // (undocumented)
+    removedNodes: NodeList;
+    // (undocumented)
+    target: Node;
+    // (undocumented)
+    type: 'childList';
+}
+
+// @public (undocumented)
+export function createDOMMutationObservable(): Observable<MutationRecord_2[]>;
 
 // @public (undocumented)
 export const enum DOM_EVENT {
@@ -107,44 +141,11 @@ export function getMutationObserverConstructor(): MutationObserverConstructor;
 export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target | undefined, eventName: EventName): boolean;
 
 // @public (undocumented)
+type MutationRecord_2 = CharacterDataMutationRecord | AttributesMutationRecord | ChildListMutationRecord;
+export { MutationRecord_2 as MutationRecord }
+
+// @public (undocumented)
 export function resetAllowUntrustedEvents(): void;
-
-// @public (undocumented)
-export interface RumAttributesMutationRecord {
-    // (undocumented)
-    attributeName: string;
-    // (undocumented)
-    oldValue: string | null;
-    // (undocumented)
-    target: Element;
-    // (undocumented)
-    type: 'attributes';
-}
-
-// @public (undocumented)
-export interface RumCharacterDataMutationRecord {
-    // (undocumented)
-    oldValue: string | null;
-    // (undocumented)
-    target: Node;
-    // (undocumented)
-    type: 'characterData';
-}
-
-// @public (undocumented)
-export interface RumChildListMutationRecord {
-    // (undocumented)
-    addedNodes: NodeList;
-    // (undocumented)
-    removedNodes: NodeList;
-    // (undocumented)
-    target: Node;
-    // (undocumented)
-    type: 'childList';
-}
-
-// @public (undocumented)
-export type RumMutationRecord = RumCharacterDataMutationRecord | RumAttributesMutationRecord | RumChildListMutationRecord;
 
 // @public (undocumented)
 export function setAllowUntrustedEvents(value: boolean | undefined): void;

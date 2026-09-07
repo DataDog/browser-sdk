@@ -4,7 +4,7 @@ import { noop } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
-import type { RumMutationRecord } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import {
   createMutationRecord,
@@ -31,7 +31,7 @@ const RANDOM_VIEW_START = 50 as RelativeTime
 describe('trackLoadingTime', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
-  let domMutationObservable: Observable<RumMutationRecord[]>
+  let domMutationObservable: Observable<MutationRecord[]>
   let windowOpenObservable: Observable<void>
   let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void

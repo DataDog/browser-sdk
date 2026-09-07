@@ -2,7 +2,7 @@ import { Observable } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'
 import type { Duration, ServerDuration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumMutationRecord } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
@@ -74,7 +74,7 @@ describe('viewCollection', () => {
     hooks = createHooks()
     const viewHistory = mockViewHistory(viewHistoryEntry)
     getReplayStatsSpy = jasmine.createSpy()
-    const domMutationObservable = new Observable<RumMutationRecord[]>()
+    const domMutationObservable = new Observable<MutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const locationChangeObservable = new Observable<LocationChange>()
     mockClock()

@@ -1,6 +1,5 @@
 import type { Subscription, TimeoutId } from '@datadog/js-core/util'
-import type { TimeoutId } from '@datadog/browser-core'
-import type { RumMutationRecord } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { timeStampNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { monitor } from '@datadog/js-core/monitor'
@@ -57,7 +56,7 @@ export type PageActivityEndEvent = { hadActivity: true; end: TimeStamp } | { had
  */
 export function waitPageActivityEnd(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   pageActivityEndCallback: (event: PageActivityEndEvent) => void,
@@ -117,7 +116,7 @@ export function waitPageActivityEnd(
 
 export function createPageActivityObservable(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ): Observable<PageActivityEvent> {
@@ -176,7 +175,7 @@ function isExcludedUrl(configuration: RumConfiguration, requestUrl: string): boo
   return matchList(configuration.excludedActivityUrls, requestUrl)
 }
 
-function isExcludedMutation(mutation: RumMutationRecord): boolean {
+function isExcludedMutation(mutation: MutationRecord): boolean {
   const targetElement = mutation.type === 'characterData' ? mutation.target.parentElement : mutation.target
 
   return Boolean(

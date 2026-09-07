@@ -1,6 +1,6 @@
 import type { ClocksState, RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/js-core/util'
-import type { RumMutationRecord } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { elapsed, timeStampNow } from '@datadog/js-core/time'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
@@ -22,7 +22,7 @@ export interface CommonViewMetrics {
 
 export function trackCommonViewMetrics(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
