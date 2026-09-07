@@ -59,7 +59,23 @@ describe('startWasmModuleTracking', () => {
     startWasmModuleTracking()
     await WebAssembly.instantiate(wasmModule)
 
-    expect(getLoadedWasmModules()).toEqual([{ url: '<wasm-instantiate-bytes>', build_id: 'abcd' }])
+    expect(getLoadedWasmModules()).toEqual([
+      { url: '<wasm-instantiate-bytes>', build_id: 'abcd', debug_info_type: 'dwarf' },
+    ])
+  })
+
+  it('records source map debug information from the sourceMappingURL custom section', async () => {
+    const wasmModule = new Uint8Array([
+      0, 97, 115, 109, 1, 0, 0, 0, 0, 18, 16, 115, 111, 117, 114, 99, 101, 77, 97, 112, 112, 105, 110, 103, 85, 82, 76,
+      0,
+    ])
+
+    startWasmModuleTracking()
+    await WebAssembly.compile(wasmModule)
+
+    expect(getLoadedWasmModules()).toEqual([
+      { url: '<wasm-compile-bytes>', build_id: '', debug_info_type: 'sourcemap' },
+    ])
   })
 
   it('records modules compiled from a view without including bytes outside of the view', async () => {
@@ -71,7 +87,7 @@ describe('startWasmModuleTracking', () => {
     startWasmModuleTracking()
     await WebAssembly.compile(moduleView)
 
-    expect(getLoadedWasmModules()).toEqual([{ url: '<wasm-compile-bytes>', build_id: '' }])
+    expect(getLoadedWasmModules()).toEqual([{ url: '<wasm-compile-bytes>', build_id: '', debug_info_type: 'unknown' }])
   })
 
   it('records the build ID and URL of modules instantiated from a response', async () => {
@@ -88,7 +104,7 @@ describe('startWasmModuleTracking', () => {
     try {
       await WebAssembly.instantiateStreaming(response)
 
-      expect(getLoadedWasmModules()).toEqual([{ url: response.url, build_id: 'abcd' }])
+      expect(getLoadedWasmModules()).toEqual([{ url: response.url, build_id: 'abcd', debug_info_type: 'dwarf' }])
     } finally {
       resetWasmModuleRegistryForTesting()
       if (originalInstantiateStreaming) {

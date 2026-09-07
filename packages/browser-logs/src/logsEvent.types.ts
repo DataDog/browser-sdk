@@ -115,6 +115,7 @@ export interface LogsEvent {
     wasm_modules?: Array<{
       url: string
       build_id: string
+      debug_info_type?: 'dwarf' | 'sourcemap' | 'unknown'
     }>
 
     [k: string]: unknown

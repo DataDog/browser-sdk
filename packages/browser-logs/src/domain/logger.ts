@@ -14,9 +14,9 @@ import {
   sanitizeTag,
 } from '@datadog/browser-core'
 
+import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 import { isAuthorized, StatusType } from './logger/isAuthorized'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
-import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 
 export interface LogsMessage {
   message: string
