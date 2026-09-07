@@ -13,11 +13,9 @@ export type {
   SessionPersistence,
   TrackingConsent,
   MatchOption,
-  Context,
-  ContextValue,
-  ContextArray,
   RumInternalContext,
 } from '@datadog/browser-core'
+export type { Context, ContextValue, ContextArray } from '@datadog/js-core/util'
 export type { ProxyFn, Site } from '@datadog/js-core/transport'
 
 /**

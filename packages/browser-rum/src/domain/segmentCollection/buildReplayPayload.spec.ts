@@ -1,5 +1,4 @@
 import { deflate } from 'pako'
-import type { Uint8ArrayBuffer } from '@datadog/browser-core'
 import type { BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { readReplayPayload } from '../../../test'
 import type { SerializationStats } from '../record'
@@ -8,7 +7,7 @@ import { buildReplayPayload } from './buildReplayPayload'
 describe('buildReplayPayload', () => {
   const SEGMENT = { foo: 'bar' } as unknown as BrowserSegment
   const SERIALIZED_SEGMENT = JSON.stringify(SEGMENT)
-  const COMPRESSED_SEGMENT = deflate(SERIALIZED_SEGMENT) as Uint8ArrayBuffer
+  const COMPRESSED_SEGMENT = deflate(SERIALIZED_SEGMENT)
   const METADATA: BrowserSegmentMetadata = {
     application: { id: 'xxx' },
     session: { id: 'xxx' },

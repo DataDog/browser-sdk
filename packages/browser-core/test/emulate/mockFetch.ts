@@ -1,4 +1,4 @@
-import type { Uint8ArrayBuffer } from '../../src'
+import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import { noop } from '../../src'
 import { registerCleanupTask } from '../registerCleanupTask'
 

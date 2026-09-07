@@ -1,4 +1,4 @@
-import { mockable } from '@datadog/browser-core'
+import { mockable } from '@datadog/js-core/util'
 import type { RumPlugin } from '@datadog/browser-rum-core'
 import { patchSandboxedIframeApis } from '../boot/patchSandboxedIframeApis'
 import type { ShopifyAnalyticsApi } from './shopifyAnalytics'

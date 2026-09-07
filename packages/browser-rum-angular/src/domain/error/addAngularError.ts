@@ -1,4 +1,4 @@
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { clocksNow } from '@datadog/js-core/time'
 import { callMonitored } from '@datadog/js-core/monitor'
 import { createHandlingStack } from '@datadog/browser-core'

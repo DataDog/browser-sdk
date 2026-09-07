@@ -34,9 +34,6 @@ export type LogsGlobal = LogsPublicApi
 export type {
   InitConfiguration,
   PublicApi,
-  Context,
-  ContextValue,
-  ContextArray,
   User,
   Account,
   TraceContextInjection,
@@ -46,6 +43,7 @@ export type {
   RawReportType,
   ErrorSource,
 } from '@datadog/browser-core'
+export type { Context, ContextValue, ContextArray } from '@datadog/js-core/util'
 export type { ProxyFn, Site } from '@datadog/js-core/transport'
 export type { ConsoleApiName } from '@datadog/js-core/util'
 

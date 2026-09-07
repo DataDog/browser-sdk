@@ -1,9 +1,9 @@
 import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
 import { monitor, monitorError } from '@datadog/js-core/monitor'
-import type { Context } from '../tools/serialisation/context'
+import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
+import type { Context } from '@datadog/js-core/util'
 import { fetch } from '../browser/fetch'
 import { Observable } from '../tools/observable'
-import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
 /**
