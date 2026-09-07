@@ -46,6 +46,10 @@ export function trackRouteChangeViewMetrics(configuration: RumConfiguration, sch
     if (softNavEntry) {
       return
     }
+    // Known limitation: if this view's own transition never produces a soft-navigation entry
+    // (rare) and a later, unrelated interaction on the same view does (e.g. a query-only history
+    // update, which doesn't create a new RUM view per areDifferentLocation() in trackViews.ts),
+    // that entry gets misattributed here. Accepted, compounding edge case.
     softNavEntry = entries[0]
 
     // The ICP entry for this interaction might have arrived before this soft-navigation entry
