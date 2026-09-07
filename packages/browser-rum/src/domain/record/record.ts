@@ -25,6 +25,7 @@ import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScope } from './recordingScope'
 import { createCanvasManager } from './canvas/canvasManager'
+import { serializeCanvasImageContent } from './canvas/serializeCanvasImageContent'
 
 export interface RecordOptions {
   emitRecord: EmitRecordCallback
@@ -84,7 +85,9 @@ export function record(options: RecordOptions): RecordAPI {
     trackVisualViewportResize(processRecord),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
     trackCanvasContent(scope),
-    trackCanvasCapture(scope),
+    trackCanvasCapture(scope, (capture) => {
+      serializeCanvasImageContent(capture, processRecord, emitStats, scope)
+    }),
   ]
 
   return {
