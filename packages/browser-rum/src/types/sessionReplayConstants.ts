@@ -63,6 +63,7 @@ export const ChangeType: {
   InputValue: ChangeTypeId<12, SessionReplay.InputValueChange>
   InputSelection: ChangeTypeId<13, SessionReplay.InputSelectionChange>
   ClearStrings: DatalessChangeTypeId<14>
+  ImageContent: ChangeTypeId<15, SessionReplay.ImageContentChange>
 } = {
   AddString: 0,
   AddNode: 1,
@@ -79,6 +80,7 @@ export const ChangeType: {
   InputValue: 12,
   InputSelection: 13,
   ClearStrings: 14,
+  ImageContent: 15,
 } as const
 
 export type ChangeType = (typeof ChangeType)[keyof typeof ChangeType]
@@ -97,6 +99,7 @@ export const StringRole: {
   FormInput: SessionReplay.StringRoleFormInput
   Css: SessionReplay.StringRoleCSS
   Url: SessionReplay.StringRoleURL
+  ResourceId: SessionReplay.StringResourceId
 } = {
   Default: 0,
   NodeName: 1,
@@ -106,6 +109,7 @@ export const StringRole: {
   FormInput: 5,
   Css: 6,
   Url: 7,
+  ResourceId: 8,
 } as const
 
 export type StringRole = (typeof StringRole)[keyof typeof StringRole]
