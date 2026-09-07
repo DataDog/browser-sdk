@@ -1,6 +1,6 @@
 import type { Payload } from '@datadog/browser-core'
 
-export function buildResourcePayload(hash: string, image: Blob, application: string): Payload {
+export function buildCanvasResourcePayload(hash: string, image: Blob, application: string): Payload {
   const formData = new FormData()
 
   formData.append('image', image, hash)

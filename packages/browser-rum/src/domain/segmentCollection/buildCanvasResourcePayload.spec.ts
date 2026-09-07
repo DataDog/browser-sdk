@@ -1,14 +1,14 @@
 import type { Payload } from '@datadog/browser-core'
-import { buildResourcePayload } from './buildResourcePayload'
+import { buildCanvasResourcePayload } from './buildCanvasResourcePayload'
 
-describe('buildResourcePayload', () => {
+describe('buildCanvasResourcePayload', () => {
   const HASH = '20x30:abcdef1234567890'
   const IMAGE_BLOB = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
   const APPLICATION_ID = 'app-id'
   let payload: Payload
 
   beforeEach(() => {
-    payload = buildResourcePayload(HASH, IMAGE_BLOB, APPLICATION_ID)
+    payload = buildCanvasResourcePayload(HASH, IMAGE_BLOB, APPLICATION_ID)
   })
 
   it('adds the image as a file named after the hash', () => {
