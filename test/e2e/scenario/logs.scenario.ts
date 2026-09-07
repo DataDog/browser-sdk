@@ -313,7 +313,9 @@ test.describe('logs', () => {
       })
 
       await flushEvents()
-      const expectedWasmModules = [{ url: new URL('/test-module.wasm', baseUrl).href, build_id: 'abcd' }]
+      const expectedWasmModules = [
+        { url: new URL('/test-module.wasm', baseUrl).href, build_id: 'abcd', debug_info_type: 'dwarf' },
+      ]
 
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].error?.source_type).toBe('browser+wasm')

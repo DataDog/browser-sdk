@@ -71,7 +71,7 @@ test.describe('rum errors', () => {
       expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
       expect(intakeRegistry.rumErrorEvents[0].error.source_type).toBe('browser+wasm')
       expect(intakeRegistry.rumErrorEvents[0].error.wasm_modules).toEqual([
-        { url: new URL('/test-module.wasm', baseUrl).href, build_id: 'abcd' },
+        { url: new URL('/test-module.wasm', baseUrl).href, build_id: 'abcd', debug_info_type: 'dwarf' },
       ])
       withBrowserLogs((browserLogs) => {
         expect(browserLogs).toHaveLength(1)

@@ -55,7 +55,7 @@ describe('Logger', () => {
             fingerprint: undefined,
           },
         })
-        expect(getLoggedMessage(0).error).toEqual(getLoggedMessage(0).context?.error)
+        expect(getLoggedMessage(0).error).toEqual(getLoggedMessage(0).context?.error as LogsMessage['error'])
       })
 
       it(`'logger.${status}' should create an handling stack`, () => {
