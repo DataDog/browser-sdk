@@ -20,6 +20,7 @@ import type {
   LogsIntakeRequest,
   ProfileIntakeRequest,
   ReplayIntakeRequest,
+  ReplayResourceIntakeRequest,
   RumIntakeRequest,
 } from './intakeProxyMiddleware'
 
@@ -133,6 +134,10 @@ export class IntakeRegistry {
     return this.replayRequests.flatMap((request) => request.segment.records)
   }
 
+  get replayResourceRequests() {
+    return this.requests.filter(isReplayResourceIntakeRequest)
+  }
+
   //
   // Profiling
   //
@@ -168,6 +173,10 @@ function isRumIntakeRequest(request: IntakeRequest): request is RumIntakeRequest
 
 function isReplayIntakeRequest(request: IntakeRequest): request is ReplayIntakeRequest {
   return request.intakeType === 'replay'
+}
+
+function isReplayResourceIntakeRequest(request: IntakeRequest): request is ReplayResourceIntakeRequest {
+  return request.intakeType === 'replay-resource'
 }
 
 function isProfileIntakeRequest(request: IntakeRequest): request is ProfileIntakeRequest {

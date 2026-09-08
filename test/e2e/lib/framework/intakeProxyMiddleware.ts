@@ -41,6 +41,23 @@ export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {
   compressed_segment_size: number
 }
 
+export interface BrowserResourceEvent {
+  application: { id: string }
+  type: 'resource'
+}
+
+export type ReplayResourceIntakeRequest = {
+  intakeType: 'replay-resource'
+  hash: string
+  image: Buffer
+  imageFile: {
+    filename: string
+    encoding: string
+    mimetype: string
+  }
+  event: BrowserResourceEvent
+} & BaseIntakeRequest
+
 export type ProfileIntakeRequest = {
   intakeType: 'profile'
   event: BrowserProfileEvent
@@ -58,7 +75,12 @@ export type DebuggerIntakeRequest = {
 } & BaseIntakeRequest
 
 export type IntakeRequest =
-  LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest | ProfileIntakeRequest | DebuggerIntakeRequest
+  | LogsIntakeRequest
+  | RumIntakeRequest
+  | ReplayIntakeRequest
+  | ReplayResourceIntakeRequest
+  | ProfileIntakeRequest
+  | DebuggerIntakeRequest
 
 interface IntakeRequestInfos {
   isBridge: boolean
@@ -165,7 +187,7 @@ async function readEventIntakeRequest(
 function readReplayIntakeRequest(
   req: express.Request,
   infos: IntakeRequestInfos & { intakeType: 'replay' }
-): Promise<ReplayIntakeRequest> {
+): Promise<ReplayIntakeRequest | ReplayResourceIntakeRequest> {
   return new Promise((resolve, reject) => {
     if (infos.isBridge) {
       readStream(req)
@@ -190,7 +212,13 @@ function readReplayIntakeRequest(
       mimetype: string
       segment: BrowserSegment
     }>
-    let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes>
+    let imagePromise: Promise<{
+      encoding: string
+      filename: string
+      mimetype: string
+      image: Buffer
+    }>
+    let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes | BrowserResourceEvent>
 
     const busboy = createBusboy({ headers: req.headers })
 
@@ -203,22 +231,45 @@ function readReplayIntakeRequest(
           mimetype: mimeType,
           segment: JSON.parse(data.toString()),
         }))
+      } else if (name === 'image') {
+        // canvas resource images are uploaded raw (not deflate-compressed), unlike segments
+        imagePromise = readStream(stream).then((data) => ({
+          encoding,
+          filename,
+          mimetype: mimeType,
+          image: data,
+        }))
       } else if (name === 'event') {
         metadataPromise = readStream(stream).then(
-          (data) => JSON.parse(data.toString()) as BrowserSegmentMetadataAndSegmentSizes
+          (data) => JSON.parse(data.toString()) as BrowserSegmentMetadataAndSegmentSizes | BrowserResourceEvent
         )
       }
     })
 
     busboy.on('finish', () => {
-      Promise.all([segmentPromise, metadataPromise])
-        .then(([{ segment, ...segmentFile }, metadata]) => ({
-          ...infos,
-          segmentFile,
-          metadata,
-          segment,
-        }))
-        .then(resolve, reject)
+      Promise.all([metadataPromise, segmentPromise, imagePromise])
+        .then(([metadata, segmentResult, imageResult]) => {
+          if (imageResult) {
+            const { image, ...imageFile } = imageResult
+            resolve({
+              ...infos,
+              intakeType: 'replay-resource',
+              hash: imageFile.filename,
+              image,
+              imageFile,
+              event: metadata as BrowserResourceEvent,
+            })
+          } else {
+            const { segment, ...segmentFile } = segmentResult
+            resolve({
+              ...infos,
+              segmentFile,
+              metadata: metadata as BrowserSegmentMetadataAndSegmentSizes,
+              segment,
+            })
+          }
+        })
+        .catch(reject)
     })
 
     req.pipe(busboy)
