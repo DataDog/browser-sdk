@@ -2,13 +2,13 @@ import { timeStampNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { StringRole } from '../../../types'
 import { createString } from '../encoding'
+import type { NodeId } from '../encoding'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
 import { SerializationKind, serializeInTransaction } from '../serialization'
-import type { CanvasCapture } from '../trackers'
 
 export function serializeCanvasImageContent(
-  capture: CanvasCapture,
+  capture: { nodeId: NodeId; changeHash: string },
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
   scope: RecordingScope,

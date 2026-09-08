@@ -8,17 +8,16 @@ import type { CanvasCaptureAttempt } from '../canvas/canvasManager'
 import { CanvasStatus } from '../canvas/canvasManager'
 import { captureCanvasImage, createCanvasSnapshot } from '../canvas/canvasSnapshot'
 import { computeImageHash } from '../canvas/canvasHash'
+import { serializeCanvasImageContent } from '../canvas/serializeCanvasImageContent'
+import type { EmitCanvasResourceCallback, EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
 
-export interface CanvasCapture {
-  nodeId: NodeId
-  changeHash: string
-  image: Blob
-}
-
-export type CanvasCaptureCallback = (capture: CanvasCapture) => void
-
-export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: CanvasCaptureCallback = noop): Tracker => {
+export const trackCanvasCapture = (
+  emitRecord: EmitRecordCallback,
+  emitStats: EmitStatsCallback,
+  scope: RecordingScope,
+  emitCanvasResource?: EmitCanvasResourceCallback
+): Tracker => {
   const canvasManager = scope.canvasManager
   const configuration = scope.configuration.sessionReplayCanvasRecording
   const maxFramesPerSecond = configuration?.maxFramesPerSecond ?? 0
@@ -120,7 +119,8 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       }
 
       try {
-        onCanvasCapture({ nodeId, changeHash: hash, image })
+        serializeCanvasImageContent({ nodeId, changeHash: hash }, emitRecord, emitStats, scope)
+        emitCanvasResource?.(hash, image)
       } catch {
         if (!cancelled()) {
           canvasManager.markCanvas(canvas, CanvasStatus.Dirty)

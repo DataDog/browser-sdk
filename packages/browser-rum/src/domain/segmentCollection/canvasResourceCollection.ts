@@ -7,12 +7,24 @@ export function startCanvasResourceCollection(
   httpRequest: HttpRequest<Payload>
 ): EmitCanvasResourceCallback {
   const uploadedHashes = new Set<string>()
+  const pendingHashes = new WeakMap<Payload, string>()
+
+  httpRequest.observable.subscribe((event) => {
+    if (event.type === 'queue-full') {
+      const hash = pendingHashes.get(event.payload)
+      if (hash) {
+        uploadedHashes.delete(hash)
+      }
+    }
+  })
 
   return (hash, image) => {
     if (uploadedHashes.has(hash)) {
       return
     }
     uploadedHashes.add(hash)
-    httpRequest.send(buildCanvasResourcePayload(hash, image, applicationId))
+    const payload = buildCanvasResourcePayload(hash, image, applicationId)
+    pendingHashes.set(payload, hash)
+    httpRequest.send(payload)
   }
 }
