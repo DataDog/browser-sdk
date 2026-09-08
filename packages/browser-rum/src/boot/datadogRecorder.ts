@@ -1,4 +1,4 @@
-import type { HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { HttpRequest, Payload, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop, ErrorSource } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
@@ -8,7 +8,12 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
 import type { ReplayPayload } from '../domain/segmentCollection'
-import { startSegmentCollection, SEGMENT_BYTES_LIMIT, startSegmentTelemetry } from '../domain/segmentCollection'
+import {
+  startSegmentCollection,
+  SEGMENT_BYTES_LIMIT,
+  startSegmentTelemetry,
+  startCanvasResourceCollection,
+} from '../domain/segmentCollection'
 import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
 
@@ -19,7 +24,8 @@ export function startRecording(
   viewHistory: ViewHistory,
   encoder: DeflateEncoder,
   telemetry: Telemetry,
-  httpRequest?: HttpRequest<ReplayPayload>
+  httpRequest?: HttpRequest<ReplayPayload>,
+  canvasHttpRequest?: HttpRequest<Payload>
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -34,8 +40,12 @@ export function startRecording(
   const replayRequest =
     httpRequest || createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
 
+  const canvasResourceRequest =
+    canvasHttpRequest || createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError)
+
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
+  let emitCanvasResource: ((hash: string, image: Blob) => void) | undefined
 
   if (!canUseEventBridge()) {
     const segmentCollection = startSegmentCollection(
@@ -52,6 +62,8 @@ export function startRecording(
 
     const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
     cleanupTasks.push(segmentTelemetry.stop)
+
+    emitCanvasResource = startCanvasResourceCollection(configuration.applicationId, canvasResourceRequest).addResource
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))
     addStats = noop
@@ -63,6 +75,7 @@ export function startRecording(
     configuration,
     lifeCycle,
     viewHistory,
+    emitCanvasResource,
   })
   cleanupTasks.push(stopRecording)
 

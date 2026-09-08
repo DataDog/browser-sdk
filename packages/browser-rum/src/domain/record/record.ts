@@ -22,7 +22,7 @@ import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
-import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+import type { EmitRecordCallback, EmitStatsCallback, EmitCanvasResourceCallback } from './record.types'
 import { createRecordingScope } from './recordingScope'
 import { createCanvasManager } from './canvas/canvasManager'
 import { serializeCanvasImageContent } from './canvas/serializeCanvasImageContent'
@@ -33,6 +33,7 @@ export interface RecordOptions {
   configuration: RumConfiguration
   lifeCycle: LifeCycle
   viewHistory: ViewHistory
+  emitCanvasResource?: EmitCanvasResourceCallback
 }
 
 export interface RecordAPI {
@@ -87,6 +88,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackCanvasContent(scope),
     trackCanvasCapture(scope, (capture) => {
       serializeCanvasImageContent(capture, processRecord, emitStats, scope)
+      options.emitCanvasResource?.(capture.changeHash, capture.image)
     }),
   ]
 

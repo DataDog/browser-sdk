@@ -1,14 +1,14 @@
 import type { HttpRequest, Payload } from '@datadog/browser-core'
 import { buildCanvasResourcePayload } from './buildCanvasResourcePayload'
 
-export interface ResourceCollector {
+export interface CanvasResourceCollector {
   addResource(this: void, hash: string, image: Blob): void
 }
 
 export function startCanvasResourceCollection(
   applicationId: string,
   httpRequest: HttpRequest<Payload>
-): ResourceCollector {
+): CanvasResourceCollector {
   const uploadedHashes = new Set<string>()
 
   return {
