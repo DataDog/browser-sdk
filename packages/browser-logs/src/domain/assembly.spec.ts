@@ -49,7 +49,7 @@ describe('startLogsAssembly', () => {
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
     startRUMInternalContext(hooks)
-    startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, noop)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -160,7 +160,7 @@ describe('startLogsAssembly', () => {
 
   describe('assembly precedence', () => {
     it('defaultLogsEventAttributes should take precedence over service, session_id', () => {
-      hooks.assemble.register(() => ({
+      hooks.assembleEventDefaults.register(() => ({
         service: 'foo',
         session_id: 'bar',
       }))
@@ -172,7 +172,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('defaultLogsEventAttributes should take precedence over common context', () => {
-      hooks.assemble.register(() => ({
+      hooks.assembleEventDefaults.register(() => ({
         view: {
           referrer: 'referrer_from_defaultLogsEventAttributes',
           url: 'url_from_defaultLogsEventAttributes',
@@ -202,13 +202,23 @@ describe('startLogsAssembly', () => {
     })
 
     it('raw log should take precedence over defaultLogsEventAttributes', () => {
-      hooks.assemble.register(() => ({
+      hooks.assembleEventDefaults.register(() => ({
         message: 'from-defaultLogsEventAttributes',
       }))
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].message).toEqual('message')
+    })
+  })
+
+  describe('assembleEvent override hook', () => {
+    it('lets an assembleEvent hook override fields set on the raw event', () => {
+      hooks.assembleEvent.register(() => ({ message: 'overridden-message' }))
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+
+      expect(serverLogs[0].message).toBe('overridden-message')
     })
   })
 
@@ -276,7 +286,7 @@ describe('logs limitation', () => {
 
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, reportErrorSpy, 1)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy, 1)
     clock = mockClock()
   })
 

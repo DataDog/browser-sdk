@@ -242,7 +242,11 @@ export function createPreStartStrategy(
         return
       }
 
-      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, { initConfiguration, publicApi })
+      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, {
+        initConfiguration,
+        publicApi,
+        registerAssembleEventHook: hooks.assembleEvent.register,
+      })
 
       if (typeof shouldContinue === 'boolean') {
         if (shouldContinue) {

@@ -1,6 +1,6 @@
 import { VERSION } from '@angular/core'
 import { toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { angularPlugin, onRumInit, onRumStart, resetAngularPlugin } from './angularPlugin'
 
@@ -36,7 +36,7 @@ describe('angularPlugin', () => {
     angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
-    })
+    } as RumPluginOnInitOptions)
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
@@ -50,7 +50,7 @@ describe('angularPlugin', () => {
     angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
-    })
+    } as RumPluginOnInitOptions)
 
     onRumInit(callbackSpy)
 
@@ -62,7 +62,7 @@ describe('angularPlugin', () => {
   it('enforce manual view tracking when router is enabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-    angularPlugin({ router: true }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
+    angularPlugin({ router: true }).onInit!({ publicApi: PUBLIC_API, initConfiguration } as RumPluginOnInitOptions)
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
@@ -70,7 +70,7 @@ describe('angularPlugin', () => {
   it('does not enforce manual view tracking when router is disabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-    angularPlugin({ router: false }).onInit!({ publicApi: PUBLIC_API, initConfiguration })
+    angularPlugin({ router: false }).onInit!({ publicApi: PUBLIC_API, initConfiguration } as RumPluginOnInitOptions)
 
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })
