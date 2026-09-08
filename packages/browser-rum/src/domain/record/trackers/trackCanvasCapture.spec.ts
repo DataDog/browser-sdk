@@ -236,8 +236,10 @@ describe('trackCanvasCapture', () => {
       expect(onCanvasCapture).toHaveBeenCalledTimes(2)
       if (currentNodeId !== undefined) {
         expect(currentNodeId).not.toBe(previousNodeId)
-        expect(emitRecord.calls.argsFor(1)[0].data).toEqual(
-          jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]])
+        expect(emitRecord.calls.argsFor(1)[0]).toEqual(
+          jasmine.objectContaining({
+            data: jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]])
+          })
         )
       }
     })
@@ -316,8 +318,10 @@ describe('trackCanvasCapture', () => {
       await waitForCanvasCapture()
 
       expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob))
-      expect(emitRecord.calls.argsFor(0)[0].data).toEqual(
-        jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]])
+      expect(emitRecord.calls.argsFor(0)[0]).toEqual(
+        jasmine.objectContaining({
+          data: jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]])
+        })
       )
     })
   })
