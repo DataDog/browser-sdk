@@ -17,18 +17,9 @@ export function checkPackageJsonFiles(): void {
 `
   )
 
-  // Map each independently-versioned package (e.g. @datadog/js-core) to its own version, so we can
-  // check that dependents reference the matching version rather than the synced release version.
-  const independentVersions = new Map<string, string>()
-  for (const { content } of packageJsonFiles) {
-    if (content.name && isIndependentlyVersionedPackage(content.name) && content.version) {
-      independentVersions.set(content.name, content.version)
-    }
-  }
-
   for (const packageJsonFile of packageJsonFiles) {
     checkPackageJsonVersion(packageJsonFile)
-    checkPackageDependencyVersions(packageJsonFile, independentVersions)
+    checkPackageDependencyVersions(packageJsonFile)
   }
 }
 function checkPackageJsonVersion(packageJsonInfo: PackageJsonInfo): void {
@@ -55,10 +46,7 @@ function checkPackageJsonVersion(packageJsonInfo: PackageJsonInfo): void {
     )
   }
 }
-function checkPackageDependencyVersions(
-  packageJsonInfo: PackageJsonInfo,
-  independentVersions: Map<string, string>
-): void {
+function checkPackageDependencyVersions(packageJsonInfo: PackageJsonInfo): void {
   if (packageJsonInfo.content.private) {
     return
   }
@@ -73,18 +61,12 @@ function checkPackageDependencyVersions(
     }
 
     for (const [dependencyName, dependencyVersion] of Object.entries(dependencies)) {
-      // Independently-versioned packages (e.g. @datadog/js-core) are pinned to their own version,
-      // so dependents must reference that version rather than the synced release version.
-      const expectedIndependentVersion = independentVersions.get(dependencyName)
-      if (expectedIndependentVersion !== undefined) {
-        if (dependencyVersion !== expectedIndependentVersion) {
-          throw new Error(
-            `Invalid dependency version for ${dependencyName} in ${packageJsonInfo.relativePath}: expected ${expectedIndependentVersion}, got ${dependencyVersion}`
-          )
-        }
-      } else if (isBrowserSdkPackageName(dependencyName) && dependencyVersion !== releaseVersion) {
+      // Internal Browser SDK packages are resolved from the monorepo workspaces, so dependents must
+      // reference them with the `workspace:` protocol instead of a hardcoded version. Yarn rewrites
+      // `workspace:*` to the resolved concrete version at publish time.
+      if (isBrowserSdkPackageName(dependencyName) && dependencyVersion !== 'workspace:*') {
         throw new Error(
-          `Invalid dependency version for ${dependencyName} in ${packageJsonInfo.relativePath}: expected ${releaseVersion}, got ${dependencyVersion}`
+          `Invalid dependency version for ${dependencyName} in ${packageJsonInfo.relativePath}: expected workspace:*, got ${dependencyVersion}`
         )
       }
     }

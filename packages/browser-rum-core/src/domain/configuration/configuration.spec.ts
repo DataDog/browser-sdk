@@ -359,25 +359,68 @@ describe('validateAndBuildRumConfiguration', () => {
           sessionReplayCanvasRecording: { enable: true },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 1 })
+        expect(configuration.sessionReplayCanvasRecording).toEqual({
+          enable: true,
+          maxFramesPerSecond: 1,
+          hashingMaxDimension: 100,
+          maxImageDimension: 1000,
+        })
       })
 
       it('uses the configured frame rate', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
+          sessionReplayCanvasRecording: {
+            enable: true,
+            maxFramesPerSecond: 2.5,
+            hashingMaxDimension: 50,
+            maxImageDimension: 500,
+          },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 2.5 })
+        expect(configuration.sessionReplayCanvasRecording).toEqual({
+          enable: true,
+          maxFramesPerSecond: 2.5,
+          hashingMaxDimension: 50,
+          maxImageDimension: 500,
+        })
       })
 
-      it('preserves the configured frame rate when disabled', () => {
+      it('preserves the configured options when disabled', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionReplayCanvasRecording: { enable: false, maxFramesPerSecond: 2.5 },
+          sessionReplayCanvasRecording: {
+            enable: false,
+            maxFramesPerSecond: 2.5,
+            hashingMaxDimension: 50,
+            maxImageDimension: 500,
+          },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: false, maxFramesPerSecond: 2.5 })
+        expect(configuration.sessionReplayCanvasRecording).toEqual({
+          enable: false,
+          maxFramesPerSecond: 2.5,
+          hashingMaxDimension: 50,
+          maxImageDimension: 500,
+        })
+      })
+
+      it('rejects a hashing dimension above 100 pixels', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: { enable: true, hashingMaxDimension: 101 },
+          })
+        ).toBeUndefined()
+      })
+
+      it('rejects an image dimension above 1000 pixels', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: { enable: true, maxImageDimension: 1001 },
+          })
+        ).toBeUndefined()
       })
 
       it('rejects invalid canvas recording options', () => {

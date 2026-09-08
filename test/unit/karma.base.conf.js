@@ -33,6 +33,8 @@ const FILES = [
   // `afterEach` hooks.
   'packages/browser-core/test/forEach.spec.ts',
   'packages/browser-rum/test/record/toto.css',
+  // Served but not injected into the runner page, so its rules don't leak into other specs.
+  { pattern: 'packages/browser-rum/test/record/relativeStylesheet.css', included: false, watched: false },
 ]
 
 const FILES_SPECS = [
