@@ -2,6 +2,7 @@ import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
 import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager } from '@datadog/browser-core'
 import { display, ResourceType, startGlobalContext, startTabContext } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
@@ -572,7 +573,7 @@ describe('rum assembly', () => {
         partialConfiguration: { service: 'default-service', version: 'default-version' },
       })
 
-      hooks.assemble.register(({ eventType }) => ({
+      hooks.assembleEventDefaults.register(({ eventType }) => ({
         type: eventType,
         service: 'new service',
         version: 'new version',
@@ -590,7 +591,7 @@ describe('rum assembly', () => {
     it('should not override customer context', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
 
-      hooks.assemble.register(({ eventType }) => ({
+      hooks.assembleEventDefaults.register(({ eventType }) => ({
         type: eventType,
         context: { foo: 'bar' },
       }))
@@ -604,13 +605,44 @@ describe('rum assembly', () => {
     it('should include tab.id from tabContext', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
 
-      startTabContext(hooks.assemble)
+      startTabContext(hooks.assembleEventDefaults)
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
       expect((serverRumEvents[0] as any).tab.id).toEqual(jasmine.any(String))
+    })
+  })
+
+  describe('assembleEvent override hook', () => {
+    it('lets an assembleEvent hook override fields set on the raw event', () => {
+      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
+
+      hooks.assembleEvent.register(({ eventType }) =>
+        eventType === RumEventType.ERROR
+          ? { type: eventType, error: { fingerprint: 'overridden-fingerprint' } }
+          : SKIPPED
+      )
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
+          error: {
+            id: 'error-id',
+            source: 'source',
+            message: 'boom',
+            stack: 'Error: boom\n  at foo (https://example.com/app.js:1:1)',
+            source_type: 'browser',
+            handling: 'unhandled',
+            fingerprint: 'original-fingerprint',
+          },
+        }),
+      })
+
+      const errorEvent = serverRumEvents[0] as RumErrorEvent
+      expect(errorEvent.error.fingerprint).toBe('overridden-fingerprint')
+      // Raw event fields not overridden by the hook are preserved.
+      expect(errorEvent.error.message).toBe('boom')
     })
   })
 
@@ -776,9 +808,9 @@ function setupAssemblyTestWithDefaults({
   const recorderApi = noopRecorderApi
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
   const configuration = mockRumConfiguration(partialConfiguration)
-  startGlobalContext(hooks.assemble, configuration, 'rum', true)
-  startSessionContext(hooks.assemble, configuration, rumSessionManager, recorderApi, viewHistory)
-  startRumAssembly(configuration, lifeCycle, hooks.assemble, reportErrorSpy, eventRateLimit)
+  startGlobalContext(hooks.assembleEventDefaults, configuration, 'rum', true)
+  startSessionContext(hooks.assembleEventDefaults, configuration, rumSessionManager, recorderApi, viewHistory)
+  startRumAssembly(configuration, lifeCycle, hooks, reportErrorSpy, eventRateLimit)
 
   registerCleanupTask(() => {
     subscription.unsubscribe()

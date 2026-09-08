@@ -199,7 +199,7 @@ export type StringRoleId =
   | StringRoleFormInput
   | StringRoleCSS
   | StringRoleURL
-  | StringResourceId
+  | StringRoleResourceId
 /**
  * The default string role, used for uncategorized strings. Strings added by an AddStringChange are added to this string role.
  */
@@ -235,7 +235,7 @@ export type StringRoleURL = 7
 /**
  * A string role containing resource IDs.
  */
-export type StringResourceId = 8
+export type StringRoleResourceId = 8
 /**
  * Schema representing the addition of a new #document node.
  *

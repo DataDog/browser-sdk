@@ -13,6 +13,6 @@ export function startTrackingConsentContext(hooks: Hooks, trackingConsentState: 
     return SKIPPED
   }
 
-  hooks.assemble.register(isConsented)
+  hooks.assembleEventDefaults.register(isConsented)
   hooks.assembleTelemetry.register(isConsented)
 }
