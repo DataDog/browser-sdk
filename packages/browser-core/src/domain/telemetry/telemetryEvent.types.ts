@@ -638,7 +638,14 @@ export type TelemetryFeatureFlagsLifecycleEvent = CommonTelemetryProperties & {
     /**
      * Feature Flags SDK lifecycle transition
      */
-    event_type: 'provider_error'
+    event_type:
+      | 'sdk_init_started'
+      | 'configuration_received'
+      | 'provider_ready'
+      | 'provider_error'
+      | 'first_evaluation'
+      | 'init_timeout'
+      | 'init_failed'
     /**
      * Time at which the SDK observed the transition, in milliseconds from epoch
      */
@@ -668,9 +675,33 @@ export type TelemetryFeatureFlagsLifecycleEvent = CommonTelemetryProperties & {
      */
     sdk_version: string
     /**
+     * Source from which the active flag configuration was obtained
+     */
+    configuration_source?: 'remote' | 'cache'
+    /**
+     * Opaque version of the active flag configuration
+     */
+    configuration_version?: string
+    /**
+     * Time at which the active flag configuration was fetched, in milliseconds from epoch
+     */
+    configuration_fetched_at?: number
+    /**
+     * Feature Flags provider status after the lifecycle transition
+     */
+    provider_status?: 'ready' | 'stale' | 'error'
+    /**
+     * Elapsed time between SDK initialization starting and terminating
+     */
+    init_latency_ms?: number
+    /**
+     * Whether full flag evaluation reporting is enabled
+     */
+    evaluation_reporting_enabled?: boolean
+    /**
      * Fixed customer-safe error classification
      */
-    error_code: 'precomputed_assignments_fetch_failed'
+    error_code?: 'precomputed_assignments_fetch_failed' | 'initialization_timeout' | 'initialization_failed'
   }
   [k: string]: unknown
 }

@@ -10,25 +10,72 @@ import type { TelemetryEvent, TelemetryFeatureFlagsLifecycleEvent } from './tele
 import { startTelemetryTransport, TelemetryService } from './telemetry'
 
 export const FeatureFlagsTelemetryEventType = {
+  SDK_INIT_STARTED: 'sdk_init_started',
+  CONFIGURATION_RECEIVED: 'configuration_received',
+  PROVIDER_READY: 'provider_ready',
   PROVIDER_ERROR: 'provider_error',
+  FIRST_EVALUATION: 'first_evaluation',
+  INIT_TIMEOUT: 'init_timeout',
+  INIT_FAILED: 'init_failed',
 } as const
 
 export const FeatureFlagsTelemetryErrorCode = {
   PRECOMPUTED_ASSIGNMENTS_FETCH_FAILED: 'precomputed_assignments_fetch_failed',
+  INITIALIZATION_TIMEOUT: 'initialization_timeout',
+  INITIALIZATION_FAILED: 'initialization_failed',
+} as const
+
+export const FeatureFlagsTelemetryConfigurationSource = {
+  REMOTE: 'remote',
+  CACHE: 'cache',
+} as const
+
+export const FeatureFlagsTelemetryProviderStatus = {
+  READY: 'ready',
+  STALE: 'stale',
+  ERROR: 'error',
 } as const
 
 type FeatureFlagsTelemetryPayload = TelemetryFeatureFlagsLifecycleEvent['telemetry']
 
-export interface FeatureFlagsLifecycleEvent {
-  eventType: FeatureFlagsTelemetryPayload['event_type']
-  errorCode: FeatureFlagsTelemetryPayload['error_code']
-}
+export type FeatureFlagsLifecycleEvent =
+  | { eventType: typeof FeatureFlagsTelemetryEventType.SDK_INIT_STARTED }
+  | {
+      eventType: typeof FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED
+      configurationSource: NonNullable<FeatureFlagsTelemetryPayload['configuration_source']>
+      configurationVersion?: string
+      configurationFetchedAt?: number
+    }
+  | {
+      eventType: typeof FeatureFlagsTelemetryEventType.PROVIDER_READY
+      providerStatus:
+        typeof FeatureFlagsTelemetryProviderStatus.READY | typeof FeatureFlagsTelemetryProviderStatus.STALE
+      initLatencyMs: number
+    }
+  | {
+      eventType: typeof FeatureFlagsTelemetryEventType.PROVIDER_ERROR
+      errorCode: typeof FeatureFlagsTelemetryErrorCode.PRECOMPUTED_ASSIGNMENTS_FETCH_FAILED
+    }
+  | { eventType: typeof FeatureFlagsTelemetryEventType.FIRST_EVALUATION }
+  | {
+      eventType: typeof FeatureFlagsTelemetryEventType.INIT_TIMEOUT
+      providerStatus: typeof FeatureFlagsTelemetryProviderStatus.ERROR
+      errorCode: typeof FeatureFlagsTelemetryErrorCode.INITIALIZATION_TIMEOUT
+      initLatencyMs: number
+    }
+  | {
+      eventType: typeof FeatureFlagsTelemetryEventType.INIT_FAILED
+      providerStatus: typeof FeatureFlagsTelemetryProviderStatus.ERROR
+      errorCode: typeof FeatureFlagsTelemetryErrorCode.INITIALIZATION_FAILED
+      initLatencyMs: number
+    }
 
 export interface FeatureFlagsTelemetryOptions {
   applicationId?: string
   environmentName?: string
   sdkName: string
   sdkVersion: string
+  evaluationReportingEnabled?: boolean
 }
 
 export interface FeatureFlagsTelemetry {
@@ -63,7 +110,7 @@ export function startFeatureFlagsTelemetry(
   return {
     enabled: true,
     add: (event) => {
-      const deduplicationKey = `${event.eventType}:${event.errorCode}`
+      const deduplicationKey = `${event.eventType}:${'errorCode' in event ? event.errorCode : ''}`
       if (sentEvents.has(deduplicationKey)) {
         return
       }
@@ -73,7 +120,6 @@ export function startFeatureFlagsTelemetry(
         type: 'feature_flags_lifecycle',
         product: 'feature_flags',
         event_type: event.eventType,
-        error_code: event.errorCode,
         timestamp: clockNow.timeStamp,
         runtime_id: runtimeId,
         sequence: ++sequence,
@@ -81,6 +127,10 @@ export function startFeatureFlagsTelemetry(
         sdk_version: options.sdkVersion,
         ...(isValidApplicationId(options.applicationId) && { application_id: options.applicationId }),
         ...(isValidEnvironmentName(options.environmentName) && { environment_name: options.environmentName }),
+        ...(options.evaluationReportingEnabled !== undefined && {
+          evaluation_reporting_enabled: options.evaluationReportingEnabled,
+        }),
+        ...toTelemetryPayloadFields(event),
       }
 
       const telemetryEvent = {
@@ -101,6 +151,36 @@ export function startFeatureFlagsTelemetry(
       }
     },
     stop: transport.flushAndStop,
+  }
+}
+
+function toTelemetryPayloadFields(event: FeatureFlagsLifecycleEvent): Partial<FeatureFlagsTelemetryPayload> {
+  switch (event.eventType) {
+    case FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED:
+      return {
+        configuration_source: event.configurationSource,
+        ...(event.configurationVersion !== undefined && { configuration_version: event.configurationVersion }),
+        ...(event.configurationFetchedAt !== undefined && {
+          configuration_fetched_at: event.configurationFetchedAt,
+        }),
+      }
+    case FeatureFlagsTelemetryEventType.PROVIDER_READY:
+      return {
+        provider_status: event.providerStatus,
+        init_latency_ms: event.initLatencyMs,
+      }
+    case FeatureFlagsTelemetryEventType.PROVIDER_ERROR:
+      return { error_code: event.errorCode }
+    case FeatureFlagsTelemetryEventType.INIT_TIMEOUT:
+    case FeatureFlagsTelemetryEventType.INIT_FAILED:
+      return {
+        provider_status: event.providerStatus,
+        error_code: event.errorCode,
+        init_latency_ms: event.initLatencyMs,
+      }
+    case FeatureFlagsTelemetryEventType.SDK_INIT_STARTED:
+    case FeatureFlagsTelemetryEventType.FIRST_EVALUATION:
+      return {}
   }
 }
 

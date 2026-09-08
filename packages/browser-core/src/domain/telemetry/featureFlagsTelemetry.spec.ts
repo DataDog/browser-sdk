@@ -2,8 +2,10 @@ import { INTAKE_SITE_STAGING } from '@datadog/js-core/transport'
 import { createNewEvent, interceptRequests, mockEventBridge, registerCleanupTask } from '../../../test'
 import type { Configuration } from '../configuration'
 import {
+  FeatureFlagsTelemetryConfigurationSource,
   FeatureFlagsTelemetryErrorCode,
   FeatureFlagsTelemetryEventType,
+  FeatureFlagsTelemetryProviderStatus,
   startFeatureFlagsTelemetry,
 } from './featureFlagsTelemetry'
 
@@ -64,6 +66,101 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(interceptor.requests.length).toBe(1)
     expect(interceptor.requests[0].body.trim().split('\n').length).toBe(1)
     expect(JSON.parse(interceptor.requests[0].body).telemetry.application_id).toBeUndefined()
+  })
+
+  it('sends the complete lifecycle event family', () => {
+    const interceptor = interceptRequests()
+    const telemetry = startFeatureFlagsTelemetry(configuration(), {
+      sdkName: 'dd-openfeature-browser',
+      sdkVersion: '1.4.0',
+      evaluationReportingEnabled: false,
+    })
+    registerCleanupTask(telemetry.stop)
+
+    telemetry.add({ eventType: FeatureFlagsTelemetryEventType.SDK_INIT_STARTED })
+    telemetry.add({
+      eventType: FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED,
+      configurationSource: FeatureFlagsTelemetryConfigurationSource.REMOTE,
+      configurationVersion: 'configuration-1',
+      configurationFetchedAt: 123,
+    })
+    telemetry.add({
+      eventType: FeatureFlagsTelemetryEventType.PROVIDER_READY,
+      providerStatus: FeatureFlagsTelemetryProviderStatus.READY,
+      initLatencyMs: 456,
+    })
+    telemetry.add(fetchError())
+    telemetry.add({ eventType: FeatureFlagsTelemetryEventType.FIRST_EVALUATION })
+    telemetry.add({
+      eventType: FeatureFlagsTelemetryEventType.INIT_TIMEOUT,
+      providerStatus: FeatureFlagsTelemetryProviderStatus.ERROR,
+      errorCode: FeatureFlagsTelemetryErrorCode.INITIALIZATION_TIMEOUT,
+      initLatencyMs: 5_000,
+    })
+    telemetry.add({
+      eventType: FeatureFlagsTelemetryEventType.INIT_FAILED,
+      providerStatus: FeatureFlagsTelemetryProviderStatus.ERROR,
+      errorCode: FeatureFlagsTelemetryErrorCode.INITIALIZATION_FAILED,
+      initLatencyMs: 789,
+    })
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    expect(interceptor.requests.length).toBe(1)
+    const events = interceptor.requests[0].body
+      .trim()
+      .split('\n')
+      .map((event) => (JSON.parse(event) as { telemetry: Record<string, unknown> }).telemetry)
+    const runtimeId = events[0].runtime_id
+    expect(events).toEqual([
+      jasmine.objectContaining({
+        event_type: 'sdk_init_started',
+        sequence: 1,
+        runtime_id: runtimeId,
+        evaluation_reporting_enabled: false,
+      }),
+      jasmine.objectContaining({
+        event_type: 'configuration_received',
+        sequence: 2,
+        runtime_id: runtimeId,
+        configuration_source: 'remote',
+        configuration_version: 'configuration-1',
+        configuration_fetched_at: 123,
+      }),
+      jasmine.objectContaining({
+        event_type: 'provider_ready',
+        sequence: 3,
+        runtime_id: runtimeId,
+        provider_status: 'ready',
+        init_latency_ms: 456,
+      }),
+      jasmine.objectContaining({
+        event_type: 'provider_error',
+        sequence: 4,
+        runtime_id: runtimeId,
+        error_code: 'precomputed_assignments_fetch_failed',
+      }),
+      jasmine.objectContaining({
+        event_type: 'first_evaluation',
+        sequence: 5,
+        runtime_id: runtimeId,
+      }),
+      jasmine.objectContaining({
+        event_type: 'init_timeout',
+        sequence: 6,
+        runtime_id: runtimeId,
+        provider_status: 'error',
+        error_code: 'initialization_timeout',
+        init_latency_ms: 5_000,
+      }),
+      jasmine.objectContaining({
+        event_type: 'init_failed',
+        sequence: 7,
+        runtime_id: runtimeId,
+        provider_status: 'error',
+        error_code: 'initialization_failed',
+        init_latency_ms: 789,
+      }),
+    ])
   })
 
   it('is independent from general telemetry sampling', () => {
