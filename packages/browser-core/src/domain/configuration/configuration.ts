@@ -112,6 +112,15 @@ export interface InitConfiguration {
   trackingConsent?: TrackingConsent | undefined
 
   /**
+   * Respects the browser's Do Not Track (DNT) setting. When enabled, the SDK does not initialize
+   * if the user has enabled Do Not Track (`navigator.doNotTrack === '1'`).
+   *
+   * @category Privacy
+   * @defaultValue false
+   */
+  respectDoNotTrack?: boolean | undefined
+
+  /**
    * List of origins where the SDK is allowed to run when used in a browser extension context.
    * Matches urls against the extensions origin.
    * If not provided and the SDK is running in a browser extension, the SDK will not run.
@@ -304,6 +313,7 @@ export const BROWSER_CORE_SCHEMA = {
 
   // Privacy
   trackingConsent: { type: 'enum', values: TrackingConsent, default: TrackingConsent.GRANTED },
+  respectDoNotTrack: { type: 'boolean', default: false, strict: false },
 
   // Callbacks
   beforeSend: { type: 'function', signature: undefined as GenericBeforeSendCallback | undefined },

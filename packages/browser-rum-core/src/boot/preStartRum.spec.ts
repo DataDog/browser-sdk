@@ -22,6 +22,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  setNavigatorDoNotTrack,
 } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -1054,6 +1055,37 @@ describe('preStartRum', () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
 
       expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('do not track', () => {
+    it('does not start rum if respectDoNotTrack is enabled and navigator.doNotTrack === "1"', () => {
+      setNavigatorDoNotTrack('1')
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectDoNotTrack: true }, PUBLIC_API)
+
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+
+    it('starts rum if respectDoNotTrack is enabled but navigator.doNotTrack === "0"', async () => {
+      setNavigatorDoNotTrack('0')
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectDoNotTrack: true }, PUBLIC_API)
+
+      await collectAsyncCalls(doStartRumSpy, 1)
+      expect(doStartRumSpy).toHaveBeenCalled()
+    })
+
+    it('starts rum even if navigator.doNotTrack === "1" when respectDoNotTrack is false (default)', async () => {
+      setNavigatorDoNotTrack('1')
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      await collectAsyncCalls(doStartRumSpy, 1)
+      expect(doStartRumSpy).toHaveBeenCalled()
     })
   })
 

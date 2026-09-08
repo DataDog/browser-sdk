@@ -9,6 +9,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  setNavigatorDoNotTrack,
 } from '@datadog/browser-core/test'
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
@@ -250,6 +251,37 @@ describe('preStartLogs', () => {
       await waitNextMicrotask()
 
       expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('do not track', () => {
+    it('does not start logs if respectDoNotTrack is enabled and navigator.doNotTrack === "1"', () => {
+      setNavigatorDoNotTrack('1')
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectDoNotTrack: true })
+
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+
+    it('starts logs if respectDoNotTrack is enabled but navigator.doNotTrack === "0"', async () => {
+      setNavigatorDoNotTrack('0')
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectDoNotTrack: true })
+
+      await collectAsyncCalls(doStartLogsSpy, 1)
+      expect(doStartLogsSpy).toHaveBeenCalled()
+    })
+
+    it('starts logs even if navigator.doNotTrack === "1" when respectDoNotTrack is false (default)', async () => {
+      setNavigatorDoNotTrack('1')
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+
+      await collectAsyncCalls(doStartLogsSpy, 1)
+      expect(doStartLogsSpy).toHaveBeenCalled()
     })
   })
 

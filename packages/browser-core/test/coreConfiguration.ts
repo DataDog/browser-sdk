@@ -19,6 +19,7 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   allowUntrustedEvents: true,
   storeContextsAcrossPages: true,
   trackingConsent: 'not-granted',
+  respectDoNotTrack: true,
   proxy: 'proxy',
   site: 'datadoghq.com',
   service: 'service',
@@ -80,6 +81,8 @@ export type MapInitConfigurationKey<Key extends string> =
           | 'datacenter'
           | 'replica'
           | 'enableExperimentalFeatures'
+          // TODO: report as telemetry once `respect_do_not_track` is added to the telemetry configuration schema
+          | 'respectDoNotTrack'
       ? never
       : // Other keys are simply snake cased
         CamelToSnakeCase<Key>

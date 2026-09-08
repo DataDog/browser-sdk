@@ -24,3 +24,20 @@ export function setNavigatorConnection(connection: Partial<NetworkInformation> |
     delete (navigator as any).connection
   })
 }
+
+export function setNavigatorDoNotTrack(doNotTrack: string | null | undefined) {
+  const original = navigator.doNotTrack
+  Object.defineProperty(navigator, 'doNotTrack', {
+    get() {
+      return doNotTrack
+    },
+    configurable: true,
+  })
+  registerCleanupTask(() => {
+    Object.defineProperty(navigator, 'doNotTrack', {
+      value: original,
+      writable: true,
+      configurable: true,
+    })
+  })
+}
