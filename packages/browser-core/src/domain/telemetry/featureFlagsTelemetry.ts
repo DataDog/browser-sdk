@@ -93,8 +93,12 @@ export function startFeatureFlagsTelemetry(
         telemetry,
         ddtags: buildTags(configuration).join(','),
       } as TelemetryFeatureFlagsLifecycleEvent & Context
-      observable.notify(telemetryEvent)
       sentEvents.add(deduplicationKey)
+      try {
+        observable.notify(telemetryEvent)
+      } catch {
+        // Internal telemetry must never affect Feature Flags SDK behavior.
+      }
     },
     stop: transport.flushAndStop,
   }

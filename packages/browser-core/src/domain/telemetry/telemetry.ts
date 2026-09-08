@@ -216,6 +216,9 @@ export function startTelemetryTransport(
   const cleanupTasks: Array<() => void> = []
   let flush = noop
   let stopped = false
+  // TODO(FFL-3069): Make bridge selection stream-aware before enabling Feature Flags lifecycle
+  // telemetry for WebViews. Android does not consume internal_telemetry, and iOS currently requires
+  // a sampled RUM context, so the Feature Flags stream needs capability negotiation or HTTP fallback.
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
     const telemetrySubscription = telemetryObservable.subscribe((event) => bridge.send('internal_telemetry', event))

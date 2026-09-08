@@ -1,5 +1,5 @@
 import { INTAKE_SITE_STAGING } from '@datadog/js-core/transport'
-import { createNewEvent, interceptRequests, registerCleanupTask } from '../../../test'
+import { createNewEvent, interceptRequests, mockEventBridge, registerCleanupTask } from '../../../test'
 import type { Configuration } from '../configuration'
 import {
   FeatureFlagsTelemetryErrorCode,
@@ -78,6 +78,21 @@ describe('Feature Flags lifecycle telemetry', () => {
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     expect(interceptor.requests.length).toBe(1)
+  })
+
+  it('does not throw or retry when a WebView bridge send fails', () => {
+    const eventBridge = mockEventBridge()
+    spyOn(eventBridge, 'send').and.throwError('bridge failure')
+    const telemetry = startFeatureFlagsTelemetry(configuration(), {
+      sdkName: 'dd-openfeature-browser',
+      sdkVersion: '1.4.0',
+    })
+    registerCleanupTask(telemetry.stop)
+
+    expect(() => telemetry.add(fetchError())).not.toThrow()
+    expect(() => telemetry.add(fetchError())).not.toThrow()
+
+    expect(eventBridge.send).toHaveBeenCalledTimes(1)
   })
 
   it('is disabled outside staging for the initial rollout', () => {

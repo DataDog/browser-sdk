@@ -329,6 +329,13 @@ function TelemetryDescription({ event }: { event: TelemetryEvent }) {
       </>
     )
   }
+  if (event.telemetry.type === 'feature_flags_lifecycle') {
+    return (
+      <>
+        <Emphasis>Feature Flags</Emphasis> {event.telemetry.event_type}: {event.telemetry.error_code}
+      </>
+    )
+  }
   return <>{event.telemetry.message}</>
 }
 
