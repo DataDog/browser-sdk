@@ -1,4 +1,4 @@
-import type { BrowserWindowWithZoneJs } from '../../src/tools/getZoneJsOriginalValue'
+import type { BrowserWindowWithZoneJs } from '../../../js-core/src/util/getZoneJsOriginalValue'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export type MockZoneJs = ReturnType<typeof mockZoneJs>

@@ -1,8 +1,10 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
 import { clocksNow, clocksOrigin } from '@datadog/js-core/time'
-import { noop, Observable } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import {
   createMutationRecord,
@@ -14,7 +16,6 @@ import {
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import { LifeCycle } from '../../lifeCycle'
-import type { RumMutationRecord } from '../../../browser/domMutationObservable'
 import { trackLoadingTime } from './trackLoadingTime'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
@@ -30,7 +31,7 @@ const RANDOM_VIEW_START = 50 as RelativeTime
 describe('trackLoadingTime', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
-  let domMutationObservable: Observable<RumMutationRecord[]>
+  let domMutationObservable: Observable<MutationRecord[]>
   let windowOpenObservable: Observable<void>
   let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void

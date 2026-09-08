@@ -1,8 +1,6 @@
-import { mockZoneJs } from '../../test'
-
+import { mockZoneJs } from '../../../browser-core/test'
 import type { BrowserWindowWithZoneJs } from './getZoneJsOriginalValue'
 import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
-import { noop } from './utils/functionUtils'
 
 describe('getZoneJsOriginalValue', () => {
   function originalValue() {
@@ -30,7 +28,9 @@ describe('getZoneJsOriginalValue', () => {
 
   it('returns the original value if Zone did patch the method', () => {
     const zoneJs = mockZoneJs()
-    zoneJs.replaceProperty(object, 'name', noop)
+    zoneJs.replaceProperty(object, 'name', () => {
+      // ignore
+    })
     expect(getZoneJsOriginalValue(object, 'name')).toBe(originalValue)
   })
 })

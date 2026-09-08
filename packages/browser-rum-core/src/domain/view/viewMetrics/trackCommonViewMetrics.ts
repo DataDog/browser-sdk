@@ -1,10 +1,10 @@
 import type { ClocksState, RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
-import type { Observable } from '@datadog/browser-core'
+import type { Observable } from '@datadog/js-core/util'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { elapsed, timeStampNow } from '@datadog/js-core/time'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
-import type { RumMutationRecord } from '../../../browser/domMutationObservable'
 import type { CumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import type { InteractionToNextPaint } from './trackInteractionToNextPaint'
@@ -22,7 +22,7 @@ export interface CommonViewMetrics {
 
 export function trackCommonViewMetrics(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,

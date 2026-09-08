@@ -1,5 +1,6 @@
-import { globalObject, mockable } from '@datadog/js-core/util'
-import { addEventListener, DOM_EVENT, instrumentMethod, Observable, shallowClone } from '@datadog/browser-core'
+import { globalObject, mockable, Observable } from '@datadog/js-core/util'
+import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
+import { instrumentMethod, shallowClone } from '@datadog/browser-core'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>

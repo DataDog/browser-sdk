@@ -44,8 +44,6 @@ export {
   addTelemetryUsage,
   addTelemetryMetrics,
 } from './domain/telemetry'
-export type { Subscription } from './tools/observable'
-export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager, SessionContext } from './domain/session/sessionManager'
 export { startSessionManager, startSessionManagerStub, stopSessionManager } from './domain/session/sessionManager'
 export {
@@ -85,7 +83,6 @@ export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState, asyncRunOnReadyState } from './browser/runOnReadyState'
-export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export type { InstrumentedMethodCall, InstrumentedConstructorCall } from './tools/instrumentMethod'
 export { instrumentMethod, instrumentConstructor, instrumentSetter } from './tools/instrumentMethod'
 export {
@@ -114,13 +111,10 @@ export type {
   WebSocketClosedContext,
 } from './browser/webSocketObservable'
 export { initWebSocketObservable } from './browser/webSocketObservable'
-export { fetch } from './browser/fetch'
 export type { PageMayExitEvent } from './browser/pageMayExitObservable'
 export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
-export * from './browser/addEventListener'
 export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
-export * from './tools/timer'
 export * from './tools/thenable'
 export type { ConsoleLog } from './domain/console/consoleObservable'
 export { initConsoleObservable } from './domain/console/consoleObservable'

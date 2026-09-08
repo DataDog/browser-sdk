@@ -1,6 +1,5 @@
-import { ConsoleApiName, mockable } from '@datadog/js-core/util'
-import type { Observable, Subscription } from '../tools/observable'
-import { BufferedObservable } from '../tools/observable'
+import { ConsoleApiName, mockable, BufferedObservable } from '@datadog/js-core/util'
+import type { Observable, Subscription } from '@datadog/js-core/util'
 import type { FetchContext } from '../browser/fetchObservable'
 import { initFetchObservable } from '../browser/fetchObservable'
 import type { XhrContext } from '../browser/xhrObservable'

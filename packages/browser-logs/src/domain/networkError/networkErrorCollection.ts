@@ -1,4 +1,5 @@
-import type { FetchResolveContext, XhrCompleteContext, Observable, BufferedData } from '@datadog/browser-core'
+import type { FetchResolveContext, XhrCompleteContext, BufferedData } from '@datadog/browser-core'
+import type { Observable } from '@datadog/js-core/util'
 import {
   BufferedDataType,
   ErrorSource,

@@ -1,8 +1,8 @@
 import { monitor } from '@datadog/js-core/monitor'
 import { noop } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
-import type { RumMutationRecord } from '@datadog/browser-rum-core'
-import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
+import type { MutationRecord } from '@datadog/js-core/dom'
+import { getMutationObserverConstructor } from '@datadog/js-core/dom'
 import type { RecordingScope } from '../recordingScope'
 import { createMutationBatch } from '../mutationBatch'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
@@ -28,7 +28,7 @@ export function trackMutation(
   const mutationBatch = createMutationBatch((mutations) => {
     serializeMutations(
       timeStampNow(),
-      mutations.concat(observer.takeRecords() as RumMutationRecord[]),
+      mutations.concat(observer.takeRecords() as MutationRecord[]),
       emitRecord,
       emitStats,
       scope

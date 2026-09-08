@@ -1,9 +1,9 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import type { Context } from '@datadog/js-core/util'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { relativeNow } from '@datadog/js-core/time'
 import { ErrorHandling, ErrorSource, generateUUID, ResourceType } from '@datadog/browser-core'
 import { combine } from '@datadog/js-core/util'
-import type { RumMutationRecord } from '@datadog/browser-rum-core'
 import {
   type RumPerformanceEntry,
   type RumLayoutShiftAttribution,
@@ -303,14 +303,14 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
   return fullEntry as EntryTypeToReturnType[T]
 }
 
-export function createMutationRecord<T extends RumMutationRecord['type']>(
+export function createMutationRecord<T extends MutationRecord['type']>(
   type: T = 'childList' as T,
-  overrides: Partial<Exclude<RumMutationRecord, { type: T }>> = {}
-): RumMutationRecord {
+  overrides: Partial<Exclude<MutationRecord, { type: T }>> = {}
+): MutationRecord {
   return {
     type,
     target: document.body,
 
     ...overrides,
-  } as RumMutationRecord
+  } as MutationRecord
 }

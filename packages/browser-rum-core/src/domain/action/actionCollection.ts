@@ -1,5 +1,6 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import type { Observable } from '@datadog/browser-core'
+import type { Observable } from '@datadog/js-core/util'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { toServerDuration, addDuration } from '@datadog/js-core/time'
 import { noop } from '@datadog/browser-core'
 import { SKIPPED } from '@datadog/js-core/assembly'
@@ -10,7 +11,6 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { trackClickActions } from './trackClickActions'
 import type { ClickAction } from './trackClickActions'
 import { trackManualActions } from './trackManualActions'
@@ -27,7 +27,7 @@ export const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
 export function startActionCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {

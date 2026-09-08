@@ -1,9 +1,8 @@
 import { ONE_MINUTE, ONE_SECOND } from '@datadog/js-core/time'
 import type { TrackType } from '@datadog/js-core/transport'
-import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '@datadog/js-core/util'
-import { setTimeout } from '../tools/timer'
+import { ONE_MEBI_BYTE, ONE_KIBI_BYTE, setTimeout } from '@datadog/js-core/util'
+import type { Observable } from '@datadog/js-core/util'
 import { isServerError } from '../tools/utils/responseUtils'
-import type { Observable } from '../tools/observable'
 import type { Payload, HttpRequestEvent, HttpResponse, BandwidthStats } from './httpRequest'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE

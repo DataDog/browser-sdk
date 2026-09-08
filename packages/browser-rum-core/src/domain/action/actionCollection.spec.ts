@@ -1,7 +1,8 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import { addDuration } from '@datadog/js-core/time'
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
@@ -9,7 +10,6 @@ import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
 import type { ActionContexts } from './actionCollection'
@@ -22,7 +22,7 @@ describe('actionCollection', () => {
   let actionContexts: ActionContexts
 
   beforeEach(() => {
-    const domMutationObservable = new Observable<RumMutationRecord[]>()
+    const domMutationObservable = new Observable<MutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     hooks = createHooks()
 

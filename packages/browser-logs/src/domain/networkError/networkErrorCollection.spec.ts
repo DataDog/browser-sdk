@@ -1,6 +1,7 @@
 import type { BufferedData, FetchResolveContext } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
-import { BufferedDataType, ErrorSource, Observable } from '@datadog/browser-core'
+import { BufferedDataType, ErrorSource } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import { mockSourceCodeContext, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'

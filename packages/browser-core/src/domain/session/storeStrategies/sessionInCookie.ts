@@ -1,5 +1,5 @@
 import { monitorError } from '@datadog/js-core/monitor'
-import { mockable } from '@datadog/js-core/util'
+import { mockable, Observable } from '@datadog/js-core/util'
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCookies } from '../../../browser/cookie'
@@ -8,7 +8,6 @@ import { buildCookieOptions } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
-import { Observable } from '../../../tools/observable'
 import type { CookieAccess } from '../../../browser/cookieAccess'
 import {
   areCookiesAuthorized,
