@@ -30,7 +30,7 @@ describe('makeWasmPlugin', () => {
 
     function registerPluginAssemble(): Assemble {
       const assemble = createHook<any, any>()
-      void plugin.onInit!({ hooks: { assemble } } as any)
+      void plugin.onInit!({ registerAssembleEventHook: assemble.register } as any)
       return assemble
     }
 

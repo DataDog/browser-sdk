@@ -22,6 +22,19 @@ describe('ChangeDecoder', () => {
     expect(decoded.data).toEqual([[ChangeType.Text, [0, 'Hello World']]])
   })
 
+  it('decodes an image content resource ID string table reference', () => {
+    const decoder = createChangeDecoder()
+
+    const decoded = decoder.decode(
+      changeRecord(
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.ResourceId, 'resource-id']],
+        [ChangeType.ImageContent, [42, 0]]
+      )
+    )
+
+    expect(decoded.data).toEqual([[ChangeType.ImageContent, [42, 'resource-id']]])
+  })
+
   describe('clearing the string table', () => {
     it('interprets the references that follow a clear against an emptied string table', () => {
       const decoder = createChangeDecoder()

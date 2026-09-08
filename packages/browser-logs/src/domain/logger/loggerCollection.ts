@@ -26,15 +26,16 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
 
     if (isAuthorized(logsMessage.status, HandlerType.http, logger)) {
       const rawLogEventData: RawLogsEventCollectedData<RawLogsEvent> = {
-        rawLogsEvent: {
-          date: savedDate || timeStampNow(),
-          message: logsMessage.message,
-          status: logsMessage.status,
-          origin: ErrorSource.LOGGER,
-          _dd: { debug_ids: logsMessage.debugIds },
-          ...(logsMessage.error ? { error: logsMessage.error } : {}),
-        },
-        messageContext,
+        rawLogsEvent: combine(
+          {
+            date: savedDate || timeStampNow(),
+            message: logsMessage.message,
+            status: logsMessage.status,
+            origin: ErrorSource.LOGGER,
+            _dd: { debug_ids: logsMessage.debugIds },
+          },
+          messageContext
+        ),
         savedCommonContext,
         ddtags: logger.getTags(),
       }

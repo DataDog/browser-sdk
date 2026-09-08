@@ -1,3 +1,5 @@
+import { stopMonitorErrorCollection } from '@datadog/js-core/monitor'
+import { setDebugMode } from '@datadog/js-core/util'
 import { resetManageResourceTimingBufferFull } from '../../browser-rum-core/src/browser/performanceObservable'
 import { resetExperimentalFeatures } from '../src/tools/experimentalFeatures'
 import { resetValueHistoryGlobals } from '../src/tools/valueHistory'
@@ -8,7 +10,6 @@ import { resetWebSocketObservable } from '../src/browser/webSocketObservable'
 import { resetGetCurrentSite } from '../src/browser/cookie'
 import { resetReplayStats } from '../../browser-rum/src/domain/replayStats'
 import { resetInteractionCountPolyfill } from '../../browser-rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
-import { resetMonitor } from '../src/tools/monitor'
 import { resetTelemetry } from '../src/domain/telemetry'
 import { resetSampleDecisionCache } from '../src/domain/sampler'
 import { resetAllowUntrustedEvents } from '../src/browser/addEventListener'
@@ -36,7 +37,8 @@ afterEach(() => {
   resetWebSocketObservable()
   resetGetCurrentSite()
   resetReplayStats()
-  resetMonitor()
+  stopMonitorErrorCollection()
+  setDebugMode(false)
   resetTelemetry()
   resetInteractionCountPolyfill()
   resetSampleDecisionCache()

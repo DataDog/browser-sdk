@@ -1,4 +1,9 @@
-import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type {
+  RumInitConfiguration,
+  RumPublicApi,
+  StartRumResult,
+  RumPluginOnInitOptions,
+} from '@datadog/browser-rum-core'
 import { noop } from '@datadog/browser-core'
 import type { VuePluginConfiguration } from '../src/domain/vuePlugin'
 import { vuePlugin, resetVuePlugin } from '../src/domain/vuePlugin'
@@ -19,9 +24,9 @@ export function initializeVuePlugin({
   const plugin = vuePlugin(configuration)
   // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
   plugin.onInit({
-    publicApi: publicApi as RumPublicApi,
-    initConfiguration: initConfiguration as RumInitConfiguration,
-  })
+    publicApi,
+    initConfiguration,
+  } as RumPluginOnInitOptions)
   plugin.onRumStart({ addError })
   registerCleanupTask(() => resetVuePlugin())
 }

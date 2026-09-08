@@ -7,8 +7,8 @@ import {
   correctedChildSampleRate,
   isSampled,
   mockable,
-  monitorError,
 } from '@datadog/browser-core'
+import { monitorError } from '@datadog/js-core/monitor'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'

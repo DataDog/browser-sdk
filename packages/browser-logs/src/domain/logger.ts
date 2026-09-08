@@ -6,24 +6,23 @@ import {
   ErrorHandling,
   createContextManager,
   ErrorSource,
-  callMonitored,
   sanitize,
   NonErrorPrefix,
   createHandlingStack,
   buildTag,
   sanitizeTag,
 } from '@datadog/browser-core'
+import { callMonitored } from '@datadog/js-core/monitor'
 
+import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 import { isAuthorized, StatusType } from './logger/isAuthorized'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
-import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 
 export interface LogsMessage {
   message: string
   status: StatusType
   context?: Context
   debugIds?: DebugIdEntry[]
-  error?: RawLoggerLogsEvent['error']
 }
 
 export const HandlerType = {
@@ -100,7 +99,6 @@ export class Logger {
           context,
           status,
           ...(debugIds ? { debugIds } : {}),
-          ...(errorField ? { error: errorField } : {}),
         },
         this,
         handlingStack

@@ -1,3 +1,4 @@
+import { monitorError } from '@datadog/js-core/monitor'
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCookies } from '../../../browser/cookie'
@@ -8,7 +9,6 @@ import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
-import { monitorError } from '../../../tools/monitor'
 import type { CookieAccess } from '../../../browser/cookieAccess'
 import {
   areCookiesAuthorized,

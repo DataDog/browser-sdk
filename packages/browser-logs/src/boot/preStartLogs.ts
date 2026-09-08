@@ -1,4 +1,5 @@
 import { timeStampNow } from '@datadog/js-core/time'
+import { monitorError } from '@datadog/js-core/monitor'
 import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
   BufferedObservable,
@@ -6,7 +7,6 @@ import {
   display,
   displayAlreadyInitializedError,
   initFeatureFlags,
-  monitorError,
   noop,
   buildAccountContextManager,
   CustomerContextKey,
@@ -102,7 +102,11 @@ export function createPreStartStrategy(
         return
       }
 
-      callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi, hooks })
+      callPluginsMethod(initConfiguration.plugins, 'onInit', {
+        initConfiguration,
+        publicApi,
+        registerAssembleEventHook: hooks.assembleEvent.register,
+      })
 
       const configuration = validateAndBuildLogsConfiguration(initConfiguration)
       if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {

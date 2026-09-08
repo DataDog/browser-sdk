@@ -1,7 +1,7 @@
 import { createHook } from '@datadog/js-core/assembly'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED, INTAKE_SITE_US1 } from '@datadog/js-core/transport'
+import { callMonitored } from '@datadog/js-core/monitor'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
-import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import { type Configuration } from '../configuration'

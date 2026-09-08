@@ -1,17 +1,16 @@
 import type { EventRateLimiter } from '@datadog/browser-core'
 import { isEmptyObject, display, createEventRateLimiter, buildTags } from '@datadog/browser-core'
 import { DISCARDED } from '@datadog/js-core/assembly'
-import { combine, mergeInto } from '@datadog/js-core/util'
+import { combine } from '@datadog/js-core/util'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { AssembleHook, AssembleHookParams } from './hooks'
+import type { AssembleHookParams, Hooks } from './hooks'
 
 const COMMON_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -61,7 +60,7 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
 export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  assembleHook: AssembleHook,
+  hooks: Hooks,
   reportError: (message: string) => void,
   eventRateLimit?: number
 ) {
@@ -74,28 +73,26 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startClocks, duration, rawRumEvent, domainContext }) => {
-      const defaultRumEventAttributes = assembleHook.trigger({
+      const assemblyParams = {
         eventType: rawRumEvent.type,
         rawRumEvent,
         domainContext,
         startTime: startClocks.relative,
         duration,
-      } as AssembleHookParams)!
-
+      } as AssembleHookParams
+      const defaultRumEventAttributes = hooks.assembleEventDefaults.trigger(assemblyParams)!
       if (defaultRumEventAttributes === DISCARDED) {
         return
       }
 
-      const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, {
+      const rumEventAttributes = hooks.assembleEvent.trigger(assemblyParams)!
+      if (rumEventAttributes === DISCARDED) {
+        return
+      }
+
+      const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, rumEventAttributes, {
         ddtags: buildTags(configuration).join(','),
       }) as AssembledRumEvent
-
-      // Assemble hooks may provide error attributes (e.g. `source_type`, `wasm_modules`) that
-      // should take precedence over the values set when building the raw event. Re-apply them so
-      // plugins can override error fields such as `source_type`.
-      if (rawRumEvent.type === RumEventType.ERROR && defaultRumEventAttributes.error) {
-        mergeInto((serverRumEvent as RumErrorEvent).error, defaultRumEventAttributes.error)
-      }
 
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
         if (isEmptyObject(serverRumEvent.context!)) {

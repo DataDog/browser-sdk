@@ -10,6 +10,7 @@ import {
 } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { isWorkerEnvironment } from '@datadog/js-core/util'
+import { monitorError } from '@datadog/js-core/monitor'
 import { Observable } from '../../tools/observable'
 import { createValueHistory } from '../../tools/valueHistory'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
@@ -22,7 +23,6 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { TelemetryMetrics, addTelemetryMetrics } from '../telemetry'
-import { monitorError } from '../../tools/monitor'
 import type { SessionState } from './sessionState'
 import {
   expandOnly,

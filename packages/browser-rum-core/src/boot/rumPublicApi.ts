@@ -21,8 +21,6 @@ import {
   ContextManagerMethod,
   addTelemetryUsage,
   makePublicApi,
-  monitor,
-  callMonitored,
   createHandlingStack,
   sanitize,
   createIdentityEncoder,
@@ -35,6 +33,7 @@ import {
   generateUUID,
   display,
 } from '@datadog/browser-core'
+import { monitor, callMonitored } from '@datadog/js-core/monitor'
 
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'

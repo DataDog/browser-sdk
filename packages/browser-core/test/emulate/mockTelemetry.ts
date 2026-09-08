@@ -1,4 +1,4 @@
-import { startMonitorErrorCollection } from '../../src/tools/monitor'
+import { startMonitorErrorCollection } from '@datadog/js-core/monitor'
 import {
   addTelemetryError,
   getTelemetryObservable,

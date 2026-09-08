@@ -1,6 +1,6 @@
+import { startMonitorErrorCollection } from '@datadog/js-core/monitor'
 import { mockClock, mockZoneJs } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
-import { startMonitorErrorCollection } from './monitor'
 import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'
 import { noop } from './utils/functionUtils'
 ;[

@@ -42,6 +42,7 @@ export function createRecordingScope(
       scope.nodeIds.clear()
       scope.stringIds.clear()
       scope.styleSheetIds.clear()
+      scope.canvasManager.reset()
     },
 
     canvasManager,

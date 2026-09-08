@@ -1,5 +1,5 @@
 import { globalObject } from '@datadog/js-core/util'
-import { monitor } from './monitor'
+import { monitor } from '@datadog/js-core/monitor'
 
 export function queueMicrotask(callback: () => void) {
   // Intentionally avoid .bind(globalObject): in some environments (e.g. Selenium GeckoDriver's

@@ -12,13 +12,10 @@ import { getLoadedWasmModules, isWasmError, startWasmModuleTracking } from './wa
 export type WasmPlugin = RumPlugin & LogsPlugin
 
 /**
- * Minimal shape of the SDK hooks the plugin needs. Both the RUM and Logs SDK expose an
- * `assemble` hook with a compatible register callback.
+ * Minimal shape of the plugin initialization option shared by the RUM and Logs SDKs.
  */
-interface WasmPluginHooks {
-  assemble: {
-    register(callback: (params: WasmPluginAssembleParams) => unknown): unknown
-  }
+interface WasmPluginOnInitOptions {
+  registerAssembleEventHook: (callback: (params: WasmPluginAssembleParams) => unknown) => unknown
 }
 
 interface WasmPluginAssembleParams {
@@ -42,12 +39,12 @@ interface WasmPluginAssembleParams {
 export function makeWasmPlugin(): WasmPlugin {
   return {
     name: 'wasm',
-    onInit({ hooks }: { hooks: WasmPluginHooks }) {
+    onInit({ registerAssembleEventHook }: WasmPluginOnInitOptions) {
       // Start intercepting WebAssembly module creation as early as possible, so modules loaded
       // during the SDK pre-start phase are captured.
       startWasmModuleTracking()
 
-      hooks.assemble.register((params: WasmPluginAssembleParams) => {
+      registerAssembleEventHook((params: WasmPluginAssembleParams) => {
         // RUM exposes `rawRumEvent`, Logs exposes `rawLogsEvent`.
         const rawEvent = params.rawRumEvent ?? params.rawLogsEvent
         const error = rawEvent?.error

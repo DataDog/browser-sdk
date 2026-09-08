@@ -1,13 +1,6 @@
 import type { createContextManager, Context } from '@datadog/browser-core'
-import {
-  display,
-  mapValues,
-  getCookie,
-  addTelemetryMetrics,
-  TelemetryMetrics,
-  monitorError,
-  fetch,
-} from '@datadog/browser-core'
+import { display, mapValues, getCookie, addTelemetryMetrics, TelemetryMetrics, fetch } from '@datadog/browser-core'
+import { monitorError } from '@datadog/js-core/monitor'
 import { isIndexableObject } from '@datadog/js-core/util'
 import { buildEndpointUrl } from '@datadog/js-core/transport'
 import { extractRegexMatch } from '../extractRegexMatch'

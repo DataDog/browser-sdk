@@ -1,5 +1,5 @@
 import { globalObject } from '@datadog/js-core/util'
-import type { Batch, Context, ContextValue } from '@datadog/browser-core'
+import type { Batch, ContextValue } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { buildTag, generateUUID, mergeArrays } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
@@ -124,10 +124,6 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
       entry = {
         arguments: captureArguments(args, self, probe.capture, captureCtx),
       }
-      if (captureCtx.timedOut) {
-        probe.activeEntries.push(null)
-        continue
-      }
     } else if (entryCaptureExpressions) {
       entry = {
         captureExpressions: entryCaptureExpressions,
@@ -227,9 +223,6 @@ export function onReturn(
           '@return': capture(value, probe.capture, captureCtx),
         },
       }
-      if (captureCtx.timedOut) {
-        continue
-      }
     }
 
     queueDebuggerSnapshot(probe, result)
@@ -307,9 +300,6 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
     let throwArguments: Record<string, any> | undefined
     if (probe.captureSnapshot) {
       throwArguments = captureArguments(args, self, probe.capture, captureCtx)
-      if (captureCtx.timedOut) {
-        continue
-      }
     }
 
     const throwable = formatThrowable(error)
@@ -347,7 +337,7 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
       : undefined
   ) as ContextValue
 
-  const payload: Context = {
+  const payload = {
     message: result.message,
     service: debuggerConfig.service,
     ddtags: getDebuggerDDtags(version),
