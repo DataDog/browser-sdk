@@ -117,6 +117,20 @@ describe('nextjsPlugin', () => {
     expect(startViewSpy).toHaveBeenCalledTimes(2)
   })
 
+  it('starts a view when a navigation returns to the committed pathname', () => {
+    const { startViewSpy } = initPlugin()
+    startViewSpy.calls.reset()
+
+    onRouterTransitionStart('/redirect', undefined, { id: 'transition-1' })
+    onRouterTransitionStart(window.location.pathname, undefined, { id: 'transition-2' })
+
+    expect(startViewSpy).toHaveBeenCalledTimes(2)
+    expect(startViewSpy.calls.argsFor(1)[0]).toEqual({
+      name: window.location.pathname,
+      url: window.location.href,
+    })
+  })
+
   it('starts views for successive concrete App Router pathnames', () => {
     const { startViewSpy } = initPlugin()
     startViewSpy.calls.reset()

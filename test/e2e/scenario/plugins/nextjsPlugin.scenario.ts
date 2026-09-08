@@ -173,4 +173,17 @@ test.describe('plugin: nextjs', () => {
 
       expect(loadingTypes).toEqual(['initial_load', 'route_change', 'route_change'])
     })
+  createTest('should restore the home view when a redirect returns to it')
+    .withRum()
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Redirect Home')
+      await page.waitForURL('**/?redirected=true')
+      await page.waitForSelector('text=Home')
+      await flushEvents()
+
+      const views = [...new Map(intakeRegistry.rumViewEvents.map((event) => [event.view.id, event])).values()]
+
+      expect(views.map((event) => event.view.name)).toEqual(['/', '/redirect-home', '/'])
+    })
 })

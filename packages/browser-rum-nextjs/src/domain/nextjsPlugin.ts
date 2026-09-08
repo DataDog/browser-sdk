@@ -15,7 +15,10 @@ type StartSubscriber = (addError: StartRumResult['addError']) => void
 let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
 let currentViewName: string | undefined
+// Updated by DatadogAppRouter after React commits the route.
 let currentAppRouterPathname: string | undefined
+// Updated immediately when a RUM view starts, so it can point to an uncommitted route.
+let activeAppRouterPathname: string | undefined
 let lastRouterTransitionId: string | undefined
 let routerType: NextjsRouterType | undefined
 
@@ -32,6 +35,7 @@ export function nextjsPlugin(): NextjsPlugin {
 
       if (routerType === 'app-router') {
         currentAppRouterPathname = window.location.pathname
+        activeAppRouterPathname = window.location.pathname
         startNextjsView(window.location.pathname, window.location.href)
       }
 
@@ -73,6 +77,7 @@ export function startNextjsView(viewName: string, url?: string) {
 export function setNextjsViewName(viewName: string, pathname?: string) {
   // The App Router component calls this after the route has committed.
   currentAppRouterPathname = pathname ?? currentAppRouterPathname
+  activeAppRouterPathname = pathname ?? activeAppRouterPathname
 
   if (globalPublicApi && currentViewName !== viewName) {
     currentViewName = viewName
@@ -88,10 +93,17 @@ export function onRouterTransitionStart(url: string, _navigationType?: string, e
     return
   }
 
-  // Compare with the last committed pathname because window.location can already contain the target pathname
-  // when this callback runs.
-  if (navigationUrl.origin === window.location.origin && navigationUrl.pathname !== currentAppRouterPathname) {
+  // A different transition ID can target the same active pathname while that pathname has not committed yet.
+  // Keep it distinct from a query/hash-only navigation on the committed route.
+  const isNewPendingTransition =
+    event && event.id !== lastRouterTransitionId && navigationUrl.pathname !== currentAppRouterPathname
+
+  if (
+    navigationUrl.origin === window.location.origin &&
+    (navigationUrl.pathname !== activeAppRouterPathname || isNewPendingTransition)
+  ) {
     lastRouterTransitionId = event?.id
+    activeAppRouterPathname = navigationUrl.pathname
     startNextjsView(navigationUrl.pathname, navigationUrl.href)
   }
 }
@@ -119,6 +131,7 @@ export function resetNextjsPlugin() {
   onRumStartSubscribers.length = 0
   currentViewName = undefined
   currentAppRouterPathname = undefined
+  activeAppRouterPathname = undefined
   lastRouterTransitionId = undefined
   routerType = undefined
 }
