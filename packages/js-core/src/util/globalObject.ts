@@ -62,12 +62,16 @@ export interface NetworkInformation {
   saveData: boolean
 }
 
-/** Extends the standard Navigator with the Network Information API. */
+/** Extends the standard Navigator with the Network Information API and privacy signals. */
 export interface Navigator {
   /** Whether the browser is online. */
   onLine: boolean
   /** Network connection info; may be absent in some browsers. */
   connection?: NetworkInformation
+  /** The user's Do Not Track preference. https://developer.mozilla.org/en-US/docs/Web/API/Navigator/doNotTrack */
+  doNotTrack?: string | null
+  /** Global Privacy Control signal; not yet in TypeScript's DOM lib. https://developer.mozilla.org/en-US/docs/Web/API/Navigator/globalPrivacyControl */
+  globalPrivacyControl?: boolean
 }
 
 // CookieStore API

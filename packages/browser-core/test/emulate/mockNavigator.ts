@@ -41,3 +41,15 @@ export function setNavigatorDoNotTrack(doNotTrack: string | null | undefined) {
     })
   })
 }
+
+export function setNavigatorGlobalPrivacyControl(globalPrivacyControl: boolean | undefined) {
+  Object.defineProperty(navigator, 'globalPrivacyControl', {
+    get() {
+      return globalPrivacyControl
+    },
+    configurable: true,
+  })
+  registerCleanupTask(() => {
+    delete (navigator as any).globalPrivacyControl
+  })
+}
