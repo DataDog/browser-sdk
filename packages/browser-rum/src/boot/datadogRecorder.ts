@@ -5,7 +5,7 @@ import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
-import type { SerializationStats } from '../domain/record'
+import type { EmitCanvasResourceCallback, SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
 import type { ReplayPayload } from '../domain/segmentCollection'
 import {
@@ -45,7 +45,7 @@ export function startRecording(
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
-  let emitCanvasResource: ((hash: string, image: Blob) => void) | undefined
+  let emitCanvasResource: EmitCanvasResourceCallback | undefined
 
   if (!canUseEventBridge()) {
     const segmentCollection = startSegmentCollection(
