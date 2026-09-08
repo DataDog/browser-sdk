@@ -173,6 +173,8 @@ export const MORE_DETAILS = "More details:";
 // @public
 interface Navigator_2 {
     connection?: NetworkInformation;
+    doNotTrack?: string | null;
+    globalPrivacyControl?: boolean;
     onLine: boolean;
 }
 export { Navigator_2 as Navigator }

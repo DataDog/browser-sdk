@@ -22,6 +22,8 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  setNavigatorDoNotTrack,
+  setNavigatorGlobalPrivacyControl,
 } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -1056,6 +1058,67 @@ describe('preStartRum', () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
 
       expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('privacy settings', () => {
+    it('does not start rum if respectPrivacySettings is enabled and navigator.doNotTrack === "1"', () => {
+      setNavigatorDoNotTrack('1')
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectPrivacySettings: true }, PUBLIC_API)
+
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start rum if respectPrivacySettings is enabled and navigator.globalPrivacyControl === true', () => {
+      setNavigatorGlobalPrivacyControl(true)
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectPrivacySettings: true }, PUBLIC_API)
+
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start rum if respectPrivacySettings is enabled and both DNT and GPC are enabled', () => {
+      setNavigatorDoNotTrack('1')
+      setNavigatorGlobalPrivacyControl(true)
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectPrivacySettings: true }, PUBLIC_API)
+
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+
+    it('starts rum if respectPrivacySettings is enabled but neither DNT nor GPC are enabled', async () => {
+      setNavigatorDoNotTrack('0')
+      setNavigatorGlobalPrivacyControl(false)
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectPrivacySettings: true }, PUBLIC_API)
+
+      await collectAsyncCalls(doStartRumSpy, 1)
+      expect(doStartRumSpy).toHaveBeenCalled()
+    })
+
+    it('starts rum even if navigator.doNotTrack === "1" when respectPrivacySettings is false (default)', async () => {
+      setNavigatorDoNotTrack('1')
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      await collectAsyncCalls(doStartRumSpy, 1)
+      expect(doStartRumSpy).toHaveBeenCalled()
+    })
+
+    it('starts rum even if navigator.globalPrivacyControl === true when respectPrivacySettings is false (default)', async () => {
+      setNavigatorGlobalPrivacyControl(true)
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      await collectAsyncCalls(doStartRumSpy, 1)
+      expect(doStartRumSpy).toHaveBeenCalled()
     })
   })
 
