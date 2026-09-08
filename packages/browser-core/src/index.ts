@@ -47,8 +47,10 @@ export {
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
+  FeatureFlagsTelemetryConfigurationSource,
   FeatureFlagsTelemetryErrorCode,
   FeatureFlagsTelemetryEventType,
+  FeatureFlagsTelemetryProviderStatus,
   startFeatureFlagsTelemetry,
 } from './domain/telemetry'
 export type { Subscription } from './tools/observable'
