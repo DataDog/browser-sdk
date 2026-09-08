@@ -5,6 +5,7 @@ import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-r
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart' | 'getConfigurationTelemetry'>
 
 type NextjsRouterType = 'app-router' | 'pages-router'
+type RouterTransitionEvent = { id: string } | null
 interface NextjsGlobalObject {
   next?: { version?: string }
 }
@@ -15,6 +16,7 @@ let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
 let currentViewName: string | undefined
 let currentAppRouterPathname: string | undefined
+let lastRouterTransitionId: string | undefined
 let routerType: NextjsRouterType | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
@@ -79,12 +81,17 @@ export function setNextjsViewName(viewName: string, pathname?: string) {
 }
 
 // Must be re-exported from the user's instrumentation-client.ts so we can start the view before React renders
-export function onRouterTransitionStart(url: string) {
+export function onRouterTransitionStart(url: string, _navigationType?: string, event?: RouterTransitionEvent) {
   const navigationUrl = buildUrl(url, window.location.origin)
+
+  if (event && event.id === lastRouterTransitionId) {
+    return
+  }
 
   // Compare with the last committed pathname because window.location can already contain the target pathname
   // when this callback runs.
   if (navigationUrl.origin === window.location.origin && navigationUrl.pathname !== currentAppRouterPathname) {
+    lastRouterTransitionId = event?.id
     startNextjsView(navigationUrl.pathname, navigationUrl.href)
   }
 }
@@ -112,5 +119,6 @@ export function resetNextjsPlugin() {
   onRumStartSubscribers.length = 0
   currentViewName = undefined
   currentAppRouterPathname = undefined
+  lastRouterTransitionId = undefined
   routerType = undefined
 }

@@ -96,6 +96,27 @@ describe('nextjsPlugin', () => {
     })
   })
 
+  it('does not start a duplicate view when Next.js repeats a transition event', () => {
+    const { startViewSpy } = initPlugin()
+    startViewSpy.calls.reset()
+    const event = { id: 'transition-1' }
+
+    onRouterTransitionStart('/about', undefined, event)
+    onRouterTransitionStart('/about', undefined, event)
+
+    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/about', url: `${window.location.origin}/about` })
+  })
+
+  it('starts views for separate transition events to the same pending pathname', () => {
+    const { startViewSpy } = initPlugin()
+    startViewSpy.calls.reset()
+
+    onRouterTransitionStart('/about', undefined, { id: 'transition-1' })
+    onRouterTransitionStart('/about', undefined, { id: 'transition-2' })
+
+    expect(startViewSpy).toHaveBeenCalledTimes(2)
+  })
+
   it('starts views for successive concrete App Router pathnames', () => {
     const { startViewSpy } = initPlugin()
     startViewSpy.calls.reset()
