@@ -28,6 +28,7 @@ import {
   addTelemetryDebug,
   setAllowUntrustedEvents,
   isAllowedTrackingOrigins,
+  isTrackingAllowedByBrowser,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -155,7 +156,11 @@ export function createPreStartStrategy(
     }
 
     const configuration = validateAndBuildRumConfiguration(initConfiguration, sdkName)
-    if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
+    if (
+      !configuration ||
+      !isAllowedTrackingOrigins(configuration, errorStack ?? '') ||
+      (configuration.respectDoNotTrack && !isTrackingAllowedByBrowser())
+    ) {
       return
     }
 
