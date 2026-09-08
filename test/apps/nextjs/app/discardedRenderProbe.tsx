@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 
 let renderAttempt = 0
-let suspendPromise: Promise<void> | undefined
 
 export function DiscardedRenderProbe() {
   const enabled =
@@ -21,14 +20,9 @@ export function DiscardedRenderProbe() {
   }
 
   renderAttempt += 1
-  console.log(`[DiscardedRenderProbe] render attempt #${renderAttempt}`)
 
   if (renderAttempt === 1) {
-    console.log('[DiscardedRenderProbe] suspending render attempt #1')
-    suspendPromise = new Promise((resolve) => {
-      setTimeout(resolve)
-    })
-    throw suspendPromise
+    throw new Promise<void>((resolve) => setTimeout(resolve))
   }
 
   return <span data-testid="discarded-render-probe-ready" hidden />
