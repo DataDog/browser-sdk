@@ -6,7 +6,11 @@
  * Schema of all properties of a telemetry event
  */
 export type TelemetryEvent =
-  TelemetryErrorEvent | TelemetryDebugEvent | TelemetryConfigurationEvent | TelemetryUsageEvent
+  | TelemetryErrorEvent
+  | TelemetryDebugEvent
+  | TelemetryConfigurationEvent
+  | TelemetryUsageEvent
+  | TelemetryFeatureFlagsLifecycleEvent
 /**
  * Schema of all properties of a telemetry error event
  */
@@ -597,6 +601,61 @@ export type TelemetryBrowserFeaturesUsage =
  * Schema of mobile specific features usage
  */
 export type TelemetryMobileFeaturesUsage = TrackWebView | Timeseries | AndroidNetworkInstrumentation
+/**
+ * Schema of Feature Flags SDK lifecycle telemetry events
+ */
+export type TelemetryFeatureFlagsLifecycleEvent = CommonTelemetryProperties & {
+  /**
+   * A bounded Feature Flags SDK lifecycle transition
+   */
+  telemetry: {
+    /**
+     * Telemetry payload discriminator
+     */
+    type: 'feature_flags_lifecycle'
+    /**
+     * Product producing the lifecycle event
+     */
+    product: 'feature_flags'
+    /**
+     * Feature Flags SDK lifecycle transition
+     */
+    event_type: 'provider_error'
+    /**
+     * Time at which the SDK observed the transition, in milliseconds from epoch
+     */
+    timestamp: number
+    /**
+     * Random identifier generated once for this SDK runtime
+     */
+    runtime_id: string
+    /**
+     * Monotonically increasing sequence within the SDK runtime
+     */
+    sequence: number
+    /**
+     * Optional browser or mobile application identifier
+     */
+    application_id?: string
+    /**
+     * Feature Flags environment supplied to the SDK
+     */
+    environment_name?: string
+    /**
+     * Name of the Feature Flags SDK
+     */
+    sdk_name: string
+    /**
+     * Version of the Feature Flags SDK
+     */
+    sdk_version: string
+    /**
+     * Fixed customer-safe error classification
+     */
+    error_code: 'precomputed_assignments_fetch_failed'
+  }
+  [k: string]: unknown
+}
 
 /**
  * Schema of common properties of Telemetry events

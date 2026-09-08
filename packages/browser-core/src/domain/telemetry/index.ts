@@ -19,4 +19,15 @@ export type {
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
+  TelemetryFeatureFlagsLifecycleEvent,
 } from './telemetryEvent.types'
+export {
+  FeatureFlagsTelemetryErrorCode,
+  FeatureFlagsTelemetryEventType,
+  startFeatureFlagsTelemetry,
+} from './featureFlagsTelemetry'
+export type {
+  FeatureFlagsLifecycleEvent,
+  FeatureFlagsTelemetry,
+  FeatureFlagsTelemetryOptions,
+} from './featureFlagsTelemetry'

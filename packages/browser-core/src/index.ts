@@ -31,8 +31,12 @@ export type {
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
+  TelemetryFeatureFlagsLifecycleEvent,
   RawTelemetryUsage,
   RawTelemetryUsageFeature,
+  FeatureFlagsLifecycleEvent,
+  FeatureFlagsTelemetry,
+  FeatureFlagsTelemetryOptions,
 } from './domain/telemetry'
 export {
   startTelemetry,
@@ -43,6 +47,9 @@ export {
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
+  FeatureFlagsTelemetryErrorCode,
+  FeatureFlagsTelemetryEventType,
+  startFeatureFlagsTelemetry,
 } from './domain/telemetry'
 export type { Subscription } from './tools/observable'
 export { Observable, BufferedObservable } from './tools/observable'
