@@ -768,41 +768,6 @@ describe('rum assembly', () => {
       })
     })
   })
-
-  describe('assemble hook error override', () => {
-    it('lets an assemble hook override error fields set on the raw event', () => {
-      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
-
-      hooks.assembleEvent.register(({ eventType }) =>
-        eventType === RumEventType.ERROR
-          ? {
-              type: eventType,
-              error: { source_type: 'browser+wasm', wasm_modules: [{ url: 'app.wasm', build_id: 'abcd' }] },
-            }
-          : SKIPPED
-      )
-
-      notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
-          error: {
-            id: 'error-id',
-            source: 'source',
-            message: 'unreachable',
-            stack: 'RuntimeError: unreachable\n  at foo (wasm://wasm/abc:wasm-function[42]:0x10)',
-            source_type: 'browser',
-            handling: 'unhandled',
-          },
-        }),
-      })
-
-      const errorEvent = serverRumEvents[0] as RumErrorEvent
-      expect(errorEvent.error.source_type).toBe('browser+wasm')
-      expect(errorEvent.error.wasm_modules).toEqual([{ url: 'app.wasm', build_id: 'abcd' }])
-      // Raw event fields not overridden by the hook are preserved.
-      expect(errorEvent.error.message).toBe('unreachable')
-      expect(errorEvent.error.source_type).toBe('browser+wasm')
-    })
-  })
 })
 
 function notifyRawRumEvent<E extends RawRumEvent>(

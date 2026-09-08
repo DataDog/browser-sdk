@@ -14,7 +14,6 @@ import {
 } from '@datadog/browser-core'
 import { callMonitored } from '@datadog/js-core/monitor'
 
-import type { RawLoggerLogsEvent } from '../rawLogsEvent.types'
 import { isAuthorized, StatusType } from './logger/isAuthorized'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
 
@@ -68,7 +67,6 @@ export class Logger {
       const sanitizedMessageContext = sanitize(messageContext) as Context
       let context: Context
       let debugIds: DebugIdEntry[] | undefined
-      let errorField: RawLoggerLogsEvent['error']
 
       if (error !== undefined && error !== null) {
         const rawError = computeRawError({
@@ -80,11 +78,9 @@ export class Logger {
         })
 
         debugIds = rawError.debugIds
-        errorField = createErrorFieldFromRawError(rawError, { includeMessage: true })
-
         context = combine(
           {
-            error: errorField,
+            error: createErrorFieldFromRawError(rawError, { includeMessage: true }),
           },
           rawError.context,
           sanitizedMessageContext

@@ -26,8 +26,8 @@ interface WasmPluginAssembleParams {
 /**
  * Creates the WebAssembly plugin.
  *
- * When registered on `DD_RUM.init({ plugins: [makeWasmPlugin()] })` and/or
- * `DD_LOGS.init({ plugins: [makeWasmPlugin()] })`, it intercepts WebAssembly module creation
+ * When registered on `DD_RUM.init({ plugins: [wasmPlugin()] })` and/or
+ * `DD_LOGS.init({ plugins: [wasmPlugin()] })`, it intercepts WebAssembly module creation
  * to record each module's URL and build ID, and enriches error events whose stack trace
  * contains a WebAssembly frame with `source_type: 'browser+wasm'` and the list of loaded
  * `wasm_modules`, so they can be symbolicated against the matching debug symbols.
@@ -36,7 +36,7 @@ interface WasmPluginAssembleParams {
  *
  * @experimental
  */
-export function makeWasmPlugin(): WasmPlugin {
+export function wasmPlugin(): WasmPlugin {
   return {
     name: 'wasm',
     onInit({ registerAssembleEventHook }: WasmPluginOnInitOptions) {
