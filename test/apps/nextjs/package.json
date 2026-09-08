@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "start": "next start --port 0"
+    "start": "next start --port 0",
+    "dev": "next dev --turbo"
   },
   "dependencies": {
     "next": "16.3.1",

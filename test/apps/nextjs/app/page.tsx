@@ -20,6 +20,23 @@ export default function HomePage() {
         <li>
           <Link href="/global-error-test?throw=true">Go to Global Error</Link>
         </li>
+        <li>
+          <Link href="/slow" prefetch={false}>
+            Go to Slow Page
+          </Link>
+        </li>
+        <li>
+          <Link href="/?discard-nextjs-render">Discard Next.js Render</Link>
+        </li>
+        <li>
+          <Link href="/redirect">Go to Redirect</Link>
+        </li>
+        <li>
+          <Link href="/redirect-home">Redirect Home</Link>
+        </li>
+        <li>
+          <Link href="/protected">Go to Protected</Link>
+        </li>
       </ul>
     </div>
   )

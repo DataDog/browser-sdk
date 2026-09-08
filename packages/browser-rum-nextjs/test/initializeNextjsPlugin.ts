@@ -5,7 +5,7 @@ import { registerCleanupTask } from '../../browser-core/test'
 
 export function initializeNextjsPlugin({
   initConfiguration = {},
-  publicApi = {},
+  publicApi = { startView: noop, setViewName: noop },
   addError = noop,
 }: {
   initConfiguration?: Partial<RumInitConfiguration>

@@ -5,6 +5,7 @@ import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-r
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart' | 'getConfigurationTelemetry'>
 
 type NextjsRouterType = 'app-router' | 'pages-router'
+type RouterTransitionEvent = { id: string } | null
 interface NextjsGlobalObject {
   next?: { version?: string }
 }
@@ -13,7 +14,12 @@ type StartSubscriber = (addError: StartRumResult['addError']) => void
 
 let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
-let lastNavigationUrl: string | undefined
+let currentViewName: string | undefined
+// Updated by DatadogAppRouter after React commits the route.
+let currentAppRouterPathname: string | undefined
+// Updated immediately when a RUM view starts, so it can point to an uncommitted route.
+let activeAppRouterPathname: string | undefined
+let lastRouterTransitionId: string | undefined
 let routerType: NextjsRouterType | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
@@ -26,6 +32,12 @@ export function nextjsPlugin(): NextjsPlugin {
       globalPublicApi = publicApi
       initConfiguration.trackViewsManually = true
       routerType = mockable(detectNextjsRouterType)()
+
+      if (routerType === 'app-router') {
+        currentAppRouterPathname = window.location.pathname
+        activeAppRouterPathname = window.location.pathname
+        startNextjsView(window.location.pathname, window.location.href)
+      }
 
       for (const subscriber of onRumInitSubscribers) {
         subscriber(publicApi)
@@ -55,18 +67,52 @@ function detectNextjsRouterType(): NextjsRouterType {
   return document.getElementById('__NEXT_DATA__') ? 'pages-router' : 'app-router'
 }
 
-export function startNextjsView(viewName: string) {
+export function startNextjsView(viewName: string, url?: string) {
   if (globalPublicApi) {
-    // Use the URL captured by onRouterTransitionStart if available, since React renders before pushState updates window.location
-    const url = lastNavigationUrl ? buildUrl(lastNavigationUrl, window.location.origin).href : undefined
-    lastNavigationUrl = undefined
+    currentViewName = viewName
     globalPublicApi.startView({ name: viewName, url })
   }
 }
 
-// Must be re-exported from the user's instrumentation-client.ts so we can capture the URL before React renders
-export function onRouterTransitionStart(url: string) {
-  lastNavigationUrl = url
+export function setNextjsViewName(viewName: string, pathname?: string) {
+  // The App Router component calls this after the route has committed.
+  const hasPendingNavigation = activeAppRouterPathname !== currentAppRouterPathname
+  currentAppRouterPathname = pathname ?? currentAppRouterPathname
+
+  // A layout effect may have started a newer navigation before this passive effect runs.
+  if (pathname && pathname !== activeAppRouterPathname && hasPendingNavigation) {
+    return
+  }
+
+  activeAppRouterPathname = pathname ?? activeAppRouterPathname
+
+  if (globalPublicApi && currentViewName !== viewName) {
+    currentViewName = viewName
+    globalPublicApi.setViewName(viewName)
+  }
+}
+
+// Must be re-exported from the user's instrumentation-client.ts so we can start the view before React renders
+export function onRouterTransitionStart(url: string, _navigationType?: string, event?: RouterTransitionEvent) {
+  const navigationUrl = buildUrl(url, window.location.origin)
+
+  if (event && event.id === lastRouterTransitionId) {
+    return
+  }
+
+  // A different transition ID can target the same active pathname while that pathname has not committed yet.
+  // Keep it distinct from a query/hash-only navigation on the committed route.
+  const isNewPendingTransition =
+    event && event.id !== lastRouterTransitionId && navigationUrl.pathname !== currentAppRouterPathname
+
+  if (
+    navigationUrl.origin === window.location.origin &&
+    (navigationUrl.pathname !== activeAppRouterPathname || isNewPendingTransition)
+  ) {
+    lastRouterTransitionId = event?.id
+    activeAppRouterPathname = navigationUrl.pathname
+    startNextjsView(navigationUrl.pathname, navigationUrl.href)
+  }
 }
 
 export function onRumInit(callback: InitSubscriber) {
@@ -90,6 +136,9 @@ export function resetNextjsPlugin() {
   globalAddError = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
-  lastNavigationUrl = undefined
+  currentViewName = undefined
+  currentAppRouterPathname = undefined
+  activeAppRouterPathname = undefined
+  lastRouterTransitionId = undefined
   routerType = undefined
 }

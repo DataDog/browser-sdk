@@ -118,4 +118,85 @@ test.describe('plugin: nextjs', () => {
         expect(browserLogs.length).toBeGreaterThan(0)
       })
     })
+  createTest('should not create views from discarded renders')
+    .withRum()
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry, baseUrl }) => {
+      await flushEvents()
+      intakeRegistry.empty()
+
+      const discardedRenderUrl = new URL(baseUrl)
+      discardedRenderUrl.searchParams.set('discard-nextjs-render', 'true')
+
+      await page.goto(discardedRenderUrl.href)
+      await page.waitForSelector('[data-testid="discarded-render-probe-ready"]', { state: 'attached' })
+      await flushEvents()
+
+      const viewEvents = intakeRegistry.rumViewEvents
+      const viewIds = new Set(viewEvents.map((event) => event.view.id))
+
+      expect(viewIds.size).toBe(1)
+      expect(viewEvents[0].view.loading_type).toBe('initial_load')
+    })
+
+  createTest('should start a slow navigation view before the route commits')
+    .withRum()
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      const navigationStartedAt = Date.now()
+
+      await page.click('text=Go to Slow Page')
+      await page.waitForURL('**/slow')
+      await page.waitForSelector('text=Slow Page')
+      const routeCommittedAt = Date.now()
+
+      await flushEvents()
+
+      const slowView = intakeRegistry.rumViewEvents.find((event) => event.view.name === '/slow')
+      expect(slowView).toBeDefined()
+      expect(slowView?.view.loading_type).toBe('route_change')
+      expect(slowView?.date).toBeGreaterThanOrEqual(navigationStartedAt)
+      expect(routeCommittedAt - slowView!.date).toBeGreaterThan(500)
+    })
+  createTest('should track redirect views')
+    .withRum()
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to Redirect')
+      await page.waitForURL('**/user/123')
+      await page.waitForSelector('text=User 123')
+      await flushEvents()
+
+      const loadingTypes = [
+        ...new Map(intakeRegistry.rumViewEvents.map((event) => [event.view.id, event])).values(),
+      ].map((event) => event.view.loading_type)
+
+      expect(loadingTypes).toEqual(['initial_load', 'route_change', 'route_change'])
+    })
+  createTest('should restore the home view when a redirect returns to it')
+    .withRum()
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Redirect Home')
+      await page.waitForURL('**/?redirected=true')
+      await page.waitForSelector('text=Home')
+      await flushEvents()
+
+      const views = [...new Map(intakeRegistry.rumViewEvents.map((event) => [event.view.id, event])).values()]
+
+      expect(views.map((event) => event.view.name)).toEqual(['/', '/redirect-home', '/'])
+    })
+  createTest('should preserve a newer view started from a layout effect')
+    .withRum()
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to Protected')
+      await page.waitForURL('**/login')
+      await page.waitForSelector('text=Login')
+      await flushEvents()
+
+      const views = [...new Map(intakeRegistry.rumViewEvents.map((event) => [event.view.id, event])).values()]
+
+      expect(views.map((event) => event.view.name)).toEqual(['/', '/protected', '/login'])
+    })
 })
