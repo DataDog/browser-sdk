@@ -186,4 +186,17 @@ test.describe('plugin: nextjs', () => {
 
       expect(views.map((event) => event.view.name)).toEqual(['/', '/redirect-home', '/'])
     })
+  createTest('should preserve a newer view started from a layout effect')
+    .withRum()
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to Protected')
+      await page.waitForURL('**/login')
+      await page.waitForSelector('text=Login')
+      await flushEvents()
+
+      const views = [...new Map(intakeRegistry.rumViewEvents.map((event) => [event.view.id, event])).values()]
+
+      expect(views.map((event) => event.view.name)).toEqual(['/', '/protected', '/login'])
+    })
 })

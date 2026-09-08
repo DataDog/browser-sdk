@@ -131,6 +131,18 @@ describe('nextjsPlugin', () => {
     })
   })
 
+  it('does not rename a newer pending view from an older commit', () => {
+    const { startViewSpy, setViewNameSpy } = initPlugin()
+    startViewSpy.calls.reset()
+
+    onRouterTransitionStart('/protected', undefined, { id: 'transition-1' })
+    onRouterTransitionStart('/login', undefined, { id: 'transition-2' })
+    setNextjsViewName('/protected', '/protected')
+
+    expect(startViewSpy).toHaveBeenCalledTimes(2)
+    expect(setViewNameSpy).not.toHaveBeenCalled()
+  })
+
   it('starts views for successive concrete App Router pathnames', () => {
     const { startViewSpy } = initPlugin()
     startViewSpy.calls.reset()

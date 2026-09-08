@@ -34,6 +34,9 @@ export default function HomePage() {
         <li>
           <Link href="/redirect-home">Redirect Home</Link>
         </li>
+        <li>
+          <Link href="/protected">Go to Protected</Link>
+        </li>
       </ul>
     </div>
   )

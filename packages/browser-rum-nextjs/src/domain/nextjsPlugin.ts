@@ -76,7 +76,14 @@ export function startNextjsView(viewName: string, url?: string) {
 
 export function setNextjsViewName(viewName: string, pathname?: string) {
   // The App Router component calls this after the route has committed.
+  const hasPendingNavigation = activeAppRouterPathname !== currentAppRouterPathname
   currentAppRouterPathname = pathname ?? currentAppRouterPathname
+
+  // A layout effect may have started a newer navigation before this passive effect runs.
+  if (pathname && pathname !== activeAppRouterPathname && hasPendingNavigation) {
+    return
+  }
+
   activeAppRouterPathname = pathname ?? activeAppRouterPathname
 
   if (globalPublicApi && currentViewName !== viewName) {
