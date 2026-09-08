@@ -605,8 +605,24 @@ export type TelemetryMobileFeaturesUsage = TrackWebView | Timeseries | AndroidNe
  * Schema of Feature Flags SDK lifecycle telemetry events
  */
 export type TelemetryFeatureFlagsLifecycleEvent = CommonTelemetryProperties & {
-  service: 'browser-feature-flags-sdk'
-  source: 'browser'
+  /**
+   * The SDK generating the telemetry event
+   */
+  service: string
+  /**
+   * The source of this event
+   */
+  readonly source:
+    | 'android'
+    | 'ios'
+    | 'browser'
+    | 'flutter'
+    | 'react-native'
+    | 'unity'
+    | 'kotlin-multiplatform'
+    | 'electron'
+    | 'cpp'
+    | 'maui'
   /**
    * A bounded Feature Flags SDK lifecycle transition
    */

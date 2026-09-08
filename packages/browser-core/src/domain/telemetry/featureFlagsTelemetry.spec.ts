@@ -82,7 +82,7 @@ describe('Feature Flags lifecycle telemetry', () => {
 
   it('does not throw or retry when a WebView bridge send fails', () => {
     const eventBridge = mockEventBridge()
-    spyOn(eventBridge, 'send').and.throwError('bridge failure')
+    const sendSpy = spyOn(eventBridge, 'send').and.throwError('bridge failure')
     const telemetry = startFeatureFlagsTelemetry(configuration(), {
       sdkName: 'dd-openfeature-browser',
       sdkVersion: '1.4.0',
@@ -92,7 +92,7 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(() => telemetry.add(fetchError())).not.toThrow()
     expect(() => telemetry.add(fetchError())).not.toThrow()
 
-    expect(eventBridge.send).toHaveBeenCalledTimes(1)
+    expect(sendSpy).toHaveBeenCalledTimes(1)
   })
 
   it('is disabled outside staging for the initial rollout', () => {
