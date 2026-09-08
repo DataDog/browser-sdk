@@ -6,7 +6,7 @@ describe('canvasResourceCollection', () => {
 
   it('sends a resource on first sight of a hash', () => {
     const httpRequest = { send: jasmine.createSpy() } as unknown as HttpRequest
-    const { addResource } = startCanvasResourceCollection('app-id', httpRequest)
+    const addResource = startCanvasResourceCollection('app-id', httpRequest)
 
     addResource('hash1', IMAGE_BLOB)
 
@@ -15,7 +15,7 @@ describe('canvasResourceCollection', () => {
 
   it('does not re-send a hash already uploaded', () => {
     const httpRequest = { send: jasmine.createSpy() } as unknown as HttpRequest
-    const { addResource } = startCanvasResourceCollection('app-id', httpRequest)
+    const addResource = startCanvasResourceCollection('app-id', httpRequest)
 
     addResource('hash1', IMAGE_BLOB)
     addResource('hash1', IMAGE_BLOB)

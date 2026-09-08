@@ -63,7 +63,7 @@ export function startRecording(
     const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
     cleanupTasks.push(segmentTelemetry.stop)
 
-    emitCanvasResource = startCanvasResourceCollection(configuration.applicationId, canvasResourceRequest).addResource
+    emitCanvasResource = startCanvasResourceCollection(configuration.applicationId, canvasResourceRequest)
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))
     addStats = noop
