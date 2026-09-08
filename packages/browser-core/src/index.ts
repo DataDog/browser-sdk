@@ -8,7 +8,7 @@ export {
 } from './domain/configuration'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
-export { isTrackingAllowedByBrowser } from './domain/doNotTrack'
+export { isTrackingAllowedByPrivacySignals } from './domain/privacySignals'
 export {
   isExperimentalFeatureEnabled,
   addExperimentalFeatures,
