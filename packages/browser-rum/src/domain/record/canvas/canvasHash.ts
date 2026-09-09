@@ -37,7 +37,7 @@ function arrayBufferToHex(buffer: ArrayBuffer): string {
 }
 
 function createChangeHash(width: number, height: number, pixelHash: string): string {
-  return `${width}x${height}:${pixelHash}`
+  return `${width}x${height}-${pixelHash}`
 }
 
 /* eslint-disable no-bitwise */

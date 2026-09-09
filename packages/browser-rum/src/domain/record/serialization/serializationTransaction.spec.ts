@@ -100,7 +100,7 @@ describe('SerializationTransaction', () => {
     const emitStats = jasmine.createSpy<EmitStatsCallback>()
     const scope = createRecordingScopeForTesting()
     const nodeId = 42 as NodeId
-    const resourceHash = '100x100:abc123'
+    const resourceHash = '100x100-abc123'
     serializeInTransaction(
       SerializationKind.INCREMENTAL_SNAPSHOT,
       emitRecord,

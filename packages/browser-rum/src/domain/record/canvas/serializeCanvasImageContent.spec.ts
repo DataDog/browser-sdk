@@ -12,7 +12,7 @@ describe('serializeCanvasImageContent', () => {
     const scope = createRecordingScopeForTesting()
 
     serializeCanvasImageContent(
-      { nodeId: 42 as NodeId, changeHash: '100x100:abc' },
+      { nodeId: 42 as NodeId, changeHash: '100x100-abc' },
       emitRecord,
       emitStats,
       scope,

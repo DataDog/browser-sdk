@@ -2,7 +2,7 @@ import type { Payload } from '@datadog/browser-core'
 import { buildCanvasResourcePayload } from './buildCanvasResourcePayload'
 
 describe('buildCanvasResourcePayload', () => {
-  const HASH = '20x30:abcdef1234567890'
+  const HASH = '20x30-abcdef1234567890'
   const IMAGE_BLOB = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
   const APPLICATION_ID = 'app-id'
   let payload: Payload
