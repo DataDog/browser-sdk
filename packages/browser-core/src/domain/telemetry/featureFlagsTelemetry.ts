@@ -7,6 +7,7 @@ import { noop } from '../../tools/utils/functionUtils'
 import { sendToExtension } from '../../tools/sendToExtension'
 import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
+import { TrackingConsent } from '../trackingConsent'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import { startTelemetryTransport, TelemetryService } from './telemetry'
 
@@ -127,7 +128,7 @@ export function startFeatureFlagsTelemetry(
   configuration: Configuration,
   options: FeatureFlagsTelemetryOptions
 ): FeatureFlagsTelemetry {
-  if (configuration.site !== INTAKE_SITE_STAGING) {
+  if (configuration.site !== INTAKE_SITE_STAGING || configuration.trackingConsent !== TrackingConsent.GRANTED) {
     return { add: noop, stop: noop, enabled: false }
   }
 

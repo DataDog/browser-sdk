@@ -1,6 +1,7 @@
 import { INTAKE_SITE_STAGING } from '@datadog/js-core/transport'
 import { createNewEvent, interceptRequests, mockEventBridge, registerCleanupTask } from '../../../test'
 import type { Configuration } from '../configuration'
+import { TrackingConsent } from '../trackingConsent'
 import {
   FeatureFlagsTelemetryConfigurationSource,
   FeatureFlagsTelemetryErrorCode,
@@ -228,6 +229,20 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(telemetry.enabled).toBeFalse()
     expect(interceptor.requests.length).toBe(0)
   })
+
+  it('is disabled when tracking consent is not granted', () => {
+    const interceptor = interceptRequests()
+    const telemetry = startFeatureFlagsTelemetry(configuration({ trackingConsent: TrackingConsent.NOT_GRANTED }), {
+      sdkName: 'dd-openfeature-browser',
+      sdkVersion: '1.4.0',
+    })
+
+    telemetry.add(fetchError())
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    expect(telemetry.enabled).toBeFalse()
+    expect(interceptor.requests.length).toBe(0)
+  })
 })
 
 function configuration(overrides: Partial<Configuration> = {}): Configuration {
@@ -235,6 +250,7 @@ function configuration(overrides: Partial<Configuration> = {}): Configuration {
     clientToken: 'client-token',
     site: INTAKE_SITE_STAGING,
     env: 'staging',
+    trackingConsent: TrackingConsent.GRANTED,
     telemetrySampleRate: 100,
     ...overrides,
   } as Configuration
