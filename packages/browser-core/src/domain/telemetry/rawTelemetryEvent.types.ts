@@ -4,7 +4,6 @@ export const TelemetryType = {
   LOG: 'log',
   CONFIGURATION: 'configuration',
   USAGE: 'usage',
-  FEATURE_FLAGS_LIFECYCLE: 'feature_flags_lifecycle',
 } as const
 
 export const enum StatusType {

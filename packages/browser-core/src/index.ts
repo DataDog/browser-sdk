@@ -31,7 +31,6 @@ export type {
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
-  TelemetryFeatureFlagsLifecycleEvent,
   RawTelemetryUsage,
   RawTelemetryUsageFeature,
   FeatureFlagsLifecycleEvent,

@@ -4,9 +4,10 @@ import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { noop } from '../../tools/utils/functionUtils'
+import { sendToExtension } from '../../tools/sendToExtension'
 import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
-import type { TelemetryEvent, TelemetryFeatureFlagsLifecycleEvent } from './telemetryEvent.types'
+import type { TelemetryEvent } from './telemetryEvent.types'
 import { startTelemetryTransport, TelemetryService } from './telemetry'
 
 export const FeatureFlagsTelemetryEventType = {
@@ -36,13 +37,12 @@ export const FeatureFlagsTelemetryProviderStatus = {
   ERROR: 'error',
 } as const
 
-type FeatureFlagsTelemetryPayload = TelemetryFeatureFlagsLifecycleEvent['telemetry']
-
 export type FeatureFlagsLifecycleEvent =
   | { eventType: typeof FeatureFlagsTelemetryEventType.SDK_INIT_STARTED }
   | {
       eventType: typeof FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED
-      configurationSource: NonNullable<FeatureFlagsTelemetryPayload['configuration_source']>
+      configurationSource:
+        typeof FeatureFlagsTelemetryConfigurationSource.REMOTE | typeof FeatureFlagsTelemetryConfigurationSource.CACHE
       configurationVersion?: string
       configurationFetchedAt?: number
     }
@@ -69,6 +69,36 @@ export type FeatureFlagsLifecycleEvent =
       errorCode: typeof FeatureFlagsTelemetryErrorCode.INITIALIZATION_FAILED
       initLatencyMs: number
     }
+
+interface FeatureFlagsTelemetryPayload {
+  [key: string]: unknown
+  type: 'log'
+  status: 'debug' | 'error'
+  message: string
+  product: 'feature_flags'
+  event_type: FeatureFlagsLifecycleEvent['eventType']
+  timestamp: number
+  runtime_id: string
+  sequence: number
+  application_id?: string
+  environment_name?: string
+  sdk_name: string
+  sdk_version: string
+  configuration_source?:
+    typeof FeatureFlagsTelemetryConfigurationSource.REMOTE | typeof FeatureFlagsTelemetryConfigurationSource.CACHE
+  configuration_version?: string
+  configuration_fetched_at?: number
+  provider_status?:
+    | typeof FeatureFlagsTelemetryProviderStatus.READY
+    | typeof FeatureFlagsTelemetryProviderStatus.STALE
+    | typeof FeatureFlagsTelemetryProviderStatus.ERROR
+  init_latency_ms?: number
+  evaluation_reporting_enabled?: boolean
+  error_code?:
+    | typeof FeatureFlagsTelemetryErrorCode.PRECOMPUTED_ASSIGNMENTS_FETCH_FAILED
+    | typeof FeatureFlagsTelemetryErrorCode.INITIALIZATION_TIMEOUT
+    | typeof FeatureFlagsTelemetryErrorCode.INITIALIZATION_FAILED
+}
 
 export interface FeatureFlagsTelemetryOptions {
   applicationId?: string
@@ -117,7 +147,9 @@ export function startFeatureFlagsTelemetry(
 
       const clockNow = clocksNow()
       const telemetry: FeatureFlagsTelemetryPayload = {
-        type: 'feature_flags_lifecycle',
+        type: 'log',
+        status: 'errorCode' in event ? 'error' : 'debug',
+        message: `feature_flags.${event.eventType}`,
         product: 'feature_flags',
         event_type: event.eventType,
         timestamp: clockNow.timeStamp,
@@ -141,11 +173,12 @@ export function startFeatureFlagsTelemetry(
         source: 'browser',
         _dd: { format_version: 2 },
         telemetry,
-        ddtags: buildTags(configuration).join(','),
-      } as TelemetryFeatureFlagsLifecycleEvent & Context
+        ddtags: buildTags({ ...configuration, sdkVersion: options.sdkVersion }).join(','),
+      } as TelemetryEvent & Context
       sentEvents.add(deduplicationKey)
       try {
         observable.notify(telemetryEvent)
+        sendToExtension('telemetry', telemetryEvent)
       } catch {
         // Internal telemetry must never affect Feature Flags SDK behavior.
       }

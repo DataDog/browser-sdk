@@ -19,7 +19,6 @@ export type {
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
-  TelemetryFeatureFlagsLifecycleEvent,
 } from './telemetryEvent.types'
 export {
   FeatureFlagsTelemetryConfigurationSource,

@@ -6,11 +6,7 @@
  * Schema of all properties of a telemetry event
  */
 export type TelemetryEvent =
-  | TelemetryErrorEvent
-  | TelemetryDebugEvent
-  | TelemetryConfigurationEvent
-  | TelemetryUsageEvent
-  | TelemetryFeatureFlagsLifecycleEvent
+  TelemetryErrorEvent | TelemetryDebugEvent | TelemetryConfigurationEvent | TelemetryUsageEvent
 /**
  * Schema of all properties of a telemetry error event
  */
@@ -601,110 +597,6 @@ export type TelemetryBrowserFeaturesUsage =
  * Schema of mobile specific features usage
  */
 export type TelemetryMobileFeaturesUsage = TrackWebView | Timeseries | AndroidNetworkInstrumentation
-/**
- * Schema of Feature Flags SDK lifecycle telemetry events
- */
-export type TelemetryFeatureFlagsLifecycleEvent = CommonTelemetryProperties & {
-  /**
-   * The SDK generating the telemetry event
-   */
-  service: string
-  /**
-   * The source of this event
-   */
-  readonly source:
-    | 'android'
-    | 'ios'
-    | 'browser'
-    | 'flutter'
-    | 'react-native'
-    | 'unity'
-    | 'kotlin-multiplatform'
-    | 'electron'
-    | 'cpp'
-    | 'maui'
-  /**
-   * A bounded Feature Flags SDK lifecycle transition
-   */
-  telemetry: {
-    /**
-     * Telemetry payload discriminator
-     */
-    type: 'feature_flags_lifecycle'
-    /**
-     * Product producing the lifecycle event
-     */
-    product: 'feature_flags'
-    /**
-     * Feature Flags SDK lifecycle transition
-     */
-    event_type:
-      | 'sdk_init_started'
-      | 'configuration_received'
-      | 'provider_ready'
-      | 'provider_error'
-      | 'first_evaluation'
-      | 'init_timeout'
-      | 'init_failed'
-    /**
-     * Time at which the SDK observed the transition, in milliseconds from epoch
-     */
-    timestamp: number
-    /**
-     * Random identifier generated once for this SDK runtime
-     */
-    runtime_id: string
-    /**
-     * Monotonically increasing sequence within the SDK runtime
-     */
-    sequence: number
-    /**
-     * Optional browser or mobile application identifier
-     */
-    application_id?: string
-    /**
-     * Feature Flags environment supplied to the SDK
-     */
-    environment_name?: string
-    /**
-     * Name of the Feature Flags SDK
-     */
-    sdk_name: string
-    /**
-     * Version of the Feature Flags SDK
-     */
-    sdk_version: string
-    /**
-     * Source from which the active flag configuration was obtained
-     */
-    configuration_source?: 'remote' | 'cache'
-    /**
-     * Opaque version of the active flag configuration
-     */
-    configuration_version?: string
-    /**
-     * Time at which the active flag configuration was fetched, in milliseconds from epoch
-     */
-    configuration_fetched_at?: number
-    /**
-     * Feature Flags provider status after the lifecycle transition
-     */
-    provider_status?: 'ready' | 'stale' | 'error'
-    /**
-     * Elapsed time between SDK initialization starting and terminating
-     */
-    init_latency_ms?: number
-    /**
-     * Whether full flag evaluation reporting is enabled
-     */
-    evaluation_reporting_enabled?: boolean
-    /**
-     * Fixed customer-safe error classification
-     */
-    error_code?: 'precomputed_assignments_fetch_failed' | 'initialization_timeout' | 'initialization_failed'
-  }
-  [k: string]: unknown
-}
 
 /**
  * Schema of common properties of Telemetry events

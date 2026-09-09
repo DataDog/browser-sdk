@@ -124,8 +124,6 @@ export function startTelemetryCollection(
     [TelemetryType.LOG]: telemetryEnabled,
     [TelemetryType.CONFIGURATION]: telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate),
     [TelemetryType.USAGE]: telemetryEnabled && performDraw(configuration.telemetryUsageSampleRate),
-    // Feature Flags lifecycle telemetry uses its own private channel.
-    [TelemetryType.FEATURE_FLAGS_LIFECYCLE]: false,
     // not an actual "type" but using a single draw for all metrics
     metric: telemetryEnabled && performDraw(metricSampleRate),
   }

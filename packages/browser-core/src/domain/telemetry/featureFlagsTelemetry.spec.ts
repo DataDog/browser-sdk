@@ -35,7 +35,9 @@ describe('Feature Flags lifecycle telemetry', () => {
       source: 'browser',
       _dd: { format_version: 2 },
       telemetry: {
-        type: 'feature_flags_lifecycle',
+        type: 'log',
+        status: 'error',
+        message: 'feature_flags.provider_error',
         product: 'feature_flags',
         event_type: 'provider_error',
         error_code: 'precomputed_assignments_fetch_failed',
@@ -47,7 +49,7 @@ describe('Feature Flags lifecycle telemetry', () => {
         sdk_name: 'dd-openfeature-browser',
         sdk_version: '1.4.0',
       },
-      ddtags: 'sdk_version:test,env:staging',
+      ddtags: 'sdk_version:1.4.0,env:staging',
     })
   })
 
@@ -113,12 +115,18 @@ describe('Feature Flags lifecycle telemetry', () => {
     const runtimeId = events[0].runtime_id
     expect(events).toEqual([
       jasmine.objectContaining({
+        type: 'log',
+        status: 'debug',
+        message: 'feature_flags.sdk_init_started',
         event_type: 'sdk_init_started',
         sequence: 1,
         runtime_id: runtimeId,
         evaluation_reporting_enabled: false,
       }),
       jasmine.objectContaining({
+        type: 'log',
+        status: 'debug',
+        message: 'feature_flags.configuration_received',
         event_type: 'configuration_received',
         sequence: 2,
         runtime_id: runtimeId,
@@ -127,6 +135,9 @@ describe('Feature Flags lifecycle telemetry', () => {
         configuration_fetched_at: 123,
       }),
       jasmine.objectContaining({
+        type: 'log',
+        status: 'debug',
+        message: 'feature_flags.provider_ready',
         event_type: 'provider_ready',
         sequence: 3,
         runtime_id: runtimeId,
@@ -134,17 +145,26 @@ describe('Feature Flags lifecycle telemetry', () => {
         init_latency_ms: 456,
       }),
       jasmine.objectContaining({
+        type: 'log',
+        status: 'error',
+        message: 'feature_flags.provider_error',
         event_type: 'provider_error',
         sequence: 4,
         runtime_id: runtimeId,
         error_code: 'precomputed_assignments_fetch_failed',
       }),
       jasmine.objectContaining({
+        type: 'log',
+        status: 'debug',
+        message: 'feature_flags.first_evaluation',
         event_type: 'first_evaluation',
         sequence: 5,
         runtime_id: runtimeId,
       }),
       jasmine.objectContaining({
+        type: 'log',
+        status: 'error',
+        message: 'feature_flags.init_timeout',
         event_type: 'init_timeout',
         sequence: 6,
         runtime_id: runtimeId,
@@ -153,6 +173,9 @@ describe('Feature Flags lifecycle telemetry', () => {
         init_latency_ms: 5_000,
       }),
       jasmine.objectContaining({
+        type: 'log',
+        status: 'error',
+        message: 'feature_flags.init_failed',
         event_type: 'init_failed',
         sequence: 7,
         runtime_id: runtimeId,
