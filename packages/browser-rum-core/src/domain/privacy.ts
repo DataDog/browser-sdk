@@ -195,6 +195,37 @@ export function shouldMaskAttribute(
   return false
 }
 
+/**
+ * Masks an attribute's value when the element's privacy level requires it, using the same
+ * MASK/MASK_UNLESS_ALLOWLISTED classification as action names collected from standard attributes
+ * (`getActionNameFromStandardAttribute`). Unlike that function, this one is NOT gated behind
+ * `enablePrivacyForActionName`: that flag is scoped to the action `name` field, and callers of
+ * this function (ex: the composed-path attributes map) are a different, unrelated field — turning
+ * it off must not also turn off masking here.
+ */
+export function maskAttributeIfNeeded(
+  element: Element,
+  attributeName: string,
+  attributeValue: string,
+  configuration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache,
+  fixedMask?: string
+): string {
+  const nodePrivacyLevel = getNodePrivacyLevel(element, configuration.defaultPrivacyLevel, nodePrivacyLevelCache)
+  // `shouldMaskAttribute` only recognizes MASK and MASK_UNLESS_ALLOWLISTED: HIDDEN and IGNORE (the
+  // strictest levels, meant to keep content out of Datadog entirely) must be enforced here,
+  // unconditionally and without the `$DD_ALLOW` allowlist, the same way session replay's
+  // `serializeAttribute` guards them before ever delegating to `shouldMaskAttribute`, and the same
+  // way `getTextContent` substitutes `CENSORED_STRING_MARK` for HIDDEN text nodes.
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN || nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
+    return fixedMask ?? censorText(attributeValue)
+  }
+  if (shouldMaskAttribute(element.tagName, attributeName, attributeValue, nodePrivacyLevel, configuration)) {
+    return maskDisallowedTextContent(attributeValue, fixedMask)
+  }
+  return attributeValue
+}
+
 function isFormElement(node: Node | null): boolean {
   if (!node || node.nodeType !== node.ELEMENT_NODE) {
     return false
