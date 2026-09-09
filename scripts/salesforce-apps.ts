@@ -10,14 +10,24 @@ import { command } from './lib/command.ts'
 const repositoryRoot = resolve(import.meta.dirname, '..')
 const TARGET_ORG = 'sf-lwc-ci'
 
-type AppKey = 'lwc' | 'experience-cloud' | 'experience-cloud-headmarkup'
+type AppKey = 'lwc' | 'lwc-sr' | 'experience-cloud' | 'experience-cloud-headmarkup' | 'experience-cloud-headmarkup-sr'
 
-const APP_KEYS: AppKey[] = ['lwc', 'experience-cloud', 'experience-cloud-headmarkup']
+const APP_KEYS: AppKey[] = [
+  'lwc',
+  'lwc-sr',
+  'experience-cloud',
+  'experience-cloud-headmarkup',
+  'experience-cloud-headmarkup-sr',
+]
 
 const APPS: Record<AppKey, { dir: string; url: string; siteName?: string }> = {
   lwc: {
     dir: resolve(repositoryRoot, 'test/apps/sf-lwc-app'),
     url: new URL('/lightning/app/c__SF_LWC_App/page/home', getSfLwcInstanceUrl()).href,
+  },
+  'lwc-sr': {
+    dir: resolve(repositoryRoot, 'test/apps/sf-lwc-app-sr'),
+    url: new URL('/lightning/app/c__SF_LWC_App_SR/page/home', getSfLwcInstanceUrl()).href,
   },
   'experience-cloud': {
     dir: resolve(repositoryRoot, 'test/apps/sf-experience-app'),
@@ -29,14 +39,21 @@ const APPS: Record<AppKey, { dir: string; url: string; siteName?: string }> = {
     url: new URL('sfexperienceheadmarkup/', getSalesforceSiteUrl()).href,
     siteName: 'SF Experience Cloud Head Markup',
   },
+  'experience-cloud-headmarkup-sr': {
+    dir: resolve(repositoryRoot, 'test/apps/sf-experience-headmarkup-sr'),
+    url: new URL('sfexperienceheadmarkupsr/', getSalesforceSiteUrl()).href,
+    siteName: 'SF Experience Cloud Head Markup SR',
+  },
 }
 
 // Name of the corresponding app in scripts/build/build-test-apps.ts, used to (re)build the app
 // (and refresh its RUM Salesforce bundle static resource) before deploying it.
 const BUILD_APP_NAME: Record<AppKey, string> = {
   lwc: 'sf-lwc-app',
+  'lwc-sr': 'sf-lwc-app-sr',
   'experience-cloud': 'sf-experience-app',
   'experience-cloud-headmarkup': 'sf-experience-headmarkup-app',
+  'experience-cloud-headmarkup-sr': 'sf-experience-headmarkup-sr',
 }
 
 const SUPPORTED_COMMANDS = ['deploy-apps', 'get-urls']
@@ -120,8 +137,11 @@ function authenticate(targetOrg: string, cwd: string) {
 }
 
 function deployApp(appKeys: AppKey[]) {
-  printLog('Building RUM Salesforce bundle...')
+  printLog('Building RUM Salesforce bundles...')
   command`yarn workspace @datadog/browser-rum-slim build:bundle`.withLogs().run()
+  if (appKeys.includes('lwc-sr')) {
+    command`yarn workspace @datadog/browser-rum build:bundle`.withLogs().run()
+  }
 
   printLog('Building Salesforce apps...')
   command`yarn build:apps ${appKeys.flatMap((appKey) => ['--app', BUILD_APP_NAME[appKey]])}`
@@ -152,6 +172,35 @@ function deployApp(appKeys: AppKey[]) {
         .run()
       printLog(`Salesforce site "${siteName}" published.`)
     }
+
+    if (appKey === 'lwc-sr') {
+      assignSessionReplayPermissionSet()
+    }
+  }
+}
+
+function assignSessionReplayPermissionSet() {
+  const assignmentQuery =
+    command`sf data query --target-org ${TARGET_ORG} --query ${"SELECT Assignee.Username, PermissionSet.Name FROM PermissionSetAssignment WHERE PermissionSet.Name IN ('SF_LWC_App', 'SF_LWC_App_SR')"} --json`.run()
+  const assignments = JSON.parse(assignmentQuery).result.records as Array<{
+    Assignee: { Username: string }
+    PermissionSet: { Name: string }
+  }>
+  const usersWithSessionReplayAccess = new Set(
+    assignments
+      .filter((assignment) => assignment.PermissionSet.Name === 'SF_LWC_App_SR')
+      .map((assignment) => assignment.Assignee.Username)
+  )
+  const usersToAssign = assignments
+    .filter((assignment) => assignment.PermissionSet.Name === 'SF_LWC_App')
+    .map((assignment) => assignment.Assignee.Username)
+    .filter((username) => !usersWithSessionReplayAccess.has(username))
+
+  if (usersToAssign.length) {
+    printLog('Assigning Session Replay app permission set...')
+    command`sf org assign permset --name SF_LWC_App_SR --on-behalf-of ${usersToAssign} --target-org ${TARGET_ORG}`
+      .withLogs()
+      .run()
   }
 }
 

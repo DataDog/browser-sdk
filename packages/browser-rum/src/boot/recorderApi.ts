@@ -21,9 +21,10 @@ import {
   startDeflateWorker,
 } from '../domain/deflate'
 import { createPostStartStrategy } from './postStartStrategy'
+import type { StartRecording } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
 
-export function makeRecorderApi(): RecorderApi {
+export function makeRecorderApi(loadRecorder: () => Promise<StartRecording | undefined>): RecorderApi {
   if (canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) {
     return {
       start: noop,
@@ -99,7 +100,8 @@ export function makeRecorderApi(): RecorderApi {
       sessionManager,
       viewHistory,
       getOrCreateDeflateEncoder,
-      telemetry
+      telemetry,
+      loadRecorder
     )
 
     if (shouldStartImmediately(configuration)) {

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>eager</name>
+                    <type>decorator</type>
+                    <value>true</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>applicationId</name>
+                    <value>a08fb90d-3a11-4391-9ed3-1cb2ec7703ed</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>clientToken</name>
+                    <value>pub2170234a8cda07e021cff9912de6e048</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>site</name>
+                    <value>datad0g.com</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>service</name>
+                    <value>SERVICE_NAME</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>env</name>
+                    <value>ENV_NAME</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <type>decorator</type>
+                    <value>Datadog Init SR</value>
+                </componentInstanceProperties>
+                <componentName>datadogInitSr</componentName>
+                <identifier>datadogInitSr</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>utilityItems</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <masterLabel>SF LWC App SR UtilityBar</masterLabel>
+    <template>
+        <name>one:utilityBarTemplateDesktop</name>
+    </template>
+    <type>UtilityBar</type>
+</FlexiPage>

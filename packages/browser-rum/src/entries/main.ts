@@ -12,6 +12,7 @@ import { defineGlobal } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
+import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { makeProfilerApi } from '../boot/profilerApi'
 
@@ -81,7 +82,7 @@ export type {
 
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 
-const recorderApi = makeRecorderApi()
+const recorderApi = makeRecorderApi(lazyLoadRecorder)
 
 const profilerApi = makeProfilerApi()
 

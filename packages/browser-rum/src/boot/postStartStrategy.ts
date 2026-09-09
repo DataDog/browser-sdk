@@ -6,7 +6,6 @@ import { asyncRunOnReadyState, Observable } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
 import type { startRecording } from './datadogRecorder'
-import { lazyLoadRecorder } from './lazyLoadRecorder'
 
 export type StartRecording = typeof startRecording
 
@@ -44,7 +43,8 @@ export function createPostStartStrategy(
   sessionManager: SessionManager,
   viewHistory: ViewHistory,
   getOrCreateDeflateEncoder: () => DeflateEncoder | undefined,
-  telemetry: Telemetry
+  telemetry: Telemetry,
+  loadRecorder: () => Promise<StartRecording | undefined>
 ): Strategy {
   let status = RecorderStatus.Stopped
   let stopRecording: () => void
@@ -69,7 +69,7 @@ export function createPostStartStrategy(
     observable.notify({ type: 'start', forced })
 
     const [startRecordingImpl] = await Promise.all([
-      notifyWhenSettled(observable, { type: 'recorder-settled' }, lazyLoadRecorder()),
+      notifyWhenSettled(observable, { type: 'recorder-settled' }, loadRecorder()),
       notifyWhenSettled(observable, { type: 'document-ready' }, asyncRunOnReadyState('interactive')),
     ])
 

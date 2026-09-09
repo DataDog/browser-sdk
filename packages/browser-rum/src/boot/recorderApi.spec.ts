@@ -29,7 +29,7 @@ import * as replayStats from '../domain/replayStats'
 import { type RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
-import { importRecorder } from './lazyLoadRecorder'
+import { importRecorder, lazyLoadRecorder } from './lazyLoadRecorder'
 
 describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
@@ -49,11 +49,13 @@ describe('makeRecorderApi', () => {
   function setupRecorderApi({
     sessionManager,
     loadRecorderError,
+    preloadedRecorder,
     startSessionReplayRecordingManually,
     sessionReplaySampleRate = 100,
   }: {
     sessionManager?: SessionManager
     loadRecorderError?: boolean
+    preloadedRecorder?: boolean
     startSessionReplayRecordingManually?: boolean
     sessionReplaySampleRate?: number
   } = {}) {
@@ -84,7 +86,15 @@ describe('makeRecorderApi', () => {
       sessionReplaySampleRate,
     })
 
-    recorderApi = makeRecorderApi()
+    recorderApi = makeRecorderApi(
+      preloadedRecorder
+        ? async () =>
+            (...args) => {
+              startRecordingSpy(...args)
+              return { stop: stopRecordingSpy }
+            }
+        : lazyLoadRecorder
+    )
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
@@ -131,6 +141,15 @@ describe('makeRecorderApi', () => {
 
         expect(startRecordingSpy).toHaveBeenCalled()
         expect(await telemetry.getEvents()).toEqual([expectedRecorderInitTelemetry()])
+      })
+
+      it('uses the preloaded recorder without importing its chunk', async () => {
+        setupRecorderApi({ preloadedRecorder: true })
+        rumInit()
+
+        await collectAsyncCalls(startRecordingSpy, 1)
+
+        expect(importRecorderSpy).not.toHaveBeenCalled()
       })
     })
 

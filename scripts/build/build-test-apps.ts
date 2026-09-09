@@ -62,10 +62,16 @@ const APPS: AppConfig[] = [
 
   // Salesforce apps
   { name: 'sf-lwc-app', builderFn: buildSalesforceApp },
+  { name: 'sf-lwc-app-sr', builderFn: buildSalesforceSessionReplayApp, deps: ['sf-lwc-app'] },
   { name: 'sf-experience-app', builderFn: buildSalesforceApp },
   {
     name: 'sf-experience-headmarkup-app',
     builderFn: buildExperienceHeadMarkupApp,
+    deps: ['sf-experience-app'],
+  },
+  {
+    name: 'sf-experience-headmarkup-sr',
+    builderFn: buildExperienceHeadMarkupSessionReplayApp,
     deps: ['sf-experience-app'],
   },
 ]
@@ -195,10 +201,176 @@ function buildSalesforceApp(appName: string) {
   fs.copyFileSync(sourceBundle, targetBundle)
 }
 
+async function buildSalesforceSessionReplayApp() {
+  await buildGeneratedSalesforceApp('sf-lwc-app', 'sf-lwc-app-sr', async (appPath) => {
+    await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
+      content.replace('"name": "sf-lwc-app"', '"name": "sf-lwc-app-sr"')
+    )
+    await modifyFile(
+      path.join(appPath, 'force-app/main/default/applications/SF_LWC_App.app-meta.xml'),
+      (content: string) =>
+        content
+          .replace('<label>SF LWC App</label>', '<label>SF LWC App SR</label>')
+          .replace(
+            '<utilityBar>SF_LWC_App_UtilityBar</utilityBar>',
+            '<utilityBar>SF_LWC_App_SR_UtilityBar</utilityBar>'
+          )
+    )
+    fs.renameSync(
+      path.join(appPath, 'force-app/main/default/applications/SF_LWC_App.app-meta.xml'),
+      path.join(appPath, 'force-app/main/default/applications/SF_LWC_App_SR.app-meta.xml')
+    )
+    await modifyFile(
+      path.join(appPath, 'force-app/main/default/flexipages/SF_LWC_App_UtilityBar.flexipage-meta.xml'),
+      (content: string) =>
+        content
+          .replaceAll('SF LWC App', 'SF LWC App SR')
+          .replaceAll('datadogInit', 'datadogInitSr')
+          .replace(
+            '</componentInstanceProperties>\n                <componentInstanceProperties>\n                    <name>label</name>',
+            `</componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>applicationId</name>
+                    <value>a08fb90d-3a11-4391-9ed3-1cb2ec7703ed</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>clientToken</name>
+                    <value>pub2170234a8cda07e021cff9912de6e048</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>site</name>
+                    <value>datad0g.com</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>service</name>
+                    <value>SERVICE_NAME</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>env</name>
+                    <value>ENV_NAME</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>`
+          )
+          .replace('<value>Datadog Init</value>', '<value>Datadog Init SR</value>')
+    )
+    fs.renameSync(
+      path.join(appPath, 'force-app/main/default/flexipages/SF_LWC_App_UtilityBar.flexipage-meta.xml'),
+      path.join(appPath, 'force-app/main/default/flexipages/SF_LWC_App_SR_UtilityBar.flexipage-meta.xml')
+    )
+    fs.renameSync(
+      path.join(appPath, 'force-app/main/default/lwc/datadogInit'),
+      path.join(appPath, 'force-app/main/default/lwc/datadogInitSr')
+    )
+    for (const extension of ['html', 'js', 'js-meta.xml']) {
+      fs.renameSync(
+        path.join(appPath, `force-app/main/default/lwc/datadogInitSr/datadogInit.${extension}`),
+        path.join(appPath, `force-app/main/default/lwc/datadogInitSr/datadogInitSr.${extension}`)
+      )
+    }
+    await modifyFile(
+      path.join(appPath, 'force-app/main/default/lwc/datadogInitSr/datadogInitSr.js'),
+      (content: string) =>
+        content
+          .replace("import { LightningElement, wire } from 'lwc'", "import { LightningElement, wire, api } from 'lwc'")
+          .replace(
+            `const defaultInitConfiguration = {
+  applicationId: 'xxx',
+  clientToken: 'xxx',
+  site: 'datadoghq.com',
+  trackViewsManually: true,
+}
+
+`,
+            ''
+          )
+          .replace(
+            'export default class DatadogInit extends NavigationMixin(LightningElement) {',
+            `export default class DatadogInit extends NavigationMixin(LightningElement) {
+  @api applicationId
+  @api clientToken
+  @api site
+  @api service
+  @api env
+`
+          )
+          .replace(
+            'window.DD_RUM.init({ ...defaultInitConfiguration, ...window.RUM_CONFIGURATION })',
+            `window.DD_RUM.init({
+        applicationId: this.applicationId,
+        clientToken: this.clientToken,
+        site: this.site,
+        service: this.service,
+        env: this.env,
+        sessionSampleRate: 100,
+        sessionReplaySampleRate: 100,
+        trackViewsManually: true,
+        ...window.RUM_CONFIGURATION,
+      })`
+          )
+          .replace(
+            'window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)',
+            `if (window.RUM_CONTEXT) {
+        window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)
+      }`
+          )
+          .replaceAll('datadog_rum_salesforce', 'datadog_rum_salesforce_sr')
+    )
+    await modifyFile(
+      path.join(appPath, 'force-app/main/default/lwc/datadogInitSr/datadogInitSr.js-meta.xml'),
+      (content: string) =>
+        content.replace(
+          '</LightningComponentBundle>',
+          `    <targetConfigs>
+        <targetConfig targets="lightning__UtilityBar">
+            <property name="applicationId" type="String"/>
+            <property name="clientToken" type="String"/>
+            <property name="site" type="String"/>
+            <property name="service" type="String"/>
+            <property name="env" type="String"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>`
+        )
+    )
+    await modifyFile(
+      path.join(appPath, 'force-app/main/default/permissionsets/SF_LWC_App.permissionset-meta.xml'),
+      (content: string) => content.replaceAll('SF_LWC_App', 'SF_LWC_App_SR').replaceAll('SF LWC App', 'SF LWC App SR')
+    )
+    fs.renameSync(
+      path.join(appPath, 'force-app/main/default/permissionsets/SF_LWC_App.permissionset-meta.xml'),
+      path.join(appPath, 'force-app/main/default/permissionsets/SF_LWC_App_SR.permissionset-meta.xml')
+    )
+    fs.renameSync(
+      path.join(appPath, 'force-app/main/default/staticresources/datadog_rum_salesforce.resource-meta.xml'),
+      path.join(appPath, 'force-app/main/default/staticresources/datadog_rum_salesforce_sr.resource-meta.xml')
+    )
+    await modifyFile(path.join(appPath, '.gitignore'), (content: string) =>
+      content.replace('datadog_rum_salesforce.js', 'datadog_rum_salesforce_sr.js')
+    )
+    fs.copyFileSync(
+      'packages/browser-rum/bundle/datadog-rum-salesforce-sr.js',
+      path.join(appPath, 'force-app/main/default/staticresources/datadog_rum_salesforce_sr.js')
+    )
+  })
+}
+
 async function buildExperienceHeadMarkupApp() {
-  await buildGeneratedSalesforceApp('sf-experience-app', 'sf-experience-headmarkup-app', async (appPath) => {
+  await buildExperienceHeadMarkupVariant('sf-experience-headmarkup-app')
+}
+
+async function buildExperienceHeadMarkupSessionReplayApp() {
+  await buildExperienceHeadMarkupVariant('sf-experience-headmarkup-sr')
+  fs.rmSync('test/apps/sf-experience-headmarkup-sr/force-app/main/default/staticresources', {
+    recursive: true,
+    force: true,
+  })
+}
+
+async function buildExperienceHeadMarkupVariant(appName: string) {
+  await buildGeneratedSalesforceApp('sf-experience-app', appName, async (appPath) => {
     await modifyPackageJson(appPath, (packageJson) => {
-      packageJson.name = 'sf-experience-headmarkup-app'
+      packageJson.name = appName
     })
 
     // This app exercises the Experience Cloud head markup init path, so it doesn't need the

@@ -17,4 +17,5 @@ export * from '../types'
 export { takeFullSnapshot, takeNodeSnapshot } from '../domain/record'
 
 export { makeRecorderApi } from '../boot/recorderApi'
+export { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
 export { makeProfilerApi } from '../boot/profilerApi'
