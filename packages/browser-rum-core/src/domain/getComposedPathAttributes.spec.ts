@@ -39,10 +39,10 @@ describe('getComposedPathAttributes', () => {
       expect(collect([element])).toBeUndefined()
     })
 
-    it('collects a sanitized href from an <a> element', () => {
+    it('collects an href from an <a> element as-is at the default privacy level', () => {
       const element = appendElementInIsolation('<a href="/orders/8842/edit?token=secret#section"></a>')
 
-      expect(collect([element])).toEqual({ href: '/orders/?/edit?token' })
+      expect(collect([element])).toEqual({ href: '/orders/8842/edit?token=secret#section' })
     })
 
     it('collects href from an <area> element', () => {
@@ -57,7 +57,15 @@ describe('getComposedPathAttributes', () => {
       expect(collect([element])).toBeUndefined()
     })
 
-    it('collects a masked aria-label', () => {
+    it('masks href under the mask privacy level, same as aria-label', () => {
+      const element = appendElementInIsolation('<a href="/orders/8842?token=secret"></a>')
+
+      const result = collect([element], mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK }))
+
+      expect(result).toEqual({ href: '***' })
+    })
+
+    it('collects an aria-label as-is at the default privacy level', () => {
       const element = appendElementInIsolation('<button aria-label="Close dialog"></button>')
 
       expect(collect([element])).toEqual({ 'aria-label': 'Close dialog' })
@@ -101,6 +109,12 @@ describe('getComposedPathAttributes', () => {
       expect(result).toEqual({ 'data-user-email': '***' })
     })
 
+    it('collects a non-stable data-* attribute as-is at the default privacy level', () => {
+      const element = appendElementInIsolation('<div data-user-id="12345"></div>')
+
+      expect(collect([element])).toEqual({ 'data-user-id': '12345' })
+    })
+
     it('excludes the SDK privacy-override attribute (data-dd-privacy) from the wildcard data-* collection', () => {
       const element = appendElementInIsolation('<div data-dd-privacy="mask" data-testid="submit"></div>')
 
@@ -113,50 +127,6 @@ describe('getComposedPathAttributes', () => {
       const result = collect([element], mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK }))
 
       expect(result).toEqual({ id: 'my-id', role: 'button' })
-    })
-
-    describe('content-based PII sanitization (emails, digits)', () => {
-      it('drops a non-stable data-* attribute containing an email, even at the default (mask-user-input) privacy level', () => {
-        const element = appendElementInIsolation('<div data-user-email="john@example.com"></div>')
-
-        expect(collect([element])).toBeUndefined()
-      })
-
-      it('drops an aria-label containing an email, even at the default privacy level', () => {
-        const element = appendElementInIsolation('<button aria-label="Contact jane@example.com"></button>')
-
-        expect(collect([element])).toBeUndefined()
-      })
-
-      it('drops an aria-label containing a digit, even at the default privacy level', () => {
-        const element = appendElementInIsolation('<button aria-label="Page 2 of 10"></button>')
-
-        expect(collect([element])).toBeUndefined()
-      })
-
-      it('collects a non-stable data-* attribute containing a digit: digits are exempt from the content check for data-* attributes', () => {
-        const element = appendElementInIsolation('<div data-user-id="12345"></div>')
-
-        expect(collect([element])).toEqual({ 'data-user-id': '12345' })
-      })
-
-      it('collects an id containing a digit: digits are exempt from the content check for id', () => {
-        const element = appendElementInIsolation('<div id="user-12345"></div>')
-
-        expect(collect([element])).toEqual({ id: 'user-12345' })
-      })
-
-      it('collects a stable data-* attribute containing a digit', () => {
-        const element = appendElementInIsolation('<div data-testid="submit-button-2"></div>')
-
-        expect(collect([element])).toEqual({ 'data-testid': 'submit-button-2' })
-      })
-
-      it('does not drop other keys collected on the same element when one value is unsafe', () => {
-        const element = appendElementInIsolation('<div id="user-id" aria-label="Contact jane@example.com"></div>')
-
-        expect(collect([element])).toEqual({ id: 'user-id' })
-      })
     })
 
     it('skips every attribute of an element at the hidden privacy level', () => {

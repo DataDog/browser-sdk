@@ -3,15 +3,16 @@ import { NodePrivacyLevel, CENSORED_STRING_MARK, PRIVACY_ATTR_NAME } from './pri
 import type { RumConfiguration } from './configuration'
 import { getNodePrivacyLevel, maskAttributeIfNeeded } from './privacy'
 import type { NodePrivacyLevelCache } from './privacy'
-import { isGeneratedValue, FILTERED_TAGNAMES } from './getSelectorFromElement'
-import { getSanitizedHref, HREF_ATTRIBUTE, ATTRIBUTE_VALUE_LIMIT } from './urlSanitizer'
+import { FILTERED_TAGNAMES } from './getSelectorFromElement'
 
+const HREF_ATTRIBUTE = 'href'
 const HREF_TAGNAMES = ['A', 'AREA']
 
 // Attributes masked through the same privacy pipeline as action names: free-form text that can
 // carry PII (a user's name, an email address...), already classified this way by
-// `shouldMaskAttribute` in `privacy.ts`.
-const MASKED_TEXT_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt']
+// `shouldMaskAttribute` in `privacy.ts`. `href` is included here too, gated to `<a>`/`<area>`:
+// `shouldMaskAttribute` already special-cases `<a href>` the same way.
+const MASKED_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt', HREF_ATTRIBUTE]
 
 // Structural/identification attributes: not part of `shouldMaskAttribute`'s masked set, so no
 // masking needed beyond the element-level HIDDEN/IGNORE check every attribute already gets.
@@ -24,30 +25,12 @@ const PASSTHROUGH_ATTRIBUTES = ['id', 'role']
  */
 const MAX_ATTRIBUTE_KEY_COUNT = 20
 
-// Matches an email address anywhere in the value (ex: a mailto-style label, a "Contact
-// jane@example.com" aria-label), not just a value that's an email in its entirety.
-const EMAIL_PATTERN = /[^\s@]+@[^\s@]+\.[^\s@]+/
-
 /**
- * A last-resort content check applied on top of the existing privacy-level masking:
- * `maskAttributeIfNeeded` only masks free-form text under `MASK`/`MASK_UNLESS_ALLOWLISTED`, so at
- * `ALLOW`/`MASK_USER_INPUT` (the default) a raw attribute value would otherwise pass straight
- * through, email addresses included. The email check applies to every attribute.
- *
- * The digit check (`isGeneratedValue`, the same heuristic already used to exclude generated
- * ids/classes/URL path segments elsewhere in this domain) only applies to `MASKED_TEXT_ATTRIBUTES`
- * (free-form, human-authored text most likely to embed a raw identifier such as a phone number
- * when unmasked). It's intentionally not applied to `id`, `role`, or `data-*`: those are
- * structural/identifier-style attributes where digits are the common, wanted case (product ids,
- * SKUs, test ids), and dropping them entirely would throw away exactly the values customers asked
- * for this feature to expose.
+ * Arbitrary value, consistent with the truncation applied to action names
+ * (`getActionNameFromElement`), to avoid a single free-form attribute (ex: a long aria-label)
+ * consuming the whole map's character budget.
  */
-function isSafeToCollect(value: string, checkDigits: boolean): boolean {
-  if (EMAIL_PATTERN.test(value)) {
-    return false
-  }
-  return !checkDigits || !isGeneratedValue(value)
-}
+const ATTRIBUTE_VALUE_LIMIT = 100
 
 /**
  * Extracts a facetable key→value map of attributes (`href`, `aria-label`, `data-*`, `id`, `name`,
@@ -57,11 +40,11 @@ function isSafeToCollect(value: string, checkDigits: boolean): boolean {
  * Elements are visited target-first (composedPath's natural order), and the first (closest) value
  * seen for a given key wins — farther ancestors are ignored for that key once it's set.
  *
- * Every value is dropped if it contains an email address, regardless of privacy level or attribute
- * type. Values of `aria-label`, `name`, `title`, and `alt` are additionally dropped if they contain
- * a digit, since those are free-form text that can carry a raw identifier when unmasked (see
- * `isSafeToCollect`). `id`, `role`, and `data-*` are exempt from the digit check: digits are the
- * common, wanted case there (product ids, SKUs, test ids).
+ * Every value goes through the same privacy pipeline already used to mask action names
+ * (`maskAttributeIfNeeded`, backed by `shouldMaskAttribute`): masked under `MASK`/
+ * `MASK_UNLESS_ALLOWLISTED`, collected as-is otherwise. No additional, feature-specific content
+ * filtering is applied — customers control what leaves the browser through the existing privacy
+ * level configuration, the same way they already do for the action name.
  *
  * Returns `undefined` unless the `composed_path_selector_attributes_map` experimental flag is
  * enabled, or if the resulting map ends up empty.
@@ -83,11 +66,8 @@ export function getComposedPathAttributes(
   let collectedKeyCount = 0
   let hasReachedMaxKeyCount = false
 
-  function addAttribute(key: string, rawValue: string, checkDigits: boolean) {
+  function addAttribute(key: string, rawValue: string) {
     if (key in result) {
-      return
-    }
-    if (!isSafeToCollect(rawValue, checkDigits)) {
       return
     }
     if (collectedKeyCount >= MAX_ATTRIBUTE_KEY_COUNT) {
@@ -109,17 +89,10 @@ export function getComposedPathAttributes(
       continue
     }
 
-    if (HREF_TAGNAMES.includes(element.tagName)) {
-      const sanitizedHref = getSanitizedHref(element)
-      if (sanitizedHref !== undefined) {
-        addAttribute(HREF_ATTRIBUTE, sanitizedHref, false)
-      }
-    }
-
     for (const attributeName of PASSTHROUGH_ATTRIBUTES) {
       const value = element.getAttribute(attributeName)
       if (value) {
-        addAttribute(attributeName, value, false)
+        addAttribute(attributeName, value)
       }
     }
 
@@ -130,8 +103,12 @@ export function getComposedPathAttributes(
       if (attribute.name === PRIVACY_ATTR_NAME) {
         continue
       }
-      const isMaskedTextAttribute = MASKED_TEXT_ATTRIBUTES.includes(attribute.name)
-      if (isMaskedTextAttribute || attribute.name.startsWith('data-')) {
+      // `href` is collected only from `<a>`/`<area>`, matching `shouldMaskAttribute`'s own
+      // `<a href>` special case and avoiding a stray `href` attribute on an arbitrary element.
+      if (attribute.name === HREF_ATTRIBUTE && !HREF_TAGNAMES.includes(element.tagName)) {
+        continue
+      }
+      if (MASKED_ATTRIBUTES.includes(attribute.name) || attribute.name.startsWith('data-')) {
         const maskedValue = maskAttributeIfNeeded(
           element,
           attribute.name,
@@ -141,7 +118,7 @@ export function getComposedPathAttributes(
           CENSORED_STRING_MARK
         )
         if (maskedValue) {
-          addAttribute(attribute.name, maskedValue, isMaskedTextAttribute)
+          addAttribute(attribute.name, maskedValue)
         }
       }
     }

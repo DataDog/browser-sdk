@@ -96,7 +96,6 @@ describe('actionCollection', () => {
             width: 1,
             height: 2,
             composed_path_selector: undefined,
-            attributes: undefined,
           },
           name_source: 'text_content',
           position: {

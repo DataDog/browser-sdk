@@ -10,7 +10,8 @@ import {
   FILTERED_TAGNAMES,
 } from './getSelectorFromElement'
 import type { RumConfiguration } from './configuration'
-import { HREF_ATTRIBUTE } from './urlSanitizer'
+
+const HREF_ATTRIBUTE = 'href'
 
 /**
  * arbitrary value, we want to truncate the selector if it exceeds the limit

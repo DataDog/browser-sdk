@@ -807,14 +807,13 @@ test.describe('action collection with composed path selector', () => {
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
       // href and aria-label are excluded from the selector string itself (see the
-      // `ARIA_LABEL_ATTRIBUTE` comment in getComposedPathSelector.ts) and collected instead,
-      // sanitized and masked, in the attributes map below.
+      // `ARIA_LABEL_ATTRIBUTE` comment in getComposedPathSelector.ts) and collected instead in the
+      // attributes map below.
       expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe('A#my-link:nth-child(2);')
-      // the query value, hash and numeric order id are stripped from href, but the "token" param
-      // name is kept; aria-label and id are collected as-is (below the mask-user-input default
-      // privacy level, and containing no digit or email)
-      expect(actionEvents[0]._dd.action?.target?.attributes).toEqual({
-        href: '/orders/?/edit?token',
+      // href, aria-label, and id go through the same privacy pipeline as the action name: at the
+      // default (mask-user-input) privacy level, nothing is masked, so values are collected as-is.
+      expect(actionEvents[0].action.target?.attributes).toEqual({
+        href: '/orders/8842/edit?token=secret#section',
         'aria-label': 'Edit order',
         id: 'my-link',
       })

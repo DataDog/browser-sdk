@@ -359,6 +359,7 @@ export interface RawRumActionEvent {
     resource?: Count
     target: {
       name: string
+      attributes?: Record<string, string>
     }
   }
   view?: {
@@ -371,7 +372,6 @@ export interface RawRumActionEvent {
         width?: number
         height?: number
         composed_path_selector?: string
-        attributes?: Record<string, string>
       }
       name_source?: string
       position?: {
