@@ -1,5 +1,4 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { INTAKE_SITE_STAGING } from '@datadog/js-core/transport'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import { generateUUID } from '../../tools/utils/stringUtils'
@@ -121,14 +120,14 @@ const MAX_ENVIRONMENT_NAME_LENGTH = 200
 /**
  * Starts a private, unsampled Feature Flags lifecycle telemetry channel.
  *
- * This initial vertical slice is intentionally enabled only for staging. It does not subscribe to
- * the module-global RUM/Logs telemetry observable and does not require either product SDK to start.
+ * It does not subscribe to the module-global RUM/Logs telemetry observable and does not require
+ * either product SDK to start.
  */
 export function startFeatureFlagsTelemetry(
   configuration: Configuration,
   options: FeatureFlagsTelemetryOptions
 ): FeatureFlagsTelemetry {
-  if (configuration.site !== INTAKE_SITE_STAGING || configuration.trackingConsent !== TrackingConsent.GRANTED) {
+  if (configuration.trackingConsent !== TrackingConsent.GRANTED) {
     return { add: noop, stop: noop, enabled: false }
   }
 

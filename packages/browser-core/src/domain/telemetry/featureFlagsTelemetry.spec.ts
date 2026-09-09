@@ -261,7 +261,7 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(sendSpy).toHaveBeenCalledTimes(1)
   })
 
-  it('is disabled outside staging for the initial rollout', () => {
+  it('is enabled for production Datadog sites', () => {
     const interceptor = interceptRequests()
     const telemetry = startFeatureFlagsTelemetry(configuration({ site: 'datadoghq.com' }), {
       sdkName: 'dd-openfeature-browser',
@@ -269,10 +269,10 @@ describe('Feature Flags lifecycle telemetry', () => {
     })
 
     telemetry.add(fetchError())
-    window.dispatchEvent(createNewEvent('beforeunload'))
+    telemetry.stop()
 
-    expect(telemetry.enabled).toBeFalse()
-    expect(interceptor.requests.length).toBe(0)
+    expect(telemetry.enabled).toBeTrue()
+    expect(interceptor.requests.length).toBe(1)
   })
 
   it('is disabled when tracking consent is not granted', () => {
