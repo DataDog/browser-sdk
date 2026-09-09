@@ -5,7 +5,6 @@
 // — the hooks stay active for the lifetime of the page.
 
 import { instrumentMethod } from '@datadog/browser-core'
-import type { RawError } from '@datadog/browser-core'
 import { extractWasmBuildId } from './wasmBinaryParser'
 
 export interface RawWasmModule {
@@ -32,7 +31,13 @@ const WASM_STACK_FRAME_PATTERNS = [
   /\.wasm(?=$|[:@)\s]|[?#])/i,
 ]
 
-export function isWasmError({ stack, causes }: Pick<RawError, 'stack' | 'causes'>): boolean {
+export function isWasmError({
+  stack,
+  causes,
+}: {
+  readonly stack?: string
+  readonly causes?: ReadonlyArray<{ readonly stack?: string }>
+}): boolean {
   return [stack]
     .concat(causes?.map((cause) => cause.stack) ?? [])
     .some(
