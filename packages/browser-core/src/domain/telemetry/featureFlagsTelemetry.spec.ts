@@ -201,6 +201,51 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(interceptor.requests.length).toBe(1)
   })
 
+  it('flushes pending lifecycle events when stopped', () => {
+    const interceptor = interceptRequests()
+    const telemetry = startFeatureFlagsTelemetry(configuration(), {
+      sdkName: 'dd-openfeature-browser',
+      sdkVersion: '1.4.0',
+    })
+
+    telemetry.add(fetchError())
+    expect(interceptor.requests.length).toBe(0)
+
+    telemetry.stop()
+    expect(interceptor.requests.length).toBe(1)
+
+    telemetry.stop()
+    expect(interceptor.requests.length).toBe(1)
+  })
+
+  it('counts environment name limits in Unicode code points', () => {
+    const interceptor = interceptRequests()
+    const telemetry = startFeatureFlagsTelemetry(configuration(), {
+      environmentName: '🚀'.repeat(200),
+      sdkName: 'dd-openfeature-browser',
+      sdkVersion: '1.4.0',
+    })
+
+    telemetry.add(fetchError())
+    telemetry.stop()
+
+    expect(JSON.parse(interceptor.requests[0].body).telemetry.environment_name).toBe('🚀'.repeat(200))
+  })
+
+  it('omits environment names over the Unicode code point limit', () => {
+    const interceptor = interceptRequests()
+    const telemetry = startFeatureFlagsTelemetry(configuration(), {
+      environmentName: '🚀'.repeat(201),
+      sdkName: 'dd-openfeature-browser',
+      sdkVersion: '1.4.0',
+    })
+
+    telemetry.add(fetchError())
+    telemetry.stop()
+
+    expect(JSON.parse(interceptor.requests[0].body).telemetry.environment_name).toBeUndefined()
+  })
+
   it('does not throw or retry when a WebView bridge send fails', () => {
     const eventBridge = mockEventBridge()
     const sendSpy = spyOn(eventBridge, 'send').and.throwError('bridge failure')

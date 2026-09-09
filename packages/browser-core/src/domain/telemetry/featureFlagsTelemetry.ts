@@ -224,6 +224,8 @@ function isValidApplicationId(applicationId: string | undefined): applicationId 
 
 function isValidEnvironmentName(environmentName: string | undefined): environmentName is string {
   return (
-    environmentName !== undefined && environmentName.length > 0 && environmentName.length <= MAX_ENVIRONMENT_NAME_LENGTH
+    environmentName !== undefined &&
+    environmentName.length > 0 &&
+    Array.from(environmentName).length <= MAX_ENVIRONMENT_NAME_LENGTH
   )
 }
