@@ -12,7 +12,7 @@ import { ChangeType } from '../../../types'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
 import type { NodeId } from '../encoding'
-import type { EmitCanvasResourceCallback, EmitRecordCallback, EmitStatsCallback } from '../record.types'
+import type { EmitResourceCallback, EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
 import { trackCanvasCapture } from './trackCanvasCapture'
@@ -49,7 +49,7 @@ describe('trackCanvasCapture', () => {
   })
 
   function startTracking(
-    emitCanvasResource: jasmine.Spy<EmitCanvasResourceCallback> = jasmine.createSpy(),
+    emitResource: jasmine.Spy<EmitResourceCallback> = jasmine.createSpy(),
     maxImageDimension = 1000,
     hashingMaxDimension = 100
   ) {
@@ -66,8 +66,8 @@ describe('trackCanvasCapture', () => {
     })
     scope.nodeIds.getOrInsert(canvas)
     emitRecord = jasmine.createSpy<EmitRecordCallback>()
-    tracker = trackCanvasCapture(emitRecord, jasmine.createSpy<EmitStatsCallback>(), scope, emitCanvasResource)
-    return emitCanvasResource
+    tracker = trackCanvasCapture(emitRecord, emitResource, jasmine.createSpy<EmitStatsCallback>(), scope)
+    return emitResource
   }
 
   function markCanvasDirtyAndWaitForCapture() {
@@ -328,7 +328,7 @@ describe('trackCanvasCapture', () => {
 
   it('leaves the canvas dirty when emitting the canvas resource fails', async () => {
     draw('red')
-    const onCanvasCapture = jasmine.createSpy<EmitCanvasResourceCallback>().and.throwError('resource failed')
+    const onCanvasCapture = jasmine.createSpy<EmitResourceCallback>().and.throwError('resource failed')
     startTracking(onCanvasCapture)
 
     markCanvasDirtyAndWaitForCapture()
@@ -340,7 +340,7 @@ describe('trackCanvasCapture', () => {
   it('does not mark the canvas as tainted when emitting the canvas resource throws a SecurityError', async () => {
     draw('red')
     const onCanvasCapture = jasmine
-      .createSpy<EmitCanvasResourceCallback>()
+      .createSpy<EmitResourceCallback>()
       .and.throwError(new DOMException('resource emission failed', 'SecurityError'))
     startTracking(onCanvasCapture)
 

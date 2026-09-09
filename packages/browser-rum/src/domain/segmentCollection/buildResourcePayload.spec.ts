@@ -1,14 +1,14 @@
 import type { Payload } from '@datadog/browser-core'
-import { buildCanvasResourcePayload } from './buildCanvasResourcePayload'
+import { buildResourcePayload } from './buildResourcePayload'
 
-describe('buildCanvasResourcePayload', () => {
+describe('buildResourcePayload', () => {
   const HASH = '20x30-abcdef1234567890'
   const IMAGE_BLOB = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
   const APPLICATION_ID = 'app-id'
   let payload: Payload
 
   beforeEach(() => {
-    payload = buildCanvasResourcePayload(HASH, IMAGE_BLOB, APPLICATION_ID)
+    payload = buildResourcePayload(HASH, IMAGE_BLOB, APPLICATION_ID)
   })
 
   it('adds the image as a file named after the hash', () => {
@@ -18,11 +18,9 @@ describe('buildCanvasResourcePayload', () => {
     expect(imageEntry.size).toBe(IMAGE_BLOB.size)
   })
 
-  it('adds the application id and type as the `event` entry', async () => {
-    const eventEntry = (payload.data as FormData).get('event')! as File
-    expect(eventEntry.name).toBe('blob')
-    const event = JSON.parse(await eventEntry.text())
-    expect(event).toEqual({ application: { id: APPLICATION_ID }, type: 'resource' })
+  it('adds the application id and type as the `event` entry', () => {
+    const eventEntry = (payload.data as FormData).get('event')! as string
+    expect(JSON.parse(eventEntry)).toEqual({ application: { id: APPLICATION_ID }, type: 'resource' })
   })
 
   it('returns the image size as the approximate byte count', () => {

@@ -3,4 +3,4 @@ import type { SerializationStats } from './serialization'
 
 export type EmitRecordCallback<Record extends BrowserRecord = BrowserRecord> = (record: Record) => void
 export type EmitStatsCallback = (stats: SerializationStats) => void
-export type EmitCanvasResourceCallback = (hash: string, image: Blob) => void
+export type EmitResourceCallback = (hash: string, content: Blob) => void

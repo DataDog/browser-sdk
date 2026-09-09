@@ -5,14 +5,14 @@ import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
-import type { EmitCanvasResourceCallback, SerializationStats } from '../domain/record'
+import type { EmitResourceCallback, SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
 import type { ReplayPayload } from '../domain/segmentCollection'
 import {
   startSegmentCollection,
   SEGMENT_BYTES_LIMIT,
   startSegmentTelemetry,
-  startCanvasResourceCollection,
+  startReplayResourceCollection,
 } from '../domain/segmentCollection'
 import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
@@ -45,7 +45,7 @@ export function startRecording(
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
-  let emitCanvasResource: EmitCanvasResourceCallback | undefined
+  let emitResource: EmitResourceCallback = noop
 
   if (!canUseEventBridge()) {
     const segmentCollection = startSegmentCollection(
@@ -63,13 +63,13 @@ export function startRecording(
     const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
     cleanupTasks.push(segmentTelemetry.stop)
 
-    const canvasResourceCollection = startCanvasResourceCollection(
+    const replayResourceCollection = startReplayResourceCollection(
       configuration.applicationId,
       lifeCycle,
       canvasResourceRequest
     )
-    emitCanvasResource = canvasResourceCollection.emitCanvasResource
-    cleanupTasks.push(canvasResourceCollection.stop)
+    emitResource = replayResourceCollection.emitResource
+    cleanupTasks.push(replayResourceCollection.stop)
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))
     addStats = noop
@@ -77,11 +77,11 @@ export function startRecording(
 
   const { stop: stopRecording } = record({
     emitRecord: addRecord,
+    emitResource,
     emitStats: addStats,
     configuration,
     lifeCycle,
     viewHistory,
-    emitCanvasResource,
   })
   cleanupTasks.push(stopRecording)
 

@@ -2,19 +2,19 @@ import { isPageExitReason, PageExitReason } from '@datadog/browser-core'
 import type { HttpRequest, Payload } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { EmitCanvasResourceCallback } from '../record'
-import { buildCanvasResourcePayload } from './buildCanvasResourcePayload'
+import type { EmitResourceCallback } from '../record'
+import { buildResourcePayload } from './buildResourcePayload'
 
-interface CanvasResourceCollection {
-  emitCanvasResource: EmitCanvasResourceCallback
+interface ReplayResourceCollection {
+  emitResource: EmitResourceCallback
   stop(this: void): void
 }
 
-export function startCanvasResourceCollection(
+export function startReplayResourceCollection(
   applicationId: string,
   lifeCycle: LifeCycle,
   httpRequest: HttpRequest<Payload>
-): CanvasResourceCollection {
+): ReplayResourceCollection {
   const uploadedHashes = new Set<string>()
   const pendingHashes = new WeakMap<Payload, string>()
   const pendingPayloads = new Set<Payload>()
@@ -41,12 +41,12 @@ export function startCanvasResourceCollection(
   )
 
   return {
-    emitCanvasResource: (hash, image) => {
+    emitResource: (hash, content) => {
       if (uploadedHashes.has(hash)) {
         return
       }
       uploadedHashes.add(hash)
-      const payload = buildCanvasResourcePayload(hash, image, applicationId)
+      const payload = buildResourcePayload(hash, content, applicationId)
       pendingHashes.set(payload, hash)
       pendingPayloads.add(payload)
       httpRequest.send(payload)

@@ -1,4 +1,4 @@
-export type { EmitCanvasResourceCallback } from './record.types'
+export type { EmitResourceCallback } from './record.types'
 export { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
 export { record } from './record'
 export type { ChangeDecoder } from './encoding'

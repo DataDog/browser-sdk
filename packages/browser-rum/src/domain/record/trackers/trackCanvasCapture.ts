@@ -9,14 +9,14 @@ import { CanvasStatus } from '../canvas/canvasManager'
 import { captureCanvasImage, createCanvasSnapshot } from '../canvas/canvasSnapshot'
 import { computeImageHash } from '../canvas/canvasHash'
 import { serializeCanvasImageContent } from '../canvas/serializeCanvasImageContent'
-import type { EmitCanvasResourceCallback, EmitRecordCallback, EmitStatsCallback } from '../record.types'
+import type { EmitResourceCallback, EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
 
 export const trackCanvasCapture = (
   emitRecord: EmitRecordCallback,
+  emitResource: EmitResourceCallback,
   emitStats: EmitStatsCallback,
-  scope: RecordingScope,
-  emitCanvasResource?: EmitCanvasResourceCallback
+  scope: RecordingScope
 ): Tracker => {
   const canvasManager = scope.canvasManager
   const configuration = scope.configuration.sessionReplayCanvasRecording
@@ -120,7 +120,7 @@ export const trackCanvasCapture = (
 
       try {
         serializeCanvasImageContent({ nodeId, changeHash: hash }, emitRecord, emitStats, scope)
-        emitCanvasResource?.(hash, image)
+        emitResource(hash, image)
       } catch {
         if (!cancelled()) {
           canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
