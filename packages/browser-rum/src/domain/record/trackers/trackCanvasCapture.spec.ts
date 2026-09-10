@@ -10,6 +10,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
+import { expectPixelApprox } from '../canvas/canvasImage.specHelper'
 import type { NodeId } from '../encoding'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
@@ -89,14 +90,6 @@ describe('trackCanvasCapture', () => {
     scope.nodeIds.delete(canvas)
     document.body.appendChild(canvas)
     return scope.nodeIds.getOrInsert(canvas)
-  }
-
-  // Lossy WebP encoding can shift channel values by a few units, so compare with a tolerance
-  // instead of an exact match.
-  function expectPixelApprox(actual: number[], expected: number[]) {
-    actual.forEach((value, index) => {
-      expect(Math.abs(value - expected[index])).toBeLessThan(10)
-    })
   }
 
   function firstPixelOf(image: Blob): Promise<number[]> {

@@ -1,6 +1,7 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { CanvasSnapshot } from './canvasSnapshot'
 import { captureCanvasImage, createCanvasSnapshot } from './canvasSnapshot'
+import { expectPixelApprox, supportsWebPEncoding } from './canvasImage.specHelper'
 
 describe('createCanvasSnapshot', () => {
   it('downscales the snapshot to the configured maximum dimension', () => {
@@ -34,17 +35,17 @@ describe('createCanvasSnapshot', () => {
 
     fill(canvas, 'blue')
 
-    expect(await imagePixels((await captureCanvasImage(snapshot, 1))!)).toEqual([255, 0, 0, 255])
+    expectPixelApprox(await imagePixels((await captureCanvasImage(snapshot, 1))!), [255, 0, 0, 255])
   })
 })
 
 describe('captureCanvasImage', () => {
-  it('encodes the snapshot as a WebP image', async () => {
+  it('encodes the snapshot as WebP, or PNG when the browser does not support WebP encoding', async () => {
     const snapshot = createSnapshot(createCanvas(2, 2), 1000)
 
     const image = await captureCanvasImage(snapshot, 0.5)
 
-    expect(image?.type).toBe('image/webp')
+    expect(image?.type).toBe(supportsWebPEncoding() ? 'image/webp' : 'image/png')
   })
 
   it('encodes an image with the dimensions of the snapshot', async () => {
@@ -61,7 +62,7 @@ describe('captureCanvasImage', () => {
 
     const image = await captureCanvasImage(snapshot, 1)
 
-    expect(await imagePixels(image!)).toEqual([255, 0, 0, 255, 0, 0, 255, 255])
+    expectPixelApprox(await imagePixels(image!), [255, 0, 0, 255, 0, 0, 255, 255])
   })
 })
 
