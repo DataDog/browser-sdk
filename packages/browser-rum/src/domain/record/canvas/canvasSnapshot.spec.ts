@@ -34,23 +34,23 @@ describe('createCanvasSnapshot', () => {
 
     fill(canvas, 'blue')
 
-    expect(await imagePixels((await captureCanvasImage(snapshot))!)).toEqual([255, 0, 0, 255])
+    expect(await imagePixels((await captureCanvasImage(snapshot, 1))!)).toEqual([255, 0, 0, 255])
   })
 })
 
 describe('captureCanvasImage', () => {
-  it('encodes the snapshot as a PNG image', async () => {
+  it('encodes the snapshot as a WebP image', async () => {
     const snapshot = createSnapshot(createCanvas(2, 2), 1000)
 
-    const image = await captureCanvasImage(snapshot)
+    const image = await captureCanvasImage(snapshot, 0.5)
 
-    expect(image?.type).toBe('image/png')
+    expect(image?.type).toBe('image/webp')
   })
 
   it('encodes an image with the dimensions of the snapshot', async () => {
     const snapshot = createSnapshot(createCanvas(4, 2), 2)
 
-    const image = await captureCanvasImage(snapshot)
+    const image = await captureCanvasImage(snapshot, 1)
 
     expect(await imageSize(image!)).toEqual([2, 1])
   })
@@ -59,7 +59,7 @@ describe('captureCanvasImage', () => {
     // Left half red, right half blue: a cropped image would be fully red.
     const snapshot = createSnapshot(createCanvas(4, 2, ['red', 'blue']), 2)
 
-    const image = await captureCanvasImage(snapshot)
+    const image = await captureCanvasImage(snapshot, 1)
 
     expect(await imagePixels(image!)).toEqual([255, 0, 0, 255, 0, 0, 255, 255])
   })

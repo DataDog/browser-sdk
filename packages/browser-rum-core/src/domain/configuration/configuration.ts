@@ -243,27 +243,11 @@ export interface RumInitConfiguration extends InitConfiguration {
         enable: boolean
 
         /**
-         * The maximum number of canvas frames recorded per second, between 0 and 5. Setting this option to `0` disables canvas frame recording.
+         * Trades frame rate and image resolution for bandwidth. See {@link CanvasRecordingQuality}.
          *
-         * @defaultValue 1
+         * @defaultValue 'medium'
          */
-        maxFramesPerSecond?: number | undefined
-
-        /**
-         * The maximum width or height, in pixels, of the image used for canvas change detection, between 1 and 100.
-         * Images are downscaled proportionally to fit within this bound and smaller images are not upscaled.
-         *
-         * @defaultValue 100
-         */
-        hashingMaxDimension?: number | undefined
-
-        /**
-         * The maximum width or height, in pixels, of recorded canvas images, between 1 and 1000. Images are downscaled proportionally
-         * to fit within this bound and smaller images are not upscaled.
-         *
-         * @defaultValue 1000
-         */
-        maxImageDimension?: number | undefined
+        quality?: CanvasRecordingQuality | undefined
       }
     | undefined
 
@@ -404,6 +388,48 @@ export interface RumInitConfiguration extends InitConfiguration {
   betaTrackWebSockets?: boolean | undefined
 }
 
+/**
+ * Recording quality presets for canvas capture. See {@link RumInitConfiguration.sessionReplayCanvasRecording}.
+ */
+export const CanvasRecordingQuality = {
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+} as const
+export type CanvasRecordingQuality = (typeof CanvasRecordingQuality)[keyof typeof CanvasRecordingQuality]
+
+/**
+ * The resolved canvas recording tuning behind each {@link CanvasRecordingQuality} preset.
+ */
+export interface CanvasRecordingConfiguration {
+  enable: true
+  maxFramesPerSecond: number
+  hashingMaxDimension: number
+  maxImageDimension: number
+  encodeQuality: number
+}
+
+const CANVAS_RECORDING_QUALITY_PRESETS: Record<CanvasRecordingQuality, Omit<CanvasRecordingConfiguration, 'enable'>> = {
+  [CanvasRecordingQuality.LOW]: {
+    maxFramesPerSecond: 1,
+    hashingMaxDimension: 50,
+    maxImageDimension: 600,
+    encodeQuality: 0.3,
+  },
+  [CanvasRecordingQuality.MEDIUM]: {
+    maxFramesPerSecond: 4,
+    hashingMaxDimension: 100,
+    maxImageDimension: 1000,
+    encodeQuality: 0.5,
+  },
+  [CanvasRecordingQuality.HIGH]: {
+    maxFramesPerSecond: 8,
+    hashingMaxDimension: 100,
+    maxImageDimension: 1280,
+    encodeQuality: 0.75,
+  },
+}
+
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
 
 /**
@@ -459,9 +485,7 @@ export const RUM_SCHEMA = {
     type: 'schema',
     schema: {
       enable: { type: 'boolean', required: true },
-      maxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
-      hashingMaxDimension: { type: 'number', min: 1, max: 100, default: 100 },
-      maxImageDimension: { type: 'number', min: 1, max: 1000, default: 1000 },
+      quality: { type: 'enum', values: CanvasRecordingQuality, default: CanvasRecordingQuality.MEDIUM },
     },
   },
 
@@ -528,13 +552,17 @@ export const RUM_SCHEMA = {
   },
 } as const
 
-export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedTracingUrls'> & {
+export type RumConfiguration = Omit<
+  InferredConfig<typeof RUM_SCHEMA>,
+  'allowedTracingUrls' | 'sessionReplayCanvasRecording'
+> & {
   allowedTracingUrls: TracingOption[]
   betaEnableViewUpdates: boolean
   rulePsr: number | undefined
   trackResourceHeaders: MatchHeader[]
   allowedGraphQlUrls: GraphQlUrlOption[]
   remoteConfigurationId: string | undefined
+  sessionReplayCanvasRecording: CanvasRecordingConfiguration | undefined
 }
 
 /**
@@ -585,9 +613,11 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const sessionReplayCanvasRecording = isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS)
-    ? config.sessionReplayCanvasRecording
-    : undefined
+  const sessionReplayCanvasRecording =
+    isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS) &&
+    config.sessionReplayCanvasRecording?.enable
+      ? { enable: true as const, ...CANVAS_RECORDING_QUALITY_PRESETS[config.sessionReplayCanvasRecording.quality] }
+      : undefined
 
   return {
     ...config,

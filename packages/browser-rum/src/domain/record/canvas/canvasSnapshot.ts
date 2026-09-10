@@ -41,10 +41,10 @@ export function createDownscaledCanvas(
   return canvas
 }
 
-export function captureCanvasImage(snapshot: CanvasSnapshot): Promise<Blob | undefined> {
+export function captureCanvasImage(snapshot: CanvasSnapshot, encodeQuality: number): Promise<Blob | undefined> {
   return new Promise((resolve) => {
     try {
-      snapshot.source.toBlob((blob) => resolve(blob ?? undefined), 'image/png')
+      snapshot.source.toBlob((blob) => resolve(blob ?? undefined), 'image/webp', encodeQuality)
     } catch {
       resolve(undefined)
     }

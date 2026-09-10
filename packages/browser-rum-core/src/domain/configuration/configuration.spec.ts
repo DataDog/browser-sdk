@@ -19,6 +19,7 @@ import {
 } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import {
+  CanvasRecordingQuality,
   DEFAULT_PROPAGATOR_TYPES,
   DEFAULT_TRACKED_RESOURCE_HEADERS,
   serializeRumConfiguration,
@@ -392,7 +393,7 @@ describe('validateAndBuildRumConfiguration', () => {
         addExperimentalFeatures([ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS])
       })
 
-      it('uses one frame per second by default when enabled', () => {
+      it('uses the medium quality preset by default when enabled', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           sessionReplayCanvasRecording: { enable: true },
@@ -400,64 +401,48 @@ describe('validateAndBuildRumConfiguration', () => {
 
         expect(configuration.sessionReplayCanvasRecording).toEqual({
           enable: true,
-          maxFramesPerSecond: 1,
+          maxFramesPerSecond: 4,
           hashingMaxDimension: 100,
           maxImageDimension: 1000,
+          encodeQuality: 0.5,
         })
       })
 
-      it('uses the configured frame rate', () => {
+      it('uses the configured quality preset', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           sessionReplayCanvasRecording: {
             enable: true,
-            maxFramesPerSecond: 2.5,
-            hashingMaxDimension: 50,
-            maxImageDimension: 500,
+            quality: CanvasRecordingQuality.LOW,
           },
         })!
 
         expect(configuration.sessionReplayCanvasRecording).toEqual({
           enable: true,
-          maxFramesPerSecond: 2.5,
+          maxFramesPerSecond: 1,
           hashingMaxDimension: 50,
-          maxImageDimension: 500,
+          maxImageDimension: 600,
+          encodeQuality: 0.3,
         })
       })
 
-      it('preserves the configured options when disabled', () => {
+      it('resolves to undefined when disabled regardless of the configured quality', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           sessionReplayCanvasRecording: {
             enable: false,
-            maxFramesPerSecond: 2.5,
-            hashingMaxDimension: 50,
-            maxImageDimension: 500,
+            quality: CanvasRecordingQuality.HIGH,
           },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({
-          enable: false,
-          maxFramesPerSecond: 2.5,
-          hashingMaxDimension: 50,
-          maxImageDimension: 500,
-        })
+        expect(configuration.sessionReplayCanvasRecording).toBeUndefined()
       })
 
-      it('rejects a hashing dimension above 100 pixels', () => {
+      it('rejects an invalid quality preset', () => {
         expect(
           validateAndBuildRumConfiguration({
             ...DEFAULT_INIT_CONFIGURATION,
-            sessionReplayCanvasRecording: { enable: true, hashingMaxDimension: 101 },
-          })
-        ).toBeUndefined()
-      })
-
-      it('rejects an image dimension above 1000 pixels', () => {
-        expect(
-          validateAndBuildRumConfiguration({
-            ...DEFAULT_INIT_CONFIGURATION,
-            sessionReplayCanvasRecording: { enable: true, maxImageDimension: 1001 },
+            sessionReplayCanvasRecording: { enable: true, quality: 'ultra' as any },
           })
         ).toBeUndefined()
       })
@@ -1181,7 +1166,7 @@ describe('serializeRumConfiguration', () => {
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
-      sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
+      sessionReplayCanvasRecording: { enable: true, quality: CanvasRecordingQuality.HIGH },
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration

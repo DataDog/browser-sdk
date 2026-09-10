@@ -82,6 +82,7 @@ describe('record', () => {
           maxFramesPerSecond: 1,
           hashingMaxDimension: 100,
           maxImageDimension: 1000,
+          encodeQuality: 0.5,
         },
       })
 
@@ -109,6 +110,7 @@ describe('record', () => {
           maxFramesPerSecond: 0,
           hashingMaxDimension: 100,
           maxImageDimension: 1000,
+          encodeQuality: 0.5,
         },
       })
 
