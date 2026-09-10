@@ -33,13 +33,18 @@ describe('replayResourceCollection', () => {
   it('retries a hash whose upload was discarded because the queue was full', () => {
     const { httpRequest, observable, send } = createHttpRequestSpy()
     const { emitResource } = startCollection(httpRequest)
+    const onDiscard = jasmine.createSpy()
+    const secondOnDiscard = jasmine.createSpy()
 
-    emitResource('hash1', CONTENT)
+    emitResource('hash1', CONTENT, onDiscard)
+    emitResource('hash1', CONTENT, secondOnDiscard)
     const [payload] = send.calls.argsFor(0) as [Payload]
     observable.notify({ type: 'queue-full', payload, bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 } })
 
     emitResource('hash1', CONTENT)
 
+    expect(onDiscard).toHaveBeenCalledOnceWith()
+    expect(secondOnDiscard).toHaveBeenCalledOnceWith()
     expect(send).toHaveBeenCalledTimes(2)
   })
 

@@ -35,6 +35,8 @@ export interface CanvasManager {
   /** Starts a capture attempt for a canvas */
   startCaptureAttempt: (canvas: HTMLCanvasElement) => CanvasCaptureAttempt
   discardCaptureAttempt: (canvas: HTMLCanvasElement, captureAttempt: CanvasCaptureAttempt) => void
+  /** Discards the last capture hash and retries a rejected capture */
+  retryCanvas: (canvas: HTMLCanvasElement) => void
   addCanvasContentMutation: (mutation: CanvasContentMutation) => void
   takeCanvasContentMutations: () => CanvasContentMutation[]
   /** New record stream: discards the per-stream tracking states (not the taint) */
@@ -142,6 +144,11 @@ export function createCanvasManager(): CanvasManager {
       if (captureAttempt.isCurrent()) {
         getTrackingState(canvas).capturePending = false
       }
+    },
+
+    retryCanvas: (canvas) => {
+      canvasTrackingStates.delete(canvas)
+      markDirty(canvas)
     },
 
     addCanvasContentMutation: (mutation) => {

@@ -41,11 +41,19 @@ export function startRecording(
     httpRequest || createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
 
   const canvasResourceRequest =
-    canvasHttpRequest || createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError)
+    canvasHttpRequest ||
+    createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
   let emitResource: EmitResourceCallback = noop
+  let flushMutations = noop
+
+  // This must be registered before the segment and resource collectors so an urgent exit includes queued canvas changes.
+  const { unsubscribe: unsubscribeMutationFlush } = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () =>
+    flushMutations()
+  )
+  cleanupTasks.push(unsubscribeMutationFlush)
 
   if (!canUseEventBridge()) {
     const segmentCollection = startSegmentCollection(
@@ -75,7 +83,7 @@ export function startRecording(
     addStats = noop
   }
 
-  const { stop: stopRecording } = record({
+  const recording = record({
     emitRecord: addRecord,
     emitResource,
     emitStats: addStats,
@@ -83,7 +91,8 @@ export function startRecording(
     lifeCycle,
     viewHistory,
   })
-  cleanupTasks.push(stopRecording)
+  flushMutations = recording.flushMutations
+  cleanupTasks.push(recording.stop)
 
   return {
     stop: () => {

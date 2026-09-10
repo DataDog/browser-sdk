@@ -23,7 +23,6 @@ import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
-import { MUTATION_PROCESS_MIN_DELAY } from '../domain/record'
 import { startRecording } from './datadogRecorder'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp
@@ -198,7 +197,7 @@ describe('startRecording', () => {
     expect(requests[0].segment.records[2].type).toBe(RecordType.FullSnapshot)
   })
 
-  it('sends a canvas resource through its own http request when a tracked canvas changes', async () => {
+  it('flushes queued canvas content before an urgent exit', async () => {
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     // the canvas must exist before recording starts so the initial full snapshot assigns it a node id
@@ -208,10 +207,11 @@ describe('startRecording', () => {
     )
 
     const canvasSendSpy = jasmine.createSpy()
+    const canvasSendOnExitSpy = jasmine.createSpy()
     const canvasHttpRequest = {
       observable: new Observable<HttpRequestEvent<Payload>>(),
       send: canvasSendSpy,
-      sendOnExit: canvasSendSpy,
+      sendOnExit: canvasSendOnExitSpy,
     }
 
     setupStartRecording(
@@ -229,10 +229,10 @@ describe('startRecording', () => {
     canvas.getContext('2d')!.fillRect(0, 0, 2, 2)
     clock.tick(1000)
     await collectAsyncCalls(requestIdleCallbackMock.spy)
-    requestIdleCallbackMock.idle()
-    clock.tick(MUTATION_PROCESS_MIN_DELAY)
+    flushSegment(lifeCycle)
 
     expect(canvasSendSpy).toHaveBeenCalledTimes(1)
+    expect(canvasSendOnExitSpy).toHaveBeenCalledTimes(1)
   })
 
   describe('when calling stop()', () => {

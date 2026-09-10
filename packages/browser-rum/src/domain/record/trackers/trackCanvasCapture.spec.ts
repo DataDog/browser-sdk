@@ -125,7 +125,7 @@ describe('trackCanvasCapture', () => {
     markCanvasDirtyAndWaitForCapture()
     await waitForCanvasCapture()
 
-    expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob))
+    expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob), jasmine.any(Function))
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
@@ -155,6 +155,22 @@ describe('trackCanvasCapture', () => {
 
     expect(onCanvasCapture).toHaveBeenCalledTimes(1)
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
+  })
+
+  it('retries an unchanged canvas when its resource upload is rejected', async () => {
+    draw('red')
+    const onCanvasCapture = startTracking()
+
+    markCanvasDirtyAndWaitForCapture()
+    await collectAsyncCalls(onCanvasCapture, 1)
+    await waitForCanvasCapture()
+    const onDiscard = onCanvasCapture.calls.argsFor(0)[2] as () => void
+    onDiscard()
+
+    clock.tick(1000)
+    await collectAsyncCalls(onCanvasCapture, 2)
+
+    expect(onCanvasCapture.calls.argsFor(1)[0]).toBe(onCanvasCapture.calls.argsFor(0)[0])
   })
 
   it('hashes and emits the same immutable canvas snapshot', async () => {
@@ -321,7 +337,7 @@ describe('trackCanvasCapture', () => {
       clock.tick(1000)
       await waitForCanvasCapture()
 
-      expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob))
+      expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob), jasmine.any(Function))
       expect(emitRecord.calls.argsFor(0)[0]).toEqual(
         jasmine.objectContaining({
           data: jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]]),

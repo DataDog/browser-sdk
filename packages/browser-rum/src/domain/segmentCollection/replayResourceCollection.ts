@@ -10,22 +10,35 @@ interface ReplayResourceCollection {
   stop(this: void): void
 }
 
+interface PendingResource {
+  hash: string
+  onDiscards: Set<() => void>
+}
+
 export function startReplayResourceCollection(
   applicationId: string,
   lifeCycle: LifeCycle,
   httpRequest: HttpRequest<Payload>
 ): ReplayResourceCollection {
   const uploadedHashes = new Set<string>()
-  const pendingResources = new Map<Payload, string>()
+  const pendingResources = new Map<Payload, PendingResource>()
+  const pendingResourcesByHash = new Map<string, PendingResource>()
 
   const { unsubscribe: unsubscribeRequest } = httpRequest.observable.subscribe((event) => {
     if (event.type === 'success') {
+      const resource = pendingResources.get(event.payload)
       pendingResources.delete(event.payload)
+      if (resource) {
+        pendingResourcesByHash.delete(resource.hash)
+        resource.onDiscards.clear()
+      }
     } else if (event.type === 'queue-full') {
-      const hash = pendingResources.get(event.payload)
+      const resource = pendingResources.get(event.payload)
       pendingResources.delete(event.payload)
-      if (hash) {
-        uploadedHashes.delete(hash)
+      if (resource) {
+        uploadedHashes.delete(resource.hash)
+        pendingResourcesByHash.delete(resource.hash)
+        resource.onDiscards.forEach((onDiscard) => onDiscard())
       }
     }
   })
@@ -34,19 +47,27 @@ export function startReplayResourceCollection(
     LifeCycleEventType.PREPARE_URGENT_FLUSH,
     (reason) => {
       if (isPageExitReason(reason) && reason !== PageExitReason.HIDDEN) {
-        pendingResources.forEach((_hash, payload) => httpRequest.sendOnExit(payload))
+        pendingResources.forEach((_resource, payload) => httpRequest.sendOnExit(payload))
       }
     }
   )
 
   return {
-    emitResource: (hash, content) => {
+    emitResource: (hash, content, onDiscard) => {
       if (uploadedHashes.has(hash)) {
+        if (onDiscard) {
+          pendingResourcesByHash.get(hash)?.onDiscards.add(onDiscard)
+        }
         return
       }
       uploadedHashes.add(hash)
       const payload = buildResourcePayload(hash, content, applicationId)
-      pendingResources.set(payload, hash)
+      const resource = { hash, onDiscards: new Set<() => void>() }
+      if (onDiscard) {
+        resource.onDiscards.add(onDiscard)
+      }
+      pendingResources.set(payload, resource)
+      pendingResourcesByHash.set(hash, resource)
       httpRequest.send(payload)
     },
     stop: () => {

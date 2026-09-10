@@ -325,7 +325,11 @@ function processCanvasContentMutations(
       continue
     }
     try {
-      emitResource(hash, image)
+      emitResource(hash, image, () => {
+        if (captureAttempt.isCurrent()) {
+          transaction.scope.canvasManager.retryCanvas(canvas)
+        }
+      })
       transaction.setImageContent(nodeId, createString(StringRole.ResourceId, hash))
       captureAttempt.setLastChangeHash(hash)
     } catch {

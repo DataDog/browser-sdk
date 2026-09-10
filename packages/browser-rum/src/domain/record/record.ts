@@ -55,9 +55,8 @@ export function record(options: RecordOptions): RecordAPI {
     replayStats.addRecord(view.id)
   }
 
-  const processResource: EmitResourceCallback = (hash, content) => {
-    emitResource(hash, content)
-    sendToExtension('resource', { hash, content })
+  const processResource: EmitResourceCallback = (hash, content, onDiscard) => {
+    emitResource(hash, content, onDiscard)
     const view = options.viewHistory.findView()!
     replayStats.addResource(view.id)
   }

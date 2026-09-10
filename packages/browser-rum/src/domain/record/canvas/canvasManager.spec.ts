@@ -81,6 +81,19 @@ describe('CanvasManager', () => {
     expect(captureAttempt.isCurrent()).toBe(true)
   })
 
+  it('retries a rejected capture without retaining its hash', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    const captureAttempt = canvasManager.startCaptureAttempt(canvas)
+    captureAttempt.setLastChangeHash('hash')
+
+    canvasManager.retryCanvas(canvas)
+
+    expect(captureAttempt.isCurrent()).toBe(false)
+    expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
+    expect(canvasManager.startCaptureAttempt(canvas).lastChangeHash).toBeUndefined()
+  })
+
   it('waits for queued content to be consumed before capturing again', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
