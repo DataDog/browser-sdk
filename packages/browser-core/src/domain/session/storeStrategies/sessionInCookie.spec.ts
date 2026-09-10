@@ -187,6 +187,44 @@ describe('session in cookie strategy', () => {
       expect(calls).toEqual(['first', 'second'])
       expect(mockCookie.getStoredValues()[0]).toContain('id=second')
     })
+
+    describe('web lock teardown errors', () => {
+      function stubLocksRequest(error: Error) {
+        if (!navigator.locks) {
+          pending('Web Locks API not available')
+        }
+        // Reject inside callFake so Firefox 78 (no Web Locks) can pending() without creating an
+        // unhandled rejection from Promise.reject() evaluated as a stub argument.
+        spyOn(navigator.locks, 'request').and.callFake(() => Promise.reject(error))
+      }
+
+      it('should swallow InvalidStateError when the responsible document is not fully active', async () => {
+        stubLocksRequest(new DOMException('Responsible document is not fully active', 'InvalidStateError'))
+        const { strategy, mockCookie } = setupCookieStrategy()
+
+        await strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
+
+        expect(mockCookie.getStoredValues()).toEqual([])
+      })
+
+      it('should swallow InvalidStateError when the document is not active', async () => {
+        stubLocksRequest(new DOMException('The document is not active.', 'InvalidStateError'))
+        const { strategy, mockCookie } = setupCookieStrategy()
+
+        await strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
+
+        expect(mockCookie.getStoredValues()).toEqual([])
+      })
+
+      it('should rethrow unexpected lock request errors', async () => {
+        stubLocksRequest(new Error('boom'))
+        const { strategy } = setupCookieStrategy()
+
+        await expectAsync(
+          strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
+        ).toBeRejectedWithError('boom')
+      })
+    })
   })
 
   describe('cookie options matching', () => {
