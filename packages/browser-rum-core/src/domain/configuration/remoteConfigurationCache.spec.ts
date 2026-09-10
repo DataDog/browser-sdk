@@ -161,7 +161,7 @@ describe('remoteConfigurationCache', () => {
       })
     })
 
-    describe('write', () => {
+    describe('recordSync', () => {
       let clock: Clock
 
       beforeEach(() => {
@@ -171,7 +171,7 @@ describe('remoteConfigurationCache', () => {
       it('should persist a config that can be read back', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
-        cache.write(VALID_CONFIG)
+        cache.recordSync(VALID_CONFIG)
 
         expect(cache.read()).toEqual({
           status: 'hit',
@@ -184,7 +184,7 @@ describe('remoteConfigurationCache', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
         clock.tick(5000)
-        cache.write(VALID_CONFIG, 1500)
+        cache.recordSync(VALID_CONFIG, 1500)
 
         const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
         expect(stored).toEqual({
@@ -201,8 +201,8 @@ describe('remoteConfigurationCache', () => {
       it('should overwrite a previously stored entry', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
-        cache.write({ rum: { applicationId: 'first' } })
-        cache.write({ rum: { applicationId: 'second' } })
+        cache.recordSync({ rum: { applicationId: 'first' } })
+        cache.recordSync({ rum: { applicationId: 'second' } })
 
         expect(readHit(cache).config).toEqual({ rum: { applicationId: 'second' } })
       })
@@ -210,11 +210,11 @@ describe('remoteConfigurationCache', () => {
       it('should regenerate sync metadata when the config changed', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
-        cache.write({ rum: { applicationId: 'first' } }, 1500)
+        cache.recordSync({ rum: { applicationId: 'first' } }, 1500)
         const first = readHit(cache).metadata
 
         clock.tick(5000)
-        cache.write({ rum: { applicationId: 'second' } }, 2500)
+        cache.recordSync({ rum: { applicationId: 'second' } }, 2500)
 
         const second = readHit(cache).metadata
         expect(second.syncId).not.toBe(first.syncId)
@@ -225,11 +225,23 @@ describe('remoteConfigurationCache', () => {
       it('should not rewrite sync metadata when the config is unchanged', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
-        cache.write(VALID_CONFIG, 1500)
+        cache.recordSync(VALID_CONFIG, 1500)
         const first = readHit(cache).metadata
 
         clock.tick(5000)
-        cache.write(VALID_CONFIG, 2500)
+        cache.recordSync(VALID_CONFIG, 2500)
+
+        expect(readHit(cache).metadata).toEqual(first)
+      })
+
+      it('should not rewrite sync metadata when the config is the same but keys are reordered', () => {
+        const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
+
+        cache.recordSync({ rum: { applicationId: 'app-id', sessionSampleRate: 50 } }, 1500)
+        const first = readHit(cache).metadata
+
+        clock.tick(5000)
+        cache.recordSync({ rum: { sessionSampleRate: 50, applicationId: 'app-id' } }, 2500)
 
         expect(readHit(cache).metadata).toEqual(first)
       })
@@ -239,7 +251,7 @@ describe('remoteConfigurationCache', () => {
 
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
-        expect(() => cache.write(VALID_CONFIG)).not.toThrow()
+        expect(() => cache.recordSync(VALID_CONFIG)).not.toThrow()
       })
     })
 
@@ -252,7 +264,7 @@ describe('remoteConfigurationCache', () => {
 
       it('should stamp firstApplied and persist it when unset', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
-        cache.write(VALID_CONFIG)
+        cache.recordSync(VALID_CONFIG)
 
         clock.tick(5000)
         const metadata = cache.stampFirstApplied(readHit(cache))
@@ -264,7 +276,7 @@ describe('remoteConfigurationCache', () => {
 
       it('should reuse the firstApplied already stamped', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
-        cache.write(VALID_CONFIG)
+        cache.recordSync(VALID_CONFIG)
         const first = cache.stampFirstApplied(readHit(cache))
 
         clock.tick(60000)
@@ -275,28 +287,28 @@ describe('remoteConfigurationCache', () => {
 
       it('should preserve firstApplied when an unchanged config is refetched', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
-        cache.write(VALID_CONFIG)
+        cache.recordSync(VALID_CONFIG)
         const stamped = cache.stampFirstApplied(readHit(cache))
 
         clock.tick(5000)
-        cache.write(VALID_CONFIG)
+        cache.recordSync(VALID_CONFIG)
 
         expect(readHit(cache).metadata.firstApplied).toEqual(stamped.firstApplied)
       })
 
       it('should leave firstApplied unset when the config changed', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
-        cache.write({ rum: { applicationId: 'first' } })
+        cache.recordSync({ rum: { applicationId: 'first' } })
         cache.stampFirstApplied(readHit(cache))
 
-        cache.write({ rum: { applicationId: 'second' } })
+        cache.recordSync({ rum: { applicationId: 'second' } })
 
         expect(readHit(cache).metadata.firstApplied).toBeUndefined()
       })
 
       it('should keep the rest of the metadata intact when stamping', () => {
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
-        cache.write(VALID_CONFIG, 1500)
+        cache.recordSync(VALID_CONFIG, 1500)
         const before = readHit(cache).metadata
 
         const after = cache.stampFirstApplied(readHit(cache))

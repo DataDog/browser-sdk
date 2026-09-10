@@ -2,6 +2,7 @@ import { timeStampNow } from '@datadog/js-core/time'
 import { generateUUID, tryJsonParse } from '@datadog/browser-core'
 import { isIndexableObject } from '@datadog/js-core/util'
 import type { TimeStamp } from '@datadog/js-core/time'
+import { isEqual } from '../view/viewDiff'
 import type { RemoteConfiguration } from './remoteConfiguration'
 
 export const CACHE_VERSION = 3
@@ -68,7 +69,7 @@ function isValidCacheEntry(value: unknown): value is CachedRemoteConfiguration {
   return hasVersion && hasConfig && hasMetadata
 }
 
-function persist(key: string, entry: CachedRemoteConfiguration) {
+function write(key: string, entry: CachedRemoteConfiguration) {
   try {
     localStorage.setItem(key, JSON.stringify(entry))
   } catch {
@@ -115,20 +116,19 @@ export function createConfigurationCache({ remoteConfigurationId }: { remoteConf
         // Ignore
       }
     },
-    write(config: RemoteConfiguration, lastModified?: number) {
+    recordSync(config: RemoteConfiguration, lastModified?: number) {
       const cached = this.read()
 
       // Only a payload change counts as a sync. The SDK sends no `If-None-Match`, so it never
       // observes a 304 and cannot otherwise tell a genuine sync from a repeated fetch of the same
       // version. Skipping the write here is also what keeps `firstApplied` alive across refetches.
       // TODO: compare on `ETag` instead once the CDN exposes it through
-      // `Access-Control-Expose-Headers`. The stringify compare is key-order sensitive, which holds
-      // only because both sides come from `JSON.parse` of the same CDN payload.
-      if (cached.status === 'hit' && JSON.stringify(cached.config) === JSON.stringify(config)) {
+      // `Access-Control-Expose-Headers`.
+      if (cached.status === 'hit' && isEqual(cached.config, config)) {
         return
       }
 
-      persist(key, {
+      write(key, {
         version: CACHE_VERSION,
         config,
         metadata: { lastModified, lastSynced: timeStampNow(), syncId: generateUUID() },
@@ -145,7 +145,7 @@ export function createConfigurationCache({ remoteConfigurationId }: { remoteConf
       }
 
       const metadata: RemoteConfigurationMetadata = { ...cached.metadata, firstApplied: timeStampNow() }
-      persist(key, { version: CACHE_VERSION, config: cached.config, metadata })
+      write(key, { version: CACHE_VERSION, config: cached.config, metadata })
 
       return metadata
     },

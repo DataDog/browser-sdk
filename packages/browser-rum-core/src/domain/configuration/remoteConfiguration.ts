@@ -292,11 +292,6 @@ function extractValue(extractor: SerializedRegex, candidate: string) {
 type FetchRemoteConfigurationResult =
   { ok: true; value: RemoteConfiguration; lastModified?: number } | { ok: false; error: Error }
 
-/**
- * Reads the CDN publish time. `Last-Modified` is a CORS-safelisted response header, so it is
- * readable cross-origin without the CDN having to expose it explicitly. It carries an HTTP-date,
- * so the value is only accurate to the second.
- */
 function parseLastModified(response: Response): number | undefined {
   const header = response.headers?.get('last-modified')
   if (!header) {
@@ -364,7 +359,7 @@ function doBackgroundCacheSync(
         display.error(fetchResult.error)
       } else {
         metrics.increment('fetch', 'success')
-        cache.write(fetchResult.value, fetchResult.lastModified)
+        cache.recordSync(fetchResult.value, fetchResult.lastModified)
       }
     })
     .catch(monitorError)
