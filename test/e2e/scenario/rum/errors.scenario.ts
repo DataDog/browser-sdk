@@ -1,6 +1,12 @@
 import type { RumErrorEvent } from '@datadog/browser-rum-core'
 import { test, expect } from '@playwright/test'
-import { createTest, html } from '../../lib/framework'
+import { createTest, html, npmSetup } from '../../lib/framework'
+
+declare global {
+  interface Window {
+    DD_WASM_PLUGIN?: () => { name: string }
+  }
+}
 
 // Note: using `browser.execute` to throw exceptions may result in "Script error." being reported,
 // Use createBody because `page.evaluate()` runs in a different context and breaks stack traces.
@@ -37,6 +43,41 @@ function createBody(errorGenerator: string) {
 }
 
 test.describe('rum errors', () => {
+  createTest('send WebAssembly runtime errors with module metadata')
+    .withSetup(npmSetup)
+    .withRum()
+    .withWasmUnsafeEval()
+    .withRumInit((configuration) => {
+      // The wasm plugin is only available in the npm setup, where the SDK and the plugin share
+      // the same browser-core instance (and thus the same wasm module registry).
+      configuration.plugins = [window.DD_WASM_PLUGIN!()]
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ baseUrl, intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+      test.skip(
+        test.info().project.name === 'webkit' || test.info().project.name === 'chromium-pinned',
+        'These browser versions do not expose uncaught WebAssembly traps through the runtime error event'
+      )
+
+      await page.evaluate(async () => {
+        const { instance } = await WebAssembly.instantiateStreaming(fetch('/test-module.wasm'))
+
+        // Schedule the trap outside page.evaluate() so it is reported through
+        // the browser's uncaught runtime-error path.
+        setTimeout(() => (instance.exports.run as () => void)())
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expect(intakeRegistry.rumErrorEvents[0].error.source_type).toBe('browser+wasm')
+      expect(intakeRegistry.rumErrorEvents[0].error.wasm_modules).toEqual([
+        { url: new URL('/test-module.wasm', baseUrl).href, build_id: 'abcd' },
+      ])
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
+    })
+
   createTest('send console.error errors')
     .withRum()
     .withBody(createBody('console.error("oh snap")'))

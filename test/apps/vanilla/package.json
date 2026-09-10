@@ -9,7 +9,8 @@
   "peerDependencies": {
     "@datadog/browser-logs": "*",
     "@datadog/browser-rum": "*",
-    "@datadog/browser-debugger": "*"
+    "@datadog/browser-debugger": "*",
+    "@datadog/browser-plugin-wasm": "*"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-logs": {
@@ -19,6 +20,9 @@
       "optional": true
     },
     "@datadog/browser-debugger": {
+      "optional": true
+    },
+    "@datadog/browser-plugin-wasm": {
       "optional": true
     }
   },
@@ -31,7 +35,8 @@
     "@datadog/browser-rum-react": "file:../../../packages/browser-rum-react/package.tgz",
     "@datadog/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
     "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz",
-    "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
+    "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz",
+    "@datadog/browser-plugin-wasm": "file:../../../packages/browser-plugin-wasm/package.tgz"
   },
   "devDependencies": {
     "ts-loader": "9.6.2",

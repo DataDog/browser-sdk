@@ -36,6 +36,7 @@ export interface SetupOptions {
   worker?: WorkerOptions
   callerLocation?: CallerLocation
   mockClock: boolean
+  allowWasmUnsafeEval: boolean
   salesforceApp: SalesforceApp | undefined
   shopifyApp: boolean
 }

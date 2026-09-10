@@ -1,0 +1,135 @@
+import type { RawError } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+import {
+  getLoadedWasmModules,
+  isWasmError,
+  resetWasmModuleRegistryForTesting,
+  startWasmModuleTracking,
+} from './wasmModuleTracking'
+
+function makeError(stack?: string, causes?: RawError['causes']): Pick<RawError, 'stack' | 'causes'> {
+  return { stack, causes }
+}
+
+describe('isWasmError', () => {
+  ;[
+    'RuntimeError: unreachable\n  at foo (https://example.com/app.wasm:wasm-function[42]:0x10)',
+    'RuntimeError: unreachable\n  at foo @ wasm://wasm/abc123:1:2',
+    'RuntimeError: unreachable\n  at foo @ [wasm code]',
+    'RuntimeError: unreachable\n  at namedFunction @ https://example.com/app.wasm',
+  ].forEach((stack) => {
+    it(`detects a WASM frame in ${stack}`, () => {
+      expect(isWasmError(makeError(stack))).toBe(true)
+    })
+  })
+
+  it('detects a WASM frame in an error cause', () => {
+    expect(
+      isWasmError(
+        makeError('Error: wrapper\n  at wrap @ https://example.com/app.js:1:1', [
+          {
+            message: 'WASM cause',
+            source: 'source',
+            stack: 'RuntimeError: unreachable\n  at wasm-function[3] @ [wasm code]',
+          },
+        ])
+      )
+    ).toBe(true)
+  })
+
+  it('does not classify a regular runtime error as WASM', () => {
+    expect(isWasmError(makeError('RuntimeError: failure\n  at foo @ https://example.com/app.js:1:1'))).toBe(false)
+  })
+
+  it('does not classify a JavaScript file containing .wasm in its name as WASM', () => {
+    expect(isWasmError(makeError('Error: failure\n  at foo @ https://example.com/app.wasm.js:1:1'))).toBe(false)
+  })
+})
+
+describe('startWasmModuleTracking', () => {
+  beforeEach(() => {
+    registerCleanupTask(resetWasmModuleRegistryForTesting)
+  })
+
+  it('records the build ID of modules instantiated from bytes', async () => {
+    const wasmModule = new Uint8Array([
+      0, 97, 115, 109, 1, 0, 0, 0, 0, 11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
+    ])
+
+    startWasmModuleTracking()
+    await WebAssembly.instantiate(wasmModule)
+
+    expect(getLoadedWasmModules()).toEqual([{ url: '<wasm-instantiate-bytes>', build_id: 'abcd' }])
+  })
+
+  it('records modules compiled from a view without including bytes outside of the view', async () => {
+    const wasmModule = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])
+    const paddedBuffer = new Uint8Array(wasmModule.length + 2)
+    paddedBuffer.set(wasmModule, 1)
+    const moduleView = paddedBuffer.subarray(1, paddedBuffer.length - 1)
+
+    startWasmModuleTracking()
+    await WebAssembly.compile(moduleView)
+
+    expect(getLoadedWasmModules()).toEqual([{ url: '<wasm-compile-bytes>', build_id: '' }])
+  })
+
+  it('records the build ID and URL of modules instantiated from a response', async () => {
+    const wasmModule = new Uint8Array([
+      0, 97, 115, 109, 1, 0, 0, 0, 0, 11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
+    ])
+    const module = new WebAssembly.Module(wasmModule)
+    const response = { url: 'https://example.com/module.wasm' } as Response
+    const originalInstantiateStreaming = WebAssembly.instantiateStreaming
+    const instantiateStreamingSpy = jasmine.createSpy().and.resolveTo({ module })
+    WebAssembly.instantiateStreaming = instantiateStreamingSpy
+
+    startWasmModuleTracking()
+    try {
+      await WebAssembly.instantiateStreaming(response)
+
+      expect(getLoadedWasmModules()).toEqual([{ url: response.url, build_id: 'abcd' }])
+    } finally {
+      resetWasmModuleRegistryForTesting()
+      if (originalInstantiateStreaming) {
+        WebAssembly.instantiateStreaming = originalInstantiateStreaming
+      } else {
+        delete (WebAssembly as Partial<typeof WebAssembly>).instantiateStreaming
+      }
+    }
+  })
+
+  it('forwards all compileStreaming arguments', async () => {
+    const module = new WebAssembly.Module(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]))
+    const response = { url: 'https://example.com/module.wasm' } as Response
+    const compileOptions = { builtins: ['js-string'] }
+    const originalCompileStreaming = WebAssembly.compileStreaming
+    const compileStreamingSpy = jasmine.createSpy().and.resolveTo(module)
+    WebAssembly.compileStreaming = compileStreamingSpy
+
+    startWasmModuleTracking()
+    try {
+      await (WebAssembly.compileStreaming as unknown as (...parameters: unknown[]) => Promise<WebAssembly.Module>)(
+        response,
+        compileOptions
+      )
+
+      expect(compileStreamingSpy).toHaveBeenCalledOnceWith(response, compileOptions)
+    } finally {
+      resetWasmModuleRegistryForTesting()
+      if (originalCompileStreaming) {
+        WebAssembly.compileStreaming = originalCompileStreaming
+      } else {
+        delete (WebAssembly as Partial<typeof WebAssembly>).compileStreaming
+      }
+    }
+  })
+
+  it('installs hooks only once', () => {
+    startWasmModuleTracking()
+    const trackedCompile = WebAssembly.compile
+    startWasmModuleTracking()
+
+    expect(WebAssembly.compile).toBe(trackedCompile)
+  })
+})
