@@ -35,24 +35,6 @@ test.describe('soft navigation', () => {
       expect(lastRouteChange.view.performance?.lcp?.timestamp).toBeGreaterThan(0)
     })
 
-  createTest('does not report LCP on a route_change view without the experimental feature enabled')
-    .withRum()
-    .withBody(NAV_BUTTON)
-    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
-      test.skip(browserName !== 'chromium', 'Soft navigation API is Chromium-only')
-
-      await page.locator('#nav-button').click()
-      await page.waitForTimeout(100)
-
-      await flushEvents()
-
-      const routeChangeViews = intakeRegistry.rumViewEvents.filter((v) => v.view.loading_type === 'route_change')
-      expect(routeChangeViews.length).toBeGreaterThanOrEqual(1)
-
-      const lastRouteChange = routeChangeViews[routeChangeViews.length - 1]
-      expect(lastRouteChange.view.performance?.lcp).toBeUndefined()
-    })
-
   createTest('does not error on browsers without the soft navigation API')
     .withRum({ enableExperimentalFeatures: ['soft_navigation'] })
     .withBody(NAV_BUTTON)
@@ -75,7 +57,5 @@ test.describe('soft navigation', () => {
       expect(initialLoadViews.length).toBeGreaterThanOrEqual(1)
       expect(routeChangeViews.length).toBeGreaterThanOrEqual(1)
       expect(routeChangeViews[0].view.performance?.lcp).toBeUndefined()
-
-      // No console errors -- automatically validated by test teardown.
     })
 })

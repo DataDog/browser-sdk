@@ -269,17 +269,24 @@ function newView(
     startClocks
   )
 
+  let viewMetricsTracking =
+    loadingType === ViewLoadingType.INITIAL_LOAD
+      ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
+      : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
+
+  if (
+    loadingType === ViewLoadingType.ROUTE_CHANGE &&
+    isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
+    supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
+  ) {
+    viewMetricsTracking = trackRouteChangeViewMetrics(configuration, scheduleViewUpdate)
+  }
+
   const {
     stop: stopInitialViewMetricsTracking,
     initialViewMetrics,
     setViewEnd: setRouteChangeViewEnd,
-  } = loadingType === ViewLoadingType.INITIAL_LOAD
-    ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
-    : loadingType === ViewLoadingType.ROUTE_CHANGE &&
-        isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
-        supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
-      ? trackRouteChangeViewMetrics(configuration, scheduleViewUpdate)
-      : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
+  } = viewMetricsTracking
 
   // Start BFCache-specific metrics when restoring from BFCache
   if (loadingType === ViewLoadingType.BF_CACHE) {

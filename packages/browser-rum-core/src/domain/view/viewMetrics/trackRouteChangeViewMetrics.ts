@@ -14,6 +14,9 @@ import type { InitialViewMetrics } from './trackInitialViewMetrics'
  * Tracks LCP for a `route_change` view via Chrome's Soft Navigation API (gated behind
  * ExperimentalFeature.SOFT_NAVIGATION + browser support, see trackViews.ts).
  *
+ * Gated behind the experimental flag while validating in production; the plan is to make this
+ * the default behavior for route_change views once stable, likely in v8.
+ *
  * The soft-navigation entry arrives asynchronously, so `setViewEnd` must unsubscribe from it
  * immediately when the view ends -- otherwise an ended view could steal the next view's entry.
  * ICP entries keep being tracked until `stop()`, since by then the `interactionId` to filter on
