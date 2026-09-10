@@ -1,7 +1,7 @@
 import { globalObject } from '@datadog/js-core/util'
 import type { Batch, ContextValue } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
-import { buildTag, generateUUID, mergeArrays } from '@datadog/browser-core'
+import { buildDebugIdByUrl, buildTag, generateUUID, mergeArrays } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
@@ -15,6 +15,7 @@ import {
   setProbeBudgetConfiguration,
 } from './probes'
 import type { ActiveEntry } from './activeEntries'
+import type { StackFrame } from './stacktrace'
 import { captureStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
@@ -336,11 +337,13 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
         }
       : undefined
   ) as ContextValue
+  const debugIds = buildSnapshotDebugIds(result)
 
   const payload = {
     message: result.message,
     service: debuggerConfig.service,
     ddtags: getDebuggerDDtags(version),
+    _dd: (debugIds ? { debug_ids: debugIds } : undefined) as ContextValue,
     // TODO: Fill out logger with the right information
     logger: {
       name: probe.where.typeName,
@@ -373,6 +376,23 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
 
   debuggerBatch.add(payload)
   recordProbeEventSent(probe)
+}
+
+function buildSnapshotDebugIds(result: ActiveEntry) {
+  const urls: string[] = []
+  appendStackFrameUrls(urls, result.return?.throwable?.stacktrace)
+  appendStackFrameUrls(urls, result.stack)
+  return buildDebugIdByUrl(urls)
+}
+
+function appendStackFrameUrls(urls: string[], stack: StackFrame[] | undefined): void {
+  if (!stack) {
+    return
+  }
+
+  for (const { fileName } of stack) {
+    urls.push(fileName)
+  }
 }
 
 function captureArguments(

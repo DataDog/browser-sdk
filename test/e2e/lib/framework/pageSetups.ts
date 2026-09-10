@@ -287,7 +287,7 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
     header += setupExtension(options, servers)
   }
 
-  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+  const { logsScriptUrl, rumScriptUrl, debuggerScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
     header += html`<script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>`
@@ -303,6 +303,15 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
       DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
     </script>`
+  }
+
+  if (options.debugger) {
+    header += html`
+      <script type="text/javascript" src="${debuggerScriptUrl}"></script>
+      <script type="text/javascript">
+        DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})
+      </script>
+    `
   }
 
   header += html`<script type="module" src="/microfrontend/shell.js"></script>`
