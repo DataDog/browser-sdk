@@ -7,24 +7,38 @@ export interface CanvasSnapshot {
 export function createCanvasSnapshot(canvas: HTMLCanvasElement, maxImageDimension: number): CanvasSnapshot | undefined {
   const canvasWidth = canvas.width
   const canvasHeight = canvas.height
-  const scale = Math.min(1, maxImageDimension / Math.max(canvasWidth, canvasHeight))
+  const source = createDownscaledCanvas(canvas, canvasWidth, canvasHeight, maxImageDimension)
+  if (!source) {
+    return undefined
+  }
 
-  const width = Math.max(1, Math.round(canvasWidth * scale))
-  const height = Math.max(1, Math.round(canvasHeight * scale))
+  return { canvasHeight, canvasWidth, source }
+}
 
-  const source = document.createElement('canvas')
-  source.width = width
-  source.height = height
+// Downscales `image` (of size `width`x`height`) to fit within `maxDimension` on a fresh canvas.
+export function createDownscaledCanvas(
+  image: CanvasImageSource,
+  width: number,
+  height: number,
+  maxDimension: number
+): HTMLCanvasElement | undefined {
+  const scale = Math.min(1, maxDimension / Math.max(width, height))
+  const scaledWidth = Math.max(1, Math.round(width * scale))
+  const scaledHeight = Math.max(1, Math.round(height * scale))
 
-  const context = source.getContext('2d')
+  const canvas = document.createElement('canvas')
+  canvas.width = scaledWidth
+  canvas.height = scaledHeight
+
+  const context = canvas.getContext('2d')
   if (!context) {
     return undefined
   }
 
   context.imageSmoothingQuality = 'low'
-  context.drawImage(canvas, 0, 0, width, height)
+  context.drawImage(image, 0, 0, scaledWidth, scaledHeight)
 
-  return { canvasHeight, canvasWidth, source }
+  return canvas
 }
 
 export function captureCanvasImage(snapshot: CanvasSnapshot): Promise<Blob | undefined> {

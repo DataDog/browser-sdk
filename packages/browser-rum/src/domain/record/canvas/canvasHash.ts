@@ -1,25 +1,25 @@
 import { mockable } from '@datadog/browser-core'
 import { globalObject } from '@datadog/js-core/util'
 import type { CanvasSnapshot } from './canvasSnapshot'
+import { createDownscaledCanvas } from './canvasSnapshot'
 
 export function computeImageHash(snapshot: CanvasSnapshot, maxHashDimension: number): Promise<string | undefined> {
   const { height: sourceHeight, width: sourceWidth } = snapshot.source
-  const scale = Math.min(1, maxHashDimension / Math.max(sourceWidth, sourceHeight))
-  const width = Math.max(1, Math.round(sourceWidth * scale))
-  const height = Math.max(1, Math.round(sourceHeight * scale))
-
-  const thumbnail = document.createElement('canvas')
-  thumbnail.width = width
-  thumbnail.height = height
+  // The snapshot is already frozen, so if it already fits, hash it directly instead of downscaling it again.
+  const thumbnail =
+    Math.max(sourceWidth, sourceHeight) <= maxHashDimension
+      ? snapshot.source
+      : createDownscaledCanvas(snapshot.source, sourceWidth, sourceHeight, maxHashDimension)
+  if (!thumbnail) {
+    return Promise.resolve(undefined)
+  }
 
   const context = thumbnail.getContext('2d')
   if (!context) {
     return Promise.resolve(undefined)
   }
-  context.imageSmoothingQuality = 'low'
-  context.drawImage(snapshot.source, 0, 0, width, height)
 
-  const data = context.getImageData(0, 0, width, height).data
+  const data = context.getImageData(0, 0, thumbnail.width, thumbnail.height).data
   // crypto.subtle is only exposed in secure contexts, so it is missing on plain HTTP pages.
   const subtleCrypto = mockable(globalObject.crypto?.subtle)
   if (!subtleCrypto) {
