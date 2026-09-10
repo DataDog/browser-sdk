@@ -306,14 +306,14 @@ describe('view lifecycle', () => {
       expect(getViewCreate(6)).toEqual(
         jasmine.objectContaining({
           name: undefined,
-          service: undefined,
+          service: 'app-id',
           version: undefined,
         })
       )
       expect(getViewCreate(7)).toEqual(
         jasmine.objectContaining({
           name: undefined,
-          service: undefined,
+          service: 'app-id',
           version: undefined,
         })
       )
@@ -1049,7 +1049,7 @@ describe('start view', () => {
 
     expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
-        service: undefined,
+        service: 'app-id',
         version: undefined,
       })
     )
@@ -1067,13 +1067,13 @@ describe('start view', () => {
     )
   })
 
-  it('should ignore null service/version', () => {
+  it('should fall back to the configured service/version when they are null', () => {
     const { getViewUpdate, startView } = viewTest
 
     startView({ service: null, version: null })
     expect(getViewUpdate(2)).toEqual(
       jasmine.objectContaining({
-        service: undefined,
+        service: 'app-id',
         version: undefined,
       })
     )
