@@ -92,10 +92,11 @@ export function startRecording(
     viewHistory,
   })
   flushMutations = recording.flushMutations
-  cleanupTasks.push(recording.stop)
 
   return {
     stop: () => {
+      recording.flushMutations()
+      recording.stop()
       cleanupTasks.forEach((task) => task())
     },
   }

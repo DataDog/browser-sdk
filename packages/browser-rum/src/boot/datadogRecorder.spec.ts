@@ -236,6 +236,43 @@ describe('startRecording', () => {
   })
 
   describe('when calling stop()', () => {
+    it('flushes queued canvas content before stopping collectors', async () => {
+      const clock = mockClock()
+      const requestIdleCallbackMock = mockRequestIdleCallback()
+      const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
+      spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
+        callback(new Blob([], { type: 'image/png' }))
+      )
+
+      const canvasSendSpy = jasmine.createSpy()
+      const canvasHttpRequest = {
+        observable: new Observable<HttpRequestEvent<Payload>>(),
+        send: canvasSendSpy,
+        sendOnExit: jasmine.createSpy(),
+      }
+
+      setupStartRecording(
+        {
+          sessionReplayCanvasRecording: {
+            enable: true,
+            maxFramesPerSecond: 1,
+            hashingMaxDimension: 100,
+            maxImageDimension: 1000,
+          },
+        },
+        canvasHttpRequest
+      )
+
+      canvas.getContext('2d')!.fillRect(0, 0, 2, 2)
+      clock.tick(1000)
+      await collectAsyncCalls(requestIdleCallbackMock.spy)
+      stopRecording()
+
+      expect(canvasSendSpy).toHaveBeenCalledTimes(1)
+      const requests = await readSentRequests(1)
+      expect(requests[0].event.records_count).toBe(recordsPerFullSnapshot() + 1)
+    })
+
     it('stops collecting records', async () => {
       setupStartRecording()
 
