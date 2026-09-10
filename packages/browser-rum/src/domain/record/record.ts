@@ -63,7 +63,7 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const canvasManager = createCanvasManager()
-  const shadowRootsController = initShadowRootsController(processRecord, emitStats)
+  const shadowRootsController = initShadowRootsController(processRecord, processResource, emitStats)
   const scope = createRecordingScope(
     canvasManager,
     configuration,
@@ -78,7 +78,7 @@ export function record(options: RecordOptions): RecordAPI {
     mutationTracker.flush()
   }
 
-  const mutationTracker = trackMutation(document, processRecord, emitStats, scope)
+  const mutationTracker = trackMutation(document, processRecord, processResource, emitStats, scope)
   const trackers: Tracker[] = [
     mutationTracker,
     trackMove(processRecord, scope),
@@ -92,7 +92,7 @@ export function record(options: RecordOptions): RecordAPI {
     trackVisualViewportResize(processRecord),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
     trackCanvasContent(scope),
-    trackCanvasCapture(processRecord, processResource, emitStats, scope),
+    trackCanvasCapture(scope, mutationTracker.notifyContentMutated),
   ]
 
   return {

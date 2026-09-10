@@ -1,4 +1,5 @@
 import { globalObject } from '@datadog/js-core/util'
+import { timeStampNow } from '@datadog/js-core/time'
 import {
   collectAsyncCalls,
   registerCleanupTask,
@@ -14,6 +15,7 @@ import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
 import type { NodeId } from '../encoding'
 import type { EmitResourceCallback, EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
+import { serializeMutations } from '../serialization'
 import type { Tracker } from './tracker.types'
 import { trackCanvasCapture } from './trackCanvasCapture'
 
@@ -66,7 +68,9 @@ describe('trackCanvasCapture', () => {
     })
     scope.nodeIds.getOrInsert(canvas)
     emitRecord = jasmine.createSpy<EmitRecordCallback>()
-    tracker = trackCanvasCapture(emitRecord, emitResource, jasmine.createSpy<EmitStatsCallback>(), scope)
+    tracker = trackCanvasCapture(scope, () => {
+      serializeMutations(timeStampNow(), [], emitRecord, emitResource, jasmine.createSpy<EmitStatsCallback>(), scope)
+    })
     return emitResource
   }
 
@@ -423,7 +427,7 @@ describe('trackCanvasCapture', () => {
   ]
 
   maskingCaptureStages.forEach(({ description, deferCapture }) => {
-    it(`emits the snapshot taken before the canvas becomes masked ${description}`, async () => {
+    it(`does not emit a snapshot when the canvas becomes masked ${description}`, async () => {
       const resumeCapture = deferCapture()
       draw('red')
       const onCanvasCapture = startTracking()
@@ -434,8 +438,8 @@ describe('trackCanvasCapture', () => {
       resumeCapture()
       await waitForCanvasCapture()
 
-      expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob))
-      expect(canvasManager.takeCapturableCanvases()).toEqual([])
+      expect(onCanvasCapture).not.toHaveBeenCalled()
+      expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
     })
   })
 

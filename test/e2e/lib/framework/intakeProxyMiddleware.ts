@@ -50,11 +50,6 @@ export type ReplayResourceIntakeRequest = {
   intakeType: 'replay-resource'
   hash: string
   image: Buffer
-  imageFile: {
-    filename: string
-    encoding: string
-    mimetype: string
-  }
   event: BrowserResourceEvent
 } & BaseIntakeRequest
 
@@ -212,12 +207,7 @@ function readReplayIntakeRequest(
       mimetype: string
       segment: BrowserSegment
     }>
-    let imagePromise: Promise<{
-      encoding: string
-      filename: string
-      mimetype: string
-      image: Buffer
-    }>
+    let imagePromise: Promise<{ hash: string; image: Buffer }>
     let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes | BrowserResourceEvent>
 
     const busboy = createBusboy({ headers: req.headers })
@@ -233,12 +223,7 @@ function readReplayIntakeRequest(
         }))
       } else if (name === 'image') {
         // canvas resource images are uploaded raw (not deflate-compressed), unlike segments
-        imagePromise = readStream(stream).then((data) => ({
-          encoding,
-          filename,
-          mimetype: mimeType,
-          image: data,
-        }))
+        imagePromise = readStream(stream).then((image) => ({ hash: filename, image }))
       } else if (name === 'event') {
         metadataPromise = readStream(stream).then(
           (data) => JSON.parse(data.toString()) as BrowserSegmentMetadataAndSegmentSizes | BrowserResourceEvent
@@ -250,13 +235,10 @@ function readReplayIntakeRequest(
       Promise.all([metadataPromise, segmentPromise, imagePromise])
         .then(([metadata, segmentResult, imageResult]) => {
           if (imageResult) {
-            const { image, ...imageFile } = imageResult
             resolve({
               ...infos,
               intakeType: 'replay-resource',
-              hash: imageFile.filename,
-              image,
-              imageFile,
+              ...imageResult,
               event: metadata as BrowserResourceEvent,
             })
           } else {

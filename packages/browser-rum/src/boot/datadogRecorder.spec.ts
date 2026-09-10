@@ -8,6 +8,7 @@ import {
   collectAsyncCalls,
   createNewEvent,
   mockClock,
+  mockRequestIdleCallback,
   mockEventBridge,
   registerCleanupTask,
   createSessionManagerMock,
@@ -22,6 +23,7 @@ import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
+import { MUTATION_PROCESS_MIN_DELAY } from '../domain/record'
 import { startRecording } from './datadogRecorder'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp
@@ -198,6 +200,7 @@ describe('startRecording', () => {
 
   it('sends a canvas resource through its own http request when a tracked canvas changes', async () => {
     const clock = mockClock()
+    const requestIdleCallbackMock = mockRequestIdleCallback()
     // the canvas must exist before recording starts so the initial full snapshot assigns it a node id
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
     spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
@@ -225,8 +228,9 @@ describe('startRecording', () => {
 
     canvas.getContext('2d')!.fillRect(0, 0, 2, 2)
     clock.tick(1000)
-
-    await collectAsyncCalls(canvasSendSpy, 1)
+    await collectAsyncCalls(requestIdleCallbackMock.spy)
+    requestIdleCallbackMock.idle()
+    clock.tick(MUTATION_PROCESS_MIN_DELAY)
 
     expect(canvasSendSpy).toHaveBeenCalledTimes(1)
   })

@@ -81,6 +81,20 @@ describe('CanvasManager', () => {
     expect(captureAttempt.isCurrent()).toBe(true)
   })
 
+  it('waits for queued content to be consumed before capturing again', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    const captureAttempt = canvasManager.startCaptureAttempt(canvas)
+    canvasManager.addCanvasContentMutation({ canvas, captureAttempt, hash: 'hash', image: new Blob() })
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
+    expect(canvasManager.takeCanvasContentMutations()).toHaveSize(1)
+    expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
+  })
+
   it('invalidates the capture attempt when the bitmap is reset', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
@@ -92,7 +106,9 @@ describe('CanvasManager', () => {
     canvasManager.resetCanvasBitmap(canvas)
 
     expect(captureAttempt.isCurrent()).toBe(false)
-    expect(canvasManager.startCaptureAttempt(canvas).lastChangeHash).toBeUndefined()
+    const nextCaptureAttempt = canvasManager.startCaptureAttempt(canvas)
+    expect(nextCaptureAttempt.lastChangeHash).toBeUndefined()
+    canvasManager.discardCaptureAttempt(canvas, nextCaptureAttempt)
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
@@ -110,7 +126,9 @@ describe('CanvasManager', () => {
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    expect(canvasManager.startCaptureAttempt(canvas).lastChangeHash).toBeUndefined()
+    const nextCaptureAttempt = canvasManager.startCaptureAttempt(canvas)
+    expect(nextCaptureAttempt.lastChangeHash).toBeUndefined()
+    canvasManager.discardCaptureAttempt(canvas, nextCaptureAttempt)
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 

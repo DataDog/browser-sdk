@@ -16,6 +16,13 @@ export interface CanvasCaptureAttempt {
   setLastChangeHash: (changeHash: string) => void
 }
 
+export interface CanvasContentMutation {
+  canvas: HTMLCanvasElement
+  captureAttempt: CanvasCaptureAttempt
+  hash: string
+  image: Blob
+}
+
 export interface CanvasManager {
   /** Single entry point for the canvas status */
   markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
@@ -27,23 +34,28 @@ export interface CanvasManager {
   takeCapturableCanvases: () => HTMLCanvasElement[]
   /** Starts a capture attempt for a canvas */
   startCaptureAttempt: (canvas: HTMLCanvasElement) => CanvasCaptureAttempt
+  discardCaptureAttempt: (canvas: HTMLCanvasElement, captureAttempt: CanvasCaptureAttempt) => void
+  addCanvasContentMutation: (mutation: CanvasContentMutation) => void
+  takeCanvasContentMutations: () => CanvasContentMutation[]
   /** New record stream: discards the per-stream tracking states (not the taint) */
   reset: () => void
 }
 
 interface CanvasTrackingState {
+  capturePending: boolean
   lastChangeHash?: string
 }
 
 export function createCanvasManager(): CanvasManager {
   const dirtyCanvases = new Set<HTMLCanvasElement>()
   const taintedCanvases = new WeakSet<HTMLCanvasElement>()
+  let canvasContentMutations: CanvasContentMutation[] = []
   let canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
 
   function getTrackingState(canvas: HTMLCanvasElement): CanvasTrackingState {
     let trackingState = canvasTrackingStates.get(canvas)
     if (!trackingState) {
-      trackingState = {}
+      trackingState = { capturePending: false }
       canvasTrackingStates.set(canvas, trackingState)
     }
     return trackingState
@@ -51,6 +63,7 @@ export function createCanvasManager(): CanvasManager {
 
   function startCaptureAttempt(canvas: HTMLCanvasElement): CanvasCaptureAttempt {
     const trackingState = getTrackingState(canvas)
+    trackingState.capturePending = true
     const isCurrent = () => canvasTrackingStates.get(canvas) === trackingState
 
     return {
@@ -114,7 +127,7 @@ export function createCanvasManager(): CanvasManager {
       dirtyCanvases.forEach((canvas) => {
         if (!canvas.isConnected) {
           dirtyCanvases.delete(canvas)
-        } else if (!taintedCanvases.has(canvas)) {
+        } else if (!taintedCanvases.has(canvas) && !getTrackingState(canvas).capturePending) {
           dirtyCanvases.delete(canvas)
           capturableCanvases.push(canvas)
         }
@@ -125,8 +138,30 @@ export function createCanvasManager(): CanvasManager {
 
     startCaptureAttempt,
 
+    discardCaptureAttempt: (canvas, captureAttempt) => {
+      if (captureAttempt.isCurrent()) {
+        getTrackingState(canvas).capturePending = false
+      }
+    },
+
+    addCanvasContentMutation: (mutation) => {
+      canvasContentMutations.push(mutation)
+    },
+
+    takeCanvasContentMutations: () => {
+      const mutations = canvasContentMutations
+      canvasContentMutations = []
+      for (const mutation of mutations) {
+        if (mutation.captureAttempt.isCurrent()) {
+          getTrackingState(mutation.canvas).capturePending = false
+        }
+      }
+      return mutations
+    },
+
     reset: () => {
       dirtyCanvases.clear()
+      canvasContentMutations = []
       canvasTrackingStates = new WeakMap()
     },
   }

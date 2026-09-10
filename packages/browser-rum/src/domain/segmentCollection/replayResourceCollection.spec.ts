@@ -20,15 +20,6 @@ describe('replayResourceCollection', () => {
     return { lifeCycle, ...collection }
   }
 
-  it('sends a resource on first sight of a hash', () => {
-    const { httpRequest, send } = createHttpRequestSpy()
-    const { emitResource } = startCollection(httpRequest)
-
-    emitResource('hash1', CONTENT)
-
-    expect(send).toHaveBeenCalledTimes(1)
-  })
-
   it('does not re-send a hash already uploaded', () => {
     const { httpRequest, send } = createHttpRequestSpy()
     const { emitResource } = startCollection(httpRequest)

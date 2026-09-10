@@ -16,15 +16,14 @@ export function startReplayResourceCollection(
   httpRequest: HttpRequest<Payload>
 ): ReplayResourceCollection {
   const uploadedHashes = new Set<string>()
-  const pendingHashes = new WeakMap<Payload, string>()
-  const pendingPayloads = new Set<Payload>()
+  const pendingResources = new Map<Payload, string>()
 
   const { unsubscribe: unsubscribeRequest } = httpRequest.observable.subscribe((event) => {
     if (event.type === 'success') {
-      pendingPayloads.delete(event.payload)
+      pendingResources.delete(event.payload)
     } else if (event.type === 'queue-full') {
-      pendingPayloads.delete(event.payload)
-      const hash = pendingHashes.get(event.payload)
+      const hash = pendingResources.get(event.payload)
+      pendingResources.delete(event.payload)
       if (hash) {
         uploadedHashes.delete(hash)
       }
@@ -35,7 +34,7 @@ export function startReplayResourceCollection(
     LifeCycleEventType.PREPARE_URGENT_FLUSH,
     (reason) => {
       if (isPageExitReason(reason) && reason !== PageExitReason.HIDDEN) {
-        pendingPayloads.forEach(httpRequest.sendOnExit)
+        pendingResources.forEach((_hash, payload) => httpRequest.sendOnExit(payload))
       }
     }
   )
@@ -47,8 +46,7 @@ export function startReplayResourceCollection(
       }
       uploadedHashes.add(hash)
       const payload = buildResourcePayload(hash, content, applicationId)
-      pendingHashes.set(payload, hash)
-      pendingPayloads.add(payload)
+      pendingResources.set(payload, hash)
       httpRequest.send(payload)
     },
     stop: () => {
