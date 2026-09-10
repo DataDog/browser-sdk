@@ -6,7 +6,7 @@ export function buildResourcePayload(hash: string, content: Blob, application: s
   formData.append('image', content, hash)
 
   const event = { application: { id: application }, type: 'resource' }
-  formData.append('event', JSON.stringify(event))
+  formData.append('event', new Blob([JSON.stringify(event)], { type: 'application/json' }))
 
   return {
     data: formData,

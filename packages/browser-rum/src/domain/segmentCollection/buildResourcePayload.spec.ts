@@ -18,9 +18,11 @@ describe('buildResourcePayload', () => {
     expect(imageEntry.size).toBe(IMAGE_BLOB.size)
   })
 
-  it('adds the application id and type as the `event` entry', () => {
-    const eventEntry = (payload.data as FormData).get('event')! as string
-    expect(JSON.parse(eventEntry)).toEqual({ application: { id: APPLICATION_ID }, type: 'resource' })
+  it('adds the application id and type as the `event` entry', async () => {
+    const eventEntry = (payload.data as FormData).get('event')! as File
+    expect(eventEntry.name).toBe('blob')
+    const event = JSON.parse(await eventEntry.text())
+    expect(event).toEqual({ application: { id: APPLICATION_ID }, type: 'resource' })
   })
 
   it('returns the image size as the approximate byte count', () => {
