@@ -390,6 +390,18 @@ export interface RumInitConfiguration extends InitConfiguration {
 
 /**
  * Recording quality presets for canvas capture. See {@link RumInitConfiguration.sessionReplayCanvasRecording}.
+ *
+ * @example
+ * ```ts
+ * datadogRum.init({
+ *   // ...
+ *   sessionReplayCanvasRecording: {
+ *     enable: true,
+ *     quality: CanvasRecordingQuality.MEDIUM,
+ *   },
+ * })
+ * ```
+ * @hidden
  */
 export const CanvasRecordingQuality = {
   LOW: 'low',
