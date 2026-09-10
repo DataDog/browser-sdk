@@ -21,6 +21,7 @@ import type { SdkName } from '../contexts/defaultContext'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 import { getRemoteConfigurationId } from './remoteConfiguration'
+import type { RemoteConfigurationMetadata } from './remoteConfigurationCache'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_SETUP__: string
@@ -79,6 +80,16 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Authentication
    */
   applicationId: string
+
+  /**
+   * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * `allowedTracingUrls` still requires an explicitly configured service.
+   *
+   * @category Data Collection
+   * @defaultValue the `applicationId`
+   */
+  service?: string | undefined | null
 
   /**
    * Whether to propagate user and account IDs in the baggage header of trace requests.
@@ -580,6 +591,7 @@ export function validateAndBuildRumConfiguration(
 
   return {
     ...config,
+    service: config.service || config.applicationId,
     sessionReplayCanvasRecording,
     betaEnableViewUpdates: isViewUpdatesEnabled(config.betaEnableViewUpdates, config.proxy, sdkName),
     allowedTracingUrls,
@@ -742,7 +754,11 @@ function getTrackResourceHeadersTelemetryValue(
   }
 }
 
-export function serializeRumConfiguration(configuration: RumInitConfiguration, sdkName?: SdkName) {
+export function serializeRumConfiguration(
+  configuration: RumInitConfiguration,
+  sdkName?: SdkName,
+  remoteConfigurationMetadata?: RemoteConfigurationMetadata
+) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
   // `use_` prefix is for telemetry options that track usage of a configuration option as a boolean to avoid capturing customer data
@@ -773,6 +789,12 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration, s
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     remote_configuration_id: getRemoteConfigurationId(configuration),
+    remote_configuration: remoteConfigurationMetadata && {
+      last_modified: remoteConfigurationMetadata.lastModified,
+      last_synced: remoteConfigurationMetadata.lastSynced,
+      first_applied: remoteConfigurationMetadata.firstApplied,
+      sync_id: remoteConfigurationMetadata.syncId,
+    },
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
