@@ -553,7 +553,11 @@ describe('preStartRum', () => {
         it('should start the SDK with the cached configuration on cache hit', async () => {
           localStorage.setItem(
             CACHE_KEY,
-            JSON.stringify({ version: 2, config: { rum: { sessionSampleRate: 75 } }, fetchedAt: 1000 })
+            JSON.stringify({
+              version: 3,
+              config: { rum: { sessionSampleRate: 75 } },
+              metadata: { lastSynced: 1000, syncId: 'sync-id' },
+            })
           )
           const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
 
