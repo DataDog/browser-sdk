@@ -64,5 +64,10 @@ export function mockPerformanceObserver({ supportedEntryTypes = objectValues(Rum
       }
       instances.forEach((instance) => notify(instance, entries))
     },
+    // Number of PerformanceObserver instances currently observing `entryType`. Useful to verify a
+    // subscription was actually torn down (disconnect() removes the instance from the set), not
+    // just that its callback happens to produce no visible effect.
+    activeObserverCount: (entryType: RumPerformanceEntryType) =>
+      Array.from(instances).filter((instance) => instance.entryTypes.includes(entryType)).length,
   }
 }
