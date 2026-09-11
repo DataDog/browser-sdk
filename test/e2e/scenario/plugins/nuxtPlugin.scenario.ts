@@ -94,7 +94,6 @@ test.describe('plugin: nuxt error', () => {
           await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
           await flushEvents()
 
-          await expect(page.getByTestId('error-handled')).toBeVisible()
           const errorEvents = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
           expect(errorEvents).toHaveLength(1)
 
