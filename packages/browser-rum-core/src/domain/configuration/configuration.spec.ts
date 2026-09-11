@@ -632,6 +632,12 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBeFalse()
     })
 
+    it('defaults to false for the slim Salesforce bundle', () => {
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce-slim')!.betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
     it('is true for the Salesforce bundle when the option is explicitly enabled', () => {
       expect(
         validateAndBuildRumConfiguration(

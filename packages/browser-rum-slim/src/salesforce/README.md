@@ -24,12 +24,14 @@ You should also enable [Lightning Web Security][1] in the Salesforce org.
 
 All deployment paths share the first two steps. Complete them once before configuring a deployment path.
 
+Use `datadog-rum-salesforce-slim.js` for Lightning App Utility Bar and Experience Cloud Component deployments. Those paths run inside Lightning Web Security (LWS), which cannot support Session Replay. Use `datadog-rum-salesforce.js` for Experience Cloud Head Markup; it includes Session Replay support.
+
 #### 1. Add Static Resource
 
 [Download the Datadog RUM Salesforce bundle][2], then register it as the `datadog_rum` static resource. For example, download it into your project's static resources directory with:
 
 ```shell
-curl -o staticresources/datadog_rum.js https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce.js
+curl -o staticresources/datadog_rum.js https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce-slim.js
 ```
 
 <!-- xxx tabs xxx -->
@@ -283,6 +285,12 @@ Add the following `componentInstance` excerpt to your app's existing Utility Bar
 
 Use when you can edit Head Markup. This is the most direct Experience Cloud setup.
 
+Head Markup runs outside LWS and is the only Salesforce deployment path that supports Session Replay. Load the full `datadog-rum-salesforce.js` bundle for this path. If you use a static resource, download that bundle instead of the slim bundle shown above. You can also load it directly from the Datadog CDN:
+
+```html
+<script src="https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce.js"></script>
+```
+
 **Relax CSP in Experience Builder**
 
 1. Open the site in Experience Builder from **Setup > Digital Experiences > All Sites > Builder**.
@@ -304,6 +312,7 @@ In Experience Builder, go to **Settings > Advanced > Edit Head Markup**, paste t
       service: '<YOUR_SERVICE_NAME>',
       site: '<YOUR_DATADOG_SITE>',
       sessionSampleRate: 100,
+      sessionReplaySampleRate: 100,
       trackLongTasks: true,
       trackResources: true,
       trackUserInteractions: true,
@@ -437,30 +446,30 @@ Expose the component to Experience Builder and place it in a shared region, page
 
 The following table outlines SDK feature support within the Lightning Web Security (LWS) sandbox environment.
 
-| Feature Area        | Supported   | Notes                                                                     |
-| ------------------- | ----------- | ------------------------------------------------------------------------- |
-| **View Events**     |             |                                                                           |
-| Initial View        | Yes         | Automatic on init.                                                        |
-| Manual Tracking     | Yes         | Supported through `startView`.                                            |
-| Navigation Timings  | Yes         | Collected via performance API.                                            |
-| Web Vitals          | Yes         |                                                                           |
-| **Resource Events** |             |                                                                           |
-| Fetch / XHR         | Limited (2) | Context payload inaccessible.                                             |
-| Other Resources     | Yes         | CSS, images, etc.                                                         |
-| APM Correlation     | Limited (2) | Requires header injection.                                                |
-| **Action Events**   |             |                                                                           |
-| Custom Actions      | Yes         | Supported through `addAction`. (5) Not supported on the Head Markup path. |
-| Click Actions       | Yes         | (3) Shadow DOM boundaries apply.                                          |
-| Frustration Signals | Yes         |                                                                           |
-| Loading Time        | Limited (1) | Network detection may be incomplete.                                      |
-| **Error Events**    |             |                                                                           |
-| Console / Custom    | Yes         | Captured via instrumentation. (5) Not supported on the Head Markup path.  |
-| Runtime Errors      | Limited (4) | Often redacted as "Script error."                                         |
-| Unhandled Rejection | No          | Event not supported in LWS.                                               |
-| **Other**           |             |                                                                           |
-| Vital Events        | Yes         |                                                                           |
-| Long Task Events    | Yes         |                                                                           |
-| Session Replay      | No          | DOM/Worker constraints prevent support.                                   |
+| Feature Area        | Supported        | Notes                                                                     |
+| ------------------- | ---------------- | ------------------------------------------------------------------------- |
+| **View Events**     |                  |                                                                           |
+| Initial View        | Yes              | Automatic on init.                                                        |
+| Manual Tracking     | Yes              | Supported through `startView`.                                            |
+| Navigation Timings  | Yes              | Collected via performance API.                                            |
+| Web Vitals          | Yes              |                                                                           |
+| **Resource Events** |                  |                                                                           |
+| Fetch / XHR         | Limited (2)      | Context payload inaccessible.                                             |
+| Other Resources     | Yes              | CSS, images, etc.                                                         |
+| APM Correlation     | Limited (2)      | Requires header injection.                                                |
+| **Action Events**   |                  |                                                                           |
+| Custom Actions      | Yes              | Supported through `addAction`. (5) Not supported on the Head Markup path. |
+| Click Actions       | Yes              | (3) Shadow DOM boundaries apply.                                          |
+| Frustration Signals | Yes              |                                                                           |
+| Loading Time        | Limited (1)      | Network detection may be incomplete.                                      |
+| **Error Events**    |                  |                                                                           |
+| Console / Custom    | Yes              | Captured via instrumentation. (5) Not supported on the Head Markup path.  |
+| Runtime Errors      | Limited (4)      | Often redacted as "Script error."                                         |
+| Unhandled Rejection | No               | Event not supported in LWS.                                               |
+| **Other**           |                  |                                                                           |
+| Vital Events        | Yes              |                                                                           |
+| Long Task Events    | Yes              |                                                                           |
+| Session Replay      | Head Markup only | Unsupported inside LWS; use the full Salesforce bundle in Head Markup.    |
 
 Footnotes:
 
@@ -475,6 +484,6 @@ Footnotes:
 Need help? Contact [Datadog Support][3].
 
 [1]: https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-enable.html
-[2]: https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce.js
+[2]: https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce-slim.js
 [3]: https://docs.datadoghq.com/help/
 [4]: https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site

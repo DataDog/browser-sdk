@@ -561,7 +561,7 @@ function isViewUpdatesEnabled(
   // The Salesforce bundle is a CDN build, but the supported install flow uploads it as a static
   // resource, so publishing a new bundle does not roll those deployments back. Keep them out of
   // the default, they can still opt in explicitly.
-  return explicit ?? (__BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy && sdkName !== 'rum-salesforce')
+  return explicit ?? (__BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy && !sdkName?.startsWith('rum-salesforce'))
 }
 
 export function validateAndBuildRumConfiguration(
