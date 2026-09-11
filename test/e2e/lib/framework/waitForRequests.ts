@@ -8,22 +8,16 @@ import { waitForServersIdle } from './httpServers'
  * callback might *not* have reached the local server when `browser.execute` finishes. Thus, calling
  * `waitForServersIdle()` directly might be flaky, because no request might be pending yet.
  *
-* The SDK also defers some bookkeeping (notably resource event emission) onto an idle-callback
- * task queue, so we drain it explicitly via two `requestIdleCallback` round-trips before letting
- * the test assert on captured events.
+ * As a workaround, this function delays the `waitForServersIdle()` call by doing a browser
+ * roundtrip, ensuring requests have plenty of time to reach the local server.
  */
 export async function waitForRequests(page: Page) {
   await page.evaluate(
     () =>
-      new Promise<void>((resolve) => {
-        // Drain the SDK's idle-callback task queue (used to defer resource event emission) before
-        // letting the test assert on captured events. Two passes ensure tasks enqueued by the
-        // first batch of tasks are also processed. A 500ms watchdog covers pages where
-        // requestIdleCallback is throttled or unavailable (e.g. the empty /flush page during
-        // teardown).
-        setTimeout(resolve, 500) 
-        const ric = window.requestIdleCallback?.bind(window) ?? ((cb: IdleRequestCallback) => setTimeout(cb, 50))
-        ric(() => ric(() => setTimeout(resolve, 0)))
+      new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(undefined)
+        }, 200)
       })
   )
 }
