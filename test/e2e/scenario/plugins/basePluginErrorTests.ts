@@ -23,6 +23,7 @@ export function runBasePluginErrorTests(configs: ErrorPluginTestConfig[]) {
       test.describe('errors', () => {
         loadApp(createTest('should report client-side error').withRum()).run(
           async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+            await page.waitForTimeout(2000)
             await page.click('text=Go to Error Test')
             await page.waitForURL(`**${viewPrefix}/error-test`)
 
