@@ -19,6 +19,17 @@ const baseSalesforceRumConfiguration = {
 
 const salesforceApps: SalesforceApp[] = ['lwc', 'experience-cloud', 'experience-cloud-headmarkup']
 
+createTest('salesforce experience-cloud-headmarkup session replay')
+  .withRum(baseSalesforceRumConfiguration)
+  .withSalesforceApp('experience-cloud-headmarkup')
+  .run(async ({ page, intakeRegistry, flushEvents }) => {
+    await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
+
+    await flushEvents()
+
+    expect(intakeRegistry.replaySegments.length).toBeGreaterThanOrEqual(1)
+  })
+
 for (const app of salesforceApps) {
   const canCallRumFromComponents = app !== 'experience-cloud-headmarkup'
 
