@@ -188,7 +188,7 @@ async function restoreFilesAfter<T>(filePaths: string[], action: () => Promise<T
 }
 
 function buildSalesforceApp(appName: string) {
-  const sourceBundle = 'packages/browser-rum-slim/bundle/datadog-rum-salesforce.js'
+  const sourceBundle = `packages/${appName === 'sf-experience-headmarkup-app' ? 'browser-rum' : 'browser-rum-slim'}/bundle/datadog-rum-salesforce${appName === 'sf-experience-headmarkup-app' ? '' : '-slim'}.js`
   const targetBundle = `test/apps/${appName}/force-app/main/default/staticresources/datadog_rum_salesforce.js`
 
   printLog(`Building app at test/apps/${appName}...`)

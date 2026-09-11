@@ -39,6 +39,7 @@ const packagesRoot = path.resolve(import.meta.dirname, '..', 'packages')
 const pathsWithSideEffect = new Set([
   `${packagesRoot}/browser-logs/src/entries/main.ts`,
   `${packagesRoot}/browser-rum/src/entries/main.ts`,
+  `${packagesRoot}/browser-rum/src/entries/salesforce.ts`,
   `${packagesRoot}/browser-rum-slim/src/entries/main.ts`,
   `${packagesRoot}/browser-rum-slim/src/entries/salesforce.ts`,
   `${packagesRoot}/browser-rum-shopify/src/entries/main.ts`,

@@ -16,8 +16,8 @@
     "!src/**/*.specHelper.ts"
   ],
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules --worker-string --bundle datadog-rum.js",
-    "build:bundle": "node ../../scripts/build/build-package.ts --worker-string --bundle datadog-rum.js",
+    "build": "node ../../scripts/build/build-package.ts --modules --worker-string --bundle datadog-rum.js --bundle datadog-rum-salesforce.js=./src/entries/salesforce.ts",
+    "build:bundle": "node ../../scripts/build/build-package.ts --worker-string --bundle datadog-rum.js --bundle datadog-rum-salesforce.js=./src/entries/salesforce.ts",
     "prepack": "yarn build"
   },
   "dependencies": {
