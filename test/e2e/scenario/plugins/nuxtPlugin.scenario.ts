@@ -67,9 +67,12 @@ test.describe('plugin: nuxt error', () => {
         .withBasePath('/error-test')
         .withRum()
         .withNuxtApp(routerVersion)
-        .run(async ({ page, flushEvents, intakeRegistry }) => {
+        .run(async ({ page, flushEvents, intakeRegistry, browserName }) => {
           await page.click('[data-testid="trigger-error"]')
 
+          if (browserName === 'webkit') {
+            await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+          }
           await flushEvents()
 
           const errorEvents = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
@@ -87,9 +90,12 @@ test.describe('plugin: nuxt error', () => {
         .withBasePath('/startup-error')
         .withRum()
         .withNuxtApp(routerVersion)
-        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs, browserName }) => {
           await page.waitForLoadState('networkidle')
 
+          if (browserName === 'webkit') {
+            await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+          }
           await flushEvents()
 
           const errorEvents = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
@@ -107,9 +113,7 @@ test.describe('plugin: nuxt error', () => {
         .withBasePath('/error-test')
         .withRum()
         .withNuxtApp(routerVersion)
-        .run(async ({ page, flushEvents, intakeRegistry }) => {
-          // Wait for hydration (app:suspense:resolve) to complete: only the initial render is
-          // allowed to trigger the full-page error.
+        .run(async ({ page, flushEvents, intakeRegistry, browserName }) => {
           await page.click('[data-testid="trigger-error"]')
           // Verify that the 500 error page is not rendered.
           // This is proven by showing that we are still in the same page and the button is still visible.
@@ -117,6 +121,9 @@ test.describe('plugin: nuxt error', () => {
           await expect(page.getByTestId('trigger-error')).toBeVisible()
           await expect(page.getByTestId('error-handled')).toBeVisible()
 
+          if (browserName === 'webkit') {
+            await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+          }
           await flushEvents()
 
           const errorEvents = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
