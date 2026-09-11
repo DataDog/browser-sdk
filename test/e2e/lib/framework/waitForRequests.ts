@@ -20,4 +20,5 @@ export async function waitForRequests(page: Page) {
         }, 200)
       })
   )
+  await waitForServersIdle()
 }
