@@ -392,8 +392,7 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
   // The full Head Markup bundle lazy-loads features such as Session Replay, so serve its chunks
   // from the local build just like the main bundle.
   if (options.salesforceApp === 'experience-cloud-headmarkup') {
-    const chunkUrlPattern =
-      /\/resource(?:\/[^/?#]+)?\/chunks\/([\w-]+-datadog-rum-salesforce\.js)(?:[?#].*)?$/
+    const chunkUrlPattern = /\/resource(?:\/[^/?#]+)?\/chunks\/([\w-]+-datadog-rum-salesforce\.js)(?:[?#].*)?$/
     const chunkDirectory = resolve(__dirname, '../../../../packages/browser-rum/bundle/chunks')
 
     await page.route(chunkUrlPattern, async (route) => {
