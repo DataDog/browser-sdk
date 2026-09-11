@@ -68,6 +68,7 @@ test.describe('plugin: nuxt error', () => {
         .withRum()
         .withNuxtApp(routerVersion)
         .run(async ({ page, flushEvents, intakeRegistry }) => {
+          await page.waitForFunction(() => (window as any).__NUXT_HYDRATED__)
           await page.click('[data-testid="trigger-error"]')
 
           await flushEvents()
@@ -108,8 +109,8 @@ test.describe('plugin: nuxt error', () => {
         .withRum()
         .withNuxtApp(routerVersion)
         .run(async ({ page, flushEvents, intakeRegistry }) => {
-          // Wait for hydration (app:suspense:resolve) to complete: only the initial render is
-          // allowed to trigger the full-page error.
+          // Wait for hydration to complete: only the initial render is allowed to trigger the full-page error.
+          await page.waitForFunction(() => (window as any).__NUXT_HYDRATED__)
           await page.click('[data-testid="trigger-error"]')
           // Verify that the 500 error page is not rendered.
           // This is proven by showing that we are still in the same page and the button is still visible.
