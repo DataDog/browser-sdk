@@ -6,11 +6,11 @@ Instrument Salesforce Lightning Apps and Experience Cloud sites with Datadog Rea
 
 The integration supports Lightning Apps, Experience Cloud Head Markup, and Experience Cloud components. Use only one deployment path per Salesforce app or Experience Cloud site.
 
-| Deployment path              | Bundle                           | Loading method             | Session Replay |
-| ---------------------------- | -------------------------------- | -------------------------- | -------------- |
-| Lightning App Utility Bar    | `datadog-rum-salesforce-slim.js` | Salesforce Static Resource | No             |
-| Experience Cloud Component   | `datadog-rum-salesforce-slim.js` | Salesforce Static Resource | No             |
-| Experience Cloud Head Markup | `datadog-rum-salesforce.js`      | Datadog CDN                | Yes            |
+| Deployment path              | Bundle                           | Loading method                            | Session Replay |
+| ---------------------------- | -------------------------------- | ----------------------------------------- | -------------- |
+| Lightning App Utility Bar    | `datadog-rum-salesforce-slim.js` | Salesforce Static Resource                | No             |
+| Experience Cloud Component   | `datadog-rum-salesforce-slim.js` | Salesforce Static Resource                | No             |
+| Experience Cloud Head Markup | `datadog-rum-salesforce.js`      | Salesforce Static Resource or Datadog CDN | Yes            |
 
 ## Setup
 
@@ -28,18 +28,27 @@ You should also enable [Lightning Web Security][1] in the Salesforce org.
 
 ### Prepare your Salesforce site
 
-All deployment paths must allow connections to the Datadog browser intake. Lightning App Utility Bar and Experience Cloud Component deployments must also install the slim bundle as a Salesforce Static Resource.
+All deployment paths must allow connections to the Datadog browser intake. Lightning App Utility Bar and Experience Cloud Component deployments load the slim bundle from a Salesforce Static Resource. Experience Cloud Head Markup can load the full bundle from either Salesforce Static Resources or the Datadog CDN.
 
 These LWC-based paths run inside Lightning Web Security (LWS), which does not support Session Replay, so they use the `datadog-rum-salesforce-slim.js` bundle.
 
-#### 1. Add Static Resource for LWC deployments
+#### 1. Add Salesforce Static Resources
 
-Skip this step for Experience Cloud Head Markup.
+This step is required for Lightning App Utility Bar and Experience Cloud Component deployments. For Experience Cloud Head Markup, follow it only if you want to host the SDK in Salesforce; skip it when using the Datadog CDN.
 
-[Download the Datadog RUM Salesforce bundle][2], then register it as the `datadog_rum` static resource. For example, download it into your project's static resources directory with:
+Download the bundle for your deployment path, then register it as the `datadog_rum` static resource:
+
+- For Lightning App Utility Bar or Experience Cloud Component, use the slim bundle, which does not include Session Replay.
+- For Experience Cloud Head Markup, use the full bundle. To support Session Replay and profiling, also upload its matching `chunks/` directory as a ZIP static resource named `chunks`, preserving the chunk filenames.
+
+For example, download the selected bundle into your project's static resources directory with one of these commands:
 
 ```shell
+# Lightning App Utility Bar or Experience Cloud Component
 curl -o staticresources/datadog_rum.js https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce-slim.js
+
+# Experience Cloud Head Markup
+curl -o staticresources/datadog_rum.js https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce.js
 ```
 
 <!-- xxx tabs xxx -->
@@ -59,6 +68,18 @@ Use this option when your Salesforce project is managed from source control. Com
 </StaticResource>
 ```
 
+For a full Head Markup deployment, also add the `chunks` ZIP and its metadata:
+
+`staticresources/chunks.resource-meta.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+  <cacheControl>Public</cacheControl>
+  <contentType>application/zip</contentType>
+</StaticResource>
+```
+
 <!-- xxz tab xxx -->
 <!-- xxx tab "Salesforce UI" xxx -->
 
@@ -71,6 +92,8 @@ Use this option when you configure the static resource directly in Salesforce Se
 3. Set **Name** to `datadog_rum`.
 4. Upload the downloaded RUM JavaScript bundle.
 5. Set **Cache Control** to **Public**, then save.
+
+For a full Head Markup deployment, repeat these steps to upload the matching chunks ZIP with **Name** set to `chunks`.
 
 <!-- xxz tab xxx -->
 <!-- xxz tabs xxx -->
@@ -293,18 +316,21 @@ Add the following `componentInstance` excerpt to your app's existing Utility Bar
 
 Use when you can edit Head Markup. This is the most direct Experience Cloud setup.
 
-Head Markup runs outside LWS and is the only Salesforce deployment path that supports Session Replay. Load the full `datadog-rum-salesforce.js` bundle from the Datadog CDN so its Session Replay modules can also be loaded from the CDN.
+Head Markup runs outside LWS and is the only Salesforce deployment path that supports Session Replay. Load the full `datadog-rum-salesforce.js` bundle from Salesforce Static Resources or the Datadog CDN.
 
-Both CDN async and CDN sync support RUM and Session Replay:
+All three loading methods support RUM and Session Replay:
 
+- **Salesforce Static Resource** loads synchronously and hosts the SDK and its lazy-loaded chunks in Salesforce.
 - **CDN async (recommended)** does not block page rendering, but it can miss events that occur before the SDK loads.
 - **CDN sync** loads the SDK before subsequent scripts, collecting earlier events at the cost of potentially affecting page load performance.
 
-For more information about these loading methods, see [Browser Monitoring Setup][5].
+For more information about the CDN loading methods, see [Browser Monitoring Setup][5].
 
 ##### 1. Configure CSP in Experience Builder
 
-First, [allow Salesforce to connect to the Datadog browser intake](#2-configure-csp). Then, allow the site to load the Datadog Browser SDK from the CDN:
+First, [allow Salesforce to connect to the Datadog browser intake](#2-configure-csp). When loading the SDK from the Datadog CDN, also allow the CDN host:
+
+If you are using Salesforce Static Resources, no additional script host is required and you can continue to [Add Head Markup](#2-add-head-markup).
 
 1. Open the site in Experience Builder from **Setup > Digital Experiences > All Sites > Builder**.
 2. Go to **Settings > Security & Privacy**.
@@ -317,6 +343,30 @@ For more information, see [Where to Allowlist Third-Party Hosts for Experience B
 ##### 2. Add Head Markup
 
 In Experience Builder, go to **Settings > Advanced > Edit Head Markup**, paste one of the following snippets, and replace the placeholder values with your Datadog RUM configuration. Set `sessionReplaySampleRate` to a value greater than `0` to enable Session Replay. Save the change, then publish the site.
+
+###### Salesforce Static Resource
+
+Use this after uploading the full bundle and its chunks as described in [Add Salesforce Static Resources](#1-add-salesforce-static-resources).
+
+```html
+<script src="/sfsites/c/resource/datadog_rum" type="text/javascript"></script>
+<script>
+  window.DD_RUM.onReady(function () {
+    window.DD_RUM.init({
+      applicationId: 'YOUR_DATADOG_APPLICATION_ID',
+      clientToken: 'YOUR_DATADOG_CLIENT_TOKEN',
+      site: 'YOUR_DATADOG_SITE',
+      service: 'YOUR_SERVICE_NAME',
+      env: 'YOUR_ENV_NAME',
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 100,
+      trackLongTasks: true,
+      trackResources: true,
+      trackUserInteractions: true,
+    })
+  })
+</script>
+```
 
 ###### CDN async (recommended)
 
@@ -542,7 +592,6 @@ Footnotes:
 Need help? Contact [Datadog Support][3].
 
 [1]: https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-enable.html
-[2]: https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce-slim.js
 [3]: https://docs.datadoghq.com/help/
 [4]: https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site
 [5]: https://docs.datadoghq.com/real_user_monitoring/application_monitoring/browser/setup/
