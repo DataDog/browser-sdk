@@ -3,22 +3,13 @@ import type { TimeoutId } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'
-import type { NodeId } from '../encoding'
 import type { CanvasCaptureAttempt } from '../canvas/canvasManager'
 import { CanvasStatus } from '../canvas/canvasManager'
 import { captureCanvasImage, createCanvasSnapshot } from '../canvas/canvasSnapshot'
 import { computeImageHash } from '../canvas/canvasHash'
 import type { Tracker } from './tracker.types'
 
-export interface CanvasCapture {
-  nodeId: NodeId
-  changeHash: string
-  image: Blob
-}
-
-export type CanvasCaptureCallback = (capture: CanvasCapture) => void
-
-export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: CanvasCaptureCallback = noop): Tracker => {
+export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: () => void): Tracker => {
   const canvasManager = scope.canvasManager
   const configuration = scope.configuration.sessionReplayCanvasRecording
   const maxFramesPerSecond = configuration?.maxFramesPerSecond ?? 0
@@ -65,13 +56,11 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         canvasManager.forgetCanvas(canvas)
         continue
       }
-      const nodePrivacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
-      if (nodePrivacyLevel !== NodePrivacyLevel.ALLOW) {
+      if (getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel) !== NodePrivacyLevel.ALLOW) {
         canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
         continue
       }
-
-      await captureCanvas(canvas, nodeId)
+      await captureCanvas(canvas)
     }
   }
 
@@ -81,7 +70,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
     }
   }
 
-  async function captureCanvas(canvas: HTMLCanvasElement, nodeId: NodeId) {
+  async function captureCanvas(canvas: HTMLCanvasElement) {
     const captureAttempt = canvasManager.startCaptureAttempt(canvas)
     const cancelled = () => stopped || !captureAttempt.isCurrent()
 
@@ -93,6 +82,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       const snapshot = createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
       if (!snapshot) {
         markDirtyIfCurrent(captureAttempt, canvas)
+        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
         return // snapshot failed; leave it dirty
       }
 
@@ -103,10 +93,12 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       }
       if (hash === undefined) {
         markDirtyIfCurrent(captureAttempt, canvas)
+        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
         return // hashing failed; leave it dirty
       }
 
       if (hash === captureAttempt.lastChangeHash) {
+        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
         return // unchanged: no capture/output
       }
 
@@ -116,21 +108,16 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
       }
       if (!image) {
         markDirtyIfCurrent(captureAttempt, canvas)
+        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
         return // encoding failed; leave it dirty
       }
 
-      try {
-        onCanvasCapture({ nodeId, changeHash: hash, image })
-      } catch {
-        if (!cancelled()) {
-          canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-        }
-        return
-      }
-      captureAttempt.setLastChangeHash(hash)
+      canvasManager.addCanvasContentMutation({ canvas, captureAttempt, hash, image })
+      notifyContentMutated()
     } catch (error) {
       if (!cancelled()) {
         canvasManager.markCanvas(canvas, isSecurityError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)
+        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
       }
     }
   }

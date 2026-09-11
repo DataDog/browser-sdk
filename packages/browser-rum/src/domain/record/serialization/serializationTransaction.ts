@@ -119,6 +119,9 @@ export interface SerializationTransaction {
   /** Set a node's attributes to the given values. */
   setAttributes(change: RoleAnnotatedAttributeChange): void
 
+  /** Set the content of a canvas node to the given resource ID. */
+  setImageContent(nodeId: NodeId, resourceId: RoleAnnotatedStringLiteral): void
+
   /** Set the selection state of one or more checkboxes, radio buttons, or <option> elements. */
   setInputSelection(state: InputSelectionState, nodeIds: NodeId[]): void
 
@@ -211,6 +214,9 @@ export function serializeInTransaction(
     },
     setText(nodeId: NodeId, content: RoleAnnotatedStringLiteral): void {
       encoder.add(ChangeType.Text, [nodeId, content])
+    },
+    setImageContent(nodeId: NodeId, resourceId: RoleAnnotatedStringLiteral): void {
+      encoder.add(ChangeType.ImageContent, [nodeId, resourceId])
     },
     kind,
     scope,

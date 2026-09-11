@@ -1,12 +1,14 @@
-import type { HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import type { HttpRequest, HttpRequestEvent, Payload, Telemetry } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
-import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
+import type { ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
   createNewEvent,
+  mockClock,
+  mockRequestIdleCallback,
   mockEventBridge,
   registerCleanupTask,
   createSessionManagerMock,
@@ -33,8 +35,11 @@ describe('startRecording', () => {
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
   let stopRecording: () => void
 
-  function setupStartRecording() {
-    const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
+  function setupStartRecording(
+    configOverrides: Partial<RumConfiguration> = {},
+    canvasHttpRequest?: HttpRequest<Payload>
+  ) {
+    const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW, ...configOverrides })
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
     requestSendSpy = jasmine.createSpy()
@@ -57,7 +62,8 @@ describe('startRecording', () => {
       viewHistory,
       deflateEncoder,
       mockTelemetry,
-      httpRequest
+      httpRequest,
+      canvasHttpRequest
     )
     stopRecording = recording ? recording.stop : noop
 
@@ -191,7 +197,82 @@ describe('startRecording', () => {
     expect(requests[0].segment.records[2].type).toBe(RecordType.FullSnapshot)
   })
 
+  it('flushes queued canvas content before an urgent exit', async () => {
+    const clock = mockClock()
+    const requestIdleCallbackMock = mockRequestIdleCallback()
+    // the canvas must exist before recording starts so the initial full snapshot assigns it a node id
+    const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
+    spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
+      callback(new Blob([], { type: 'image/png' }))
+    )
+
+    const canvasSendSpy = jasmine.createSpy()
+    const canvasSendOnExitSpy = jasmine.createSpy()
+    const canvasHttpRequest = {
+      observable: new Observable<HttpRequestEvent<Payload>>(),
+      send: canvasSendSpy,
+      sendOnExit: canvasSendOnExitSpy,
+    }
+
+    setupStartRecording(
+      {
+        sessionReplayCanvasRecording: {
+          enable: true,
+          maxFramesPerSecond: 1,
+          hashingMaxDimension: 100,
+          maxImageDimension: 1000,
+        },
+      },
+      canvasHttpRequest
+    )
+
+    canvas.getContext('2d')!.fillRect(0, 0, 2, 2)
+    clock.tick(1000)
+    await collectAsyncCalls(requestIdleCallbackMock.spy)
+    flushSegment(lifeCycle)
+
+    expect(canvasSendSpy).toHaveBeenCalledTimes(1)
+    expect(canvasSendOnExitSpy).toHaveBeenCalledTimes(1)
+  })
+
   describe('when calling stop()', () => {
+    it('flushes queued canvas content before stopping collectors', async () => {
+      const clock = mockClock()
+      const requestIdleCallbackMock = mockRequestIdleCallback()
+      const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
+      spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
+        callback(new Blob([], { type: 'image/png' }))
+      )
+
+      const canvasSendSpy = jasmine.createSpy()
+      const canvasHttpRequest = {
+        observable: new Observable<HttpRequestEvent<Payload>>(),
+        send: canvasSendSpy,
+        sendOnExit: jasmine.createSpy(),
+      }
+
+      setupStartRecording(
+        {
+          sessionReplayCanvasRecording: {
+            enable: true,
+            maxFramesPerSecond: 1,
+            hashingMaxDimension: 100,
+            maxImageDimension: 1000,
+          },
+        },
+        canvasHttpRequest
+      )
+
+      canvas.getContext('2d')!.fillRect(0, 0, 2, 2)
+      clock.tick(1000)
+      await collectAsyncCalls(requestIdleCallbackMock.spy)
+      stopRecording()
+
+      expect(canvasSendSpy).toHaveBeenCalledTimes(1)
+      const requests = await readSentRequests(1)
+      expect(requests[0].event.records_count).toBe(recordsPerFullSnapshot() + 1)
+    })
+
     it('stops collecting records', async () => {
       setupStartRecording()
 

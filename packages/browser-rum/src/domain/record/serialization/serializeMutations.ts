@@ -10,10 +10,11 @@ import {
 } from '@datadog/browser-rum-core'
 import { StringRole } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
-import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
+import type { EmitRecordCallback, EmitResourceCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds, RoleAnnotatedAttributeChange } from '../encoding'
 import { createAttributeAssignment, createAttributeAssignmentOrDeletion, createString } from '../encoding'
 import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
+import { CanvasStatus } from '../canvas/canvasManager'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
 import { serializeNode } from './serializeNode'
@@ -25,6 +26,7 @@ export function serializeMutations(
   timestamp: TimeStamp,
   mutations: RumMutationRecord[],
   emitRecord: EmitRecordCallback,
+  emitResource: EmitResourceCallback,
   emitStats: EmitStatsCallback,
   scope: RecordingScope
 ): void {
@@ -34,14 +36,18 @@ export function serializeMutations(
     emitStats,
     scope,
     timestamp,
-    (transaction: SerializationTransaction) => processMutations(mutations, transaction)
+    (transaction: SerializationTransaction) => processMutations(mutations, emitResource, transaction)
   )
 }
 
 type AttributeName = string
 type OldValue = string | null
 
-function processMutations(mutations: RumMutationRecord[], transaction: SerializationTransaction): void {
+function processMutations(
+  mutations: RumMutationRecord[],
+  emitResource: EmitResourceCallback,
+  transaction: SerializationTransaction
+): void {
   const addedNodes = new Set<Node>()
   const attributeMutations = new Map<Element, Map<AttributeName, OldValue>>()
   const characterDataMutations = new Map<Node, OldValue>()
@@ -101,6 +107,7 @@ function processMutations(mutations: RumMutationRecord[], transaction: Serializa
   processAddedNodes(addedNodes, nodePrivacyLevelCache, transaction)
   processCharacterDataMutations(characterDataMutations, firstNewNodeId, nodePrivacyLevelCache, transaction)
   processAttributeMutations(attributeMutations, firstNewNodeId, nodePrivacyLevelCache, transaction)
+  processCanvasContentMutations(nodePrivacyLevelCache, emitResource, transaction)
 }
 
 function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransaction): void {
@@ -290,6 +297,43 @@ function processAttributeMutations(
 
     if (change.length > 1) {
       transaction.setAttributes(change)
+    }
+  }
+}
+
+function processCanvasContentMutations(
+  nodePrivacyLevelCache: NodePrivacyLevelCache,
+  emitResource: EmitResourceCallback,
+  transaction: SerializationTransaction
+): void {
+  for (const { canvas, captureAttempt, hash, image } of transaction.scope.canvasManager.takeCanvasContentMutations()) {
+    if (!captureAttempt.isCurrent() || !canvas.isConnected) {
+      continue
+    }
+    const nodeId = transaction.scope.nodeIds.get(canvas)
+    const privacyLevel = getNodePrivacyLevel(
+      canvas,
+      transaction.scope.configuration.defaultPrivacyLevel,
+      nodePrivacyLevelCache
+    )
+    if (nodeId === undefined) {
+      transaction.scope.canvasManager.forgetCanvas(canvas)
+      continue
+    }
+    if (privacyLevel !== NodePrivacyLevel.ALLOW) {
+      transaction.scope.canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+      continue
+    }
+    try {
+      emitResource(hash, image, () => {
+        if (captureAttempt.isCurrent()) {
+          transaction.scope.canvasManager.retryCanvas(canvas)
+        }
+      })
+      transaction.setImageContent(nodeId, createString(StringRole.ResourceId, hash))
+      captureAttempt.setLastChangeHash(hash)
+    } catch {
+      transaction.scope.canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     }
   }
 }
