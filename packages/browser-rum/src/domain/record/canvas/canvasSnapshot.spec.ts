@@ -57,12 +57,19 @@ describe('captureCanvasImage', () => {
   })
 
   it('downscales the whole canvas instead of cropping it', async () => {
-    // Left half red, right half blue: a cropped image would be fully red.
+    // WebP chroma subsampling blends adjacent colors, so exact RGB values are not stable.
+    // A cropped image would be red-dominant throughout.
     const snapshot = createSnapshot(createCanvas(4, 2, ['red', 'blue']), 2)
 
     const image = await captureCanvasImage(snapshot, 1)
+    const pixels = await imagePixels(image!)
 
-    expectPixelApprox(await imagePixels(image!), [255, 0, 0, 255, 0, 0, 255, 255])
+    // First pixel: [R, G, B, A] = indices 0, 1, 2, 3
+    // Second pixel: [R, G, B, A] = indices 4, 5, 6, 7
+    // First pixel: red dominates over blue.
+    expect(pixels[0]).toBeGreaterThan(pixels[2])
+    // Second pixel: blue dominates over red.
+    expect(pixels[6]).toBeGreaterThan(pixels[4])
   })
 })
 
