@@ -171,6 +171,23 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(interceptor.requests.length).toBe(1)
   })
 
+  it('does not let a throwing proxy interrupt shutdown', () => {
+    const telemetry = startFeatureFlagsTelemetry(
+      configuration({
+        proxy: () => {
+          throw new Error('proxy failed')
+        },
+      }),
+      options()
+    )
+
+    telemetry.add(fetchError())
+
+    expect(() => telemetry.stop()).not.toThrow()
+    expect(() => telemetry.stop()).not.toThrow()
+    expect(() => window.dispatchEvent(createNewEvent('beforeunload'))).not.toThrow()
+  })
+
   it('counts environment name limits in Unicode code points', () => {
     const interceptor = interceptRequests()
     const telemetry = startFeatureFlagsTelemetry(configuration(), options({ environmentName: '🚀'.repeat(200) }))

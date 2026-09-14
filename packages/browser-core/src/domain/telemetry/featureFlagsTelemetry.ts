@@ -7,6 +7,11 @@ import { createBatch } from '../../transport'
 import type { Configuration } from '../configuration'
 import { TrackingConsent } from '../trackingConsent'
 
+/**
+ * Feature Flags SDK lifecycle transitions.
+ *
+ * @internal
+ */
 export const FeatureFlagsTelemetryEventType = {
   SDK_INIT_STARTED: 'sdk_init_started',
   CONFIGURATION_RECEIVED: 'configuration_received',
@@ -17,23 +22,43 @@ export const FeatureFlagsTelemetryEventType = {
   INIT_FAILED: 'init_failed',
 } as const
 
+/**
+ * Fixed error codes reported with Feature Flags lifecycle transitions.
+ *
+ * @internal
+ */
 export const FeatureFlagsTelemetryErrorCode = {
   PRECOMPUTED_ASSIGNMENTS_FETCH_FAILED: 'precomputed_assignments_fetch_failed',
   INITIALIZATION_TIMEOUT: 'initialization_timeout',
   INITIALIZATION_FAILED: 'initialization_failed',
 } as const
 
+/**
+ * Sources from which the Feature Flags SDK can receive configuration.
+ *
+ * @internal
+ */
 export const FeatureFlagsTelemetryConfigurationSource = {
   REMOTE: 'remote',
   CACHE: 'cache',
 } as const
 
+/**
+ * Provider states reported by Feature Flags lifecycle transitions.
+ *
+ * @internal
+ */
 export const FeatureFlagsTelemetryProviderStatus = {
   READY: 'ready',
   STALE: 'stale',
   ERROR: 'error',
 } as const
 
+/**
+ * A Feature Flags lifecycle transition before common SDK fields are added.
+ *
+ * @internal
+ */
 export type FeatureFlagsLifecycleEvent =
   | { eventType: typeof FeatureFlagsTelemetryEventType.SDK_INIT_STARTED }
   | {
@@ -93,6 +118,11 @@ interface FeatureFlagsTelemetryPayload extends Context {
     | typeof FeatureFlagsTelemetryErrorCode.INITIALIZATION_FAILED
 }
 
+/**
+ * Identifies the Feature Flags SDK runtime that emits lifecycle transitions.
+ *
+ * @internal
+ */
 export interface FeatureFlagsTelemetryOptions {
   applicationId?: string
   environmentName?: string
@@ -101,6 +131,11 @@ export interface FeatureFlagsTelemetryOptions {
   evaluationReportingEnabled: boolean
 }
 
+/**
+ * Adds lifecycle transitions to the Feature Flags telemetry batch and stops its transport.
+ *
+ * @internal
+ */
 export interface FeatureFlagsTelemetry {
   add: (event: FeatureFlagsLifecycleEvent) => void
   stop: () => void
@@ -116,6 +151,18 @@ const MAX_CONFIGURATION_VERSION_LENGTH = 256
  *
  * Events use the dedicated flagtelemetry EVP track. The transport does not require the RUM or Logs
  * product SDK to start.
+ *
+ * @example
+ * ```ts
+ * const telemetry = startFeatureFlagsTelemetry(configuration, {
+ *   sdkName: 'dd-openfeature-browser',
+ *   sdkVersion: '1.0.0',
+ *   evaluationReportingEnabled: true,
+ * })
+ * telemetry.add({ eventType: FeatureFlagsTelemetryEventType.SDK_INIT_STARTED })
+ * ```
+ *
+ * @internal
  */
 export function startFeatureFlagsTelemetry(
   configuration: Configuration,
@@ -169,8 +216,17 @@ export function startFeatureFlagsTelemetry(
         return
       }
       stopped = true
-      batch.forceFlush('duration_limit')
-      batch.stop()
+      try {
+        batch.forceFlush('duration_limit')
+      } catch {
+        // Lifecycle delivery must never affect Feature Flags SDK behavior.
+      } finally {
+        try {
+          batch.stop()
+        } catch {
+          // Lifecycle delivery must never affect Feature Flags SDK behavior.
+        }
+      }
     },
   }
 }
