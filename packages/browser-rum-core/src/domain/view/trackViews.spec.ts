@@ -643,7 +643,7 @@ describe('view metrics', () => {
     }
 
     it('does not track LCP for route_change views when the experimental feature is disabled', () => {
-      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = setupViewTest()
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = viewTest
       startView()
       clock.tick(0)
 
@@ -667,7 +667,7 @@ describe('view metrics', () => {
 
     it('tracks LCP for route_change views when the experimental feature is enabled and the browser supports it', () => {
       addExperimentalFeatures([ExperimentalFeature.SOFT_NAVIGATION])
-      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = setupViewTest()
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = viewTest
       startView()
       clock.tick(0)
 
@@ -697,7 +697,7 @@ describe('view metrics', () => {
       addExperimentalFeatures([ExperimentalFeature.SOFT_NAVIGATION])
       // Remove soft_navigation from the mocked supported entry types to simulate unsupported browser
       ;(window.PerformanceObserver as any).supportedEntryTypes = [RumPerformanceEntryType.RESOURCE]
-      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = setupViewTest()
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = viewTest
       startView()
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -709,7 +709,7 @@ describe('view metrics', () => {
 
     it("does not let a later route_change view steal an earlier, already-ended view's soft-navigation entry", () => {
       addExperimentalFeatures([ExperimentalFeature.SOFT_NAVIGATION])
-      const { getViewUpdate, getViewUpdateCount, getViewCreate, startView } = setupViewTest()
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, startView } = viewTest
 
       // First route change: no soft-navigation entry ever fires for it (e.g. a programmatic pushState).
       startView()
