@@ -13,14 +13,9 @@ import {
 const APPLICATION_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
 
 describe('Feature Flags lifecycle telemetry', () => {
-  it('sends a schema-shaped provider error through the RUM telemetry transport', () => {
+  it('sends a schema-shaped provider error to the flagtelemetry track', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration(), {
-      applicationId: APPLICATION_ID,
-      environmentName: 'staging',
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options({ applicationId: APPLICATION_ID }))
     registerCleanupTask(telemetry.stop)
 
     telemetry.add(fetchError())
@@ -28,38 +23,26 @@ describe('Feature Flags lifecycle telemetry', () => {
 
     expect(telemetry.enabled).toBeTrue()
     expect(interceptor.requests.length).toBe(1)
+    expect(interceptor.requests[0].url).toContain('/api/v2/flagtelemetry?')
+    expect(interceptor.requests[0].url).toContain('dd-api-key=client-token')
     expect(JSON.parse(interceptor.requests[0].body)).toEqual({
-      type: 'telemetry',
-      date: jasmine.any(Number),
-      service: 'browser-feature-flags-sdk',
-      version: '1.4.0',
-      source: 'browser',
-      _dd: { format_version: 2 },
-      telemetry: {
-        type: 'log',
-        status: 'error',
-        message: 'feature_flags.provider_error',
-        product: 'feature_flags',
-        event_type: 'provider_error',
-        error_code: 'precomputed_assignments_fetch_failed',
-        timestamp: jasmine.any(Number),
-        runtime_id: jasmine.stringMatching(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/),
-        sequence: 1,
-        application_id: APPLICATION_ID,
-        environment_name: 'staging',
-        sdk_name: 'dd-openfeature-browser',
-        sdk_version: '1.4.0',
-      },
-      ddtags: 'sdk_version:1.4.0,env:staging',
+      product: 'feature_flags',
+      event_type: 'provider_error',
+      error_code: 'precomputed_assignments_fetch_failed',
+      timestamp: jasmine.any(Number),
+      runtime_id: jasmine.stringMatching(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/),
+      sequence: 1,
+      application_id: APPLICATION_ID,
+      environment: 'staging',
+      sdk_name: 'dd-openfeature-browser',
+      sdk_version: '1.4.0',
+      evaluation_reporting_enabled: true,
     })
   })
 
   it('deduplicates each event type and error code tuple once per runtime', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration(), {
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options())
     registerCleanupTask(telemetry.stop)
 
     telemetry.add(fetchError())
@@ -68,16 +51,12 @@ describe('Feature Flags lifecycle telemetry', () => {
 
     expect(interceptor.requests.length).toBe(1)
     expect(interceptor.requests[0].body.trim().split('\n').length).toBe(1)
-    expect(JSON.parse(interceptor.requests[0].body).telemetry.application_id).toBeUndefined()
+    expect(JSON.parse(interceptor.requests[0].body).application_id).toBeUndefined()
   })
 
   it('sends the complete lifecycle event family', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration(), {
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-      evaluationReportingEnabled: false,
-    })
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options({ evaluationReportingEnabled: false }))
     registerCleanupTask(telemetry.stop)
 
     telemetry.add({ eventType: FeatureFlagsTelemetryEventType.SDK_INIT_STARTED })
@@ -112,22 +91,16 @@ describe('Feature Flags lifecycle telemetry', () => {
     const events = interceptor.requests[0].body
       .trim()
       .split('\n')
-      .map((event) => (JSON.parse(event) as { telemetry: Record<string, unknown> }).telemetry)
+      .map((event) => JSON.parse(event) as Record<string, unknown>)
     const runtimeId = events[0].runtime_id
     expect(events).toEqual([
       jasmine.objectContaining({
-        type: 'log',
-        status: 'debug',
-        message: 'feature_flags.sdk_init_started',
         event_type: 'sdk_init_started',
         sequence: 1,
         runtime_id: runtimeId,
         evaluation_reporting_enabled: false,
       }),
       jasmine.objectContaining({
-        type: 'log',
-        status: 'debug',
-        message: 'feature_flags.configuration_received',
         event_type: 'configuration_received',
         sequence: 2,
         runtime_id: runtimeId,
@@ -136,9 +109,6 @@ describe('Feature Flags lifecycle telemetry', () => {
         configuration_fetched_at: 123,
       }),
       jasmine.objectContaining({
-        type: 'log',
-        status: 'debug',
-        message: 'feature_flags.provider_ready',
         event_type: 'provider_ready',
         sequence: 3,
         runtime_id: runtimeId,
@@ -146,26 +116,17 @@ describe('Feature Flags lifecycle telemetry', () => {
         init_latency_ms: 456,
       }),
       jasmine.objectContaining({
-        type: 'log',
-        status: 'error',
-        message: 'feature_flags.provider_error',
         event_type: 'provider_error',
         sequence: 4,
         runtime_id: runtimeId,
         error_code: 'precomputed_assignments_fetch_failed',
       }),
       jasmine.objectContaining({
-        type: 'log',
-        status: 'debug',
-        message: 'feature_flags.first_evaluation',
         event_type: 'first_evaluation',
         sequence: 5,
         runtime_id: runtimeId,
       }),
       jasmine.objectContaining({
-        type: 'log',
-        status: 'error',
-        message: 'feature_flags.init_timeout',
         event_type: 'init_timeout',
         sequence: 6,
         runtime_id: runtimeId,
@@ -174,9 +135,6 @@ describe('Feature Flags lifecycle telemetry', () => {
         init_latency_ms: 5_000,
       }),
       jasmine.objectContaining({
-        type: 'log',
-        status: 'error',
-        message: 'feature_flags.init_failed',
         event_type: 'init_failed',
         sequence: 7,
         runtime_id: runtimeId,
@@ -189,10 +147,7 @@ describe('Feature Flags lifecycle telemetry', () => {
 
   it('is independent from general telemetry sampling', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration({ telemetrySampleRate: 0 }), {
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
+    const telemetry = startFeatureFlagsTelemetry(configuration({ telemetrySampleRate: 0 }), options())
     registerCleanupTask(telemetry.stop)
 
     telemetry.add(fetchError())
@@ -203,10 +158,7 @@ describe('Feature Flags lifecycle telemetry', () => {
 
   it('flushes pending lifecycle events when stopped', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration(), {
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options())
 
     telemetry.add(fetchError())
     expect(interceptor.requests.length).toBe(0)
@@ -215,58 +167,47 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(interceptor.requests.length).toBe(1)
 
     telemetry.stop()
+    telemetry.add({ eventType: FeatureFlagsTelemetryEventType.SDK_INIT_STARTED })
     expect(interceptor.requests.length).toBe(1)
   })
 
   it('counts environment name limits in Unicode code points', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration(), {
-      environmentName: '🚀'.repeat(200),
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options({ environmentName: '🚀'.repeat(200) }))
 
     telemetry.add(fetchError())
     telemetry.stop()
 
-    expect(JSON.parse(interceptor.requests[0].body).telemetry.environment_name).toBe('🚀'.repeat(200))
+    expect(JSON.parse(interceptor.requests[0].body).environment).toBe('🚀'.repeat(200))
   })
 
   it('omits environment names over the Unicode code point limit', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration(), {
-      environmentName: '🚀'.repeat(201),
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options({ environmentName: '🚀'.repeat(201) }))
 
     telemetry.add(fetchError())
     telemetry.stop()
 
-    expect(JSON.parse(interceptor.requests[0].body).telemetry.environment_name).toBeUndefined()
+    expect(JSON.parse(interceptor.requests[0].body).environment).toBeUndefined()
   })
 
-  it('does not throw or retry when a WebView bridge send fails', () => {
+  it('uses HTTP instead of the RUM WebView telemetry bridge', () => {
+    const interceptor = interceptRequests()
     const eventBridge = mockEventBridge()
-    const sendSpy = spyOn(eventBridge, 'send').and.throwError('bridge failure')
-    const telemetry = startFeatureFlagsTelemetry(configuration(), {
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
-    registerCleanupTask(telemetry.stop)
+    const sendSpy = spyOn(eventBridge, 'send')
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options())
 
-    expect(() => telemetry.add(fetchError())).not.toThrow()
-    expect(() => telemetry.add(fetchError())).not.toThrow()
+    telemetry.add(fetchError())
+    telemetry.stop()
 
-    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(sendSpy).not.toHaveBeenCalled()
+    expect(interceptor.requests.length).toBe(1)
+    expect(interceptor.requests[0].url).toContain('/api/v2/flagtelemetry?')
   })
 
   it('is enabled for production Datadog sites', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration({ site: 'datadoghq.com' }), {
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
+    const telemetry = startFeatureFlagsTelemetry(configuration({ site: 'datadoghq.com' }), options())
 
     telemetry.add(fetchError())
     telemetry.stop()
@@ -277,10 +218,10 @@ describe('Feature Flags lifecycle telemetry', () => {
 
   it('is disabled when tracking consent is not granted', () => {
     const interceptor = interceptRequests()
-    const telemetry = startFeatureFlagsTelemetry(configuration({ trackingConsent: TrackingConsent.NOT_GRANTED }), {
-      sdkName: 'dd-openfeature-browser',
-      sdkVersion: '1.4.0',
-    })
+    const telemetry = startFeatureFlagsTelemetry(
+      configuration({ trackingConsent: TrackingConsent.NOT_GRANTED }),
+      options()
+    )
 
     telemetry.add(fetchError())
     window.dispatchEvent(createNewEvent('beforeunload'))
@@ -299,6 +240,16 @@ function configuration(overrides: Partial<Configuration> = {}): Configuration {
     telemetrySampleRate: 100,
     ...overrides,
   } as Configuration
+}
+
+function options(overrides: Partial<Parameters<typeof startFeatureFlagsTelemetry>[1]> = {}) {
+  return {
+    environmentName: 'staging',
+    sdkName: 'dd-openfeature-browser',
+    sdkVersion: '1.4.0',
+    evaluationReportingEnabled: true,
+    ...overrides,
+  }
 }
 
 function fetchError() {

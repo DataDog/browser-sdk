@@ -66,7 +66,7 @@ export type ProxyFn = (options: {
 export type Site = 'datadoghq.com' | 'us3.datadoghq.com' | 'us5.datadoghq.com' | 'datadoghq.eu' | 'ddog-gov.com' | 'us2.ddog-gov.com' | 'ap1.datadoghq.com' | 'ap2.datadoghq.com' | (string & {});
 
 // @public
-export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation' | 'debugger';
+export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation' | 'flagtelemetry' | 'debugger';
 
 // @public
 export type TransportApiType = 'fetch' | 'beacon' | 'manual';

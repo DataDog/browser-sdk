@@ -53,7 +53,6 @@ const ALLOWED_FRAME_URLS = [
 export const enum TelemetryService {
   LOGS = 'browser-logs-sdk',
   RUM = 'browser-rum-sdk',
-  FEATURE_FLAGS = 'browser-feature-flags-sdk',
 }
 
 export interface Telemetry {
@@ -212,11 +211,6 @@ export function startTelemetryTransport(
   telemetryObservable: Observable<TelemetryEvent & Context>
 ) {
   const cleanupTasks: Array<() => void> = []
-  let flush = noop
-  let stopped = false
-  // TODO(FFL-3069): Make bridge selection stream-aware before enabling Feature Flags lifecycle
-  // telemetry for WebViews. Android does not consume internal_telemetry, and iOS currently requires
-  // a sampled RUM context, so the Feature Flags stream needs capability negotiation or HTTP fallback.
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
     const telemetrySubscription = telemetryObservable.subscribe((event) => bridge.send('internal_telemetry', event))
@@ -232,26 +226,13 @@ export function startTelemetryTransport(
       // Ignore transport errors for telemetry
       reportError: noop,
     })
-    flush = () => telemetryBatch.forceFlush('duration_limit')
     cleanupTasks.push(telemetryBatch.stop)
     const telemetrySubscription = telemetryObservable.subscribe(telemetryBatch.add)
     cleanupTasks.push(telemetrySubscription.unsubscribe)
   }
 
-  function stop(flushBeforeStopping: boolean) {
-    if (stopped) {
-      return
-    }
-    stopped = true
-    if (flushBeforeStopping) {
-      flush()
-    }
-    cleanupTasks.forEach((task) => task())
-  }
-
   return {
-    stop: () => stop(false),
-    flushAndStop: () => stop(true),
+    stop: () => cleanupTasks.forEach((task) => task()),
   }
 }
 

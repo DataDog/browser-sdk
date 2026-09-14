@@ -1,14 +1,11 @@
+import { createEndpointBuilder } from '@datadog/js-core/transport'
 import { clocksNow } from '@datadog/js-core/time'
 import type { Context } from '../../tools/serialisation/context'
-import { Observable } from '../../tools/observable'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { noop } from '../../tools/utils/functionUtils'
-import { sendToExtension } from '../../tools/sendToExtension'
+import { createBatch } from '../../transport'
 import type { Configuration } from '../configuration'
-import { buildTags } from '../tags'
 import { TrackingConsent } from '../trackingConsent'
-import type { TelemetryEvent } from './telemetryEvent.types'
-import { startTelemetryTransport, TelemetryService } from './telemetry'
 
 export const FeatureFlagsTelemetryEventType = {
   SDK_INIT_STARTED: 'sdk_init_started',
@@ -70,20 +67,17 @@ export type FeatureFlagsLifecycleEvent =
       initLatencyMs: number
     }
 
-interface FeatureFlagsTelemetryPayload {
-  [key: string]: unknown
-  type: 'log'
-  status: 'debug' | 'error'
-  message: string
+interface FeatureFlagsTelemetryPayload extends Context {
   product: 'feature_flags'
   event_type: FeatureFlagsLifecycleEvent['eventType']
   timestamp: number
   runtime_id: string
   sequence: number
   application_id?: string
-  environment_name?: string
+  environment?: string
   sdk_name: string
   sdk_version: string
+  evaluation_reporting_enabled: boolean
   configuration_source?:
     typeof FeatureFlagsTelemetryConfigurationSource.REMOTE | typeof FeatureFlagsTelemetryConfigurationSource.CACHE
   configuration_version?: string
@@ -93,7 +87,6 @@ interface FeatureFlagsTelemetryPayload {
     | typeof FeatureFlagsTelemetryProviderStatus.STALE
     | typeof FeatureFlagsTelemetryProviderStatus.ERROR
   init_latency_ms?: number
-  evaluation_reporting_enabled?: boolean
   error_code?:
     | typeof FeatureFlagsTelemetryErrorCode.PRECOMPUTED_ASSIGNMENTS_FETCH_FAILED
     | typeof FeatureFlagsTelemetryErrorCode.INITIALIZATION_TIMEOUT
@@ -105,7 +98,7 @@ export interface FeatureFlagsTelemetryOptions {
   environmentName?: string
   sdkName: string
   sdkVersion: string
-  evaluationReportingEnabled?: boolean
+  evaluationReportingEnabled: boolean
 }
 
 export interface FeatureFlagsTelemetry {
@@ -114,14 +107,15 @@ export interface FeatureFlagsTelemetry {
   enabled: boolean
 }
 
-const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/
+const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
 const MAX_ENVIRONMENT_NAME_LENGTH = 200
+const MAX_CONFIGURATION_VERSION_LENGTH = 256
 
 /**
- * Starts a private, unsampled Feature Flags lifecycle telemetry channel.
+ * Starts an unsampled Feature Flags lifecycle event channel.
  *
- * It does not subscribe to the module-global RUM/Logs telemetry observable and does not require
- * either product SDK to start.
+ * Events use the dedicated flagtelemetry EVP track. The transport does not require the RUM or Logs
+ * product SDK to start.
  */
 export function startFeatureFlagsTelemetry(
   configuration: Configuration,
@@ -131,59 +125,53 @@ export function startFeatureFlagsTelemetry(
     return { add: noop, stop: noop, enabled: false }
   }
 
-  const observable = new Observable<TelemetryEvent & Context>()
-  const transport = startTelemetryTransport(configuration, observable)
+  const batch = createBatch({
+    endpoints: [createEndpointBuilder(configuration, 'flagtelemetry')],
+    // Lifecycle delivery must never affect Feature Flags SDK behavior.
+    reportError: noop,
+  })
   const runtimeId = generateUUID()
   const sentEvents = new Set<string>()
   let sequence = 0
+  let stopped = false
 
   return {
     enabled: true,
     add: (event) => {
       const deduplicationKey = `${event.eventType}:${'errorCode' in event ? event.errorCode : ''}`
-      if (sentEvents.has(deduplicationKey)) {
+      if (stopped || sentEvents.has(deduplicationKey)) {
         return
       }
 
-      const clockNow = clocksNow()
-      const telemetry: FeatureFlagsTelemetryPayload = {
-        type: 'log',
-        status: 'errorCode' in event ? 'error' : 'debug',
-        message: `feature_flags.${event.eventType}`,
+      const payload: FeatureFlagsTelemetryPayload = {
         product: 'feature_flags',
         event_type: event.eventType,
-        timestamp: clockNow.timeStamp,
+        timestamp: clocksNow().timeStamp,
         runtime_id: runtimeId,
         sequence: ++sequence,
         sdk_name: options.sdkName,
         sdk_version: options.sdkVersion,
+        evaluation_reporting_enabled: options.evaluationReportingEnabled,
         ...(isValidApplicationId(options.applicationId) && { application_id: options.applicationId }),
-        ...(isValidEnvironmentName(options.environmentName) && { environment_name: options.environmentName }),
-        ...(options.evaluationReportingEnabled !== undefined && {
-          evaluation_reporting_enabled: options.evaluationReportingEnabled,
-        }),
+        ...(isValidEnvironmentName(options.environmentName) && { environment: options.environmentName }),
         ...toTelemetryPayloadFields(event),
       }
 
-      const telemetryEvent = {
-        type: 'telemetry',
-        date: clockNow.timeStamp,
-        service: TelemetryService.FEATURE_FLAGS,
-        version: options.sdkVersion,
-        source: 'browser',
-        _dd: { format_version: 2 },
-        telemetry,
-        ddtags: buildTags({ ...configuration, sdkVersion: options.sdkVersion }).join(','),
-      } as TelemetryEvent & Context
       sentEvents.add(deduplicationKey)
       try {
-        observable.notify(telemetryEvent)
-        sendToExtension('telemetry', telemetryEvent)
+        batch.add(payload)
       } catch {
-        // Internal telemetry must never affect Feature Flags SDK behavior.
+        // Lifecycle delivery must never affect Feature Flags SDK behavior.
       }
     },
-    stop: transport.flushAndStop,
+    stop: () => {
+      if (stopped) {
+        return
+      }
+      stopped = true
+      batch.forceFlush('duration_limit')
+      batch.stop()
+    },
   }
 }
 
@@ -192,7 +180,9 @@ function toTelemetryPayloadFields(event: FeatureFlagsLifecycleEvent): Partial<Fe
     case FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED:
       return {
         configuration_source: event.configurationSource,
-        ...(event.configurationVersion !== undefined && { configuration_version: event.configurationVersion }),
+        ...(isValidConfigurationVersion(event.configurationVersion) && {
+          configuration_version: event.configurationVersion,
+        }),
         ...(event.configurationFetchedAt !== undefined && {
           configuration_fetched_at: event.configurationFetchedAt,
         }),
@@ -226,5 +216,13 @@ function isValidEnvironmentName(environmentName: string | undefined): environmen
     environmentName !== undefined &&
     environmentName.length > 0 &&
     Array.from(environmentName).length <= MAX_ENVIRONMENT_NAME_LENGTH
+  )
+}
+
+function isValidConfigurationVersion(configurationVersion: string | undefined): configurationVersion is string {
+  return (
+    configurationVersion !== undefined &&
+    configurationVersion.length > 0 &&
+    Array.from(configurationVersion).length <= MAX_CONFIGURATION_VERSION_LENGTH
   )
 }

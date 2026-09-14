@@ -329,15 +329,6 @@ function TelemetryDescription({ event }: { event: TelemetryEvent }) {
       </>
     )
   }
-  if (event.telemetry.product === 'feature_flags') {
-    const errorCode = typeof event.telemetry.error_code === 'string' ? event.telemetry.error_code : undefined
-    return (
-      <>
-        <Emphasis>Feature Flags</Emphasis> {String(event.telemetry.event_type)}
-        {errorCode === undefined ? '' : `: ${errorCode}`}
-      </>
-    )
-  }
   return <>{event.telemetry.message}</>
 }
 
