@@ -26,7 +26,7 @@ describe('getComposedPathAttributes', () => {
 
   describe('when the experimental flag is enabled', () => {
     beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES_MAP])
+      addExperimentalFeatures([ExperimentalFeature.CLICK_TARGET_ATTRIBUTES_MAP])
     })
 
     it('returns undefined for an empty composedPath', () => {

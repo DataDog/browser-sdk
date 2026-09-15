@@ -46,7 +46,7 @@ const ATTRIBUTE_VALUE_LIMIT = 100
  * filtering is applied — customers control what leaves the browser through the existing privacy
  * level configuration, the same way they already do for the action name.
  *
- * Returns `undefined` unless the `composed_path_selector_attributes_map` experimental flag is
+ * Returns `undefined` unless the `click_target_attributes_map` experimental flag is
  * enabled, or if the resulting map ends up empty.
  */
 export function getComposedPathAttributes(
@@ -54,7 +54,7 @@ export function getComposedPathAttributes(
   configuration: RumConfiguration,
   nodePrivacyLevelCache: NodePrivacyLevelCache
 ): Record<string, string> | undefined {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES_MAP)) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.CLICK_TARGET_ATTRIBUTES_MAP)) {
     return undefined
   }
 

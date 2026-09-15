@@ -780,11 +780,11 @@ test.describe('action collection with composed path selector', () => {
     })
 
   createTest(
-    'should return a sanitized composed_path_selector and a composed path attributes map when composed_path_selector_attributes_map is enabled'
+    'should return a sanitized composed_path_selector and a composed path attributes map when click_target_attributes_map is enabled'
   )
     .withRum({
       trackUserInteractions: true,
-      enableExperimentalFeatures: ['composed_path_selector_attributes_map'],
+      enableExperimentalFeatures: ['click_target_attributes_map'],
     })
     .withBody(html`
       <!-- a preceding sibling keeps the link's nth-child position fixed at 2 regardless of what
