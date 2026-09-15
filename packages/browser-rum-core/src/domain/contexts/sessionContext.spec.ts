@@ -16,6 +16,7 @@ describe('session context', () => {
   const fakeStats = {
     segments_count: 4,
     records_count: 10,
+    resources_count: 0,
     segments_total_raw_size: 1000,
   }
 
