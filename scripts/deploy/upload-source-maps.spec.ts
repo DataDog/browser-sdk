@@ -117,14 +117,6 @@ describe('upload-source-maps', () => {
         },
         {
           command:
-            'mv packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim.js packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim-v6.js',
-        },
-        {
-          command:
-            'mv packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim.js.map packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim-v6.js.map',
-        },
-        {
-          command:
             'mv packages/browser-rum-slim/bundle/datadog-rum-slim.js packages/browser-rum-slim/bundle/datadog-rum-slim-v6.js',
         },
         {
@@ -298,14 +290,6 @@ describe('upload-source-maps', () => {
       },
       {
         command:
-          'mv packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim.js packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim-staging.js',
-      },
-      {
-        command:
-          'mv packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim.js.map packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim-staging.js.map',
-      },
-      {
-        command:
           'mv packages/browser-rum-slim/bundle/datadog-rum-slim.js packages/browser-rum-slim/bundle/datadog-rum-slim-staging.js',
       },
       {
@@ -442,14 +426,6 @@ describe('upload-source-maps', () => {
       },
       {
         command:
-          'mv packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim.js packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim-canary.js',
-      },
-      {
-        command:
-          'mv packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim.js.map packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim-canary.js.map',
-      },
-      {
-        command:
           'mv packages/browser-rum-slim/bundle/datadog-rum-slim.js packages/browser-rum-slim/bundle/datadog-rum-slim-canary.js',
       },
       {
@@ -559,14 +535,6 @@ describe('upload-source-maps', () => {
       {
         command:
           'mv packages/browser-rum/bundle/datadog-rum.js.map packages/browser-rum/bundle/datadog-rum-v7-canary.js.map',
-      },
-      {
-        command:
-          'mv packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim.js packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim-v7-canary.js',
-      },
-      {
-        command:
-          'mv packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim.js.map packages/browser-rum-slim/bundle/datadog-rum-salesforce-slim-v7-canary.js.map',
       },
       {
         command:

@@ -64,7 +64,7 @@ export type {
 } from '@datadog/browser-rum-core'
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 
-/** The global RUM instance for Salesforce Experience Cloud Head Markup. */
+/** The global RUM instance for Salesforce applications. */
 const recorderApi = makeRecorderApi()
 
 const profilerApi = makeProfilerApi()
