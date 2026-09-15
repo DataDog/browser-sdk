@@ -54,6 +54,70 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(JSON.parse(interceptor.requests[0].body).application_id).toBeUndefined()
   })
 
+  it('reports configuration again when its source or version changes', () => {
+    const interceptor = interceptRequests()
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options())
+    registerCleanupTask(telemetry.stop)
+
+    telemetry.add({
+      eventType: FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED,
+      configurationSource: FeatureFlagsTelemetryConfigurationSource.CACHE,
+      configurationVersion: 'configuration-1',
+    })
+    telemetry.add({
+      eventType: FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED,
+      configurationSource: FeatureFlagsTelemetryConfigurationSource.CACHE,
+      configurationVersion: 'configuration-1',
+    })
+    telemetry.add({
+      eventType: FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED,
+      configurationSource: FeatureFlagsTelemetryConfigurationSource.REMOTE,
+      configurationVersion: 'configuration-1',
+    })
+    telemetry.add({
+      eventType: FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED,
+      configurationSource: FeatureFlagsTelemetryConfigurationSource.REMOTE,
+      configurationVersion: 'configuration-2',
+    })
+    telemetry.stop()
+
+    const events = interceptor.requests[0].body
+      .trim()
+      .split('\n')
+      .map((event) => JSON.parse(event) as Record<string, unknown>)
+    expect(events).toEqual([
+      jasmine.objectContaining({ configuration_source: 'cache', configuration_version: 'configuration-1' }),
+      jasmine.objectContaining({ configuration_source: 'remote', configuration_version: 'configuration-1' }),
+      jasmine.objectContaining({ configuration_source: 'remote', configuration_version: 'configuration-2' }),
+    ])
+  })
+
+  it('omits invalid configuration fetch timestamps', () => {
+    const interceptor = interceptRequests()
+    const telemetry = startFeatureFlagsTelemetry(configuration(), options())
+    registerCleanupTask(telemetry.stop)
+
+    for (const [index, configurationFetchedAt] of [
+      -1,
+      1.5,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      Number.MAX_SAFE_INTEGER + 1,
+    ].entries()) {
+      telemetry.add({
+        eventType: FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED,
+        configurationSource: FeatureFlagsTelemetryConfigurationSource.REMOTE,
+        configurationVersion: `configuration-${index}`,
+        configurationFetchedAt,
+      })
+    }
+    telemetry.stop()
+
+    for (const event of interceptor.requests[0].body.trim().split('\n')) {
+      expect(JSON.parse(event).configuration_fetched_at).toBeUndefined()
+    }
+  })
+
   it('sends the complete lifecycle event family', () => {
     const interceptor = interceptRequests()
     const telemetry = startFeatureFlagsTelemetry(configuration(), options({ evaluationReportingEnabled: false }))

@@ -185,7 +185,7 @@ export function startFeatureFlagsTelemetry(
   return {
     enabled: true,
     add: (event) => {
-      const deduplicationKey = `${event.eventType}:${'errorCode' in event ? event.errorCode : ''}`
+      const deduplicationKey = getDeduplicationKey(event)
       if (stopped || sentEvents.has(deduplicationKey)) {
         return
       }
@@ -239,7 +239,7 @@ function toTelemetryPayloadFields(event: FeatureFlagsLifecycleEvent): Partial<Fe
         ...(isValidConfigurationVersion(event.configurationVersion) && {
           configuration_version: event.configurationVersion,
         }),
-        ...(event.configurationFetchedAt !== undefined && {
+        ...(isValidTimestamp(event.configurationFetchedAt) && {
           configuration_fetched_at: event.configurationFetchedAt,
         }),
       }
@@ -263,6 +263,13 @@ function toTelemetryPayloadFields(event: FeatureFlagsLifecycleEvent): Partial<Fe
   }
 }
 
+function getDeduplicationKey(event: FeatureFlagsLifecycleEvent): string {
+  if (event.eventType === FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED) {
+    return `${event.eventType}:${event.configurationSource}:${event.configurationVersion ?? ''}`
+  }
+  return `${event.eventType}:${'errorCode' in event ? event.errorCode : ''}`
+}
+
 function isValidApplicationId(applicationId: string | undefined): applicationId is string {
   return applicationId !== undefined && UUID_PATTERN.test(applicationId)
 }
@@ -281,4 +288,8 @@ function isValidConfigurationVersion(configurationVersion: string | undefined): 
     configurationVersion.length > 0 &&
     Array.from(configurationVersion).length <= MAX_CONFIGURATION_VERSION_LENGTH
   )
+}
+
+function isValidTimestamp(timestamp: number | undefined): timestamp is number {
+  return timestamp !== undefined && Number.isSafeInteger(timestamp) && timestamp >= 0
 }
