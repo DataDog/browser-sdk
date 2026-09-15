@@ -359,6 +359,7 @@ export interface RawRumActionEvent {
     resource?: Count
     target: {
       name: string
+      attributes?: Record<string, string>
     }
   }
   view?: {

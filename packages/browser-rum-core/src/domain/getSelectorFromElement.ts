@@ -11,6 +11,13 @@ import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameC
 export const SHADOW_DOM_MARKER = '::shadow '
 
 /**
+ * Tags filtered out of a composedPath walk: `HTML` and `BODY` sit above any meaningful click
+ * target and never carry attributes worth collecting, whether building the selector string
+ * (`getComposedPathSelector`) or the attributes map (`getComposedPathAttributes`).
+ */
+export const FILTERED_TAGNAMES = ['HTML', 'BODY']
+
+/**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:
  * component). Those attribute values should not be generated randomly (hardcoded most of the time)
  * and stay the same across deploys. They are not necessarily unique across the document.
