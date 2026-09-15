@@ -2,8 +2,9 @@ import { globalObject } from '@datadog/js-core/util'
 import { defineGlobal } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
-import { makeRecorderApiStub } from '../boot/stubRecorderApi'
-import { makeProfilerApiStub } from '../boot/stubProfilerApi'
+import { makeRecorderApi } from '../boot/recorderApi'
+import { makeProfilerApi } from '../boot/profilerApi'
+import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 
 export type {
   User,
@@ -17,11 +18,10 @@ export type {
   ContextArray,
   RumInternalContext,
 } from '@datadog/browser-core'
+export { DefaultPrivacyLevel } from '@datadog/browser-core'
 export type { ProxyFn, Site } from '@datadog/js-core/transport'
 
-/**
- * @deprecated Use {@link DatadogRum} instead
- */
+/** @deprecated Use {@link DatadogRum} instead */
 export type RumGlobal = RumPublicApi
 
 export type {
@@ -45,8 +45,6 @@ export type {
   PropagatorType,
   FeatureFlagsForEvents,
   MatchHeader,
-
-  // Events
   CommonProperties,
   RumEvent,
   RumActionEvent,
@@ -54,9 +52,8 @@ export type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
-
-  // Events context
   RumEventDomainContext,
   RumViewEventDomainContext,
   RumErrorEventDomainContext,
@@ -64,18 +61,17 @@ export type {
   RumVitalEventDomainContext,
   RumResourceEventDomainContext,
   RumWebSocketResourceEventDomainContext,
-  RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
-export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
-/**
- * The global RUM instance for Salesforce Lightning and LWC applications.
- *
- * @category Main
- * @see {@link DatadogRum}
- */
-export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
+/** The global RUM instance for Salesforce applications. */
+const recorderApi = makeRecorderApi()
+
+const profilerApi = makeProfilerApi()
+
+export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
+  startDeflateWorker,
+  createDeflateEncoder,
   sdkName: 'rum-salesforce',
 })
 
