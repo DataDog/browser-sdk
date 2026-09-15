@@ -442,6 +442,18 @@ const CANVAS_RECORDING_QUALITY_PRESETS: Record<CanvasRecordingQuality, Omit<Canv
   },
 }
 
+function resolveCanvasRecordingConfiguration(
+  configuration: { enable: boolean; quality: CanvasRecordingQuality } | undefined
+): CanvasRecordingConfiguration | undefined {
+  const preset = configuration && CANVAS_RECORDING_QUALITY_PRESETS[configuration.quality]
+
+  return isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS) &&
+    configuration?.enable &&
+    preset
+    ? { enable: true, ...preset }
+    : undefined
+}
+
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
 
 /**
@@ -625,11 +637,7 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const sessionReplayCanvasRecording =
-    isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS) &&
-    config.sessionReplayCanvasRecording?.enable
-      ? { enable: true as const, ...CANVAS_RECORDING_QUALITY_PRESETS[config.sessionReplayCanvasRecording.quality] }
-      : undefined
+  const sessionReplayCanvasRecording = resolveCanvasRecordingConfiguration(config.sessionReplayCanvasRecording)
 
   return {
     ...config,
