@@ -20,6 +20,8 @@ import { getComposedPathAttributes } from '../getComposedPathAttributes'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import type { FrustrationIgnore } from './frustrationIgnore'
+import { getFrustrationIgnore } from './frustrationIgnore'
 import type { ActionNameSource } from './actionNameConstants'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
@@ -69,11 +71,12 @@ export function trackClickActions(
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
+    ignore: FrustrationIgnore
     hadActivityOnPointerDown: () => boolean
   }>({
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
-    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
+    onPointerUp: ({ clickActionBase, ignore, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
       startClickAction(
         configuration,
         lifeCycle,
@@ -83,6 +86,7 @@ export function trackClickActions(
         stopObservable,
         appendClickToClickChain,
         clickActionBase,
+        ignore,
         startEvent,
         getUserActivity,
         hadActivityOnPointerDown
@@ -103,13 +107,17 @@ export function trackClickActions(
   function appendClickToClickChain(click: Click) {
     if (!currentClickChain?.tryAppend(click)) {
       const rageClick = click.clone()
-      currentClickChain = createClickChain(click, (clicks) => {
+      const clickChain = createClickChain(click, (clicks) => {
         finalizeClicks(clicks, rageClick)
         // Clear the reference to allow garbage collection. Without this, the finalize callback
         // retains a closure reference to the old click chain, preventing it from being cleaned up
         // and causing a memory leak as click chains accumulate over time.
-        currentClickChain = undefined
+        // Only clear it if no newer chain has replaced it.
+        if (currentClickChain === clickChain) {
+          currentClickChain = undefined
+        }
       })
+      currentClickChain = clickChain
     }
   }
 
@@ -156,7 +164,11 @@ function processPointerDown(
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
 
-  return { clickActionBase, hadActivityOnPointerDown: () => hadActivityOnPointerDown }
+  return {
+    clickActionBase,
+    ignore: getFrustrationIgnore(getEventTarget(pointerDownEvent)),
+    hadActivityOnPointerDown: () => hadActivityOnPointerDown,
+  }
 }
 
 function startClickAction(
@@ -168,11 +180,12 @@ function startClickAction(
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
+  ignore: FrustrationIgnore,
   startEvent: MouseEventOnElement,
   getUserActivity: () => UserActivity,
   hadActivityOnPointerDown: () => boolean
 ) {
-  const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent)
+  const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, ignore, startEvent)
   appendClickToClickChain(click)
 
   const selector = clickActionBase?.target?.selector
@@ -295,6 +308,7 @@ function newClick(
   actionTracker: EventTracker<ClickActionBase>,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
+  ignore: FrustrationIgnore,
   startEvent: MouseEventOnElement
 ) {
   const clickKey = generateUUID()
@@ -327,6 +341,7 @@ function newClick(
 
   return {
     event: startEvent,
+    ignore,
     stop,
     stopObservable,
 
@@ -347,7 +362,7 @@ function newClick(
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent),
+    clone: () => newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, ignore, startEvent),
 
     validate: (domEvents?: Event[]) => {
       stop()

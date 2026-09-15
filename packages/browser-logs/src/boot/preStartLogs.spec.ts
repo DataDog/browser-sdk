@@ -22,7 +22,7 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
-import type { Strategy } from './logsPublicApi'
+import type { Strategy, LogsPublicApi } from './logsPublicApi'
 import type { DoStartLogs } from './preStartLogs'
 import { createPreStartStrategy } from './preStartLogs'
 import type { StartLogsResult } from './startLogs'
@@ -48,7 +48,7 @@ describe('preStartLogs', () => {
     })
 
     it('should start when the configuration is valid', async () => {
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
       expect(displaySpy).not.toHaveBeenCalled()
       await collectAsyncCalls(doStartLogsSpy, 1)
       expect(doStartLogsSpy).toHaveBeenCalled()
@@ -61,36 +61,42 @@ describe('preStartLogs', () => {
     })
 
     it('should not start when the configuration is invalid', () => {
-      strategy.init(INVALID_INIT_CONFIGURATION)
+      strategy.init(INVALID_INIT_CONFIGURATION, {} as LogsPublicApi)
       expect(displaySpy).toHaveBeenCalled()
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
     it("should return init configuration even if it's invalid", () => {
-      strategy.init(INVALID_INIT_CONFIGURATION)
+      strategy.init(INVALID_INIT_CONFIGURATION, {} as LogsPublicApi)
       expect(strategy.initConfiguration).toEqual(INVALID_INIT_CONFIGURATION)
     })
 
     describe('multiple init', () => {
       it('should log an error if init is called several times', () => {
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
         expect(displaySpy).toHaveBeenCalledTimes(0)
 
-        strategy.init(DEFAULT_INIT_CONFIGURATION)
+        strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
         expect(displaySpy).toHaveBeenCalledTimes(1)
       })
 
       it('should not log an error if init is called several times and silentMultipleInit is true', () => {
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          silentMultipleInit: true,
-        })
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            silentMultipleInit: true,
+          },
+          {} as LogsPublicApi
+        )
         expect(displaySpy).toHaveBeenCalledTimes(0)
 
-        strategy.init({
-          ...DEFAULT_INIT_CONFIGURATION,
-          silentMultipleInit: true,
-        })
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            silentMultipleInit: true,
+          },
+          {} as LogsPublicApi
+        )
         expect(displaySpy).toHaveBeenCalledTimes(0)
       })
     })
@@ -102,7 +108,7 @@ describe('preStartLogs', () => {
 
       it('init should accept empty client token', async () => {
         const hybridInitConfiguration: Omit<LogsInitConfiguration, 'clientToken'> = {}
-        strategy.init(hybridInitConfiguration as LogsInitConfiguration)
+        strategy.init(hybridInitConfiguration as LogsInitConfiguration, {} as LogsPublicApi)
 
         await collectAsyncCalls(doStartLogsSpy, 1)
         expect(displaySpy).not.toHaveBeenCalled()
@@ -115,7 +121,7 @@ describe('preStartLogs', () => {
     const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults({
       startSessionManagerMock: () => Promise.reject(new Error('Session init failed')),
     })
-    strategy.init(DEFAULT_INIT_CONFIGURATION)
+    strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
     await collectAsyncCalls(doStartLogsSpy, 0)
     expect(doStartLogsSpy).not.toHaveBeenCalled()
   })
@@ -131,7 +137,7 @@ describe('preStartLogs', () => {
     )
 
     expect(handleLogSpy).not.toHaveBeenCalled()
-    strategy.init(DEFAULT_INIT_CONFIGURATION)
+    strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
     await collectAsyncCalls(handleLogSpy, 1)
 
     expect(handleLogSpy.calls.all().length).toBe(1)
@@ -155,7 +161,7 @@ describe('preStartLogs', () => {
         {} as Logger
       )
       clock.tick(ONE_SECOND)
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
       await collectAsyncCalls(handleLogSpy, 1)
 
       expect(getLoggedMessage(0).savedDate).toEqual(Date.now() - ONE_SECOND)
@@ -171,7 +177,7 @@ describe('preStartLogs', () => {
         },
         {} as Logger
       )
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
 
       await collectAsyncCalls(handleLogSpy, 1)
       expect(getLoggedMessage(0).savedCommonContext!.view?.url).toEqual('url')
@@ -190,7 +196,7 @@ describe('preStartLogs', () => {
       )
       context.foo = 'baz'
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
       await collectAsyncCalls(handleLogSpy, 1)
 
       expect(getLoggedMessage(0).message.context!.foo).toEqual('bar')
@@ -215,34 +221,43 @@ describe('preStartLogs', () => {
     })
 
     it('does not start logs if tracking consent is not granted at init', () => {
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.NOT_GRANTED,
-      })
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        {} as LogsPublicApi
+      )
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
     it('starts logs if tracking consent is granted before init', async () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.NOT_GRANTED,
-      })
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        {} as LogsPublicApi
+      )
       await collectAsyncCalls(doStartLogsSpy, 1)
       expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
     })
 
     it('does not start logs if tracking consent is not withdrawn before init', () => {
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.GRANTED,
-      })
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.GRANTED,
+        },
+        {} as LogsPublicApi
+      )
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
     it('do not call startLogs when tracking consent state is updated after init', async () => {
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
       await collectAsyncCalls(doStartLogsSpy, 1)
       doStartLogsSpy.calls.reset()
 
@@ -256,7 +271,7 @@ describe('preStartLogs', () => {
   describe('telemetry', () => {
     it('starts telemetry during init() by default', async () => {
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
       await collectAsyncCalls(startTelemetrySpy, 1)
       expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
     })
@@ -264,7 +279,7 @@ describe('preStartLogs', () => {
     it('passes the sdk name to telemetry', async () => {
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({ sdkName: 'logs' })
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
       await collectAsyncCalls(startTelemetrySpy, 1)
 
       expect(startTelemetrySpy.calls.argsFor(0)[3]).toBe('logs')
@@ -276,10 +291,13 @@ describe('preStartLogs', () => {
         trackingConsentState,
       })
 
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.NOT_GRANTED,
-      })
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        {} as LogsPublicApi
+      )
 
       expect(startTelemetrySpy).not.toHaveBeenCalled()
 

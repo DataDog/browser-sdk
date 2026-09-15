@@ -10,7 +10,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { AssembleHook, AssembleHookParams } from './hooks'
+import type { AssembleHookParams, Hooks } from './hooks'
 
 const COMMON_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -60,7 +60,7 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
 export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  assembleHook: AssembleHook,
+  hooks: Hooks,
   reportError: (message: string) => void,
   eventRateLimit?: number
 ) {
@@ -73,19 +73,24 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startClocks, duration, rawRumEvent, domainContext }) => {
-      const defaultRumEventAttributes = assembleHook.trigger({
+      const assemblyParams = {
         eventType: rawRumEvent.type,
         rawRumEvent,
         domainContext,
         startTime: startClocks.relative,
         duration,
-      } as AssembleHookParams)!
-
+      } as AssembleHookParams
+      const defaultRumEventAttributes = hooks.assembleEventDefaults.trigger(assemblyParams)!
       if (defaultRumEventAttributes === DISCARDED) {
         return
       }
 
-      const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, {
+      const rumEventAttributes = hooks.assembleEvent.trigger(assemblyParams)!
+      if (rumEventAttributes === DISCARDED) {
+        return
+      }
+
+      const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, rumEventAttributes, {
         ddtags: buildTags(configuration).join(','),
       }) as AssembledRumEvent
 

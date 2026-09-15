@@ -12,7 +12,7 @@ export function startProfilingContext(hooks: Hooks): ProfilingContextManager {
     status: 'starting',
   }
 
-  hooks.assemble.register(({ eventType }) => {
+  hooks.assembleEventDefaults.register(({ eventType }) => {
     if (
       eventType !== RumEventType.VIEW &&
       eventType !== RumEventType.LONG_TASK &&

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { createTest } from '../lib/framework'
 import { generateLongTask } from '../lib/helpers/browser.ts'
+import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 test.describe('profiling', () => {
   test.beforeEach(({ browserName }) => {
@@ -58,7 +59,7 @@ test.describe('profiling', () => {
         runtime: 'chrome',
         format: 'json',
         version: 4,
-        tags_profiler: 'sdk_version:dev,language:javascript,runtime:chrome,family:chrome,host:browser',
+        tags_profiler: `sdk_version:dev,service:${APPLICATION_ID},language:javascript,runtime:chrome,family:chrome,host:browser`,
         _dd: {
           clock_drift: expect.any(Number),
         },

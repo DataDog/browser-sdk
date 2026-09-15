@@ -1,4 +1,9 @@
-import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type {
+  RumInitConfiguration,
+  RumPublicApi,
+  StartRumResult,
+  RumPluginOnInitOptions,
+} from '@datadog/browser-rum-core'
 import { noop } from '@datadog/browser-core'
 import { nextjsPlugin, resetNextjsPlugin } from '../src/domain/nextjsPlugin'
 import { registerCleanupTask } from '../../browser-core/test'
@@ -15,10 +20,11 @@ export function initializeNextjsPlugin({
   resetNextjsPlugin()
   const plugin = nextjsPlugin()
 
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
   plugin.onInit({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
-  })
+  } as RumPluginOnInitOptions)
   plugin.onRumStart({
     addError,
   })

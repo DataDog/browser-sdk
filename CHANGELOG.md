@@ -20,6 +20,50 @@
 
 ---
 
+## v7.13.0
+
+**Public Changes:**
+
+- ✨ [RUM-16985] Capture wasm module build_ids and enrich error events ([#4920](https://github.com/DataDog/browser-sdk/pull/4920))
+- ✨ Attach debug IDs to debugger snapshots ([#5028](https://github.com/DataDog/browser-sdk/pull/5028))
+- ✨ [RUM-18194] default RUM service to the applicationId ([#4979](https://github.com/DataDog/browser-sdk/pull/4979))
+- ✨ Add per-element frustration signal opt-outs ([#5005](https://github.com/DataDog/browser-sdk/pull/5005))
+- 🐛 Keep inlining link stylesheets after a client-side navigation ([#5019](https://github.com/DataDog/browser-sdk/pull/5019))
+- 🐛 Send partial snapshots after debugger capture timeout ([#4734](https://github.com/DataDog/browser-sdk/pull/4734))
+- 📝 [Shopify] Update README to point to public docs instead of inline setup snippet ([#5011](https://github.com/DataDog/browser-sdk/pull/5011))
+- ⚗️ Add Canvas image capture [3/n] ([#4980](https://github.com/DataDog/browser-sdk/pull/4980))
+
+**Internal Changes:**
+
+- 👷 Rename StringResourceId to StringRoleResourceId ([#5023](https://github.com/DataDog/browser-sdk/pull/5023))
+- 👷 Sync rum-events-format schemas for session replay image content ([#5017](https://github.com/DataDog/browser-sdk/pull/5017))
+- 👷 Use workspace:* protocol for internal monorepo dependencies ([#5016](https://github.com/DataDog/browser-sdk/pull/5016))
+- 👷 [Shopify] Add Slack notification on e2e-shopify-scheduled failure ([#5012](https://github.com/DataDog/browser-sdk/pull/5012))
+- ♻️ introduce Logs plugin API and assemble hook enrichment ([#5014](https://github.com/DataDog/browser-sdk/pull/5014))
+- ♻️ Merge message context into raw logs event at collection time ([#5009](https://github.com/DataDog/browser-sdk/pull/5009))
+- ♻️ Move global monitor functions to js-core ([#4986](https://github.com/DataDog/browser-sdk/pull/4986))
+- ✅ Stabilize base plugin error E2E tests in WebKit ([#5038](https://github.com/DataDog/browser-sdk/pull/5038))
+- ✅ Stabilize Nuxt error E2E tests in WebKit ([#5037](https://github.com/DataDog/browser-sdk/pull/5037))
+- 🔊 Report remote configuration sync metadata on configuration telemetry ([#5001](https://github.com/DataDog/browser-sdk/pull/5001))
+
+## v7.12.0
+
+**Public Changes:**
+
+- 🐛 [Shopify] Defer plugin init until a checkout page view, fixing double session IDs ([#4981](https://github.com/DataDog/browser-sdk/pull/4981))
+
+## v7.11.0
+
+**Public Changes:**
+
+- ✨ enable partial view updates by default for CDN users without a proxy ([#5000](https://github.com/DataDog/browser-sdk/pull/5000))
+- 🐛 [PANA-8819] Don't send segments with sendBeacon unless the page is really exiting ([#4990](https://github.com/DataDog/browser-sdk/pull/4990))
+- 📝 Remove beta note from Vue, Angular and Nuxt readme's ([#4996](https://github.com/DataDog/browser-sdk/pull/4996))
+
+**Internal Changes:**
+
+- 👷 skip telemetry error checks when no datacenter has credentials ([#4997](https://github.com/DataDog/browser-sdk/pull/4997))
+
 ## v7.10.0
 
 **Public Changes:**

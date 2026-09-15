@@ -1,3 +1,4 @@
+import type { TimeStamp } from '@datadog/js-core/time'
 import type { InitConfiguration } from '@datadog/browser-core'
 import {
   addExperimentalFeatures,
@@ -11,9 +12,14 @@ import type {
   CamelToSnakeCase,
   MapInitConfigurationKey,
 } from '@datadog/browser-core/test'
-import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
+import {
+  EXHAUSTIVE_INIT_CONFIGURATION,
+  mockEventBridge,
+  SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+} from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import {
+  CanvasRecordingQuality,
   DEFAULT_PROPAGATOR_TYPES,
   DEFAULT_TRACKED_RESOURCE_HEADERS,
   serializeRumConfiguration,
@@ -37,6 +43,44 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, applicationId: undefined as any })
       ).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('"applicationId" is required')
+    })
+  })
+
+  describe('service', () => {
+    it('defaults to the applicationId if the option is not provided', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, applicationId: 'my-app-id' })!.service
+      ).toBe('my-app-id')
+    })
+
+    it('is set to the provided value', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'my-app-id',
+          service: 'my-service',
+        })!.service
+      ).toBe('my-service')
+    })
+
+    it('defaults to the applicationId if the option is null', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'my-app-id',
+          service: null,
+        })!.service
+      ).toBe('my-app-id')
+    })
+
+    it('defaults to the applicationId if the option is an empty string', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'my-app-id',
+          service: '',
+        })!.service
+      ).toBe('my-app-id')
     })
   })
 
@@ -349,31 +393,58 @@ describe('validateAndBuildRumConfiguration', () => {
         addExperimentalFeatures([ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS])
       })
 
-      it('uses one frame per second by default when enabled', () => {
+      it('uses the medium quality preset by default when enabled', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           sessionReplayCanvasRecording: { enable: true },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 1 })
+        expect(configuration.sessionReplayCanvasRecording).toEqual({
+          enable: true,
+          maxFramesPerSecond: 4,
+          hashingMaxDimension: 100,
+          maxImageDimension: 1000,
+          encodeQuality: 0.5,
+        })
       })
 
-      it('uses the configured frame rate', () => {
+      it('uses the configured quality preset', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
+          sessionReplayCanvasRecording: {
+            enable: true,
+            quality: CanvasRecordingQuality.LOW,
+          },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: true, maxFramesPerSecond: 2.5 })
+        expect(configuration.sessionReplayCanvasRecording).toEqual({
+          enable: true,
+          maxFramesPerSecond: 1,
+          hashingMaxDimension: 50,
+          maxImageDimension: 600,
+          encodeQuality: 0.3,
+        })
       })
 
-      it('preserves the configured frame rate when disabled', () => {
+      it('resolves to undefined when disabled regardless of the configured quality', () => {
         const configuration = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionReplayCanvasRecording: { enable: false, maxFramesPerSecond: 2.5 },
+          sessionReplayCanvasRecording: {
+            enable: false,
+            quality: CanvasRecordingQuality.HIGH,
+          },
         })!
 
-        expect(configuration.sessionReplayCanvasRecording).toEqual({ enable: false, maxFramesPerSecond: 2.5 })
+        expect(configuration.sessionReplayCanvasRecording).toBeUndefined()
+      })
+
+      it('rejects an invalid quality preset', () => {
+        expect(
+          validateAndBuildRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionReplayCanvasRecording: { enable: true, quality: 'ultra' as any },
+          })
+        ).toBeUndefined()
       })
 
       it('rejects invalid canvas recording options', () => {
@@ -483,6 +554,89 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaTrackWebSockets: true })!
           .betaTrackWebSockets
       ).toBeTrue()
+    })
+  })
+
+  describe('betaEnableViewUpdates', () => {
+    // Unit tests are bundled as a CDN build (webpack.base.ts pins `setup: 'cdn'`), so the npm
+    // side of the default is only covered by e2e and by reading the code.
+
+    it('defaults to true on a CDN build without a proxy', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeTrue()
+    })
+
+    it('defaults to false on a CDN build with a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('defaults to false on a CDN build with a proxy function', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: () => 'https://proxy.example.com' })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('honors an explicit false on a CDN build without a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('honors an explicit true on a CDN build with a proxy', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          betaEnableViewUpdates: true,
+          proxy: 'https://proxy.example.com',
+        })!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('is false when the event bridge is used', () => {
+      // The bridge replaces the batch transport, so no view_update can ever be created.
+      mockEventBridge()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeFalse()
+    })
+
+    it('is false when the event bridge is used, even if the option is explicitly enabled', () => {
+      mockEventBridge()
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })!
+          .betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('defaults to false for the Salesforce bundle', () => {
+      // The Salesforce bundle is a CDN build, but it is installed as a pinned static resource.
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce')!.betaEnableViewUpdates
+      ).toBeFalse()
+    })
+
+    it('is true for the Salesforce bundle when the option is explicitly enabled', () => {
+      expect(
+        validateAndBuildRumConfiguration(
+          { ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true },
+          'rum-salesforce'
+        )!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('defaults to true for other CDN bundles', () => {
+      expect(
+        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-shopify')!.betaEnableViewUpdates
+      ).toBeTrue()
+    })
+
+    it('does not validate the configuration if it is not a boolean', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: 'yes' as any })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"betaEnableViewUpdates" must be a boolean')
     })
   })
 
@@ -712,6 +866,28 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('serializeRumConfiguration', () => {
+    describe('remote configuration metadata serialization', () => {
+      it('should serialize the applied metadata', () => {
+        const serialized = serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION, undefined, {
+          lastModified: 1500,
+          lastSynced: 2000 as TimeStamp,
+          firstApplied: 3000 as TimeStamp,
+          syncId: 'sync-id',
+        })
+
+        expect(serialized.remote_configuration).toEqual({
+          last_modified: 1500,
+          last_synced: 2000 as TimeStamp,
+          first_applied: 3000 as TimeStamp,
+          sync_id: 'sync-id',
+        })
+      })
+
+      it('should omit remote_configuration when no metadata was applied', () => {
+        expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).remote_configuration).toBeUndefined()
+      })
+    })
+
     describe('selected tracing propagators serialization', () => {
       it('should not return any propagator type', () => {
         expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).selected_tracing_propagators).toEqual([])
@@ -919,6 +1095,45 @@ describe('validateAndBuildRumConfiguration', () => {
 })
 
 describe('serializeRumConfiguration', () => {
+  describe('beta_enable_view_updates', () => {
+    it('reports the effective default on a CDN build without a proxy', () => {
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeTrue()
+    })
+
+    it('reports the effective default on a CDN build with a proxy', () => {
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+
+    it('reports an explicitly disabled option', () => {
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+
+    it('reports false when the event bridge is used', () => {
+      mockEventBridge()
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeFalse()
+    })
+
+    it('reports false for the Salesforce bundle', () => {
+      expect(
+        serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce').beta_enable_view_updates
+      ).toBeFalse()
+    })
+
+    it('reports false when the event bridge is used, even if the option is explicitly enabled', () => {
+      mockEventBridge()
+      expect(
+        serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })
+          .beta_enable_view_updates
+      ).toBeFalse()
+    })
+  })
+
   it('should serialize the configuration', () => {
     const exhaustiveRumInitConfiguration: Required<RumInitConfiguration> = {
       ...EXHAUSTIVE_INIT_CONFIGURATION,
@@ -951,7 +1166,7 @@ describe('serializeRumConfiguration', () => {
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
-      sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 2.5 },
+      sessionReplayCanvasRecording: { enable: true, quality: CanvasRecordingQuality.HIGH },
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -966,7 +1181,9 @@ describe('serializeRumConfiguration', () => {
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
-            // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
+            // The `remoteConfiguration` init option is covered by the legacy `remote_configuration_id`
+            // field. The `remote_configuration` telemetry field is unrelated: it carries the sync
+            // metadata of the applied version, which does not come from the init configuration.
             Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'sessionReplayCanvasRecording'
             ? never
             : CamelToSnakeCase<Key>
@@ -977,6 +1194,7 @@ describe('serializeRumConfiguration', () => {
       | 'selected_tracing_propagators'
       | 'use_track_graph_ql_payload'
       | 'use_track_graph_ql_response_errors'
+      | 'remote_configuration'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
@@ -1004,6 +1222,7 @@ describe('serializeRumConfiguration', () => {
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
       remote_configuration_id: '123',
+      remote_configuration: undefined,
       use_remote_configuration_proxy: true,
       profiling_sample_rate: 42,
       track_resource_headers: 'default_headers',

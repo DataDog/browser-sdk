@@ -1,6 +1,6 @@
 import type { Router } from 'vue-router'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import type { NuxtApp } from './error/setupNuxtErrorHandling'
 import { nuxtRumPlugin, resetNuxtPlugin } from './nuxtPlugin'
@@ -24,7 +24,11 @@ describe('nuxtRumPlugin', () => {
   it('sets trackViewsManually to true', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
 
-    nuxtRumPlugin({ router: makeRouter() }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    nuxtRumPlugin({ router: makeRouter() }).onInit({
+      publicApi: PUBLIC_API,
+      initConfiguration,
+    } as RumPluginOnInitOptions)
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
