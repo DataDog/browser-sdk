@@ -22,7 +22,7 @@ describe('trackCanvasContent', () => {
   })
 
   function startTracking(
-    enable = true,
+    enable: boolean = true,
     maxFramesPerSecond = 1,
     hashingMaxDimension = 100,
     maxImageDimension = 1000
@@ -30,7 +30,9 @@ describe('trackCanvasContent', () => {
     const scope = createRecordingScopeForTesting({
       canvasManager,
       configuration: {
-        sessionReplayCanvasRecording: { enable, maxFramesPerSecond, hashingMaxDimension, maxImageDimension },
+        sessionReplayCanvasRecording: enable
+          ? { enable: true, maxFramesPerSecond, hashingMaxDimension, maxImageDimension, encodeQuality: 0.5 }
+          : undefined,
       },
     })
     scope.nodeIds.getOrInsert(canvas)
@@ -87,6 +89,7 @@ describe('trackCanvasContent', () => {
           maxFramesPerSecond: 1,
           hashingMaxDimension: 100,
           maxImageDimension: 1000,
+          encodeQuality: 0.5,
         },
       },
     })

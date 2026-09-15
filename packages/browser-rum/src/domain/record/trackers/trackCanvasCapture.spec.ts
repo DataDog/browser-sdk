@@ -10,6 +10,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
+import { expectPixelApprox } from '../canvas/canvasImage.specHelper'
 import type { NodeId } from '../encoding'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
@@ -37,7 +38,7 @@ describe('trackCanvasCapture', () => {
     canvasManager = createCanvasManager()
     document.body.appendChild(canvas)
     toBlobSpy = spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback) => {
-      callback(new Blob([], { type: 'image/png' }))
+      callback(new Blob([], { type: 'image/webp' }))
     })
 
     registerCleanupTask(() => {
@@ -59,6 +60,7 @@ describe('trackCanvasCapture', () => {
           maxFramesPerSecond: 1,
           hashingMaxDimension,
           maxImageDimension,
+          encodeQuality: 0.5,
         },
       },
     })
@@ -90,7 +92,7 @@ describe('trackCanvasCapture', () => {
     return scope.nodeIds.getOrInsert(canvas)
   }
 
-  function firstPixelOf(image: Blob) {
+  function firstPixelOf(image: Blob): Promise<number[]> {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(image)
       const element = new Image()
@@ -172,7 +174,7 @@ describe('trackCanvasCapture', () => {
       return Promise.resolve(result)
     })
     replaceMockable(globalObject.crypto?.subtle, { digest: digestSpy } as unknown as SubtleCrypto)
-    // The emitted image is the assertion here, so it has to be a real PNG rather than the empty
+    // The emitted image is the assertion here, so it has to be a real WebP rather than the empty
     // blob the suite stubs in.
     toBlobSpy.and.callThrough()
 
@@ -188,14 +190,14 @@ describe('trackCanvasCapture', () => {
     await collectAsyncCalls(onCanvasCapture, 1)
     await waitForCanvasCapture()
 
-    expect(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[0].image)).toEqual([255, 0, 0, 255])
+    expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[0].image), [255, 0, 0, 255])
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
     clock.tick(1000)
     await collectAsyncCalls(onCanvasCapture, 2)
 
-    expect(await firstPixelOf(onCanvasCapture.calls.argsFor(1)[0].image)).toEqual([0, 0, 255, 255])
+    expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(1)[0].image), [0, 0, 255, 255])
     expect(onCanvasCapture.calls.argsFor(1)[0].changeHash).not.toBe(onCanvasCapture.calls.argsFor(0)[0].changeHash)
   })
 
@@ -285,10 +287,10 @@ describe('trackCanvasCapture', () => {
         isFirstBlob = false
         resolveFirstBlob = callback
       } else {
-        callback(new Blob([], { type: 'image/png' }))
+        callback(new Blob([], { type: 'image/webp' }))
       }
     })
-    return () => resolveFirstBlob(new Blob([], { type: 'image/png' }))
+    return () => resolveFirstBlob(new Blob([], { type: 'image/webp' }))
   }
 
   const nodeIdChangeCaptureStages: Array<{ description: string; deferCapture: () => () => void }> = [

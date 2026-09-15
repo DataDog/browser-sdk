@@ -110,7 +110,7 @@ export const trackCanvasCapture = (scope: RecordingScope, onCanvasCapture: Canva
         return // unchanged: no capture/output
       }
 
-      const image = await captureCanvasImage(snapshot)
+      const image = await captureCanvasImage(snapshot, configuration?.encodeQuality ?? 0.5)
       if (cancelled()) {
         return
       }
