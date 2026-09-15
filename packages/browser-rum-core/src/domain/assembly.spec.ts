@@ -67,6 +67,43 @@ describe('rum assembly', () => {
           expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
         })
 
+        it('should allow adding synthetics.lighthouse on view events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                if (event.type === RumEventType.VIEW && event.synthetics) {
+                  event.synthetics.lighthouse = {
+                    accessibility: 67,
+                    agentic: 50,
+                    best_practices: 63,
+                    performance: 92,
+                    seo: 98,
+                  }
+                }
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
+              synthetics: { test_id: 'test-abc', result_id: 'result-xyz', injected: true },
+            }),
+          })
+
+          expect(serverRumEvents[0].synthetics).toEqual({
+            test_id: 'test-abc',
+            result_id: 'result-xyz',
+            injected: true,
+            lighthouse: {
+              accessibility: 67,
+              agentic: 50,
+              best_practices: 63,
+              performance: 92,
+              seo: 98,
+            },
+          })
+        })
+
         it('should allow modification of error.handling_stack', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
