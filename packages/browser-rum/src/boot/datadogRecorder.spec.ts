@@ -90,7 +90,7 @@ describe('startRecording', () => {
     expect(requests[0].segment).toEqual(jasmine.any(Object))
     expect(requests[0].event).toEqual({
       application: {
-        id: 'appId',
+        id: 'app-id',
       },
       creation_reason: 'init',
       end: jasmine.stringMatching(/^\d{13}$/),
@@ -221,6 +221,7 @@ describe('startRecording', () => {
           maxFramesPerSecond: 1,
           hashingMaxDimension: 100,
           maxImageDimension: 1000,
+          encodeQuality: 0.5,
         },
       },
       canvasHttpRequest
@@ -258,6 +259,7 @@ describe('startRecording', () => {
             maxFramesPerSecond: 1,
             hashingMaxDimension: 100,
             maxImageDimension: 1000,
+            encodeQuality: 0.5,
           },
         },
         canvasHttpRequest

@@ -8,7 +8,7 @@ test.describe('recorder canvas resource upload', () => {
   createTest('uploads a canvas resource when a tracked canvas is drawn on')
     .withRum({
       enableExperimentalFeatures: ['session_replay_record_canvas'],
-      sessionReplayCanvasRecording: { enable: true, maxFramesPerSecond: 1 },
+      sessionReplayCanvasRecording: { enable: true, quality: 'low' },
     })
     .withBody(html`<canvas id="canvas" width="10" height="10"></canvas>`)
     .run(async ({ intakeRegistry, flushEvents, page }) => {

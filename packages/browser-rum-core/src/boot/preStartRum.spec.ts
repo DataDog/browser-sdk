@@ -117,6 +117,21 @@ describe('preStartRum', () => {
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
+      it('should default the service to the web application id rather than the bridge placeholder', () => {
+        mockEventBridge()
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, applicationId: 'my-web-app-id' }, PUBLIC_API)
+        expect(strategy.initConfiguration?.service).toEqual('my-web-app-id')
+      })
+
+      it('should keep the service provided in the init configuration', () => {
+        mockEventBridge()
+        strategy.init(
+          { ...DEFAULT_INIT_CONFIGURATION, applicationId: 'my-web-app-id', service: 'my-service' },
+          PUBLIC_API
+        )
+        expect(strategy.initConfiguration?.service).toEqual('my-service')
+      })
+
       it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
@@ -553,7 +568,11 @@ describe('preStartRum', () => {
         it('should start the SDK with the cached configuration on cache hit', async () => {
           localStorage.setItem(
             CACHE_KEY,
-            JSON.stringify({ version: 2, config: { rum: { sessionSampleRate: 75 } }, fetchedAt: 1000 })
+            JSON.stringify({
+              version: 3,
+              config: { rum: { sessionSampleRate: 75 } },
+              metadata: { lastSynced: 1000, syncId: 'sync-id' },
+            })
           )
           const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
 

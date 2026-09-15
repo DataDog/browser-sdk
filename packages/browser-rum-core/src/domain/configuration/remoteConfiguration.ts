@@ -7,6 +7,7 @@ import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
+import type { RemoteConfigurationMetadata } from './remoteConfigurationCache'
 import { CACHE_STATUS_TO_METRIC_MAP, createConfigurationCache } from './remoteConfigurationCache'
 
 export type RemoteConfiguration = RumSdkConfig
@@ -288,7 +289,23 @@ function extractValue(extractor: SerializedRegex, candidate: string) {
   return extractRegexMatch(candidate, resolvedExtractor)
 }
 
-type FetchRemoteConfigurationResult = { ok: true; value: RemoteConfiguration } | { ok: false; error: Error }
+type FetchRemoteConfigurationResult =
+  { ok: true; value: RemoteConfiguration; lastModified?: number } | { ok: false; error: Error }
+
+/**
+ * Reads the CDN publish time. `Last-Modified` is a CORS-safelisted response header, so it is
+ * readable cross-origin without the CDN having to expose it explicitly. It carries an HTTP-date,
+ * so the value is only accurate to the second.
+ */
+function parseLastModified(response: Response): number | undefined {
+  const header = response.headers?.get('last-modified')
+  if (!header) {
+    return
+  }
+  const timestamp = new Date(header).getTime()
+
+  return isNaN(timestamp) ? undefined : timestamp
+}
 
 export async function fetchRemoteConfiguration(
   configuration: RumInitConfiguration
@@ -310,6 +327,7 @@ export async function fetchRemoteConfiguration(
     return {
       ok: true,
       value: remoteConfiguration,
+      lastModified: parseLastModified(response),
     }
   }
   return {
@@ -346,7 +364,7 @@ function doBackgroundCacheSync(
         display.error(fetchResult.error)
       } else {
         metrics.increment('fetch', 'success')
-        cache.write(fetchResult.value)
+        cache.write(fetchResult.value, fetchResult.lastModified)
       }
     })
     .catch(monitorError)
@@ -356,10 +374,20 @@ function doBackgroundCacheSync(
     })
 }
 
+export interface ResolvedRemoteConfiguration {
+  initConfiguration: RumInitConfiguration
+  /** Only set when a cached configuration was applied, and reported on configuration telemetry. */
+  metadata?: RemoteConfigurationMetadata
+}
+
+/**
+ * Returns `undefined` when RUM must not start, which only happens with `required: true` and no
+ * usable cache entry.
+ */
 export function getRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   supportedContextManagers: SupportedContextManagers
-): RumInitConfiguration | undefined {
+): ResolvedRemoteConfiguration | undefined {
   const configurationCache = createConfigurationCache({
     remoteConfigurationId: getRemoteConfigurationId(initConfiguration)!,
   })
@@ -372,12 +400,21 @@ export function getRemoteConfiguration(
   doBackgroundCacheSync(initConfiguration, configurationCache, metrics)
 
   if (cacheResult.status === 'hit') {
-    return applyRemoteConfiguration(initConfiguration, cacheResult.config, supportedContextManagers, metrics)
+    return {
+      // Stamping is synchronous, so it always lands before the background sync above can write.
+      metadata: configurationCache.stampFirstApplied(cacheResult),
+      initConfiguration: applyRemoteConfiguration(
+        initConfiguration,
+        cacheResult.config,
+        supportedContextManagers,
+        metrics
+      ),
+    }
   }
 
   if (initConfiguration.remoteConfiguration?.required) {
     return
   }
 
-  return initConfiguration
+  return { initConfiguration }
 }

@@ -1,10 +1,11 @@
 import { globalObject } from '@datadog/js-core/util'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, mockSourceCodeContext, registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
 import { display } from './display'
 import { addProbe, removeProbe, getProbes, clearProbes } from './probes'
 import type { Probe } from './probes'
 import { createProbe } from './probe.specHelper'
+import { captureStackTrace } from './stacktrace'
 
 const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
 const thisArg = {}
@@ -515,6 +516,69 @@ describe('api', () => {
       onEntry(probes, thisArg)
       onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('debug IDs', () => {
+    function makeStack(topFrameUrl: string) {
+      return `Error: context
+    at init (${topFrameUrl}:41:27)
+    at HTMLButtonElement.onclick (http://source-code-context-spec.example.com/runtime.js:107:146)`
+    }
+
+    it('should attach atomic URL and debug ID pairs at the top level', () => {
+      const entryUrl = captureStackTrace()[0].fileName
+      mockSourceCodeContext({
+        [makeStack(entryUrl)]: { service: 'entry-service', version: '1.2.3', ddDebugId: 'entry-id' },
+      })
+
+      addProbe(createProbe())
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      expect(payload._dd).toEqual({ debug_ids: [{ url: entryUrl, id: 'entry-id' }] })
+    })
+
+    it('should attach debug IDs from throwable and entry frame URLs', () => {
+      const entryUrl = captureStackTrace()[0].fileName
+      const throwableUrl = 'http://throwable.example.com/bundle.js?cache=1'
+      mockSourceCodeContext({
+        [makeStack(entryUrl)]: { ddDebugId: 'entry-id' },
+        [makeStack(throwableUrl)]: { ddDebugId: 'throwable-id' },
+      })
+
+      const error = new Error('boom')
+      error.stack = `Error: boom
+    at throwFn (${throwableUrl}:10:2)`
+
+      addProbe(createProbe())
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onThrow(probes, error, thisArg)
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      expect(payload._dd.debug_ids).toEqual(
+        jasmine.arrayWithExactContents([
+          { url: throwableUrl, id: 'throwable-id' },
+          { url: entryUrl, id: 'entry-id' },
+        ])
+      )
+    })
+
+    it('should omit _dd when no source code context matches', () => {
+      mockSourceCodeContext({
+        [makeStack('http://unrelated.example.com/bundle.js')]: { ddDebugId: 'unrelated-id' },
+      })
+
+      addProbe(createProbe())
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      expect(payload._dd).toBeUndefined()
     })
   })
 

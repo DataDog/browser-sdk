@@ -79,7 +79,7 @@ export type {
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 
-export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
+export { DEFAULT_TRACKED_RESOURCE_HEADERS, CanvasRecordingQuality } from '@datadog/browser-rum-core'
 
 const recorderApi = makeRecorderApi()
 
