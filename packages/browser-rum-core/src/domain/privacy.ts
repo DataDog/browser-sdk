@@ -184,7 +184,10 @@ export function shouldMaskAttribute(
     case 'name':
       return true
   }
-  if ((tagName === 'A' || tagName === 'AREA') && attributeName === 'href') {
+  // Compared case-insensitively: SVG elements (ex: `<a href>` inside an <svg>) report a lowercase
+  // `tagName`, unlike their HTML namesakes.
+  const upperTagName = tagName.toUpperCase()
+  if ((upperTagName === 'A' || upperTagName === 'AREA') && attributeName === 'href') {
     return true
   }
   if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
@@ -233,7 +236,12 @@ export function maskAttributeIfNeeded(
       honorActionNameAttributeExemption: false,
     })
   ) {
-    return maskDisallowedTextContent(attributeValue, fixedMask)
+    // Only MASK_UNLESS_ALLOWLISTED consults `$DD_ALLOW`. MASK must always return the fixed mask,
+    // the same way HIDDEN/IGNORE are enforced above without the allowlist.
+    if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
+      return maskDisallowedTextContent(attributeValue, fixedMask)
+    }
+    return fixedMask ?? censorText(attributeValue)
   }
   return attributeValue
 }

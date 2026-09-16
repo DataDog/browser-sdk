@@ -1,8 +1,9 @@
 import { addExperimentalFeatures, display, ExperimentalFeature } from '@datadog/browser-core'
+import { registerCleanupTask } from '../../../browser-core/test'
 import { appendElement, mockRumConfiguration } from '../../test'
 import { NodePrivacyLevel } from './privacyConstants'
 import { getClickTargetAttributes } from './getClickTargetAttributes'
-import type { NodePrivacyLevelCache } from './privacy'
+import type { NodePrivacyLevelCache, BrowserWindow } from './privacy'
 
 const defaultConfiguration = mockRumConfiguration()
 
@@ -59,6 +60,25 @@ describe('getClickTargetAttributes', () => {
 
     it('masks href under the mask privacy level, same as aria-label', () => {
       const element = appendElementInIsolation('<a href="/orders/8842?token=secret"></a>')
+
+      const result = collect([element], mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK }))
+
+      expect(result).toEqual({ href: '***' })
+    })
+
+    it('collects href from an SVG <a> element (lowercase tagName)', () => {
+      const svg = appendElementInIsolation('<svg><a href="/foo"></a></svg>')
+      const element = svg.querySelector('a')!
+
+      expect(collect([element])).toEqual({ href: '/foo' })
+    })
+
+    it('masks href even when the raw value is allowlisted via $DD_ALLOW, under the mask privacy level', () => {
+      const element = appendElementInIsolation('<a href="/orders/8842?token=secret"></a>')
+      ;(window as BrowserWindow).$DD_ALLOW = new Set(['/orders/8842?token=secret'])
+      registerCleanupTask(() => {
+        ;(window as BrowserWindow).$DD_ALLOW = undefined
+      })
 
       const result = collect([element], mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK }))
 

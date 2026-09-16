@@ -107,7 +107,9 @@ export function getClickTargetAttributes(
       }
       // `href` is collected only from `<a>`/`<area>`, matching `shouldMaskAttribute`'s own
       // `<a href>` special case and avoiding a stray `href` attribute on an arbitrary element.
-      if (attribute.name === HREF_ATTRIBUTE && !HREF_TAGNAMES.includes(element.tagName)) {
+      // `tagName` is compared case-insensitively: SVG elements (ex: `<a href>` inside an <svg>)
+      // report a lowercase `tagName`, unlike their HTML namesakes.
+      if (attribute.name === HREF_ATTRIBUTE && !HREF_TAGNAMES.includes(element.tagName.toUpperCase())) {
         continue
       }
       if (MASKED_ATTRIBUTES.includes(attribute.name) || attribute.name.startsWith('data-')) {

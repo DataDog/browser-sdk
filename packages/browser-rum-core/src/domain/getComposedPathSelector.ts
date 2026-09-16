@@ -1,4 +1,4 @@
-import { safeTruncate, ONE_KIBI_BYTE } from '@datadog/browser-core'
+import { safeTruncate, ONE_KIBI_BYTE, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
 import type { MatchOption } from '@datadog/browser-core'
 import {
   STABLE_ATTRIBUTES,
@@ -39,10 +39,12 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
 ])
 
 /**
- * `href` and `aria-label` can help identify an element but may carry PII, so they're never
- * collected in this string, even when configured as the customer's `actionNameAttribute`. They're
- * collected instead, sanitized/masked, in the `getClickTargetAttributes` key→value map, so we
- * don't duplicate the same PII-sensitive data across both fields.
+ * `href` and `aria-label` can help identify an element but may carry PII, so they're excluded from
+ * this string once the `click_target_attributes_map` flag is enabled, even when configured as the
+ * customer's `actionNameAttribute`. They're collected instead, sanitized/masked, in the
+ * `getClickTargetAttributes` key→value map, so we don't duplicate the same PII-sensitive data
+ * across both fields. While the flag is disabled, that replacement map is never populated, so the
+ * exclusion is skipped and the previous (pre-flag) selector behavior is preserved.
  */
 const ARIA_LABEL_ATTRIBUTE = 'aria-label'
 
@@ -70,14 +72,15 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
   }
 
   const { actionNameAttribute } = configuration
+  const rawAllowedAttributes = actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
   // `href` and `aria-label` are excluded here even when configured as the customer's
   // `actionNameAttribute`: see the `ARIA_LABEL_ATTRIBUTE` comment above — they're collected
   // instead, sanitized/masked, by `getClickTargetAttributes`. Letting them through this list too
   // would leak the raw, unsanitized value (bypassing that sanitization/masking) alongside the safe
-  // one.
-  const allowedAttributes = (
-    actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
-  ).filter((attribute) => attribute !== HREF_ATTRIBUTE && attribute !== ARIA_LABEL_ATTRIBUTE)
+  // one. Only applied once the replacement map is enabled, so it doesn't disappear from both fields.
+  const allowedAttributes = isExperimentalFeatureEnabled(ExperimentalFeature.CLICK_TARGET_ATTRIBUTES_MAP)
+    ? rawAllowedAttributes.filter((attribute) => attribute !== HREF_ATTRIBUTE && attribute !== ARIA_LABEL_ATTRIBUTE)
+    : rawAllowedAttributes
 
   let result = ''
   for (const element of elements) {

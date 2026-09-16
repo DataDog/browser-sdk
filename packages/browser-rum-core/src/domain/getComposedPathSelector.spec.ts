@@ -1,3 +1,4 @@
+import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
 import { appendElement, mockRumConfiguration } from '../../test'
 import { getComposedPathSelector, CHARACTER_LIMIT } from './getComposedPathSelector'
 
@@ -115,18 +116,38 @@ describe('getSelectorFromComposedPath', () => {
     })
 
     describe('actionNameAttribute exclusions', () => {
-      it('excludes href from the selector even when configured as the actionNameAttribute', () => {
+      it('keeps href in the selector when the click-target-attributes-map flag is disabled', () => {
         const element = appendElementInIsolation('<a href="/foo"></a>')
         const configuration = mockRumConfiguration({ actionNameAttribute: 'href' })
 
-        expect(getComposedPathSelector([element], configuration)).toBe('A;')
+        expect(getComposedPathSelector([element], configuration)).toBe(`A[href="${CSS.escape('/foo')}"];`)
       })
 
-      it('excludes aria-label from the selector even when configured as the actionNameAttribute', () => {
+      it('keeps aria-label in the selector when the click-target-attributes-map flag is disabled', () => {
         const element = appendElementInIsolation('<a aria-label="Secret label"></a>')
         const configuration = mockRumConfiguration({ actionNameAttribute: 'aria-label' })
 
-        expect(getComposedPathSelector([element], configuration)).toBe('A;')
+        expect(getComposedPathSelector([element], configuration)).toBe(`A[aria-label="${CSS.escape('Secret label')}"];`)
+      })
+
+      describe('when the click-target-attributes-map flag is enabled', () => {
+        beforeEach(() => {
+          addExperimentalFeatures([ExperimentalFeature.CLICK_TARGET_ATTRIBUTES_MAP])
+        })
+
+        it('excludes href from the selector even when configured as the actionNameAttribute', () => {
+          const element = appendElementInIsolation('<a href="/foo"></a>')
+          const configuration = mockRumConfiguration({ actionNameAttribute: 'href' })
+
+          expect(getComposedPathSelector([element], configuration)).toBe('A;')
+        })
+
+        it('excludes aria-label from the selector even when configured as the actionNameAttribute', () => {
+          const element = appendElementInIsolation('<a aria-label="Secret label"></a>')
+          const configuration = mockRumConfiguration({ actionNameAttribute: 'aria-label' })
+
+          expect(getComposedPathSelector([element], configuration)).toBe('A;')
+        })
       })
     })
 
