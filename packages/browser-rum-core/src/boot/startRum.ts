@@ -154,7 +154,7 @@ export function startRumEventCollection(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  const { assemble: assembleHook } = hooks
+  const { assembleEventDefaults: assembleHook } = hooks
   startDefaultContext(assembleHook, configuration, sdkName)
   const pageStateHistory = startPageStateHistory(assembleHook)
   cleanupTasks.push(() => pageStateHistory.stop())
@@ -187,7 +187,7 @@ export function startRumEventCollection(
   cleanupTasks.push(ciVisibilityContext.stop)
   startSyntheticsContext(assembleHook)
 
-  startRumAssembly(configuration, lifeCycle, assembleHook, reportError)
+  startRumAssembly(configuration, lifeCycle, hooks, reportError)
 
   const {
     addTiming,

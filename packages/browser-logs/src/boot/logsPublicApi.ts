@@ -4,15 +4,14 @@ import {
   CustomerContextKey,
   addTelemetryUsage,
   makePublicApi,
-  monitor,
   sanitize,
   displayAlreadyInitializedError,
   createTrackingConsentState,
   defineContextMethod,
   startBufferingData,
-  callMonitored,
   mockable,
 } from '@datadog/browser-core'
+import { monitor, callMonitored } from '@datadog/js-core/monitor'
 import { deepClone } from '@datadog/js-core/util'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -259,7 +258,7 @@ export interface LogsPublicApi extends PublicApi {
 }
 
 export interface Strategy {
-  init: (initConfiguration: LogsInitConfiguration, publicApi?: LogsPublicApi, errorStack?: string) => void
+  init: (initConfiguration: LogsInitConfiguration, publicApi: LogsPublicApi, errorStack?: string) => void
   initConfiguration: LogsInitConfiguration | undefined
   globalContext: ContextManager
   accountContext: ContextManager

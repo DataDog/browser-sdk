@@ -1,7 +1,7 @@
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import type { StartLogsResult } from '../boot/startLogs'
 import type { LogsInitConfiguration } from './configuration'
-import type { Hooks } from './hooks'
+import type { AssembleHook } from './hooks'
 
 /**
  * onInit plugin API options.
@@ -10,13 +10,13 @@ import type { Hooks } from './hooks'
  */
 export interface OnInitOptions {
   initConfiguration: LogsInitConfiguration
-  publicApi?: LogsPublicApi
+  publicApi: LogsPublicApi
   /**
-   * SDK hooks. Plugins can register assemble callbacks to enrich logs before they are sent.
-   * Callbacks registered in `onInit` run before any log is assembled, including logs buffered
-   * during the pre-start phase.
+   * Register a callback invoked when a log event is assembled, so plugins can enrich or override
+   * log fields before they are sent. Callbacks registered in `onInit` run before any log is
+   * assembled, including logs buffered during the pre-start phase.
    */
-  hooks?: Hooks
+  registerAssembleEventHook: AssembleHook['register']
 }
 
 /**
@@ -28,7 +28,7 @@ export interface OnLogsStartOptions {
   /**
    * Emit a log with the same pipeline as a logger call.
    */
-  handleLog?: StartLogsResult['handleLog']
+  handleLog: StartLogsResult['handleLog']
 }
 
 /**

@@ -44,7 +44,7 @@ export function startLogs(
   const reportError = startReportError(lifeCycle)
 
   // Start user and account context first to allow overrides from global context
-  const assembleHook = hooks.assemble
+  const { assembleEventDefaults: assembleHook } = hooks
   startSessionContext(assembleHook, configuration, sessionManager)
   const accountContext = startAccountContext(assembleHook, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(assembleHook, configuration, sessionManager, LOGS_STORAGE_KEY)
@@ -59,7 +59,7 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  startLogsAssembly(configuration, lifeCycle, assembleHook, getCommonContext, reportError)
+  startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
 
   if (!canUseEventBridge()) {
     const { stop: stopLogsBatch } = startLogsBatch(configuration, lifeCycle, reportError, sessionManager)

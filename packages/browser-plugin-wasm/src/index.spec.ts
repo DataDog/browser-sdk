@@ -3,14 +3,14 @@ import type { RumPlugin } from '@datadog/browser-rum-core'
 import type { LogsPlugin } from '@datadog/browser-logs'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { getLoadedWasmModules, resetWasmModuleRegistryForTesting } from './wasmModuleTracking'
-import { makeWasmPlugin } from './index'
+import { wasmPlugin } from './index'
 
-describe('makeWasmPlugin', () => {
-  let plugin: ReturnType<typeof makeWasmPlugin>
+describe('wasmPlugin', () => {
+  let plugin: ReturnType<typeof wasmPlugin>
 
   beforeEach(() => {
     registerCleanupTask(resetWasmModuleRegistryForTesting)
-    plugin = makeWasmPlugin()
+    plugin = wasmPlugin()
   })
 
   it('is named "wasm"', () => {
@@ -30,7 +30,7 @@ describe('makeWasmPlugin', () => {
 
     function registerPluginAssemble(): Assemble {
       const assemble = createHook<any, any>()
-      void plugin.onInit!({ hooks: { assemble } } as any)
+      void plugin.onInit!({ registerAssembleEventHook: assemble.register } as any)
       return assemble
     }
 

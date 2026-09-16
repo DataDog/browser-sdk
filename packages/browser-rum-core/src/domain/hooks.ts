@@ -30,13 +30,15 @@ export type AssembleHook = Hook<AssembleHookParams, DefaultRumEventAttributes>
 export type AssembleTelemetryHook = Hook<{ startTime: RelativeTime }, DefaultTelemetryEventAttributes>
 
 export interface Hooks {
-  assemble: AssembleHook
+  assembleEventDefaults: AssembleHook
   assembleTelemetry: AssembleTelemetryHook
+  assembleEvent: AssembleHook
 }
 
 export function createHooks(): Hooks {
   return {
-    assemble: createHook(),
+    assembleEventDefaults: createHook(),
     assembleTelemetry: createHook(),
+    assembleEvent: createHook(),
   }
 }

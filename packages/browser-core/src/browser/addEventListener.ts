@@ -1,5 +1,5 @@
 import type { CookieStore, CookieStoreEventMap } from '@datadog/js-core/util'
-import { monitor } from '../tools/monitor'
+import { monitor } from '@datadog/js-core/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
 import { noop } from '../tools/utils/functionUtils'
 import type { VisualViewport, VisualViewportEventMap } from './browser.types'

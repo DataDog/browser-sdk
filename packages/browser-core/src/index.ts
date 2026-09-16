@@ -44,7 +44,6 @@ export {
   addTelemetryUsage,
   addTelemetryMetrics,
 } from './domain/telemetry'
-export { monitored, monitor, callMonitored, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
 export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager, SessionContext } from './domain/session/sessionManager'

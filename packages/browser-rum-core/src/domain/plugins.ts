@@ -2,22 +2,22 @@ import { isThenable } from '@datadog/browser-core'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
-import type { Hooks } from './hooks'
+import type { AssembleHook } from './hooks'
 
 /**
  * onInit plugin API options.
  *
  * @experimental
  */
-export interface OnInitOptions {
+export interface RumPluginOnInitOptions {
   initConfiguration: RumInitConfiguration
   publicApi: RumPublicApi
   /**
-   * SDK hooks. Plugins can register assemble callbacks to enrich events before they are sent.
-   * Callbacks registered in `onInit` run before any event is assembled, including events buffered
-   * during the pre-start phase.
+   * Register a callback invoked when a RUM event is assembled, so plugins can enrich or override
+   * event fields before they are sent. Callbacks registered in `onInit` run before any event is
+   * assembled, including events buffered during the pre-start phase.
    */
-  hooks?: Hooks
+  registerAssembleEventHook: AssembleHook['register']
 }
 
 /**
@@ -52,7 +52,7 @@ export interface OnRumStartOptions {
 export interface RumPlugin {
   name: string
   getConfigurationTelemetry?(): Record<string, unknown>
-  onInit?(options: OnInitOptions): false | void | Promise<false | void>
+  onInit?(options: RumPluginOnInitOptions): false | void | Promise<false | void>
   onRumStart?(options: OnRumStartOptions): void
 }
 
@@ -63,7 +63,7 @@ export interface RumPlugin {
  */
 export function callPluginsOnInit(
   plugins: RumPlugin[] | undefined,
-  parameter: OnInitOptions
+  parameter: RumPluginOnInitOptions
 ): boolean | Promise<boolean> {
   if (!plugins) {
     return true

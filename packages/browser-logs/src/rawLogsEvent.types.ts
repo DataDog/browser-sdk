@@ -28,6 +28,7 @@ export interface CommonRawLogsEvent {
   _dd?: {
     debug_ids?: DebugIdEntry[]
   }
+  [key: string]: unknown
 }
 
 export interface RawConsoleLogsEvent extends CommonRawLogsEvent {

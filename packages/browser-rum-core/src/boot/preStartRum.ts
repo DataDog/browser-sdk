@@ -1,5 +1,6 @@
 import { isWorkerEnvironment } from '@datadog/js-core/util'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
+import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
 import {
@@ -17,7 +18,6 @@ import {
   buildGlobalContextManager,
   buildUserContextManager,
   bufferContextCalls,
-  monitorError,
   sanitize,
   startSessionManager,
   startSessionManagerStub,
@@ -31,7 +31,7 @@ import {
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
-import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import type { RemoteConfigurationMetadata, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 
 import {
   fetchAndApplyRemoteConfiguration,
@@ -136,7 +136,11 @@ export function createPreStartStrategy(
     bufferApiCalls.unbuffer()
   }
 
-  function doInit(initConfiguration: RumInitConfiguration, errorStack?: string) {
+  function doInit(
+    initConfiguration: RumInitConfiguration,
+    errorStack?: string,
+    remoteConfigurationMetadata?: RemoteConfigurationMetadata
+  ) {
     const eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
@@ -197,7 +201,7 @@ export function createPreStartStrategy(
           startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
             application: { id: configuration.applicationId },
           })
-          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName))
+          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata))
 
           tryStartRum()
         })
@@ -242,7 +246,11 @@ export function createPreStartStrategy(
         return
       }
 
-      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, { initConfiguration, publicApi, hooks })
+      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, {
+        initConfiguration,
+        publicApi,
+        registerAssembleEventHook: hooks.assembleEvent.register,
+      })
 
       if (typeof shouldContinue === 'boolean') {
         if (shouldContinue) {
@@ -275,10 +283,10 @@ export function createPreStartStrategy(
               })
               .catch(monitorError)
           } else {
-            const resolvedInitConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+            const resolvedRemoteConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
-            if (resolvedInitConfiguration) {
-              doInit(resolvedInitConfiguration, errorStack)
+            if (resolvedRemoteConfiguration) {
+              doInit(resolvedRemoteConfiguration.initConfiguration, errorStack, resolvedRemoteConfiguration.metadata)
             }
           }
         } else {
@@ -389,6 +397,9 @@ export function createPreStartStrategy(
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {
   return {
     ...initConfiguration,
+    // Resolve the service default here, while the web application id is still available: the
+    // placeholder below would otherwise be used, and it is shared by every bridge session.
+    service: initConfiguration.service || initConfiguration.applicationId,
     applicationId: '00000000-aaaa-0000-aaaa-000000000000',
     clientToken: 'empty',
     sessionSampleRate: 100,
