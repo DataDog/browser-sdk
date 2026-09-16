@@ -3,7 +3,7 @@ import { NodePrivacyLevel, CENSORED_STRING_MARK, PRIVACY_ATTR_NAME } from './pri
 import type { RumConfiguration } from './configuration'
 import { getNodePrivacyLevel, maskAttributeIfNeeded } from './privacy'
 import type { NodePrivacyLevelCache } from './privacy'
-import { FILTERED_TAGNAMES } from './getSelectorFromElement'
+import { FILTERED_TAGNAMES, isGeneratedValue } from './getSelectorFromElement'
 
 const HREF_ATTRIBUTE = 'href'
 const HREF_TAGNAMES = ['A', 'AREA']
@@ -46,15 +46,15 @@ const ATTRIBUTE_VALUE_LIMIT = 100
  * filtering is applied — customers control what leaves the browser through the existing privacy
  * level configuration, the same way they already do for the action name.
  *
- * Returns `undefined` unless the `composed_path_selector_attributes_map` experimental flag is
+ * Returns `undefined` unless the `click_target_attributes_map` experimental flag is
  * enabled, or if the resulting map ends up empty.
  */
-export function getComposedPathAttributes(
+export function getClickTargetAttributes(
   composedPath: EventTarget[],
   configuration: RumConfiguration,
   nodePrivacyLevelCache: NodePrivacyLevelCache
 ): Record<string, string> | undefined {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES_MAP)) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.CLICK_TARGET_ATTRIBUTES_MAP)) {
     return undefined
   }
 
@@ -67,7 +67,7 @@ export function getComposedPathAttributes(
   let hasReachedMaxKeyCount = false
 
   function addAttribute(key: string, rawValue: string) {
-    if (key in result) {
+    if (Object.prototype.hasOwnProperty.call(result, key)) {
       return
     }
     if (collectedKeyCount >= MAX_ATTRIBUTE_KEY_COUNT) {
@@ -91,7 +91,9 @@ export function getComposedPathAttributes(
 
     for (const attributeName of PASSTHROUGH_ATTRIBUTES) {
       const value = element.getAttribute(attributeName)
-      if (value) {
+      // Framework-generated ids (ex: "react-select-2-input") are high-cardinality and defeat the
+      // point of a facetable attribute, the same way `getIDSelector` excludes them from selectors.
+      if (value && !(attributeName === 'id' && isGeneratedValue(value))) {
         addAttribute(attributeName, value)
       }
     }

@@ -158,7 +158,12 @@ export function shouldMaskAttribute(
   attributeName: string,
   attributeValue: string | null,
   nodePrivacyLevel: NodePrivacyLevel,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  // `configuration.actionNameAttribute` is exempted from masking below so the action `name` field
+  // can show the customer's explicitly chosen attribute unmasked. That exemption only makes sense
+  // for that one caller (`getActionNameFromStandardAttribute`); other callers that reuse this
+  // function for unrelated fields (ex: the composed-path attributes map) must opt out of it.
+  { honorActionNameAttributeExemption = true }: { honorActionNameAttributeExemption?: boolean } = {}
 ) {
   if (nodePrivacyLevel !== NodePrivacyLevel.MASK && nodePrivacyLevel !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
     return false
@@ -166,7 +171,7 @@ export function shouldMaskAttribute(
   if (
     attributeName === PRIVACY_ATTR_NAME ||
     STABLE_ATTRIBUTES.includes(attributeName) ||
-    attributeName === configuration.actionNameAttribute
+    (honorActionNameAttributeExemption && attributeName === configuration.actionNameAttribute)
   ) {
     return false
   }
@@ -179,7 +184,7 @@ export function shouldMaskAttribute(
     case 'name':
       return true
   }
-  if (tagName === 'A' && attributeName === 'href') {
+  if ((tagName === 'A' || tagName === 'AREA') && attributeName === 'href') {
     return true
   }
   if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
@@ -201,7 +206,10 @@ export function shouldMaskAttribute(
  * (`getActionNameFromStandardAttribute`). Unlike that function, this one is NOT gated behind
  * `enablePrivacyForActionName`: that flag is scoped to the action `name` field, and callers of
  * this function (ex: the composed-path attributes map) are a different, unrelated field — turning
- * it off must not also turn off masking here.
+ * it off must not also turn off masking here. For the same reason, this also opts out of
+ * `shouldMaskAttribute`'s `actionNameAttribute` exemption: that exemption exists so the action
+ * `name` field can surface the customer's chosen attribute unmasked, which doesn't apply to an
+ * unrelated field that happens to collect the same attribute name.
  */
 export function maskAttributeIfNeeded(
   element: Element,
@@ -220,7 +228,11 @@ export function maskAttributeIfNeeded(
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN || nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
     return fixedMask ?? censorText(attributeValue)
   }
-  if (shouldMaskAttribute(element.tagName, attributeName, attributeValue, nodePrivacyLevel, configuration)) {
+  if (
+    shouldMaskAttribute(element.tagName, attributeName, attributeValue, nodePrivacyLevel, configuration, {
+      honorActionNameAttributeExemption: false,
+    })
+  ) {
     return maskDisallowedTextContent(attributeValue, fixedMask)
   }
   return attributeValue

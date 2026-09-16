@@ -17,7 +17,7 @@ export enum ExperimentalFeature {
   SESSION_REPLAY_RECORD_CANVAS = 'session_replay_record_canvas',
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   TRACK_WEBSOCKETS = 'track_websockets',
-  COMPOSED_PATH_SELECTOR_ATTRIBUTES_MAP = 'composed_path_selector_attributes_map',
+  CLICK_TARGET_ATTRIBUTES_MAP = 'click_target_attributes_map',
   SOFT_NAVIGATION = 'soft_navigation',
 }
 

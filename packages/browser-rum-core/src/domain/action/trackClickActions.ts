@@ -16,7 +16,7 @@ import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startEventTracker } from '../eventTracker'
 import type { StoppedEvent, DiscardedEvent, EventTracker } from '../eventTracker'
 import { getComposedPathSelector } from '../getComposedPathSelector'
-import { getComposedPathAttributes } from '../getComposedPathAttributes'
+import { getClickTargetAttributes } from '../getClickTargetAttributes'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -251,17 +251,19 @@ function computeClickActionBase(
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration)
+  const composedPath = event.composedPath()
+  const composedPathSelector = getComposedPathSelector(composedPath, configuration)
   // Elements are visited target-first, and privacy levels are derived from ancestors, so this
-  // cache turns most lookups into O(1) hits within a single composedPath walk.
+  // cache turns most lookups into O(1) hits within a single composedPath walk. It's also passed
+  // to getActionNameFromElement below, since it walks the same (or an overlapping) ancestor chain.
   const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
-  const composedPathAttributes = getComposedPathAttributes(event.composedPath(), configuration, nodePrivacyLevelCache)
+  const composedPathAttributes = getClickTargetAttributes(composedPath, configuration, nodePrivacyLevelCache)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
 
-  const { name, nameSource } = getActionNameFromElement(target, configuration, nodePrivacyLevel)
+  const { name, nameSource } = getActionNameFromElement(target, configuration, nodePrivacyLevel, nodePrivacyLevelCache)
 
   return {
     type: ActionType.CLICK,

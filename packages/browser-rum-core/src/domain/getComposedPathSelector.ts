@@ -41,7 +41,7 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
 /**
  * `href` and `aria-label` can help identify an element but may carry PII, so they're never
  * collected in this string, even when configured as the customer's `actionNameAttribute`. They're
- * collected instead, sanitized/masked, in the `getComposedPathAttributes` key→value map, so we
+ * collected instead, sanitized/masked, in the `getClickTargetAttributes` key→value map, so we
  * don't duplicate the same PII-sensitive data across both fields.
  */
 const ARIA_LABEL_ATTRIBUTE = 'aria-label'
@@ -72,7 +72,7 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
   const { actionNameAttribute } = configuration
   // `href` and `aria-label` are excluded here even when configured as the customer's
   // `actionNameAttribute`: see the `ARIA_LABEL_ATTRIBUTE` comment above — they're collected
-  // instead, sanitized/masked, by `getComposedPathAttributes`. Letting them through this list too
+  // instead, sanitized/masked, by `getClickTargetAttributes`. Letting them through this list too
   // would leak the raw, unsanitized value (bypassing that sanitization/masking) alongside the safe
   // one.
   const allowedAttributes = (

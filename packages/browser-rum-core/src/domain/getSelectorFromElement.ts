@@ -13,7 +13,7 @@ export const SHADOW_DOM_MARKER = '::shadow '
 /**
  * Tags filtered out of a composedPath walk: `HTML` and `BODY` sit above any meaningful click
  * target and never carry attributes worth collecting, whether building the selector string
- * (`getComposedPathSelector`) or the attributes map (`getComposedPathAttributes`).
+ * (`getComposedPathSelector`) or the attributes map (`getClickTargetAttributes`).
  */
 export const FILTERED_TAGNAMES = ['HTML', 'BODY']
 

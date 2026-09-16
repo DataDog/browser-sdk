@@ -1,7 +1,7 @@
-import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
+import { addExperimentalFeatures, display, ExperimentalFeature } from '@datadog/browser-core'
 import { appendElement, mockRumConfiguration } from '../../test'
 import { NodePrivacyLevel } from './privacyConstants'
-import { getComposedPathAttributes } from './getComposedPathAttributes'
+import { getClickTargetAttributes } from './getClickTargetAttributes'
 import type { NodePrivacyLevelCache } from './privacy'
 
 const defaultConfiguration = mockRumConfiguration()
@@ -14,10 +14,10 @@ function appendElementInIsolation(html: string): HTMLElement {
 
 function collect(composedPath: EventTarget[], configuration = defaultConfiguration) {
   const cache: NodePrivacyLevelCache = new Map()
-  return getComposedPathAttributes(composedPath, configuration, cache)
+  return getClickTargetAttributes(composedPath, configuration, cache)
 }
 
-describe('getComposedPathAttributes', () => {
+describe('getClickTargetAttributes', () => {
   it('returns undefined when the experimental flag is disabled', () => {
     const element = appendElementInIsolation('<a href="/foo" aria-label="Foo"></a>')
 
@@ -26,7 +26,7 @@ describe('getComposedPathAttributes', () => {
 
   describe('when the experimental flag is enabled', () => {
     beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES_MAP])
+      addExperimentalFeatures([ExperimentalFeature.CLICK_TARGET_ATTRIBUTES_MAP])
     })
 
     it('returns undefined for an empty composedPath', () => {
@@ -171,6 +171,7 @@ describe('getComposedPathAttributes', () => {
     })
 
     it('caps the number of collected keys and keeps collecting nothing further past the cap', () => {
+      const displaySpy = spyOn(display, 'warn')
       const letters = 'abcdefghijklmnopqrstuvwxy'.split('')
       const dataAttributes = letters.map((letter) => `data-attr-${letter}="value-${letter}"`).join(' ')
       const element = appendElementInIsolation(`<div ${dataAttributes}></div>`)
@@ -178,6 +179,7 @@ describe('getComposedPathAttributes', () => {
       const result = collect([element])
 
       expect(Object.keys(result!).length).toBe(20)
+      expect(displaySpy).toHaveBeenCalledTimes(1)
     })
 
     it('ignores non-Element items and HTML/BODY tags in the composedPath', () => {
