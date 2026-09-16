@@ -1,10 +1,19 @@
+/**
+ * Datadog Salesforce Browser RUM SDK - Full version with Session Replay and Real User Profiling capabilities.
+ * Use this package to monitor your Salesforce web application's performance and user experience.
+ *
+ * @packageDocumentation
+ * @see [Salesforce RUM Browser Monitoring Setup](https://docs.datadoghq.com/integrations/rum-salesforce-lwc/?tab=projectmetadata)
+ */
+
 import { globalObject } from '@datadog/js-core/util'
+// Keep the following in sync with packages/browser-rum-slim/src/entries/main.ts
 import { defineGlobal } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
-import { makeProfilerApi } from '../boot/profilerApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
+import { makeProfilerApi } from '../boot/profilerApi'
 
 export type {
   User,
@@ -21,7 +30,9 @@ export type {
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 export type { ProxyFn, Site } from '@datadog/js-core/transport'
 
-/** @deprecated Use {@link DatadogRum} instead */
+/**
+ * @deprecated Use {@link DatadogRum} instead
+ */
 export type RumGlobal = RumPublicApi
 
 export type {
@@ -45,6 +56,8 @@ export type {
   PropagatorType,
   FeatureFlagsForEvents,
   MatchHeader,
+
+  // Events
   CommonProperties,
   RumEvent,
   RumActionEvent,
@@ -54,6 +67,8 @@ export type {
   RumViewEvent,
   RumViewUpdateEvent,
   RumVitalEvent,
+
+  // Events context
   RumEventDomainContext,
   RumViewEventDomainContext,
   RumErrorEventDomainContext,
@@ -61,14 +76,22 @@ export type {
   RumVitalEventDomainContext,
   RumResourceEventDomainContext,
   RumWebSocketResourceEventDomainContext,
+  RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
+
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 
-/** The global RUM instance for Salesforce applications. */
 const recorderApi = makeRecorderApi()
 
 const profilerApi = makeProfilerApi()
 
+/**
+ * The global Salesforce RUM instance. Use this to call Salesforce RUM methods.
+ *
+ * @category Main
+ * @see {@link DatadogRum}
+ * @see [Salesforce RUM Browser Monitoring Setup](https://docs.datadoghq.com/integrations/rum-salesforce-lwc/?tab=projectmetadata)
+ */
 export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
   startDeflateWorker,
   createDeflateEncoder,
