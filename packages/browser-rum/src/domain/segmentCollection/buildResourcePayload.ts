@@ -1,6 +1,10 @@
 import type { Payload } from '@datadog/browser-core'
 
-export function buildResourcePayload(hash: string, content: Blob, application: string): Payload {
+export type ResourcePayload = Payload & {
+  hash: string
+}
+
+export function buildResourcePayload(hash: string, content: Blob, application: string): ResourcePayload {
   const formData = new FormData()
 
   formData.append('image', content, hash)
@@ -11,5 +15,6 @@ export function buildResourcePayload(hash: string, content: Blob, application: s
   return {
     data: formData,
     bytesCount: content.size,
+    hash,
   }
 }

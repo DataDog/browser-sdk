@@ -1,4 +1,4 @@
-import type { HttpRequest, HttpRequestEvent, Payload, Telemetry } from '@datadog/browser-core'
+import type { HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
@@ -18,7 +18,7 @@ import type { ViewEndedEvent } from '../../../browser-rum-core/src/domain/view/t
 import { appendElement, mockRumConfiguration } from '../../../browser-rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
-import type { ReplayPayload } from '../domain/segmentCollection'
+import type { ReplayPayload, ResourcePayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
@@ -37,7 +37,7 @@ describe('startRecording', () => {
 
   function setupStartRecording(
     configOverrides: Partial<RumConfiguration> = {},
-    canvasHttpRequest?: HttpRequest<Payload>
+    resourceHttpRequest?: HttpRequest<ResourcePayload>
   ) {
     const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW, ...configOverrides })
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
@@ -63,7 +63,7 @@ describe('startRecording', () => {
       deflateEncoder,
       mockTelemetry,
       httpRequest,
-      canvasHttpRequest
+      resourceHttpRequest
     )
     stopRecording = recording ? recording.stop : noop
 
@@ -208,8 +208,8 @@ describe('startRecording', () => {
 
     const canvasSendSpy = jasmine.createSpy()
     const canvasSendOnExitSpy = jasmine.createSpy()
-    const canvasHttpRequest = {
-      observable: new Observable<HttpRequestEvent<Payload>>(),
+    const resourceHttpRequest = {
+      observable: new Observable<HttpRequestEvent<ResourcePayload>>(),
       send: canvasSendSpy,
       sendOnExit: canvasSendOnExitSpy,
     }
@@ -224,7 +224,7 @@ describe('startRecording', () => {
           encodeQuality: 0.5,
         },
       },
-      canvasHttpRequest
+      resourceHttpRequest
     )
 
     canvas.getContext('2d')!.fillRect(0, 0, 2, 2)
@@ -246,8 +246,8 @@ describe('startRecording', () => {
       )
 
       const canvasSendSpy = jasmine.createSpy()
-      const canvasHttpRequest = {
-        observable: new Observable<HttpRequestEvent<Payload>>(),
+      const resourceHttpRequest = {
+        observable: new Observable<HttpRequestEvent<ResourcePayload>>(),
         send: canvasSendSpy,
         sendOnExit: jasmine.createSpy(),
       }
@@ -262,7 +262,7 @@ describe('startRecording', () => {
             encodeQuality: 0.5,
           },
         },
-        canvasHttpRequest
+        resourceHttpRequest
       )
 
       canvas.getContext('2d')!.fillRect(0, 0, 2, 2)

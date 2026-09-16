@@ -1,20 +1,21 @@
-import type { HttpRequest, HttpRequestEvent, Payload } from '@datadog/browser-core'
+import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
 import { Observable, PageExitReason } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { ResourcePayload } from './buildResourcePayload'
 import { startReplayResourceCollection } from './replayResourceCollection'
 
 describe('replayResourceCollection', () => {
   const CONTENT = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
 
   function createHttpRequestSpy() {
-    const observable = new Observable<HttpRequestEvent<Payload>>()
+    const observable = new Observable<HttpRequestEvent<ResourcePayload>>()
     const send = jasmine.createSpy('send')
     const sendOnExit = jasmine.createSpy('sendOnExit')
-    const httpRequest = { observable, send, sendOnExit } as HttpRequest
+    const httpRequest = { observable, send, sendOnExit } as HttpRequest<ResourcePayload>
     return { httpRequest, observable, send, sendOnExit }
   }
 
-  function startCollection(httpRequest: HttpRequest<Payload>) {
+  function startCollection(httpRequest: HttpRequest<ResourcePayload>) {
     const lifeCycle = new LifeCycle()
     const collection = startReplayResourceCollection('app-id', lifeCycle, httpRequest)
     return { lifeCycle, ...collection }
@@ -38,7 +39,7 @@ describe('replayResourceCollection', () => {
 
     emitResource('hash1', CONTENT, onDiscard)
     emitResource('hash1', CONTENT, secondOnDiscard)
-    const [payload] = send.calls.argsFor(0) as [Payload]
+    const [payload] = send.calls.argsFor(0) as [ResourcePayload]
     observable.notify({ type: 'queue-full', payload, bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 } })
 
     emitResource('hash1', CONTENT)
@@ -63,7 +64,7 @@ describe('replayResourceCollection', () => {
     const { emitResource, lifeCycle } = startCollection(httpRequest)
 
     emitResource('hash1', CONTENT)
-    const [payload] = send.calls.argsFor(0) as [Payload]
+    const [payload] = send.calls.argsFor(0) as [ResourcePayload]
     observable.notify({ type: 'success', payload, bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 } })
     lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 

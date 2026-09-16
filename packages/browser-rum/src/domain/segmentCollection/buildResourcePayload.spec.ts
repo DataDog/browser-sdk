@@ -1,11 +1,11 @@
-import type { Payload } from '@datadog/browser-core'
 import { buildResourcePayload } from './buildResourcePayload'
+import type { ResourcePayload } from './buildResourcePayload'
 
 describe('buildResourcePayload', () => {
   const HASH = '20x30-abcdef1234567890'
   const IMAGE_BLOB = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' })
   const APPLICATION_ID = 'app-id'
-  let payload: Payload
+  let payload: ResourcePayload
 
   beforeEach(() => {
     payload = buildResourcePayload(HASH, IMAGE_BLOB, APPLICATION_ID)
@@ -27,5 +27,9 @@ describe('buildResourcePayload', () => {
 
   it('returns the image size as the approximate byte count', () => {
     expect(payload.bytesCount).toBe(IMAGE_BLOB.size)
+  })
+
+  it('returns the resource hash', () => {
+    expect(payload.hash).toBe(HASH)
   })
 })

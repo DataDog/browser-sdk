@@ -1,4 +1,4 @@
-import type { HttpRequest, Payload, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop, ErrorSource } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
@@ -7,7 +7,7 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import type { EmitResourceCallback, SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
-import type { ReplayPayload } from '../domain/segmentCollection'
+import type { ReplayPayload, ResourcePayload } from '../domain/segmentCollection'
 import {
   startSegmentCollection,
   SEGMENT_BYTES_LIMIT,
@@ -24,8 +24,8 @@ export function startRecording(
   viewHistory: ViewHistory,
   encoder: DeflateEncoder,
   telemetry: Telemetry,
-  httpRequest?: HttpRequest<ReplayPayload>,
-  canvasHttpRequest?: HttpRequest<Payload>
+  segmentHttpRequest?: HttpRequest<ReplayPayload>,
+  resourceHttpRequest?: HttpRequest<ResourcePayload>
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -38,11 +38,12 @@ export function startRecording(
   }
 
   const replayRequest =
-    httpRequest || createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
-
-  const canvasResourceRequest =
-    canvasHttpRequest ||
+    segmentHttpRequest ||
     createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
+
+  const resourceRequest =
+    resourceHttpRequest ||
+    createHttpRequest<ResourcePayload>([createEndpointBuilder(configuration, 'replay')], reportError, 0)
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
@@ -74,7 +75,7 @@ export function startRecording(
     const replayResourceCollection = startReplayResourceCollection(
       configuration.applicationId,
       lifeCycle,
-      canvasResourceRequest
+      resourceRequest
     )
     emitResource = replayResourceCollection.emitResource
     cleanupTasks.push(replayResourceCollection.stop)

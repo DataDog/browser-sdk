@@ -1,5 +1,6 @@
 export { startSegmentCollection, setSegmentBytesLimit } from './segmentCollection'
 export { SEGMENT_BYTES_LIMIT } from './segmentCollection'
 export type { BrowserSegmentMetadataAndSegmentSizes, ReplayPayload } from './buildReplayPayload'
+export type { ResourcePayload } from './buildResourcePayload'
 export { startSegmentTelemetry } from './startSegmentTelemetry'
 export { startReplayResourceCollection } from './replayResourceCollection'

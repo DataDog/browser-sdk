@@ -311,15 +311,15 @@ function processCanvasContentMutations(
       continue
     }
     const nodeId = transaction.scope.nodeIds.get(canvas)
+    if (nodeId === undefined) {
+      transaction.scope.canvasManager.forgetCanvas(canvas)
+      continue
+    }
     const privacyLevel = getNodePrivacyLevel(
       canvas,
       transaction.scope.configuration.defaultPrivacyLevel,
       nodePrivacyLevelCache
     )
-    if (nodeId === undefined) {
-      transaction.scope.canvasManager.forgetCanvas(canvas)
-      continue
-    }
     if (privacyLevel !== NodePrivacyLevel.ALLOW) {
       transaction.scope.canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
       continue

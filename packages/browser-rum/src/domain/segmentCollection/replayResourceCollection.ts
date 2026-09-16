@@ -1,9 +1,10 @@
 import { isPageExitReason, PageExitReason } from '@datadog/browser-core'
-import type { HttpRequest, Payload } from '@datadog/browser-core'
+import type { HttpRequest } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { EmitResourceCallback } from '../record'
 import { buildResourcePayload } from './buildResourcePayload'
+import type { ResourcePayload } from './buildResourcePayload'
 
 interface ReplayResourceCollection {
   emitResource: EmitResourceCallback
@@ -11,33 +12,30 @@ interface ReplayResourceCollection {
 }
 
 interface PendingResource {
-  hash: string
+  payload: ResourcePayload
   onDiscards: Set<() => void>
 }
 
 export function startReplayResourceCollection(
   applicationId: string,
   lifeCycle: LifeCycle,
-  httpRequest: HttpRequest<Payload>
+  httpRequest: HttpRequest<ResourcePayload>
 ): ReplayResourceCollection {
   const uploadedHashes = new Set<string>()
-  const pendingResources = new Map<Payload, PendingResource>()
   const pendingResourcesByHash = new Map<string, PendingResource>()
 
   const { unsubscribe: unsubscribeRequest } = httpRequest.observable.subscribe((event) => {
     if (event.type === 'success') {
-      const resource = pendingResources.get(event.payload)
-      pendingResources.delete(event.payload)
+      const resource = pendingResourcesByHash.get(event.payload.hash)
+      pendingResourcesByHash.delete(event.payload.hash)
       if (resource) {
-        pendingResourcesByHash.delete(resource.hash)
         resource.onDiscards.clear()
       }
     } else if (event.type === 'queue-full') {
-      const resource = pendingResources.get(event.payload)
-      pendingResources.delete(event.payload)
+      const resource = pendingResourcesByHash.get(event.payload.hash)
+      pendingResourcesByHash.delete(event.payload.hash)
       if (resource) {
-        uploadedHashes.delete(resource.hash)
-        pendingResourcesByHash.delete(resource.hash)
+        uploadedHashes.delete(event.payload.hash)
         resource.onDiscards.forEach((onDiscard) => onDiscard())
       }
     }
@@ -47,7 +45,7 @@ export function startReplayResourceCollection(
     LifeCycleEventType.PREPARE_URGENT_FLUSH,
     (reason) => {
       if (isPageExitReason(reason) && reason !== PageExitReason.HIDDEN) {
-        pendingResources.forEach((_resource, payload) => httpRequest.sendOnExit(payload))
+        pendingResourcesByHash.forEach(({ payload }) => httpRequest.sendOnExit(payload))
       }
     }
   )
@@ -62,11 +60,10 @@ export function startReplayResourceCollection(
       }
       uploadedHashes.add(hash)
       const payload = buildResourcePayload(hash, content, applicationId)
-      const resource = { hash, onDiscards: new Set<() => void>() }
+      const resource = { payload, onDiscards: new Set<() => void>() }
       if (onDiscard) {
         resource.onDiscards.add(onDiscard)
       }
-      pendingResources.set(payload, resource)
       pendingResourcesByHash.set(hash, resource)
       httpRequest.send(payload)
     },
