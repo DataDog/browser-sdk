@@ -12,6 +12,7 @@ test.use({
 })
 
 const baseSalesforceRumConfiguration = {
+  sessionReplaySampleRate: 0,
   trackLongTasks: true,
   trackResources: true,
   trackUserInteractions: true,
@@ -20,7 +21,7 @@ const baseSalesforceRumConfiguration = {
 const salesforceApps: SalesforceApp[] = ['lwc', 'experience-cloud', 'experience-cloud-headmarkup']
 
 createTest('salesforce experience-cloud-headmarkup session replay')
-  .withRum(baseSalesforceRumConfiguration)
+  .withRum({ ...baseSalesforceRumConfiguration, sessionReplaySampleRate: 100 })
   .withSalesforceApp('experience-cloud-headmarkup')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
