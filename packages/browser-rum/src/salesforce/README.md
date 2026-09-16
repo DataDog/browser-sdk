@@ -153,7 +153,7 @@ File location: `lwc/datadogInit/datadogInit.html`
 Create the component JavaScript at `lwc/datadogInit/datadogInit.js`:
 
 ```javascript
-import { LightningElement, api, wire } from 'lwc'
+import { LightningElement, wire } from 'lwc'
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation'
 import datadogRum from '@salesforce/resourceUrl/datadog_rum'
 import { loadScript } from 'lightning/platformResourceLoader'
@@ -162,12 +162,6 @@ let datadogInitialization
 let lastStartedUrl
 
 export default class DatadogInit extends NavigationMixin(LightningElement) {
-  @api applicationId
-  @api clientToken
-  @api site
-  @api service
-  @api env
-
   connectedCallback() {
     this.initialize()
   }
@@ -206,12 +200,13 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   loadDatadogRum() {
     return loadScript(this, datadogRum).then(() => {
       const initConfig = {
-        applicationId: this.applicationId,
-        clientToken: this.clientToken,
-        env: this.env,
-        service: this.service,
-        site: this.site,
+        applicationId: '<YOUR_DATADOG_APPLICATION_ID>',
+        clientToken: '<YOUR_DATADOG_CLIENT_TOKEN>',
+        env: '<YOUR_ENV_NAME>',
+        service: '<YOUR_SERVICE_NAME>',
+        site: '<YOUR_DATADOG_SITE>',
         sessionSampleRate: 100,
+        sessionReplaySampleRate: 0,
         trackViewsManually: true,
         trackLongTasks: true,
         trackResources: true,
@@ -243,15 +238,6 @@ Expose the component to the Lightning Utility Bar, then add it to your app's Uti
   <targets>
     <target>lightning__UtilityBar</target>
   </targets>
-  <targetConfigs>
-    <targetConfig targets="lightning__UtilityBar">
-      <property name="applicationId" type="String" label="Application ID" required="true" />
-      <property name="clientToken" type="String" label="Client Token" required="true" />
-      <property name="site" type="String" label="Site" />
-      <property name="service" type="String" label="Service" />
-      <property name="env" type="String" label="Env" />
-    </targetConfig>
-  </targetConfigs>
 </LightningComponentBundle>
 ```
 
@@ -263,31 +249,6 @@ Add the following `componentInstance` excerpt to your app's existing Utility Bar
     <name>eager</name>
     <type>decorator</type>
     <value>true</value>
-  </componentInstanceProperties>
-  <componentInstanceProperties>
-    <name>applicationId</name>
-    <type>String</type>
-    <value>YOUR_DATADOG_APPLICATION_ID</value>
-  </componentInstanceProperties>
-  <componentInstanceProperties>
-    <name>clientToken</name>
-    <type>String</type>
-    <value>YOUR_DATADOG_CLIENT_TOKEN</value>
-  </componentInstanceProperties>
-  <componentInstanceProperties>
-    <name>site</name>
-    <type>String</type>
-    <value>YOUR_DATADOG_SITE</value>
-  </componentInstanceProperties>
-  <componentInstanceProperties>
-    <name>service</name>
-    <type>String</type>
-    <value>YOUR_SERVICE_NAME</value>
-  </componentInstanceProperties>
-  <componentInstanceProperties>
-    <name>env</name>
-    <type>String</type>
-    <value>YOUR_ENV_NAME</value>
   </componentInstanceProperties>
   <componentName>datadogInit</componentName>
   <identifier>datadogInit</identifier>
@@ -490,6 +451,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
         service: '<YOUR_SERVICE_NAME>',
         site: '<YOUR_DATADOG_SITE>',
         sessionSampleRate: 100,
+        sessionReplaySampleRate: 0,
         trackViewsManually: true,
         trackLongTasks: true,
         trackResources: true,
