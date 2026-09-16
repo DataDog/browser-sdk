@@ -70,6 +70,8 @@ export function startReplayResourceCollection(
     stop: () => {
       unsubscribeRequest()
       unsubscribePageMayExit()
+      pendingResourcesByHash.clear()
+      uploadedHashes.clear()
     },
   }
 }

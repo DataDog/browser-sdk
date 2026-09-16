@@ -81,4 +81,15 @@ describe('replayResourceCollection', () => {
 
     expect(sendOnExit).not.toHaveBeenCalled()
   })
+
+  it('releases resource state when stopped', () => {
+    const { httpRequest, send } = createHttpRequestSpy()
+    const { emitResource, stop } = startCollection(httpRequest)
+
+    emitResource('hash1', CONTENT)
+    stop()
+    emitResource('hash1', CONTENT)
+
+    expect(send).toHaveBeenCalledTimes(2)
+  })
 })
