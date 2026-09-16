@@ -54,7 +54,7 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(JSON.parse(interceptor.requests[0].body).application_id).toBeUndefined()
   })
 
-  it('reports configuration again when its source or version changes', () => {
+  it('reports configuration once for each source', () => {
     const interceptor = interceptRequests()
     const telemetry = startFeatureFlagsTelemetry(configuration(), options())
     registerCleanupTask(telemetry.stop)
@@ -67,7 +67,7 @@ describe('Feature Flags lifecycle telemetry', () => {
     telemetry.add({
       eventType: FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED,
       configurationSource: FeatureFlagsTelemetryConfigurationSource.CACHE,
-      configurationVersion: 'configuration-1',
+      configurationVersion: 'configuration-2',
     })
     telemetry.add({
       eventType: FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED,
@@ -88,7 +88,6 @@ describe('Feature Flags lifecycle telemetry', () => {
     expect(events).toEqual([
       jasmine.objectContaining({ configuration_source: 'cache', configuration_version: 'configuration-1' }),
       jasmine.objectContaining({ configuration_source: 'remote', configuration_version: 'configuration-1' }),
-      jasmine.objectContaining({ configuration_source: 'remote', configuration_version: 'configuration-2' }),
     ])
   })
 

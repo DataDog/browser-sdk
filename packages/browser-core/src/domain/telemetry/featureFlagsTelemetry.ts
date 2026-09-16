@@ -265,7 +265,7 @@ function toTelemetryPayloadFields(event: FeatureFlagsLifecycleEvent): Partial<Fe
 
 function getDeduplicationKey(event: FeatureFlagsLifecycleEvent): string {
   if (event.eventType === FeatureFlagsTelemetryEventType.CONFIGURATION_RECEIVED) {
-    return `${event.eventType}:${event.configurationSource}:${event.configurationVersion ?? ''}`
+    return `${event.eventType}:${event.configurationSource}`
   }
   return `${event.eventType}:${'errorCode' in event ? event.errorCode : ''}`
 }
