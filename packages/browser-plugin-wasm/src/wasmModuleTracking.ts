@@ -5,20 +5,21 @@
 // — the hooks stay active for the lifetime of the page.
 
 import { instrumentMethod } from '@datadog/browser-core'
+import type { RumErrorEvent } from '@datadog/browser-rum-core'
 import { extractWasmBuildId } from './wasmBinaryParser'
 
-export interface RawWasmModule {
-  url: string
-  build_id: string
-  debug_info_type: WasmDebugInfoType
-}
+type SchemaWasmModule = NonNullable<RumErrorEvent['error']['wasm_modules']>[number]
 
-export type WasmDebugInfoType = 'dwarf' | 'sourcemap' | 'unknown'
+export interface RawWasmModule {
+  url: SchemaWasmModule['url']
+  build_id: SchemaWasmModule['build_id']
+  debug_info_type: NonNullable<SchemaWasmModule['debug_info_type']>
+}
 
 interface WasmModuleEntry {
   url: string
   buildId: string
-  debugInfoType: WasmDebugInfoType
+  debugInfoType: RawWasmModule['debug_info_type']
 }
 
 const registry = new Map<string, WasmModuleEntry>()
