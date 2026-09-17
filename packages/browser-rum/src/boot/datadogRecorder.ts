@@ -5,10 +5,15 @@ import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
-import type { SerializationStats } from '../domain/record'
+import type { EmitResourceCallback, SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
-import type { ReplayPayload } from '../domain/segmentCollection'
-import { startSegmentCollection, SEGMENT_BYTES_LIMIT, startSegmentTelemetry } from '../domain/segmentCollection'
+import type { ReplayPayload, ResourcePayload } from '../domain/segmentCollection'
+import {
+  startSegmentCollection,
+  SEGMENT_BYTES_LIMIT,
+  startSegmentTelemetry,
+  startReplayResourceCollection,
+} from '../domain/segmentCollection'
 import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
 
@@ -19,7 +24,8 @@ export function startRecording(
   viewHistory: ViewHistory,
   encoder: DeflateEncoder,
   telemetry: Telemetry,
-  httpRequest?: HttpRequest<ReplayPayload>
+  segmentHttpRequest?: HttpRequest<ReplayPayload>,
+  resourceHttpRequest?: HttpRequest<ResourcePayload>
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -32,10 +38,23 @@ export function startRecording(
   }
 
   const replayRequest =
-    httpRequest || createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
+    segmentHttpRequest ||
+    createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
+
+  const resourceRequest =
+    resourceHttpRequest ||
+    createHttpRequest<ResourcePayload>([createEndpointBuilder(configuration, 'replay')], reportError, 0)
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
+  let emitResource: EmitResourceCallback = noop
+  let flushMutations = noop
+
+  // This must be registered before the segment and resource collectors so an urgent exit includes queued canvas changes.
+  const { unsubscribe: unsubscribeMutationFlush } = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () =>
+    flushMutations()
+  )
+  cleanupTasks.push(unsubscribeMutationFlush)
 
   if (!canUseEventBridge()) {
     const segmentCollection = startSegmentCollection(
@@ -52,22 +71,33 @@ export function startRecording(
 
     const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
     cleanupTasks.push(segmentTelemetry.stop)
+
+    const replayResourceCollection = startReplayResourceCollection(
+      configuration.applicationId,
+      lifeCycle,
+      resourceRequest
+    )
+    emitResource = replayResourceCollection.emitResource
+    cleanupTasks.push(replayResourceCollection.stop)
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))
     addStats = noop
   }
 
-  const { stop: stopRecording } = record({
+  const recording = record({
     emitRecord: addRecord,
+    emitResource,
     emitStats: addStats,
     configuration,
     lifeCycle,
     viewHistory,
   })
-  cleanupTasks.push(stopRecording)
+  flushMutations = recording.flushMutations
 
   return {
     stop: () => {
+      recording.flushMutations()
+      recording.stop()
       cleanupTasks.forEach((task) => task())
     },
   }
