@@ -48,8 +48,8 @@ describe('api', () => {
       const self = { name: 'testObj' }
       const args = { a: 1, b: 2 }
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, self, args)
-      onReturn(probes, 'result', self, args)
+      const invocation = onEntry(probes, self, args)!
+      onReturn(invocation, 'result', self, args)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -90,8 +90,8 @@ describe('api', () => {
 
       const args = { a: 1 }
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, globalObject, args)
-      onReturn(probes, 'result', globalObject, args)
+      const invocation = onEntry(probes, globalObject, args)!
+      onReturn(invocation, 'result', globalObject, args)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -111,8 +111,8 @@ describe('api', () => {
       const args = { arg1: 'value1', arg2: 42 }
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, self, args)
-      const result = onReturn(probes, 'returnValue', self, args)
+      const invocation = onEntry(probes, self, args)!
+      const result = onReturn(invocation, 'returnValue', self, args)
 
       expect(result).toBe('returnValue')
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -134,13 +134,12 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // First call should work
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      onReturn(onEntry(probes, thisArg)!, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      // Second immediate call should be skipped (less than 2000ms passed)
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      // Second immediate call should be skipped (less than 2000ms passed), so no handle is
+      // returned and the instrumented code never reaches the exit hooks
+      expect(onEntry(probes, thisArg)).toBeUndefined()
 
       // Still only one call because sampling budget not refreshed
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -159,12 +158,10 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { missing: { value: true } })
-      onReturn(probes, null, thisArg, { missing: { value: true } })
+      onReturn(onEntry(probes, thisArg, { missing: { value: true } })!, null, thisArg, { missing: { value: true } })
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      expect(onEntry(probes, thisArg)).toBeUndefined()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -181,12 +178,10 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { missing: { value: true } })
-      onReturn(probes, null, thisArg, { missing: { value: true } })
+      onReturn(onEntry(probes, thisArg, { missing: { value: true } })!, null, thisArg, { missing: { value: true } })
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      expect(onEntry(probes, thisArg)).toBeUndefined()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -203,8 +198,7 @@ describe('api', () => {
 
       let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should fire when condition passes
-      onEntry(probes, thisArg, { x: 10 })
-      onReturn(probes, null, thisArg, { x: 10 })
+      onReturn(onEntry(probes, thisArg, { x: 10 })!, null, thisArg, { x: 10 })
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       clearProbes()
@@ -212,9 +206,8 @@ describe('api', () => {
       mockBatchAdd.calls.reset()
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      // Should not fire when condition fails
-      onEntry(probes, thisArg, { x: 3 })
-      onReturn(probes, null, thisArg, { x: 3 })
+      // A failing ENTRY condition captures nothing, so there is no handle to exit with
+      expect(onEntry(probes, thisArg, { x: 3 })).toBeUndefined()
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
@@ -229,8 +222,7 @@ describe('api', () => {
 
       let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should fire when return value > 10
-      onEntry(probes, thisArg)
-      onReturn(probes, 15, thisArg)
+      onReturn(onEntry(probes, thisArg)!, 15, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       clearProbes()
@@ -239,8 +231,7 @@ describe('api', () => {
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should not fire when return value <= 10
-      onEntry(probes, thisArg)
-      onReturn(probes, 5, thisArg)
+      onReturn(onEntry(probes, thisArg)!, 5, thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
@@ -258,8 +249,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { arg: { value: 42 }, longString: 'abcdef' })
-      onReturn(probes, null, thisArg, { arg: { value: 42 }, longString: 'abcdef' })
+      const invocation = onEntry(probes, thisArg, { arg: { value: 42 }, longString: 'abcdef' })!
+      onReturn(invocation, null, thisArg, { arg: { value: 42 }, longString: 'abcdef' })
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -287,8 +278,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, { nested: 'return' }, thisArg, {}, { local: { value: 'data' } })
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, { nested: 'return' }, thisArg, {}, { local: { value: 'data' } })
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -320,8 +311,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { existing: 'value' })
-      onReturn(probes, null, thisArg, { existing: 'value' })
+      const invocation = onEntry(probes, thisArg, { existing: 'value' })!
+      onReturn(invocation, null, thisArg, { existing: 'value' })
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -340,8 +331,8 @@ describe('api', () => {
       addProbe(createProbe({ evaluateAt: 'ENTRY' }))
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, { name: 'obj' }, { arg: 'value' })
-      onReturn(probes, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
+      const invocation = onEntry(probes, { name: 'obj' }, { arg: 'value' })!
+      onReturn(invocation, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -369,8 +360,8 @@ describe('api', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, { name: 'obj' }, { arg: 'value' })
-      onReturn(probes, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
+      const invocation = onEntry(probes, { name: 'obj' }, { arg: 'value' })!
+      onReturn(invocation, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -405,8 +396,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { arg: 'value' })
-      onReturn(probes, true, thisArg, { arg: 'value' })
+      const invocation = onEntry(probes, thisArg, { arg: 'value' })!
+      onReturn(invocation, true, thisArg, { arg: 'value' })
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -420,11 +411,11 @@ describe('api', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
+      const invocation = onEntry(probes, thisArg)!
 
       clock.tick(10)
 
-      onReturn(probes, null, thisArg)
+      onReturn(invocation, null, thisArg)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -444,8 +435,7 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      expect(onEntry(probes, thisArg)).toBeUndefined()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.calls.mostRecent().args[0]
@@ -474,8 +464,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.calls.mostRecent().args[0]
@@ -506,15 +496,12 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
       onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       clock.tick(5 * 60 * 1000)
 
       onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
     })
   })
@@ -534,8 +521,8 @@ describe('api', () => {
 
       addProbe(createProbe())
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       expect(payload._dd).toEqual({ debug_ids: [{ url: entryUrl, id: 'entry-id' }] })
@@ -555,8 +542,8 @@ describe('api', () => {
 
       addProbe(createProbe())
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onThrow(probes, error, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onThrow(invocation, error, thisArg)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       expect(payload._dd.debug_ids).toEqual(
@@ -574,8 +561,8 @@ describe('api', () => {
 
       addProbe(createProbe())
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       expect(payload._dd).toBeUndefined()
@@ -590,8 +577,8 @@ describe('api', () => {
       const args = { a: 1, b: 2 }
       const error = new Error('Test error')
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, self, args)
-      onThrow(probes, error, self, args)
+      const invocation = onEntry(probes, self, args)!
+      onThrow(invocation, error, self, args)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -630,8 +617,8 @@ describe('api', () => {
 
       const args = { a: 1 }
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, globalObject, args)
-      onThrow(probes, new Error('Test error'), globalObject, args)
+      const invocation = onEntry(probes, globalObject, args)!
+      onThrow(invocation, new Error('Test error'), globalObject, args)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -650,8 +637,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const error = new Error('Test error')
-      onEntry(probes, thisArg, { arg: 'value' })
-      onThrow(probes, error, thisArg, { arg: 'value' })
+      const invocation = onEntry(probes, thisArg, { arg: 'value' })!
+      onThrow(invocation, error, thisArg, { arg: 'value' })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
@@ -677,8 +664,8 @@ describe('api', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onThrow(probes, 'Test error', thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onThrow(invocation, 'Test error', thisArg)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -698,8 +685,8 @@ describe('api', () => {
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const iframeWindow = iframe.contentWindow as Window & { Error: ErrorConstructor }
       const error = new iframeWindow.Error('Iframe error')
-      onEntry(probes, thisArg)
-      onThrow(probes, error, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onThrow(invocation, error, thisArg)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -713,8 +700,8 @@ describe('api', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      expect(() => onThrow(probes, Object.create(null), thisArg)).not.toThrow()
+      const invocation = onEntry(probes, thisArg)!
+      expect(() => onThrow(invocation, Object.create(null), thisArg)).not.toThrow()
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -736,8 +723,8 @@ describe('api', () => {
           throw new Error('Cannot sanitize')
         },
       }
-      onEntry(probes, {}, {})
-      expect(() => onThrow(probes, error, {}, {})).not.toThrow()
+      const invocation = onEntry(probes, {}, {})!
+      expect(() => onThrow(invocation, error, {}, {})).not.toThrow()
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -757,8 +744,8 @@ describe('api', () => {
           throw new Error('Cannot read message')
         },
       }
-      onEntry(probes, {}, {})
-      expect(() => onThrow(probes, error, {}, {})).not.toThrow()
+      const invocation = onEntry(probes, {}, {})!
+      expect(() => onThrow(invocation, error, {}, {})).not.toThrow()
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -782,8 +769,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const error = new Error('Test error')
-      onEntry(probes, thisArg)
-      onThrow(probes, error, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onThrow(invocation, error, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -803,8 +790,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onThrow(probes, new Error('Test error'), thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onThrow(invocation, new Error('Test error'), thisArg)
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
@@ -834,8 +821,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onThrow(probes, new Error('Test error'), thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onThrow(invocation, new Error('Test error'), thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.calls.mostRecent().args[0]
@@ -849,16 +836,6 @@ describe('api', () => {
       ])
       expect(snapshot.captures).toBeUndefined()
       expect(snapshot.stack).toBeUndefined()
-    })
-
-    it('should handle onThrow without preceding onEntry', () => {
-      addProbe(createProbe())
-
-      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      const error = new Error('Test error')
-      onThrow(probes, error, thisArg)
-
-      expect(mockBatchAdd).not.toHaveBeenCalled()
     })
   })
 
@@ -878,8 +855,12 @@ describe('api', () => {
       // Try to fire 30 probes rapidly
       for (let i = 0; i < 30; i++) {
         const probes = getProbes(`test.js;method${i}`)!
-        onEntry(probes, thisArg)
-        onReturn(probes, null, thisArg)
+        // Mirrors the generated code: once the budget is spent onEntry captures nothing and the
+        // exit hooks are skipped.
+        const invocation = onEntry(probes, thisArg)
+        if (invocation) {
+          onReturn(invocation, null, thisArg)
+        }
       }
 
       // Should only get 25 calls (global limit)
@@ -900,8 +881,10 @@ describe('api', () => {
 
       for (let i = 0; i < 3; i++) {
         const probes = getProbes(`test.js;configuredGlobal${i}`)!
-        onEntry(probes, thisArg)
-        onReturn(probes, null, thisArg)
+        const invocation = onEntry(probes, thisArg)
+        if (invocation) {
+          onReturn(invocation, null, thisArg)
+        }
       }
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
@@ -921,8 +904,10 @@ describe('api', () => {
 
       for (let i = 0; i < 30; i++) {
         const probes = getProbes(`test.js;captureExpressionGlobal${i}`)!
-        onEntry(probes, thisArg, { x: i })
-        onReturn(probes, null, thisArg, { x: i })
+        const invocation = onEntry(probes, thisArg, { x: i })
+        if (invocation) {
+          onReturn(invocation, null, thisArg, { x: i })
+        }
       }
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(25)
@@ -936,10 +921,8 @@ describe('api', () => {
       addProbe(createProbe({ sampling: undefined }))
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      onReturn(onEntry(probes, thisArg)!, null, thisArg)
+      expect(onEntry(probes, thisArg)).toBeUndefined()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -955,10 +938,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      onReturn(onEntry(probes, thisArg)!, null, thisArg)
+      expect(onEntry(probes, thisArg)).toBeUndefined()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -974,10 +955,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { x: 1 })
-      onReturn(probes, null, thisArg, { x: 1 })
-      onEntry(probes, thisArg, { x: 2 })
-      onReturn(probes, null, thisArg, { x: 2 })
+      onReturn(onEntry(probes, thisArg, { x: 1 })!, null, thisArg, { x: 1 })
+      expect(onEntry(probes, thisArg, { x: 2 })).toBeUndefined()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -996,14 +975,13 @@ describe('api', () => {
 
       // First invocation: probe sends its single allowed event.
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      // Second invocation: the lifetime budget is now exhausted. No new event should
-      // be queued, and the probe should be auto-unregistered.
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      // Second invocation: the lifetime budget is now exhausted. Nothing is captured, so no new
+      // event is queued, and the probe is auto-unregistered.
+      expect(onEntry(probes, thisArg)).toBeUndefined()
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
@@ -1029,13 +1007,11 @@ describe('api', () => {
       // (context spread + captureFields) + 1 read from return capture = 3 reads.
       // This exhausts the lifetime budget.
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, args)
-      onReturn(probes, null, thisArg, args)
+      onReturn(onEntry(probes, thisArg, args)!, null, thisArg, args)
 
-      // Second invocation: both onEntry and onReturn detect the exhausted budget
-      // up front and skip all capture work — no further reads from args.
-      onEntry(probes, thisArg, args)
-      onReturn(probes, null, thisArg, args)
+      // Second invocation: onEntry detects the exhausted budget up front and skips all capture
+      // work — no further reads from args, and no handle for the exit hooks.
+      expect(onEntry(probes, thisArg, args)).toBeUndefined()
 
       expect(getterSpy).toHaveBeenCalledTimes(3)
     })
@@ -1054,14 +1030,13 @@ describe('api', () => {
 
       // First invocation: probe sends its single allowed event.
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      // Second invocation: the lifetime budget is now exhausted. No new event should
-      // be queued, and the probe should be auto-unregistered.
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      // Second invocation: the lifetime budget is now exhausted. Nothing is captured, so no new
+      // event is queued, and the probe is auto-unregistered.
+      expect(onEntry(probes, thisArg)).toBeUndefined()
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
@@ -1077,15 +1052,15 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onEntry(probes, thisArg)
+      const outerInvocation = onEntry(probes, thisArg)!
+      const innerInvocation = onEntry(probes, thisArg)!
 
-      onReturn(probes, null, thisArg)
+      onReturn(innerInvocation, null, thisArg)
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
 
       // The lifetime budget gates new entries, but already accepted in-flight
       // entries still drain even if another frame exhausts the budget first.
-      onReturn(probes, null, thisArg)
+      onReturn(outerInvocation, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
     })
 
@@ -1096,8 +1071,8 @@ describe('api', () => {
       addProbe(probe)
 
       let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       // The old probe has reached its lifetime budget and was auto-unregistered.
@@ -1105,8 +1080,8 @@ describe('api', () => {
       addProbe({ ...probe, version: 1 })
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation2 = onEntry(probes, thisArg)!
+      onReturn(invocation2, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
     })
 
@@ -1116,8 +1091,7 @@ describe('api', () => {
       addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      expect(onEntry(probes, thisArg)).toBeUndefined()
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
@@ -1150,8 +1124,8 @@ describe('api', () => {
       // First invocation: both probes emit one event. probeA hits its cap (eventsSent=1,
       // max=1) but is not removed yet — the pre-call budget check still passed.
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
 
       // Second invocation: probeA's pre-call check now fails and it is queued for
@@ -1159,29 +1133,28 @@ describe('api', () => {
       // probeA gets spliced out of the probes array.
       mockBatchAdd.calls.reset()
       const probesAfterFirst = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probesAfterFirst, thisArg)
-      onReturn(probesAfterFirst, null, thisArg)
+      const invocation2 = onEntry(probesAfterFirst, thisArg)!
+      onReturn(invocation2, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([jasmine.objectContaining({ id: 'sibling-probe-b' })])
 
-      // probeB's stack entry must not leak: a third onReturn without onEntry is a no-op.
+      // probeB's entry must not leak: exiting the same invocation again is a no-op.
       mockBatchAdd.calls.reset()
-      const remainingProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onReturn(remainingProbes, null, thisArg)
+      onReturn(invocation2, null, thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
   })
 
-  describe('active entries cleanup', () => {
+  describe('invocation handles', () => {
     it('should drain in-flight entries through the removed probe instance', () => {
       const probe = createProbe()
       addProbe(probe)
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
+      const invocation = onEntry(probes, thisArg)!
 
       removeProbe(probe.id)
-      onReturn(probes, null, thisArg)
+      onReturn(invocation, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -1191,59 +1164,306 @@ describe('api', () => {
       addProbe(probe)
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
+      const invocation = onEntry(probes, thisArg)!
 
       removeProbe(probe.id)
-      addProbe(createProbe({ id: probe.id }))
+      const replacement = createProbe({ id: probe.id })
+      addProbe(replacement)
 
+      // The in-flight invocation reports through the probe instance it entered with, so the
+      // replacement does not inherit it.
+      onReturn(invocation, null, thisArg)
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.probe.version).toBe(probe.version)
+
+      // The replacement starts from a clean slate: its own invocation is independent.
+      mockBatchAdd.calls.reset()
       const newProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onReturn(newProbes, null, thisArg)
-
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      onReturn(onEntry(newProbes, thisArg)!, null, thisArg)
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
 
     it('should discard in-flight entries when all probes are cleared', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
+      const invocation = onEntry(probes, thisArg)!
 
       clearProbes()
       addProbe(createProbe())
 
-      const newProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onReturn(newProbes, null, thisArg)
+      onReturn(invocation, null, thisArg)
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
-    it('should not leak active entries after onReturn completes', () => {
+    // Generated code can reach two exit hooks for one invocation: `try { return a } finally
+    // { return b }` runs both return hooks, and an exit hook that throws is followed by the
+    // generated catch block calling onThrow with the same handle.
+    it('should report an invocation once when the return hook runs twice', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       mockBatchAdd.calls.reset()
 
-      // A second onReturn without onEntry should not produce a snapshot
-      onReturn(probes, null, thisArg)
+      onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
-    it('should not leak active entries after onThrow completes', () => {
+    it('should report an invocation once when the throw hook runs twice', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onThrow(probes, new Error('test'), thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onThrow(invocation, new Error('test'), thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       mockBatchAdd.calls.reset()
 
-      // A second onThrow without onEntry should not produce a snapshot
-      onThrow(probes, new Error('test'), thisArg)
+      onThrow(invocation, new Error('test'), thisArg)
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should report an invocation once when the return hook is followed by the throw hook', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, 'value', thisArg)
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+
+      mockBatchAdd.calls.reset()
+
+      onThrow(invocation, new Error('test'), thisArg)
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    // Asynchronous invocations of the same function overlap and settle in any order, so the exit
+    // hooks cannot infer which invocation is exiting. Each snapshot must describe the invocation
+    // its handle came from: entry state, duration, arguments, return value, locals and exception.
+    describe('overlapping invocations', () => {
+      function getSnapshots(): Array<Record<string, any>> {
+        return mockBatchAdd.calls.allArgs().map(([payload]) => payload.debugger.snapshot as Record<string, any>)
+      }
+
+      it('should pair each snapshot with its own entry state when invocations exit in entry order', () => {
+        const clock = mockClock()
+        addProbe(createProbe({ sampling: { snapshotsPerSecond: Infinity } }))
+
+        const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+        const invocationA = onEntry(probes, thisArg, { name: 'A' })!
+        clock.tick(10)
+        const invocationB = onEntry(probes, thisArg, { name: 'B' })!
+
+        // A entered first and also settles first: a stack of entries would pair A's exit with B.
+        clock.tick(90)
+        onReturn(invocationA, 'resultA', thisArg, { name: 'A' }, { local: 'localA' })
+        clock.tick(910)
+        onReturn(invocationB, 'resultB', thisArg, { name: 'B' }, { local: 'localB' })
+
+        const [snapshotA, snapshotB] = getSnapshots()
+        expect(snapshotA.captures.entry.arguments.name.value).toBe('A')
+        expect(snapshotA.captures.return.arguments.name.value).toBe('A')
+        expect(snapshotA.captures.return.locals.local.value).toBe('localA')
+        expect(snapshotA.captures.return.locals['@return'].value).toBe('resultA')
+        expect(snapshotA.duration).toBe(100 * 1e6)
+
+        expect(snapshotB.captures.entry.arguments.name.value).toBe('B')
+        expect(snapshotB.captures.return.arguments.name.value).toBe('B')
+        expect(snapshotB.captures.return.locals.local.value).toBe('localB')
+        expect(snapshotB.captures.return.locals['@return'].value).toBe('resultB')
+        expect(snapshotB.duration).toBe(1000 * 1e6)
+      })
+
+      it('should pair each snapshot with its own entry state when invocations exit in reverse entry order', () => {
+        const clock = mockClock()
+        addProbe(createProbe({ sampling: { snapshotsPerSecond: Infinity } }))
+
+        const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+        const invocationA = onEntry(probes, thisArg, { name: 'A' })!
+        clock.tick(10)
+        const invocationB = onEntry(probes, thisArg, { name: 'B' })!
+
+        clock.tick(90)
+        onReturn(invocationB, 'resultB', thisArg, { name: 'B' })
+        clock.tick(910)
+        onReturn(invocationA, 'resultA', thisArg, { name: 'A' })
+
+        const [snapshotB, snapshotA] = getSnapshots()
+        expect(snapshotB.captures.entry.arguments.name.value).toBe('B')
+        expect(snapshotB.captures.return.locals['@return'].value).toBe('resultB')
+        expect(snapshotB.duration).toBe(90 * 1e6)
+
+        expect(snapshotA.captures.entry.arguments.name.value).toBe('A')
+        expect(snapshotA.captures.return.locals['@return'].value).toBe('resultA')
+        expect(snapshotA.duration).toBe(1010 * 1e6)
+      })
+
+      it('should pair the throwing invocation with its own entry state while another returns', () => {
+        addProbe(createProbe({ sampling: { snapshotsPerSecond: Infinity } }))
+
+        const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+        const invocationA = onEntry(probes, thisArg, { name: 'A' })!
+        const invocationB = onEntry(probes, thisArg, { name: 'B' })!
+
+        onReturn(invocationA, 'resultA', thisArg, { name: 'A' })
+        onThrow(invocationB, new Error('failed B'), thisArg, { name: 'B' })
+
+        const [snapshotA, snapshotB] = getSnapshots()
+        expect(snapshotA.captures.entry.arguments.name.value).toBe('A')
+        expect(snapshotA.captures.return.locals['@return'].value).toBe('resultA')
+        expect(snapshotA.captures.return.throwable).toBeUndefined()
+
+        expect(snapshotB.captures.entry.arguments.name.value).toBe('B')
+        expect(snapshotB.captures.return.throwable.message).toBe('failed B')
+        expect(snapshotB.captures.return.locals).toBeUndefined()
+      })
+
+      it('should keep each probe paired with its own entry state when several probes watch the function', () => {
+        addProbe(createProbe({ id: 'probe-a', template: 'A', sampling: { snapshotsPerSecond: Infinity } }))
+        addProbe(createProbe({ id: 'probe-b', template: 'B', sampling: { snapshotsPerSecond: Infinity } }))
+
+        const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+        const invocationFirst = onEntry(probes, thisArg, { name: 'first' })!
+        const invocationSecond = onEntry(probes, thisArg, { name: 'second' })!
+
+        onReturn(invocationFirst, 'resultFirst', thisArg, { name: 'first' })
+        onReturn(invocationSecond, 'resultSecond', thisArg, { name: 'second' })
+
+        // Both probes report both invocations, each with the arguments it was entered with.
+        expect(
+          getSnapshots().map((snapshot) => [
+            String(snapshot.probe.id),
+            String(snapshot.captures.entry.arguments.name.value),
+            String(snapshot.captures.return.locals['@return'].value),
+          ])
+        ).toEqual([
+          ['probe-a', 'first', 'resultFirst'],
+          ['probe-b', 'first', 'resultFirst'],
+          ['probe-a', 'second', 'resultSecond'],
+          ['probe-b', 'second', 'resultSecond'],
+        ])
+      })
+
+      it('should report the probes that captured an invocation when a sibling probe is sampled out', () => {
+        // sampledProbe only captures the first invocation; unsampledProbe captures both. The
+        // handle holds one entry per probe that captured, so the second invocation's exit must
+        // not be paired with the entry sampledProbe made for the first one.
+        addProbe(createProbe({ id: 'unsampled-probe', sampling: { snapshotsPerSecond: Infinity } }))
+        addProbe(createProbe({ id: 'sampled-probe', sampling: { snapshotsPerSecond: 0.5 } }))
+
+        const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+        const invocationFirst = onEntry(probes, thisArg, { name: 'first' })!
+        const invocationSecond = onEntry(probes, thisArg, { name: 'second' })!
+
+        onReturn(invocationFirst, 'resultFirst', thisArg, { name: 'first' })
+        onReturn(invocationSecond, 'resultSecond', thisArg, { name: 'second' })
+
+        expect(
+          getSnapshots().map((snapshot) => [
+            String(snapshot.probe.id),
+            String(snapshot.captures.entry.arguments.name.value),
+          ])
+        ).toEqual([
+          ['unsampled-probe', 'first'],
+          ['sampled-probe', 'first'],
+          ['unsampled-probe', 'second'],
+        ])
+      })
+
+      it('should leave an in-flight invocation untouched when a later one is skipped by its entry condition', () => {
+        addProbe(
+          createProbe({
+            when: { dsl: 'x > 5', json: { gt: [{ ref: 'x' }, 5] } },
+            evaluateAt: 'ENTRY',
+            sampling: { snapshotsPerSecond: Infinity },
+          })
+        )
+
+        const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+        const invocationPassing = onEntry(probes, thisArg, { x: 10 })!
+        expect(onEntry(probes, thisArg, { x: 3 })).toBeUndefined()
+
+        onReturn(invocationPassing, 'result', thisArg, { x: 10 })
+
+        const [snapshot] = getSnapshots()
+        expect(getSnapshots().length).toBe(1)
+        expect(snapshot.captures.entry.arguments.x.value).toBe('10')
+        expect(snapshot.captures.return.locals['@return'].value).toBe('result')
+      })
+
+      it('should give each frame of a synchronous recursion its own entry state', () => {
+        const clock = mockClock()
+        addProbe(createProbe({ sampling: { snapshotsPerSecond: Infinity } }))
+
+        const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+        const outerInvocation = onEntry(probes, thisArg, { depth: 2 })!
+        clock.tick(10)
+        const innerInvocation = onEntry(probes, thisArg, { depth: 1 })!
+
+        // Recursive frames exit innermost-first, which a stack of entries handled correctly too.
+        clock.tick(10)
+        onReturn(innerInvocation, 'inner', thisArg, { depth: 1 })
+        clock.tick(10)
+        onReturn(outerInvocation, 'outer', thisArg, { depth: 2 })
+
+        const [innerSnapshot, outerSnapshot] = getSnapshots()
+        expect(innerSnapshot.captures.entry.arguments.depth.value).toBe('1')
+        expect(innerSnapshot.captures.return.locals['@return'].value).toBe('inner')
+        expect(innerSnapshot.duration).toBe(10 * 1e6)
+
+        expect(outerSnapshot.captures.entry.arguments.depth.value).toBe('2')
+        expect(outerSnapshot.captures.return.locals['@return'].value).toBe('outer')
+        expect(outerSnapshot.duration).toBe(30 * 1e6)
+      })
+    })
+  })
+
+  // TODO: Remove together with the pre-handle guard in consumeEntry (see api.ts).
+  describe('instrumentation built before the invocation handle contract', () => {
+    // What the build plugin emitted before it forwarded the handle: onEntry's result is discarded,
+    // so the exit hooks are handed the probes array instead of an invocation handle.
+    function callWithProbesArray(a: number, b: number): number {
+      const probes: any = getProbes(DEFAULT_PROBE_FUNCTION_ID)
+      try {
+        if (probes) {
+          onEntry(probes, thisArg, { a, b })
+        }
+        const sum = a + b
+        return probes ? (onReturn(probes, sum, thisArg, { a, b }, { sum }) as number) : sum
+      } catch (error) {
+        if (probes) {
+          onThrow(probes, error, thisArg, { a, b })
+        }
+        throw error
+      }
+    }
+
+    beforeEach(() => {
+      addProbe(createProbe({ sampling: { snapshotsPerSecond: Infinity } }))
+    })
+
+    it('should return the value to the caller and capture nothing', () => {
+      expect(callWithProbesArray(1, 2)).toBe(3)
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should leave the probe registry usable', () => {
+      callWithProbesArray(1, 2)
+
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([jasmine.objectContaining({ id: 'test-probe' })])
+      expect(() => clearProbes()).not.toThrow()
+    })
+
+    it('should let the application exception through unchanged', () => {
+      const probes: any = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg, {})
+
+      expect(() => onThrow(probes, new Error('application error'), thisArg, {})).not.toThrow()
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
   })
@@ -1279,8 +1499,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const deepObj = { level1: { level2: { level3: { level4: 'deep' } } } }
-      onEntry(probes, thisArg, { arg: deepObj })
-      onReturn(probes, null, thisArg, { arg: deepObj })
+      const invocation = onEntry(probes, thisArg, { arg: deepObj })!
+      onReturn(invocation, null, thisArg, { arg: deepObj })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.calls.mostRecent().args[0]
@@ -1294,7 +1514,7 @@ describe('api', () => {
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
 
       // Let onEntry succeed with real time
-      onEntry(probes, thisArg, { x: 1 })
+      const invocation = onEntry(probes, thisArg, { x: 1 })!
 
       // Now make performance.now jump forward so the return capture times out
       let callCount = 0
@@ -1307,7 +1527,7 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      onReturn(probes, null, thisArg, { x: 1 }, { local: 'value' })
+      onReturn(invocation, null, thisArg, { x: 1 }, { local: 'value' })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.calls.mostRecent().args[0]
@@ -1321,7 +1541,7 @@ describe('api', () => {
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
 
       // Let onEntry succeed with real time
-      onEntry(probes, thisArg, { x: 1 })
+      const invocation = onEntry(probes, thisArg, { x: 1 })!
 
       // Now make performance.now jump forward so the throw capture times out
       let callCount = 0
@@ -1334,7 +1554,7 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      onThrow(probes, new Error('test'), thisArg, { x: 1 })
+      onThrow(invocation, new Error('test'), thisArg, { x: 1 })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.calls.mostRecent().args[0]
@@ -1363,13 +1583,13 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg)
-      onReturn(probes, null, thisArg)
+      const invocation = onEntry(probes, thisArg)!
+      onReturn(invocation, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
 
-    it('should not leak active entries when entry capture times out', () => {
+    it('should still report an invocation whose entry capture timed out', () => {
       addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
       let shouldTimeout = true
@@ -1384,13 +1604,13 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      // This onEntry will time out but should still push the partial snapshot entry
-      onEntry(probes, thisArg, { x: 1 })
+      // This onEntry will time out but should still record the partial snapshot entry
+      const invocation = onEntry(probes, thisArg, { x: 1 })!
 
-      // onReturn should pop the timed-out entry and send its partial snapshot
+      // onReturn should consume the timed-out entry and send its partial snapshot
       shouldTimeout = false
       callCount = 0
-      onReturn(probes, null, thisArg, { x: 1 })
+      onReturn(invocation, null, thisArg, { x: 1 })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -1424,8 +1644,8 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { x: { nested: 'value' } })
-      onReturn(probes, null, thisArg, { x: { nested: 'value' } })
+      const invocation = onEntry(probes, thisArg, { x: { nested: 'value' } })!
+      onReturn(invocation, null, thisArg, { x: { nested: 'value' } })
 
       // All probes should still send, with snapshot probes marked as timed out
       const calls = mockBatchAdd.calls.allArgs()
@@ -1462,8 +1682,8 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { x: { nested: 'value' } })
-      onReturn(probes, null, thisArg, { x: { nested: 'value' } })
+      const invocation = onEntry(probes, thisArg, { x: { nested: 'value' } })!
+      onReturn(invocation, null, thisArg, { x: { nested: 'value' } })
 
       // Both snapshot probes share the deadline, so the second probe should send a timeout marker immediately.
       const calls = mockBatchAdd.calls.allArgs()
@@ -1483,8 +1703,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       expect(() => {
-        onEntry(probes, thisArg)
-        onReturn(probes, null, thisArg)
+        const invocation = onEntry(probes, thisArg)!
+        onReturn(invocation, null, thisArg)
       }).not.toThrow()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -1497,8 +1717,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       expect(() => {
-        onEntry(probes, thisArg)
-        onReturn(probes, null, thisArg)
+        const invocation = onEntry(probes, thisArg)!
+        onReturn(invocation, null, thisArg)
       }).not.toThrow()
       expect(warnSpy).toHaveBeenCalledWith(
         'Transport is not initialized. Make sure DD_DEBUGGER.init() has been called.'

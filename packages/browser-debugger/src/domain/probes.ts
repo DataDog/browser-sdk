@@ -7,7 +7,6 @@ import { browserInspect, templateRequiresEvaluation, compileSegments } from './t
 import type { TemplateSegment } from './template'
 import { formatUnknownError } from './error'
 import type { CaptureOptions } from './capture'
-import type { ActiveEntry } from './activeEntries'
 import type { ExpressionNode } from './expression'
 
 // Sampling rate limits
@@ -96,7 +95,7 @@ export interface InitializedProbe extends Probe {
   lastConditionErrorMs: number
   eventsSentInLifetime: number
   lifetimeBudgetWarningEmitted: boolean
-  activeEntries: Array<ActiveEntry | null>
+  discarded: boolean
 }
 
 // Pre-populate with a placeholder key to help V8 optimize property lookups.
@@ -251,9 +250,9 @@ export function clearProbes(): void {
     if (probes) {
       for (const probe of probes) {
         // Unlike removeProbe(), clearProbes() is an aggressive teardown used by
-        // tests and the delivery API circuit breaker. Drop in-flight entries so
+        // tests and the delivery API circuit breaker. Discard in-flight entries so
         // stale captured probe instances cannot emit after the debugger is disabled.
-        probe.activeEntries.length = 0
+        probe.discarded = true
       }
     }
   }
@@ -412,7 +411,7 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
   ;(probe as InitializedProbe).lastConditionErrorMs = -Infinity
   ;(probe as InitializedProbe).eventsSentInLifetime = 0
   ;(probe as InitializedProbe).lifetimeBudgetWarningEmitted = false
-  ;(probe as InitializedProbe).activeEntries = []
+  ;(probe as InitializedProbe).discarded = false
 }
 
 function normalizeProbeLifetimeLimit(limit: number | undefined, defaultLimit: number): number {
