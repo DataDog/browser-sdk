@@ -6,9 +6,8 @@
  * are injected by the debugger SDK at runtime.
  */
 
-// Global hooks injected by debugger SDK. $dd_entry exchanges the probes for an opaque handle
-// identifying the invocation, which is stored back into the same binding and handed to the exit
-// hooks. Typed as `any` because the generated code is untyped and never inspects either value.
+// Global hooks injected by debugger SDK. $dd_entry exchanges the probes for an opaque handle that
+// is stored back into the same binding and handed to the exit hooks.
 declare const $dd_probes: (functionId: string) => any
 declare const $dd_entry: (probes: any, self: any, args: Record<string, any>) => any
 declare const $dd_return: (

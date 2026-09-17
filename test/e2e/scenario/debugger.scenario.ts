@@ -92,8 +92,7 @@ async function injectInstrumentedFunction(page: Page) {
 async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
   await page.evaluate(() => {
     ;(window as any).testFunction = function testFunction(a: unknown, b: unknown) {
-      // $dd_entry exchanges the probes for a handle identifying this invocation, stored back into
-      // the same binding so the exit hooks are handed their own invocation's state.
+      // $dd_entry returns a handle for this invocation, stored back into the same binding.
       let probes = (window as any).$dd_probes('TestModule;testFunction')
       if (probes) {
         probes = (window as any).$dd_entry(probes, this, { a, b })
@@ -110,12 +109,8 @@ async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
 }
 
 /**
- * Injects an async instrumented function whose invocations overlap: each call settles only when
- * its own name is released, so a test can make two in-flight calls finish in either order.
- *
- * Mirrors the generated instrumentation for an async function: `$dd_entry` is called on entry and
- * `$dd_return` after the awaited work, which is where two overlapping calls can be mismatched if
- * the exit hook is not told which invocation is exiting.
+ * Injects an async instrumented function whose calls settle only when their own name is released,
+ * so a test can finish two in-flight calls in either order.
  */
 async function injectOverlappingAsyncFunction(page: Page) {
   await page.evaluate(() => {
@@ -235,8 +230,7 @@ test.describe('debugger', () => {
       await page.reload()
       await injectOverlappingAsyncFunction(page)
 
-      // Both calls are in flight before either settles, and they settle in the order they were
-      // made - the case a stack of entries pairs the wrong way around.
+      // Both calls are in flight before either settles, and settle in the order they were made.
       await page.evaluate(async () => {
         const first = (window as any).asyncFunction('first')
         const second = (window as any).asyncFunction('second')

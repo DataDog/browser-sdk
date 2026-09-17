@@ -51,17 +51,12 @@ export function resetDebuggerTransport(): void {
 /**
  * Called when entering an instrumented function
  *
- * Returns an opaque handle holding the entry state of this one invocation, which the instrumented
- * code hands back to {@link onReturn}/{@link onThrow}. That is what keeps overlapping asynchronous
- * invocations paired correctly: they complete in any order, so a per-probe stack of entries would
- * pair each exit with whichever invocation entered last.
+ * Returns an opaque handle with this invocation's entry state, which the instrumented code hands
+ * back to {@link onReturn}/{@link onThrow}, or `undefined` when no probe captured it - the exit
+ * hooks are then skipped.
  *
- * Returns `undefined` when no probe captured the invocation, which makes the instrumented code
- * skip the exit hooks entirely.
- *
- * This function never throws. The instrumented code assigns the returned handle over the binding
- * that holds the probes array, so an exception here would leave that binding holding the probes
- * array and the generated catch block would then hand it to {@link onThrow} as if it were a handle.
+ * Never throws: the instrumented code assigns the result over the binding holding the probes array,
+ * so an exception here would leave the exit hooks receiving that array as a handle.
  *
  * @param probes - Array of probes for this function
  * @param self - The 'this' context
@@ -158,8 +153,7 @@ export function onEntry(
       })
     }
   } catch (error) {
-    // Entries collected before the throw are complete, so they still report: one probe hitting a
-    // throwing getter should not silence its siblings, as with every other failure in this loop.
+    // Entries already collected are complete, so they still report.
     monitorError(error)
   }
 
@@ -167,21 +161,13 @@ export function onEntry(
 }
 
 /**
- * Take a probe's entry state out of an invocation handle.
- *
- * Emptying the slot keeps a snapshot to one per probe per invocation even when the generated code
- * reaches two exit hooks for the same invocation - `try { return a } finally { return b }` runs
- * both return hooks, and an exit hook that throws is followed by the generated catch block calling
- * {@link onThrow}. The first exit wins, so a `finally` that overrides the outcome is reported with
- * the superseded one - reporting the last exit instead would mean holding every snapshot back until
- * the invocation can no longer produce one.
+ * Take a probe's entry state out of an invocation handle. Emptying the slot keeps one snapshot per
+ * probe per invocation when a function reaches two exit hooks (`try { return a } finally
+ * { return b }`, or an exit hook that throws into the generated catch): the first exit wins.
  */
 function consumeEntry(invocation: InvocationHandle, index: number): ActiveEntry | undefined {
   const entry = invocation[index]
-  // TODO: Remove once no bundle built before the invocation handle contract can still be loaded,
-  // which holds only while web-ui is the sole consumer. Such instrumentation discards the handle
-  // and passes the probes array here instead, which would otherwise throw a TypeError into the
-  // host application and write holes into the live probe registry below.
+  // TODO: Remove once every instrumented bundle forwards the handle; older ones pass the probes array.
   if (!entry?.probe) {
     return undefined
   }

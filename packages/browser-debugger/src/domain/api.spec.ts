@@ -137,8 +137,7 @@ describe('api', () => {
       onReturn(onEntry(probes, thisArg)!, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      // Second immediate call should be skipped (less than 2000ms passed), so no handle is
-      // returned and the instrumented code never reaches the exit hooks
+      // Second immediate call should be skipped (less than 2000ms passed)
       expect(onEntry(probes, thisArg)).toBeUndefined()
 
       // Still only one call because sampling budget not refreshed
@@ -206,7 +205,7 @@ describe('api', () => {
       mockBatchAdd.calls.reset()
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      // A failing ENTRY condition captures nothing, so there is no handle to exit with
+      // Should not fire when condition fails
       expect(onEntry(probes, thisArg, { x: 3 })).toBeUndefined()
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
@@ -855,8 +854,6 @@ describe('api', () => {
       // Try to fire 30 probes rapidly
       for (let i = 0; i < 30; i++) {
         const probes = getProbes(`test.js;method${i}`)!
-        // Mirrors the generated code: once the budget is spent onEntry captures nothing and the
-        // exit hooks are skipped.
         const invocation = onEntry(probes, thisArg)
         if (invocation) {
           onReturn(invocation, null, thisArg)
@@ -1010,7 +1007,7 @@ describe('api', () => {
       onReturn(onEntry(probes, thisArg, args)!, null, thisArg, args)
 
       // Second invocation: onEntry detects the exhausted budget up front and skips all capture
-      // work — no further reads from args, and no handle for the exit hooks.
+      // work — no further reads from args.
       expect(onEntry(probes, thisArg, args)).toBeUndefined()
 
       expect(getterSpy).toHaveBeenCalledTimes(3)
@@ -1197,9 +1194,8 @@ describe('api', () => {
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
-    // Generated code can reach two exit hooks for one invocation: `try { return a } finally
-    // { return b }` runs both return hooks, and an exit hook that throws is followed by the
-    // generated catch block calling onThrow with the same handle.
+    // Generated code can reach two exit hooks for one invocation, e.g. `try { return a } finally
+    // { return b }`.
     it('should report an invocation once when the return hook runs twice', () => {
       addProbe(createProbe())
 
@@ -1242,9 +1238,8 @@ describe('api', () => {
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
-    // Asynchronous invocations of the same function overlap and settle in any order, so the exit
-    // hooks cannot infer which invocation is exiting. Each snapshot must describe the invocation
-    // its handle came from: entry state, duration, arguments, return value, locals and exception.
+    // Overlapping async invocations settle in any order, so each snapshot must describe its own
+    // invocation: entry state, duration, arguments, return value, locals and exception.
     describe('overlapping invocations', () => {
       function getSnapshots(): Array<Record<string, any>> {
         return mockBatchAdd.calls.allArgs().map(([payload]) => payload.debugger.snapshot as Record<string, any>)
@@ -1259,7 +1254,6 @@ describe('api', () => {
         clock.tick(10)
         const invocationB = onEntry(probes, thisArg, { name: 'B' })!
 
-        // A entered first and also settles first: a stack of entries would pair A's exit with B.
         clock.tick(90)
         onReturn(invocationA, 'resultA', thisArg, { name: 'A' }, { local: 'localA' })
         clock.tick(910)
@@ -1334,7 +1328,6 @@ describe('api', () => {
         onReturn(invocationFirst, 'resultFirst', thisArg, { name: 'first' })
         onReturn(invocationSecond, 'resultSecond', thisArg, { name: 'second' })
 
-        // Both probes report both invocations, each with the arguments it was entered with.
         expect(
           getSnapshots().map((snapshot) => [
             String(snapshot.probe.id),
@@ -1350,9 +1343,7 @@ describe('api', () => {
       })
 
       it('should report the probes that captured an invocation when a sibling probe is sampled out', () => {
-        // sampledProbe only captures the first invocation; unsampledProbe captures both. The
-        // handle holds one entry per probe that captured, so the second invocation's exit must
-        // not be paired with the entry sampledProbe made for the first one.
+        // sampled-probe only captures the first invocation; unsampled-probe captures both.
         addProbe(createProbe({ id: 'unsampled-probe', sampling: { snapshotsPerSecond: Infinity } }))
         addProbe(createProbe({ id: 'sampled-probe', sampling: { snapshotsPerSecond: 0.5 } }))
 
@@ -1405,7 +1396,7 @@ describe('api', () => {
         clock.tick(10)
         const innerInvocation = onEntry(probes, thisArg, { depth: 1 })!
 
-        // Recursive frames exit innermost-first, which a stack of entries handled correctly too.
+        // Recursive frames exit innermost-first.
         clock.tick(10)
         onReturn(innerInvocation, 'inner', thisArg, { depth: 1 })
         clock.tick(10)
@@ -1425,8 +1416,7 @@ describe('api', () => {
 
   // TODO: Remove together with the pre-handle guard in consumeEntry (see api.ts).
   describe('instrumentation built before the invocation handle contract', () => {
-    // What the build plugin emitted before it forwarded the handle: onEntry's result is discarded,
-    // so the exit hooks are handed the probes array instead of an invocation handle.
+    // Pre-handle codegen: onEntry's result is discarded, so the exit hooks get the probes array.
     function callWithProbesArray(a: number, b: number): number {
       const probes: any = getProbes(DEFAULT_PROBE_FUNCTION_ID)
       try {
