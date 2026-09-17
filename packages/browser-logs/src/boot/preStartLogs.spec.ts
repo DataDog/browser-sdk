@@ -9,6 +9,8 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  setNavigatorDoNotTrack,
+  setNavigatorGlobalPrivacyControl,
 } from '@datadog/browser-core/test'
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
@@ -265,6 +267,67 @@ describe('preStartLogs', () => {
       await waitNextMicrotask()
 
       expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('privacy settings', () => {
+    it('does not start logs if respectPrivacySettings is enabled and navigator.doNotTrack === "1"', () => {
+      setNavigatorDoNotTrack('1')
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectPrivacySettings: true })
+
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start logs if respectPrivacySettings is enabled and navigator.globalPrivacyControl === true', () => {
+      setNavigatorGlobalPrivacyControl(true)
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectPrivacySettings: true })
+
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start logs if respectPrivacySettings is enabled and both DNT and GPC are enabled', () => {
+      setNavigatorDoNotTrack('1')
+      setNavigatorGlobalPrivacyControl(true)
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectPrivacySettings: true })
+
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+
+    it('starts logs if respectPrivacySettings is enabled but neither DNT nor GPC are enabled', async () => {
+      setNavigatorDoNotTrack('0')
+      setNavigatorGlobalPrivacyControl(false)
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectPrivacySettings: true })
+
+      await collectAsyncCalls(doStartLogsSpy, 1)
+      expect(doStartLogsSpy).toHaveBeenCalled()
+    })
+
+    it('starts logs even if navigator.doNotTrack === "1" when respectPrivacySettings is false (default)', async () => {
+      setNavigatorDoNotTrack('1')
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+
+      await collectAsyncCalls(doStartLogsSpy, 1)
+      expect(doStartLogsSpy).toHaveBeenCalled()
+    })
+
+    it('starts logs even if navigator.globalPrivacyControl === true when respectPrivacySettings is false (default)', async () => {
+      setNavigatorGlobalPrivacyControl(true)
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+
+      await collectAsyncCalls(doStartLogsSpy, 1)
+      expect(doStartLogsSpy).toHaveBeenCalled()
     })
   })
 
