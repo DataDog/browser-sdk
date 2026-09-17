@@ -141,7 +141,7 @@ class TokenRequestError extends Error {
 }
 
 async function requestToken(host: string, body: URLSearchParams, fallbackRefreshToken?: string): Promise<OAuthTokens> {
-  const response = await fetch(`https://${host}/oauth2/v1/token`, {
+  const response = await fetch(`https://${host}/api/v2/oauth2/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
