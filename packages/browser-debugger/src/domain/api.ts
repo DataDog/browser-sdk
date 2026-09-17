@@ -172,7 +172,9 @@ export function onEntry(
  * Emptying the slot keeps a snapshot to one per probe per invocation even when the generated code
  * reaches two exit hooks for the same invocation - `try { return a } finally { return b }` runs
  * both return hooks, and an exit hook that throws is followed by the generated catch block calling
- * {@link onThrow}.
+ * {@link onThrow}. The first exit wins, so a `finally` that overrides the outcome is reported with
+ * the superseded one - reporting the last exit instead would mean holding every snapshot back until
+ * the invocation can no longer produce one.
  */
 function consumeEntry(invocation: InvocationHandle, index: number): ActiveEntry | undefined {
   const entry = invocation[index]
