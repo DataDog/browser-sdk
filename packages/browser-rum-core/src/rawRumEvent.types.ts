@@ -286,6 +286,7 @@ export interface ViewCustomTimings {
 
 export interface ReplayStats {
   records_count: number
+  resources_count: number
   segments_count: number
   segments_total_raw_size: number
 }

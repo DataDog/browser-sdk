@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, noop } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
@@ -57,7 +57,7 @@ describe('trackMutation', () => {
         }
         emitStats(stats)
 
-        const mutationTracker = trackMutation(sandbox.ownerDocument, emitRecord, emitStats, scope)
+        const mutationTracker = trackMutation(sandbox.ownerDocument, emitRecord, noop, emitStats, scope)
         registerCleanupTask(() => {
           mutationTracker.stop()
         })

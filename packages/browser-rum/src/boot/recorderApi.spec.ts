@@ -675,6 +675,7 @@ describe('makeRecorderApi', () => {
 
       expect(recorderApi.getReplayStats(VIEW_ID)).toEqual({
         records_count: 0,
+        resources_count: 0,
         segments_count: 1,
         segments_total_raw_size: 0,
       })

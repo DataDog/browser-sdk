@@ -426,6 +426,7 @@ describe('record', () => {
     lifeCycle = new LifeCycle()
     recordApi = record({
       emitRecord: emitSpy,
+      emitResource: noop,
       emitStats: noop,
       configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW, ...configuration } as RumConfiguration,
       lifeCycle,
