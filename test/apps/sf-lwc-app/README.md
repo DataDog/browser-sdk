@@ -12,7 +12,7 @@ This app is Lightning-only.
 - `c:datadogInit` in the utility bar, backed by the `datadog_rum_salesforce` static resource
 
 For the canonical RUM integration setup, see
-`[packages/browser-rum-slim/src/salesforce/README.md](../../../packages/browser-rum-slim/src/salesforce/README.md)`.
+`[packages/browser-rum/src/salesforce/README.md](../../../packages/browser-rum/src/salesforce/README.md)`.
 
 ## Authentication
 

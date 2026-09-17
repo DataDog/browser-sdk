@@ -22,7 +22,7 @@ using two initialization approaches:
 - `browser_intake_datadoghq_com` CSP trusted site metadata (US1 intake endpoint)
 
 For the canonical RUM integration setup, see
-`[packages/browser-rum-slim/src/salesforce/README.md](../../../packages/browser-rum-slim/src/salesforce/README.md)`
+`[packages/browser-rum/src/salesforce/README.md](../../../packages/browser-rum/src/salesforce/README.md)`
 and `[test/apps/sf-lwc-app/README.md](../sf-lwc-app/README.md)`.
 
 ## Authentication And URLs

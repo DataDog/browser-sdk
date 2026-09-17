@@ -121,7 +121,7 @@ function authenticate(targetOrg: string, cwd: string) {
 
 function deployApp(appKeys: AppKey[]) {
   printLog('Building RUM Salesforce bundle...')
-  command`yarn workspace @datadog/browser-rum-slim build:bundle`.withLogs().run()
+  command`yarn workspace @datadog/browser-rum build:bundle`.withLogs().run()
 
   printLog('Building Salesforce apps...')
   command`yarn build:apps ${appKeys.flatMap((appKey) => ['--app', BUILD_APP_NAME[appKey]])}`
