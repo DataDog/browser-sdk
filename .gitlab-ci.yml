@@ -248,6 +248,12 @@ e2e:
     when: always
     reports:
       junit: test-report/e2e/*.xml
+  before_script:
+    - |
+      if [[ "$BROWSER" == firefox* ]]; then
+        export NO_PROXY="${NO_PROXY:+$NO_PROXY,}$POD_IP"
+        export no_proxy="${no_proxy:+$no_proxy,}$POD_IP"
+      fi
   script:
     - yarn
     - yarn build
