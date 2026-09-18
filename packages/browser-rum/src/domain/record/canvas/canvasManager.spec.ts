@@ -1,5 +1,6 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { CanvasStatus, createCanvasManager } from './canvasManager'
+import { createCanvasSnapshot } from './canvasSnapshot'
 
 describe('CanvasManager', () => {
   it('tracks whether a canvas is capturable', () => {
@@ -92,6 +93,19 @@ describe('CanvasManager', () => {
     expect(captureAttempt.isCurrent()).toBe(false)
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
     expect(canvasManager.startCaptureAttempt(canvas).lastChangeHash).toBeUndefined()
+  })
+
+  it('keeps a frozen snapshot when retrying a rejected capture', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    const snapshot = createCanvasSnapshot(canvas, 1000)!
+    canvasManager.setCanvasSnapshot(canvas, snapshot)
+
+    const captureAttempt = canvasManager.startCaptureAttempt(canvas)
+    canvasManager.retryCanvas(canvas)
+
+    expect(captureAttempt.isCurrent()).toBe(false)
+    expect(canvasManager.startCaptureAttempt(canvas).snapshot).toBe(snapshot)
   })
 
   it('waits for queued content to be consumed before capturing again', () => {

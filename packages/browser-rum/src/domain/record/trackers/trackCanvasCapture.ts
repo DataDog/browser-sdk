@@ -79,7 +79,7 @@ export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: 
     }
 
     try {
-      const snapshot = createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
+      const snapshot = captureAttempt.snapshot ?? createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
       if (!snapshot) {
         markDirtyIfCurrent(captureAttempt, canvas)
         canvasManager.discardCaptureAttempt(canvas, captureAttempt)

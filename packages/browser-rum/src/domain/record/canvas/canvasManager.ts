@@ -1,3 +1,5 @@
+import type { CanvasSnapshot } from './canvasSnapshot'
+
 export const enum CanvasStatus {
   /** The canvas is clean, meaning it has not been marked as dirty or tainted */
   Clean,
@@ -10,6 +12,8 @@ export const enum CanvasStatus {
 export interface CanvasCaptureAttempt {
   /** changeHash emitted the last time this canvas was captured, taken when the attempt started */
   readonly lastChangeHash: string | undefined
+  /** snapshot frozen while the WebGL drawing buffer was still available */
+  readonly snapshot: CanvasSnapshot | undefined
   /** false if the canvas was forgotten/reset, or if another attempt took its place */
   isCurrent: () => boolean
   /** stores the changeHash */
@@ -26,6 +30,8 @@ export interface CanvasContentMutation {
 export interface CanvasManager {
   /** Single entry point for the canvas status */
   markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
+  /** Stores a snapshot taken before a WebGL drawing buffer is discarded */
+  setCanvasSnapshot: (canvas: HTMLCanvasElement, snapshot: CanvasSnapshot) => void
   /** The node left the DOM: forget its tracking state, but not its taint */
   forgetCanvas: (canvas: HTMLCanvasElement) => void
   /** width/height were assigned: the bitmap was cleared, so drop the last hash and mark dirty */
@@ -46,6 +52,7 @@ export interface CanvasManager {
 interface CanvasTrackingState {
   capturePending: boolean
   lastChangeHash?: string
+  snapshot?: CanvasSnapshot
 }
 
 export function createCanvasManager(): CanvasManager {
@@ -70,6 +77,7 @@ export function createCanvasManager(): CanvasManager {
 
     return {
       lastChangeHash: trackingState.lastChangeHash,
+      snapshot: trackingState.snapshot,
       isCurrent,
       setLastChangeHash: (changeHash) => {
         if (isCurrent()) {
@@ -113,6 +121,10 @@ export function createCanvasManager(): CanvasManager {
       }
     },
 
+    setCanvasSnapshot: (canvas, snapshot) => {
+      getTrackingState(canvas).snapshot = snapshot
+    },
+
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
       canvasTrackingStates.delete(canvas)
@@ -147,7 +159,8 @@ export function createCanvasManager(): CanvasManager {
     },
 
     retryCanvas: (canvas) => {
-      canvasTrackingStates.delete(canvas)
+      const snapshot = getTrackingState(canvas).snapshot
+      canvasTrackingStates.set(canvas, { capturePending: false, snapshot })
       markDirty(canvas)
     },
 
