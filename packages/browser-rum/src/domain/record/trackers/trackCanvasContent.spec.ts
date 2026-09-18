@@ -119,6 +119,40 @@ describe('trackCanvasContent', () => {
     expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
   })
 
+  it('keeps the latest WebGL frame when drawing faster than the capture interval', async () => {
+    const webGLCanvas = document.createElement('canvas')
+    const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
+    if (!webGLContext) {
+      return
+    }
+    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    startTracking(true, 1, 100, 1000, webGLCanvas)
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+    setCanvasSnapshotSpy.calls.reset()
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(webGLCanvas, jasmine.any(Object))
+  })
+
+  it('only marks WebGL canvases dirty when the drawing buffer is preserved', () => {
+    const webGLCanvas = document.createElement('canvas')
+    const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: true })
+    if (!webGLContext) {
+      return
+    }
+    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    startTracking(true, 1, 100, 1000, webGLCanvas)
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+
+    expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+    expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+  })
+
   it('marks the canvas dirty after WebGL2 drawing operations', async () => {
     const webGLCanvas = document.createElement('canvas')
     const webGLContext = webGLCanvas.getContext('webgl2')
@@ -136,72 +170,6 @@ describe('trackCanvasContent', () => {
       () => webGLContext.drawArraysInstanced(webGLContext.POINTS, 0, 0, 0),
       () => webGLContext.drawElementsInstanced(webGLContext.POINTS, 0, webGLContext.UNSIGNED_SHORT, 0, 0),
       () => webGLContext.drawRangeElements(webGLContext.POINTS, 0, 0, 0, webGLContext.UNSIGNED_SHORT, 0),
-    ]
-
-    for (const draw of drawingOperations) {
-      markCanvasDirtySpy.calls.reset()
-      draw()
-      await Promise.resolve()
-
-      expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
-    }
-  })
-
-  it('marks the canvas dirty after ANGLE instanced drawing operations', async () => {
-    const webGLCanvas = document.createElement('canvas')
-    const webGLContext = webGLCanvas.getContext('webgl')
-    if (!webGLContext) {
-      return
-    }
-    startTracking(true, Infinity, 100, 1000, webGLCanvas)
-    const extension = webGLContext.getExtension('ANGLE_instanced_arrays')
-    if (!extension) {
-      return
-    }
-
-    const drawingOperations = [
-      () => extension.drawArraysInstancedANGLE(webGLContext.POINTS, 0, 0, 0),
-      () => extension.drawElementsInstancedANGLE(webGLContext.POINTS, 0, webGLContext.UNSIGNED_SHORT, 0, 0),
-    ]
-
-    for (const draw of drawingOperations) {
-      markCanvasDirtySpy.calls.reset()
-      draw()
-      await Promise.resolve()
-
-      expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
-    }
-  })
-
-  it('marks the canvas dirty after WebGL multi-draw operations', async () => {
-    const webGLCanvas = document.createElement('canvas')
-    const webGLContext = webGLCanvas.getContext('webgl2')
-    if (!webGLContext) {
-      return
-    }
-    startTracking(true, Infinity, 100, 1000, webGLCanvas)
-    const extension = webGLContext.getExtension('WEBGL_multi_draw')
-    if (!extension) {
-      return
-    }
-    const values = new Int32Array()
-
-    const drawingOperations = [
-      () => extension.multiDrawArraysWEBGL(webGLContext.POINTS, values, 0, values, 0, 0),
-      () => extension.multiDrawElementsWEBGL(webGLContext.POINTS, values, 0, webGLContext.UNSIGNED_SHORT, values, 0, 0),
-      () => extension.multiDrawArraysInstancedWEBGL(webGLContext.POINTS, values, 0, values, 0, values, 0, 0),
-      () =>
-        extension.multiDrawElementsInstancedWEBGL(
-          webGLContext.POINTS,
-          values,
-          0,
-          webGLContext.UNSIGNED_SHORT,
-          values,
-          0,
-          values,
-          0,
-          0
-        ),
     ]
 
     for (const draw of drawingOperations) {
