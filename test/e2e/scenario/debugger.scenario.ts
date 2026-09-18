@@ -92,9 +92,10 @@ async function injectInstrumentedFunction(page: Page) {
 async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
   await page.evaluate(() => {
     ;(window as any).testFunction = function testFunction(a: unknown, b: unknown) {
-      const probes = (window as any).$dd_probes('TestModule;testFunction')
+      // $dd_entry returns a handle for this invocation, stored back into the same binding.
+      let probes = (window as any).$dd_probes('TestModule;testFunction')
       if (probes) {
-        ;(window as any).$dd_entry(probes, this, { a, b })
+        probes = (window as any).$dd_entry(probes, this, { a, b })
       }
       const result = String(a) + String(b)
       const returnValue = result
@@ -108,6 +109,32 @@ async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
 }
 
 /**
+ * Injects an async instrumented function whose calls settle only when their own name is released,
+ * so a test can finish two in-flight calls in either order.
+ */
+async function injectOverlappingAsyncFunction(page: Page) {
+  await page.evaluate(() => {
+    const releases: Record<string, () => void> = {}
+    ;(window as any).releaseAsyncCall = (name: string) => releases[name]()
+    ;(window as any).asyncFunction = async function asyncFunction(name: string) {
+      let probes = (window as any).$dd_probes('TestModule;asyncFunction')
+      if (probes) {
+        probes = (window as any).$dd_entry(probes, this, { name })
+      }
+      await new Promise<void>((resolve) => {
+        releases[name] = resolve
+      })
+      const result = `result-${name}`
+      if (probes) {
+        return (window as any).$dd_return(probes, result, this, { name }, { result }) as unknown
+      }
+      return result
+    }
+  })
+  await waitForProbe(page, 'TestModule;asyncFunction')
+}
+
+/**
  * Injects an instrumented function that throws, triggering `$dd_throw`, and waits for the
  * SDK to register the corresponding probe before returning.
  */
@@ -118,9 +145,9 @@ async function injectThrowingFunction(page: Page) {
     const script = document.createElement('script')
     script.textContent = `
       window.throwingFunction = function throwingFunction(msg) {
-        const probes = window.$dd_probes('TestModule;throwingFunction')
+        let probes = window.$dd_probes('TestModule;throwingFunction')
         if (probes) {
-          window.$dd_entry(probes, this, { msg })
+          probes = window.$dd_entry(probes, this, { msg })
         }
         try {
           throw new Error(msg)
@@ -194,6 +221,43 @@ test.describe('debugger', () => {
       expect(returnCapture.locals['@return'].value).toBe('foobar')
     })
 
+  createTest('pair overlapping async invocations with their own entry state')
+    .withDebugger()
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      const probe = makeProbe({ methodName: 'asyncFunction' })
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await injectOverlappingAsyncFunction(page)
+
+      // Both calls are in flight before either settles, and settle in the order they were made.
+      await page.evaluate(async () => {
+        const first = (window as any).asyncFunction('first')
+        const second = (window as any).asyncFunction('second')
+        ;(window as any).releaseAsyncCall('first')
+        await first
+        ;(window as any).releaseAsyncCall('second')
+        await second
+      })
+
+      await flushEvents()
+
+      const captures = intakeRegistry.debuggerEvents.map(
+        (event) => (event.debugger as any).snapshot.captures as Record<string, any>
+      )
+      expect(captures.length).toBe(2)
+      expect(
+        captures.map(({ entry, return: exit }) => [
+          String(entry.arguments.name.value),
+          String(exit.arguments.name.value),
+          String(exit.locals['@return'].value),
+        ])
+      ).toEqual([
+        ['first', 'first', 'result-first'],
+        ['second', 'second', 'result-second'],
+      ])
+    })
+
   createTest('capture exception in snapshot on throw')
     .withDebugger()
     .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
@@ -254,10 +318,10 @@ test.describe('debugger', () => {
           }
 
           const probes = (window as any).$dd_probes('TestModule;throwingFunction')
-          ;(window as any).$dd_entry(probes, window, { msg: 'debug IDs' })
+          const invocation = (window as any).$dd_entry(probes, window, { msg: 'debug IDs' })
           const error = new Error('debug IDs')
           error.stack = `Error: debug IDs\n    at first (${firstUrl}:10:2)\n    at second (${secondUrl}:20:3)`
-          ;(window as any).$dd_throw(probes, error, window, { msg: 'debug IDs' })
+          ;(window as any).$dd_throw(invocation, error, window, { msg: 'debug IDs' })
         },
         { firstUrl, secondUrl }
       )
@@ -292,8 +356,8 @@ test.describe('debugger', () => {
             event.preventDefault()
             const probes = (window as any).$dd_probes('TestModule;throwingFunction')
             if (probes && event.error) {
-              ;(window as any).$dd_entry(probes, window, {})
-              ;(window as any).$dd_throw(probes, event.error, window, {})
+              const invocation = (window as any).$dd_entry(probes, window, {})
+              ;(window as any).$dd_throw(invocation, event.error, window, {})
             }
           },
           { once: true }

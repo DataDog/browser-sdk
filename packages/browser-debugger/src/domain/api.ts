@@ -1,6 +1,7 @@
 import { globalObject } from '@datadog/js-core/util'
 import type { Batch, ContextValue } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
+import { monitorError } from '@datadog/js-core/monitor'
 import { buildDebugIdByUrl, buildTag, generateUUID, mergeArrays } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
@@ -14,7 +15,7 @@ import {
   resetProbeBudgetConfiguration,
   setProbeBudgetConfiguration,
 } from './probes'
-import type { ActiveEntry } from './activeEntries'
+import type { ActiveEntry, InvocationHandle } from './invocation'
 import type { StackFrame } from './stacktrace'
 import { captureStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
@@ -50,102 +51,134 @@ export function resetDebuggerTransport(): void {
 /**
  * Called when entering an instrumented function
  *
+ * Returns an opaque handle with this invocation's entry state, which the instrumented code hands
+ * back to {@link onReturn}/{@link onThrow}, or `undefined` when no probe captured it - the exit
+ * hooks are then skipped.
+ *
+ * Never throws: the instrumented code assigns the result over the binding holding the probes array,
+ * so an exception here would leave the exit hooks receiving that array as a handle.
+ *
  * @param probes - Array of probes for this function
  * @param self - The 'this' context
  * @param args - Function arguments
+ * @returns A handle for this invocation, or undefined if no probe captured it
  */
-export function onEntry(probes: InitializedProbe[], self: any, args: Record<string, any> = {}): void {
+export function onEntry(
+  probes: InitializedProbe[],
+  self: any,
+  args: Record<string, any> = {}
+): InvocationHandle | undefined {
   const start = performance.now()
   const captureCtx: CaptureContext = { deadline: start + SNAPSHOT_TIMEOUT_MS, timedOut: false }
+  let invocation: InvocationHandle | undefined
 
-  // TODO: A lot of repeated work performed for each probe that could be shared between probes
-  for (const probe of probes) {
-    if (!enforceProbeLifetimeBudget(probe)) {
-      continue
-    }
-
-    // Skip if sampling budget is exceeded
-    if (
-      start - probe.lastCaptureMs < probe.msBetweenSampling ||
-      !checkGlobalSnapshotBudget(start, isSnapshotProducingProbe(probe))
-    ) {
-      probe.activeEntries.push(null)
-      continue
-    }
-
-    // Update last capture time
-    probe.lastCaptureMs = start
-
-    let timestamp: number | undefined
-    let message: string | undefined
-    let entryCaptureExpressions: Record<string, any> | undefined
-    let evaluationErrors: ActiveEntry['evaluationErrors'] | undefined
-    if (probe.evaluateAt === 'ENTRY') {
-      // Build context for condition and message evaluation
-      const context = { ...args, this: self }
-
-      try {
-        // Check condition - if it fails, don't evaluate or capture anything
-        if (!evaluateProbeCondition(probe, context)) {
-          // Still push to stack so onReturn/onThrow can pop it, but mark as skipped
-          probe.activeEntries.push(null)
-          continue
-        }
-      } catch (error) {
-        if (isConditionEvaluationError(error) && checkConditionErrorBudget(probe, start)) {
-          queueDebuggerSnapshot(probe, {
-            start,
-            timestamp: timeStampNow(),
-            evaluationErrors: [error.evaluationError],
-          })
-        }
-        // Still push to stack so onReturn/onThrow can pop it, but mark as skipped
-        probe.activeEntries.push(null)
+  try {
+    // TODO: A lot of repeated work performed for each probe that could be shared between probes
+    for (const probe of probes) {
+      if (!enforceProbeLifetimeBudget(probe)) {
         continue
       }
 
-      timestamp = timeStampNow()
-      message = evaluateProbeMessage(probe, context)
+      // Skip if sampling budget is exceeded
+      if (
+        start - probe.lastCaptureMs < probe.msBetweenSampling ||
+        !checkGlobalSnapshotBudget(start, isSnapshotProducingProbe(probe))
+      ) {
+        continue
+      }
 
-      const captureExpressionsResult = evaluateCaptureExpressions(probe, context, captureCtx)
-      if (captureExpressionsResult) {
-        entryCaptureExpressions = captureExpressionsResult.values
-        evaluationErrors = captureExpressionsResult.evaluationErrors
-        if (captureCtx.timedOut) {
-          probe.activeEntries.push(null)
+      // Update last capture time
+      probe.lastCaptureMs = start
+
+      let timestamp: number | undefined
+      let message: string | undefined
+      let entryCaptureExpressions: Record<string, any> | undefined
+      let evaluationErrors: ActiveEntry['evaluationErrors'] | undefined
+      if (probe.evaluateAt === 'ENTRY') {
+        // Build context for condition and message evaluation
+        const context = { ...args, this: self }
+
+        try {
+          // Check condition - if it fails, don't evaluate or capture anything
+          if (!evaluateProbeCondition(probe, context)) {
+            continue
+          }
+        } catch (error) {
+          if (isConditionEvaluationError(error) && checkConditionErrorBudget(probe, start)) {
+            queueDebuggerSnapshot({
+              probe,
+              start,
+              timestamp: timeStampNow(),
+              evaluationErrors: [error.evaluationError],
+            })
+          }
           continue
         }
-      }
-    }
 
-    // Special case for evaluateAt=EXIT with a condition: we only capture the return snapshot
-    const shouldCaptureEntrySnapshot = probe.captureSnapshot && (probe.evaluateAt === 'ENTRY' || !probe.condition)
-    let entry: ActiveEntry['entry'] | undefined
-    if (shouldCaptureEntrySnapshot) {
-      entry = {
-        arguments: captureArguments(args, self, probe.capture, captureCtx),
-      }
-    } else if (entryCaptureExpressions) {
-      entry = {
-        captureExpressions: entryCaptureExpressions,
-      }
-    }
+        timestamp = timeStampNow()
+        message = evaluateProbeMessage(probe, context)
 
-    probe.activeEntries.push({
-      start,
-      timestamp,
-      message,
-      evaluationErrors,
-      entry,
-      stack: isSnapshotProducingProbe(probe) ? captureStackTrace(1) : undefined,
-    })
+        const captureExpressionsResult = evaluateCaptureExpressions(probe, context, captureCtx)
+        if (captureExpressionsResult) {
+          entryCaptureExpressions = captureExpressionsResult.values
+          evaluationErrors = captureExpressionsResult.evaluationErrors
+          if (captureCtx.timedOut) {
+            continue
+          }
+        }
+      }
+
+      // Special case for evaluateAt=EXIT with a condition: we only capture the return snapshot
+      const shouldCaptureEntrySnapshot = probe.captureSnapshot && (probe.evaluateAt === 'ENTRY' || !probe.condition)
+      let entry: ActiveEntry['entry'] | undefined
+      if (shouldCaptureEntrySnapshot) {
+        entry = {
+          arguments: captureArguments(args, self, probe.capture, captureCtx),
+        }
+      } else if (entryCaptureExpressions) {
+        entry = {
+          captureExpressions: entryCaptureExpressions,
+        }
+      }
+
+      invocation ??= []
+      invocation.push({
+        probe,
+        start,
+        timestamp,
+        message,
+        evaluationErrors,
+        entry,
+        stack: isSnapshotProducingProbe(probe) ? captureStackTrace(1) : undefined,
+      })
+    }
+  } catch (error) {
+    // Entries already collected are complete, so they still report.
+    monitorError(error)
   }
+
+  return invocation
+}
+
+/**
+ * Take a probe's entry state out of an invocation handle. Emptying the slot keeps one snapshot per
+ * probe per invocation when a function reaches two exit hooks (`try { return a } finally
+ * { return b }`, or an exit hook that throws into the generated catch): the first exit wins.
+ */
+function consumeEntry(invocation: InvocationHandle, index: number): ActiveEntry | undefined {
+  const entry = invocation[index]
+  // TODO: Remove once every instrumented bundle forwards the handle; older ones pass the probes array.
+  if (!entry?.probe) {
+    return undefined
+  }
+  invocation[index] = undefined
+  return entry.probe.discarded ? undefined : entry
 }
 
 /**
  * Called when exiting an instrumented function normally
  *
- * @param probes - Array of probes for this function
+ * @param invocation - Handle returned by {@link onEntry} for the invocation that is exiting
  * @param value - Return value
  * @param self - The 'this' context
  * @param args - Function arguments
@@ -153,7 +186,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
  * @returns The return value (passed through)
  */
 export function onReturn(
-  probes: InitializedProbe[],
+  invocation: InvocationHandle,
   value: any,
   self: any,
   args: Record<string, any> = {},
@@ -163,11 +196,12 @@ export function onReturn(
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
-  for (const probe of probes) {
-    const result = probe.activeEntries.pop()
+  for (let i = 0; i < invocation.length; i++) {
+    const result = consumeEntry(invocation, i)
     if (!result) {
       continue
     }
+    const probe = result.probe
 
     result.duration = end - result.start
 
@@ -188,7 +222,8 @@ export function onReturn(
         }
       } catch (error) {
         if (isConditionEvaluationError(error) && checkConditionErrorBudget(probe, end)) {
-          queueDebuggerSnapshot(probe, {
+          queueDebuggerSnapshot({
+            probe,
             start: result.start,
             timestamp: result.timestamp,
             duration: result.duration,
@@ -226,7 +261,7 @@ export function onReturn(
       }
     }
 
-    queueDebuggerSnapshot(probe, result)
+    queueDebuggerSnapshot(result)
   }
 
   return value
@@ -235,21 +270,22 @@ export function onReturn(
 /**
  * Called when exiting an instrumented function via exception
  *
- * @param probes - Array of probes for this function
+ * @param invocation - Handle returned by {@link onEntry} for the invocation that is exiting
  * @param error - The thrown value
  * @param self - The 'this' context
  * @param args - Function arguments
  */
-export function onThrow(probes: InitializedProbe[], error: unknown, self: any, args: Record<string, any> = {}): void {
+export function onThrow(invocation: InvocationHandle, error: unknown, self: any, args: Record<string, any> = {}): void {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
-  for (const probe of probes) {
-    const result = probe.activeEntries.pop()
+  for (let i = 0; i < invocation.length; i++) {
+    const result = consumeEntry(invocation, i)
     if (!result) {
       continue
     }
+    const probe = result.probe
 
     result.duration = end - result.start
     result.exception = error
@@ -270,7 +306,8 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
         }
       } catch (error) {
         if (isConditionEvaluationError(error) && checkConditionErrorBudget(probe, end)) {
-          queueDebuggerSnapshot(probe, {
+          queueDebuggerSnapshot({
+            probe,
             start: result.start,
             timestamp: result.timestamp,
             duration: result.duration,
@@ -312,17 +349,17 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
       result.return = { throwable }
     }
 
-    queueDebuggerSnapshot(probe, result)
+    queueDebuggerSnapshot(result)
   }
 }
 
 /**
  * Queue a debugger snapshot for delivery via the debugger's own transport.
  *
- * @param probe - The probe that was executed
  * @param result - The result of the probe execution
  */
-function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): void {
+function queueDebuggerSnapshot(result: ActiveEntry): void {
+  const probe = result.probe
   if (!debuggerBatch || !debuggerConfig) {
     display.warn('Transport is not initialized. Make sure DD_DEBUGGER.init() has been called.')
     return
