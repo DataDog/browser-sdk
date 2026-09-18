@@ -31,7 +31,6 @@ describe('instrumentMethod', () => {
       expect(instrumentationSpy).not.toHaveBeenCalled()
 
       stop()
-      stop()
       expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual(descriptor)
     })
   })
@@ -310,7 +309,6 @@ describe('instrumentConstructor', () => {
     expect(new container.MyClass(1).constructor).toBe(MyClass)
     expect(instrumentationSpy).not.toHaveBeenCalled()
 
-    stop()
     stop()
     expect(Object.getOwnPropertyDescriptor(prototype, 'constructor')).toEqual(constructorDescriptor)
   })

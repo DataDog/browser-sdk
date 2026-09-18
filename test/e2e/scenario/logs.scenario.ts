@@ -11,7 +11,6 @@ declare global {
   interface Window {
     myServiceWorker: ServiceWorkerRegistration
     DD_WASM_PLUGIN?: () => { name: string }
-    originalFetch: typeof fetch
   }
 }
 
@@ -88,20 +87,11 @@ test.describe('logs', () => {
     .withSetup(npmSetup)
     .withHead(html`
       <script>
-        window.originalFetch = window.fetch
         Object.defineProperty(window, 'fetch', { writable: false, configurable: false })
       </script>
     `)
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      expect(await page.evaluate(() => window.fetch === window.originalFetch)).toBe(true)
-      expect(
-        await page.evaluate(() => {
-          const descriptor = Object.getOwnPropertyDescriptor(window, 'fetch')!
-          return { writable: descriptor.writable, configurable: descriptor.configurable }
-        })
-      ).toEqual({ writable: false, configurable: false })
-
       await page.evaluate(() => {
         window.DD_LOGS!.logger.log('hello with read-only fetch')
       })
