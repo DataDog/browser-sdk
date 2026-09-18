@@ -1,4 +1,5 @@
 import { globalObject } from '@datadog/js-core/util'
+import { timeStampNow } from '@datadog/js-core/time'
 import {
   collectAsyncCalls,
   registerCleanupTask,
@@ -8,12 +9,15 @@ import {
 } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
+import { ChangeType } from '../../../types'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
+import { expectPixelApprox } from '../canvas/canvasImage.specHelper'
 import type { NodeId } from '../encoding'
+import type { EmitResourceCallback, EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
+import { serializeMutations } from '../serialization'
 import type { Tracker } from './tracker.types'
-import type { CanvasCaptureCallback } from './trackCanvasCapture'
 import { trackCanvasCapture } from './trackCanvasCapture'
 
 describe('trackCanvasCapture', () => {
@@ -24,6 +28,7 @@ describe('trackCanvasCapture', () => {
   let tracker: Tracker
   let clock: Clock
   let toBlobSpy: jasmine.Spy
+  let emitRecord: jasmine.Spy<EmitRecordCallback>
   const privacyLevels = Object.values(NodePrivacyLevel).filter(
     (privacyLevel) => privacyLevel !== NodePrivacyLevel.IGNORE
   )
@@ -37,7 +42,7 @@ describe('trackCanvasCapture', () => {
     canvasManager = createCanvasManager()
     document.body.appendChild(canvas)
     toBlobSpy = spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback) => {
-      callback(new Blob([], { type: 'image/png' }))
+      callback(new Blob([], { type: 'image/webp' }))
     })
 
     registerCleanupTask(() => {
@@ -47,7 +52,7 @@ describe('trackCanvasCapture', () => {
   })
 
   function startTracking(
-    onCanvasCapture: CanvasCaptureCallback = jasmine.createSpy(),
+    emitResource: jasmine.Spy<EmitResourceCallback> = jasmine.createSpy(),
     maxImageDimension = 1000,
     hashingMaxDimension = 100
   ) {
@@ -59,12 +64,16 @@ describe('trackCanvasCapture', () => {
           maxFramesPerSecond: 1,
           hashingMaxDimension,
           maxImageDimension,
+          encodeQuality: 0.5,
         },
       },
     })
     scope.nodeIds.getOrInsert(canvas)
-    tracker = trackCanvasCapture(scope, onCanvasCapture)
-    return onCanvasCapture as jasmine.Spy<CanvasCaptureCallback>
+    emitRecord = jasmine.createSpy<EmitRecordCallback>()
+    tracker = trackCanvasCapture(scope, () => {
+      serializeMutations(timeStampNow(), [], emitRecord, emitResource, jasmine.createSpy<EmitStatsCallback>(), scope)
+    })
+    return emitResource
   }
 
   function markCanvasDirtyAndWaitForCapture() {
@@ -90,7 +99,7 @@ describe('trackCanvasCapture', () => {
     return scope.nodeIds.getOrInsert(canvas)
   }
 
-  function firstPixelOf(image: Blob) {
+  function firstPixelOf(image: Blob): Promise<number[]> {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(image)
       const element = new Image()
@@ -118,11 +127,7 @@ describe('trackCanvasCapture', () => {
     markCanvasDirtyAndWaitForCapture()
     await waitForCanvasCapture()
 
-    expect(onCanvasCapture).toHaveBeenCalledOnceWith({
-      nodeId: jasmine.any(Number),
-      changeHash: jasmine.any(String),
-      image: jasmine.any(Blob),
-    })
+    expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob), jasmine.any(Function))
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
@@ -154,6 +159,22 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
+  it('retries an unchanged canvas when its resource upload is rejected', async () => {
+    draw('red')
+    const onCanvasCapture = startTracking()
+
+    markCanvasDirtyAndWaitForCapture()
+    await collectAsyncCalls(onCanvasCapture, 1)
+    await waitForCanvasCapture()
+    const onDiscard = onCanvasCapture.calls.argsFor(0)[2] as () => void
+    onDiscard()
+
+    clock.tick(1000)
+    await collectAsyncCalls(onCanvasCapture, 2)
+
+    expect(onCanvasCapture.calls.argsFor(1)[0]).toBe(onCanvasCapture.calls.argsFor(0)[0])
+  })
+
   it('hashes and emits the same immutable canvas snapshot', async () => {
     let resolveFirstDigest!: () => void
     let isFirstDigest = true
@@ -172,7 +193,7 @@ describe('trackCanvasCapture', () => {
       return Promise.resolve(result)
     })
     replaceMockable(globalObject.crypto?.subtle, { digest: digestSpy } as unknown as SubtleCrypto)
-    // The emitted image is the assertion here, so it has to be a real PNG rather than the empty
+    // The emitted image is the assertion here, so it has to be a real WebP rather than the empty
     // blob the suite stubs in.
     toBlobSpy.and.callThrough()
 
@@ -188,15 +209,15 @@ describe('trackCanvasCapture', () => {
     await collectAsyncCalls(onCanvasCapture, 1)
     await waitForCanvasCapture()
 
-    expect(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[0].image)).toEqual([255, 0, 0, 255])
+    expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[1]), [255, 0, 0, 255])
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
     clock.tick(1000)
     await collectAsyncCalls(onCanvasCapture, 2)
 
-    expect(await firstPixelOf(onCanvasCapture.calls.argsFor(1)[0].image)).toEqual([0, 0, 255, 255])
-    expect(onCanvasCapture.calls.argsFor(1)[0].changeHash).not.toBe(onCanvasCapture.calls.argsFor(0)[0].changeHash)
+    expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(1)[1]), [0, 0, 255, 255])
+    expect(onCanvasCapture.calls.argsFor(1)[0]).not.toBe(onCanvasCapture.calls.argsFor(0)[0])
   })
 
   const nodeIdentityChanges: Array<{ description: string; change: () => NodeId | undefined }> = [
@@ -237,7 +258,11 @@ describe('trackCanvasCapture', () => {
       expect(onCanvasCapture).toHaveBeenCalledTimes(2)
       if (currentNodeId !== undefined) {
         expect(currentNodeId).not.toBe(previousNodeId)
-        expect(onCanvasCapture.calls.argsFor(1)[0].nodeId).toBe(currentNodeId)
+        expect(emitRecord.calls.argsFor(1)[0]).toEqual(
+          jasmine.objectContaining({
+            data: jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]]),
+          })
+        )
       }
     })
   })
@@ -285,10 +310,10 @@ describe('trackCanvasCapture', () => {
         isFirstBlob = false
         resolveFirstBlob = callback
       } else {
-        callback(new Blob([], { type: 'image/png' }))
+        callback(new Blob([], { type: 'image/webp' }))
       }
     })
-    return () => resolveFirstBlob(new Blob([], { type: 'image/png' }))
+    return () => resolveFirstBlob(new Blob([], { type: 'image/webp' }))
   }
 
   const nodeIdChangeCaptureStages: Array<{ description: string; deferCapture: () => () => void }> = [
@@ -314,17 +339,18 @@ describe('trackCanvasCapture', () => {
       clock.tick(1000)
       await waitForCanvasCapture()
 
-      expect(onCanvasCapture).toHaveBeenCalledOnceWith({
-        nodeId: currentNodeId,
-        changeHash: jasmine.any(String),
-        image: jasmine.any(Blob),
-      })
+      expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob), jasmine.any(Function))
+      expect(emitRecord.calls.argsFor(0)[0]).toEqual(
+        jasmine.objectContaining({
+          data: jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]]),
+        })
+      )
     })
   })
 
-  it('leaves the canvas dirty when the capture callback fails', async () => {
+  it('leaves the canvas dirty when emitting the canvas resource fails', async () => {
     draw('red')
-    const onCanvasCapture = jasmine.createSpy<CanvasCaptureCallback>().and.throwError('capture failed')
+    const onCanvasCapture = jasmine.createSpy<EmitResourceCallback>().and.throwError('resource failed')
     startTracking(onCanvasCapture)
 
     markCanvasDirtyAndWaitForCapture()
@@ -333,11 +359,11 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
-  it('does not mark the canvas as tainted when the capture callback throws a SecurityError', async () => {
+  it('does not mark the canvas as tainted when emitting the canvas resource throws a SecurityError', async () => {
     draw('red')
     const onCanvasCapture = jasmine
-      .createSpy<CanvasCaptureCallback>()
-      .and.throwError(new DOMException('capture callback failed', 'SecurityError'))
+      .createSpy<EmitResourceCallback>()
+      .and.throwError(new DOMException('resource emission failed', 'SecurityError'))
     startTracking(onCanvasCapture)
 
     markCanvasDirtyAndWaitForCapture()
@@ -419,7 +445,7 @@ describe('trackCanvasCapture', () => {
   ]
 
   maskingCaptureStages.forEach(({ description, deferCapture }) => {
-    it(`emits the snapshot taken before the canvas becomes masked ${description}`, async () => {
+    it(`does not emit a snapshot when the canvas becomes masked ${description}`, async () => {
       const resumeCapture = deferCapture()
       draw('red')
       const onCanvasCapture = startTracking()
@@ -430,12 +456,8 @@ describe('trackCanvasCapture', () => {
       resumeCapture()
       await waitForCanvasCapture()
 
-      expect(onCanvasCapture).toHaveBeenCalledOnceWith({
-        nodeId: jasmine.any(Number),
-        changeHash: jasmine.any(String),
-        image: jasmine.any(Blob),
-      })
-      expect(canvasManager.takeCapturableCanvases()).toEqual([])
+      expect(onCanvasCapture).not.toHaveBeenCalled()
+      expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
     })
   })
 

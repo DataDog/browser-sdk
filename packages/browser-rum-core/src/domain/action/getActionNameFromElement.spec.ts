@@ -272,6 +272,47 @@ describe('getActionNameFromElement', () => {
     expect(nameSource).toBe('text_content')
   })
 
+  it('extracts text from an A element', () => {
+    const { name, nameSource } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <div>ignored</div>
+        <a href="/x" target>foo</a>
+      </div>
+    `),
+      defaultConfiguration
+    )
+    expect(name).toBe('foo')
+    expect(nameSource).toBe('text_content')
+  })
+
+  it('extracts text from a role=link element', () => {
+    const { name, nameSource } = getActionNameFromElement(
+      appendElement(`
+      <div>
+        <div>ignored</div>
+        <span role="link" target>foo</span>
+      </div>
+    `),
+      defaultConfiguration
+    )
+    expect(name).toBe('foo')
+    expect(nameSource).toBe('text_content')
+  })
+
+  it('prefers an anchor text over an ancestor aria-label', () => {
+    const { name, nameSource } = getActionNameFromElement(
+      appendElement(`
+      <div aria-label="ignored">
+        <a href="/x" target>foo</a>
+      </div>
+    `),
+      defaultConfiguration
+    )
+    expect(name).toBe('foo')
+    expect(nameSource).toBe('text_content')
+  })
+
   it('limits the recursion to the 10th parent', () => {
     const { name, nameSource } = getActionNameFromElement(
       appendElement(`
