@@ -30,6 +30,7 @@ import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configu
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
+import { callPluginsMethod } from '../domain/plugins'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
@@ -80,7 +81,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration, errorStack) {
+    init(initConfiguration, publicApi, errorStack) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -100,6 +101,12 @@ export function createPreStartStrategy(
         displayAlreadyInitializedError('DD_LOGS', initConfiguration)
         return
       }
+
+      callPluginsMethod(initConfiguration.plugins, 'onInit', {
+        initConfiguration,
+        publicApi,
+        registerAssembleEventHook: hooks.assembleEvent.register,
+      })
 
       const configuration = validateAndBuildLogsConfiguration(initConfiguration)
       if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {

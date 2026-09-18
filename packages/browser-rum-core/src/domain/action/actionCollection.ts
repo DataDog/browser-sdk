@@ -57,7 +57,7 @@ export function startActionCollection(
     },
   }
 
-  hooks.assemble.register(({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
+  hooks.assembleEventDefaults.register(({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (
       eventType !== RumEventType.ERROR &&
       eventType !== RumEventType.RESOURCE &&

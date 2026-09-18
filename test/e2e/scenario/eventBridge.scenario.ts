@@ -4,7 +4,7 @@ import { generateLongTask } from '../lib/helpers/browser.ts'
 
 declare global {
   interface Window {
-    syncXhrHeaders?: string
+    syncXhrHeaders: string
   }
 }
 

@@ -1,10 +1,11 @@
 import { globalObject } from '@datadog/js-core/util'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, mockSourceCodeContext, registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
 import { display } from './display'
 import { addProbe, removeProbe, getProbes, clearProbes } from './probes'
 import type { Probe } from './probes'
 import { createProbe } from './probe.specHelper'
+import { captureStackTrace } from './stacktrace'
 
 const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
 const thisArg = {}
@@ -515,6 +516,69 @@ describe('api', () => {
       onEntry(probes, thisArg)
       onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('debug IDs', () => {
+    function makeStack(topFrameUrl: string) {
+      return `Error: context
+    at init (${topFrameUrl}:41:27)
+    at HTMLButtonElement.onclick (http://source-code-context-spec.example.com/runtime.js:107:146)`
+    }
+
+    it('should attach atomic URL and debug ID pairs at the top level', () => {
+      const entryUrl = captureStackTrace()[0].fileName
+      mockSourceCodeContext({
+        [makeStack(entryUrl)]: { service: 'entry-service', version: '1.2.3', ddDebugId: 'entry-id' },
+      })
+
+      addProbe(createProbe())
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      expect(payload._dd).toEqual({ debug_ids: [{ url: entryUrl, id: 'entry-id' }] })
+    })
+
+    it('should attach debug IDs from throwable and entry frame URLs', () => {
+      const entryUrl = captureStackTrace()[0].fileName
+      const throwableUrl = 'http://throwable.example.com/bundle.js?cache=1'
+      mockSourceCodeContext({
+        [makeStack(entryUrl)]: { ddDebugId: 'entry-id' },
+        [makeStack(throwableUrl)]: { ddDebugId: 'throwable-id' },
+      })
+
+      const error = new Error('boom')
+      error.stack = `Error: boom
+    at throwFn (${throwableUrl}:10:2)`
+
+      addProbe(createProbe())
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onThrow(probes, error, thisArg)
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      expect(payload._dd.debug_ids).toEqual(
+        jasmine.arrayWithExactContents([
+          { url: throwableUrl, id: 'throwable-id' },
+          { url: entryUrl, id: 'entry-id' },
+        ])
+      )
+    })
+
+    it('should omit _dd when no source code context matches', () => {
+      mockSourceCodeContext({
+        [makeStack('http://unrelated.example.com/bundle.js')]: { ddDebugId: 'unrelated-id' },
+      })
+
+      addProbe(createProbe())
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      expect(payload._dd).toBeUndefined()
     })
   })
 
@@ -1185,7 +1249,20 @@ describe('api', () => {
   })
 
   describe('snapshot timeout', () => {
-    it('should drop snapshot when entry capture exceeds timeout', () => {
+    function hasTimeoutMarker(value: any): boolean {
+      if (!value || typeof value !== 'object') {
+        return false
+      }
+      if (value.notCapturedReason === 'timeout') {
+        return true
+      }
+      if (Array.isArray(value)) {
+        return value.some(hasTimeoutMarker)
+      }
+      return Object.values(value).some(hasTimeoutMarker)
+    }
+
+    it('should send partial snapshot when entry capture exceeds timeout', () => {
       addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
       let callCount = 0
@@ -1205,15 +1282,13 @@ describe('api', () => {
       onEntry(probes, thisArg, { arg: deepObj })
       onReturn(probes, null, thisArg, { arg: deepObj })
 
-      // The entry capture timed out, so onEntry pushed null.
-      // onReturn still gets an active entry from its own onEntry call, but
-      // the entry snapshot is dropped. The return capture has its own timeout.
-      // Since performance.now is still returning future values, the return
-      // capture also times out and no snapshot is sent.
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(hasTimeoutMarker(snapshot.captures.entry)).toBe(true)
     })
 
-    it('should drop snapshot when return capture exceeds timeout', () => {
+    it('should send partial snapshot when return capture exceeds timeout', () => {
       addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
@@ -1234,10 +1309,13 @@ describe('api', () => {
 
       onReturn(probes, null, thisArg, { x: 1 }, { local: 'value' })
 
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(hasTimeoutMarker(snapshot.captures.return)).toBe(true)
     })
 
-    it('should drop snapshot when throw capture exceeds timeout', () => {
+    it('should send partial snapshot when throw capture exceeds timeout', () => {
       addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
@@ -1258,7 +1336,11 @@ describe('api', () => {
 
       onThrow(probes, new Error('test'), thisArg, { x: 1 })
 
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(hasTimeoutMarker(snapshot.captures.return.arguments)).toBe(true)
+      expect(snapshot.captures.return.throwable.message).toBe('test')
     })
 
     it('should not affect non-snapshot probes', () => {
@@ -1302,18 +1384,18 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      // This onEntry will time out and push null
+      // This onEntry will time out but should still push the partial snapshot entry
       onEntry(probes, thisArg, { x: 1 })
 
-      // onReturn should handle the null entry gracefully (no snapshot sent)
+      // onReturn should pop the timed-out entry and send its partial snapshot
       shouldTimeout = false
       callCount = 0
       onReturn(probes, null, thisArg, { x: 1 })
 
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
 
-    it('should skip subsequent snapshot probes after timeout but still process non-snapshot probes', () => {
+    it('should mark subsequent snapshot probes as timed out but still process non-snapshot probes', () => {
       const snapshotProbe1 = createProbe({
         id: 'snapshot-probe-1',
         sampling: { snapshotsPerSecond: 5000 },
@@ -1342,16 +1424,20 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { x: 1 })
-      onReturn(probes, null, thisArg, { x: 1 })
+      onEntry(probes, thisArg, { x: { nested: 'value' } })
+      onReturn(probes, null, thisArg, { x: { nested: 'value' } })
 
-      // The non-snapshot probe should still send, but both snapshot probes should be dropped
+      // All probes should still send, with snapshot probes marked as timed out
       const calls = mockBatchAdd.calls.allArgs()
-      expect(calls.length).toBe(1)
-      expect(calls[0][0].debugger.snapshot.probe.id).toBe(nonSnapshotProbe.id)
+      expect(calls.length).toBe(3)
+      expect(calls[1][0].debugger.snapshot.probe.id).toBe(nonSnapshotProbe.id)
+      expect(calls[2][0].debugger.snapshot.captures.entry.arguments).toEqual({
+        x: { type: 'Object', notCapturedReason: 'timeout' },
+        this: { type: 'Object', notCapturedReason: 'timeout' },
+      })
     })
 
-    it('should share deadline across probes so second snapshot probe exits immediately', () => {
+    it('should share deadline across probes and mark the second snapshot as timed out immediately', () => {
       addProbe(
         createProbe({
           id: 'timeout-probe-sharedDeadline1',
@@ -1376,11 +1462,16 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, { x: 1 })
-      onReturn(probes, null, thisArg, { x: 1 })
+      onEntry(probes, thisArg, { x: { nested: 'value' } })
+      onReturn(probes, null, thisArg, { x: { nested: 'value' } })
 
-      // Both snapshot probes share the deadline -- neither should send
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      // Both snapshot probes share the deadline, so the second probe should send a timeout marker immediately.
+      const calls = mockBatchAdd.calls.allArgs()
+      expect(calls.length).toBe(2)
+      expect(calls[1][0].debugger.snapshot.captures.entry.arguments).toEqual({
+        x: { type: 'Object', notCapturedReason: 'timeout' },
+        this: { type: 'Object', notCapturedReason: 'timeout' },
+      })
     })
   })
 

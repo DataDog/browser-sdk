@@ -61,6 +61,7 @@ function createMapsByRole(): StringIdMapsByRole {
     [StringRole.FormInput]: createStringIdMap(),
     [StringRole.Css]: createStringIdMap(),
     [StringRole.Url]: createStringIdMap(),
+    [StringRole.ResourceId]: createStringIdMap(),
   }
 }
 

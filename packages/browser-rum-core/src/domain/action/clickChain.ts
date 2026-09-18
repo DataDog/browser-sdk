@@ -2,6 +2,7 @@ import type { TimeoutId } from '@datadog/browser-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import { clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { Click } from './trackClickActions'
+import { FrustrationIgnore, shouldIgnore } from './frustrationIgnore'
 
 export interface ClickChain {
   tryAppend: (click: Click) => boolean
@@ -51,10 +52,7 @@ export function createClickChain(firstClick: Click, onFinalize: (clicks: Click[]
         return false
       }
 
-      if (
-        bufferedClicks.length > 0 &&
-        !areEventsSimilar(bufferedClicks[bufferedClicks.length - 1].event, click.event)
-      ) {
+      if (bufferedClicks.length > 0 && !areClicksSimilar(bufferedClicks[bufferedClicks.length - 1], click)) {
         dontAcceptMoreClick()
         return false
       }
@@ -69,13 +67,15 @@ export function createClickChain(firstClick: Click, onFinalize: (clicks: Click[]
 }
 
 /**
- * Checks whether two events are similar by comparing their target, position and timestamp
+ * Checks whether two clicks are similar by comparing their rage ignore state, target, position and timestamp
  */
-function areEventsSimilar(first: MouseEvent, second: MouseEvent) {
+function areClicksSimilar(first: Click, second: Click) {
   return (
-    first.target === second.target &&
-    mouseEventDistance(first, second) <= MAX_DISTANCE_BETWEEN_CLICKS &&
-    first.timeStamp - second.timeStamp <= MAX_DURATION_BETWEEN_CLICKS
+    shouldIgnore(first.ignore, FrustrationIgnore.RAGE_CLICK) ===
+      shouldIgnore(second.ignore, FrustrationIgnore.RAGE_CLICK) &&
+    first.event.target === second.event.target &&
+    mouseEventDistance(first.event, second.event) <= MAX_DISTANCE_BETWEEN_CLICKS &&
+    first.event.timeStamp - second.event.timeStamp <= MAX_DURATION_BETWEEN_CLICKS
   )
 }
 

@@ -119,6 +119,7 @@ class TestBuilder {
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
   private mockClock = false
+  private allowWasmUnsafeEval = false
   private extension: {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
@@ -184,6 +185,11 @@ class TestBuilder {
 
   withMockClock() {
     this.mockClock = true
+    return this
+  }
+
+  withWasmUnsafeEval() {
+    this.allowWasmUnsafeEval = true
     return this
   }
 
@@ -331,6 +337,7 @@ class TestBuilder {
       worker: this.worker,
       callerLocation: this.callerLocation,
       mockClock: this.mockClock,
+      allowWasmUnsafeEval: this.allowWasmUnsafeEval,
       salesforceApp: this.salesforceApp,
       shopifyApp: this.shopifyApp,
     }

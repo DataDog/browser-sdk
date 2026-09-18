@@ -1,4 +1,5 @@
 import type { ClocksState } from '@datadog/js-core/time'
+import { combine } from '@datadog/js-core/util'
 import type { Context, Observable, BufferedData } from '@datadog/browser-core'
 import { noop, ErrorSource, BufferedDataType } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
@@ -27,15 +28,17 @@ export function startRuntimeErrorCollection(
     if (bufferedData.type === BufferedDataType.RUNTIME_ERROR) {
       const error = bufferedData.data
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: {
-          message: error.message,
-          date: error.startClocks.timeStamp,
-          error: createErrorFieldFromRawError(error),
-          _dd: { debug_ids: error.debugIds },
-          origin: ErrorSource.SOURCE,
-          status: StatusType.error,
-        },
-        messageContext: error.context,
+        rawLogsEvent: combine(
+          {
+            message: error.message,
+            date: error.startClocks.timeStamp,
+            error: createErrorFieldFromRawError(error),
+            _dd: { debug_ids: error.debugIds },
+            origin: ErrorSource.SOURCE,
+            status: StatusType.error,
+          },
+          error.context
+        ),
       })
     }
   })
