@@ -7,7 +7,8 @@ import { INTAKE_SITE_US1 } from './intakeSites'
 declare const __BUILD_ENV__SDK_VERSION__: string
 
 /** The Datadog backend track a request is being sent to. */
-export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation' | 'debugger'
+export type TrackType =
+  'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation' | 'flagtelemetry' | 'debugger'
 
 /** The mechanism used to send a request to an intake endpoint. */
 export type TransportApiType =

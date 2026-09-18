@@ -20,3 +20,15 @@ export type {
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
 } from './telemetryEvent.types'
+export {
+  FeatureFlagsTelemetryConfigurationSource,
+  FeatureFlagsTelemetryErrorCode,
+  FeatureFlagsTelemetryEventType,
+  FeatureFlagsTelemetryProviderStatus,
+  startFeatureFlagsTelemetry,
+} from './featureFlagsTelemetry'
+export type {
+  FeatureFlagsLifecycleEvent,
+  FeatureFlagsTelemetry,
+  FeatureFlagsTelemetryOptions,
+} from './featureFlagsTelemetry'
