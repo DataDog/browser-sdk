@@ -16,6 +16,92 @@ describe('instrumentMethod', () => {
     expect(object.method).not.toBe(original)
   })
 
+  ;[false, true].forEach((configurable) => {
+    it(`skips a non-writable method with configurable: ${configurable}`, () => {
+      const object = { method: () => 1 }
+      Object.defineProperty(object, 'method', { writable: false, configurable })
+      const descriptor = Object.getOwnPropertyDescriptor(object, 'method')!
+      const instrumentationSpy = jasmine.createSpy()
+
+      const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
+      registerCleanupTask(stop)
+
+      expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual(descriptor)
+      expect(object.method()).toBe(1)
+      expect(instrumentationSpy).not.toHaveBeenCalled()
+
+      stop()
+      stop()
+      expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual(descriptor)
+    })
+  })
+
+  it('skips a getter-only method', () => {
+    const original = () => 1
+    const object = {
+      get method() {
+        return original
+      },
+    }
+    const descriptor = Object.getOwnPropertyDescriptor(object, 'method')!
+    const instrumentationSpy = jasmine.createSpy()
+
+    const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
+    registerCleanupTask(stop)
+
+    expect(object.method).toBe(original)
+    expect(object.method()).toBe(1)
+    expect(instrumentationSpy).not.toHaveBeenCalled()
+    expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual(descriptor)
+
+    stop()
+    expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual(descriptor)
+  })
+
+  it('instruments a writable, non-configurable method', () => {
+    const object = { method: () => 1 }
+    Object.defineProperty(object, 'method', { configurable: false })
+    const descriptor = Object.getOwnPropertyDescriptor(object, 'method')!
+    const instrumentationSpy = jasmine.createSpy()
+
+    const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
+    registerCleanupTask(stop)
+
+    expect(object.method()).toBe(1)
+    expect(instrumentationSpy).toHaveBeenCalledTimes(1)
+    expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual({ ...descriptor, value: object.method })
+
+    stop()
+    expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual(descriptor)
+  })
+
+  it('instruments a non-configurable accessor through its setter', () => {
+    const original = () => 1
+    let method = original
+    const object = {
+      get method() {
+        return method
+      },
+      set method(value: () => number) {
+        method = value
+      },
+    }
+    Object.defineProperty(object, 'method', { configurable: false })
+    const descriptor = Object.getOwnPropertyDescriptor(object, 'method')!
+    const instrumentationSpy = jasmine.createSpy()
+
+    const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
+    registerCleanupTask(stop)
+
+    expect(object.method()).toBe(1)
+    expect(instrumentationSpy).toHaveBeenCalledTimes(1)
+    expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual(descriptor)
+
+    stop()
+    expect(object.method).toBe(original)
+    expect(Object.getOwnPropertyDescriptor(object, 'method')).toEqual(descriptor)
+  })
+
   it('calls the instrumentation before the original method', () => {
     const originalSpy = jasmine.createSpy()
     const instrumentationSpy = jasmine.createSpy()
@@ -205,6 +291,28 @@ describe('instrumentConstructor', () => {
 
   beforeEach(() => {
     MyClass = createMyClassFixture().MyClass
+  })
+
+  it('skips a non-writable constructor without changing its prototype', () => {
+    const container = { MyClass }
+    Object.defineProperty(container, 'MyClass', { writable: false, configurable: false })
+    const descriptor = Object.getOwnPropertyDescriptor(container, 'MyClass')!
+    const prototype = MyClass.prototype
+    const constructorDescriptor = Object.getOwnPropertyDescriptor(prototype, 'constructor')!
+    const instrumentationSpy = jasmine.createSpy()
+
+    const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
+    registerCleanupTask(stop)
+
+    expect(Object.getOwnPropertyDescriptor(container, 'MyClass')).toEqual(descriptor)
+    expect(container.MyClass.prototype).toBe(prototype)
+    expect(Object.getOwnPropertyDescriptor(prototype, 'constructor')).toEqual(constructorDescriptor)
+    expect(new container.MyClass(1).constructor).toBe(MyClass)
+    expect(instrumentationSpy).not.toHaveBeenCalled()
+
+    stop()
+    stop()
+    expect(Object.getOwnPropertyDescriptor(prototype, 'constructor')).toEqual(constructorDescriptor)
   })
 
   it('calls the instrumentation when the constructor is called with new', () => {

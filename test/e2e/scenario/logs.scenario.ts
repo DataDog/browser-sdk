@@ -2,7 +2,7 @@ import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-lo
 import { ONE_HOUR, ONE_MINUTE } from '@datadog/js-core/time'
 import { SESSION_EXPIRATION_DELAY } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'
-import { createTest, createWorker, npmSetup } from '../lib/framework'
+import { createTest, createWorker, html, npmSetup } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
@@ -11,6 +11,7 @@ declare global {
   interface Window {
     myServiceWorker: ServiceWorkerRegistration
     DD_WASM_PLUGIN?: () => { name: string }
+    originalFetch: typeof fetch
   }
 }
 
@@ -81,6 +82,32 @@ test.describe('logs', () => {
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].message).toBe('hello')
+    })
+
+  createTest('send logs with read-only fetch')
+    .withSetup(npmSetup)
+    .withHead(html`
+      <script>
+        window.originalFetch = window.fetch
+        Object.defineProperty(window, 'fetch', { writable: false, configurable: false })
+      </script>
+    `)
+    .withLogs()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      expect(await page.evaluate(() => window.fetch === window.originalFetch)).toBe(true)
+      expect(
+        await page.evaluate(() => {
+          const descriptor = Object.getOwnPropertyDescriptor(window, 'fetch')!
+          return { writable: descriptor.writable, configurable: descriptor.configurable }
+        })
+      ).toEqual({ writable: false, configurable: false })
+
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.log('hello with read-only fetch')
+      })
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('hello with read-only fetch')
     })
 
   createTest('display logs in the console')
