@@ -3,6 +3,7 @@ import { printLog, printError, runMain, fetchHandlingError } from './lib/executi
 import { command } from './lib/command.ts'
 
 const REPOSITORY = process.env.APP
+const REPOSITORY_OWNER = 'DataDog'
 const DEVFLOW_AUTH_TOKEN = command`authanywhere --audience sdm --raw`.run()
 const DEVFLOW_API_URL = 'https://devflow-api.us1.ddbuild.io/internal/api/v2/devflow/execute/'
 const FEEDBACK_LEVEL_FAILURE = 'FEEDBACK_LEVEL_FAILURE'
@@ -77,6 +78,7 @@ function getDevFlowURLSearchParams(options: Record<string, string>): string {
     throw new Error('APP environment variable is required')
   }
   const params = new URLSearchParams({
+    owner: REPOSITORY_OWNER,
     repository: REPOSITORY,
     ...options,
   })
