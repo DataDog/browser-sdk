@@ -113,21 +113,27 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry, sdkName)
-        const sessionManagerPromise = canUseEventBridge()
-          ? startSessionManagerStub()
-          : mockable(startSessionManager)(configuration, trackingConsentState)
+        const onSessionManagerReady = (newSessionManager: SessionManager) => {
+          sessionManager = newSessionManager
+          startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
+          addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
+          tryStartLogs()
+        }
 
-        void sessionManagerPromise
-          .then((newSessionManager) => {
-            if (!newSessionManager) {
-              return
-            }
-            sessionManager = newSessionManager
-            startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
-            addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
-            tryStartLogs()
-          })
-          .catch(monitorError)
+        if (canUseEventBridge()) {
+          // When using the event bridge, the session manager is a stub, so it can be created
+          // synchronously and logs can start within the `init()` call, instead of being buffered
+          // until the session is resolved.
+          onSessionManagerReady(startSessionManagerStub())
+        } else {
+          void mockable(startSessionManager)(configuration, trackingConsentState)
+            .then((newSessionManager) => {
+              if (newSessionManager) {
+                onSessionManagerReady(newSessionManager)
+              }
+            })
+            .catch(monitorError)
+        }
       })
     },
 
