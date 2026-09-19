@@ -19,7 +19,7 @@ jobs:
           echo "Publishing only CHANGELOG.md"
 
       - name: Publish Markdown to Confluence
-        uses: markdown-confluence/publish-action@7767a0a7f438bb1497ee7ffd7d3d685b81dfe700 # v5
+        uses: markdown-confluence/publish-action@7710a0f79367aca135b8c892a7b717eac1a4c848 # v7
         with:
           confluenceBaseUrl: ${{ secrets.DATADOG_CONFLUENCE_BASE_URL }}
           confluenceParentId: ${{ secrets.CONFLUENCE_PARENT_ID }}
