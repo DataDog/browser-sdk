@@ -47,6 +47,7 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
   [RumEventType.ACTION]: {
     ...COMMON_MODIFIABLE_FIELD_PATHS,
     'action.target.name': 'string',
+    'action.target.attributes': 'object',
   },
   [RumEventType.LONG_TASK]: {
     ...COMMON_MODIFIABLE_FIELD_PATHS,

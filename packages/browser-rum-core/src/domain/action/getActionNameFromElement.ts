@@ -14,10 +14,12 @@ import type { ActionName } from './actionNameConstants'
 export function getActionNameFromElement(
   element: Element,
   rumConfiguration: RumConfiguration,
-  nodePrivacyLevel: NodePrivacyLevel = NodePrivacyLevel.ALLOW
+  nodePrivacyLevel: NodePrivacyLevel = NodePrivacyLevel.ALLOW,
+  // Accepts an optional, caller-provided cache so callers that already walked this element's
+  // ancestors for privacy levels (ex: computeClickActionBase, via getClickTargetAttributes) can
+  // share those results instead of re-walking them from scratch.
+  nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
 ): ActionName {
-  const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
-
   const { actionNameAttribute: userProgrammaticAttribute } = rumConfiguration
 
   // Proceed to get the action name in two steps:

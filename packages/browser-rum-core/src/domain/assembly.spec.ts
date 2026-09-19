@@ -326,6 +326,30 @@ describe('rum assembly', () => {
         })
       })
 
+      describe('action target attributes on Action events', () => {
+        it('should allow modification and deletion of action.target.attributes', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                const attributes = (event.action!.target as { attributes: Record<string, string> }).attributes
+                attributes.href = 'REDACTED'
+                delete attributes['aria-label']
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
+              action: { target: { attributes: { href: '/orders/8842?token=secret', 'aria-label': 'Close' } } },
+            }),
+          })
+
+          const attributes = (serverRumEvents[0] as any).action.target.attributes
+          expect(attributes.href).toBe('REDACTED')
+          expect(attributes['aria-label']).toBeUndefined()
+        })
+      })
+
       describe('resource headers on Resource events', () => {
         it('should allow modification of resource request and response headers', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({

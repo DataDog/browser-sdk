@@ -115,7 +115,12 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
       date: action.startClocks.timeStamp,
       action: {
         id: action.id,
-        target: { name: action.name },
+        target: {
+          name: action.name,
+          ...(isAuto && action.target?.composedPathAttributes
+            ? { attributes: action.target.composedPathAttributes }
+            : {}),
+        },
         type: action.type,
         ...(loadingTime !== undefined && { loading_time: loadingTime }),
         ...(action.counts && {
