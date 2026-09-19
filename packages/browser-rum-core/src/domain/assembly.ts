@@ -24,6 +24,7 @@ const COMMON_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
 const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], ModifiableFieldPaths> = {
   [RumEventType.VIEW]: {
     ...COMMON_MODIFIABLE_FIELD_PATHS,
+    'synthetics.lighthouse': 'object',
     'view.performance.lcp.resource_url': 'string',
   },
   [RumEventType.ERROR]: {
