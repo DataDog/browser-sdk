@@ -168,6 +168,12 @@ describe('preStartRum', () => {
         await collectAsyncCalls(doStartRumSpy, 1)
         expect(doStartRumSpy).toHaveBeenCalled()
       })
+
+      it('should start RUM synchronously', () => {
+        mockEventBridge()
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        expect(doStartRumSpy).toHaveBeenCalled()
+      })
     })
   })
 
