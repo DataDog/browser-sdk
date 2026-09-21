@@ -114,6 +114,11 @@ describe('preStartLogs', () => {
         expect(displaySpy).not.toHaveBeenCalled()
         expect(doStartLogsSpy).toHaveBeenCalled()
       })
+
+      it('should start logs synchronously', () => {
+        strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
+        expect(doStartLogsSpy).toHaveBeenCalled()
+      })
     })
   })
 
