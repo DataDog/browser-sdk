@@ -148,13 +148,9 @@ async function measureServerLatency(browser: Browser): Promise<number> {
   // remotely, so this latency can be significant.
   const { datadogHttpApi: server } = await getTestServers()
   const page = await browser.newPage()
-  try {
-    const start = Date.now()
-    await page.goto(`${server.origin}?ddforwardSubdomain=quota`)
-    return Date.now() - start
-  } finally {
-    await page.close()
-  }
+  const start = Date.now()
+  await page.goto(server.origin)
+  return Date.now() - start
 }
 
 function createIdleWaiter() {
