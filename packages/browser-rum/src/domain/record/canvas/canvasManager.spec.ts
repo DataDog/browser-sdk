@@ -153,13 +153,15 @@ describe('CanvasManager', () => {
     expect(canvasManager.startCaptureAttempt(canvas).snapshot).toBe(currentSnapshot)
   })
 
-  it('forgets the tracking state when a canvas is forgotten', () => {
+  it('forgets per-node capture state while keeping the latest snapshot', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
+    const snapshot = createCanvasSnapshot(canvas, 1000)!
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     const captureAttempt = canvasManager.startCaptureAttempt(canvas)
     captureAttempt.setLastChangeHash('hash')
+    canvasManager.setCanvasSnapshot(canvas, snapshot)
 
     canvasManager.forgetCanvas(canvas)
 
@@ -169,6 +171,7 @@ describe('CanvasManager', () => {
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     const nextCaptureAttempt = canvasManager.startCaptureAttempt(canvas)
     expect(nextCaptureAttempt.lastChangeHash).toBeUndefined()
+    expect(nextCaptureAttempt.snapshot).toBe(snapshot)
     canvasManager.discardCaptureAttempt(canvas, nextCaptureAttempt)
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })

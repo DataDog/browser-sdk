@@ -148,6 +148,29 @@ describe('trackCanvasContent', () => {
     expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(2)
   })
 
+  it('takes a WebGL snapshot immediately after the canvas is resized', async () => {
+    const webGLCanvas = document.createElement('canvas')
+    const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
+    if (!webGLContext) {
+      return
+    }
+    let now = 1_000
+    spyOn(performance, 'now').and.callFake(() => now)
+    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    startTracking(true, 1, 100, 1000, webGLCanvas)
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
+
+    now = 1_001
+    webGLCanvas.width += 1
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(2)
+  })
+
   it('only marks WebGL canvases dirty when the drawing buffer is preserved', () => {
     const webGLCanvas = document.createElement('canvas')
     const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: true })

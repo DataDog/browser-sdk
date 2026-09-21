@@ -34,7 +34,7 @@ export interface CanvasManager {
   setCanvasSnapshot: (canvas: HTMLCanvasElement, snapshot: CanvasSnapshot) => void
   /** Invalidates the current bitmap state as soon as a size mutation is observed */
   prepareCanvasBitmapReset: (canvas: HTMLCanvasElement) => void
-  /** The node left the DOM: forget its tracking state, but not its taint */
+  /** The node left the DOM: reset its per-node state, but preserve its latest snapshot and taint */
   forgetCanvas: (canvas: HTMLCanvasElement) => void
   /** width/height were assigned: the bitmap was cleared, so drop the last hash and mark dirty */
   resetCanvasBitmap: (canvas: HTMLCanvasElement) => void
@@ -138,7 +138,10 @@ export function createCanvasManager(): CanvasManager {
 
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
-      canvasTrackingStates.delete(canvas)
+      const snapshot = canvasTrackingStates.get(canvas)?.snapshot
+      // A reinserted WebGL canvas may no longer have a readable drawing buffer.
+      // Keep its latest snapshot while invalidating its capture attempt and per-node hash.
+      canvasTrackingStates.set(canvas, { capturePending: false, streamId, snapshot })
     },
 
     resetCanvasBitmap: (canvas) => {

@@ -42,7 +42,13 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
   const webGLSnapshotInterval = ONE_SECOND / configuration.maxFramesPerSecond
   const webGLTrackingStates = new WeakMap<
     HTMLCanvasElement,
-    { nextSnapshotTime: number; preservesDrawingBuffer: boolean; snapshotScheduled: boolean }
+    {
+      canvasHeight: number
+      canvasWidth: number
+      nextSnapshotTime: number
+      preservesDrawingBuffer: boolean
+      snapshotScheduled: boolean
+    }
   >()
   let stopped = false
 
@@ -61,6 +67,8 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
     let trackingState = webGLTrackingStates.get(canvas)
     if (!trackingState) {
       trackingState = {
+        canvasHeight: canvas.height,
+        canvasWidth: canvas.width,
         nextSnapshotTime: -Infinity,
         preservesDrawingBuffer: context.getContextAttributes()?.preserveDrawingBuffer === true,
         snapshotScheduled: false,
@@ -71,6 +79,12 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
     if (trackingState.preservesDrawingBuffer) {
       markCanvasDirty(canvas)
       return
+    }
+    if (trackingState.canvasWidth !== canvas.width || trackingState.canvasHeight !== canvas.height) {
+      // Resizing resets the bitmap, so the first draw for its new dimensions must bypass the previous bitmap's cooldown.
+      trackingState.canvasWidth = canvas.width
+      trackingState.canvasHeight = canvas.height
+      trackingState.nextSnapshotTime = -Infinity
     }
     const now = performance.now()
     if (trackingState.snapshotScheduled || now < trackingState.nextSnapshotTime) {
