@@ -52,7 +52,7 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
 
   const trackWebGLDraw = (context: WebGLRenderingContext | WebGL2RenderingContext) => {
     const canvas = context.canvas
-    if (!(canvas instanceof HTMLCanvasElement) || scope.nodeIds.get(canvas) === undefined) {
+    if (!(canvas instanceof HTMLCanvasElement)) {
       return
     }
 
@@ -84,7 +84,7 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
         const snapshot = createCanvasSnapshot(canvas, configuration.maxImageDimension)
         if (snapshot) {
           scope.canvasManager.setCanvasSnapshot(canvas, snapshot)
-          scope.canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+          markCanvasDirty(canvas)
         }
       } catch (error) {
         scope.canvasManager.markCanvas(

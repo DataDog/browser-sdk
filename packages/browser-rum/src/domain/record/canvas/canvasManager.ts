@@ -32,6 +32,8 @@ export interface CanvasManager {
   markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
   /** Stores a snapshot taken before a WebGL drawing buffer is discarded */
   setCanvasSnapshot: (canvas: HTMLCanvasElement, snapshot: CanvasSnapshot) => void
+  /** Invalidates the current bitmap state as soon as a size mutation is observed */
+  prepareCanvasBitmapReset: (canvas: HTMLCanvasElement) => void
   /** The node left the DOM: forget its tracking state, but not its taint */
   forgetCanvas: (canvas: HTMLCanvasElement) => void
   /** width/height were assigned: the bitmap was cleared, so drop the last hash and mark dirty */
@@ -45,26 +47,30 @@ export interface CanvasManager {
   retryCanvas: (canvas: HTMLCanvasElement) => void
   addCanvasContentMutation: (mutation: CanvasContentMutation) => void
   takeCanvasContentMutations: () => CanvasContentMutation[]
-  /** New record stream: discards the per-stream tracking states (not the taint) */
+  /** New record stream: resets per-stream state while preserving snapshots and taint */
   reset: () => void
 }
 
 interface CanvasTrackingState {
   capturePending: boolean
+  streamId: number
   lastChangeHash?: string
   snapshot?: CanvasSnapshot
+  bitmapResetPending?: boolean
 }
 
 export function createCanvasManager(): CanvasManager {
   const dirtyCanvases = new Set<HTMLCanvasElement>()
   const taintedCanvases = new WeakSet<HTMLCanvasElement>()
   let canvasContentMutations: CanvasContentMutation[] = []
-  let canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
+  const canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
+  let streamId = 0
 
   function getTrackingState(canvas: HTMLCanvasElement): CanvasTrackingState {
     let trackingState = canvasTrackingStates.get(canvas)
-    if (!trackingState) {
-      trackingState = { capturePending: false }
+    if (trackingState?.streamId !== streamId) {
+      // Preserve the latest WebGL snapshot so the canvas does not start empty in the new stream.
+      trackingState = { capturePending: false, streamId, snapshot: trackingState?.snapshot }
       canvasTrackingStates.set(canvas, trackingState)
     }
     return trackingState
@@ -73,7 +79,7 @@ export function createCanvasManager(): CanvasManager {
   function startCaptureAttempt(canvas: HTMLCanvasElement): CanvasCaptureAttempt {
     const trackingState = getTrackingState(canvas)
     trackingState.capturePending = true
-    const isCurrent = () => canvasTrackingStates.get(canvas) === trackingState
+    const isCurrent = () => canvasTrackingStates.get(canvas) === trackingState && trackingState.streamId === streamId
 
     return {
       lastChangeHash: trackingState.lastChangeHash,
@@ -125,13 +131,24 @@ export function createCanvasManager(): CanvasManager {
       getTrackingState(canvas).snapshot = snapshot
     },
 
+    prepareCanvasBitmapReset: (canvas) => {
+      // Mutation serialization is delayed, so invalidate the old bitmap state as soon as the resize is observed.
+      canvasTrackingStates.set(canvas, { bitmapResetPending: true, capturePending: false, streamId })
+    },
+
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
       canvasTrackingStates.delete(canvas)
     },
 
     resetCanvasBitmap: (canvas) => {
-      canvasTrackingStates.delete(canvas)
+      const trackingState = canvasTrackingStates.get(canvas)
+      if (trackingState?.streamId === streamId && trackingState.bitmapResetPending) {
+        // Keep a WebGL snapshot that may have been captured after the resize was observed.
+        trackingState.bitmapResetPending = false
+      } else {
+        canvasTrackingStates.delete(canvas)
+      }
       markDirty(canvas)
     },
 
@@ -160,7 +177,7 @@ export function createCanvasManager(): CanvasManager {
 
     retryCanvas: (canvas) => {
       const snapshot = getTrackingState(canvas).snapshot
-      canvasTrackingStates.set(canvas, { capturePending: false, snapshot })
+      canvasTrackingStates.set(canvas, { capturePending: false, snapshot, streamId })
       markDirty(canvas)
     },
 
@@ -182,7 +199,7 @@ export function createCanvasManager(): CanvasManager {
     reset: () => {
       dirtyCanvases.clear()
       canvasContentMutations = []
-      canvasTrackingStates = new WeakMap()
+      streamId += 1
     },
   }
 }

@@ -267,13 +267,11 @@ function processAttributeMutations(
     const tagName = normalizedTagName(node)
 
     const change: RoleAnnotatedAttributeChange = [nodeId]
+    if (isCanvasElement(node) && Array.from(attributeNames.keys()).some(isCanvasSizeAttribute)) {
+      // Assigning either dimension resets the bitmap even when the attribute value does not change.
+      transaction.scope.canvasManager.resetCanvasBitmap(node)
+    }
     for (const [domAttributeName, oldValue] of attributeNames) {
-      if (isCanvasElement(node) && isCanvasSizeAttribute(domAttributeName)) {
-        // Assigning either dimension resets the bitmap even when the attribute value does not change,
-        // so this must run before the "no change since the last snapshot" check below.
-        transaction.scope.canvasManager.resetCanvasBitmap(node)
-      }
-
       if (node.getAttribute(domAttributeName) === oldValue) {
         continue // No change since the last snapshot.
       }

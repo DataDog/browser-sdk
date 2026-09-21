@@ -4,6 +4,7 @@ import { timeStampNow } from '@datadog/js-core/time'
 import type { RumMutationRecord } from '@datadog/browser-rum-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import type { RecordingScope } from '../recordingScope'
+import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
 import { createMutationBatch } from '../mutationBatch'
 import type { EmitRecordCallback, EmitResourceCallback, EmitStatsCallback } from '../record.types'
 import { serializeMutations } from '../serialization'
@@ -27,17 +28,18 @@ export function trackMutation(
   }
 
   const mutationBatch = createMutationBatch((mutations) => {
-    serializeMutations(
-      timeStampNow(),
-      mutations.concat(observer.takeRecords() as RumMutationRecord[]),
-      emitRecord,
-      emitResource,
-      emitStats,
-      scope
-    )
+    const remainingMutations = observer.takeRecords() as RumMutationRecord[]
+    prepareCanvasBitmapResets(remainingMutations, scope)
+    serializeMutations(timeStampNow(), mutations.concat(remainingMutations), emitRecord, emitResource, emitStats, scope)
   })
 
-  const observer = new MutationObserver(monitor(mutationBatch.addMutations))
+  const observer = new MutationObserver(
+    monitor((mutations) => {
+      // Prepare resize resets before batching so delayed serialization does not discard a newer WebGL snapshot.
+      prepareCanvasBitmapResets(mutations, scope)
+      mutationBatch.addMutations(mutations)
+    })
+  )
 
   observer.observe(target, {
     attributeOldValue: true,
@@ -58,4 +60,22 @@ export function trackMutation(
     },
     notifyContentMutated: mutationBatch.notifyContentMutated,
   }
+}
+
+function prepareCanvasBitmapResets(mutations: RumMutationRecord[], scope: RecordingScope) {
+  const resizedCanvases = new Set<HTMLCanvasElement>()
+
+  for (const mutation of mutations) {
+    if (
+      mutation.type === 'attributes' &&
+      mutation.attributeName !== null &&
+      isCanvasElement(mutation.target) &&
+      isCanvasSizeAttribute(mutation.attributeName) &&
+      scope.nodeIds.get(mutation.target) !== undefined
+    ) {
+      resizedCanvases.add(mutation.target)
+    }
+  }
+
+  resizedCanvases.forEach((canvas) => scope.canvasManager.prepareCanvasBitmapReset(canvas))
 }

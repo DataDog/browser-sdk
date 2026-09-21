@@ -574,6 +574,7 @@ describe('trackMutation', () => {
 
     it('marks a canvas dirty when a size attribute changes', async () => {
       const canvasManager = createCanvasManager()
+      const prepareCanvasBitmapResetSpy = spyOn(canvasManager, 'prepareCanvasBitmapReset').and.callThrough()
       const scope = createRecordingScopeForTesting({ canvasManager })
       let canvas!: HTMLCanvasElement
 
@@ -587,6 +588,7 @@ describe('trackMutation', () => {
         { scope }
       )
 
+      expect(prepareCanvasBitmapResetSpy).toHaveBeenCalledOnceWith(canvas)
       expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
     })
 
