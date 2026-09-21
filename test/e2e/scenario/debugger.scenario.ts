@@ -233,6 +233,11 @@ test.describe('debugger', () => {
       // Both calls are in flight before either settles, and settle in the order they were made.
       await page.evaluate(async () => {
         const first = (window as any).asyncFunction('first')
+        // Space the entries apart: the probe sampler rate-limits on `performance.now()`, which
+        // Firefox clamps to 1ms. Called back to back, both entries read the same millisecond, the
+        // sampler treats the second one as a burst and drops it, and only one snapshot is sent.
+        // `first` stays in flight in the meantime, so the calls still overlap.
+        await new Promise((resolve) => setTimeout(resolve, 10))
         const second = (window as any).asyncFunction('second')
         ;(window as any).releaseAsyncCall('first')
         await first
