@@ -171,7 +171,10 @@ function project(name: string, device: string) {
   return {
     name,
     metadata: { sessionName: device, name } satisfies BrowserConfiguration,
-    use: devices[device],
+    use: {
+      ...devices[device],
+      ...(name === 'firefox' && { launchOptions: { firefoxUserPrefs: { 'webgl.force-enabled': true } } }),
+    },
   }
 }
 
@@ -181,6 +184,7 @@ function pinnedProject(name: string, sessionName: string, device: string, versio
     metadata: { sessionName, name, version } satisfies BrowserConfiguration,
     use: {
       ...devices[device],
+      ...(name === 'firefox-pinned' && { launchOptions: { firefoxUserPrefs: { 'webgl.force-enabled': true } } }),
       connectOptions: { wsEndpoint: PINNED_WS_ENDPOINT },
     },
   }
