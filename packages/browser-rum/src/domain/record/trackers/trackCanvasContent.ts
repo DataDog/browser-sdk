@@ -1,5 +1,6 @@
 import { instrumentMethod, noop } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
+import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'
 import { CanvasStatus } from '../canvas/canvasManager'
 import { createCanvasSnapshot } from '../canvas/canvasSnapshot'
@@ -38,9 +39,10 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
   }
 
   const instrumentationStoppers: Tracker[] = []
+  const webGLSnapshotInterval = ONE_SECOND / configuration.maxFramesPerSecond
   const webGLTrackingStates = new WeakMap<
     HTMLCanvasElement,
-    { preservesDrawingBuffer: boolean; snapshotScheduled: boolean }
+    { nextSnapshotTime: number; preservesDrawingBuffer: boolean; snapshotScheduled: boolean }
   >()
   let stopped = false
 
@@ -59,6 +61,7 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
     let trackingState = webGLTrackingStates.get(canvas)
     if (!trackingState) {
       trackingState = {
+        nextSnapshotTime: -Infinity,
         preservesDrawingBuffer: context.getContextAttributes()?.preserveDrawingBuffer === true,
         snapshotScheduled: false,
       }
@@ -69,11 +72,13 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
       markCanvasDirty(canvas)
       return
     }
-    if (trackingState.snapshotScheduled) {
+    const now = performance.now()
+    if (trackingState.snapshotScheduled || now < trackingState.nextSnapshotTime) {
       return
     }
 
     trackingState.snapshotScheduled = true
+    trackingState.nextSnapshotTime = now + webGLSnapshotInterval
     void Promise.resolve().then(() => {
       trackingState.snapshotScheduled = false
       if (stopped || getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel) !== NodePrivacyLevel.ALLOW) {

@@ -122,23 +122,30 @@ describe('trackCanvasContent', () => {
     expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
   })
 
-  it('keeps the latest WebGL frame when drawing faster than the capture interval', async () => {
+  it('limits WebGL snapshots to the configured frame rate', async () => {
     const webGLCanvas = document.createElement('canvas')
     const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
     if (!webGLContext) {
       return
     }
+    let now = 1_000
+    spyOn(performance, 'now').and.callFake(() => now)
     const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
     startTracking(true, 1, 100, 1000, webGLCanvas)
 
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
     await Promise.resolve()
-    setCanvasSnapshotSpy.calls.reset()
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
 
+    now = 1_999
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
     await Promise.resolve()
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
 
-    expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(webGLCanvas, jasmine.any(Object))
+    now = 2_000
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(2)
   })
 
   it('only marks WebGL canvases dirty when the drawing buffer is preserved', () => {
