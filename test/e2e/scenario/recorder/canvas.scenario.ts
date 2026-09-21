@@ -72,18 +72,29 @@ test.describe('recorder canvas resource upload', () => {
                 const attributes: WebGLContextAttributes | undefined =
                   preserveDrawingBuffer === undefined ? undefined : { preserveDrawingBuffer }
                 let actualPreserveDrawingBuffer: boolean | undefined
+                let webGLContextCreationError: string | undefined
+
+                canvas.addEventListener('webglcontextcreationerror', (event) => {
+                  webGLContextCreationError = (event as WebGLContextEvent).statusMessage
+                })
 
                 if (contextType === '2d') {
                   const context = canvas.getContext('2d')!
                   context.fillStyle = `rgb(${red * 255}, 0, ${blue * 255})`
                   context.fillRect(0, 0, canvas.width, canvas.height)
                 } else if (contextType === 'webgl') {
-                  const context = canvas.getContext('webgl', attributes)!
+                  const context = canvas.getContext('webgl', attributes)
+                  if (!context) {
+                    throw new Error(`Failed to create WebGL context: ${webGLContextCreationError ?? 'unknown error'}`)
+                  }
                   context.clearColor(red, 0, blue, 1)
                   context.clear(context.COLOR_BUFFER_BIT)
                   actualPreserveDrawingBuffer = context.getContextAttributes()?.preserveDrawingBuffer
                 } else {
-                  const context = canvas.getContext('webgl2', attributes)!
+                  const context = canvas.getContext('webgl2', attributes)
+                  if (!context) {
+                    throw new Error(`Failed to create WebGL 2 context: ${webGLContextCreationError ?? 'unknown error'}`)
+                  }
                   context.clearBufferfv(context.COLOR, 0, [red, 0, blue, 1])
                   actualPreserveDrawingBuffer = context.getContextAttributes()?.preserveDrawingBuffer
                 }
