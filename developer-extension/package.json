@@ -8,11 +8,11 @@
   },
   "devDependencies": {
     "@types/chrome": "0.2.9",
-    "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.7",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "@wxt-dev/module-react": "1.2.2",
     "typescript": "6.0.3",
-    "vite": "8.2.2"
+    "vite": "8.3.0"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
@@ -20,12 +20,12 @@
     "@datadog/browser-rum": "workspace:*",
     "@datadog/browser-rum-core": "workspace:*",
     "@datadog/js-core": "workspace:*",
-    "@mantine/core": "9.6.0",
-    "@mantine/hooks": "9.6.0",
+    "@mantine/core": "9.6.1",
+    "@mantine/hooks": "9.6.1",
     "@tabler/icons-react": "3.46.0",
     "clsx": "2.1.1",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "wxt": "0.21.4"
   },
   "volta": {
