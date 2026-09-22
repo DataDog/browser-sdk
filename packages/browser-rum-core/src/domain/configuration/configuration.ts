@@ -840,6 +840,7 @@ export function serializeRumConfiguration(
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     remote_configuration_id: getRemoteConfigurationId(configuration),
     remote_configuration: remoteConfigurationMetadata && {
+      config_id: getRemoteConfigurationId(configuration),
       last_modified: remoteConfigurationMetadata.lastModified,
       last_synced: remoteConfigurationMetadata.lastSynced,
       first_applied: remoteConfigurationMetadata.firstApplied,
