@@ -3,7 +3,7 @@ import { toServerDuration, clocksNow } from '@datadog/js-core/time'
 import { generateUUID, sanitize } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { RawRumVitalEvent } from '../../rawRumEvent.types'
+import type { RawRumVitalEvent, RawRumWebSocketVitalEvent } from '../../rawRumEvent.types'
 import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
@@ -126,6 +126,21 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
   }
 
+  /**
+   * The seam every WebSocket vital reaches the event pipeline through, deliberately exempt from the
+   * duration-vital guards: a WebSocket vital is an instant, zero-duration event, so there is no
+   * interval for the frozen-page check to reject — and rejecting one would let a frozen page suppress
+   * the heartbeat built to detect it — and it arrives whole rather than started and stopped, so the
+   * event tracker has nothing to keep.
+   */
+  function addWebSocketVital(rawRumEvent: RawRumWebSocketVitalEvent, startClocks: ClocksState) {
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+      rawRumEvent,
+      startClocks,
+      domainContext: {},
+    })
+  }
+
   function startDurationVital(
     name: string,
     options: DurationVitalOptions & { handlingStack?: string } = {},
@@ -151,6 +166,7 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
   return {
     addOperationStepVital,
     addDurationVital,
+    addWebSocketVital,
     startDurationVital,
     stopDurationVital,
   }

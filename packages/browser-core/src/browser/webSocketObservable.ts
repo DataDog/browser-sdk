@@ -9,6 +9,12 @@ import { addEventListener } from './addEventListener'
 
 type GlobalWithWebSocket = GlobalObject & { WebSocket: typeof WebSocket }
 
+// `readyState` values, as fixed by the WebSocket specification. Held here rather than read off the
+// global constructor, which a third party may have replaced with something that does not carry
+// them, and as plain constants rather than an enum so that nothing of them is shipped.
+const READY_STATE_CONNECTING = 0
+const READY_STATE_OPEN = 1
+
 function isGlobalWithWebSocket(global: GlobalObject): global is GlobalWithWebSocket {
   return typeof (global as { WebSocket?: unknown }).WebSocket === 'function'
 }
@@ -26,6 +32,8 @@ export interface WebSocketOpenContext {
   instance: WebSocket
   openClocks: ClocksState
   protocol: string
+  /** Extensions the server selected, omitted when it negotiated none. */
+  extensions?: string
 }
 
 export interface WebSocketMessageInContext {
@@ -43,12 +51,20 @@ export interface WebSocketMessageOutContext {
   at: ClocksState
 }
 
+export interface WebSocketClosingContext {
+  state: 'closing'
+  instance: WebSocket
+  at: ClocksState
+}
+
 export interface WebSocketClosedContext {
   state: 'closed'
   instance: WebSocket
   code: number
   reason: string
   wasClean: boolean
+  /** Bytes still queued in the send buffer when the connection closed. */
+  bufferedAmountAtClose: number
   at: ClocksState
 }
 
@@ -57,6 +73,7 @@ export type WebSocketContext =
   | WebSocketOpenContext
   | WebSocketMessageInContext
   | WebSocketMessageOutContext
+  | WebSocketClosingContext
   | WebSocketClosedContext
 
 let webSocketObservable: Observable<WebSocketContext> | undefined
@@ -100,6 +117,13 @@ function createWebSocketObservable() {
       globalObject.WebSocket.prototype,
       'send',
       ({ target: instance, parameters: [data], onPostCall }) => {
+        // only an OPEN socket sends: per spec the payload is rejected before the handshake completed
+        // and silently discarded once the socket is closing or closed, and a payload that never
+        // reached the wire is not an outbound message
+        if (instance.readyState !== READY_STATE_OPEN) {
+          return
+        }
+
         const size = computePayloadSize(data)
         const bufferedAmountPreSend = instance.bufferedAmount
 
@@ -115,9 +139,35 @@ function createWebSocketObservable() {
       }
     )
 
+    const { stop: stopInstrumentingClose } = instrumentMethod(
+      globalObject.WebSocket.prototype,
+      'close',
+      ({ target: instance, onPostCall }) => {
+        // `close()` is a no-op on a socket that is already closing or closed, so this synchronous
+        // read is both what keeps us from reporting such a call and what makes a defensive double
+        // `close()` notify once. The browser fires no event for this transition, so there is nothing
+        // else to observe it from.
+        if (instance.readyState !== READY_STATE_CONNECTING && instance.readyState !== READY_STATE_OPEN) {
+          return
+        }
+
+        // the date of the call itself, which is what the closing phase is reported at
+        const at = clocksNow()
+
+        onPostCall(() => {
+          observable.notify({
+            state: 'closing',
+            instance,
+            at,
+          })
+        })
+      }
+    )
+
     return () => {
       stopInstrumentingConstructor()
       stopInstrumentingSend()
+      stopInstrumentingClose()
     }
   })
 }
@@ -129,6 +179,7 @@ function attachInstanceListeners(instance: WebSocket, observable: Observable<Web
       instance,
       openClocks: clocksNow(),
       protocol: instance.protocol || '',
+      extensions: instance.extensions || undefined,
     })
 
     stopOpen()
@@ -150,6 +201,7 @@ function attachInstanceListeners(instance: WebSocket, observable: Observable<Web
       code: event.code,
       reason: event.reason,
       wasClean: event.wasClean,
+      bufferedAmountAtClose: instance.bufferedAmount,
       at: clocksNow(),
     })
 
