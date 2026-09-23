@@ -1,3 +1,4 @@
+import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import type { CanvasSnapshot } from './canvasSnapshot'
 
 export const enum CanvasStatus {
@@ -32,12 +33,8 @@ export interface CanvasManager {
   markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
   /** Stores a snapshot taken before a WebGL drawing buffer is discarded */
   setCanvasSnapshot: (canvas: HTMLCanvasElement, snapshot: CanvasSnapshot) => void
-  /** Invalidates the current bitmap state as soon as a size mutation is observed */
-  prepareCanvasBitmapReset: (canvas: HTMLCanvasElement) => void
-  /** The node left the DOM: reset its per-node state, but preserve its latest snapshot and taint */
+  /** The node left the DOM: forget its tracking state, but not its taint */
   forgetCanvas: (canvas: HTMLCanvasElement) => void
-  /** width/height were assigned: the bitmap was cleared, so drop the last hash and mark dirty */
-  resetCanvasBitmap: (canvas: HTMLCanvasElement) => void
   /** Takes dirty, connected, non-tainted canvases and clears their dirty state */
   takeCapturableCanvases: () => HTMLCanvasElement[]
   /** Starts a capture attempt for a canvas */
@@ -56,12 +53,13 @@ interface CanvasTrackingState {
   streamId: number
   lastChangeHash?: string
   snapshot?: CanvasSnapshot
-  bitmapResetPending?: boolean
 }
 
 export function createCanvasManager(): CanvasManager {
+  const MutationObserver = getMutationObserverConstructor()
   const dirtyCanvases = new Set<HTMLCanvasElement>()
   const taintedCanvases = new WeakSet<HTMLCanvasElement>()
+  const canvasObservers = new Map<HTMLCanvasElement, InstanceType<typeof MutationObserver>>()
   let canvasContentMutations: CanvasContentMutation[] = []
   const canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
   let streamId = 0
@@ -109,8 +107,23 @@ export function createCanvasManager(): CanvasManager {
     dirtyCanvases.delete(canvas)
   }
 
+  function observeCanvas(canvas: HTMLCanvasElement) {
+    if (canvasObservers.has(canvas)) {
+      return
+    }
+    const observer = new MutationObserver(() => markDirty(canvas))
+    observer.observe(canvas, { attributes: true, attributeFilter: ['width', 'height'] })
+    canvasObservers.set(canvas, observer)
+  }
+
+  function forgetCanvasObserver(canvas: HTMLCanvasElement) {
+    canvasObservers.get(canvas)?.disconnect()
+    canvasObservers.delete(canvas)
+  }
+
   return {
     markCanvas: (canvas, status) => {
+      observeCanvas(canvas)
       switch (status) {
         case CanvasStatus.Dirty:
           markDirty(canvas)
@@ -131,28 +144,10 @@ export function createCanvasManager(): CanvasManager {
       getTrackingState(canvas).snapshot = snapshot
     },
 
-    prepareCanvasBitmapReset: (canvas) => {
-      // Mutation serialization is delayed, so invalidate the old bitmap state as soon as the resize is observed.
-      canvasTrackingStates.set(canvas, { bitmapResetPending: true, capturePending: false, streamId })
-    },
-
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
-      const snapshot = canvasTrackingStates.get(canvas)?.snapshot
-      // A reinserted WebGL canvas may no longer have a readable drawing buffer.
-      // Keep its latest snapshot while invalidating its capture attempt and per-node hash.
-      canvasTrackingStates.set(canvas, { capturePending: false, streamId, snapshot })
-    },
-
-    resetCanvasBitmap: (canvas) => {
-      const trackingState = canvasTrackingStates.get(canvas)
-      if (trackingState?.streamId === streamId && trackingState.bitmapResetPending) {
-        // Keep a WebGL snapshot that may have been captured after the resize was observed.
-        trackingState.bitmapResetPending = false
-      } else {
-        canvasTrackingStates.delete(canvas)
-      }
-      markDirty(canvas)
+      canvasTrackingStates.delete(canvas)
+      forgetCanvasObserver(canvas)
     },
 
     takeCapturableCanvases: () => {
@@ -203,6 +198,8 @@ export function createCanvasManager(): CanvasManager {
       dirtyCanvases.clear()
       canvasContentMutations = []
       streamId += 1
+      canvasObservers.forEach((observer) => observer.disconnect())
+      canvasObservers.clear()
     },
   }
 }

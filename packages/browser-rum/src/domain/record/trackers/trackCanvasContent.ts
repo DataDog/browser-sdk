@@ -32,6 +32,12 @@ const WEBGL_2_DRAWING_METHODS = [
   'drawRangeElements',
 ] as const
 
+interface WebGLTrackingState {
+  nextSnapshotTime: number
+  preservesDrawingBuffer: boolean
+  snapshotScheduled: boolean
+}
+
 export function trackCanvasContent(scope: RecordingScope): Tracker {
   const configuration = scope.configuration.sessionReplayCanvasRecording
   if (!configuration?.enable || configuration.maxFramesPerSecond === 0) {
@@ -40,51 +46,36 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
 
   const instrumentationStoppers: Tracker[] = []
   const webGLSnapshotInterval = ONE_SECOND / configuration.maxFramesPerSecond
-  const webGLTrackingStates = new WeakMap<
-    HTMLCanvasElement,
-    {
-      canvasHeight: number
-      canvasWidth: number
-      nextSnapshotTime: number
-      preservesDrawingBuffer: boolean
-      snapshotScheduled: boolean
-    }
-  >()
+  const webGLTrackingStates = new WeakMap<HTMLCanvasElement, WebGLTrackingState>()
   let stopped = false
 
   const markCanvasDirty = (canvas: HTMLCanvasElement | OffscreenCanvas) => {
-    if (canvas instanceof HTMLCanvasElement && scope.nodeIds.get(canvas) !== undefined) {
-      scope.canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    if (scope.nodeIds.get(canvas as HTMLCanvasElement) !== undefined) {
+      scope.canvasManager.markCanvas(canvas as HTMLCanvasElement, CanvasStatus.Dirty)
     }
   }
 
   const trackWebGLDraw = (context: WebGLRenderingContext | WebGL2RenderingContext) => {
     const canvas = context.canvas
-    if (!(canvas instanceof HTMLCanvasElement)) {
+    if (scope.nodeIds.get(canvas as HTMLCanvasElement) === undefined) {
       return
     }
 
-    let trackingState = webGLTrackingStates.get(canvas)
+    const htmlCanvas = canvas as HTMLCanvasElement
+
+    let trackingState = webGLTrackingStates.get(htmlCanvas)
     if (!trackingState) {
       trackingState = {
-        canvasHeight: canvas.height,
-        canvasWidth: canvas.width,
         nextSnapshotTime: -Infinity,
         preservesDrawingBuffer: context.getContextAttributes()?.preserveDrawingBuffer === true,
         snapshotScheduled: false,
       }
-      webGLTrackingStates.set(canvas, trackingState)
+      webGLTrackingStates.set(htmlCanvas, trackingState)
     }
 
     if (trackingState.preservesDrawingBuffer) {
       markCanvasDirty(canvas)
       return
-    }
-    if (trackingState.canvasWidth !== canvas.width || trackingState.canvasHeight !== canvas.height) {
-      // Resizing resets the bitmap, so the first draw for its new dimensions must bypass the previous bitmap's cooldown.
-      trackingState.canvasWidth = canvas.width
-      trackingState.canvasHeight = canvas.height
-      trackingState.nextSnapshotTime = -Infinity
     }
     const now = performance.now()
     if (trackingState.snapshotScheduled || now < trackingState.nextSnapshotTime) {
@@ -95,19 +86,22 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
     trackingState.nextSnapshotTime = now + webGLSnapshotInterval
     void Promise.resolve().then(() => {
       trackingState.snapshotScheduled = false
-      if (stopped || getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel) !== NodePrivacyLevel.ALLOW) {
+      if (
+        stopped ||
+        getNodePrivacyLevel(htmlCanvas, scope.configuration.defaultPrivacyLevel) !== NodePrivacyLevel.ALLOW
+      ) {
         return
       }
 
       try {
-        const snapshot = createCanvasSnapshot(canvas, configuration.maxImageDimension)
+        const snapshot = createCanvasSnapshot(htmlCanvas, configuration.maxImageDimension)
         if (snapshot) {
-          scope.canvasManager.setCanvasSnapshot(canvas, snapshot)
-          markCanvasDirty(canvas)
+          scope.canvasManager.setCanvasSnapshot(htmlCanvas, snapshot)
+          markCanvasDirty(htmlCanvas)
         }
       } catch (error) {
         scope.canvasManager.markCanvas(
-          canvas,
+          htmlCanvas,
           error instanceof DOMException && error.name === 'SecurityError' ? CanvasStatus.Tainted : CanvasStatus.Dirty
         )
       }

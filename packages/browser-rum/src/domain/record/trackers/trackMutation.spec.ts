@@ -10,7 +10,7 @@ import {
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../../types'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
-import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
+import { createCanvasManager } from '../canvas/canvasManager'
 import type { AddShadowRootCallBack, RemoveShadowRootCallBack } from '../shadowRootsController'
 import type { ChangeDecoder } from '../encoding'
 import type { SerializationStats } from '../serialization'
@@ -570,63 +570,6 @@ describe('trackMutation', () => {
         { configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } }
       )
       expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['data-foo', '***']]]])
-    })
-
-    it('marks a canvas dirty when a size attribute changes', async () => {
-      const canvasManager = createCanvasManager()
-      const prepareCanvasBitmapResetSpy = spyOn(canvasManager, 'prepareCanvasBitmapReset').and.callThrough()
-      const scope = createRecordingScopeForTesting({ canvasManager })
-      let canvas!: HTMLCanvasElement
-
-      await recordMutationOf(
-        '<canvas></canvas>',
-        (sandbox) => {
-          canvas = sandbox as HTMLCanvasElement
-          canvasManager.markCanvas(canvas, CanvasStatus.Clean)
-          canvas.setAttribute('width', '101')
-        },
-        { scope }
-      )
-
-      expect(prepareCanvasBitmapResetSpy).toHaveBeenCalledOnceWith(canvas)
-      expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
-    })
-
-    it('marks a canvas bitmap as reset when a size attribute is assigned its current value', async () => {
-      const canvasManager = createCanvasManager()
-      const scope = createRecordingScopeForTesting({ canvasManager })
-      let canvas!: HTMLCanvasElement
-
-      const { mutation } = await recordMutationOf(
-        '<canvas width="101"></canvas>',
-        (sandbox) => {
-          canvas = sandbox as HTMLCanvasElement
-          canvasManager.markCanvas(canvas, CanvasStatus.Clean)
-          canvas.setAttribute('width', '101')
-        },
-        { scope }
-      )
-
-      expect(mutation).toBeUndefined()
-      expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
-    })
-
-    it('does not mark a canvas dirty when an unrelated attribute changes', async () => {
-      const canvasManager = createCanvasManager()
-      const scope = createRecordingScopeForTesting({ canvasManager })
-      let canvas!: HTMLCanvasElement
-
-      await recordMutationOf(
-        '<canvas></canvas>',
-        (sandbox) => {
-          canvas = sandbox as HTMLCanvasElement
-          canvasManager.markCanvas(canvas, CanvasStatus.Clean)
-          canvas.setAttribute('class', 'foo')
-        },
-        { scope }
-      )
-
-      expect(canvasManager.takeCapturableCanvases()).toEqual([])
     })
   })
 

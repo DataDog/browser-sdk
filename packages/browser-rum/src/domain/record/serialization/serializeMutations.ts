@@ -13,7 +13,7 @@ import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitResourceCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds, RoleAnnotatedAttributeChange } from '../encoding'
 import { createAttributeAssignment, createAttributeAssignmentOrDeletion, createString } from '../encoding'
-import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
+import { isCanvasElement } from '../canvas/canvasUtils'
 import { CanvasStatus } from '../canvas/canvasManager'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
@@ -267,10 +267,6 @@ function processAttributeMutations(
     const tagName = normalizedTagName(node)
 
     const change: RoleAnnotatedAttributeChange = [nodeId]
-    if (isCanvasElement(node) && Array.from(attributeNames.keys()).some(isCanvasSizeAttribute)) {
-      // Assigning either dimension resets the bitmap even when the attribute value does not change.
-      transaction.scope.canvasManager.resetCanvasBitmap(node)
-    }
     for (const [domAttributeName, oldValue] of attributeNames) {
       if (node.getAttribute(domAttributeName) === oldValue) {
         continue // No change since the last snapshot.

@@ -148,7 +148,7 @@ describe('trackCanvasContent', () => {
     expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(2)
   })
 
-  it('takes a WebGL snapshot immediately after the canvas is resized', async () => {
+  it('does not bypass the configured frame rate after the canvas is resized', async () => {
     const webGLCanvas = document.createElement('canvas')
     const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
     if (!webGLContext) {
@@ -168,7 +168,7 @@ describe('trackCanvasContent', () => {
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
     await Promise.resolve()
 
-    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(2)
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
   })
 
   it('only marks WebGL canvases dirty when the drawing buffer is preserved', () => {
@@ -232,7 +232,7 @@ describe('trackCanvasContent', () => {
     expect(Array.from(snapshot.source.getContext('2d')!.getImageData(0, 0, 1, 1).data)).toEqual([255, 0, 0, 255])
   })
 
-  it('freezes WebGL content before an inserted canvas is serialized', async () => {
+  it('does not freeze WebGL content before an inserted canvas is serialized', async () => {
     const webGLCanvas = document.createElement('canvas')
     document.body.appendChild(webGLCanvas)
     registerCleanupTask(() => webGLCanvas.remove())
@@ -246,7 +246,7 @@ describe('trackCanvasContent', () => {
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
     await Promise.resolve()
 
-    expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(webGLCanvas, jasmine.any(Object))
+    expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
     expect(markCanvasDirtySpy).not.toHaveBeenCalled()
   })
 
