@@ -74,9 +74,8 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
     const historyEntry = history.add(id, startClocks.relative)
 
-    const existing = keyedEvents.get(key)
-    if (existing) {
-      cleanUpEvent(existing)
+    if (keyedEvents.has(key)) {
+      discard(key)
     }
 
     const eventCounts = options?.isChildEvent
