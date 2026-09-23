@@ -20,6 +20,38 @@
 
 ---
 
+## v7.14.0
+
+**Public Changes:**
+
+- ✨ Add full Salesforce RUM bundle ([#5036](https://github.com/DataDog/browser-sdk/pull/5036))
+- 🐛 Skip instrumentation of read-only properties ([#5049](https://github.com/DataDog/browser-sdk/pull/5049))
+- 🐛 Start RUM and Logs synchronously when the event bridge is present ([#5048](https://github.com/DataDog/browser-sdk/pull/5048))
+- 🐛 Pair debugger probe exits with their invocations ([#5046](https://github.com/DataDog/browser-sdk/pull/5046))
+- 🐛 Exclude local server IP from Firefox E2E proxy ([#5044](https://github.com/DataDog/browser-sdk/pull/5044))
+- 🐛 Prefer anchor and role="link" text over ancestor ARIA labels for RUM action names ([#5013](https://github.com/DataDog/browser-sdk/pull/5013))
+- ⚗️ Add canvas resource upload transport [4/n] ([#5020](https://github.com/DataDog/browser-sdk/pull/5020))
+- ⚗️ Replace canvas recording knobs with quality presets, dedupe downscaling for hashing, and switch to WebP ([#5034](https://github.com/DataDog/browser-sdk/pull/5034))
+- ⚗️ Add soft navigation LCP tracking for route_change views ([#4966](https://github.com/DataDog/browser-sdk/pull/4966))
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#5052](https://github.com/DataDog/browser-sdk/pull/5052))
+- 👷 Pass repository owner to DevFlow ([#5050](https://github.com/DataDog/browser-sdk/pull/5050))
+- 👷 Update markdown-confluence/publish-action action to v7 ([#5051](https://github.com/DataDog/browser-sdk/pull/5051))
+- 👷 Update dependency @playwright/test to v1.63.0 ([#5039](https://github.com/DataDog/browser-sdk/pull/5039))
+- 👷 Bump chrome to 153.0.8010.36-1 ([#5026](https://github.com/DataDog/browser-sdk/pull/5026))
+- 👷 Update dependency eslint-plugin-unicorn to v74 ([#5018](https://github.com/DataDog/browser-sdk/pull/5018))
+- 👷 Update all non-major dependencies ([#4998](https://github.com/DataDog/browser-sdk/pull/4998))
+- 👷 Update dependency next to v16.3.3 [SECURITY] ([#5031](https://github.com/DataDog/browser-sdk/pull/5031))
+- ✅ Fix Firefox flakiness in the overlapping async debugger E2E test ([#5054](https://github.com/DataDog/browser-sdk/pull/5054))
+- ✅ Fix soft-navigation view metric tests ([#5041](https://github.com/DataDog/browser-sdk/pull/5041))
+- ✅ Stabilize base plugin error E2E tests in WebKit ([#5038](https://github.com/DataDog/browser-sdk/pull/5038))
+- ✅ Stabilize Nuxt error E2E tests in WebKit ([#5037](https://github.com/DataDog/browser-sdk/pull/5037))
+- 🔧 Use the v2 OAuth token endpoint in the developer extension ([#5043](https://github.com/DataDog/browser-sdk/pull/5043))
+- 🔊 Add config_id to remote configuration telemetry ([#5056](https://github.com/DataDog/browser-sdk/pull/5056))
+- 🔊 Swallow InvalidStateError when the session cookie lock races with document teardown ([#5033](https://github.com/DataDog/browser-sdk/pull/5033))
+
 ## v7.13.0
 
 **Public Changes:**
