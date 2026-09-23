@@ -7,6 +7,7 @@ import { SerializationKind, serializeFullSnapshot } from './serialization'
 import { getVisualViewport } from './viewports'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+import { sanitizeUrl } from './utils/sanitizeUrl'
 
 export function startFullSnapshots(
   lifeCycle: LifeCycle,
@@ -44,7 +45,7 @@ export function takeFullSnapshot(
   emitRecord({
     data: {
       height,
-      href: window.location.href,
+      href: sanitizeUrl(window.location.href),
       width,
     },
     type: RecordType.Meta,
