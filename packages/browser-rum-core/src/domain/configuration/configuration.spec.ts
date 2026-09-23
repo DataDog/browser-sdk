@@ -868,14 +868,19 @@ describe('validateAndBuildRumConfiguration', () => {
   describe('serializeRumConfiguration', () => {
     describe('remote configuration metadata serialization', () => {
       it('should serialize the applied metadata', () => {
-        const serialized = serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION, undefined, {
-          lastModified: 1500,
-          lastSynced: 2000 as TimeStamp,
-          firstApplied: 3000 as TimeStamp,
-          syncId: 'sync-id',
-        })
+        const serialized = serializeRumConfiguration(
+          { ...DEFAULT_INIT_CONFIGURATION, remoteConfigurationId: 'rc-id' },
+          undefined,
+          {
+            lastModified: 1500,
+            lastSynced: 2000 as TimeStamp,
+            firstApplied: 3000 as TimeStamp,
+            syncId: 'sync-id',
+          }
+        )
 
         expect(serialized.remote_configuration).toEqual({
+          config_id: 'rc-id',
           last_modified: 1500,
           last_synced: 2000 as TimeStamp,
           first_applied: 3000 as TimeStamp,
