@@ -50,9 +50,7 @@ export interface CanvasManager {
 
 interface CanvasTrackingState {
   capturePending: boolean
-  streamId: number
   lastChangeHash?: string
-  snapshot?: CanvasSnapshot
 }
 
 export function createCanvasManager(): CanvasManager {
@@ -60,15 +58,14 @@ export function createCanvasManager(): CanvasManager {
   const dirtyCanvases = new Set<HTMLCanvasElement>()
   const taintedCanvases = new WeakSet<HTMLCanvasElement>()
   const canvasObservers = new Map<HTMLCanvasElement, InstanceType<typeof MutationObserver>>()
+  const canvasSnapshots = new WeakMap<HTMLCanvasElement, CanvasSnapshot>()
   let canvasContentMutations: CanvasContentMutation[] = []
-  const canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
-  let streamId = 0
+  let canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
 
   function getTrackingState(canvas: HTMLCanvasElement): CanvasTrackingState {
     let trackingState = canvasTrackingStates.get(canvas)
-    if (trackingState?.streamId !== streamId) {
-      // Preserve the latest WebGL snapshot so the canvas does not start empty in the new stream.
-      trackingState = { capturePending: false, streamId, snapshot: trackingState?.snapshot }
+    if (!trackingState) {
+      trackingState = { capturePending: false }
       canvasTrackingStates.set(canvas, trackingState)
     }
     return trackingState
@@ -77,11 +74,11 @@ export function createCanvasManager(): CanvasManager {
   function startCaptureAttempt(canvas: HTMLCanvasElement): CanvasCaptureAttempt {
     const trackingState = getTrackingState(canvas)
     trackingState.capturePending = true
-    const isCurrent = () => canvasTrackingStates.get(canvas) === trackingState && trackingState.streamId === streamId
+    const isCurrent = () => canvasTrackingStates.get(canvas) === trackingState
 
     return {
       lastChangeHash: trackingState.lastChangeHash,
-      snapshot: trackingState.snapshot,
+      snapshot: canvasSnapshots.get(canvas),
       isCurrent,
       setLastChangeHash: (changeHash) => {
         if (isCurrent()) {
@@ -141,12 +138,13 @@ export function createCanvasManager(): CanvasManager {
     },
 
     setCanvasSnapshot: (canvas, snapshot) => {
-      getTrackingState(canvas).snapshot = snapshot
+      canvasSnapshots.set(canvas, snapshot)
     },
 
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
       canvasTrackingStates.delete(canvas)
+      canvasSnapshots.delete(canvas)
       forgetCanvasObserver(canvas)
     },
 
@@ -174,8 +172,7 @@ export function createCanvasManager(): CanvasManager {
     },
 
     retryCanvas: (canvas) => {
-      const snapshot = getTrackingState(canvas).snapshot
-      canvasTrackingStates.set(canvas, { capturePending: false, snapshot, streamId })
+      canvasTrackingStates.delete(canvas)
       markDirty(canvas)
     },
 
@@ -197,7 +194,7 @@ export function createCanvasManager(): CanvasManager {
     reset: () => {
       dirtyCanvases.clear()
       canvasContentMutations = []
-      streamId += 1
+      canvasTrackingStates = new WeakMap()
       canvasObservers.forEach((observer) => observer.disconnect())
       canvasObservers.clear()
     },
