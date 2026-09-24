@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
-import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
+import { clocksNow } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
