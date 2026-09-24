@@ -95,7 +95,10 @@ export function setNextjsViewName(viewName: string, pathname: string) {
 
 // Must be re-exported from the user's instrumentation-client.ts so we can start the view before React renders
 export function onRouterTransitionStart(url: string, _navigationType?: string, event?: RouterTransitionEvent) {
-  const navigationUrl = buildUrl(url, window.location.origin)
+  // Next.js forwards the raw href passed to router.push()/replace() unresolved, which can be relative
+  // to the current URL (e.g. '?sort=asc' or 'details') rather than root-relative or absolute.
+  // Resolve against the current URL, not just the origin, so relative navigations land on the right path.
+  const navigationUrl = buildUrl(url, window.location.href)
 
   if (event && event.id === lastRouterTransitionId) {
     return
