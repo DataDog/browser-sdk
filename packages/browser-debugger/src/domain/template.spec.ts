@@ -242,6 +242,11 @@ describe('template', () => {
           expect(browserInspect(obj)).toBe('[Object]')
         })
 
+        it('should add the truncation suffix when all displayed properties are omitted by JSON', () => {
+          const result = browserInspect({ a: undefined, b: undefined, c: () => 1, d: undefined, e: undefined, f: 6 })
+          expect(result).toBe('{... 1 more properties}')
+        })
+
         it('should handle circular references beyond the displayed properties', () => {
           const obj: any = { a: 1, b: 2, c: 3, d: 4, e: 5 }
           obj.f = obj

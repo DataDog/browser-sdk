@@ -149,7 +149,11 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
       }
       return val
     }
-    return JSON.stringify(value, replacer, 0).replace(/,"__dd_more_properties__":(\d+)/g, ', ... $1 more properties')
+    // The placeholder is the first property when all retained values are omitted by JSON (undefined, functions...)
+    return JSON.stringify(value, replacer, 0).replace(
+      /([{,])"__dd_more_properties__":(\d+)/g,
+      (_match, separator: string, count: string) => `${separator === ',' ? ', ' : '{'}... ${count} more properties`
+    )
   } catch {
     return `[${getConstructorName(value) ?? 'Object'}]`
   }
