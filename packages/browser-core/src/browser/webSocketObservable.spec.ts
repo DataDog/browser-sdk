@@ -84,7 +84,7 @@ describe('webSocketObservable', () => {
         const customerHandler = jasmine.createSpy()
         ws.onmessage = customerHandler
 
-        ws.simulateMessage('hello')
+        ws.simulateIncomingMessage('hello')
 
         expect(customerHandler).toHaveBeenCalledTimes(1)
         expect(getContexts('message-in').length).toBe(1)
@@ -179,7 +179,7 @@ describe('webSocketObservable', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         const payload = 'hello world'
-        ws.simulateMessage(payload)
+        ws.simulateIncomingMessage(payload)
 
         const messageInContexts = getContexts('message-in')
         expect(messageInContexts.length).toBe(1)
@@ -191,7 +191,7 @@ describe('webSocketObservable', () => {
         ws.simulateOpen()
         // 'é' is 2 bytes in UTF-8 and 'あ' is 3 bytes; total is 5 bytes for 2 chars
         const payload = 'éあ'
-        ws.simulateMessage(payload)
+        ws.simulateIncomingMessage(payload)
 
         expect(getContexts('message-in')[0].size).toBe(new TextEncoder().encode(payload).byteLength)
       })
@@ -200,7 +200,7 @@ describe('webSocketObservable', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         const byteLength = 16
-        ws.simulateMessage(new ArrayBuffer(byteLength))
+        ws.simulateIncomingMessage(new ArrayBuffer(byteLength))
 
         expect(getContexts('message-in')[0].size).toBe(byteLength)
       })
@@ -209,7 +209,7 @@ describe('webSocketObservable', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         const viewByteLength = 12
-        ws.simulateMessage(new Uint8Array(new ArrayBuffer(32), 4, viewByteLength))
+        ws.simulateIncomingMessage(new Uint8Array(new ArrayBuffer(32), 4, viewByteLength))
 
         expect(getContexts('message-in')[0].size).toBe(viewByteLength)
       })
@@ -218,7 +218,7 @@ describe('webSocketObservable', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
         ws.simulateOpen()
         const blob = new Blob(['hello'])
-        ws.simulateMessage(blob)
+        ws.simulateIncomingMessage(blob)
 
         expect(getContexts('message-in')[0].size).toBe(blob.size)
       })

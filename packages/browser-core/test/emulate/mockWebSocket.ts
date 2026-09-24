@@ -83,7 +83,7 @@ export class MockWebSocket extends EventTarget {
     this.onopen?.(event)
   }
 
-  simulateMessage(data: unknown) {
+  simulateIncomingMessage(data: unknown) {
     const event = new MessageEvent('message', { data })
     this.dispatchEvent(event)
     this.onmessage?.(event)
