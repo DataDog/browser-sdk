@@ -261,6 +261,11 @@ describe('template', () => {
           expect(browserInspect(obj)).toBe('{"a":1,"toJSON":[Function: toJSON]}')
         })
 
+        it('should call toJSON even if its call property is shadowed', () => {
+          const toJSON = Object.assign(() => 'json', { call: undefined })
+          expect(browserInspect({ toJSON })).toBe('"json"')
+        })
+
         it('should read toJSON once and call it with the root key', () => {
           const toJSON = jasmine.createSpy('toJSON').and.returnValue('json')
           const getter = jasmine.createSpy('getter').and.returnValues(toJSON, undefined)

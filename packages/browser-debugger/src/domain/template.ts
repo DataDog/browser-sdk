@@ -140,7 +140,7 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
     // Objects with a JSON representation (e.g. Date) are inspected through it
     const toJSON = obj.toJSON
     if (typeof toJSON === 'function') {
-      const json: unknown = toJSON.call(obj, '')
+      const json: unknown = Reflect.apply(toJSON, obj, [''])
       if (Array.isArray(json)) {
         return browserInspectInternal(json)
       }
