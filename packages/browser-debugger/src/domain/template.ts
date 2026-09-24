@@ -136,10 +136,18 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
   }
 
   try {
-    const obj = value as Record<string, unknown>
+    let obj = value as Record<string, unknown>
     // Objects with a JSON representation (e.g. Date) are inspected through it
-    if (typeof obj.toJSON === 'function') {
-      return inspectValueInternal((obj.toJSON as () => unknown)())
+    const toJSON = obj.toJSON
+    if (typeof toJSON === 'function') {
+      const json: unknown = toJSON.call(obj, '')
+      if (Array.isArray(json)) {
+        return browserInspectInternal(json)
+      }
+      if (typeof json !== 'object' || json === null) {
+        return inspectValueInternal(json)
+      }
+      obj = json as Record<string, unknown>
     }
     // Like arrays, show the first properties with their nested objects and arrays collapsed
     const keys = Object.keys(obj)

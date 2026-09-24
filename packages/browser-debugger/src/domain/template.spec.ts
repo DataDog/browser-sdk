@@ -251,6 +251,27 @@ describe('template', () => {
           expect(browserInspect({ date: new Date(0) })).toBe('{"date":[Object]}')
         })
 
+        it('should inspect structured JSON representations at root depth', () => {
+          expect(browserInspect({ toJSON: () => ({ a: 1, b: { c: 2 } }) })).toBe('{"a":1,"b":[Object]}')
+          expect(browserInspect({ toJSON: () => [1, { a: 1 }] })).toBe('[1,[Object]]')
+        })
+
+        it('should not apply toJSON of JSON representations', () => {
+          const obj: Record<string, unknown> = { a: 1, toJSON: () => obj }
+          expect(browserInspect(obj)).toBe('{"a":1,"toJSON":[Function: toJSON]}')
+        })
+
+        it('should read toJSON once and call it with the root key', () => {
+          const toJSON = jasmine.createSpy('toJSON').and.returnValue('json')
+          const getter = jasmine.createSpy('getter').and.returnValues(toJSON, undefined)
+          const obj = {}
+          Object.defineProperty(obj, 'toJSON', { get: getter })
+
+          expect(browserInspect(obj)).toBe('"json"')
+          expect(getter).toHaveBeenCalledTimes(1)
+          expect(toJSON).toHaveBeenCalledOnceWith('')
+        })
+
         it('should show root array but collapse nested arrays at depth 0', () => {
           const nested = [[['deep']]]
           const result = browserInspect(nested)
