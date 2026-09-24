@@ -177,6 +177,12 @@ describe('template', () => {
           expect(result).toBe(`${'a'.repeat(8192)}…`)
         })
 
+        it('should truncate very long boxed strings', () => {
+          // eslint-disable-next-line no-new-wrappers
+          const result = browserInspect({ boxed: new String('a'.repeat(10000)) })
+          expect(result).toBe(`{"boxed":"${'a'.repeat(8192)}…"}`)
+        })
+
         it('should not truncate strings shorter than 8KB', () => {
           const shortString = 'a'.repeat(100)
           const result = browserInspect(shortString)
@@ -255,6 +261,13 @@ describe('template', () => {
           const obj: any = { a: 1, b: 2, c: 3, d: 4, e: 5 }
           obj.f = obj
           expect(browserInspect(obj)).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
+        })
+
+        it('should not truncate boxed strings', () => {
+          // eslint-disable-next-line no-new-wrappers
+          const boxed = new String('abcdef')
+          expect(browserInspect(boxed)).toBe('"abcdef"')
+          expect(browserInspect({ boxed })).toBe('{"boxed":"abcdef"}')
         })
 
         it('should apply toJSON before truncating', () => {

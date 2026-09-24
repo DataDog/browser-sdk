@@ -140,7 +140,9 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
   try {
     const truncatedObjects = new Map<object, Record<string, unknown>>()
     // Create custom replacer to handle maxStringLength and maxObjectProperties in nested values
-    const replacer = (_key: string, val: unknown) => {
+    const replacer = (_key: string, rawVal: unknown) => {
+      // Unbox String objects (serialized as strings by JSON.stringify) so their indices aren't truncated as properties
+      const val = rawVal instanceof String ? rawVal.valueOf() : rawVal
       if (typeof val === 'string' && val.length > INSPECT_MAX_STRING_LENGTH) {
         return `${val.slice(0, INSPECT_MAX_STRING_LENGTH)}…`
       }
