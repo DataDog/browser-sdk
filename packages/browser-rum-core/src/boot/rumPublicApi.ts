@@ -21,8 +21,6 @@ import {
   ContextManagerMethod,
   addTelemetryUsage,
   makePublicApi,
-  monitor,
-  callMonitored,
   createHandlingStack,
   sanitize,
   createIdentityEncoder,
@@ -35,6 +33,7 @@ import {
   generateUUID,
   display,
 } from '@datadog/browser-core'
+import { monitor, callMonitored } from '@datadog/js-core/monitor'
 
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -50,7 +49,7 @@ import type {
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
-import { callPluginsMethod } from '../domain/plugins'
+import { callPluginsOnRumStart } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { ActionOptions } from '../domain/action/trackManualActions'
@@ -714,7 +713,7 @@ export function makeRumPublicApi(
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
-      callPluginsMethod(configuration.plugins, 'onRumStart', {
+      callPluginsOnRumStart(configuration.plugins, {
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
       })

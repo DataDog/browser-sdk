@@ -44,7 +44,6 @@ export {
   addTelemetryUsage,
   addTelemetryMetrics,
 } from './domain/telemetry'
-export { monitored, monitor, callMonitored, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
 export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager, SessionContext } from './domain/session/sessionManager'
@@ -124,6 +123,7 @@ export * from './browser/addEventListener'
 export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
 export * from './tools/timer'
+export * from './tools/thenable'
 export type { ConsoleLog } from './domain/console/consoleObservable'
 export { initConsoleObservable } from './domain/console/consoleObservable'
 export { catchUserErrors } from './tools/catchUserErrors'

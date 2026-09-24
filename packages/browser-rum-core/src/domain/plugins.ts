@@ -1,6 +1,24 @@
+import { isThenable } from '@datadog/browser-core'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
+import type { AssembleHook } from './hooks'
+
+/**
+ * onInit plugin API options.
+ *
+ * @experimental
+ */
+export interface RumPluginOnInitOptions {
+  initConfiguration: RumInitConfiguration
+  publicApi: RumPublicApi
+  /**
+   * Register a callback invoked when a RUM event is assembled, so plugins can enrich or override
+   * event fields before they are sent. Callbacks registered in `onInit` run before any event is
+   * assembled, including events buffered during the pre-start phase.
+   */
+  registerAssembleEventHook: AssembleHook['register']
+}
 
 /**
  * onRumStart plugin API options.
@@ -25,35 +43,46 @@ export interface OnRumStartOptions {
  * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
  * using.
  *
+ * `onInit` may abort the SDK initialization by returning (or resolving to) `false`. All plugins'
+ * `onInit` are called concurrently and independently; a Promise defers the actual initialization
+ * until it resolves, but does not delay any other plugin's `onInit` call.
+ *
  * @experimental
  */
 export interface RumPlugin {
   name: string
   getConfigurationTelemetry?(): Record<string, unknown>
-  onInit?(options: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }): void
+  onInit?(options: RumPluginOnInitOptions): false | void | Promise<false | void>
   onRumStart?(options: OnRumStartOptions): void
 }
 
-type MethodNames = 'onInit' | 'onRumStart'
-type MethodParameter<MethodName extends MethodNames> = Parameters<NonNullable<RumPlugin[MethodName]>>[0]
-
-export function callPluginsMethod<MethodName extends MethodNames>(
+/**
+ * Calls every plugin's `onInit` method concurrently, without waiting for one to resolve before
+ * calling the next. Stays synchronous as long as no plugin returns a thenable.
+ * Returns `false` if any plugin returned (or resolved to) `false`, `true` otherwise.
+ */
+export function callPluginsOnInit(
   plugins: RumPlugin[] | undefined,
-  methodName: MethodName,
-  parameter: MethodParameter<MethodName>
-): void
-export function callPluginsMethod<MethodName extends MethodNames>(
-  plugins: RumPlugin[] | undefined,
-  methodName: MethodName,
-  parameter: any
-) {
+  parameter: RumPluginOnInitOptions
+): boolean | Promise<boolean> {
   if (!plugins) {
-    return
+    return true
   }
-  for (const plugin of plugins) {
-    const method = plugin[methodName]
-    if (method) {
-      method(parameter)
-    }
+
+  const results = plugins.map((plugin) => plugin.onInit?.(parameter))
+
+  if (results.some(isThenable)) {
+    return Promise.all(results as Array<Promise<false | void>>).then((results) => !results.includes(false))
+  }
+
+  return !results.includes(false)
+}
+
+/**
+ * Calls each plugin's `onRumStart` method in order.
+ */
+export function callPluginsOnRumStart(plugins: RumPlugin[] | undefined, options: OnRumStartOptions): void {
+  for (const plugin of plugins ?? []) {
+    plugin.onRumStart?.(options)
   }
 }

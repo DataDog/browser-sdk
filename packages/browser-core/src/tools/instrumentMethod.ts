@@ -1,5 +1,5 @@
+import { callMonitored } from '@datadog/js-core/monitor'
 import { setTimeout } from './timer'
-import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 import { createHandlingStack } from './stackTrace/handlingStack'
 
@@ -179,7 +179,8 @@ export function instrumentConstructor<CONTAINER extends { [key: string]: any }, 
 ) {
   const original = container[constructor]
 
-  if (typeof original !== 'function') {
+  // Skip before preserveConstructorShape can modify the shared prototype.
+  if (typeof original !== 'function' || isReadOnly(container, constructor)) {
     return { stop: noop }
   }
 
@@ -247,6 +248,10 @@ function replaceWithInstrumentation<TARGET extends { [key: string]: any }, METHO
   original: TARGET[METHOD],
   instrumentation: TARGET[METHOD]
 ) {
+  if (isReadOnly(targetPrototype, method)) {
+    return { stop: noop }
+  }
+
   targetPrototype[method] = instrumentation
 
   return {
@@ -257,6 +262,11 @@ function replaceWithInstrumentation<TARGET extends { [key: string]: any }, METHO
       }
     },
   }
+}
+
+function isReadOnly(target: object, property: PropertyKey): boolean {
+  const descriptor = Object.getOwnPropertyDescriptor(target, property)
+  return !!descriptor && !descriptor.writable && !descriptor.set
 }
 
 /**

@@ -11,6 +11,7 @@ import {
   INTAKE_SITE_US1_FED,
   INTAKE_SITE_US2_FED,
 } from '@datadog/js-core/transport'
+import { startMonitorErrorCollection } from '@datadog/js-core/monitor'
 import type { Context } from '../../tools/serialisation/context'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/isError'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
@@ -18,7 +19,6 @@ import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
 import { BufferedObservable, Observable } from '../../tools/observable'
-import { startMonitorErrorCollection } from '../../tools/monitor'
 import { display } from '../../tools/display'
 import { sendToExtension } from '../../tools/sendToExtension'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'

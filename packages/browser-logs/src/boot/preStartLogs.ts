@@ -1,4 +1,5 @@
 import { timeStampNow } from '@datadog/js-core/time'
+import { monitorError } from '@datadog/js-core/monitor'
 import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
   BufferedObservable,
@@ -6,7 +7,6 @@ import {
   display,
   displayAlreadyInitializedError,
   initFeatureFlags,
-  monitorError,
   noop,
   buildAccountContextManager,
   CustomerContextKey,
@@ -30,6 +30,7 @@ import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configu
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
+import { callPluginsMethod } from '../domain/plugins'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
@@ -80,7 +81,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration, errorStack) {
+    init(initConfiguration, publicApi, errorStack) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -101,6 +102,12 @@ export function createPreStartStrategy(
         return
       }
 
+      callPluginsMethod(initConfiguration.plugins, 'onInit', {
+        initConfiguration,
+        publicApi,
+        registerAssembleEventHook: hooks.assembleEvent.register,
+      })
+
       const configuration = validateAndBuildLogsConfiguration(initConfiguration)
       if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
         return
@@ -113,21 +120,27 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry, sdkName)
-        const sessionManagerPromise = canUseEventBridge()
-          ? startSessionManagerStub()
-          : mockable(startSessionManager)(configuration, trackingConsentState)
+        const onSessionManagerReady = (newSessionManager: SessionManager) => {
+          sessionManager = newSessionManager
+          startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
+          addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
+          tryStartLogs()
+        }
 
-        void sessionManagerPromise
-          .then((newSessionManager) => {
-            if (!newSessionManager) {
-              return
-            }
-            sessionManager = newSessionManager
-            startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
-            addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
-            tryStartLogs()
-          })
-          .catch(monitorError)
+        if (canUseEventBridge()) {
+          // When using the event bridge, the session manager is a stub, so it can be created
+          // synchronously and logs can start within the `init()` call, instead of being buffered
+          // until the session is resolved.
+          onSessionManagerReady(startSessionManagerStub())
+        } else {
+          void mockable(startSessionManager)(configuration, trackingConsentState)
+            .then((newSessionManager) => {
+              if (newSessionManager) {
+                onSessionManagerReady(newSessionManager)
+              }
+            })
+            .catch(monitorError)
+        }
       })
     },
 

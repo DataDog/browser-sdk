@@ -1,5 +1,5 @@
 import { globalObject } from '@datadog/js-core/util'
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPublicApi, RumPluginOnInitOptions } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { appendElement } from '../../../browser-rum-core/test'
 import {
@@ -31,7 +31,8 @@ function createPublicApi() {
 function initPlugin() {
   const { publicApi, startViewSpy, setViewNameSpy } = createPublicApi()
   const plugin = nextjsPlugin()
-  plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+  plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } } as RumPluginOnInitOptions)
   return { plugin, publicApi, startViewSpy, setViewNameSpy }
 }
 
@@ -64,7 +65,8 @@ describe('nextjsPlugin', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
     const { publicApi } = createPublicApi()
 
-    nextjsPlugin().onInit({ publicApi, initConfiguration })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    nextjsPlugin().onInit({ publicApi, initConfiguration } as RumPluginOnInitOptions)
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
@@ -220,10 +222,11 @@ describe('nextjsPlugin', () => {
 
       expect(callbackSpy).not.toHaveBeenCalled()
 
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
       nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
-      })
+      } as RumPluginOnInitOptions)
 
       expect(callbackSpy).toHaveBeenCalledTimes(1)
       expect(callbackSpy.calls.mostRecent().args[0]).toBe(publicApi)
@@ -233,10 +236,11 @@ describe('nextjsPlugin', () => {
       const callbackSpy = jasmine.createSpy()
       const { publicApi } = createPublicApi()
 
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
       nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
-      })
+      } as RumPluginOnInitOptions)
 
       onRumInit(callbackSpy)
 

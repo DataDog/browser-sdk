@@ -117,6 +117,21 @@ describe('preStartRum', () => {
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
+      it('should default the service to the web application id rather than the bridge placeholder', () => {
+        mockEventBridge()
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, applicationId: 'my-web-app-id' }, PUBLIC_API)
+        expect(strategy.initConfiguration?.service).toEqual('my-web-app-id')
+      })
+
+      it('should keep the service provided in the init configuration', () => {
+        mockEventBridge()
+        strategy.init(
+          { ...DEFAULT_INIT_CONFIGURATION, applicationId: 'my-web-app-id', service: 'my-service' },
+          PUBLIC_API
+        )
+        expect(strategy.initConfiguration?.service).toEqual('my-service')
+      })
+
       it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
@@ -151,6 +166,12 @@ describe('preStartRum', () => {
         spyOnProperty(document, 'cookie', 'get').and.returnValue('')
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
         await collectAsyncCalls(doStartRumSpy, 1)
+        expect(doStartRumSpy).toHaveBeenCalled()
+      })
+
+      it('should start RUM synchronously', () => {
+        mockEventBridge()
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
         expect(doStartRumSpy).toHaveBeenCalled()
       })
     })
@@ -553,7 +574,11 @@ describe('preStartRum', () => {
         it('should start the SDK with the cached configuration on cache hit', async () => {
           localStorage.setItem(
             CACHE_KEY,
-            JSON.stringify({ version: 2, config: { rum: { sessionSampleRate: 75 } }, fetchedAt: 1000 })
+            JSON.stringify({
+              version: 3,
+              config: { rum: { sessionSampleRate: 75 } },
+              metadata: { lastSynced: 1000, syncId: 'sync-id' },
+            })
           )
           const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
 
@@ -594,10 +619,12 @@ describe('preStartRum', () => {
         const initConfiguration: RumInitConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
         strategy.init(initConfiguration, PUBLIC_API)
 
-        expect(plugin.onInit).toHaveBeenCalledWith({
-          initConfiguration,
-          publicApi: PUBLIC_API,
-        })
+        expect(plugin.onInit).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            initConfiguration,
+            publicApi: PUBLIC_API,
+          })
+        )
       })
 
       it('plugins can edit the init configuration prior to validation', async () => {
@@ -619,6 +646,45 @@ describe('preStartRum', () => {
 
         expect(doStartRumSpy).toHaveBeenCalled()
         expect(doStartRumSpy.calls.mostRecent().args[0].applicationId).toBe('application-id')
+      })
+
+      it('does not start RUM, synchronously, when a plugin synchronously returns false', () => {
+        const plugin: RumPlugin = { name: 'a', onInit: () => false }
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('starts RUM once a plugin resolves its onInit promise to void', async () => {
+        const plugin: RumPlugin = { name: 'a', onInit: () => Promise.resolve() }
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+        await collectAsyncCalls(doStartRumSpy, 1)
+
+        expect(doStartRumSpy).toHaveBeenCalled()
+      })
+
+      it('does not start RUM when a plugin resolves its onInit promise to false', async () => {
+        const plugin: RumPlugin = { name: 'a', onInit: () => Promise.resolve(false) }
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('does not start RUM and does not throw when a plugin onInit promise rejects', async () => {
+        const plugin: RumPlugin = { name: 'a', onInit: () => Promise.reject(new Error('boom')) }
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(doStartRumSpy).not.toHaveBeenCalled()
       })
     })
   })

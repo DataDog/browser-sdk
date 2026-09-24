@@ -22,13 +22,16 @@ export function runBasePluginErrorTests(configs: ErrorPluginTestConfig[]) {
     test.describe(`base plugin: ${name}`, () => {
       test.describe('errors', () => {
         loadApp(createTest('should report client-side error').withRum()).run(
-          async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+          async ({ page, flushEvents, intakeRegistry, withBrowserLogs, browserName }) => {
             await page.click('text=Go to Error Test')
             await page.waitForURL(`**${viewPrefix}/error-test`)
 
             await page.click('[data-testid="trigger-error"]')
             await page.waitForSelector('[data-testid="error-handled"]')
 
+            if (browserName === 'webkit') {
+              await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+            }
             await flushEvents()
 
             const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')

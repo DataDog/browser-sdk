@@ -55,4 +55,13 @@ describe('createMutationBatch', () => {
 
     expect(processMutationBatchSpy).toHaveBeenCalledOnceWith([])
   })
+
+  it('calls the callback when content changes without DOM mutations', () => {
+    mutationBatch.notifyContentMutated()
+
+    requestIdleCallbackMock.idle()
+    clock.tick(MUTATION_PROCESS_MIN_DELAY)
+
+    expect(processMutationBatchSpy).toHaveBeenCalledOnceWith([])
+  })
 })

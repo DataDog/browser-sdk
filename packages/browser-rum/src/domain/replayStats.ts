@@ -15,6 +15,10 @@ export function addRecord(viewId: string) {
   getOrCreateReplayStats(viewId).records_count += 1
 }
 
+export function addResource(viewId: string) {
+  getOrCreateReplayStats(viewId).resources_count += 1
+}
+
 export function addWroteData(viewId: string, additionalBytesCount: number) {
   getOrCreateReplayStats(viewId).segments_total_raw_size += additionalBytesCount
 }
@@ -38,6 +42,7 @@ function getOrCreateReplayStats(viewId: string) {
   } else {
     replayStats = {
       records_count: 0,
+      resources_count: 0,
       segments_count: 0,
       segments_total_raw_size: 0,
     }

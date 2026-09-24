@@ -73,7 +73,9 @@ export async function checkTelemetryErrors(datacenters: string[], version: strin
   }
 }
 
-async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query[], agent: Agent): Promise<void> {
+async function getDatacenterTelemetryCredentials(
+  datacenter: string
+): Promise<{ site: string; apiKey: string; applicationKey: string } | undefined> {
   const datacenterMetadata = await getDatacenterMetadata(datacenter)
 
   if (!datacenterMetadata?.site) {
@@ -91,10 +93,34 @@ async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query
     return
   }
 
+  return { site, apiKey, applicationKey }
+}
+
+/**
+ * Returns true if at least one of the given datacenters has telemetry credentials configured.
+ * Use this to skip telemetry checks entirely when no datacenter can be queried.
+ */
+export async function hasTelemetryCredentials(datacenters: string[]): Promise<boolean> {
+  for (const datacenter of datacenters) {
+    if ((await getDatacenterTelemetryCredentials(datacenter)) !== undefined) {
+      return true
+    }
+  }
+  return false
+}
+
+async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query[], agent: Agent): Promise<void> {
+  const credentials = await getDatacenterTelemetryCredentials(datacenter)
+  if (!credentials) {
+    return
+  }
+
+  const { site, apiKey, applicationKey } = credentials
+
   for (let i = 0; i < queries.length; i++) {
     const query = queries[i]
     const buckets = await queryLogsApi(site, apiKey, applicationKey, query, agent)
-    const count = buckets[0]?.computes?.c0
+    const count = buckets[0]?.computes?.c0 ?? 0
 
     // buckets are sorted by count, so we only need to check the first one
     if (count > query.threshold) {

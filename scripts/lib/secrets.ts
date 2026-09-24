@@ -51,20 +51,12 @@ export function getOrg2AppKey(): string {
 
 export function getTelemetryOrgApiKey(site: string): string | undefined {
   const normalizedSite = site.replaceAll('.', '-')
-  try {
-    return getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
-  } catch {
-    return
-  }
+  return getOptionalSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 }
 
 export function getTelemetryOrgApplicationKey(site: string): string | undefined {
   const normalizedSite = site.replaceAll('.', '-')
-  try {
-    return getSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
-  } catch {
-    return
-  }
+  return getOptionalSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
 }
 
 export function getNpmToken(): string {
@@ -121,4 +113,21 @@ function getSecretKey(name: string): string {
   `
     .run()
     .trim()
+}
+
+/**
+ * Like getSecretKey, but returns undefined when the parameter does not exist instead of throwing.
+ *
+ * Other errors (e.g. AWS permission issues or temporary network failures) are rethrown so they are
+ * not silently mistaken for a missing parameter, which could otherwise disable safety checks.
+ */
+function getOptionalSecretKey(name: string): string | undefined {
+  try {
+    return getSecretKey(name)
+  } catch (error) {
+    if (error instanceof Error && /ParameterNotFound/.test(error.message)) {
+      return
+    }
+    throw error
+  }
 }

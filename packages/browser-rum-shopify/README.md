@@ -2,14 +2,16 @@
 
 ## Overview
 
-This package bundles the [RUM slim package](../browser-rum-slim) (no Session Replay, no Real User
-Profiling) together with bindings that translate Shopify Web Pixel events into RUM API calls, so
-Shopify's Custom Pixel sandbox only needs to load a single script.
+This package bundles the Datadog RUM Browser SDK together with a `shopifyPlugin` that translates
+Shopify Web Pixel events into RUM API calls, so a Shopify Custom Pixel only needs to load a
+single script.
 
-Exposes `window.DD_RUM`, same public API as [`@datadog/browser-rum-slim`](../browser-rum-slim),
-with `trackViewsManually: true` applied by default so views are driven by the `page_viewed` pixel
-event instead of automatic URL-based tracking.
+Exposes `window.DD_RUM`, the same public API as [`@datadog/browser-rum`][2], plus
+`DD_RUM.shopifyPlugin(configuration)`.
 
-## Setup
+See the [dedicated Datadog documentation][1] for the installation process.
 
-See the [RUM package](../rum/README.md) documentation for `init()` options.
+<!-- Note: all URLs should be absolute -->
+
+[1]: https://docs.datadoghq.com/integrations/rum-shopify
+[2]: https://www.npmjs.com/package/@datadog/browser-rum

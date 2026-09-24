@@ -132,8 +132,6 @@ describe('logger collection', () => {
           message: 'message',
           status: StatusType.error,
           _dd: { debug_ids: undefined },
-        },
-        messageContext: {
           foo: 'from-logger',
           bar: 'from-message',
         },
@@ -143,6 +141,17 @@ describe('logger collection', () => {
         },
         ddtags: [],
       })
+    })
+
+    it('message context should take precedence over native raw log fields', () => {
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { message: 'from-message-context' } },
+        logger,
+        HANDLING_STACK,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0].rawLogsEvent.message).toEqual('from-message-context')
     })
 
     it('should send the saved date when present', () => {

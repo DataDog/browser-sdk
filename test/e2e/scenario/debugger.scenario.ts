@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call, camelcase */
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest, microfrontendSetup } from '../lib/framework'
 
 const DEBUGGER_POLL_INTERVAL = 1_000
 const PROBE_WAIT_TIMEOUT = 30_000
+const DEBUG_ID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i
+const DEBUG_ID_URL_PATH_PATTERN = /^\/microfrontend\/(?:chunks\/)?[^/]+\.m?js$/
 
 function makeProbe({
   id = 'test-probe-1',
@@ -90,9 +92,10 @@ async function injectInstrumentedFunction(page: Page) {
 async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
   await page.evaluate(() => {
     ;(window as any).testFunction = function testFunction(a: unknown, b: unknown) {
-      const probes = (window as any).$dd_probes('TestModule;testFunction')
+      // $dd_entry returns a handle for this invocation, stored back into the same binding.
+      let probes = (window as any).$dd_probes('TestModule;testFunction')
       if (probes) {
-        ;(window as any).$dd_entry(probes, this, { a, b })
+        probes = (window as any).$dd_entry(probes, this, { a, b })
       }
       const result = String(a) + String(b)
       const returnValue = result
@@ -106,6 +109,32 @@ async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
 }
 
 /**
+ * Injects an async instrumented function whose calls settle only when their own name is released,
+ * so a test can finish two in-flight calls in either order.
+ */
+async function injectOverlappingAsyncFunction(page: Page) {
+  await page.evaluate(() => {
+    const releases: Record<string, () => void> = {}
+    ;(window as any).releaseAsyncCall = (name: string) => releases[name]()
+    ;(window as any).asyncFunction = async function asyncFunction(name: string) {
+      let probes = (window as any).$dd_probes('TestModule;asyncFunction')
+      if (probes) {
+        probes = (window as any).$dd_entry(probes, this, { name })
+      }
+      await new Promise<void>((resolve) => {
+        releases[name] = resolve
+      })
+      const result = `result-${name}`
+      if (probes) {
+        return (window as any).$dd_return(probes, result, this, { name }, { result }) as unknown
+      }
+      return result
+    }
+  })
+  await waitForProbe(page, 'TestModule;asyncFunction')
+}
+
+/**
  * Injects an instrumented function that throws, triggering `$dd_throw`, and waits for the
  * SDK to register the corresponding probe before returning.
  */
@@ -116,9 +145,9 @@ async function injectThrowingFunction(page: Page) {
     const script = document.createElement('script')
     script.textContent = `
       window.throwingFunction = function throwingFunction(msg) {
-        const probes = window.$dd_probes('TestModule;throwingFunction')
+        let probes = window.$dd_probes('TestModule;throwingFunction')
         if (probes) {
-          window.$dd_entry(probes, this, { msg })
+          probes = window.$dd_entry(probes, this, { msg })
         }
         try {
           throw new Error(msg)
@@ -192,6 +221,48 @@ test.describe('debugger', () => {
       expect(returnCapture.locals['@return'].value).toBe('foobar')
     })
 
+  createTest('pair overlapping async invocations with their own entry state')
+    .withDebugger()
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      const probe = makeProbe({ methodName: 'asyncFunction' })
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await injectOverlappingAsyncFunction(page)
+
+      // Both calls are in flight before either settles, and settle in the order they were made.
+      await page.evaluate(async () => {
+        const first = (window as any).asyncFunction('first')
+        // Space the entries apart: the probe sampler rate-limits on `performance.now()`, which
+        // Firefox clamps to 1ms. Called back to back, both entries read the same millisecond, the
+        // sampler treats the second one as a burst and drops it, and only one snapshot is sent.
+        // `first` stays in flight in the meantime, so the calls still overlap.
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        const second = (window as any).asyncFunction('second')
+        ;(window as any).releaseAsyncCall('first')
+        await first
+        ;(window as any).releaseAsyncCall('second')
+        await second
+      })
+
+      await flushEvents()
+
+      const captures = intakeRegistry.debuggerEvents.map(
+        (event) => (event.debugger as any).snapshot.captures as Record<string, any>
+      )
+      expect(captures.length).toBe(2)
+      expect(
+        captures.map(({ entry, return: exit }) => [
+          String(entry.arguments.name.value),
+          String(exit.arguments.name.value),
+          String(exit.locals['@return'].value),
+        ])
+      ).toEqual([
+        ['first', 'first', 'result-first'],
+        ['second', 'second', 'result-second'],
+      ])
+    })
+
   createTest('capture exception in snapshot on throw')
     .withDebugger()
     .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
@@ -228,6 +299,98 @@ test.describe('debugger', () => {
       expect(firstFrame.function).toEqual(expect.any(String))
       expect(firstFrame.fileName).toEqual(expect.any(String))
       expect(firstFrame.lineNumber).toEqual(expect.any(Number))
+    })
+
+  createTest('send exact source code context debug IDs in a debugger snapshot')
+    .withDebugger()
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      const probe = makeProbe({
+        typeName: 'TestModule',
+        methodName: 'throwingFunction',
+      })
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await injectThrowingFunction(page)
+
+      const firstUrl = 'https://debugger.example.com/first.js'
+      const secondUrl = 'https://debugger.example.com/second.js'
+      await page.evaluate(
+        ({ firstUrl, secondUrl }) => {
+          ;(window as any).DD_SOURCE_CODE_CONTEXT = {
+            [`Error: context\n    at first (${firstUrl}:1:1)`]: { ddDebugId: 'first-debug-id' },
+            [`Error: context\n    at second (${secondUrl}:1:1)`]: { ddDebugId: 'second-debug-id' },
+          }
+
+          const probes = (window as any).$dd_probes('TestModule;throwingFunction')
+          const invocation = (window as any).$dd_entry(probes, window, { msg: 'debug IDs' })
+          const error = new Error('debug IDs')
+          error.stack = `Error: debug IDs\n    at first (${firstUrl}:10:2)\n    at second (${secondUrl}:20:3)`
+          ;(window as any).$dd_throw(invocation, error, window, { msg: 'debug IDs' })
+        },
+        { firstUrl, secondUrl }
+      )
+
+      await flushEvents()
+
+      expect(intakeRegistry.debuggerEvents.length).toBeGreaterThanOrEqual(1)
+      expect((intakeRegistry.debuggerEvents[0] as any)._dd.debug_ids).toEqual([
+        { url: firstUrl, id: 'first-debug-id' },
+        { url: secondUrl, id: 'second-debug-id' },
+      ])
+    })
+
+  createTest('send well-formed build-plugin debug IDs in a debugger snapshot')
+    .withDebugger()
+    .withSetup(microfrontendSetup)
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page, baseUrl }) => {
+      const probe = makeProbe({
+        typeName: 'TestModule',
+        methodName: 'throwingFunction',
+      })
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await waitForProbe(page, 'TestModule;throwingFunction')
+      await page.locator('#app1-runtime-error').waitFor()
+
+      await page.evaluate(() => {
+        window.addEventListener(
+          'error',
+          (event) => {
+            event.preventDefault()
+            const probes = (window as any).$dd_probes('TestModule;throwingFunction')
+            if (probes && event.error) {
+              const invocation = (window as any).$dd_entry(probes, window, {})
+              ;(window as any).$dd_throw(invocation, event.error, window, {})
+            }
+          },
+          { once: true }
+        )
+      })
+
+      await page.click('#app1-runtime-error')
+      await flushEvents()
+
+      expect(intakeRegistry.debuggerEvents.length).toBeGreaterThanOrEqual(1)
+      const debugIds = (intakeRegistry.debuggerEvents[0] as any)._dd?.debug_ids as Array<{
+        url: string
+        id: string
+      }>
+      expect(debugIds).toEqual(expect.any(Array))
+      expect(debugIds.length).toBeGreaterThan(0)
+
+      for (const debugId of debugIds) {
+        expect(debugId).toEqual({
+          url: expect.any(String),
+          id: expect.any(String),
+        })
+
+        const url = new URL(debugId.url)
+        expect(url.origin).toBe(new URL(baseUrl).origin)
+        expect(url.pathname).toMatch(DEBUG_ID_URL_PATH_PATTERN)
+        expect(debugId.id).toMatch(DEBUG_ID_PATTERN)
+      }
     })
 
   createTest('fetch probes from the Delivery API after initial load')

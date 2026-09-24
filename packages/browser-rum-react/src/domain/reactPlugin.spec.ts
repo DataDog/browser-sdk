@@ -1,6 +1,6 @@
 import { version as reactVersion } from 'react'
 import { toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
 import { onRumInit, onRumStart, reactPlugin, resetReactPlugin, setReactRouterType } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
@@ -29,10 +29,11 @@ describe('reactPlugin', () => {
 
     expect(callbackSpy).not.toHaveBeenCalled()
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     reactPlugin(pluginConfiguration).onInit({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
-    })
+    } as RumPluginOnInitOptions)
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
     expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
@@ -42,10 +43,11 @@ describe('reactPlugin', () => {
   it('calls callbacks immediately if onInit was already invoked', () => {
     const callbackSpy = jasmine.createSpy()
     const pluginConfiguration = {}
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     reactPlugin(pluginConfiguration).onInit({
       publicApi: PUBLIC_API,
       initConfiguration: INIT_CONFIGURATION,
-    })
+    } as RumPluginOnInitOptions)
 
     onRumInit(callbackSpy)
 
@@ -56,14 +58,16 @@ describe('reactPlugin', () => {
 
   it('enforce manual view tracking when router is enabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    reactPlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    reactPlugin({ router: true }).onInit({ publicApi: PUBLIC_API, initConfiguration } as RumPluginOnInitOptions)
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('does not enforce manual view tracking when router is disabled', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
-    reactPlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
+    reactPlugin({ router: false }).onInit({ publicApi: PUBLIC_API, initConfiguration } as RumPluginOnInitOptions)
 
     expect(initConfiguration.trackViewsManually).toBeUndefined()
   })

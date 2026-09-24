@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-35
+  CURRENT_STAGING: staging-39
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 122
+  CURRENT_CI_IMAGE: 126
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
-  CHROME_PACKAGE_VERSION: 152.0.7977.64-1
+  CHROME_PACKAGE_VERSION: 153.0.8010.36-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
 workflow:
@@ -248,6 +248,12 @@ e2e:
     when: always
     reports:
       junit: test-report/e2e/*.xml
+  before_script:
+    - |
+      if [[ "$BROWSER" == firefox* ]]; then
+        export NO_PROXY="${NO_PROXY:+$NO_PROXY,}$POD_IP"
+        export no_proxy="${no_proxy:+$no_proxy,}$POD_IP"
+      fi
   script:
     - yarn
     - yarn build
@@ -657,6 +663,18 @@ e2e-shopify-scheduled:
     - FORCE_COLOR=1 PW_BROWSER=chromium yarn test:e2e --project=chromium -g "shopify"
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
+
+e2e-shopify-scheduled-failure:
+  extends: .prepare_notification
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "e2e-shopify-scheduled"
+  when: on_failure
+  script:
+    - 'MESSAGE_TEXT=":fire: [*$CI_PROJECT_NAME*] <$BUILD_URL|Shopify e2e tests failed> :fire:"'
+    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
+  dependencies:
+    - e2e-shopify-scheduled
 
 ########################################################################################################################
 # Check expired telemetry

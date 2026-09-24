@@ -1,4 +1,9 @@
-import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type {
+  RumInitConfiguration,
+  RumPluginOnInitOptions,
+  RumPublicApi,
+  StartRumResult,
+} from '@datadog/browser-rum-core'
 import { noop } from '@datadog/browser-core'
 import type { ReactPluginConfiguration } from '../src/domain/reactPlugin'
 import { reactPlugin, resetReactPlugin } from '../src/domain/reactPlugin'
@@ -18,10 +23,11 @@ export function initializeReactPlugin({
   resetReactPlugin()
   const plugin = reactPlugin(configuration)
 
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
   plugin.onInit({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
-  })
+  } as RumPluginOnInitOptions)
   plugin.onRumStart({
     addError,
   })

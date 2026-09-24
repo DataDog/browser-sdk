@@ -1,7 +1,10 @@
-import { StringRole } from '../../../types'
+import type { TimeStamp } from '@datadog/js-core/time'
+import { ChangeType, RecordType, StringRole } from '../../../types'
 import { createString } from '../encoding'
-import type { NodeId } from '../encoding'
-import type { SerializationTransaction } from './serializationTransaction'
+import type { NodeId, StringId } from '../encoding'
+import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
+import { SerializationKind, serializeInTransaction, type SerializationTransaction } from './serializationTransaction'
 
 describe('SerializationTransaction', () => {
   // The checks below are assertions about the types SerializationTransaction accepts rather than
@@ -90,5 +93,32 @@ describe('SerializationTransaction', () => {
     addNode(null, createString(StringRole.NodeName, '#text'), 'content')
     // @ts-expect-error an element node whose attribute assignment is a pair of bare strings
     addNode(null, createString(StringRole.NodeName, 'DIV'), ['id', 'main'])
+  })
+
+  it('emits a Change record with ImageContent', () => {
+    const emitRecord = jasmine.createSpy<EmitRecordCallback>()
+    const emitStats = jasmine.createSpy<EmitStatsCallback>()
+    const scope = createRecordingScopeForTesting()
+    const nodeId = 42 as NodeId
+    const resourceHash = '100x100-abc123'
+    serializeInTransaction(
+      SerializationKind.INCREMENTAL_SNAPSHOT,
+      emitRecord,
+      emitStats,
+      scope,
+      123 as TimeStamp,
+      (transaction) => {
+        transaction.setImageContent(nodeId, createString(StringRole.ResourceId, resourceHash))
+      }
+    )
+    expect(emitRecord).toHaveBeenCalledOnceWith({
+      type: RecordType.Change,
+      timestamp: 123,
+      data: [
+        [ChangeType.AddRoleAnnotatedStrings, [StringRole.ResourceId, resourceHash]],
+        [ChangeType.ImageContent, [nodeId, 0 as StringId]],
+      ],
+    })
+    expect(emitStats).toHaveBeenCalled()
   })
 })

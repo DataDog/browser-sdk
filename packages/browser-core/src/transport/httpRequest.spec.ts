@@ -110,6 +110,17 @@ describe('httpRequest', () => {
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
 
+    it('should use fetch for a non-HTTP endpoint', async () => {
+      request = createHttpRequest([mockEndpointBuilder('file:///proxy')], noop)
+
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      await interceptor.waitForAllFetchCalls()
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('fetch')
+    })
+
     it('should use sendBeacon when the bytes count is correct', () => {
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 

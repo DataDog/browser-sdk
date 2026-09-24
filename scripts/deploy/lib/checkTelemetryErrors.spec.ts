@@ -131,6 +131,12 @@ describe('check-telemetry-errors', () => {
     )
   })
 
+  it('should not throw and report 0 events when no buckets are returned', async () => {
+    mockFetch([[], [], []])
+
+    await assert.doesNotReject(() => checkTelemetryErrors(['us1'], '6.2.1'))
+  })
+
   it('should throw an error if the API returns an unexpected response format', async () => {
     // Mock first API call with invalid response (missing data.buckets)
     fetchMock.mock.mockImplementationOnce(

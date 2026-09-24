@@ -1,3 +1,4 @@
+import { monitorError } from '@datadog/js-core/monitor'
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCookies } from '../../../browser/cookie'
@@ -8,7 +9,6 @@ import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
-import { monitorError } from '../../../tools/monitor'
 import type { CookieAccess } from '../../../browser/cookieAccess'
 import {
   areCookiesAuthorized,
@@ -111,11 +111,18 @@ export function initCookieStrategy(
 // Thrown when the browsing context tears down mid-lock-request.
 //   - "AbortError: Promise was rejected because the browsing context is going away" (Webkit)
 //   - "Error: Failed to execute 'request' on 'LockManager': The provided callback is no longer runnable." (Chromium)
+//   - "InvalidStateError: Responsible document is not fully active" (Webkit LockManager.request)
+//   - "InvalidStateError: The document is not active." (Chromium LockManager.request)
 function isContextGoingAwayError(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false
   }
-  return error.name === 'AbortError' || error.message.includes('no longer runnable')
+  return (
+    error.name === 'AbortError' ||
+    error.message.includes('no longer runnable') ||
+    error.message.includes('Responsible document is not fully active') ||
+    error.message.includes('The document is not active')
+  )
 }
 
 export function createCookieAccess(cookieApi: CookieApi, cookieOptions: CookieOptions): CookieAccess {

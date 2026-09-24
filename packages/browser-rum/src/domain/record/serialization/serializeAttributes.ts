@@ -96,14 +96,12 @@ export function serializeVirtualAttributes(
   }
 
   const attrs: VirtualAttributes = {}
-  const doc = element.ownerDocument
   const tagName = normalizedTagName(element)
 
   // remote css
   if (tagName === 'link') {
-    const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
-    const cssText = getCssRulesString(stylesheet)
-    if (cssText && stylesheet) {
+    const cssText = getCssRulesString((element as HTMLLinkElement).sheet)
+    if (cssText) {
       transaction.addMetric('cssText', cssText.length)
       attrs._cssText = cssText
     }

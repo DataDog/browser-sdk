@@ -8,12 +8,12 @@ import {
   clearTimeout,
   setTimeout,
   DOM_EVENT,
-  monitorError,
   display,
   mockable,
   isSampled,
   correctedChildSampleRate,
 } from '@datadog/browser-core'
+import { monitorError } from '@datadog/js-core/monitor'
 
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'

@@ -176,7 +176,7 @@ describe('actionCollection', () => {
       it(`should add action properties on ${eventType} from the context`, () => {
         const actionId = ['1']
         spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
-        const defaultRumEventAttributes = hooks.assemble.trigger({
+        const defaultRumEventAttributes = hooks.assembleEventDefaults.trigger({
           eventType,
           startTime: 0 as RelativeTime,
         } as AssembleHookParams)
@@ -188,7 +188,7 @@ describe('actionCollection', () => {
       it(`should not add action properties on ${eventType} from the context`, () => {
         const actionId = ['1']
         spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
-        const defaultRumEventAttributes = hooks.assemble.trigger({
+        const defaultRumEventAttributes = hooks.assembleEventDefaults.trigger({
           eventType,
           startTime: 0 as RelativeTime,
         } as AssembleHookParams)
@@ -201,7 +201,7 @@ describe('actionCollection', () => {
       const longTaskStartTime = 100 as RelativeTime
       const findActionIdSpy = spyOn(actionContexts, 'findActionId').and.returnValue([])
 
-      hooks.assemble.trigger({
+      hooks.assembleEventDefaults.trigger({
         eventType: RumEventType.LONG_TASK,
         startTime: longTaskStartTime,
         duration: 50 as Duration,

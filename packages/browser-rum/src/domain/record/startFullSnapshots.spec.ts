@@ -2,9 +2,11 @@ import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { noop } from '@datadog/browser-core'
+import type { MetaRecord } from '../../types'
 import { RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../browser-rum-core/test'
 import { startFullSnapshots } from './startFullSnapshots'
+import { sanitizeUrl } from './utils/sanitizeUrl'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
 
@@ -60,7 +62,7 @@ describe('startFullSnapshots', () => {
         {
           data: {
             height: jasmine.any(Number),
-            href: window.location.href,
+            href: sanitizeUrl(window.location.href),
             width: jasmine.any(Number),
           },
           type: RecordType.Meta,
@@ -101,5 +103,26 @@ describe('startFullSnapshots', () => {
       cssText: { count: 1, max: 21, sum: 21 },
       serializationDuration: jasmine.anything(),
     })
+  })
+
+  describe('Meta record href', () => {
+    it('is the sanitized page URL', () => {
+      expect(getMetaRecord().data.href).toBe(sanitizeUrl(window.location.href))
+    })
+
+    it('stays an absolute URL, so it can be used as a base URL during playback', () => {
+      const { href } = getMetaRecord().data
+
+      expect(href).toBeDefined()
+      expect(new URL('relative/path', href).href).toBe(new URL('relative/path', window.location.href).href)
+    })
+
+    function getMetaRecord(): MetaRecord {
+      const metaRecords = emitRecordCallback.calls
+        .allArgs()
+        .map((args) => args[0])
+        .filter((record): record is MetaRecord => record.type === RecordType.Meta)
+      return metaRecords[metaRecords.length - 1]
+    }
   })
 })

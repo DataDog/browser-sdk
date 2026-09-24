@@ -1,5 +1,6 @@
 import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
+  canUseEventBridge,
   catchUserErrors,
   serializeConfiguration,
   DefaultPrivacyLevel,
@@ -16,9 +17,14 @@ import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
+import type { SdkName } from '../contexts/defaultContext'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 import { getRemoteConfigurationId } from './remoteConfiguration'
+import type { RemoteConfigurationMetadata } from './remoteConfigurationCache'
+
+// replaced at build time
+declare const __BUILD_ENV__SDK_SETUP__: string
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
@@ -74,6 +80,16 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Authentication
    */
   applicationId: string
+
+  /**
+   * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * `allowedTracingUrls` still requires an explicitly configured service.
+   *
+   * @category Data Collection
+   * @defaultValue the `applicationId`
+   */
+  service?: string | undefined | null
 
   /**
    * Whether to propagate user and account IDs in the baggage header of trace requests.
@@ -227,11 +243,11 @@ export interface RumInitConfiguration extends InitConfiguration {
         enable: boolean
 
         /**
-         * The maximum number of canvas frames recorded per second, between 0 and 5. Setting this option to `0` disables canvas frame recording.
+         * Trades frame rate and image resolution for bandwidth. See {@link CanvasRecordingQuality}.
          *
-         * @defaultValue 1
+         * @defaultValue 'medium'
          */
-        maxFramesPerSecond?: number | undefined
+        quality?: CanvasRecordingQuality | undefined
       }
     | undefined
 
@@ -245,6 +261,8 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   /**
    * Enables automatic collection of users actions.
+   *
+   * Add `data-dd-ignore-frustration` without a value, or set it to `all`, to ignore all frustration signals for an element and its descendants. To ignore specific signals, use a space-separated list of `rage-click`, `dead-click`, and `error-click`.
    *
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
    *
@@ -350,6 +368,9 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enable partial view updates, which reduces bandwidth by sending only changed
    * fields instead of full view events on intermediate updates.
    *
+   * Enabled by default when the SDK is loaded from the CDN and no `proxy` is configured.
+   * Disabled by default otherwise, because a proxy may not forward the `view_update` event type.
+   *
    * @category Beta
    */
   betaEnableViewUpdates?: boolean | undefined
@@ -365,6 +386,72 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Beta
    */
   betaTrackWebSockets?: boolean | undefined
+}
+
+/**
+ * Recording quality presets for canvas capture. See {@link RumInitConfiguration.sessionReplayCanvasRecording}.
+ *
+ * @example
+ * ```ts
+ * datadogRum.init({
+ *   // ...
+ *   sessionReplayCanvasRecording: {
+ *     enable: true,
+ *     quality: CanvasRecordingQuality.MEDIUM,
+ *   },
+ * })
+ * ```
+ * @hidden
+ */
+export const CanvasRecordingQuality = {
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+} as const
+export type CanvasRecordingQuality = (typeof CanvasRecordingQuality)[keyof typeof CanvasRecordingQuality]
+
+/**
+ * The resolved canvas recording tuning behind each {@link CanvasRecordingQuality} preset.
+ */
+export interface CanvasRecordingConfiguration {
+  enable: true
+  maxFramesPerSecond: number
+  hashingMaxDimension: number
+  maxImageDimension: number
+  encodeQuality: number
+}
+
+const CANVAS_RECORDING_QUALITY_PRESETS: Record<CanvasRecordingQuality, Omit<CanvasRecordingConfiguration, 'enable'>> = {
+  [CanvasRecordingQuality.LOW]: {
+    maxFramesPerSecond: 1,
+    hashingMaxDimension: 50,
+    maxImageDimension: 600,
+    encodeQuality: 0.3,
+  },
+  [CanvasRecordingQuality.MEDIUM]: {
+    maxFramesPerSecond: 4,
+    hashingMaxDimension: 100,
+    maxImageDimension: 1000,
+    encodeQuality: 0.5,
+  },
+  [CanvasRecordingQuality.HIGH]: {
+    maxFramesPerSecond: 8,
+    hashingMaxDimension: 100,
+    maxImageDimension: 1280,
+    encodeQuality: 0.75,
+  },
+}
+
+function resolveCanvasRecordingConfiguration(
+  configuration: { enable: boolean; quality: CanvasRecordingQuality } | undefined
+): CanvasRecordingConfiguration | undefined {
+  const preset = configuration && CANVAS_RECORDING_QUALITY_PRESETS[configuration.quality]
+
+  return isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS) &&
+    configuration?.enable &&
+    preset
+    ? { enable: true, ...preset }
+    : undefined
 }
 
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
@@ -413,7 +500,7 @@ export const RUM_SCHEMA = {
   trackResources: { type: 'boolean', default: true, strict: false },
   trackLongTasks: { type: 'boolean', default: true, strict: false },
   trackViewsManually: { type: 'boolean', default: false, strict: false },
-  betaEnableViewUpdates: { type: 'boolean', default: false },
+  betaEnableViewUpdates: { type: 'boolean' },
   betaTrackWebSockets: { type: 'boolean', default: false, strict: false },
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
@@ -422,7 +509,7 @@ export const RUM_SCHEMA = {
     type: 'schema',
     schema: {
       enable: { type: 'boolean', required: true },
-      maxFramesPerSecond: { type: 'number', min: 0, max: 5, default: 1 },
+      quality: { type: 'enum', values: CanvasRecordingQuality, default: CanvasRecordingQuality.MEDIUM },
     },
   },
 
@@ -489,16 +576,49 @@ export const RUM_SCHEMA = {
   },
 } as const
 
-export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedTracingUrls'> & {
+export type RumConfiguration = Omit<
+  InferredConfig<typeof RUM_SCHEMA>,
+  'allowedTracingUrls' | 'sessionReplayCanvasRecording'
+> & {
   allowedTracingUrls: TracingOption[]
+  betaEnableViewUpdates: boolean
   rulePsr: number | undefined
   trackResourceHeaders: MatchHeader[]
   allowedGraphQlUrls: GraphQlUrlOption[]
   remoteConfigurationId: string | undefined
+  sessionReplayCanvasRecording: CanvasRecordingConfiguration | undefined
+}
+
+/**
+ * Resolves whether partial view updates are enabled. Never enabled when the event bridge is used.
+ * Otherwise an explicit `betaEnableViewUpdates` takes precedence, and it defaults to true for CDN
+ * users that do not go through a proxy: a proxy may not forward the `view_update` event type yet,
+ * and npm users pin an SDK version so they opt in explicitly.
+ *
+ * The CDN check is temporary, the next step is to default this to true unless `proxy` is set.
+ * TODO next major: remove the option.
+ */
+function isViewUpdatesEnabled(
+  explicit: boolean | undefined,
+  proxy: InitConfiguration['proxy'],
+  sdkName: SdkName | undefined
+): boolean {
+  if (canUseEventBridge()) {
+    // The bridge replaces the batch transport, and `view_update` events are only created by the
+    // batch dispatcher, so partial updates never happen in a WebView. Ignore the explicit value
+    // too, otherwise telemetry reports updates that cannot be sent.
+    return false
+  }
+
+  // The Salesforce bundle is a CDN build, but the supported install flow uploads it as a static
+  // resource, so publishing a new bundle does not roll those deployments back. Keep them out of
+  // the default, they can still opt in explicitly.
+  return explicit ?? (__BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy && sdkName !== 'rum-salesforce')
 }
 
 export function validateAndBuildRumConfiguration(
-  initConfiguration: RumInitConfiguration
+  initConfiguration: RumInitConfiguration,
+  sdkName?: SdkName
 ): RumConfiguration | undefined {
   const config = validateAndBuildConfiguration(
     initConfiguration as unknown as Record<string, unknown>,
@@ -517,13 +637,13 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const sessionReplayCanvasRecording = isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_REPLAY_RECORD_CANVAS)
-    ? config.sessionReplayCanvasRecording
-    : undefined
+  const sessionReplayCanvasRecording = resolveCanvasRecordingConfiguration(config.sessionReplayCanvasRecording)
 
   return {
     ...config,
+    service: config.service || config.applicationId,
     sessionReplayCanvasRecording,
+    betaEnableViewUpdates: isViewUpdatesEnabled(config.betaEnableViewUpdates, config.proxy, sdkName),
     allowedTracingUrls,
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
@@ -684,7 +804,11 @@ function getTrackResourceHeadersTelemetryValue(
   }
 }
 
-export function serializeRumConfiguration(configuration: RumInitConfiguration) {
+export function serializeRumConfiguration(
+  configuration: RumInitConfiguration,
+  sdkName?: SdkName,
+  remoteConfigurationMetadata?: RemoteConfigurationMetadata
+) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
   // `use_` prefix is for telemetry options that track usage of a configuration option as a boolean to avoid capturing customer data
@@ -715,10 +839,17 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     remote_configuration_id: getRemoteConfigurationId(configuration),
+    remote_configuration: remoteConfigurationMetadata && {
+      config_id: getRemoteConfigurationId(configuration),
+      last_modified: remoteConfigurationMetadata.lastModified,
+      last_synced: remoteConfigurationMetadata.lastSynced,
+      first_applied: remoteConfigurationMetadata.firstApplied,
+      sync_id: remoteConfigurationMetadata.syncId,
+    },
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
-    beta_enable_view_updates: configuration.betaEnableViewUpdates,
+    beta_enable_view_updates: isViewUpdatesEnabled(configuration.betaEnableViewUpdates, configuration.proxy, sdkName),
     beta_track_web_sockets: configuration.betaTrackWebSockets,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
