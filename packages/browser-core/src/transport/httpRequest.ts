@@ -1,7 +1,9 @@
 import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
 import { monitor, monitorError } from '@datadog/js-core/monitor'
+import { globalObject } from '@datadog/js-core/util'
 import type { Context } from '../tools/serialisation/context'
 import { fetch } from '../browser/fetch'
+import { mockable } from '../tools/mockable'
 import { Observable } from '../tools/observable'
 import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
@@ -101,7 +103,8 @@ export function createHttpRequest<Body extends Payload = Payload>(
 }
 
 function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, payload: Payload) {
-  const canUseBeacon = payload.bytesCount < bytesLimit
+  const canUseBeacon =
+    payload.bytesCount < bytesLimit && ['http:', 'https:'].includes(mockable(globalObject.location).protocol)
   if (canUseBeacon) {
     try {
       const beaconUrl = endpointBuilder.build('beacon', payload)

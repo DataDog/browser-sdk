@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '@datadog/js-core/transport'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
+import { globalObject } from '@datadog/js-core/util'
 import type { Request } from '../../test'
 import {
   collectAsyncCalls,
@@ -8,6 +9,7 @@ import {
   DEFAULT_FETCH_MOCK,
   TOO_MANY_REQUESTS_FETCH_MOCK,
   NETWORK_ERROR_FETCH_MOCK,
+  replaceMockable,
   wait,
 } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
@@ -108,6 +110,17 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
       expect(requests[0].url).toContain(ENDPOINT_URL)
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
+    })
+
+    it('should use fetch in a non-HTTP context', async () => {
+      replaceMockable(globalObject.location, { protocol: 'file:' } as Location)
+
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      await interceptor.waitForAllFetchCalls()
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('fetch')
     })
 
     it('should use sendBeacon when the bytes count is correct', () => {
