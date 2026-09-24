@@ -136,97 +136,24 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
   }
 
   try {
-    // Undefined when the root toJSON() returns a non-serializable value
-    return serializeJson(value, '', []) ?? 'undefined'
+    const obj = value as Record<string, unknown>
+    // Objects with a JSON representation (e.g. Date) are inspected through it
+    if (typeof obj.toJSON === 'function') {
+      return inspectValueInternal((obj.toJSON as () => unknown)())
+    }
+    // Like arrays, show the first properties with their nested objects and arrays collapsed
+    const keys = Object.keys(obj)
+    const properties = keys
+      .slice(0, INSPECT_MAX_OBJECT_PROPERTIES)
+      .map((key) => `${JSON.stringify(key)}:${inspectValueInternal(obj[key], true)}`)
+      .join(',')
+    if (keys.length > INSPECT_MAX_OBJECT_PROPERTIES) {
+      return `{${properties}, ... ${keys.length - INSPECT_MAX_OBJECT_PROPERTIES} more properties}`
+    }
+    return `{${properties}}`
   } catch {
     return `[${getConstructorName(value) ?? 'Object'}]`
   }
-}
-
-/**
- * Serialize a value following JSON.stringify semantics, with the following limits:
- * - strings are truncated to INSPECT_MAX_STRING_LENGTH
- * - objects are truncated to INSPECT_MAX_OBJECT_PROPERTIES, omitted properties are not read
- *
- * @returns The serialized value, or undefined for non-serializable values (undefined, functions, symbols)
- */
-function serializeJson(value: unknown, key: string, ancestors: object[]): string | undefined {
-  if ((typeof value === 'object' && value !== null) || typeof value === 'bigint') {
-    const toJSON = (value as { toJSON?: unknown }).toJSON
-    if (typeof toJSON === 'function') {
-      value = toJSON.call(value, key)
-    }
-  }
-  if (typeof value === 'object' && value !== null) {
-    value = unboxPrimitive(value)
-  }
-  switch (typeof value) {
-    case 'string':
-      return JSON.stringify(
-        value.length > INSPECT_MAX_STRING_LENGTH ? `${value.slice(0, INSPECT_MAX_STRING_LENGTH)}…` : value
-      )
-    case 'number':
-      return isFinite(value) ? String(value) : 'null'
-    case 'boolean':
-      return String(value)
-    case 'bigint':
-      throw new TypeError('Do not know how to serialize a BigInt')
-    case 'object':
-      return value === null ? 'null' : serializeJsonObject(value, ancestors)
-    default:
-      return undefined
-  }
-}
-
-function serializeJsonObject(value: object, ancestors: object[]): string {
-  if (ancestors.includes(value)) {
-    throw new TypeError('Converting circular structure to JSON')
-  }
-  ancestors.push(value)
-  let result: string
-  if (Array.isArray(value)) {
-    const items: string[] = []
-    for (let i = 0; i < value.length; i++) {
-      items.push(serializeJson(value[i], String(i), ancestors) ?? 'null')
-    }
-    result = `[${items.join(',')}]`
-  } else {
-    const keys = Object.keys(value)
-    const properties: string[] = []
-    for (let i = 0; i < Math.min(keys.length, INSPECT_MAX_OBJECT_PROPERTIES); i++) {
-      const serialized = serializeJson((value as Record<string, unknown>)[keys[i]], keys[i], ancestors)
-      if (serialized !== undefined) {
-        properties.push(`${JSON.stringify(keys[i])}:${serialized}`)
-      }
-    }
-    const omittedCount = keys.length - INSPECT_MAX_OBJECT_PROPERTIES
-    if (omittedCount > 0) {
-      properties.push(`${properties.length > 0 ? ' ' : ''}... ${omittedCount} more properties`)
-    }
-    result = `{${properties.join(',')}}`
-  }
-  ancestors.pop()
-  return result
-}
-
-/**
- * Unbox String, Number and Boolean objects, regardless of their realm, like JSON.stringify does
- */
-function unboxPrimitive(value: object): unknown {
-  // The tag is only a hint (it can be overridden with Symbol.toStringTag), valueOf() checks the actual type
-  try {
-    switch (Object.prototype.toString.call(value)) {
-      case '[object String]':
-        return String.prototype.valueOf.call(value)
-      case '[object Number]':
-        return Number.prototype.valueOf.call(value)
-      case '[object Boolean]':
-        return Boolean.prototype.valueOf.call(value)
-    }
-  } catch {
-    // Not an actual boxed primitive
-  }
-  return value
 }
 
 /**
