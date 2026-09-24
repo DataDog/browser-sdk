@@ -21,9 +21,6 @@ let currentViewName: string | undefined
 let committedAppRouterView: { pathname: string; name: string } | undefined
 // Last pathname claimed by a router transition, whether or not it has committed yet.
 let activeAppRouterPathname: string | undefined
-// Bumped every time a router transition claims a new active pathname. DatadogAppRouter captures
-// this at render time so a commit can tell whether a newer transition superseded it before it flushed.
-let activeAppRouterGeneration = 0
 let lastRouterTransitionId: string | undefined
 let routerType: NextjsRouterType | undefined
 
@@ -79,16 +76,12 @@ export function startNextjsView(viewName: string, url?: string) {
   }
 }
 
-// DatadogAppRouter reads this during render, before the passive effect that calls setNextjsViewName.
-export function getActiveAppRouterGeneration() {
-  return activeAppRouterGeneration
-}
-
-// The App Router component calls this after React commits the route, passing the generation it
-// captured at render time. A layout effect may have started a newer navigation before this passive
-// effect runs, so a stale generation means some other view is already active and this commit is dropped.
-export function setNextjsViewName(viewName: string, pathname: string, generation: number) {
-  if (generation !== activeAppRouterGeneration) {
+// The App Router component calls this after React commits the route. A layout effect may have
+// started a newer navigation before this passive effect runs, or this render may belong to a route
+// that isn't the active one (e.g. a re-render of the previous route while a navigation is pending) —
+// either way, only a commit for the currently active pathname is trusted.
+export function setNextjsViewName(viewName: string, pathname: string) {
+  if (pathname !== activeAppRouterPathname) {
     return
   }
 
@@ -118,7 +111,6 @@ export function onRouterTransitionStart(url: string, _navigationType?: string, e
   ) {
     lastRouterTransitionId = event?.id
     activeAppRouterPathname = navigationUrl.pathname
-    activeAppRouterGeneration += 1
 
     // DatadogAppRouter's effect does not rerun when the pathname is restored, so reuse its normalized name.
     const viewName =
@@ -154,7 +146,6 @@ export function resetNextjsPlugin() {
   currentViewName = undefined
   committedAppRouterView = undefined
   activeAppRouterPathname = undefined
-  activeAppRouterGeneration = 0
   lastRouterTransitionId = undefined
   routerType = undefined
 }

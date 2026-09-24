@@ -6,7 +6,6 @@ import {
   nextjsPlugin,
   startNextjsView,
   setNextjsViewName,
-  getActiveAppRouterGeneration,
   onRumInit,
   onRumStart,
   onRouterTransitionStart,
@@ -122,7 +121,8 @@ describe('nextjsPlugin', () => {
 
   it('restores the normalized view name when a navigation returns to the committed pathname', () => {
     const { startViewSpy } = initPlugin()
-    setNextjsViewName('/user/[id]', '/user/123', getActiveAppRouterGeneration())
+    onRouterTransitionStart('/user/123')
+    setNextjsViewName('/user/[id]', '/user/123')
     startViewSpy.calls.reset()
 
     onRouterTransitionStart('/slow', undefined, { id: 'transition-1' })
@@ -142,12 +142,10 @@ describe('nextjsPlugin', () => {
 
     // Navigate away to /protected.
     onRouterTransitionStart('/protected', undefined, { id: 'transition-1' })
-    // /protected's DatadogAppRouter renders and captures the generation active at this point.
-    const protectedGeneration = getActiveAppRouterGeneration()
     // /protected's layout effect redirects back home before /protected's own passive effect has run.
     onRouterTransitionStart(homePathname, undefined, { id: 'transition-2' })
     // /protected's passive effect finally flushes, stale, after the redirect already restored home.
-    setNextjsViewName('/protected', '/protected', protectedGeneration)
+    setNextjsViewName('/protected', '/protected')
 
     expect(startViewSpy).toHaveBeenCalledTimes(2)
     expect(setViewNameSpy).not.toHaveBeenCalledWith('/protected')
@@ -158,9 +156,8 @@ describe('nextjsPlugin', () => {
     startViewSpy.calls.reset()
 
     onRouterTransitionStart('/protected', undefined, { id: 'transition-1' })
-    const protectedGeneration = getActiveAppRouterGeneration()
     onRouterTransitionStart('/login', undefined, { id: 'transition-2' })
-    setNextjsViewName('/protected', '/protected', protectedGeneration)
+    setNextjsViewName('/protected', '/protected')
 
     expect(startViewSpy).toHaveBeenCalledTimes(2)
     expect(setViewNameSpy).not.toHaveBeenCalled()
@@ -171,7 +168,7 @@ describe('nextjsPlugin', () => {
     startViewSpy.calls.reset()
 
     onRouterTransitionStart('/user/42?admin=true')
-    setNextjsViewName('/user/[id]', '/user/42', getActiveAppRouterGeneration())
+    setNextjsViewName('/user/[id]', '/user/42')
     onRouterTransitionStart('/user/999?admin=true')
 
     expect(startViewSpy).toHaveBeenCalledTimes(2)
@@ -202,10 +199,10 @@ describe('nextjsPlugin', () => {
 
   it('sets the normalized name after the view has started', () => {
     const { setViewNameSpy } = initPlugin()
-    const generation = getActiveAppRouterGeneration()
+    onRouterTransitionStart('/users/42')
 
-    setNextjsViewName('/users/[id]', '/users/42', generation)
-    setNextjsViewName('/users/[id]', '/users/42', generation)
+    setNextjsViewName('/users/[id]', '/users/42')
+    setNextjsViewName('/users/[id]', '/users/42')
 
     expect(setViewNameSpy).toHaveBeenCalledOnceWith('/users/[id]')
   })
