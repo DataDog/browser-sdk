@@ -186,6 +186,19 @@ test.describe('plugin: nextjs', () => {
 
       expect(views.map((event) => event.view.name)).toEqual(['/', '/redirect-home', '/'])
     })
+  createTest('should restore the normalized view name when a navigation returns to a dynamic route')
+    .withRum()
+    .withBasePath('/user/123')
+    .withNextjsApp('app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Start slow navigation')
+      await page.click('text=Change query params')
+      await flushEvents()
+
+      const views = [...new Map(intakeRegistry.rumViewEvents.map((event) => [event.view.id, event])).values()]
+
+      expect(views.map((event) => event.view.name)).toEqual(['/user/[id]', '/slow', '/user/[id]'])
+    })
   createTest('should preserve a newer view started from a layout effect')
     .withRum()
     .withNextjsApp('app')

@@ -119,17 +119,18 @@ describe('nextjsPlugin', () => {
     expect(startViewSpy).toHaveBeenCalledTimes(2)
   })
 
-  it('starts a view when a navigation returns to the committed pathname', () => {
+  it('restores the normalized view name when a navigation returns to the committed pathname', () => {
     const { startViewSpy } = initPlugin()
+    setNextjsViewName('/user/[id]', '/user/123')
     startViewSpy.calls.reset()
 
-    onRouterTransitionStart('/redirect', undefined, { id: 'transition-1' })
-    onRouterTransitionStart(window.location.pathname, undefined, { id: 'transition-2' })
+    onRouterTransitionStart('/slow', undefined, { id: 'transition-1' })
+    onRouterTransitionStart('/user/123', undefined, { id: 'transition-2' })
 
     expect(startViewSpy).toHaveBeenCalledTimes(2)
     expect(startViewSpy.calls.argsFor(1)[0]).toEqual({
-      name: window.location.pathname,
-      url: window.location.href,
+      name: '/user/[id]',
+      url: `${window.location.origin}/user/123`,
     })
   })
 

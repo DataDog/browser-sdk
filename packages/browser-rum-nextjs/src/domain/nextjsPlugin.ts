@@ -16,7 +16,7 @@ let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
 let currentViewName: string | undefined
 // Updated by DatadogAppRouter after React commits the route.
-let currentAppRouterPathname: string | undefined
+let committedAppRouterView: { pathname: string; name: string } | undefined
 // Updated immediately when a RUM view starts, so it can point to an uncommitted route.
 let activeAppRouterPathname: string | undefined
 let lastRouterTransitionId: string | undefined
@@ -34,7 +34,7 @@ export function nextjsPlugin(): NextjsPlugin {
       routerType = mockable(detectNextjsRouterType)()
 
       if (routerType === 'app-router') {
-        currentAppRouterPathname = window.location.pathname
+        committedAppRouterView = { pathname: window.location.pathname, name: window.location.pathname }
         activeAppRouterPathname = window.location.pathname
         startNextjsView(window.location.pathname, window.location.href)
       }
@@ -76,8 +76,12 @@ export function startNextjsView(viewName: string, url?: string) {
 
 export function setNextjsViewName(viewName: string, pathname?: string) {
   // The App Router component calls this after the route has committed.
-  const hasPendingNavigation = activeAppRouterPathname !== currentAppRouterPathname
-  currentAppRouterPathname = pathname ?? currentAppRouterPathname
+  const hasPendingNavigation = activeAppRouterPathname !== committedAppRouterView?.pathname
+
+  // Keep the normalized name with its concrete pathname in case a navigation returns to this route.
+  if (pathname !== undefined) {
+    committedAppRouterView = { pathname, name: viewName }
+  }
 
   // A layout effect may have started a newer navigation before this passive effect runs.
   if (pathname && pathname !== activeAppRouterPathname && hasPendingNavigation) {
@@ -103,7 +107,7 @@ export function onRouterTransitionStart(url: string, _navigationType?: string, e
   // A different transition ID can target the same active pathname while that pathname has not committed yet.
   // Keep it distinct from a query/hash-only navigation on the committed route.
   const isNewPendingTransition =
-    event && event.id !== lastRouterTransitionId && navigationUrl.pathname !== currentAppRouterPathname
+    event && event.id !== lastRouterTransitionId && navigationUrl.pathname !== committedAppRouterView?.pathname
 
   if (
     navigationUrl.origin === window.location.origin &&
@@ -111,7 +115,14 @@ export function onRouterTransitionStart(url: string, _navigationType?: string, e
   ) {
     lastRouterTransitionId = event?.id
     activeAppRouterPathname = navigationUrl.pathname
-    startNextjsView(navigationUrl.pathname, navigationUrl.href)
+
+    // DatadogAppRouter's effect does not rerun when the pathname is restored, so reuse its normalized name.
+    let viewName = navigationUrl.pathname
+    if (navigationUrl.pathname === committedAppRouterView?.pathname) {
+      viewName = committedAppRouterView.name
+    }
+
+    startNextjsView(viewName, navigationUrl.href)
   }
 }
 
@@ -137,7 +148,7 @@ export function resetNextjsPlugin() {
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
   currentViewName = undefined
-  currentAppRouterPathname = undefined
+  committedAppRouterView = undefined
   activeAppRouterPathname = undefined
   lastRouterTransitionId = undefined
   routerType = undefined
