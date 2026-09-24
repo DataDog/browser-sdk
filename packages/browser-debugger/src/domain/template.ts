@@ -149,8 +149,13 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
       }
       return val
     }
+    // JSON.stringify returns undefined when the root toJSON() returns a non-serializable value
+    const json: string | undefined = JSON.stringify(value, replacer, 0)
+    if (json === undefined) {
+      return 'undefined'
+    }
     // The placeholder is the first property when all retained values are omitted by JSON (undefined, functions...)
-    return JSON.stringify(value, replacer, 0).replace(
+    return json.replace(
       /([{,])"__dd_more_properties__":(\d+)/g,
       (_match, separator: string, count: string) => `${separator === ',' ? ', ' : '{'}... ${count} more properties`
     )

@@ -159,6 +159,10 @@ describe('template', () => {
       expect(browserInspect(obj)).toBe('[Object]')
     })
 
+    it('should inspect objects whose toJSON returns undefined', () => {
+      expect(browserInspect({ toJSON: () => undefined })).toBe('undefined')
+    })
+
     it('should handle objects without constructor', () => {
       const obj = Object.create(null)
       const result = browserInspect(obj)
