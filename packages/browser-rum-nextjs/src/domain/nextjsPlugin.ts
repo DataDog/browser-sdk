@@ -15,10 +15,15 @@ type StartSubscriber = (addError: StartRumResult['addError']) => void
 let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
 let currentViewName: string | undefined
-// Updated by DatadogAppRouter after React commits the route.
+// The pathname and normalized name DatadogAppRouter's effect last actually committed.
+// React doesn't rerun that effect when a navigation returns to a pathname it already rendered
+// (e.g. a query-only change), so this is reused instead of waiting for a fresh commit.
 let committedAppRouterView: { pathname: string; name: string } | undefined
-// Updated immediately when a RUM view starts, so it can point to an uncommitted route.
+// Last pathname claimed by a router transition, whether or not it has committed yet.
 let activeAppRouterPathname: string | undefined
+// Bumped every time a router transition claims a new active pathname. DatadogAppRouter captures
+// this at render time so a commit can tell whether a newer transition superseded it before it flushed.
+let activeAppRouterGeneration = 0
 let lastRouterTransitionId: string | undefined
 let routerType: NextjsRouterType | undefined
 
@@ -74,21 +79,20 @@ export function startNextjsView(viewName: string, url?: string) {
   }
 }
 
-export function setNextjsViewName(viewName: string, pathname?: string) {
-  // The App Router component calls this after the route has committed.
-  const hasPendingNavigation = activeAppRouterPathname !== committedAppRouterView?.pathname
+// DatadogAppRouter reads this during render, before the passive effect that calls setNextjsViewName.
+export function getActiveAppRouterGeneration() {
+  return activeAppRouterGeneration
+}
 
-  // Keep the normalized name with its concrete pathname in case a navigation returns to this route.
-  if (pathname !== undefined) {
-    committedAppRouterView = { pathname, name: viewName }
-  }
-
-  // A layout effect may have started a newer navigation before this passive effect runs.
-  if (pathname && pathname !== activeAppRouterPathname && hasPendingNavigation) {
+// The App Router component calls this after React commits the route, passing the generation it
+// captured at render time. A layout effect may have started a newer navigation before this passive
+// effect runs, so a stale generation means some other view is already active and this commit is dropped.
+export function setNextjsViewName(viewName: string, pathname: string, generation: number) {
+  if (generation !== activeAppRouterGeneration) {
     return
   }
 
-  activeAppRouterPathname = pathname ?? activeAppRouterPathname
+  committedAppRouterView = { pathname, name: viewName }
 
   if (globalPublicApi && currentViewName !== viewName) {
     currentViewName = viewName
@@ -106,8 +110,7 @@ export function onRouterTransitionStart(url: string, _navigationType?: string, e
 
   // A different transition ID can target the same active pathname while that pathname has not committed yet.
   // Keep it distinct from a query/hash-only navigation on the committed route.
-  const isNewPendingTransition =
-    event && event.id !== lastRouterTransitionId && navigationUrl.pathname !== committedAppRouterView?.pathname
+  const isNewPendingTransition = Boolean(event) && navigationUrl.pathname !== committedAppRouterView?.pathname
 
   if (
     navigationUrl.origin === window.location.origin &&
@@ -115,12 +118,13 @@ export function onRouterTransitionStart(url: string, _navigationType?: string, e
   ) {
     lastRouterTransitionId = event?.id
     activeAppRouterPathname = navigationUrl.pathname
+    activeAppRouterGeneration += 1
 
     // DatadogAppRouter's effect does not rerun when the pathname is restored, so reuse its normalized name.
-    let viewName = navigationUrl.pathname
-    if (navigationUrl.pathname === committedAppRouterView?.pathname) {
-      viewName = committedAppRouterView.name
-    }
+    const viewName =
+      navigationUrl.pathname === committedAppRouterView?.pathname
+        ? committedAppRouterView.name
+        : navigationUrl.pathname
 
     startNextjsView(viewName, navigationUrl.href)
   }
@@ -150,6 +154,7 @@ export function resetNextjsPlugin() {
   currentViewName = undefined
   committedAppRouterView = undefined
   activeAppRouterPathname = undefined
+  activeAppRouterGeneration = 0
   lastRouterTransitionId = undefined
   routerType = undefined
 }
