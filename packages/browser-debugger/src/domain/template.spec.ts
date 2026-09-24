@@ -163,6 +163,37 @@ describe('template', () => {
       expect(browserInspect({ toJSON: () => undefined })).toBe('undefined')
     })
 
+    it('should serialize objects like JSON.stringify', () => {
+      const obj = {
+        array: [1, undefined, () => 1, NaN],
+        'quoted"key': -0,
+        bool: true,
+        nil: null,
+        fn: () => 1,
+      }
+      expect(browserInspect(obj)).toBe(JSON.stringify(obj))
+    })
+
+    it('should unbox primitives like JSON.stringify', () => {
+      /* eslint-disable no-new-wrappers */
+      const obj = { str: new String('a'), num: new Number(1), bool: new Boolean(false) }
+      /* eslint-enable no-new-wrappers */
+      expect(browserInspect(obj)).toBe('{"str":"a","num":1,"bool":false}')
+    })
+
+    it('should not unbox objects with a spoofed tag', () => {
+      const obj = { spoofed: { [Symbol.toStringTag]: 'String', a: 1 } }
+      expect(browserInspect(obj)).toBe('{"spoofed":{"a":1}}')
+    })
+
+    it('should fail to serialize BigInt values like JSON.stringify', () => {
+      if (typeof BigInt === 'undefined') {
+        pending('BigInt is not supported in this browser')
+        return
+      }
+      expect(browserInspect({ a: BigInt(1) })).toBe('[Object]')
+    })
+
     it('should handle objects without constructor', () => {
       const obj = Object.create(null)
       const result = browserInspect(obj)
@@ -175,6 +206,12 @@ describe('template', () => {
           const longString = 'a'.repeat(10000)
           const result = browserInspect(longString)
           expect(result).toBe(`${'a'.repeat(8192)}…`)
+        })
+
+        it('should truncate very long boxed strings', () => {
+          // eslint-disable-next-line no-new-wrappers
+          const result = browserInspect({ boxed: new String('a'.repeat(10000)) })
+          expect(result).toBe(`{"boxed":"${'a'.repeat(8192)}…"}`)
         })
 
         it('should not truncate strings shorter than 8KB', () => {
@@ -217,6 +254,20 @@ describe('template', () => {
         it('should truncate nested objects with more than 5 properties', () => {
           const result = browserInspect({ nested: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 } })
           expect(result).toBe('{"nested":{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}}')
+        })
+
+        it('should not read omitted properties', () => {
+          const obj = { a: 1, b: 2, c: 3, d: 4, e: 5 }
+          const getter = jasmine.createSpy('getter').and.throwError('omitted getter')
+          Object.defineProperty(obj, 'f', { get: getter, enumerable: true })
+
+          expect(browserInspect(obj)).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
+          expect(getter).not.toHaveBeenCalled()
+        })
+
+        it('should preserve string values', () => {
+          const result = browserInspect({ a: '... 1 more properties', b: '__dd_more_properties__:0' })
+          expect(result).toBe('{"a":"... 1 more properties","b":"__dd_more_properties__:0"}')
         })
 
         it('should keep an own __proto__ property as a regular property', () => {
