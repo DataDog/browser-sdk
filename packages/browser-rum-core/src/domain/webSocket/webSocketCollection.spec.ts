@@ -114,7 +114,7 @@ describe('webSocketCollection', () => {
 
   function notifyMessageIn(socket: MockWebSocket, at: number, size: number) {
     setClock(at)
-    socket.simulateMessage('x'.repeat(size))
+    socket.simulateIncomingMessage('x'.repeat(size))
   }
 
   function notifyMessageOut(socket: MockWebSocket, at: number, size: number, bufferedAmountPreSend = 0) {
@@ -442,7 +442,7 @@ describe('webSocketCollection', () => {
       const socket = openConnection()
 
       tickBeats()
-      socket.simulateMessage('x'.repeat(30))
+      socket.simulateIncomingMessage('x'.repeat(30))
       tickBeats()
 
       expect(openPayloads()[1].snapshot.inbound.message_count).toBe(0)
