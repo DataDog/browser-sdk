@@ -146,7 +146,7 @@ describe('eventTracker', () => {
       const currentStartTime = clocksNow().relative
       tracker.stop('key1', clocksNow())
 
-      clock.tick(EVENT_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_VALUES_INTERVAL + ONE_MINUTE)
+      clock.tick(EVENT_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_VALUES_INTERVAL)
 
       expect(tracker.findId(currentStartTime)).toEqual([])
     })
