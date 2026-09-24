@@ -22,6 +22,9 @@ export interface TemplateSegment {
 // Options for browserInspect - controls how values are stringified
 const INSPECT_MAX_ARRAY_LENGTH = 3
 const INSPECT_MAX_STRING_LENGTH = 8 * 1024 // 8KB
+const INSPECT_MAX_OBJECT_PROPERTIES = 5
+// Placeholder key added to truncated objects, replaced by a "... N more properties" suffix after serialization
+const MORE_PROPERTIES_KEY = '__dd_more_properties__'
 
 /**
  * Check if template segments require runtime evaluation
@@ -135,17 +138,43 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
   }
 
   try {
-    // Create custom replacer to handle maxStringLength in nested values
+    const truncatedObjects = new Map<object, Record<string, unknown>>()
+    // Create custom replacer to handle maxStringLength and maxObjectProperties in nested values
     const replacer = (_key: string, val: unknown) => {
       if (typeof val === 'string' && val.length > INSPECT_MAX_STRING_LENGTH) {
         return `${val.slice(0, INSPECT_MAX_STRING_LENGTH)}…`
       }
+      if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+        return truncateObjectProperties(val, truncatedObjects)
+      }
       return val
     }
-    return JSON.stringify(value, replacer, 0)
+    return JSON.stringify(value, replacer, 0).replace(/,"__dd_more_properties__":(\d+)/g, ', ... $1 more properties')
   } catch {
     return `[${getConstructorName(value) ?? 'Object'}]`
   }
+}
+
+/**
+ * Keep only the first properties of an object, recording the number of omitted properties under MORE_PROPERTIES_KEY
+ */
+function truncateObjectProperties(value: object, truncatedObjects: Map<object, Record<string, unknown>>): object {
+  const keys = Object.keys(value)
+  if (keys.length <= INSPECT_MAX_OBJECT_PROPERTIES) {
+    return value
+  }
+  // Reuse the same copy for a given object, so JSON.stringify can still detect circular references
+  let truncated = truncatedObjects.get(value)
+  if (!truncated) {
+    // Null prototype, so that an own "__proto__" key is copied as a regular property
+    truncated = Object.create(null) as Record<string, unknown>
+    for (let i = 0; i < INSPECT_MAX_OBJECT_PROPERTIES; i++) {
+      truncated[keys[i]] = (value as Record<string, unknown>)[keys[i]]
+    }
+    truncated[MORE_PROPERTIES_KEY] = keys.length - INSPECT_MAX_OBJECT_PROPERTIES
+    truncatedObjects.set(value, truncated)
+  }
+  return truncated
 }
 
 /**

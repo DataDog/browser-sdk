@@ -199,6 +199,61 @@ describe('template', () => {
         })
       })
 
+      describe('maxObjectProperties (5)', () => {
+        it('should truncate objects with more than 5 properties', () => {
+          const result = browserInspect({ a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 })
+          expect(result).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 2 more properties}')
+        })
+
+        it('should not truncate objects with 5 or fewer properties', () => {
+          const result = browserInspect({ a: 1, b: 2, c: 3, d: 4, e: 5 })
+          expect(result).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5}')
+        })
+
+        it('should truncate nested objects with more than 5 properties', () => {
+          const result = browserInspect({ nested: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 } })
+          expect(result).toBe('{"nested":{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}}')
+        })
+
+        it('should not access omitted properties', () => {
+          const obj = { a: 1, b: 2, c: 3, d: 4, e: 5 }
+          const getter = jasmine.createSpy('getter')
+          Object.defineProperty(obj, 'f', { get: getter, enumerable: true })
+
+          expect(browserInspect(obj)).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
+          expect(getter).not.toHaveBeenCalled()
+        })
+
+        it('should keep an own __proto__ property as a regular property', () => {
+          const obj = JSON.parse('{"__proto__":1,"b":2,"c":3,"d":4,"e":5,"f":6}')
+          expect(browserInspect(obj)).toBe('{"__proto__":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
+        })
+
+        it('should handle the same truncated object referenced multiple times', () => {
+          const shared = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 }
+          const result = browserInspect({ x: shared, y: shared })
+          const expected = '{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}'
+          expect(result).toBe(`{"x":${expected},"y":${expected}}`)
+        })
+
+        it('should handle circular references in truncated objects', () => {
+          const obj: any = { self: undefined, b: 2, c: 3, d: 4, e: 5, f: 6 }
+          obj.self = obj
+          expect(browserInspect(obj)).toBe('[Object]')
+        })
+
+        it('should handle circular references beyond the displayed properties', () => {
+          const obj: any = { a: 1, b: 2, c: 3, d: 4, e: 5 }
+          obj.f = obj
+          expect(browserInspect(obj)).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
+        })
+
+        it('should apply toJSON before truncating', () => {
+          const result = browserInspect({ date: new Date(0), a: 1, b: 2, c: 3, d: 4, e: 5 })
+          expect(result).toBe('{"date":"1970-01-01T00:00:00.000Z","a":1,"b":2,"c":3,"d":4, ... 1 more properties}')
+        })
+      })
+
       describe('depth (0)', () => {
         it('should fully stringify plain objects (depth limit applies to arrays)', () => {
           const nested = { a: { b: { c: { d: 'deep' } } } }
