@@ -101,4 +101,40 @@ test.describe('transport', () => {
         })
       })
   })
+
+  createTest('use fetch instead of sendBeacon for a non-HTTP endpoint on exit')
+    .withRum({ telemetrySampleRate: 0, sessionReplaySampleRate: 0 })
+    // Override the test proxy with a non-HTTP(S) endpoint to exercise the protocol guard.
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init({ ...configuration, proxy: () => 'file:///proxy' })
+    })
+    .run(async ({ page, flushEvents }) => {
+      // Store calls outside the page because flushEvents navigates away and destroys its state.
+      const transportCalls: string[] = []
+      page.on('console', (message) => {
+        if (message.text().startsWith('transport:')) {
+          transportCalls.push(message.text())
+        }
+      })
+
+      // Stub the transports in the page context where the SDK calls them during exit.
+      await page.evaluate(() => {
+        navigator.sendBeacon = () => {
+          console.info('transport:beacon')
+          return false
+        }
+        // Resolve fetch locally so the fallback does not attempt to request a file URL.
+        window.fetch = () => {
+          console.info('transport:fetch')
+          return Promise.resolve(new Response())
+        }
+
+        window.DD_RUM!.addAction('flush')
+      })
+
+      await flushEvents()
+
+      // A non-HTTP(S) endpoint must bypass sendBeacon and use fetch directly.
+      expect(transportCalls).toEqual(['transport:fetch'])
+    })
 })

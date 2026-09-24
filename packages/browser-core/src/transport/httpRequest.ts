@@ -1,9 +1,8 @@
 import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
 import { monitor, monitorError } from '@datadog/js-core/monitor'
-import { globalObject } from '@datadog/js-core/util'
+import { buildUrl, globalObject } from '@datadog/js-core/util'
 import type { Context } from '../tools/serialisation/context'
 import { fetch } from '../browser/fetch'
-import { mockable } from '../tools/mockable'
 import { Observable } from '../tools/observable'
 import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
@@ -103,15 +102,21 @@ export function createHttpRequest<Body extends Payload = Payload>(
 }
 
 function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, payload: Payload) {
-  const canUseBeacon =
-    payload.bytesCount < bytesLimit && ['http:', 'https:'].includes(mockable(globalObject.location).protocol)
-  if (canUseBeacon) {
+  if (payload.bytesCount < bytesLimit) {
     try {
+      // Check the final endpoint because a relative proxy can resolve to a non-HTTP(S) URL.
       const beaconUrl = endpointBuilder.build('beacon', payload)
-      const isQueued = navigator.sendBeacon(beaconUrl, payload.data)
+      const beaconUrlProtocol = buildUrl(
+        beaconUrl,
+        globalObject.document?.baseURI ?? globalObject.location?.href
+      ).protocol
 
-      if (isQueued) {
-        return
+      // sendBeacon only accepts HTTP(S) endpoints; other protocols fall back to fetch.
+      if (beaconUrlProtocol === 'http:' || beaconUrlProtocol === 'https:') {
+        const isQueued = navigator.sendBeacon(beaconUrl, payload.data)
+        if (isQueued) {
+          return
+        }
       }
     } catch (e) {
       reportBeaconError(e)
