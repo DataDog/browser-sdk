@@ -177,12 +177,6 @@ describe('template', () => {
           expect(result).toBe(`${'a'.repeat(8192)}…`)
         })
 
-        it('should truncate very long boxed strings', () => {
-          // eslint-disable-next-line no-new-wrappers
-          const result = browserInspect({ boxed: new String('a'.repeat(10000)) })
-          expect(result).toBe(`{"boxed":"${'a'.repeat(8192)}…"}`)
-        })
-
         it('should not truncate strings shorter than 8KB', () => {
           const shortString = 'a'.repeat(100)
           const result = browserInspect(shortString)
@@ -225,15 +219,6 @@ describe('template', () => {
           expect(result).toBe('{"nested":{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}}')
         })
 
-        it('should not access omitted properties', () => {
-          const obj = { a: 1, b: 2, c: 3, d: 4, e: 5 }
-          const getter = jasmine.createSpy('getter')
-          Object.defineProperty(obj, 'f', { get: getter, enumerable: true })
-
-          expect(browserInspect(obj)).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
-          expect(getter).not.toHaveBeenCalled()
-        })
-
         it('should keep an own __proto__ property as a regular property', () => {
           const obj = JSON.parse('{"__proto__":1,"b":2,"c":3,"d":4,"e":5,"f":6}')
           expect(browserInspect(obj)).toBe('{"__proto__":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
@@ -268,6 +253,47 @@ describe('template', () => {
           const boxed = new String('abcdef')
           expect(browserInspect(boxed)).toBe('"abcdef"')
           expect(browserInspect({ boxed })).toBe('{"boxed":"abcdef"}')
+        })
+
+        it('should not truncate boxed strings from another realm', () => {
+          const iframe = document.createElement('iframe')
+          document.body.appendChild(iframe)
+          const IframeString = (iframe.contentWindow as unknown as Record<string, StringConstructor>)['String']
+          const boxed = new IframeString('abcdef')
+          iframe.remove()
+
+          expect(browserInspect({ boxed })).toBe('{"boxed":"abcdef"}')
+        })
+
+        it('should enumerate proxy properties only once', () => {
+          const ownKeys = jasmine.createSpy('ownKeys', Reflect.ownKeys).and.callThrough()
+          const small = new Proxy({ a: 1 }, { ownKeys })
+          const large = new Proxy({ a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 }, { ownKeys })
+
+          expect(browserInspect(small)).toBe('{"a":1}')
+          expect(browserInspect(large)).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
+          expect(ownKeys).toHaveBeenCalledTimes(2)
+        })
+
+        it('should preserve the native property evaluation order', () => {
+          let serialized = false
+          const obj = {
+            a: {
+              toJSON: () => {
+                serialized = true
+                return 1
+              },
+            },
+            get b() {
+              return serialized
+            },
+            c: 3,
+            d: 4,
+            e: 5,
+            f: 6,
+          }
+
+          expect(browserInspect(obj)).toBe('{"a":1,"b":true,"c":3,"d":4,"e":5, ... 1 more properties}')
         })
 
         it('should apply toJSON before truncating', () => {

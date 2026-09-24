@@ -23,8 +23,9 @@ export interface TemplateSegment {
 const INSPECT_MAX_ARRAY_LENGTH = 3
 const INSPECT_MAX_STRING_LENGTH = 8 * 1024 // 8KB
 const INSPECT_MAX_OBJECT_PROPERTIES = 5
-// Placeholder key added to truncated objects, replaced by a "... N more properties" suffix after serialization
-const MORE_PROPERTIES_KEY = '__dd_more_properties__'
+// Placeholder value replacing the first omitted property of an object, followed by an index in omittedCounts.
+// It is replaced by a "... N more properties" suffix after serialization.
+const MORE_PROPERTIES_PLACEHOLDER = '__dd_more_properties__:'
 
 /**
  * Check if template segments require runtime evaluation
@@ -138,16 +139,27 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
   }
 
   try {
-    const truncatedObjects = new Map<object, Record<string, unknown>>()
-    // Create custom replacer to handle maxStringLength and maxObjectProperties in nested values
-    const replacer = (_key: string, rawVal: unknown) => {
-      // Unbox String objects (serialized as strings by JSON.stringify) so their indices aren't truncated as properties
-      const val = rawVal instanceof String ? rawVal.valueOf() : rawVal
+    // Properties seen so far for each object being serialized, and its index in omittedCounts
+    const objectStates = new Map<unknown, { propertyCount: number; index: number }>()
+    const omittedCounts: number[] = []
+    // Create custom replacer to handle maxStringLength and maxObjectProperties in nested values. Properties are
+    // counted as JSON.stringify visits them, so the native serialization (enumeration, evaluation order, circular
+    // reference detection, boxed primitives...) is preserved.
+    function replacer(this: unknown, _key: string, val: unknown) {
+      const objectState = objectStates.get(this)
+      if (objectState && ++objectState.propertyCount > INSPECT_MAX_OBJECT_PROPERTIES) {
+        omittedCounts[objectState.index]++
+        // Replace the first omitted property with the placeholder, and omit the following ones
+        return objectState.propertyCount === INSPECT_MAX_OBJECT_PROPERTIES + 1
+          ? `${MORE_PROPERTIES_PLACEHOLDER}${objectState.index}`
+          : undefined
+      }
       if (typeof val === 'string' && val.length > INSPECT_MAX_STRING_LENGTH) {
         return `${val.slice(0, INSPECT_MAX_STRING_LENGTH)}…`
       }
       if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
-        return truncateObjectProperties(val, truncatedObjects)
+        // Reset the state each time an object is serialized, as it can be referenced multiple times
+        objectStates.set(val, { propertyCount: 0, index: omittedCounts.push(0) - 1 })
       }
       return val
     }
@@ -158,34 +170,13 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
     }
     // The placeholder is the first property when all retained values are omitted by JSON (undefined, functions...)
     return json.replace(
-      /([{,])"__dd_more_properties__":(\d+)/g,
-      (_match, separator: string, count: string) => `${separator === ',' ? ', ' : '{'}... ${count} more properties`
+      /([{,])"(?:[^"\\]|\\.)*":"__dd_more_properties__:(\d+)"/g,
+      (_match, separator: string, index: string) =>
+        `${separator === ',' ? ', ' : '{'}... ${omittedCounts[Number(index)]} more properties`
     )
   } catch {
     return `[${getConstructorName(value) ?? 'Object'}]`
   }
-}
-
-/**
- * Keep only the first properties of an object, recording the number of omitted properties under MORE_PROPERTIES_KEY
- */
-function truncateObjectProperties(value: object, truncatedObjects: Map<object, Record<string, unknown>>): object {
-  const keys = Object.keys(value)
-  if (keys.length <= INSPECT_MAX_OBJECT_PROPERTIES) {
-    return value
-  }
-  // Reuse the same copy for a given object, so JSON.stringify can still detect circular references
-  let truncated = truncatedObjects.get(value)
-  if (!truncated) {
-    // Null prototype, so that an own "__proto__" key is copied as a regular property
-    truncated = Object.create(null) as Record<string, unknown>
-    for (let i = 0; i < INSPECT_MAX_OBJECT_PROPERTIES; i++) {
-      truncated[keys[i]] = (value as Record<string, unknown>)[keys[i]]
-    }
-    truncated[MORE_PROPERTIES_KEY] = keys.length - INSPECT_MAX_OBJECT_PROPERTIES
-    truncatedObjects.set(value, truncated)
-  }
-  return truncated
 }
 
 /**
