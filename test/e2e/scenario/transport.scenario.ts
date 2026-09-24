@@ -103,10 +103,15 @@ test.describe('transport', () => {
   })
 
   createTest('use fetch instead of sendBeacon for a non-HTTP endpoint on exit')
-    .withRum({ telemetrySampleRate: 0, sessionReplaySampleRate: 0 })
+    .withRum()
     // Override the test proxy with a non-HTTP(S) endpoint to exercise the protocol guard.
     .withRumInit((configuration) => {
-      window.DD_RUM!.init({ ...configuration, proxy: () => 'file:///proxy' })
+      window.DD_RUM!.init({
+        ...configuration,
+        telemetrySampleRate: 0,
+        sessionReplaySampleRate: 0,
+        proxy: () => 'file:///proxy',
+      })
     })
     .run(async ({ page, flushEvents }) => {
       // Store calls outside the page because flushEvents navigates away and destroys its state.
