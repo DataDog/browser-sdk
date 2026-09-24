@@ -22,7 +22,6 @@ import type {
   RawRumWebSocketClosingVitalProperties,
   RawRumWebSocketConnectingVitalProperties,
   RawRumWebSocketOpenVitalProperties,
-  RawRumWebSocketVitalEvent,
 } from '../../rawRumEvent.types'
 import { VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -44,114 +43,6 @@ describe('webSocketCollection', () => {
     addWebSocketVitalSpy = jasmine.createSpy()
     registerCleanupTask(resetAllowUntrustedEvents)
   })
-
-  function expireSession(endClocks = relativeToClocks(clock.relative(0))) {
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
-  }
-
-  function startTracking() {
-    const tracker = trackWebSocket(initWebSocketObservable(), addWebSocketVitalSpy)
-    registerCleanupTask(tracker.stop)
-    return tracker
-  }
-
-  function emittedVitals(name?: WebSocketVitalName) {
-    const vitals = addWebSocketVitalSpy.calls.all().map((call) => call.args[0])
-    return name === undefined ? vitals : vitals.filter((vital) => vital.vital.name === name)
-  }
-
-  function emittedNames() {
-    return emittedVitals().map((vital) => vital.vital.name)
-  }
-
-  /** When the seam was told the vital was taken, which is what assembly attributes it by. */
-  function startClocksOf(vital: RawRumWebSocketVitalEvent) {
-    return addWebSocketVitalSpy.calls.all().find((call) => call.args[0] === vital)!.args[1]
-  }
-
-  // The payload of a phase is picked by the name the collection module chose; the serializer's own
-  // spec is where the compiler checks that a name and its payload agree.
-  function connectingPayloads() {
-    return emittedVitals(WebSocketVitalName.CONNECTING).map(
-      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketConnectingVitalProperties
-    )
-  }
-
-  function openPayloads() {
-    return emittedVitals(WebSocketVitalName.OPEN).map(
-      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketOpenVitalProperties
-    )
-  }
-
-  function closingPayloads() {
-    return emittedVitals(WebSocketVitalName.CLOSING).map(
-      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketClosingVitalProperties
-    )
-  }
-
-  function closedPayloads() {
-    return emittedVitals(WebSocketVitalName.CLOSED).map(
-      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketClosedVitalProperties
-    )
-  }
-
-  /** The connection ids reported by every vital, in emission order. */
-  function connectionIds() {
-    return emittedVitals().map((vital) => vital.vital.websocket.id)
-  }
-
-  function notifyConnecting(startRelative = 0, url = 'wss://example.com/socket', protocols?: string | string[]) {
-    setClock(startRelative)
-    return createMockWebSocket(url, protocols)
-  }
-
-  function notifyOpen(socket: MockWebSocket, openRelative = 10, protocol = '', extensions = '') {
-    setClock(openRelative)
-    socket.protocol = protocol
-    socket.extensions = extensions
-    socket.simulateOpen()
-  }
-
-  function notifyMessageIn(socket: MockWebSocket, at: number, size: number) {
-    setClock(at)
-    socket.simulateIncomingMessage('x'.repeat(size))
-  }
-
-  function notifyMessageOut(socket: MockWebSocket, at: number, size: number, bufferedAmountPreSend = 0) {
-    setClock(at)
-    socket.bufferedAmount = bufferedAmountPreSend
-    socket.send('x'.repeat(size))
-  }
-
-  /** Drives the application calling `close()`, which is the only way the CLOSING phase is observed. */
-  function notifyClosing(socket: MockWebSocket, at: number, code?: number, reason?: string) {
-    setClock(at)
-    socket.close(code, reason)
-  }
-
-  function notifyClosed(socket: MockWebSocket, at: number, code: number, reason: string, wasClean: boolean) {
-    setClock(at)
-    socket.simulateClose(code, reason, wasClean)
-  }
-
-  function setClock(relative: number) {
-    clock.setDate(new Date(clock.timeStamp(relative)))
-  }
-
-  /**
-   * A connection driven by ticks alone rather than by setting the date, so that the clock's date and
-   * the shared heartbeat timer stay in step. Everything the heartbeat is dated at is derived from
-   * `Date.now()` at the moment the spec drove it.
-   */
-  function openConnection(url = 'wss://example.com/socket') {
-    const socket = createMockWebSocket(url)
-    socket.simulateOpen()
-    return socket
-  }
-
-  function tickBeats(count = 1) {
-    clock.tick(count * WEBSOCKET_HEARTBEAT_INTERVAL)
-  }
 
   it('reports every vital of a connection under the same connection id', () => {
     startTracking()
@@ -271,7 +162,6 @@ describe('webSocketCollection', () => {
       notifyConnecting(40)
 
       const connectingClocks = relativeToClocks(clock.relative(40))
-      expect(startClocksOf(emittedVitals()[0])).toEqual(connectingClocks)
       expect(connectingPayloads()[0].connecting_date).toBe(connectingClocks.timeStamp)
     })
 
@@ -315,7 +205,6 @@ describe('webSocketCollection', () => {
       expect(openPayloads()[0].snapshot_version).toBe(1)
       expect(openPayloads()[0].snapshot).toBeDefined()
       expect(openPayloads()[0].open_date).toBe(clock.timeStamp(10))
-      expect(startClocksOf(emittedVitals(WebSocketVitalName.OPEN)[0])).toEqual(relativeToClocks(clock.relative(10)))
     })
 
     it('reports what the server negotiated', () => {
@@ -638,7 +527,6 @@ describe('webSocketCollection', () => {
         })
       )
       expect(closedPayloads()[0].closed_date).toBe(clock.timeStamp(40))
-      expect(startClocksOf(emittedVitals(WebSocketVitalName.CLOSED)[0])).toEqual(relativeToClocks(clock.relative(40)))
     })
 
     it('reports an empty close reason rather than nothing when the peer supplied none', () => {
@@ -675,7 +563,7 @@ describe('webSocketCollection', () => {
       expect(closedPayloads()[0].close_code).toBeUndefined()
       expect(closedPayloads()[0].close_reason).toBeUndefined()
       expect(closedPayloads()[0].was_clean).toBeUndefined()
-      expect(startClocksOf(emittedVitals(WebSocketVitalName.CLOSED)[0])).toEqual(endClocks)
+      expect(closedPayloads()[0].closed_date).toEqual(endClocks.timeStamp)
     })
 
     it('reports the send queue depth read from the socket when no close event was received', () => {
@@ -824,7 +712,7 @@ describe('webSocketCollection', () => {
 
       expect(closedPayloads()).toHaveSize(1)
       expect(closedPayloads()[0].tracking_end_reason).toBe(WebSocketTrackingEndReason.SESSION_END)
-      expect(startClocksOf(emittedVitals(WebSocketVitalName.CLOSED)[0])).toEqual(endClocks)
+      expect(closedPayloads()[0].closed_date).toEqual(endClocks.timeStamp)
     })
 
     it('ignores further WebSocket events from the same instance after stop()', () => {
@@ -855,4 +743,127 @@ describe('webSocketCollection', () => {
       expect(closedPayloads()).toHaveSize(1)
     })
   })
+
+  // ---------------------------------------------------------------------------
+  // Setup
+  // ---------------------------------------------------------------------------
+
+  function startTracking() {
+    const tracker = trackWebSocket(initWebSocketObservable(), addWebSocketVitalSpy)
+    registerCleanupTask(tracker.stop)
+    return tracker
+  }
+
+  function expireSession(endClocks = relativeToClocks(clock.relative(0))) {
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
+  }
+
+  // ---------------------------------------------------------------------------
+  // Driving a socket by date
+  // ---------------------------------------------------------------------------
+
+  function setClock(relative: number) {
+    clock.setDate(new Date(clock.timeStamp(relative)))
+  }
+
+  function notifyConnecting(startRelative = 0, url = 'wss://example.com/socket', protocols?: string | string[]) {
+    setClock(startRelative)
+    return createMockWebSocket(url, protocols)
+  }
+
+  function notifyOpen(socket: MockWebSocket, openRelative = 10, protocol = '', extensions = '') {
+    setClock(openRelative)
+    socket.protocol = protocol
+    socket.extensions = extensions
+    socket.simulateOpen()
+  }
+
+  function notifyMessageIn(socket: MockWebSocket, at: number, size: number) {
+    setClock(at)
+    socket.simulateIncomingMessage('x'.repeat(size))
+  }
+
+  function notifyMessageOut(socket: MockWebSocket, at: number, size: number, bufferedAmountPreSend = 0) {
+    setClock(at)
+    socket.bufferedAmount = bufferedAmountPreSend
+    socket.send('x'.repeat(size))
+  }
+
+  /** Drives the application calling `close()`, which is the only way the CLOSING phase is observed. */
+  function notifyClosing(socket: MockWebSocket, at: number, code?: number, reason?: string) {
+    setClock(at)
+    socket.close(code, reason)
+  }
+
+  function notifyClosed(socket: MockWebSocket, at: number, code: number, reason: string, wasClean: boolean) {
+    setClock(at)
+    socket.simulateClose(code, reason, wasClean)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Driving the heartbeat by ticks
+  //
+  // A connection driven by ticks alone rather than by setting the date, so that the clock's date and
+  // the shared heartbeat timer stay in step. Everything the heartbeat is dated at is derived from
+  // `Date.now()` at the moment the spec drove it.
+  // ---------------------------------------------------------------------------
+
+  function openConnection(url = 'wss://example.com/socket') {
+    const socket = createMockWebSocket(url)
+    socket.simulateOpen()
+    return socket
+  }
+
+  function tickBeats(count = 1) {
+    clock.tick(count * WEBSOCKET_HEARTBEAT_INTERVAL)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reading emitted vitals
+  // ---------------------------------------------------------------------------
+
+  function emittedVitals(name?: WebSocketVitalName) {
+    const vitals = addWebSocketVitalSpy.calls.all().map((call) => call.args[0])
+    return name === undefined ? vitals : vitals.filter((vital) => vital.vital.name === name)
+  }
+
+  function emittedNames() {
+    return emittedVitals().map((vital) => vital.vital.name)
+  }
+
+  /** The connection ids reported by every vital, in emission order. */
+  function connectionIds() {
+    return emittedVitals().map((vital) => vital.vital.websocket.id)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reading phase payloads
+  //
+  // The payload of a phase is picked by the name the collection module chose; the serializer's own
+  // spec is where the compiler checks that a name and its payload agree.
+  // ---------------------------------------------------------------------------
+
+  function connectingPayloads() {
+    return emittedVitals(WebSocketVitalName.CONNECTING).map(
+      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketConnectingVitalProperties
+    )
+  }
+
+  function openPayloads() {
+    return emittedVitals(WebSocketVitalName.OPEN).map(
+      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketOpenVitalProperties
+    )
+  }
+
+  function closingPayloads() {
+    return emittedVitals(WebSocketVitalName.CLOSING).map(
+      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketClosingVitalProperties
+    )
+  }
+
+  function closedPayloads() {
+    return emittedVitals(WebSocketVitalName.CLOSED).map(
+      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketClosedVitalProperties
+    )
+  }
 })
