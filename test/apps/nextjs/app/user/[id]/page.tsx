@@ -16,6 +16,11 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
       <div>
         <Link href={`/user/${id}#section`}>Go to Section</Link>
       </div>
+      <div>
+        <Link href="/slow" prefetch={false}>
+          Start slow navigation
+        </Link>
+      </div>
     </div>
   )
 }

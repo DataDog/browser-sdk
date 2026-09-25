@@ -24,6 +24,17 @@ After configuration, the Datadog App provides instructions for integrating the [
 
 Both routers require **Next.js v15.3+**, which supports the [`instrumentation-client`][3] file convention.
 
+For Next.js v16.3+, enable transition events so the plugin can deduplicate repeated callbacks for one navigation:
+
+```js
+// next.config.js
+module.exports = {
+  experimental: {
+    instrumentationClientRouterTransitionEvents: true,
+  },
+}
+```
+
 ## App router usage
 
 ### 1. Create an `instrumentation-client.js` file in the root of your Next.js project
