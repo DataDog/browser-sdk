@@ -23,6 +23,7 @@ import {
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
   isAllowedTrackingOrigins,
+  isTrackingAllowedByPrivacySignals,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -109,7 +110,11 @@ export function createPreStartStrategy(
       })
 
       const configuration = validateAndBuildLogsConfiguration(initConfiguration)
-      if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
+      if (
+        !configuration ||
+        !isAllowedTrackingOrigins(configuration, errorStack ?? '') ||
+        (configuration.respectPrivacySettings && !isTrackingAllowedByPrivacySignals())
+      ) {
         return
       }
 
