@@ -2,13 +2,28 @@ import type { Locator, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { html } from '../framework'
 
+declare global {
+  interface Window {
+    webSocketPage?: WebSocketPageApi
+  }
+}
+
+interface WebSocketPageApi {
+  open: (options?: WebSocketOpenOptions) => void
+  send: (text: string) => void
+  close: (code?: number, reason?: string) => void
+}
+
+export interface WebSocketOpenOptions {
+  protocols?: string[]
+  /** Query string to open the `/ws-echo` URL with, without the leading `?` */
+  query?: string
+}
+
 const ELEMENT_IDS = {
   status: 'ws-status',
   lastMessage: 'ws-last-message',
-  messageInput: 'ws-message',
-  open: 'ws-open',
-  send: 'ws-send',
-  closeClient: 'ws-close-client',
+  receivedCount: 'ws-received-count',
 } as const
 
 export const DEFAULT_WS_OUT_MESSAGE = 'e2e-ws-ping'
@@ -17,100 +32,113 @@ export function expectedWsEchoMessage(out = DEFAULT_WS_OUT_MESSAGE) {
   return `echo: ${out}`
 }
 
+/**
+ * Drives one WebSocket on the `/ws-echo` fixture. The page reflects the socket's state in the DOM so
+ * that each step can wait for the browser to have observed it.
+ */
 export class WebSocketPage {
-  readonly wsOpenButton: Locator
-  readonly wsStatusParagraph: Locator
-  readonly wsSendButton: Locator
-  readonly wsCloseButton: Locator
-  readonly wsLastMessageParagraph: Locator
-  readonly wsMessageInput: Locator
+  private readonly status: Locator
+  private readonly lastMessage: Locator
+  private readonly receivedCount: Locator
 
-  constructor(page: Page) {
-    this.wsOpenButton = page.locator(`#${ELEMENT_IDS.open}`)
-    this.wsStatusParagraph = page.locator(`#${ELEMENT_IDS.status}`)
-    this.wsSendButton = page.locator(`#${ELEMENT_IDS.send}`)
-    this.wsCloseButton = page.locator(`#${ELEMENT_IDS.closeClient}`)
-    this.wsLastMessageParagraph = page.locator(`#${ELEMENT_IDS.lastMessage}`)
-    this.wsMessageInput = page.locator(`#${ELEMENT_IDS.messageInput}`)
+  constructor(private readonly page: Page) {
+    this.status = page.locator(`#${ELEMENT_IDS.status}`)
+    this.lastMessage = page.locator(`#${ELEMENT_IDS.lastMessage}`)
+    this.receivedCount = page.locator(`#${ELEMENT_IDS.receivedCount}`)
   }
 
-  static testBody(outMessage = DEFAULT_WS_OUT_MESSAGE): string {
+  static testBody(): string {
     return html`
       <p id="${ELEMENT_IDS.status}"></p>
       <p id="${ELEMENT_IDS.lastMessage}"></p>
-      <input id="${ELEMENT_IDS.messageInput}" type="text" value="${outMessage}" />
-      <button type="button" id="${ELEMENT_IDS.open}">ws-open</button>
-      <button type="button" id="${ELEMENT_IDS.send}">ws-send</button>
-      <button type="button" id="${ELEMENT_IDS.closeClient}">ws-close-client</button>
+      <p id="${ELEMENT_IDS.receivedCount}"></p>
       <script>
         ;(function () {
           var ws
-          function wsUrl() {
-            var u = new URL('/ws-echo', location.href)
-            u.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-            return u.toString()
+          var status = document.getElementById('${ELEMENT_IDS.status}')
+          var lastMessage = document.getElementById('${ELEMENT_IDS.lastMessage}')
+          var receivedCount = document.getElementById('${ELEMENT_IDS.receivedCount}')
+
+          function wsUrl(query) {
+            var url = new URL('/ws-echo', location.href)
+            url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+            if (query) {
+              url.search = query
+            }
+            return url.toString()
           }
-          document.getElementById('${ELEMENT_IDS.open}').addEventListener('click', function () {
-            ws = new WebSocket(wsUrl())
-            var status = document.getElementById('${ELEMENT_IDS.status}')
-            var last = document.getElementById('${ELEMENT_IDS.lastMessage}')
-            ws.addEventListener('open', function () {
-              status.textContent = 'open'
-            })
-            ws.addEventListener('message', function (ev) {
-              last.textContent = ev.data
-              status.textContent = (status.textContent || '') + '|message'
-            })
-            ws.addEventListener('close', function () {
-              status.textContent = (status.textContent || '') + '|closed'
-            })
-            ws.addEventListener('error', function () {
-              status.textContent = (status.textContent || '') + '|error'
-            })
-          })
-          document.getElementById('${ELEMENT_IDS.send}').addEventListener('click', function () {
-            var text = document.getElementById('${ELEMENT_IDS.messageInput}').value
-            ws.send(text)
-          })
-          document.getElementById('${ELEMENT_IDS.closeClient}').addEventListener('click', function () {
-            ws.close()
-          })
+
+          window.webSocketPage = {
+            open: function (options) {
+              options = options || {}
+              ws = options.protocols
+                ? new WebSocket(wsUrl(options.query), options.protocols)
+                : new WebSocket(wsUrl(options.query))
+              status.textContent = 'connecting'
+              receivedCount.textContent = '0'
+              ws.addEventListener('open', function () {
+                status.textContent = 'open'
+              })
+              ws.addEventListener('message', function (event) {
+                lastMessage.textContent = event.data
+                receivedCount.textContent = String(Number(receivedCount.textContent) + 1)
+              })
+              ws.addEventListener('close', function () {
+                status.textContent = 'closed'
+              })
+            },
+            send: function (text) {
+              ws.send(text)
+            },
+            close: function (code, reason) {
+              ws.close(code, reason)
+            },
+          }
         })()
       </script>
     `
   }
 
-  async open() {
-    await this.wsOpenButton.click()
-    await this.expectOpen()
+  async open(options: WebSocketOpenOptions = {}) {
+    await this.page.evaluate((options) => window.webSocketPage!.open(options), options)
+    await this.expectStatus('open')
   }
 
-  async sendMessage(text?: string) {
-    if (text !== undefined) {
-      await this.wsMessageInput.fill(text)
-    }
-    await this.wsSendButton.click()
+  /** Calls `close()` in the same task as the constructor, so the opening handshake cannot complete first. */
+  async openAndCloseWhileConnecting() {
+    await this.page.evaluate(() => {
+      window.webSocketPage!.open()
+      window.webSocketPage!.close()
+    })
+    await this.expectStatus('closed')
   }
 
-  async sendDefaultMessageAndExpectEcho(outMessage = DEFAULT_WS_OUT_MESSAGE) {
-    await this.sendMessage()
-    await this.expectLastMessage(expectedWsEchoMessage(outMessage))
+  async sendAndExpectEcho(text = DEFAULT_WS_OUT_MESSAGE) {
+    const receivedCountBefore = Number(await this.receivedCount.textContent())
+    await this.page.evaluate((text) => window.webSocketPage!.send(text), text)
+    await expect(this.receivedCount).toHaveText(String(receivedCountBefore + 1))
+    await expect(this.lastMessage).toHaveText(expectedWsEchoMessage(text))
   }
 
-  async closeFromClient() {
-    await this.wsCloseButton.click()
+  async close(code?: number, reason?: string) {
+    await this.page.evaluate(({ code, reason }) => window.webSocketPage!.close(code, reason), { code, reason })
     await this.expectClosed()
   }
 
-  async expectOpen() {
-    await expect(this.wsStatusParagraph).toHaveText('open')
+  /** Calls `close()` a second time in the same task, so it always finds the socket closing. */
+  async closeTwice() {
+    await this.page.evaluate(() => {
+      window.webSocketPage!.close()
+      window.webSocketPage!.close()
+    })
+    await this.expectClosed()
   }
 
   async expectClosed() {
-    await expect(this.wsStatusParagraph).toContainText('closed')
+    await this.expectStatus('closed')
   }
 
-  async expectLastMessage(text: string) {
-    await expect(this.wsLastMessageParagraph).toHaveText(text)
+  private async expectStatus(status: 'open' | 'closed') {
+    await expect(this.status).toHaveText(status)
   }
 }
