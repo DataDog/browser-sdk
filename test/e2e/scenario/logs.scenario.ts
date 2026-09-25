@@ -330,11 +330,47 @@ test.describe('logs', () => {
       })
 
       await flushEvents()
-      const expectedWasmModules = [{ url: new URL('/test-module.wasm', baseUrl).href, build_id: 'abcd' }]
+      const expectedWasmModules = [
+        { url: new URL('/test-module.wasm', baseUrl).href, build_id: 'abcd', debug_info_type: 'dwarf' },
+      ]
 
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].error?.source_type).toBe('browser+wasm')
       expect(intakeRegistry.logsEvents[0].error?.wasm_modules).toEqual(expectedWasmModules)
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
+    })
+
+  createTest('send WebAssembly source map metadata')
+    .withSetup(npmSetup)
+    .withLogs({ forwardErrorsToLogs: true })
+    .withWasmUnsafeEval()
+    .withLogsInit((configuration) => {
+      configuration.plugins = [window.DD_WASM_PLUGIN!()]
+      window.DD_LOGS!.init(configuration)
+    })
+    .run(async ({ baseUrl, intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+      test.skip(
+        test.info().project.name === 'webkit' || test.info().project.name === 'chromium-pinned',
+        'These browser versions do not expose uncaught WebAssembly traps through the runtime error event'
+      )
+
+      await page.evaluate(async () => {
+        const { instance } = await WebAssembly.instantiateStreaming(fetch('/test-module-sourcemap.wasm'))
+        setTimeout(() => (instance.exports.run as () => void)())
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].error?.source_type).toBe('browser+wasm')
+      expect(intakeRegistry.logsEvents[0].error?.wasm_modules).toEqual([
+        {
+          url: new URL('/test-module-sourcemap.wasm', baseUrl).href,
+          build_id: '',
+          debug_info_type: 'sourcemap',
+        },
+      ])
       withBrowserLogs((browserLogs) => {
         expect(browserLogs).toHaveLength(1)
       })
