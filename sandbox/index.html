@@ -5,6 +5,8 @@
     <title>Sandbox</title>
     <script src="/datadog-rum.js" crossorigin></script>
     <script src="/datadog-logs.js" crossorigin></script>
+    <!-- SPIKE-ONLY: long-task-as-plugin feasibility spike, see Early investigation doc -->
+    <script src="/datadog-plugin-long-task.js" crossorigin></script>
     <script>
       DD_RUM.init({
         clientToken: 'xxx',
@@ -18,6 +20,7 @@
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
         proxy: '/proxy',
+        plugins: [longTaskPlugin()],
       })
       DD_LOGS.init({
         clientToken: 'xxx',
@@ -30,5 +33,12 @@
     </script>
   </head>
 
-  <body></body>
+  <body>
+    <!-- SPIKE-ONLY: triggers a real long task to verify the plugin captures it -->
+    <button
+      onclick="const end = performance.now() + 60; while (performance.now() < end) {}"
+    >
+      Trigger long task
+    </button>
+  </body>
 </html>

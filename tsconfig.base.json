@@ -53,6 +53,8 @@
 
       "@datadog/browser-plugin-wasm": ["./packages/browser-plugin-wasm/src"],
 
+      "@datadog/browser-plugin-long-task": ["./packages/browser-plugin-long-task/src"],
+
       "@datadog/js-core/assembly": ["./packages/js-core/src/entries/assembly"],
       "@datadog/js-core/time": ["./packages/js-core/src/entries/time"],
       "@datadog/js-core/monitor": ["./packages/js-core/src/entries/monitor"],
