@@ -1,5 +1,5 @@
 import type { Observable, Encoder, Context } from '@datadog/browser-core'
-import { createBatch, DeflateEncoderStreamId, sendToExtension } from '@datadog/browser-core'
+import { createBatch, DeflateEncoderStreamId, PageExitReason, sendToExtension } from '@datadog/browser-core'
 import { combine } from '@datadog/js-core/util'
 import { createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/js-core/transport'
 import type { RumConfiguration } from '../domain/configuration'
@@ -175,6 +175,7 @@ export function startRumBatch(
   lifeCycle: LifeCycle,
   reportError: (message: string) => void,
   sessionExpireObservable: Observable<void>,
+  pageUnloadFlushObservable: Observable<void>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
   const endpoints = [createEndpointBuilder(configuration, 'rum')]
@@ -189,6 +190,7 @@ export function startRumBatch(
     reportError,
   })
   sessionExpireObservable.subscribe(() => batch.forceFlush('session_expire'))
+  pageUnloadFlushObservable.subscribe(() => batch.forceFlush(PageExitReason.PAGEHIDE))
 
   const { dispatch, stop: stopDispatcher } = createBatchDispatcher(batch, configuration.betaEnableViewUpdates)
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, dispatch)
