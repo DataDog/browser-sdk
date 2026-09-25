@@ -54,7 +54,10 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
   },
   [RumEventType.VITAL]: {
     ...COMMON_MODIFIABLE_FIELD_PATHS,
+    'vital.websocket.url': 'string',
     'vital.websocket.requested_protocols': 'array',
+    'vital.websocket.selected_protocol': 'string',
+    'vital.websocket.close_reason': 'string',
   },
 }
 
