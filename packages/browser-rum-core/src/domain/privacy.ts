@@ -158,7 +158,12 @@ export function shouldMaskAttribute(
   attributeName: string,
   attributeValue: string | null,
   nodePrivacyLevel: NodePrivacyLevel,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  // `configuration.actionNameAttribute` is exempted from masking below so the action `name` field
+  // can show the customer's explicitly chosen attribute unmasked. That exemption only makes sense
+  // for that one caller (`getActionNameFromStandardAttribute`); other callers that reuse this
+  // function for unrelated fields (ex: the composed-path attributes map) must opt out of it.
+  { honorActionNameAttributeExemption = true }: { honorActionNameAttributeExemption?: boolean } = {}
 ) {
   if (nodePrivacyLevel !== NodePrivacyLevel.MASK && nodePrivacyLevel !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
     return false
@@ -166,7 +171,7 @@ export function shouldMaskAttribute(
   if (
     attributeName === PRIVACY_ATTR_NAME ||
     STABLE_ATTRIBUTES.includes(attributeName) ||
-    attributeName === configuration.actionNameAttribute
+    (honorActionNameAttributeExemption && attributeName === configuration.actionNameAttribute)
   ) {
     return false
   }
@@ -179,7 +184,10 @@ export function shouldMaskAttribute(
     case 'name':
       return true
   }
-  if (tagName === 'A' && attributeName === 'href') {
+  // Compared case-insensitively: SVG elements (ex: `<a href>` inside an <svg>) report a lowercase
+  // `tagName`, unlike their HTML namesakes.
+  const upperTagName = tagName.toUpperCase()
+  if ((upperTagName === 'A' || upperTagName === 'AREA') && attributeName === 'href') {
     return true
   }
   if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
@@ -193,6 +201,49 @@ export function shouldMaskAttribute(
   }
 
   return false
+}
+
+/**
+ * Masks an attribute's value when the element's privacy level requires it, using the same
+ * MASK/MASK_UNLESS_ALLOWLISTED classification as action names collected from standard attributes
+ * (`getActionNameFromStandardAttribute`). Unlike that function, this one is NOT gated behind
+ * `enablePrivacyForActionName`: that flag is scoped to the action `name` field, and callers of
+ * this function (ex: the composed-path attributes map) are a different, unrelated field — turning
+ * it off must not also turn off masking here. For the same reason, this also opts out of
+ * `shouldMaskAttribute`'s `actionNameAttribute` exemption: that exemption exists so the action
+ * `name` field can surface the customer's chosen attribute unmasked, which doesn't apply to an
+ * unrelated field that happens to collect the same attribute name.
+ */
+export function maskAttributeIfNeeded(
+  element: Element,
+  attributeName: string,
+  attributeValue: string,
+  configuration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache,
+  fixedMask?: string
+): string {
+  const nodePrivacyLevel = getNodePrivacyLevel(element, configuration.defaultPrivacyLevel, nodePrivacyLevelCache)
+  // `shouldMaskAttribute` only recognizes MASK and MASK_UNLESS_ALLOWLISTED: HIDDEN and IGNORE (the
+  // strictest levels, meant to keep content out of Datadog entirely) must be enforced here,
+  // unconditionally and without the `$DD_ALLOW` allowlist, the same way session replay's
+  // `serializeAttribute` guards them before ever delegating to `shouldMaskAttribute`, and the same
+  // way `getTextContent` substitutes `CENSORED_STRING_MARK` for HIDDEN text nodes.
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN || nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
+    return fixedMask ?? censorText(attributeValue)
+  }
+  if (
+    shouldMaskAttribute(element.tagName, attributeName, attributeValue, nodePrivacyLevel, configuration, {
+      honorActionNameAttributeExemption: false,
+    })
+  ) {
+    // Only MASK_UNLESS_ALLOWLISTED consults `$DD_ALLOW`. MASK must always return the fixed mask,
+    // the same way HIDDEN/IGNORE are enforced above without the allowlist.
+    if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
+      return maskDisallowedTextContent(attributeValue, fixedMask)
+    }
+    return fixedMask ?? censorText(attributeValue)
+  }
+  return attributeValue
 }
 
 function isFormElement(node: Node | null): boolean {

@@ -1,3 +1,4 @@
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacyConstants'
 import { getNodeSelfPrivacyLevel } from '../privacy'
@@ -701,6 +702,9 @@ describe('getActionNameFromElement', () => {
           expectedNameSource: 'standard_attribute',
         },
       ]
+      registerCleanupTask(() => {
+        delete (window as BrowserWindow).$DD_ALLOW
+      })
       testCases.forEach(({ html, defaultPrivacyLevel, allowlist, expectedName, expectedNameSource }) => {
         ;(window as BrowserWindow).$DD_ALLOW = new Set(allowlist)
         const target = appendElement(html)
