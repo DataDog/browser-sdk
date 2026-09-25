@@ -2,9 +2,10 @@ import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { EventTracker } from './eventTracker'
-import { startEventTracker } from './eventTracker'
+import { startEventTracker, EVENT_CONTEXT_TIME_OUT_DELAY } from './eventTracker'
 
 describe('eventTracker', () => {
   let lifeCycle: LifeCycle
@@ -128,6 +129,26 @@ describe('eventTracker', () => {
       tracker.discard('key1')
 
       expect(tracker.findId()).toEqual([])
+    })
+
+    it('should not include events replaced by a new event with the same key', () => {
+      const replaced = tracker.start('key1', clocksNow(), { value: 'data1' })
+      const current = tracker.start('key1', clocksNow(), { value: 'data2' })
+
+      expect(tracker.findId()).toEqual([current.id])
+      expect(tracker.findId()).not.toContain(replaced.id)
+    })
+
+    it('should clear expired events once a replaced event is discarded', () => {
+      tracker.start('key1', clocksNow(), { value: 'data1' })
+      clock.tick(1)
+      tracker.start('key1', clocksNow(), { value: 'data2' })
+      const currentStartTime = clocksNow().relative
+      tracker.stop('key1', clocksNow())
+
+      clock.tick(EVENT_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_VALUES_INTERVAL)
+
+      expect(tracker.findId(currentStartTime)).toEqual([])
     })
   })
 

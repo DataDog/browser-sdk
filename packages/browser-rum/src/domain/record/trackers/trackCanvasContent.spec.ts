@@ -5,6 +5,8 @@ import { createRecordingScopeForTesting } from '../test/recordingScope.specHelpe
 import type { Tracker } from './tracker.types'
 import { trackCanvasContent } from './trackCanvasContent'
 
+const WEBGL_CONTEXT_TYPES = ['webgl', 'webgl2'] as const
+
 describe('trackCanvasContent', () => {
   let canvas: HTMLCanvasElement
   let context: CanvasRenderingContext2D
@@ -25,7 +27,9 @@ describe('trackCanvasContent', () => {
     enable: boolean = true,
     maxFramesPerSecond = 1,
     hashingMaxDimension = 100,
-    maxImageDimension = 1000
+    maxImageDimension = 1000,
+    canvasToTrack = canvas,
+    serializeCanvas = true
   ): Tracker {
     const scope = createRecordingScopeForTesting({
       canvasManager,
@@ -35,7 +39,9 @@ describe('trackCanvasContent', () => {
           : undefined,
       },
     })
-    scope.nodeIds.getOrInsert(canvas)
+    if (serializeCanvas) {
+      scope.nodeIds.getOrInsert(canvasToTrack)
+    }
     tracker = trackCanvasContent(scope)
     return tracker
   }
@@ -68,6 +74,180 @@ describe('trackCanvasContent', () => {
         draw()
         expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(canvas, CanvasStatus.Dirty)
       })
+  })
+
+  WEBGL_CONTEXT_TYPES.forEach((contextType) => {
+    it(`marks the canvas dirty after ${contextType} drawing operations`, async () => {
+      const webGLCanvas = document.createElement('canvas')
+      const webGLContext = contextType === 'webgl' ? webGLCanvas.getContext('webgl') : webGLCanvas.getContext('webgl2')
+      if (!webGLContext) {
+        return
+      }
+      const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+      startTracking(true, Infinity, 100, 1000, webGLCanvas)
+
+      const drawingOperations = [
+        () => webGLContext.clear(webGLContext.COLOR_BUFFER_BIT),
+        () => webGLContext.drawArrays(webGLContext.POINTS, 0, 0),
+        () => webGLContext.drawElements(webGLContext.POINTS, 0, webGLContext.UNSIGNED_SHORT, 0),
+      ]
+
+      for (const draw of drawingOperations) {
+        markCanvasDirtySpy.calls.reset()
+        setCanvasSnapshotSpy.calls.reset()
+        draw()
+        await Promise.resolve()
+
+        expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(webGLCanvas, jasmine.any(Object))
+        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+      }
+    })
+  })
+
+  it('takes a single WebGL snapshot for drawing operations in the same task', async () => {
+    const webGLCanvas = document.createElement('canvas')
+    const webGLContext = webGLCanvas.getContext('webgl')
+    if (!webGLContext) {
+      return
+    }
+    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    startTracking(true, 1, 100, 1000, webGLCanvas)
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    webGLContext.drawArrays(webGLContext.POINTS, 0, 0)
+    webGLContext.drawElements(webGLContext.POINTS, 0, webGLContext.UNSIGNED_SHORT, 0)
+    await Promise.resolve()
+
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
+    expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+  })
+
+  it('limits WebGL snapshots to the configured frame rate', async () => {
+    const webGLCanvas = document.createElement('canvas')
+    const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
+    if (!webGLContext) {
+      return
+    }
+    let now = 1_000
+    spyOn(performance, 'now').and.callFake(() => now)
+    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    startTracking(true, 1, 100, 1000, webGLCanvas)
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
+
+    now = 1_999
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
+
+    now = 2_000
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not bypass the configured frame rate after the canvas is resized', async () => {
+    const webGLCanvas = document.createElement('canvas')
+    const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
+    if (!webGLContext) {
+      return
+    }
+    let now = 1_000
+    spyOn(performance, 'now').and.callFake(() => now)
+    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    startTracking(true, 1, 100, 1000, webGLCanvas)
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
+
+    now = 1_001
+    webGLCanvas.width += 1
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+
+    expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('only marks WebGL canvases dirty when the drawing buffer is preserved', () => {
+    const webGLCanvas = document.createElement('canvas')
+    const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: true })
+    if (!webGLContext) {
+      return
+    }
+    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    startTracking(true, 1, 100, 1000, webGLCanvas)
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+
+    expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+    expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+  })
+
+  it('marks the canvas dirty after WebGL2 drawing operations', async () => {
+    const webGLCanvas = document.createElement('canvas')
+    const webGLContext = webGLCanvas.getContext('webgl2')
+    if (!webGLContext) {
+      return
+    }
+    startTracking(true, Infinity, 100, 1000, webGLCanvas)
+
+    const drawingOperations = [
+      () => webGLContext.blitFramebuffer(0, 0, 1, 1, 0, 0, 1, 1, webGLContext.COLOR_BUFFER_BIT, webGLContext.NEAREST),
+      () => webGLContext.clearBufferfi(webGLContext.DEPTH_STENCIL, 0, 1, 0),
+      () => webGLContext.clearBufferfv(webGLContext.COLOR, 0, [0, 0, 0, 0]),
+      () => webGLContext.clearBufferiv(webGLContext.COLOR, 0, [0, 0, 0, 0]),
+      () => webGLContext.clearBufferuiv(webGLContext.COLOR, 0, [0, 0, 0, 0]),
+      () => webGLContext.drawArraysInstanced(webGLContext.POINTS, 0, 0, 0),
+      () => webGLContext.drawElementsInstanced(webGLContext.POINTS, 0, webGLContext.UNSIGNED_SHORT, 0, 0),
+      () => webGLContext.drawRangeElements(webGLContext.POINTS, 0, 0, 0, webGLContext.UNSIGNED_SHORT, 0),
+    ]
+
+    for (const draw of drawingOperations) {
+      markCanvasDirtySpy.calls.reset()
+      draw()
+      await Promise.resolve()
+
+      expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+    }
+  })
+
+  it('freezes WebGL content while the drawing buffer is available', async () => {
+    const webGLCanvas = document.createElement('canvas')
+    webGLCanvas.width = 1
+    webGLCanvas.height = 1
+    const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
+    if (!webGLContext) {
+      return
+    }
+    startTracking(true, 1, 100, 1000, webGLCanvas)
+
+    webGLContext.clearColor(1, 0, 0, 1)
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+
+    const snapshot = canvasManager.startCaptureAttempt(webGLCanvas).snapshot!
+    expect(Array.from(snapshot.source.getContext('2d')!.getImageData(0, 0, 1, 1).data)).toEqual([255, 0, 0, 255])
+  })
+
+  it('does not freeze WebGL content before an inserted canvas is serialized', async () => {
+    const webGLCanvas = document.createElement('canvas')
+    document.body.appendChild(webGLCanvas)
+    registerCleanupTask(() => webGLCanvas.remove())
+    const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
+    if (!webGLContext) {
+      return
+    }
+    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    startTracking(true, 1, 100, 1000, webGLCanvas, false)
+
+    webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+    await Promise.resolve()
+
+    expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+    expect(markCanvasDirtySpy).not.toHaveBeenCalled()
   })
 
   it('does not mark the canvas dirty for non-drawing operations', () => {

@@ -1,3 +1,6 @@
+import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
+import type { CanvasSnapshot } from './canvasSnapshot'
+
 export const enum CanvasStatus {
   /** The canvas is clean, meaning it has not been marked as dirty or tainted */
   Clean,
@@ -10,6 +13,8 @@ export const enum CanvasStatus {
 export interface CanvasCaptureAttempt {
   /** changeHash emitted the last time this canvas was captured, taken when the attempt started */
   readonly lastChangeHash: string | undefined
+  /** snapshot frozen while the WebGL drawing buffer was still available */
+  readonly snapshot: CanvasSnapshot | undefined
   /** false if the canvas was forgotten/reset, or if another attempt took its place */
   isCurrent: () => boolean
   /** stores the changeHash */
@@ -26,10 +31,10 @@ export interface CanvasContentMutation {
 export interface CanvasManager {
   /** Single entry point for the canvas status */
   markCanvas: (canvas: HTMLCanvasElement, status: CanvasStatus) => void
+  /** Stores a snapshot taken before a WebGL drawing buffer is discarded */
+  setCanvasSnapshot: (canvas: HTMLCanvasElement, snapshot: CanvasSnapshot) => void
   /** The node left the DOM: forget its tracking state, but not its taint */
   forgetCanvas: (canvas: HTMLCanvasElement) => void
-  /** width/height were assigned: the bitmap was cleared, so drop the last hash and mark dirty */
-  resetCanvasBitmap: (canvas: HTMLCanvasElement) => void
   /** Takes dirty, connected, non-tainted canvases and clears their dirty state */
   takeCapturableCanvases: () => HTMLCanvasElement[]
   /** Starts a capture attempt for a canvas */
@@ -39,7 +44,7 @@ export interface CanvasManager {
   retryCanvas: (canvas: HTMLCanvasElement) => void
   addCanvasContentMutation: (mutation: CanvasContentMutation) => void
   takeCanvasContentMutations: () => CanvasContentMutation[]
-  /** New record stream: discards the per-stream tracking states (not the taint) */
+  /** New record stream: resets per-stream state while preserving snapshots and taint */
   reset: () => void
 }
 
@@ -49,8 +54,11 @@ interface CanvasTrackingState {
 }
 
 export function createCanvasManager(): CanvasManager {
+  const MutationObserver = getMutationObserverConstructor()
   const dirtyCanvases = new Set<HTMLCanvasElement>()
   const taintedCanvases = new WeakSet<HTMLCanvasElement>()
+  const canvasObservers = new Map<HTMLCanvasElement, InstanceType<typeof MutationObserver>>()
+  const canvasSnapshots = new WeakMap<HTMLCanvasElement, CanvasSnapshot>()
   let canvasContentMutations: CanvasContentMutation[] = []
   let canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
 
@@ -70,6 +78,7 @@ export function createCanvasManager(): CanvasManager {
 
     return {
       lastChangeHash: trackingState.lastChangeHash,
+      snapshot: canvasSnapshots.get(canvas),
       isCurrent,
       setLastChangeHash: (changeHash) => {
         if (isCurrent()) {
@@ -95,8 +104,23 @@ export function createCanvasManager(): CanvasManager {
     dirtyCanvases.delete(canvas)
   }
 
+  function observeCanvas(canvas: HTMLCanvasElement) {
+    if (canvasObservers.has(canvas)) {
+      return
+    }
+    const observer = new MutationObserver(() => markDirty(canvas))
+    observer.observe(canvas, { attributes: true, attributeFilter: ['width', 'height'] })
+    canvasObservers.set(canvas, observer)
+  }
+
+  function forgetCanvasObserver(canvas: HTMLCanvasElement) {
+    canvasObservers.get(canvas)?.disconnect()
+    canvasObservers.delete(canvas)
+  }
+
   return {
     markCanvas: (canvas, status) => {
+      observeCanvas(canvas)
       switch (status) {
         case CanvasStatus.Dirty:
           markDirty(canvas)
@@ -113,14 +137,15 @@ export function createCanvasManager(): CanvasManager {
       }
     },
 
+    setCanvasSnapshot: (canvas, snapshot) => {
+      canvasSnapshots.set(canvas, snapshot)
+    },
+
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
       canvasTrackingStates.delete(canvas)
-    },
-
-    resetCanvasBitmap: (canvas) => {
-      canvasTrackingStates.delete(canvas)
-      markDirty(canvas)
+      canvasSnapshots.delete(canvas)
+      forgetCanvasObserver(canvas)
     },
 
     takeCapturableCanvases: () => {
@@ -170,6 +195,8 @@ export function createCanvasManager(): CanvasManager {
       dirtyCanvases.clear()
       canvasContentMutations = []
       canvasTrackingStates = new WeakMap()
+      canvasObservers.forEach((observer) => observer.disconnect())
+      canvasObservers.clear()
     },
   }
 }

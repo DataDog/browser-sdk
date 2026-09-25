@@ -13,6 +13,7 @@ import { ChangeType } from '../../../types'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
 import { expectPixelApprox } from '../canvas/canvasImage.specHelper'
+import { createCanvasSnapshot } from '../canvas/canvasSnapshot'
 import type { NodeId } from '../encoding'
 import type { EmitResourceCallback, EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
@@ -218,6 +219,20 @@ describe('trackCanvasCapture', () => {
 
     expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(1)[1]), [0, 0, 255, 255])
     expect(onCanvasCapture.calls.argsFor(1)[0]).not.toBe(onCanvasCapture.calls.argsFor(0)[0])
+  })
+
+  it('uses a WebGL snapshot captured before its drawing buffer is discarded', async () => {
+    toBlobSpy.and.callThrough()
+    draw('red')
+    const snapshot = createCanvasSnapshot(canvas, 1000)!
+    const onCanvasCapture = startTracking()
+    canvasManager.setCanvasSnapshot(canvas, snapshot)
+
+    draw('blue')
+    markCanvasDirtyAndWaitForCapture()
+    await collectAsyncCalls(onCanvasCapture, 1)
+
+    expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[1]), [255, 0, 0, 255])
   })
 
   const nodeIdentityChanges: Array<{ description: string; change: () => NodeId | undefined }> = [
