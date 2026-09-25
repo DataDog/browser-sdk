@@ -22,6 +22,7 @@ export interface TemplateSegment {
 // Options for browserInspect - controls how values are stringified
 const INSPECT_MAX_ARRAY_LENGTH = 3
 const INSPECT_MAX_STRING_LENGTH = 8 * 1024 // 8KB
+const INSPECT_MAX_OBJECT_PROPERTIES = 5
 
 /**
  * Check if template segments require runtime evaluation
@@ -135,14 +136,29 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
   }
 
   try {
-    // Create custom replacer to handle maxStringLength in nested values
-    const replacer = (_key: string, val: unknown) => {
-      if (typeof val === 'string' && val.length > INSPECT_MAX_STRING_LENGTH) {
-        return `${val.slice(0, INSPECT_MAX_STRING_LENGTH)}…`
+    let obj = value as Record<string, unknown>
+    // Objects with a JSON representation (e.g. Date) are inspected through it
+    const toJSON = obj.toJSON
+    if (typeof toJSON === 'function') {
+      const json: unknown = Reflect.apply(toJSON, obj, [''])
+      if (Array.isArray(json)) {
+        return browserInspectInternal(json)
       }
-      return val
+      if (typeof json !== 'object' || json === null) {
+        return inspectValueInternal(json)
+      }
+      obj = json as Record<string, unknown>
     }
-    return JSON.stringify(value, replacer, 0)
+    // Like arrays, show the first properties with their nested objects and arrays collapsed
+    const keys = Object.keys(obj)
+    const properties = keys
+      .slice(0, INSPECT_MAX_OBJECT_PROPERTIES)
+      .map((key) => `${JSON.stringify(key)}:${inspectValueInternal(obj[key], true)}`)
+      .join(',')
+    if (keys.length > INSPECT_MAX_OBJECT_PROPERTIES) {
+      return `{${properties}, ... ${keys.length - INSPECT_MAX_OBJECT_PROPERTIES} more properties}`
+    }
+    return `{${properties}}`
   } catch {
     return `[${getConstructorName(value) ?? 'Object'}]`
   }
