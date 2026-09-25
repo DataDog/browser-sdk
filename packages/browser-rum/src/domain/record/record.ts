@@ -99,6 +99,7 @@ export function record(options: RecordOptions): RecordAPI {
       shadowRootsController.stop()
       trackers.forEach((tracker) => tracker.stop())
       stopFullSnapshots()
+      canvasManager.reset()
     },
     flushMutations,
     shadowRootsController,
