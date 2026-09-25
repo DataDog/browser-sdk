@@ -1,14 +1,17 @@
 import {
   addExperimentalFeatures,
+  DOM_EVENT,
   ExperimentalFeature,
   initWebSocketObservable,
   noop,
+  Observable,
   PageExitReason,
   resetAllowUntrustedEvents,
   setAllowUntrustedEvents,
 } from '@datadog/browser-core'
 import {
   createMockWebSocket,
+  createNewEvent,
   mockClock,
   mockWebSocket,
   registerCleanupTask,
@@ -618,8 +621,19 @@ describe('webSocketCollection', () => {
   })
 
   describe('startWebSocketCollection', () => {
+    let pageUnloadFlushObservable: Observable<void>
+
+    beforeEach(() => {
+      pageUnloadFlushObservable = new Observable<void>()
+    })
+
     function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
-      const collection = startWebSocketCollection(lifeCycle, configuration, addWebSocketVitalSpy)
+      const collection = startWebSocketCollection(
+        lifeCycle,
+        configuration,
+        addWebSocketVitalSpy,
+        pageUnloadFlushObservable
+      )
       registerCleanupTask(() => collection.stop())
       return collection
     }
@@ -685,6 +699,115 @@ describe('webSocketCollection', () => {
       })
     })
 
+    describe('the page unload', () => {
+      it('ends tracking of an open connection when the page is not coming back', () => {
+        startCollection()
+        openConnection()
+        advanceTo(40)
+
+        hidePage({ persisted: false })
+
+        expect(single(closedPayloads())).toEqual(
+          jasmine.objectContaining({
+            tracking_end_reason: WebSocketTrackingEndReason.PAGE_UNLOADED,
+            closed_date: clock.timeStamp(40),
+          })
+        )
+      })
+
+      it('ends tracking of every connection, whatever its phase', () => {
+        startCollection()
+        connect()
+        openConnection()
+        callClose(openConnection())
+
+        hidePage({ persisted: false })
+
+        expect(closedPayloads().map((payload) => payload.tracking_end_reason)).toEqual([
+          WebSocketTrackingEndReason.PAGE_UNLOADED,
+          WebSocketTrackingEndReason.PAGE_UNLOADED,
+          WebSocketTrackingEndReason.PAGE_UNLOADED,
+        ])
+      })
+
+      it('reports no close outcome, the next snapshot version and the send queue depth read from the socket', () => {
+        startCollection()
+        const socket = openConnection()
+        socket.bufferedAmount = 12
+
+        hidePage({ persisted: false })
+
+        const payload = single(closedPayloads())
+        expect(payload).toEqual(jasmine.objectContaining({ snapshot_version: 2 }))
+        expect(payload.snapshot?.outbound.buffered_amount_at_close).toBe(12)
+        expect(payload.close_code).toBeUndefined()
+        expect(payload.close_reason).toBeUndefined()
+        expect(payload.was_clean).toBeUndefined()
+      })
+
+      it('reports nothing more for a connection whose close event arrives after the page unloaded', () => {
+        startCollection()
+        const socket = openConnection()
+
+        hidePage({ persisted: false })
+        dispatchClose(socket)
+
+        expect(single(closedPayloads()).tracking_end_reason).toBe(WebSocketTrackingEndReason.PAGE_UNLOADED)
+      })
+
+      it('reports nothing more for a connection that closed before the page unloaded', () => {
+        startCollection()
+        dispatchClose(openConnection())
+
+        hidePage({ persisted: false })
+
+        expect(single(closedPayloads()).tracking_end_reason).toBe(WebSocketTrackingEndReason.CLOSE_EVENT)
+      })
+
+      it('stops beating the connections it ended', () => {
+        startCollection()
+        openConnection()
+
+        hidePage({ persisted: false })
+        tickBeats()
+
+        expect(openPayloads()).toHaveSize(1)
+      })
+
+      it('asks for a flush once every connection it ended was reported', () => {
+        const closedCountsAtFlush: number[] = []
+        pageUnloadFlushObservable.subscribe(() => closedCountsAtFlush.push(closedPayloads().length))
+        startCollection()
+        openConnection()
+        openConnection()
+
+        hidePage({ persisted: false })
+
+        expect(closedCountsAtFlush).toEqual([2])
+      })
+
+      it('asks for no flush when it had no connection to end', () => {
+        const flushSpy = jasmine.createSpy()
+        pageUnloadFlushObservable.subscribe(flushSpy)
+        startCollection()
+        dispatchClose(openConnection())
+
+        hidePage({ persisted: false })
+
+        expect(flushSpy).not.toHaveBeenCalled()
+      })
+
+      // the connection may survive in the back/forward cache, so it is left to speak for itself
+      it('does not end tracking when the page goes into the back/forward cache', () => {
+        startCollection()
+        openConnection()
+
+        hidePage({ persisted: true })
+
+        expect(closedPayloads()).toHaveSize(0)
+      })
+    })
+
     it('finalizes open connections when the session expires', () => {
       startCollection()
       connect()
@@ -744,6 +867,11 @@ describe('webSocketCollection', () => {
 
   function expireSession(endClocks = clocksNow()) {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
+  }
+
+  /** The browser hiding the page, either for good or into the back/forward cache. */
+  function hidePage({ persisted }: { persisted: boolean }) {
+    window.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { persisted }))
   }
 
   // ---------------------------------------------------------------------------
