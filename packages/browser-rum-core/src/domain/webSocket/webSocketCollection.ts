@@ -1,6 +1,8 @@
 import type { Observable, TimeoutId, WebSocketContext } from '@datadog/browser-core'
 import {
+  addEventListener,
   clearInterval,
+  DOM_EVENT,
   ExperimentalFeature,
   generateUUID,
   initWebSocketObservable,
@@ -37,10 +39,14 @@ export type AddWebSocketVital = (rawRumEvent: RawRumWebSocketVitalEvent, startCl
  */
 export const WEBSOCKET_HEARTBEAT_INTERVAL = ONE_MINUTE
 
+/** A reason tracking ends for without the SDK observing any close event. */
+type UnobservedTrackingEndReason = Exclude<WebSocketTrackingEndReason, typeof WebSocketTrackingEndReason.CLOSE_EVENT>
+
 export interface WebSocketConnectionTracker {
   /** One beat of every connection in phase `open`, whether the cadence or a page transition asked. */
   beatOpenConnections: () => void
-  flushOpenConnections: (endClocks?: ClocksState) => void
+  /** Ends tracking of every tracked connection, and tells how many there were. */
+  flushOpenConnections: (endClocks?: ClocksState, trackingEndReason?: UnobservedTrackingEndReason) => number
   stop: () => void
 }
 
@@ -52,7 +58,8 @@ export interface WebSocketConnectionTracker {
 export function startWebSocketCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  addWebSocketVital: AddWebSocketVital
+  addWebSocketVital: AddWebSocketVital,
+  pageUnloadFlushObservable: Observable<void>
 ) {
   if (!isWebSocketCollectionEnabled(configuration)) {
     return { stop: noop }
@@ -72,10 +79,24 @@ export function startWebSocketCollection(
     tracker.beatOpenConnections()
   })
 
+  // A listener of its own rather than a page exit reason: Session Replay stores that reason as a
+  // segment creation reason, whose schema has no `page_hide` member.
+  const { stop: stopPageHideListener } = addEventListener(window, DOM_EVENT.PAGE_HIDE, (event) => {
+    // the connection may survive in the back/forward cache, so it is left to speak for itself
+    if ((event as PageTransitionEvent).persisted) {
+      return
+    }
+    // the page may already be hidden, so no exit flush is coming to send what was just reported
+    if (tracker.flushOpenConnections(clocksNow(), WebSocketTrackingEndReason.PAGE_UNLOADED) > 0) {
+      pageUnloadFlushObservable.notify()
+    }
+  })
+
   return {
     stop: () => {
       sessionExpiredSubscription.unsubscribe()
       prepareUrgentFlushSubscription.unsubscribe()
+      stopPageHideListener()
       tracker.flushOpenConnections()
       tracker.stop()
     },
@@ -274,17 +295,17 @@ export function trackWebSocket(
 
   return {
     beatOpenConnections,
-    flushOpenConnections: (endClocks = clocksNow()) => {
+    flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
+      const endedCount = trackedConnections.size
       trackedConnections.forEach((connection, instance) => {
         // no close event happened on this path, so the send queue depth is read from the socket and
         // the close outcome is genuinely absent rather than defaulted
-        endTracking(connection, endClocks, instance.bufferedAmount, {
-          trackingEndReason: WebSocketTrackingEndReason.SESSION_END,
-        })
+        endTracking(connection, endClocks, instance.bufferedAmount, { trackingEndReason })
       })
 
       trackedConnections.clear()
       syncHeartbeat()
+      return endedCount
     },
     stop: () => {
       subscription.unsubscribe()

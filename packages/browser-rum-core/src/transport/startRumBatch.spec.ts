@@ -1,6 +1,9 @@
-import { Observable } from '@datadog/browser-core'
+import { createIdentityEncoder, noop, Observable } from '@datadog/browser-core'
 import type { FlushEvent } from '@datadog/browser-core/src/transport/flushController'
+import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 
+import { mockRumConfiguration } from '../../test'
+import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumViewEvent } from '../rumEvent.types'
@@ -8,6 +11,7 @@ import {
   computeAssembledViewDiff,
   createBatchDispatcher,
   PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL,
+  startRumBatch,
 } from './startRumBatch'
 import type { AssembledViewDiff } from './startRumBatch'
 
@@ -210,6 +214,30 @@ describe('computeAssembledViewDiff', () => {
     computeAssembledViewDiff(current, last)
 
     expect(current.service).toBe(currentService)
+  })
+})
+
+describe('startRumBatch', () => {
+  it('sends what it holds on the exit path when a page unload flush is asked for', () => {
+    const interceptor = interceptRequests()
+    const lifeCycle = new LifeCycle()
+    const pageUnloadFlushObservable = new Observable<void>()
+    const batch = startRumBatch(
+      mockRumConfiguration(),
+      lifeCycle,
+      noop,
+      new Observable<void>(),
+      pageUnloadFlushObservable,
+      createIdentityEncoder
+    )
+    registerCleanupTask(batch.stop)
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+      type: RumEventType.VITAL,
+    } as unknown as AssembledRumEvent)
+
+    pageUnloadFlushObservable.notify()
+
+    expect(interceptor.requests.map((request) => request.type)).toEqual(['sendBeacon'])
   })
 })
 
