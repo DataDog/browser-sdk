@@ -8,13 +8,15 @@ import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datad
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
-import { RumEventType, VitalType, WebSocketVitalName } from '../rawRumEvent.types'
+import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../rawRumEvent.types'
 import type {
   RumErrorEvent,
   RumEvent,
   RumResourceEvent,
   RumVitalEvent,
+  RumVitalWebsocketClosedEvent,
   RumVitalWebsocketConnectingEvent,
+  RumVitalWebsocketOpenEvent,
 } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
@@ -281,11 +283,13 @@ describe('rum assembly', () => {
         })
       })
 
-      describe('vital.websocket.requested_protocols', () => {
+      describe('websocket vital fields', () => {
         it('should allow replacing the requested protocols of a websocket vital', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
+                // Match on the name: vital.type is 'websocket' for all four WebSocket vitals, and only the connecting
+                // vital carries requested_protocols. Setting it on the others would add a field they never report.
                 if (event.vital.name === 'websocket_connecting') {
                   event.vital.websocket.requested_protocols = ['REDACTED']
                 }
@@ -306,6 +310,90 @@ describe('rum assembly', () => {
           expect((serverRumEvents[0] as RumVitalWebsocketConnectingEvent).vital.websocket.requested_protocols).toEqual([
             'REDACTED',
           ])
+        })
+
+        it('should allow redacting the url of a websocket vital', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                // Match on the name: vital.type is 'websocket' for all four WebSocket vitals, and only the connecting
+                // vital carries url. Setting it on the others would add a field they never report.
+                if (event.vital.name === 'websocket_connecting') {
+                  event.vital.websocket.url = 'wss://example.com/users/REDACTED/feed'
+                }
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+              vital: {
+                type: VitalType.WEBSOCKET,
+                name: WebSocketVitalName.CONNECTING,
+                websocket: { url: 'wss://example.com/users/1234/feed' },
+              },
+            }),
+          })
+
+          expect((serverRumEvents[0] as RumVitalWebsocketConnectingEvent).vital.websocket.url).toBe(
+            'wss://example.com/users/REDACTED/feed'
+          )
+        })
+
+        it('should allow redacting the selected protocol of a websocket vital', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                // Match on the name: vital.type is 'websocket' for all four WebSocket vitals, and only the open vital
+                // carries selected_protocol. Setting it on the others would add a field they never report.
+                if (event.vital.name === 'websocket_open') {
+                  event.vital.websocket.selected_protocol = 'REDACTED'
+                }
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+              vital: {
+                type: VitalType.WEBSOCKET,
+                name: WebSocketVitalName.OPEN,
+                websocket: { selected_protocol: 'auth-token' },
+              },
+            }),
+          })
+
+          expect((serverRumEvents[0] as RumVitalWebsocketOpenEvent).vital.websocket.selected_protocol).toBe('REDACTED')
+        })
+
+        it('should allow redacting the close reason of a websocket vital', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                // Match on the name: vital.type is 'websocket' for all four WebSocket vitals, and only the closed vital
+                // carries close_reason. Setting it on the others would add a field they never report.
+                if (event.vital.name === 'websocket_closed') {
+                  event.vital.websocket.close_reason = 'REDACTED'
+                }
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+              vital: {
+                type: VitalType.WEBSOCKET,
+                name: WebSocketVitalName.CLOSED,
+                websocket: {
+                  tracking_end_reason: WebSocketTrackingEndReason.CLOSE_EVENT,
+                  close_code: 1000,
+                  close_reason: 'user 1234 logged out',
+                },
+              },
+            }),
+          })
+
+          expect((serverRumEvents[0] as RumVitalWebsocketClosedEvent).vital.websocket.close_reason).toBe('REDACTED')
         })
       })
 
@@ -477,6 +565,8 @@ describe('rum assembly', () => {
       })
 
       it('should not allow dismissing WebSocket vital events', () => {
+        // WebSocket vitals cannot be dismissed one by one: the backend derives each connection from the whole stream,
+        // so a partial stream corrupts it. To collect none, keep betaTrackWebSockets set to false (the default).
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             beforeSend: () => false,
