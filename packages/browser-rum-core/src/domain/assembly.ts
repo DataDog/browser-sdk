@@ -4,7 +4,7 @@ import { DISCARDED } from '@datadog/js-core/assembly'
 import { combine } from '@datadog/js-core/util'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
-import { RumEventType } from '../rawRumEvent.types'
+import { RumEventType, VitalType } from '../rawRumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
@@ -115,11 +115,14 @@ function shouldSend(
     const result = limitModification(event, MODIFIABLE_FIELD_PATHS_BY_EVENT[event.type], (event) =>
       beforeSend(event, domainContext)
     )
-    if (result === false && event.type !== RumEventType.VIEW) {
-      return false
-    }
     if (result === false) {
-      display.warn("Can't dismiss view events using beforeSend!")
+      if (event.type === RumEventType.VIEW) {
+        display.warn("Can't dismiss view events using beforeSend!")
+      } else if (event.type === RumEventType.VITAL && event.vital?.type === VitalType.WEBSOCKET) {
+        display.warn("Can't dismiss WebSocket vital events using beforeSend!")
+      } else {
+        return false
+      }
     }
   }
 
