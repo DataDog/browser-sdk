@@ -5,7 +5,7 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@tanstack/react-router": "1.170.36",
+    "@tanstack/react-router": "1.170.38",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -33,7 +33,7 @@
   "devDependencies": {
     "ts-loader": "9.6.2",
     "typescript": "6.0.3",
-    "webpack": "5.111.0",
+    "webpack": "5.111.1",
     "webpack-cli": "7.2.3"
   },
   "volta": {
