@@ -1,5 +1,10 @@
-import { appendElement } from '../../test'
-import { getComposedPathSelector, CHARACTER_LIMIT } from './getComposedPathSelector'
+import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+import { appendElement, mockRumConfiguration } from '../../test'
+import { getComposedPathSelector, CHARACTER_LIMIT, ATTRIBUTE_VALUE_LIMIT } from './getComposedPathSelector'
+import { NodePrivacyLevel } from './privacyConstants'
+
+const configuration = mockRumConfiguration()
 
 /** Appends content inside a wrapper so the element is the only child (no nth-child from body). */
 function appendElementInIsolation(html: string): HTMLElement {
@@ -10,7 +15,7 @@ function appendElementInIsolation(html: string): HTMLElement {
 describe('getSelectorFromComposedPath', () => {
   describe('getComposedPathSelector', () => {
     it('returns an empty string for an empty composedPath', () => {
-      const result = getComposedPathSelector([], undefined)
+      const result = getComposedPathSelector([], configuration)
       expect(result).toEqual('')
     })
 
@@ -18,7 +23,7 @@ describe('getSelectorFromComposedPath', () => {
       const element = appendElementInIsolation('<div id="test"></div>')
       const composedPath: EventTarget[] = [element, document.body, document, window]
 
-      const result = getComposedPathSelector(composedPath, undefined)
+      const result = getComposedPathSelector(composedPath, configuration)
 
       expect(result).toBe('DIV#test;')
     })
@@ -26,7 +31,7 @@ describe('getSelectorFromComposedPath', () => {
     it('ignores BODY and HTML elements from the composedPath', () => {
       const composedPath: EventTarget[] = [document.body, document.documentElement]
 
-      const result = getComposedPathSelector(composedPath, undefined)
+      const result = getComposedPathSelector(composedPath, configuration)
 
       expect(result).toBe('')
     })
@@ -34,35 +39,35 @@ describe('getSelectorFromComposedPath', () => {
     describe('element data extraction', () => {
       it('extracts tag name from element', () => {
         const element = appendElementInIsolation('<button></button>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('BUTTON;')
       })
 
       it('extracts id from element when present', () => {
         const element = appendElementInIsolation('<div id="my-id"></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV#my-id;')
       })
 
       it('does not include id when not present', () => {
         const element = appendElementInIsolation('<div></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV;')
       })
 
       it('extracts sorted classes from element', () => {
         const element = appendElementInIsolation('<div class="foo bar baz"></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV.bar.baz.foo;')
       })
 
       it('excludes generated class names containing digits', () => {
         const element = appendElementInIsolation('<div class="foo1 bar"></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV.bar;')
       })
@@ -71,44 +76,148 @@ describe('getSelectorFromComposedPath', () => {
     describe('safe attribute filtering', () => {
       it('collects multiple safe attributes', () => {
         const element = appendElementInIsolation('<div data-testid="foo" data-qa="bar" data-cy="baz"></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV[data-cy="baz"][data-qa="bar"][data-testid="foo"];')
       })
 
       it('does not collect non-allowlisted attributes', () => {
         const element = appendElementInIsolation('<div data-user-email="john@example.com" title="secret info"></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV;')
       })
 
       it('collects data-dd-action-name attribute', () => {
         const element = appendElementInIsolation('<div data-dd-action-name="Submit Form"></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe(`DIV[data-dd-action-name="${CSS.escape('Submit Form')}"];`)
       })
 
       it('collects role attribute', () => {
         const element = appendElementInIsolation('<div role="button"></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV[role="button"];')
       })
 
       it('collects type attribute', () => {
         const element = appendElementInIsolation('<input type="submit" />')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('INPUT[type="submit"];')
       })
 
       it('collects attribute containing separator characters ;', () => {
         const element = appendElementInIsolation('<div data-testid="foo;bar" />')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV[data-testid="foo\\;bar"];')
+      })
+    })
+
+    describe('maskable attributes', () => {
+      const maskConfiguration = mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK })
+
+      it('does not collect maskable attributes when the experimental flag is disabled', () => {
+        const element = appendElementInIsolation('<a href="/checkout" aria-label="Checkout" data-area="cart"></a>')
+
+        expect(getComposedPathSelector([element], configuration)).toBe('A;')
+      })
+
+      describe('with the experimental flag enabled', () => {
+        beforeEach(() => {
+          addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        })
+
+        it('collects href, aria-label, name, title, alt and data-* attributes', () => {
+          const element = appendElementInIsolation(
+            '<a href="/checkout" aria-label="Checkout" name="n" title="t" alt="a" data-area="cart"></a>'
+          )
+
+          expect(getComposedPathSelector([element], configuration)).toBe(
+            'A[alt="a"][aria-label="Checkout"][data-area="cart"][href="\\/checkout"][name="n"][title="t"];'
+          )
+        })
+
+        it('collects attributes from ancestors', () => {
+          const main = appendElementInIsolation('<main id="shop" data-area="checkout"></main>')
+          const link = appendElement('<a id="checkout-link" href="/checkout" aria-label="Checkout"></a>', main)
+          const span = appendElement('<span class="icon" title="Continue">Continue</span>', link)
+
+          expect(getComposedPathSelector([span, link, main], configuration)).toBe(
+            'SPAN[title="Continue"].icon;A#checkout-link[aria-label="Checkout"][href="\\/checkout"];MAIN#shop[data-area="checkout"];'
+          )
+        })
+
+        it('does not collect href on non-anchor elements', () => {
+          const element = appendElementInIsolation('<div href="/foo"></div>')
+
+          expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
+        })
+
+        it('does not collect the data-dd-privacy attribute', () => {
+          const element = appendElementInIsolation('<div data-dd-privacy="allow"></div>')
+
+          expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
+        })
+
+        it('masks values under the mask privacy level', () => {
+          const element = appendElementInIsolation(
+            '<a href="/orders/42" aria-label="Jane" data-email="jane@example.com" data-testid="btn"></a>'
+          )
+
+          expect(getComposedPathSelector([element], maskConfiguration)).toBe(
+            `A[aria-label="${CSS.escape('***')}"][data-email="${CSS.escape('***')}"][data-testid="btn"][href="${CSS.escape('***')}"];`
+          )
+        })
+
+        it('masks values when the element privacy level is mask', () => {
+          const element = appendElementInIsolation('<div data-dd-privacy="mask" title="Jane"></div>')
+
+          expect(getComposedPathSelector([element], configuration)).toBe(`DIV[title="${CSS.escape('***')}"];`)
+        })
+
+        it('does not mask allowlisted values under the mask-unless-allowlisted privacy level', () => {
+          ;(window as any).$DD_ALLOW = new Set(['checkout'])
+          registerCleanupTask(() => {
+            delete (window as any).$DD_ALLOW
+          })
+          const element = appendElementInIsolation('<div title="Checkout" aria-label="Jane"></div>')
+
+          expect(
+            getComposedPathSelector(
+              [element],
+              mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED })
+            )
+          ).toBe(`DIV[aria-label="${CSS.escape('***')}"][title="Checkout"];`)
+        })
+
+        it('masks the action name attribute when it is a maskable attribute', () => {
+          const element = appendElementInIsolation('<div title="Jane"></div>')
+
+          expect(
+            getComposedPathSelector(
+              [element],
+              mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, actionNameAttribute: 'title' })
+            )
+          ).toBe(`DIV[title="${CSS.escape('***')}"];`)
+        })
+
+        it('does not collect maskable attributes from hidden elements', () => {
+          const element = appendElementInIsolation('<div data-dd-privacy="hidden" title="Jane" role="button"></div>')
+
+          expect(getComposedPathSelector([element], configuration)).toBe('DIV[role="button"];')
+        })
+
+        it('truncates long values', () => {
+          const element = appendElementInIsolation(`<div title="${'a'.repeat(ATTRIBUTE_VALUE_LIMIT + 50)}"></div>`)
+
+          expect(getComposedPathSelector([element], configuration)).toBe(
+            `DIV[title="${'a'.repeat(ATTRIBUTE_VALUE_LIMIT)}"];`
+          )
+        })
       })
     })
 
@@ -118,7 +227,7 @@ describe('getSelectorFromComposedPath', () => {
           <span target></span>
         </div>`)
 
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('SPAN;')
       })
@@ -130,7 +239,7 @@ describe('getSelectorFromComposedPath', () => {
           <span target></span>
         </div>`)
 
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('SPAN:nth-child(3):nth-of-type(2);')
       })
@@ -141,7 +250,7 @@ describe('getSelectorFromComposedPath', () => {
           <div></div>
         </div>`)
 
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('SPAN:nth-child(1);')
       })
@@ -151,7 +260,7 @@ describe('getSelectorFromComposedPath', () => {
         const span = appendElement('<span></span>', parent)
         appendElement('<div></div>', parent)
 
-        const result = getComposedPathSelector([span], undefined)
+        const result = getComposedPathSelector([span], configuration)
 
         // span is unique of type, but not unique child (has sibling)
         expect(result).toBe('SPAN:nth-child(1);')
@@ -166,7 +275,7 @@ describe('getSelectorFromComposedPath', () => {
           </div>
         `)
 
-        const result = getComposedPathSelector([span1], undefined)
+        const result = getComposedPathSelector([span1], configuration)
 
         expect(result).toBe('SPAN:nth-child(1):nth-of-type(1);')
       })
@@ -180,7 +289,7 @@ describe('getSelectorFromComposedPath', () => {
           </div>
         `)
 
-        const result = getComposedPathSelector([button], undefined)
+        const result = getComposedPathSelector([button], configuration)
 
         expect(result).toBe('BUTTON:nth-child(3):nth-of-type(2);')
       })
@@ -191,7 +300,7 @@ describe('getSelectorFromComposedPath', () => {
         const target = appendElement('<button></button>', parent)
 
         const composedPath = [target, parent, grandparent]
-        const result = getComposedPathSelector(composedPath, undefined)
+        const result = getComposedPathSelector(composedPath, configuration)
 
         expect(result).toBe('BUTTON;SECTION:nth-child(1);DIV;')
       })
@@ -200,7 +309,7 @@ describe('getSelectorFromComposedPath', () => {
         // Detached element with no parent
         const element = appendElementInIsolation('<div></div>')
 
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV;')
       })
@@ -212,16 +321,39 @@ describe('getSelectorFromComposedPath', () => {
         const composedPath = Array.from({ length: 1000 }, () =>
           appendElement('<div data-testid="test-btn" class="secret"></div>')
         )
-        const result = getComposedPathSelector(composedPath, undefined)
+        const result = getComposedPathSelector(composedPath, configuration)
 
         expect(result.length).toBeLessThanOrEqual(CHARACTER_LIMIT)
+      })
+
+      it('does not split an attribute when truncating', () => {
+        const attribute = `[data-testid="${'a'.repeat(100)}"]`
+        const composedPath = Array.from({ length: 30 }, () =>
+          appendElementInIsolation(`<div data-testid="${'a'.repeat(100)}"></div>`)
+        )
+        const result = getComposedPathSelector(composedPath, configuration)
+
+        expect(result.length).toBeLessThanOrEqual(CHARACTER_LIMIT)
+        const segments = result.split(';')
+        const lastSegment = segments[segments.length - 1]
+        expect(['', 'DIV', `DIV${attribute}`]).toContain(lastSegment)
+        expect(segments.slice(0, -1).every((segment) => segment === `DIV${attribute}`)).toBeTrue()
+      })
+
+      it('stops before a token that does not fit', () => {
+        const element = appendElementInIsolation(
+          `<div data-testid="${'a'.repeat(CHARACTER_LIMIT - 20)}" data-qa="${'b'.repeat(30)}"></div>`
+        )
+
+        // attributes are sorted: data-qa fits, data-testid does not
+        expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-qa="${'b'.repeat(30)}"]`)
       })
     })
 
     describe('edge cases', () => {
       it('handles elements with empty class attribute', () => {
         const element = appendElementInIsolation('<div class=""></div>')
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV;')
       })
@@ -229,14 +361,14 @@ describe('getSelectorFromComposedPath', () => {
       it('handles elements with whitespace-only class', () => {
         const element = appendElement('<div><div target class="   "></div></div>')
 
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
         expect(result).toBe('DIV;')
       })
 
       it('handles SVG elements', () => {
         const element = appendElement('<div><svg target data-testid="my-svg" g="1"></svg></div>')
 
-        const result = getComposedPathSelector([element], undefined)
+        const result = getComposedPathSelector([element], configuration)
 
         // tagName for SVG in HTML document is lowercase
         expect(result).toBe('svg[data-testid="my-svg"];')
