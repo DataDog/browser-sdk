@@ -1,6 +1,6 @@
 import { clearTimeout, noop, setTimeout } from '@datadog/browser-core'
 import type { TimeoutId } from '@datadog/browser-core'
-import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
+import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'
 import type { CanvasCaptureAttempt } from '../canvas/canvasManager'
@@ -56,7 +56,8 @@ export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: 
         canvasManager.forgetCanvas(canvas)
         continue
       }
-      if (getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel) !== NodePrivacyLevel.ALLOW) {
+      const privacyLevel = getNodePrivacyLevel(canvas, scope.configuration.defaultPrivacyLevel)
+      if (shouldMaskNode(canvas, privacyLevel)) {
         canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
         continue
       }
