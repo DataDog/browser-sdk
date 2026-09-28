@@ -81,7 +81,6 @@ export type MapInitConfigurationKey<Key extends string> =
           | 'datacenter'
           | 'replica'
           | 'enableExperimentalFeatures'
-          // TODO: report as telemetry once `respect_privacy_settings` is added to the telemetry configuration schema
           | 'respectPrivacySettings'
       ? never
       : // Other keys are simply snake cased
