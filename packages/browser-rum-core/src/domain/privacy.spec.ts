@@ -420,6 +420,24 @@ describe('shouldMaskNode', () => {
     })
   })
 
+  describe('for canvas elements', () => {
+    const maskingByPrivacyLevel: Record<NodePrivacyLevel, boolean> = {
+      [NodePrivacyLevel.ALLOW]: false,
+      [NodePrivacyLevel.MASK_USER_INPUT]: false,
+      [NodePrivacyLevel.MASK]: true,
+      [NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED]: true,
+      [NodePrivacyLevel.HIDDEN]: true,
+      [NodePrivacyLevel.IGNORE]: true,
+    }
+
+    Object.entries(maskingByPrivacyLevel).forEach(([privacyLevel, masked]) => {
+      it(`returns ${masked} if the privacy level is ${privacyLevel}`, () => {
+        const element = document.createElement('canvas')
+        expect(shouldMaskNode(element, privacyLevel as NodePrivacyLevel)).toBe(masked)
+      })
+    })
+  })
+
   describe('for text nodes contained in form elements', () => {
     it('returns true if the privacy level is MASK or MASK_USER_INPUT or MASK_UNLESS_ALLOWLISTED', () => {
       const element = document.createElement('input')
@@ -488,7 +506,7 @@ describe('shouldMaskNode', () => {
           expect(shouldMaskNode(textarea, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
         })
 
-        it('returns false for non-form elements', () => {
+        it('returns false for non-form, non-canvas elements', () => {
           const div = document.createElement('div')
           expect(shouldMaskNode(div, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
 

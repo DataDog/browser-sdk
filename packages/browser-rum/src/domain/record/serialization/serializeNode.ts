@@ -10,12 +10,12 @@ import {
   getScrollX,
   getScrollY,
   isElementNode,
+  isCanvasElement,
 } from '@datadog/browser-rum-core'
 import type { RoleAnnotatedStringLiteral } from '../../../types'
 import { MediaInteractionType, StringRole } from '../../../types'
 import type { NodeId, StyleSheetId } from '../encoding'
 import { createAttributeAssignment, createString } from '../encoding'
-import { isCanvasElement } from '../canvas/canvasUtils'
 import { CanvasStatus } from '../canvas/canvasManager'
 import type { InsertionCursor } from './insertionCursor'
 import type { SerializationTransaction } from './serializationTransaction'

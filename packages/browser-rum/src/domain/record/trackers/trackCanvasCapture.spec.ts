@@ -30,8 +30,17 @@ describe('trackCanvasCapture', () => {
   let clock: Clock
   let toBlobSpy: jasmine.Spy
   let emitRecord: jasmine.Spy<EmitRecordCallback>
-  const privacyLevels = Object.values(NodePrivacyLevel).filter(
-    (privacyLevel) => privacyLevel !== NodePrivacyLevel.IGNORE
+
+  const maskingByPrivacyLevel: Record<NodePrivacyLevel, boolean> = {
+    [NodePrivacyLevel.ALLOW]: false,
+    [NodePrivacyLevel.MASK_USER_INPUT]: false,
+    [NodePrivacyLevel.MASK]: true,
+    [NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED]: true,
+    [NodePrivacyLevel.HIDDEN]: true,
+    [NodePrivacyLevel.IGNORE]: true,
+  }
+  const privacyLevels = Object.entries(maskingByPrivacyLevel).filter(
+    ([privacyLevel]) => privacyLevel !== NodePrivacyLevel.IGNORE
   )
 
   beforeEach(() => {
@@ -420,19 +429,19 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
-  for (const privacyLevel of privacyLevels) {
-    it(`only captures canvases with the allow privacy level, when the privacy level is ${privacyLevel}`, async () => {
+  for (const [privacyLevel, masked] of privacyLevels) {
+    it(`${masked ? 'does not capture' : 'captures'} a canvas when the privacy level is ${privacyLevel}`, async () => {
       canvas.setAttribute(PRIVACY_ATTR_NAME, privacyLevel)
       const onCanvasCapture = startTracking()
       markCanvasDirtyAndWaitForCapture()
       await waitForCanvasCapture()
 
-      if (privacyLevel === NodePrivacyLevel.ALLOW) {
-        expect(onCanvasCapture).toHaveBeenCalled()
-        expect(canvasManager.takeCapturableCanvases()).toEqual([])
-      } else {
+      if (masked) {
         expect(onCanvasCapture).not.toHaveBeenCalled()
         expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
+      } else {
+        expect(onCanvasCapture).toHaveBeenCalled()
+        expect(canvasManager.takeCapturableCanvases()).toEqual([])
       }
     })
   }
@@ -459,21 +468,34 @@ describe('trackCanvasCapture', () => {
     { description: 'while encoding', deferCapture: deferFirstBlob },
   ]
 
+  // The privacy level is checked again when the captured image is serialized. That check has to
+  // agree with the one made before capturing, otherwise a canvas we did capture is never emitted.
   maskingCaptureStages.forEach(({ description, deferCapture }) => {
-    it(`does not emit a snapshot when the canvas becomes masked ${description}`, async () => {
-      const resumeCapture = deferCapture()
-      draw('red')
-      const onCanvasCapture = startTracking()
-      markCanvasDirtyAndWaitForCapture()
-      await waitForCanvasCapture()
+    for (const [privacyLevel, masked] of privacyLevels) {
+      if (privacyLevel === NodePrivacyLevel.ALLOW) {
+        continue // the canvas already has the allow privacy level by default
+      }
 
-      canvas.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
-      resumeCapture()
-      await waitForCanvasCapture()
+      it(`${masked ? 'does not emit' : 'emits'} a snapshot when the canvas privacy level becomes ${privacyLevel} ${description}`, async () => {
+        const resumeCapture = deferCapture()
+        draw('red')
+        const onCanvasCapture = startTracking()
+        markCanvasDirtyAndWaitForCapture()
+        await waitForCanvasCapture()
 
-      expect(onCanvasCapture).not.toHaveBeenCalled()
-      expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
-    })
+        canvas.setAttribute(PRIVACY_ATTR_NAME, privacyLevel)
+        resumeCapture()
+        await waitForCanvasCapture()
+
+        if (masked) {
+          expect(onCanvasCapture).not.toHaveBeenCalled()
+          expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
+        } else {
+          expect(onCanvasCapture).toHaveBeenCalled()
+          expect(canvasManager.takeCapturableCanvases()).toEqual([])
+        }
+      })
+    }
   })
 
   it('stops capturing after the tracker is stopped', async () => {
