@@ -1,5 +1,5 @@
 import { instrumentMethod, noop } from '@datadog/browser-core'
-import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
+import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'
 import { CanvasStatus } from '../canvas/canvasManager'
@@ -86,10 +86,11 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
     trackingState.nextSnapshotTime = now + webGLSnapshotInterval
     void Promise.resolve().then(() => {
       trackingState.snapshotScheduled = false
-      if (
-        stopped ||
-        getNodePrivacyLevel(htmlCanvas, scope.configuration.defaultPrivacyLevel) !== NodePrivacyLevel.ALLOW
-      ) {
+      if (stopped) {
+        return
+      }
+      const privacyLevel = getNodePrivacyLevel(htmlCanvas, scope.configuration.defaultPrivacyLevel)
+      if (shouldMaskNode(htmlCanvas, privacyLevel)) {
         return
       }
 

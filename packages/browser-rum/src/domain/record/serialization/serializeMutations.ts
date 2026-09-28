@@ -7,13 +7,14 @@ import {
   getNodePrivacyLevel,
   getTextContent,
   NodePrivacyLevel,
+  isCanvasElement,
+  shouldMaskNode,
 } from '@datadog/browser-rum-core'
 import { StringRole } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitResourceCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds, RoleAnnotatedAttributeChange } from '../encoding'
 import { createAttributeAssignment, createAttributeAssignmentOrDeletion, createString } from '../encoding'
-import { isCanvasElement } from '../canvas/canvasUtils'
 import { CanvasStatus } from '../canvas/canvasManager'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
@@ -314,7 +315,7 @@ function processCanvasContentMutations(
       transaction.scope.configuration.defaultPrivacyLevel,
       nodePrivacyLevelCache
     )
-    if (privacyLevel !== NodePrivacyLevel.ALLOW) {
+    if (shouldMaskNode(canvas, privacyLevel)) {
       transaction.scope.canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
       continue
     }

@@ -1,4 +1,5 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
@@ -248,6 +249,51 @@ describe('trackCanvasContent', () => {
 
     expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
     expect(markCanvasDirtySpy).not.toHaveBeenCalled()
+  })
+
+  const maskingByPrivacyLevel: Record<NodePrivacyLevel, boolean> = {
+    [NodePrivacyLevel.ALLOW]: false,
+    [NodePrivacyLevel.MASK_USER_INPUT]: false,
+    [NodePrivacyLevel.MASK]: true,
+    [NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED]: true,
+    [NodePrivacyLevel.HIDDEN]: true,
+    [NodePrivacyLevel.IGNORE]: true,
+  }
+  const privacyLevels = Object.entries(maskingByPrivacyLevel).filter(
+    ([privacyLevel]) => privacyLevel !== NodePrivacyLevel.IGNORE
+  )
+
+  privacyLevels.forEach(([privacyLevel, masked]) => {
+    it(`${masked ? 'does not freeze' : 'freezes'} WebGL content when the privacy level is ${privacyLevel}`, async () => {
+      const webGLCanvas = document.createElement('canvas')
+      webGLCanvas.setAttribute(PRIVACY_ATTR_NAME, privacyLevel)
+      const webGLContext = webGLCanvas.getContext('webgl', { preserveDrawingBuffer: false })
+      if (!webGLContext) {
+        return
+      }
+      const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+      startTracking(true, 1, 100, 1000, webGLCanvas)
+
+      webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
+      await Promise.resolve()
+
+      if (masked) {
+        expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+        expect(markCanvasDirtySpy).not.toHaveBeenCalled()
+      } else {
+        expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(webGLCanvas, jasmine.any(Object))
+        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+      }
+    })
+  })
+
+  it('marks a masked canvas dirty, since privacy is enforced when the canvas is captured', () => {
+    canvas.setAttribute(PRIVACY_ATTR_NAME, NodePrivacyLevel.MASK)
+    startTracking()
+
+    context.fillRect(0, 0, 1, 1)
+
+    expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(canvas, CanvasStatus.Dirty)
   })
 
   it('does not mark the canvas dirty for non-drawing operations', () => {

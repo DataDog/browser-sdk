@@ -1,4 +1,4 @@
-import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
+import { isElementNode, getParentNode, isTextNode, isCanvasElement } from '../browser/htmlDomUtils'
 import {
   NodePrivacyLevel,
   FORM_PRIVATE_TAG_NAMES,
@@ -128,6 +128,10 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
  * In the `mask-user-input` case, we should mask the element only if it is a "form" element or the
  * direct parent is a form element for text nodes).
  *
+ * In the `mask-unless-allowlisted` case, we mask form elements like `mask-user-input`
+ * does, text nodes that are not allowlisted, and canvases, since their content is always
+ * dynamic.
+ *
  * Other `shouldMaskNode` cases are edge cases that should not matter too much (ex: should we mask a
  * node if it is ignored or hidden? it doesn't matter since it won't be serialized).
  */
@@ -143,9 +147,9 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
         // Otherwise, decide whether to mask based on the allowlist.
         return isFormElement(node.parentNode) ? true : !isAllowlisted(node.textContent || '')
       }
-      // Always return true if we're a form element, like MASK_USER_INPUT.
-      // Otherwise, return false; MASK_UNLESS_ALLOWLISTED only directly masks text nodes.
-      return isFormElement(node)
+      // Other than text nodes, MASK_UNLESS_ALLOWLISTED masks form inputs (like
+      // MASK_USER_INPUT) and canvases.
+      return isFormElement(node) || isCanvasElement(node)
     case NodePrivacyLevel.MASK_USER_INPUT:
       return isTextNode(node) ? isFormElement(node.parentNode) : isFormElement(node)
     default:
