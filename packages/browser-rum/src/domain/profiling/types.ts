@@ -62,6 +62,46 @@ export interface ProfilingPayload {
   trace: BrowserProfilerTrace
 }
 
+/**
+ * Reason why starting a Profiler instance failed.
+ * Values match the `error_reason` values of the profiling internal context.
+ */
+export type ProfilerStartupErrorReason =
+  | 'not-supported-by-browser'
+  | 'missing-document-policy-header'
+  | 'unexpected-exception'
+
+/**
+ * A Profiler instance started before the profiler chunk is loaded, along with
+ * the time it started, so the profiler chunk can adopt it and keep the samples
+ * collected while it was downloading.
+ */
+export interface EarlyProfilerTakeover {
+  /** The running Profiler instance to adopt. */
+  readonly profiler: Profiler
+  /** High resolution time when the Profiler instance started. */
+  readonly startClocks: ClocksState
+}
+
+/**
+ * Collects Profiler samples before the profiler chunk is loaded.
+ *
+ * `takeover()` hands the running Profiler instance over to the profiler chunk.
+ * It returns `undefined` when collection is currently paused (hidden page), so
+ * the caller should start a new Profiler instance instead.
+ *
+ * `stop()` stops collecting and discards buffered samples.
+ */
+export interface EarlyProfiler {
+  readonly takeover: () => EarlyProfilerTakeover | undefined
+  readonly stop: () => void
+}
+
+/** Result of starting the early collection of Profiler samples. */
+export type EarlyProfilerStart =
+  | { readonly state: 'started'; readonly earlyProfiler: EarlyProfiler }
+  | { readonly state: 'error'; readonly errorReason: ProfilerStartupErrorReason }
+
 export interface RUMProfilerConfiguration {
   sampleIntervalMs: number // Sample stack trace every x milliseconds (defaults to 10ms for Unix, 16ms on Windows)
   collectIntervalMs: number // Interval for collecting RUM Profiles (defaults to 1min)

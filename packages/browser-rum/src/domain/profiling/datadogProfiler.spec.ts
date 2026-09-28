@@ -1,4 +1,5 @@
-import type { ProfilerTrace } from '@datadog/js-core/util'
+import { deepClone, globalObject } from '@datadog/js-core/util'
+import type { ProfilerConstructor, ProfilerTrace } from '@datadog/js-core/util'
 import {
   elapsed,
   timeStampNow,
@@ -8,10 +9,9 @@ import {
   ONE_DAY,
   relativeNow,
 } from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
-import { deepClone } from '@datadog/js-core/util'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
 
-import { BridgeCapability, createIdentityEncoder, createValueHistory } from '@datadog/browser-core'
+import { BridgeCapability, createIdentityEncoder, createValueHistory, noop } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import {
   LifeCycle,
@@ -42,7 +42,7 @@ import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
 import { createFormDataEmitter } from './transport/formDataEmitter'
 import { createBridgeEmitter } from './transport/profilingBridge'
-import type { RUMProfilerConfiguration } from './types'
+import type { RUMProfilerConfiguration, EarlyProfiler } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import { createLongTaskHistory, type LongTaskContext } from './longTaskHistory'
@@ -78,7 +78,8 @@ describe('profiler', () => {
   function setupProfiler(
     currentView?: ViewHistoryEntry,
     profilerConfigOverrides?: Partial<RUMProfilerConfiguration>,
-    traceOverrides?: Partial<ProfilerTrace>
+    traceOverrides?: Partial<ProfilerTrace>,
+    earlyCollection?: { startClocks?: ClocksState; paused?: boolean }
   ) {
     const sessionManager = createSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
@@ -116,7 +117,19 @@ describe('profiler', () => {
     )
 
     // Replace Browser's Profiler with a mock for testing purpose.
-    mockProfiler(mockProfilerTrace)
+    const { instances } = mockProfiler(mockProfilerTrace)
+
+    // Build a fake early profiler handle, simulating the collection started
+    // before the profiler chunk is loaded.
+    let earlyProfiler: EarlyProfiler | undefined
+    if (earlyCollection) {
+      const startClocks = earlyCollection.startClocks ?? clocksNow()
+      const paused = earlyCollection.paused ?? false
+      earlyProfiler = {
+        takeover: () => (paused ? undefined : { profiler: createMockedProfilerInstance(), startClocks }),
+        stop: noop,
+      }
+    }
 
     const longTaskHistory = createValueHistory<LongTaskContext>({
       expireDelay: ONE_DAY,
@@ -144,6 +157,7 @@ describe('profiler', () => {
       profilingContextManager,
       createIdentityEncoder,
       viewHistory,
+      earlyProfiler,
       // Overrides default configuration for testing purpose.
       {
         sampleIntervalMs: 10,
@@ -157,6 +171,7 @@ describe('profiler', () => {
       profilingContextManager,
       sessionManager,
       mockedRumProfilerTrace,
+      instances,
       addLongTask: (longTask: LongTaskContext) => {
         longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
       },
@@ -1003,6 +1018,7 @@ describe('profiler', () => {
       profilingContextManager,
       createIdentityEncoder,
       mockViewHistory(),
+      undefined,
       { sampleIntervalMs: 10, collectIntervalMs: 60000, minProfileDurationMs: 0 }
     )
 
@@ -1186,6 +1202,65 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
   })
 
+  describe('early collection takeover', () => {
+    it('adopts the early-started Profiler instance so the first profile covers the early collection period', async () => {
+      const clock = mockClock()
+      const earlyStartClocks = clocksNow()
+      const { profiler, instances, profilingContextManager } = setupProfiler(undefined, undefined, undefined, {
+        startClocks: earlyStartClocks,
+      })
+
+      profiler.start()
+
+      expect(profiler.isRunning()).toBe(true)
+      expect(profilingContextManager.get()?.status).toBe('running')
+      // The Profiler instance started before this chunk was loaded is used as
+      // is: no new instance was created.
+      expect(instances.size).toBe(1)
+
+      // First periodic collection happens `collectIntervalMs` after takeover, and
+      // covers the early collection period too.
+      clock.tick(60000)
+      // Data collection uses Promises (microtasks), not setTimeout. Flush
+      // microtasks: one for profiler.stop() Promise, one for the payload handling.
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(emitPayloadSpy.calls.count()).toBe(1)
+      const payload = emitPayloadSpy.calls.argsFor(0)[0]
+      expect(payload.trace.startClocks).toBe(earlyStartClocks)
+      // A new instance was started to continue collection periodically.
+      expect(instances.size).toBe(2)
+
+      profiler.stop()
+    })
+
+    it('starts a new Profiler instance when the early collection cannot be taken over', async () => {
+      const clock = mockClock()
+      const earlyStartClocks = clocksNow()
+      const { profiler, instances } = setupProfiler(undefined, undefined, undefined, {
+        startClocks: earlyStartClocks,
+        paused: true, // e.g. the page was hidden when the chunk was loaded
+      })
+
+      profiler.start()
+
+      expect(profiler.isRunning()).toBe(true)
+      // The chunk could not take over the early instance, so it started its own.
+      expect(instances.size).toBe(1)
+
+      clock.tick(60000)
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(emitPayloadSpy.calls.count()).toBe(1)
+      const payload = emitPayloadSpy.calls.argsFor(0)[0]
+      expect(payload.trace.startClocks).not.toBe(earlyStartClocks)
+
+      profiler.stop()
+    })
+  })
+
   describe('quota check', () => {
     it('should stop profiler and set quota_exceeded context when quota check returns quota_exceeded', async () => {
       checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'quota_exceeded' }))
@@ -1259,6 +1334,7 @@ describe('profiler', () => {
         profilingContextManager,
         createIdentityEncoder,
         mockViewHistory(),
+        undefined,
         { sampleIntervalMs: 10, collectIntervalMs: 60000, minProfileDurationMs: 0 }
       )
 
@@ -1476,6 +1552,11 @@ function waitForBoolean(booleanCallback: () => boolean) {
     }
     poll()
   })
+}
+
+function createMockedProfilerInstance() {
+  const ProfilerConstructor = globalObject.Profiler as ProfilerConstructor
+  return new ProfilerConstructor({ sampleInterval: 10, maxBufferSize: 9000 })
 }
 
 function setVisibilityState(state: 'hidden' | 'visible') {
