@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import type { RumInitConfiguration } from './configuration'
 import type { RumPluginOnInitOptions, RumPlugin } from './plugins'
 import { callPluginsOnInit, callPluginsOnRumStart } from './plugins'
@@ -6,8 +7,8 @@ describe('callPluginsOnInit', () => {
   const PARAMETER = { initConfiguration: {}, publicApi: {} } as RumPluginOnInitOptions
 
   it('calls onInit on each plugin', () => {
-    const plugin1 = { name: 'a', onInit: jasmine.createSpy() } satisfies RumPlugin
-    const plugin2 = { name: 'b', onInit: jasmine.createSpy() } satisfies RumPlugin
+    const plugin1 = { name: 'a', onInit: vi.fn() } satisfies RumPlugin
+    const plugin2 = { name: 'b', onInit: vi.fn() } satisfies RumPlugin
 
     void callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
@@ -16,7 +17,7 @@ describe('callPluginsOnInit', () => {
   })
 
   it('does not call onInit if the plugin does not have it', () => {
-    const plugin1 = { name: 'a', onInit: jasmine.createSpy() } satisfies RumPlugin
+    const plugin1 = { name: 'a', onInit: vi.fn() } satisfies RumPlugin
     const plugin2 = { name: 'b' } satisfies RumPlugin
 
     expect(() => callPluginsOnInit([plugin1, plugin2], PARAMETER)).not.toThrow()
@@ -28,8 +29,8 @@ describe('callPluginsOnInit', () => {
   })
 
   it('returns true synchronously when every plugin returns void or true', () => {
-    const plugin1 = { name: 'a', onInit: jasmine.createSpy().and.returnValue(undefined) } satisfies RumPlugin
-    const plugin2 = { name: 'b', onInit: jasmine.createSpy().and.returnValue(true) } satisfies RumPlugin
+    const plugin1 = { name: 'a', onInit: vi.fn().mockReturnValue(undefined) } satisfies RumPlugin
+    const plugin2 = { name: 'b', onInit: vi.fn().mockReturnValue(true) } satisfies RumPlugin
 
     const result = callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
@@ -39,8 +40,8 @@ describe('callPluginsOnInit', () => {
   })
 
   it('returns false synchronously as soon as a sync plugin returns false, but still calls the other plugins', () => {
-    const plugin1 = { name: 'a', onInit: jasmine.createSpy().and.returnValue(false) } satisfies RumPlugin
-    const plugin2 = { name: 'b', onInit: jasmine.createSpy() } satisfies RumPlugin
+    const plugin1 = { name: 'a', onInit: vi.fn().mockReturnValue(false) } satisfies RumPlugin
+    const plugin2 = { name: 'b', onInit: vi.fn() } satisfies RumPlugin
 
     const result = callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
@@ -50,7 +51,7 @@ describe('callPluginsOnInit', () => {
 
   it('returns a Promise once a plugin returns a thenable, and resolves to true if nothing aborts', async () => {
     const plugin1 = { name: 'a', onInit: () => Promise.resolve() } satisfies RumPlugin
-    const plugin2 = { name: 'b', onInit: jasmine.createSpy().and.returnValue(true) } satisfies RumPlugin
+    const plugin2 = { name: 'b', onInit: vi.fn().mockReturnValue(true) } satisfies RumPlugin
 
     const result = callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
@@ -61,7 +62,7 @@ describe('callPluginsOnInit', () => {
 
   it('resolves to false once an async plugin resolves to false, without waiting for it before calling other plugins', async () => {
     const plugin1 = { name: 'a', onInit: () => Promise.resolve(false) } satisfies RumPlugin
-    const plugin2 = { name: 'b', onInit: jasmine.createSpy() } satisfies RumPlugin
+    const plugin2 = { name: 'b', onInit: vi.fn() } satisfies RumPlugin
 
     const result = callPluginsOnInit([plugin1, plugin2], PARAMETER)
 
@@ -94,9 +95,9 @@ describe('callPluginsOnInit', () => {
 
 describe('callPluginsOnRumStart', () => {
   it('calls onRumStart on each plugin', () => {
-    const plugin1 = { name: 'a', onRumStart: jasmine.createSpy() } satisfies RumPlugin
-    const plugin2 = { name: 'b', onRumStart: jasmine.createSpy() } satisfies RumPlugin
-    const options = { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() }
+    const plugin1 = { name: 'a', onRumStart: vi.fn() } satisfies RumPlugin
+    const plugin2 = { name: 'b', onRumStart: vi.fn() } satisfies RumPlugin
+    const options = { addEvent: vi.fn(), addError: vi.fn() }
 
     callPluginsOnRumStart([plugin1, plugin2], options)
 
@@ -105,17 +106,15 @@ describe('callPluginsOnRumStart', () => {
   })
 
   it('does not call onRumStart if the plugin does not have it', () => {
-    const plugin1 = { name: 'a', onRumStart: jasmine.createSpy() } satisfies RumPlugin
+    const plugin1 = { name: 'a', onRumStart: vi.fn() } satisfies RumPlugin
     const plugin2 = { name: 'b' } satisfies RumPlugin
-    const options = { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() }
+    const options = { addEvent: vi.fn(), addError: vi.fn() }
 
     expect(() => callPluginsOnRumStart([plugin1, plugin2], options)).not.toThrow()
     expect(plugin1.onRumStart).toHaveBeenCalledWith(options)
   })
 
   it('does nothing when there are no plugins', () => {
-    expect(() =>
-      callPluginsOnRumStart(undefined, { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() })
-    ).not.toThrow()
+    expect(() => callPluginsOnRumStart(undefined, { addEvent: vi.fn(), addError: vi.fn() })).not.toThrow()
   })
 })

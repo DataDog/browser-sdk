@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { TIMEOUT_ERROR_MESSAGE } from '@datadog/browser-core'
 import { mockClock, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
@@ -59,7 +60,7 @@ describe('shopifyPlugin', () => {
       await result
 
       expect(initConfiguration).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           trackViewsManually: true,
           sessionReplaySampleRate: 0,
           profilingSampleRate: 0,
@@ -86,7 +87,7 @@ describe('shopifyPlugin', () => {
 
       expect(patchSpy).not.toHaveBeenCalled()
       expect(initBindingsSpy).not.toHaveBeenCalled()
-      await expectAsync(result).toBeResolvedTo(false)
+      await expect(result).resolves.toBe(false)
     })
 
     it('installs bindings only once, ignoring subsequent `page_viewed` events', async () => {
@@ -119,7 +120,7 @@ describe('shopifyPlugin', () => {
       } as RumPluginOnInitOptions)
       clock.tick(1_000)
 
-      await expectAsync(result).toBeRejectedWithError(TIMEOUT_ERROR_MESSAGE)
+      await expect(result).rejects.toThrow(TIMEOUT_ERROR_MESSAGE)
     })
   })
 
@@ -135,7 +136,7 @@ describe('shopifyPlugin', () => {
         publicApi,
       } as RumPluginOnInitOptions)
 
-      await expectAsync(result).toBeResolvedTo(false)
+      await expect(result).resolves.toBe(false)
       expect(patchSpy).not.toHaveBeenCalled()
       expect(initBindingsSpy).not.toHaveBeenCalled()
       expect(initConfiguration).toEqual({ trackViewsManually: false } as unknown as RumInitConfiguration)

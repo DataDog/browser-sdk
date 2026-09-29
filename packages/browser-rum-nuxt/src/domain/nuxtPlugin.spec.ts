@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Router } from 'vue-router'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
@@ -5,7 +6,7 @@ import { registerCleanupTask } from '../../../browser-core/test'
 import type { NuxtApp } from './error/setupNuxtErrorHandling'
 import { nuxtRumPlugin, resetNuxtPlugin } from './nuxtPlugin'
 
-const PUBLIC_API = { startView: jasmine.createSpy() } as unknown as RumPublicApi
+const PUBLIC_API = { startView: vi.fn() } as unknown as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
 function makeRouter(): Router {
@@ -18,7 +19,7 @@ describe('nuxtRumPlugin', () => {
   })
 
   it('returns a plugin object with name "nuxt"', () => {
-    expect(nuxtRumPlugin({ router: makeRouter() })).toEqual(jasmine.objectContaining({ name: 'nuxt' }))
+    expect(nuxtRumPlugin({ router: makeRouter() })).toEqual(expect.objectContaining({ name: 'nuxt' }))
   })
 
   it('sets trackViewsManually to true', () => {

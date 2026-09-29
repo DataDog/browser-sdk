@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { globalObject } from '@datadog/js-core/util'
 import {
   registerCleanupTask,
@@ -13,6 +14,13 @@ import { buildCookieOptions } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import { CookieApi, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 import { createCookieAccess, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
+
+// Safari on BrowserStack cannot access cookies because vitest runs tests in an iframe
+// and BrowserStack replaces localhost with bs-local.com, triggering Safari's ITP restrictions.
+// https://www.browserstack.com/support/faq/local-testing/local-exceptions/i-face-issues-while-testing-localhost-urls-or-private-servers-in-safari-on-macos-os-x-and-ios
+beforeEach((ctx) => {
+  ctx.skip(navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome'), 'Safari on BrowserStack')
+})
 
 function createMockCookieAccess() {
   let storedValues: string[] = []
@@ -58,6 +66,7 @@ function setupCookieStrategy(partialConfiguration: Partial<Configuration> = {}) 
 
   const { mockCookieAccess, mockCookie } = createMockCookieAccess()
   replaceMockable(createCookieAccess, () => mockCookieAccess)
+  const cookiesMock = mockCookies()
 
   return {
     strategy: initCookieStrategy(
@@ -66,6 +75,7 @@ function setupCookieStrategy(partialConfiguration: Partial<Configuration> = {}) 
     ),
     cookieOptions,
     mockCookie,
+    cookiesMock,
   }
 }
 
@@ -136,38 +146,38 @@ describe('session in cookie strategy', () => {
 
     it('should strip c from state emitted via observable', async () => {
       const { strategy, mockCookie } = setupCookieStrategy()
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       mockCookie.simulateExternalChange('id=test&c=0')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0].c).toBeUndefined()
+      expect(spy.mock.lastCall![0].c).toBeUndefined()
     })
 
     it('should notify observable when cookie is cleared', async () => {
       const { strategy, mockCookie } = setupCookieStrategy()
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       mockCookie.simulateExternalChange('')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0]).toEqual({})
+      expect(spy.mock.lastCall![0]).toEqual({})
     })
 
     it('should notify sessionObservable after write', async () => {
       const { strategy } = setupCookieStrategy()
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       await strategy.setSessionState(() => ({ id: '123' }), 'updateState')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0]).toEqual({ id: '123' })
+      expect(spy.mock.lastCall![0]).toEqual({ id: '123' })
     })
 
     it('should queue setSessionState calls and process them sequentially', async () => {
@@ -189,17 +199,15 @@ describe('session in cookie strategy', () => {
     })
 
     describe('web lock teardown errors', () => {
-      function stubLocksRequest(error: Error) {
+      function stubLocksRequest(ctx: { skip: (condition: boolean, reason: string) => void }, error: Error) {
         if (!navigator.locks) {
-          pending('Web Locks API not available')
+          ctx.skip(true, 'Web Locks API not available')
         }
-        // Reject inside callFake so Firefox 78 (no Web Locks) can pending() without creating an
-        // unhandled rejection from Promise.reject() evaluated as a stub argument.
-        spyOn(navigator.locks, 'request').and.callFake(() => Promise.reject(error))
+        vi.spyOn(navigator.locks, 'request').mockImplementation(() => Promise.reject(error))
       }
 
-      it('should swallow InvalidStateError when the responsible document is not fully active', async () => {
-        stubLocksRequest(new DOMException('Responsible document is not fully active', 'InvalidStateError'))
+      it('should swallow InvalidStateError when the responsible document is not fully active', async (ctx) => {
+        stubLocksRequest(ctx, new DOMException('Responsible document is not fully active', 'InvalidStateError'))
         const { strategy, mockCookie } = setupCookieStrategy()
 
         await strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
@@ -207,8 +215,8 @@ describe('session in cookie strategy', () => {
         expect(mockCookie.getStoredValues()).toEqual([])
       })
 
-      it('should swallow InvalidStateError when the document is not active', async () => {
-        stubLocksRequest(new DOMException('The document is not active.', 'InvalidStateError'))
+      it('should swallow InvalidStateError when the document is not active', async (ctx) => {
+        stubLocksRequest(ctx, new DOMException('The document is not active.', 'InvalidStateError'))
         const { strategy, mockCookie } = setupCookieStrategy()
 
         await strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
@@ -216,13 +224,13 @@ describe('session in cookie strategy', () => {
         expect(mockCookie.getStoredValues()).toEqual([])
       })
 
-      it('should rethrow unexpected lock request errors', async () => {
-        stubLocksRequest(new Error('boom'))
+      it('should rethrow unexpected lock request errors', async (ctx) => {
+        stubLocksRequest(ctx, new Error('boom'))
         const { strategy } = setupCookieStrategy()
 
-        await expectAsync(
-          strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
-        ).toBeRejectedWithError('boom')
+        await expect(strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')).rejects.toThrow(
+          'boom'
+        )
       })
     })
   })
@@ -279,23 +287,23 @@ describe('session in cookie strategy', () => {
     }
 
     function disableDocumentCookie() {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
     }
 
-    it('returns cookieStore strategy when both APIs are available', async () => {
+    it('returns cookieStore strategy when both APIs are available', async (ctx) => {
       if (!globalObject.cookieStore) {
-        pending('CookieStore API not available')
+        ctx.skip(true, 'CookieStore API not available')
       }
       mockCookies()
       const strategy = await selectCookieStrategy(mockBaseConfiguration())
-      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.COOKIE_STORE }))
+      expect(strategy).toEqual(expect.objectContaining({ cookieApi: CookieApi.COOKIE_STORE }))
     })
 
     it('falls back to document.cookie when CookieStore is unavailable', async () => {
       disableCookieStore()
       mockCookies()
       const strategy = await selectCookieStrategy(mockBaseConfiguration())
-      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.DOCUMENT_COOKIE }))
+      expect(strategy).toEqual(expect.objectContaining({ cookieApi: CookieApi.DOCUMENT_COOKIE }))
     })
 
     it('returns undefined when both APIs are unavailable', async () => {
@@ -307,9 +315,8 @@ describe('session in cookie strategy', () => {
   })
 
   describe('migration from legacy cookie', () => {
-    function setLegacyCookie(value: string) {
-      const mock = mockCookies()
-      mock.getCookies().push({
+    function setLegacyCookie(cookiesMock: ReturnType<typeof mockCookies>, value: string) {
+      cookiesMock.getCookies().push({
         name: LEGACY_SESSION_STORE_KEY,
         value,
         expires: Date.now() + 60_000,
@@ -317,8 +324,8 @@ describe('session in cookie strategy', () => {
     }
 
     it('should read from legacy cookie on first call when new cookie is empty', async () => {
-      setLegacyCookie('id=legacy-id&created=123&c=0')
-      const { strategy } = setupCookieStrategy()
+      const { strategy, cookiesMock } = setupCookieStrategy()
+      setLegacyCookie(cookiesMock, 'id=legacy-id&created=123&c=0')
 
       let capturedState: SessionState | undefined
       await strategy.setSessionState((state) => {
@@ -331,8 +338,8 @@ describe('session in cookie strategy', () => {
     })
 
     it('should not read from legacy cookie when new cookie has data', async () => {
-      setLegacyCookie('id=legacy-id&c=0')
-      const { strategy, mockCookie } = setupCookieStrategy()
+      const { strategy, mockCookie, cookiesMock } = setupCookieStrategy()
+      setLegacyCookie(cookiesMock, 'id=legacy-id&c=0')
       mockCookie.setAllValues(['id=new-id&c=0'])
 
       let capturedState: SessionState | undefined
@@ -345,8 +352,8 @@ describe('session in cookie strategy', () => {
     })
 
     it('should not read from legacy cookie on subsequent calls', async () => {
-      setLegacyCookie('id=legacy-id&c=0')
-      const { strategy, mockCookie } = setupCookieStrategy()
+      const { strategy, mockCookie, cookiesMock } = setupCookieStrategy()
+      setLegacyCookie(cookiesMock, 'id=legacy-id&c=0')
 
       // First call triggers migration
       await strategy.setSessionState((state) => state, 'updateState')

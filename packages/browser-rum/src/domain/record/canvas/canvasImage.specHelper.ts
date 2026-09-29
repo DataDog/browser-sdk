@@ -1,3 +1,5 @@
+import { expect } from 'vitest'
+
 // Some browsers (e.g. older Firefox/Safari versions) don't support encoding canvases as WebP and
 // silently fall back to PNG, as mandated by the spec for unsupported `toBlob`/`toDataURL` types.
 export function supportsWebPEncoding(): boolean {

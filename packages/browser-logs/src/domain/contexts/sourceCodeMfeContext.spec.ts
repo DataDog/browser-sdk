@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { ErrorSource } from '@datadog/browser-core'
 import { FAKE_CSP_VIOLATION_EVENT, FAKE_REPORT, mockSourceCodeContext } from '@datadog/browser-core/test'
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'

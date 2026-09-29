@@ -1,3 +1,4 @@
+import { describe, expect, it, beforeEach } from 'vitest'
 import { relativeNow, timeStampNow } from '@datadog/js-core/time'
 import { createIdentityEncoder } from '@datadog/browser-core'
 import { interceptRequests, DEFAULT_FETCH_MOCK, readFormDataRequest } from '@datadog/browser-core/test'

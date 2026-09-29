@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../types'
 import { ChangeType, RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../browser-rum-core/test'
@@ -8,44 +9,45 @@ import { createChangeDecoder } from './encoding'
 describe('takeFullSnapshot', () => {
   it('should produce Meta, Focus, and FullSnapshot records', () => {
     expect(takeFullSnapshot()).toEqual(
-      jasmine.arrayContaining([
+      expect.arrayContaining([
         {
           data: {
-            height: jasmine.any(Number),
+            height: expect.any(Number),
             href: sanitizeUrl(window.location.href),
-            width: jasmine.any(Number),
+            width: expect.any(Number),
           },
           type: RecordType.Meta,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
         },
         {
           data: {
             has_focus: document.hasFocus(),
           },
           type: RecordType.Focus,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
         },
         {
-          data: jasmine.any(Object),
+          data: expect.any(Object),
           format: SnapshotFormat.Change,
           type: RecordType.FullSnapshot,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
         },
       ])
     )
   })
 
-  it('should produce VisualViewport records when supported', () => {
+  it('should produce VisualViewport records when supported', (ctx) => {
     if (!window.visualViewport) {
-      pending('visualViewport not supported')
+      ctx.skip(true, 'VisualViewport API not supported')
+      return
     }
 
     expect(takeFullSnapshot()).toEqual(
-      jasmine.arrayContaining([
+      expect.arrayContaining([
         {
-          data: jasmine.any(Object),
+          data: expect.any(Object),
           type: RecordType.VisualViewport,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
         },
       ])
     )
@@ -76,7 +78,7 @@ describe('takeNodeSnapshot', () => {
       type: RecordType.FullSnapshot,
       format: SnapshotFormat.Change,
       data: [[ChangeType.AddNode, [null, 'DIV'], [1, '#text', 'Hello '], [0, 'B'], [1, '#text', 'world']]],
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
     })
   })
 
@@ -88,7 +90,7 @@ describe('takeNodeSnapshot', () => {
       type: RecordType.FullSnapshot,
       format: SnapshotFormat.Change,
       data: [[ChangeType.AddNode, [null, 'DIV'], [1, '#text', 'Hello'], [0, '#shadow-root'], [1, '#text', 'world']]],
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
     })
   })
 })

@@ -1,11 +1,19 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
+import type { Mocked } from 'vitest'
 import type { Display } from '../util/display'
 import { validateAndBuildConfiguration } from './configuration'
 import type { ConfigurationSchema, InferredConfig, MatchOption } from './configuration'
 
-let display: jasmine.SpyObj<Display>
+let display: Mocked<Display>
 
 beforeEach(() => {
-  display = jasmine.createSpyObj<Display>('display', ['debug', 'log', 'info', 'warn', 'error'])
+  display = {
+    debug: vi.fn<Display['debug']>(),
+    log: vi.fn<Display['log']>(),
+    info: vi.fn<Display['info']>(),
+    warn: vi.fn<Display['warn']>(),
+    error: vi.fn<Display['error']>(),
+  }
 })
 
 describe('validateAndBuildConfiguration', () => {
@@ -441,19 +449,19 @@ describe('validateAndBuildConfiguration', () => {
     it('returns undefined and displays an error when initConfig is undefined', () => {
       const schema = { token: { type: 'string' as const } }
       expect(validateAndBuildConfiguration(undefined, schema, display)).toBeUndefined()
-      expect(display.error).toHaveBeenCalledOnceWith('Configuration must be an object')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('Configuration must be an object')
     })
 
     it('returns undefined and displays an error when initConfig is null', () => {
       const schema = { token: { type: 'string' as const } }
       expect(validateAndBuildConfiguration(null, schema, display)).toBeUndefined()
-      expect(display.error).toHaveBeenCalledOnceWith('Configuration must be an object')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('Configuration must be an object')
     })
 
     it('returns undefined and displays an error when initConfig is not an object', () => {
       const schema = { token: { type: 'string' as const } }
       expect(validateAndBuildConfiguration('not an object', schema, display)).toBeUndefined()
-      expect(display.error).toHaveBeenCalledOnceWith('Configuration must be an object')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('Configuration must be an object')
     })
   })
 
@@ -518,49 +526,49 @@ describe('validateAndBuildConfiguration', () => {
     it('reports the right message for an invalid string', () => {
       const schema = { env: { type: 'string' as const } }
       validateAndBuildConfiguration({ env: 42 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"env" must be a non-empty string')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"env" must be a non-empty string')
     })
 
     it('reports the right message for an invalid percentage', () => {
       const schema = { rate: { type: 'percentage' as const, default: 100 } }
       validateAndBuildConfiguration({ rate: 200 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"rate" must be a number between 0 and 100')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"rate" must be a number between 0 and 100')
     })
 
     it('reports the configured bounds for an invalid number', () => {
       const schema = { value: { type: 'number' as const, min: 0, max: 5, default: 1 } }
       validateAndBuildConfiguration({ value: 6 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"value" must be a number between 0 and 5')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"value" must be a number between 0 and 5')
     })
 
     it('reports a configured minimum for an invalid number', () => {
       const schema = { value: { type: 'number' as const, min: 0 } }
       validateAndBuildConfiguration({ value: -1 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"value" must be a number greater than or equal to 0')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"value" must be a number greater than or equal to 0')
     })
 
     it('reports a configured maximum for an invalid number', () => {
       const schema = { value: { type: 'number' as const, max: 5 } }
       validateAndBuildConfiguration({ value: 6 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"value" must be a number less than or equal to 5')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"value" must be a number less than or equal to 5')
     })
 
     it('reports finite-number requirements for an unbounded number', () => {
       const schema = { value: { type: 'number' as const } }
       validateAndBuildConfiguration({ value: Infinity }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"value" must be a finite number')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"value" must be a finite number')
     })
 
     it('reports the right message for an invalid boolean', () => {
       const schema = { flag: { type: 'boolean' as const, default: false } }
       validateAndBuildConfiguration({ flag: 'yes' }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"flag" must be a boolean')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"flag" must be a boolean')
     })
 
     it('reports the right message for an invalid site', () => {
       const schema = { site: { type: 'site' as const, default: 'datadoghq.com' } }
       validateAndBuildConfiguration({ site: 'evil.com' }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith(
+      expect(display.error).toHaveBeenCalledExactlyOnceWith(
         '"site" must be a valid Datadog site. More details: https://docs.datadoghq.com/getting_started/site/.'
       )
     })
@@ -568,13 +576,13 @@ describe('validateAndBuildConfiguration', () => {
     it('reports the right message for an invalid match-option', () => {
       const schema = { origin: { type: 'match-option' as const } }
       validateAndBuildConfiguration({ origin: 42 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"origin" must be a string, RegExp, or function')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"origin" must be a string, RegExp, or function')
     })
 
     it('reports the right message for an invalid enum (array form)', () => {
       const schema = { level: { type: 'enum' as const, values: ['a', 'b'] as const, default: 'a' as const } }
       validateAndBuildConfiguration({ level: 'z' }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"level" must be one of: "a", "b"')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"level" must be one of: "a", "b"')
     })
 
     it('reports the right message for an invalid enum (object form)', () => {
@@ -586,25 +594,25 @@ describe('validateAndBuildConfiguration', () => {
         },
       }
       validateAndBuildConfiguration({ consent: 'foo' }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"consent" must be one of: "granted", "not-granted"')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"consent" must be one of: "granted", "not-granted"')
     })
 
     it('reports the right message for an invalid string field', () => {
       const schema = { token: { type: 'string' as const, default: 'fallback' } }
       validateAndBuildConfiguration({ token: 42 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"token" must be a non-empty string')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"token" must be a non-empty string')
     })
 
     it('reports the type message for a required field with wrong type', () => {
       const schema = { token: { type: 'string' as const, required: true as const } }
       validateAndBuildConfiguration({ token: 42 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"token" must be a non-empty string')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"token" must be a non-empty string')
     })
 
     it('reports "is required" for a missing required field', () => {
       const schema = { token: { type: 'string' as const, required: true as const } }
       validateAndBuildConfiguration({}, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"token" is required')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"token" is required')
     })
 
     it('does not report an error when the value is absent', () => {
@@ -622,14 +630,14 @@ describe('validateAndBuildConfiguration', () => {
     it('reports an error but continues when strict: false', () => {
       const schema = { rate: { type: 'percentage' as const, default: 100, strict: false as const } }
       const config = validateAndBuildConfiguration({ rate: 200 }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"rate" must be a number between 0 and 100')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"rate" must be a number between 0 and 100')
       expect(config).toEqual({ rate: 100 })
     })
 
     it('reports an error for the first invalid item in a multiple field', () => {
       const schema = { hosts: { type: 'string' as const, multiple: true as const, default: [] as string[] } }
       validateAndBuildConfiguration({ hosts: ['a', 42] }, schema, display)
-      expect(display.error).toHaveBeenCalledOnceWith('"hosts" must be a non-empty string')
+      expect(display.error).toHaveBeenCalledExactlyOnceWith('"hosts" must be a non-empty string')
     })
 
     it('reports the specific nested field message for an invalid schema field, in addition to the outer message', () => {

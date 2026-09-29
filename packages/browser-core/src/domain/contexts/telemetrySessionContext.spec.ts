@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { Hook } from '@datadog/js-core/assembly'
 import { createHook } from '@datadog/js-core/assembly'
@@ -44,7 +45,7 @@ describe('telemetrySessionContext', () => {
 
   it('should pass startTime to findTrackedSession', () => {
     const sessionManager = createSessionManagerMock()
-    spyOn(sessionManager, 'findTrackedSession').and.callThrough()
+    vi.spyOn(sessionManager, 'findTrackedSession')
 
     startTelemetrySessionContext(hook, sessionManager)
 

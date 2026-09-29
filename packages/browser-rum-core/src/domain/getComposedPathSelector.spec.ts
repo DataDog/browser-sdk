@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { appendElement } from '../../test'
 import { getComposedPathSelector, CHARACTER_LIMIT } from './getComposedPathSelector'
 

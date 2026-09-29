@@ -1,5 +1,6 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '../../../../../../packages/browser-core/test'
 import { useInspectedPageOverrides } from './useInspectedPageOverrides'
 
@@ -79,9 +80,7 @@ describe('useInspectedPageOverrides lifecycle', () => {
 
     hook.fireNav('before')
     expect(hook.get().status).toBe('loading')
-    await expectAsync(hook.get().setOverride('f', { type: 'BOOLEAN', value: true })).toBeRejectedWithError(
-      /still loading/
-    )
+    await expect(hook.get().setOverride('f', { type: 'BOOLEAN', value: true })).rejects.toThrow(/still loading/)
   })
 
   it('re-reads and returns to ready once the navigation completes', async () => {
@@ -106,8 +105,8 @@ describe('useInspectedPageOverrides lifecycle', () => {
 
 describe('useInspectedPageOverrides settle window', () => {
   beforeEach(() => {
-    jasmine.clock().install()
-    registerCleanupTask(() => jasmine.clock().uninstall())
+    vi.useFakeTimers()
+    registerCleanupTask(() => vi.useRealTimers())
   })
 
   // Flush the read chain (readFlagState → settle callback → setState).
@@ -121,7 +120,9 @@ describe('useInspectedPageOverrides settle window', () => {
 
   // Fire the next settle tick's scheduled setTimeout, then flush its read.
   async function advanceTick() {
-    act(() => jasmine.clock().tick(250))
+    act(() => {
+      vi.advanceTimersByTime(250)
+    })
     await flushReads()
   }
 
@@ -154,7 +155,7 @@ describe('useInspectedPageOverrides settle window', () => {
 
   it('ends in error when reads keep failing through the settle window', async () => {
     // readFlagState logs the eval failure via console.error — suppress so the CI reporter is happy.
-    spyOn(console, 'error')
+    vi.spyOn(console, 'error').mockImplementation(() => true)
     const { get } = mountHook({
       eval: (_code, callback) => callback(undefined, { isError: true, code: 'E', description: 'busy' }),
     })
@@ -168,7 +169,7 @@ describe('useInspectedPageOverrides settle window', () => {
   })
 
   it('keeps the last good state (not error) when only the final read fails', async () => {
-    spyOn(console, 'error')
+    vi.spyOn(console, 'error').mockImplementation(() => true)
     let fail = false
     const { get } = mountHook({
       eval: (_code, callback) =>
@@ -192,7 +193,7 @@ describe('useInspectedPageOverrides settle window', () => {
   })
 
   it('clears a stale devtoolsEnabled from a prior settle when the final read fails', async () => {
-    spyOn(console, 'error')
+    vi.spyOn(console, 'error').mockImplementation(() => true)
     let devtoolsEnabled = true
     let fail = false
     const { get, fireNav } = mountHook({

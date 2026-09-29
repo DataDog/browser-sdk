@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
 import { globalObject } from '@datadog/js-core/util'
 import type { CanvasSnapshot } from './canvasSnapshot'
@@ -28,7 +29,7 @@ describe('computeImageHash', () => {
 
   it('returns undefined when no 2d context is available', async () => {
     const snapshot = createSnapshot('red')
-    spyOn(HTMLCanvasElement.prototype, 'getContext').and.returnValue(null)
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
     expect(await computeImageHash(snapshot, 100)).toBeUndefined()
   })

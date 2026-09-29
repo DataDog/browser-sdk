@@ -1,3 +1,4 @@
+import { beforeEach, afterEach } from 'vitest'
 import { stopMonitorErrorCollection } from '@datadog/js-core/monitor'
 import { setDebugMode } from '@datadog/js-core/util'
 import { resetManageResourceTimingBufferFull } from '../../browser-rum-core/src/browser/performanceObservable'

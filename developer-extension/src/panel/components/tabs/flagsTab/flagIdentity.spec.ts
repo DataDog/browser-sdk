@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { fetchCurrentUserId, fetchFlagIdentity, fetchMyTeamHandles } from './flagIdentity'
 
 describe('flagIdentity', () => {
@@ -5,7 +6,7 @@ describe('flagIdentity', () => {
   // describe the endpoints it cares about.
   function mockEndpoints(handlers: Record<string, () => Response>) {
     const requests: string[] = []
-    spyOn(globalThis, 'fetch').and.callFake((input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
       requests.push(url)
       for (const [fragment, respond] of Object.entries(handlers)) {
@@ -37,7 +38,7 @@ describe('flagIdentity', () => {
 
     it('throws on a non-ok response', async () => {
       mockEndpoints({ '/api/v2/current_user': () => json({}, { status: 500, statusText: 'Server Error' }) })
-      await expectAsync(fetchCurrentUserId('tok', 'datad0g.com')).toBeRejectedWithError(/failed: 500/)
+      await expect(fetchCurrentUserId('tok', 'datad0g.com')).rejects.toThrow(/failed: 500/)
     })
   })
 

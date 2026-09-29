@@ -1,3 +1,4 @@
+import { vi, afterEach, describe, expect, it } from 'vitest'
 import { version as reactVersion } from 'react'
 import { toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
@@ -14,16 +15,16 @@ describe('reactPlugin', () => {
   it('returns a plugin object', () => {
     const plugin = reactPlugin()
     expect(plugin).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         name: 'react',
-        onInit: jasmine.any(Function),
-        onRumStart: jasmine.any(Function),
+        onInit: expect.any(Function),
+        onRumStart: expect.any(Function),
       })
     )
   })
 
   it('calls callbacks registered with onReactPluginInit during onInit', () => {
-    const callbackSpy = jasmine.createSpy()
+    const callbackSpy = vi.fn()
     const pluginConfiguration = {}
     onRumInit(callbackSpy)
 
@@ -36,12 +37,12 @@ describe('reactPlugin', () => {
     } as RumPluginOnInitOptions)
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
-    expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-    expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.mock.lastCall![0]).toBe(pluginConfiguration)
+    expect(callbackSpy.mock.lastCall![1]).toBe(PUBLIC_API)
   })
 
   it('calls callbacks immediately if onInit was already invoked', () => {
-    const callbackSpy = jasmine.createSpy()
+    const callbackSpy = vi.fn()
     const pluginConfiguration = {}
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     reactPlugin(pluginConfiguration).onInit({
@@ -52,8 +53,8 @@ describe('reactPlugin', () => {
     onRumInit(callbackSpy)
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
-    expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-    expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.mock.lastCall![0]).toBe(pluginConfiguration)
+    expect(callbackSpy.mock.lastCall![1]).toBe(PUBLIC_API)
   })
 
   it('enforce manual view tracking when router is enabled', () => {
@@ -94,8 +95,8 @@ describe('reactPlugin', () => {
   })
 
   it('calls onRumStart subscribers during onRumStart', () => {
-    const callbackSpy = jasmine.createSpy()
-    const addErrorSpy = jasmine.createSpy()
+    const callbackSpy = vi.fn()
+    const addErrorSpy = vi.fn()
     onRumStart(callbackSpy)
 
     reactPlugin().onRumStart({ addError: addErrorSpy })
@@ -104,10 +105,10 @@ describe('reactPlugin', () => {
   })
 
   it('calls onRumStart subscribers immediately if already started', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     reactPlugin().onRumStart({ addError: addErrorSpy })
 
-    const callbackSpy = jasmine.createSpy()
+    const callbackSpy = vi.fn()
     onRumStart(callbackSpy)
 
     expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)

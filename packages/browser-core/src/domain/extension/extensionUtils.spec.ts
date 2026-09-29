@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import {
   STACK_WITH_INIT_IN_EXTENSION,
   STACK_WITH_INIT_IN_EXTENSION_FIREFOX,
