@@ -1,6 +1,7 @@
 import type { Profiler } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
 import type { TimeoutId } from '@datadog/browser-core'
+import type { ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type { LongTaskContext } from './longTaskHistory'
 
@@ -64,10 +65,15 @@ export interface ProfilingPayload {
 
 /**
  * Reason why starting a Profiler instance failed.
- * Values match the `error_reason` values of the profiling internal context.
+ *
+ * Derived from the `error_reason` values of the profiling internal context
+ * (auto-generated schema), excluding `failed-to-lazy-load` which is a profiler
+ * chunk loading error, not a Profiler construction error.
  */
-export type ProfilerStartupErrorReason =
-  'not-supported-by-browser' | 'missing-document-policy-header' | 'unexpected-exception'
+export type ProfilerStartupErrorReason = Exclude<
+  NonNullable<ProfilingInternalContextSchema['error_reason']>,
+  'failed-to-lazy-load'
+>
 
 /**
  * A Profiler instance started by the early profiler snippet, along with the
