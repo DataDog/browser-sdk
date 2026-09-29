@@ -20,6 +20,19 @@
 
 ---
 
+## v7.15.0
+
+**Public Changes:**
+
+- ✨ enable partial view updates by default for all customers ([#5071](https://github.com/DataDog/browser-sdk/pull/5071))
+- ✨ Limit objects in debugger log messages to 5 root-level properties ([#5064](https://github.com/DataDog/browser-sdk/pull/5064))
+- ✨ [PANA-9099] Strip query string and fragment from the Meta record URL ([#5060](https://github.com/DataDog/browser-sdk/pull/5060))
+- 🐛 Discard the previous event when restarting an event tracker key ([#5061](https://github.com/DataDog/browser-sdk/pull/5061))
+- 🐛 Skip sendBeacon for non-HTTP(S) endpoints ([#5062](https://github.com/DataDog/browser-sdk/pull/5062))
+- 📝 Document browser Live Debugger CSP prerequisite ([#5065](https://github.com/DataDog/browser-sdk/pull/5065))
+- ⚗️ Make canvas masking behavior consistent with image masking ([#5070](https://github.com/DataDog/browser-sdk/pull/5070))
+- ⚗️ Track WebGL canvas updates in Session Replay ([#5047](https://github.com/DataDog/browser-sdk/pull/5047))
+
 ## v7.14.0
 
 **Public Changes:**
