@@ -558,35 +558,32 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('betaEnableViewUpdates', () => {
-    // Unit tests are bundled as a CDN build (webpack.base.ts pins `setup: 'cdn'`), so the npm
-    // side of the default is only covered by e2e and by reading the code.
-
-    it('defaults to true on a CDN build without a proxy', () => {
+    it('defaults to true without a proxy', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeTrue()
     })
 
-    it('defaults to false on a CDN build with a proxy', () => {
+    it('defaults to false with a proxy', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })!
           .betaEnableViewUpdates
       ).toBeFalse()
     })
 
-    it('defaults to false on a CDN build with a proxy function', () => {
+    it('defaults to false with a proxy function', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: () => 'https://proxy.example.com' })!
           .betaEnableViewUpdates
       ).toBeFalse()
     })
 
-    it('honors an explicit false on a CDN build without a proxy', () => {
+    it('honors an explicit false without a proxy', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })!
           .betaEnableViewUpdates
       ).toBeFalse()
     })
 
-    it('honors an explicit true on a CDN build with a proxy', () => {
+    it('honors an explicit true with a proxy', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
@@ -611,7 +608,7 @@ describe('validateAndBuildRumConfiguration', () => {
     })
 
     it('defaults to false for the Salesforce bundle', () => {
-      // The Salesforce bundle is a CDN build, but it is installed as a pinned static resource.
+      // The Salesforce bundle is installed as a pinned static resource with no rollback path.
       expect(
         validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce')!.betaEnableViewUpdates
       ).toBeFalse()
@@ -626,7 +623,7 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBeTrue()
     })
 
-    it('defaults to true for other CDN bundles', () => {
+    it('defaults to true for other bundles', () => {
       expect(
         validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-shopify')!.betaEnableViewUpdates
       ).toBeTrue()
@@ -1101,11 +1098,11 @@ describe('validateAndBuildRumConfiguration', () => {
 
 describe('serializeRumConfiguration', () => {
   describe('beta_enable_view_updates', () => {
-    it('reports the effective default on a CDN build without a proxy', () => {
+    it('reports the effective default without a proxy', () => {
       expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeTrue()
     })
 
-    it('reports the effective default on a CDN build with a proxy', () => {
+    it('reports the effective default with a proxy', () => {
       expect(
         serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })
           .beta_enable_view_updates
