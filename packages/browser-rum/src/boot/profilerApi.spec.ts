@@ -13,6 +13,7 @@ import {
 import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
 import { mockProfiler } from '../../test'
 import { EARLY_PROFILER_GLOBAL_NAME } from '../domain/profiling/earlyProfilerConstants'
+import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { mockedTrace } from '../domain/profiling/test-utils/mockedTrace'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 import { makeProfilerApi } from './profilerApi'
@@ -28,6 +29,7 @@ describe('profilerApi', () => {
       // - Without correction: isSampled(id, 60) → true (50.7 < 60)
       // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
       const lazyLoadProfilerSpy = replaceMockableWithSpy(lazyLoadProfiler)
+      const isProfilingSupportedSpy = replaceMockableWithSpy(isProfilingSupported)
       const profilerApi = makeProfilerApi()
 
       profilerApi.onRumStart(
@@ -39,6 +41,7 @@ describe('profilerApi', () => {
         createIdentityEncoder
       )
 
+      expect(isProfilingSupportedSpy).not.toHaveBeenCalled()
       expect(lazyLoadProfilerSpy).not.toHaveBeenCalled()
     })
   })
@@ -46,6 +49,7 @@ describe('profilerApi', () => {
   describe('early profiler snippet', () => {
     let createRumProfilerSpy: jasmine.Spy
     let lazyLoadProfilerSpy: jasmine.Spy
+    let isProfilingSupportedSpy: jasmine.Spy
     let instances: Set<unknown>
 
     function setEarlyProfilerSnippet(): MockProfilerInstance {
@@ -88,6 +92,8 @@ describe('profilerApi', () => {
         .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
       lazyLoadProfilerSpy = replaceMockableWithSpy(lazyLoadProfiler)
       lazyLoadProfilerSpy.and.returnValue(Promise.resolve(createRumProfilerSpy))
+      isProfilingSupportedSpy = replaceMockableWithSpy(isProfilingSupported)
+      isProfilingSupportedSpy.and.returnValue(true)
     })
 
     it('loads the profiler chunk when the session is sampled for profiling', async () => {
@@ -105,6 +111,17 @@ describe('profilerApi', () => {
       await waitNextMicrotask() // let lazyLoadProfiler().then() run
 
       expect(instances.size).toBe(0)
+    })
+
+    it('does not load the profiler chunk and stops the snippet Profiler when the browser does not support the Profiler API', () => {
+      isProfilingSupportedSpy.and.returnValue(false)
+      const snippetProfiler = setEarlyProfilerSnippet()
+
+      startApi()
+
+      expect(lazyLoadProfilerSpy).not.toHaveBeenCalled()
+      expect(snippetProfiler.stopped).toBeTrue()
+      expect(getEarlyProfilerSnippet()).toBeUndefined()
     })
 
     it('does not load the profiler chunk and stops the snippet Profiler when the session is not tracked', () => {
@@ -180,6 +197,7 @@ describe('profilerApi', () => {
         .createSpy('createRumProfiler')
         .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
       replaceMockable(lazyLoadProfiler, () => Promise.resolve(createRumProfilerSpy))
+      replaceMockable(isProfilingSupported, () => true)
     })
 
     async function startApi() {

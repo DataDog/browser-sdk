@@ -12,6 +12,7 @@ import { monitorError } from '@datadog/js-core/monitor'
 import { globalObject } from '@datadog/js-core/util'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { EARLY_PROFILER_GLOBAL_NAME } from '../domain/profiling/earlyProfilerConstants'
+import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
@@ -47,6 +48,16 @@ export function makeProfilerApi(): ProfilerApi {
 
     // Listen to events and add the profiling context to them.
     const profilingContextManager = startProfilingContext(hooks)
+
+    // Browser support check. This also avoids downloading the profiler chunk
+    // on browsers that don't support the Profiler API. Other startup errors
+    // (e.g. missing `Document-Policy: js-profiling` header) are only detectable
+    // when constructing a Profiler instance, and are handled by the chunk.
+    if (!mockable(isProfilingSupported)()) {
+      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
+      stopEarlyProfilerSnippet()
+      return
+    }
 
     mockable(lazyLoadProfiler)()
       .then((createRumProfiler) => {
