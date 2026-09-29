@@ -116,8 +116,6 @@ export function serializeWebSocketVital(
         name: WebSocketVitalName.OPEN,
         websocket: {
           id,
-          // an open vital cannot exist otherwise, and the constant keeps it self-describing
-          open_handshake_succeeded: true,
           connecting_duration: toServerDuration(elapsed(connectingClocks.relative, openClocks.relative)),
           open_date: toPhaseDate(connectingClocks, openClocks),
           selected_protocol: state.selectedProtocol,

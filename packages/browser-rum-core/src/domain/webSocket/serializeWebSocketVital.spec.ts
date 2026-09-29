@@ -83,10 +83,6 @@ describe('serializeWebSocketVital', () => {
   })
 
   describe('the open vital', () => {
-    it('reports the handshake as succeeded, since it cannot exist otherwise', () => {
-      expect(serializeOpen().websocket.open_handshake_succeeded).toBe(true)
-    })
-
     it('reports the connecting duration as the span from the constructor call to the open event', () => {
       const { websocket } = serializeOpen(openState({ openClocks: clocksAt(120) }))
 
@@ -112,7 +108,6 @@ describe('serializeWebSocketVital', () => {
 
       expect(fieldsOf(websocket)).toEqual([
         'id',
-        'open_handshake_succeeded',
         'connecting_duration',
         'open_date',
         'snapshot_version',

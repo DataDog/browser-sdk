@@ -465,7 +465,6 @@ export interface RawRumWebSocketConnectingVitalProperties {
 }
 
 export interface RawRumWebSocketOpenVitalProperties {
-  open_handshake_succeeded: true
   connecting_duration: ServerDuration
   open_date: TimeStamp
   selected_protocol?: string
