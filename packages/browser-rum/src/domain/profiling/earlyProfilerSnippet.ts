@@ -38,7 +38,9 @@ function isProfiler(value: unknown): value is Profiler {
     return false
   }
   const candidate = value as { stopped?: unknown; stop?: unknown; sampleInterval?: unknown }
-  return candidate.stopped !== true && typeof candidate.stop === 'function' && typeof candidate.sampleInterval === 'number'
+  return (
+    candidate.stopped !== true && typeof candidate.stop === 'function' && typeof candidate.sampleInterval === 'number'
+  )
 }
 
 function isClocksState(value: unknown): value is ClocksState {

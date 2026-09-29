@@ -7,14 +7,14 @@
       // Early profiler snippet: starts collecting Profiler samples before the
       // SDK is loaded. See `EARLY_PROFILER_GLOBAL_NAME` in
       // packages/browser-rum/src/domain/profiling/earlyProfilerConstants.ts.
-      window._DD_RUM_EARLY_PROFILER = function (w) {
+      window._DD_RUM_EARLY_PROFILER = (function (w) {
         try {
           return {
             profiler: new w.Profiler({ sampleInterval: 10, maxBufferSize: 9000 }),
             startClocks: { relative: w.performance.now(), timeStamp: Date.now() },
           }
         } catch (e) {}
-      }(window)
+      })(window)
     </script>
     <script src="/datadog-rum.js" crossorigin></script>
     <script src="/datadog-logs.js" crossorigin></script>

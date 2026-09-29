@@ -67,9 +67,7 @@ export interface ProfilingPayload {
  * Values match the `error_reason` values of the profiling internal context.
  */
 export type ProfilerStartupErrorReason =
-  | 'not-supported-by-browser'
-  | 'missing-document-policy-header'
-  | 'unexpected-exception'
+  'not-supported-by-browser' | 'missing-document-policy-header' | 'unexpected-exception'
 
 /**
  * A Profiler instance started by the early profiler snippet, along with the
