@@ -1,3 +1,4 @@
+import { vi, describe, expect, it, type TestContext } from 'vitest'
 import { templateRequiresEvaluation, compileSegments, evaluateProbeMessage, browserInspect } from './template'
 import { formatUnknownError } from './error'
 
@@ -96,10 +97,9 @@ describe('template', () => {
       expect(browserInspect(false)).toBe('false')
     })
 
-    it('should inspect bigint', () => {
+    it('should inspect bigint', (ctx: TestContext) => {
       if (typeof BigInt === 'undefined') {
-        pending('BigInt is not supported in this browser')
-        return
+        ctx.skip(true, 'BigInt not supported')
       }
       expect(browserInspect(BigInt(123))).toBe('123n')
     })
@@ -138,7 +138,7 @@ describe('template', () => {
 
     it('should not call custom toString when object serialization fails', () => {
       const obj: any = {
-        toString: jasmine.createSpy('toString', () => 'custom').and.callThrough(),
+        toString: vi.fn(() => 'custom'),
       }
       defineThrowingGetter(obj)
 
@@ -219,7 +219,7 @@ describe('template', () => {
 
         it('should not read omitted properties', () => {
           const obj = { a: 1, b: 2, c: 3, d: 4, e: 5 }
-          const getter = jasmine.createSpy('getter')
+          const getter = vi.fn()
           Object.defineProperty(obj, 'f', { get: getter, enumerable: true })
 
           expect(browserInspect(obj)).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
@@ -267,14 +267,14 @@ describe('template', () => {
         })
 
         it('should read toJSON once and call it with the root key', () => {
-          const toJSON = jasmine.createSpy('toJSON').and.returnValue('json')
-          const getter = jasmine.createSpy('getter').and.returnValues(toJSON, undefined)
+          const toJSON = vi.fn().mockReturnValue('json')
+          const getter = vi.fn().mockReturnValueOnce(toJSON).mockReturnValueOnce(undefined)
           const obj = {}
           Object.defineProperty(obj, 'toJSON', { get: getter })
 
           expect(browserInspect(obj)).toBe('"json"')
           expect(getter).toHaveBeenCalledTimes(1)
-          expect(toJSON).toHaveBeenCalledOnceWith('')
+          expect(toJSON).toHaveBeenCalledExactlyOnceWith('')
         })
 
         it('should show root array but collapse nested arrays at depth 0', () => {

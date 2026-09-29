@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { DefaultPrivacyLevel, noop } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
@@ -140,7 +141,7 @@ describe('trackMutation', () => {
       ])
       expect(stats).toEqual({
         cssText: { count: 1, max: 21, sum: 21 },
-        serializationDuration: jasmine.anything(),
+        serializationDuration: expect.anything(),
       })
     })
 
@@ -337,13 +338,13 @@ describe('trackMutation', () => {
     })
 
     describe('for shadow DOM', () => {
-      let addShadowRootSpy: jasmine.Spy<AddShadowRootCallBack>
-      let removeShadowRootSpy: jasmine.Spy<RemoveShadowRootCallBack>
+      let addShadowRootSpy: Mock<AddShadowRootCallBack>
+      let removeShadowRootSpy: Mock<RemoveShadowRootCallBack>
       let scope: RecordingScope
 
       beforeEach(() => {
-        addShadowRootSpy = jasmine.createSpy()
-        removeShadowRootSpy = jasmine.createSpy()
+        addShadowRootSpy = vi.fn()
+        removeShadowRootSpy = vi.fn()
         scope = createRecordingScopeForTesting({
           addShadowRoot: addShadowRootSpy,
           removeShadowRoot: removeShadowRootSpy,
@@ -365,7 +366,8 @@ describe('trackMutation', () => {
         )
 
         expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'DIV'], [1, '#shadow-root'], [1, 'SPAN']]])
-        expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot, jasmine.anything())
+        expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
+        expect(addShadowRootSpy).toHaveBeenCalledWith(shadowRoot, expect.anything())
         expect(removeShadowRootSpy).not.toHaveBeenCalled()
       })
 
@@ -388,7 +390,8 @@ describe('trackMutation', () => {
 
         expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
-        expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
+        expect(removeShadowRootSpy).toHaveBeenCalledTimes(1)
+        expect(removeShadowRootSpy).toHaveBeenCalledWith(shadowRoot)
       })
 
       it('should call removeShadowRoot when parent of host is removed', async () => {
@@ -410,7 +413,8 @@ describe('trackMutation', () => {
 
         expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
-        expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
+        expect(removeShadowRootSpy).toHaveBeenCalledTimes(1)
+        expect(removeShadowRootSpy).toHaveBeenCalledWith(shadowRoot)
       })
 
       it('should call removeShadowRoot when removing a host containing other hosts in its children', async () => {
@@ -437,14 +441,17 @@ describe('trackMutation', () => {
         expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(2)
         expect(removeShadowRootSpy).toHaveBeenCalledTimes(2)
-        expect(removeShadowRootSpy.calls.argsFor(0)[0]).toBe(parentShadowRoot)
-        expect(removeShadowRootSpy.calls.argsFor(1)[0]).toBe(childShadowRoot)
+        // Note: `toHaveBeenCalledWith` does not assert strict equality, we need to actually
+        // retrieve the argument and using `toBe` to make sure the spy has been called with both
+        // shadow roots.
+        expect(removeShadowRootSpy.mock.calls[0][0]).toBe(parentShadowRoot)
+        expect(removeShadowRootSpy.mock.calls[1][0]).toBe(childShadowRoot)
       })
     })
 
     it('removes a canvas from dirty canvases when it is removed', async () => {
       const canvasManager = createCanvasManager()
-      const forgetCanvasSpy = spyOn(canvasManager, 'forgetCanvas').and.callThrough()
+      const forgetCanvasSpy = vi.spyOn(canvasManager, 'forgetCanvas')
       const scope = createRecordingScopeForTesting({ canvasManager })
       let canvas!: HTMLCanvasElement
 
@@ -459,7 +466,7 @@ describe('trackMutation', () => {
         { scope }
       )
 
-      expect(forgetCanvasSpy).toHaveBeenCalledOnceWith(canvas)
+      expect(forgetCanvasSpy).toHaveBeenCalledExactlyOnceWith(canvas)
       expect(canvasManager.takeCapturableCanvases()).toEqual([])
     })
   })

@@ -1,9 +1,10 @@
+import { vi, describe, expect, it } from 'vitest'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { onBFCacheRestore } from './bfCacheSupport'
 
 describe('onBFCacheRestore', () => {
   it('should invoke the callback only for BFCache restoration and stop listening when stopped', () => {
-    const callback = jasmine.createSpy('callback')
+    const callback = vi.fn()
 
     const stop = onBFCacheRestore(callback)
     registerCleanupTask(stop)

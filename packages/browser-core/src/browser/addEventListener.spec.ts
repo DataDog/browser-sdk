@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent, mockZoneJs, registerCleanupTask } from '../../test'
 import type { MockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
@@ -12,7 +13,7 @@ describe('addEventListener', () => {
     })
 
     it('uses the original addEventListener method instead of the method patched by Zone.js', () => {
-      const zoneJsPatchedAddEventListener = jasmine.createSpy()
+      const zoneJsPatchedAddEventListener = vi.fn()
       const eventTarget = document.createElement('div')
       zoneJs.replaceProperty(eventTarget, 'addEventListener', zoneJsPatchedAddEventListener)
 
@@ -21,7 +22,7 @@ describe('addEventListener', () => {
     })
 
     it('uses the original removeEventListener method instead of the method patched by Zone.js', () => {
-      const zoneJsPatchedRemoveEventListener = jasmine.createSpy()
+      const zoneJsPatchedRemoveEventListener = vi.fn()
       const eventTarget = document.createElement('div')
       zoneJs.replaceProperty(eventTarget, 'removeEventListener', zoneJsPatchedRemoveEventListener)
 
@@ -37,8 +38,8 @@ describe('addEventListener', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const originalRemoveEventListener = EventTarget.prototype.removeEventListener
 
-    EventTarget.prototype.addEventListener = jasmine.createSpy()
-    EventTarget.prototype.removeEventListener = jasmine.createSpy()
+    EventTarget.prototype.addEventListener = vi.fn()
+    EventTarget.prototype.removeEventListener = vi.fn()
 
     registerCleanupTask(() => {
       EventTarget.prototype.addEventListener = originalAddEventListener
@@ -46,8 +47,8 @@ describe('addEventListener', () => {
     })
 
     const htmlDivElement = document.createElement('div')
-    htmlDivElement.addEventListener = jasmine.createSpy()
-    htmlDivElement.removeEventListener = jasmine.createSpy()
+    htmlDivElement.addEventListener = vi.fn()
+    htmlDivElement.removeEventListener = vi.fn()
 
     const { stop } = addEventListener(htmlDivElement, DOM_EVENT.CLICK, noop)
 
@@ -67,11 +68,11 @@ describe('addEventListener', () => {
   })
 
   it('Use the addEventListener method when the eventTarget is not an instance of EventTarget', () => {
-    const listener = jasmine.createSpy()
+    const listener = vi.fn()
 
     const customEventTarget = {
-      addEventListener: jasmine.createSpy(),
-      removeEventListener: jasmine.createSpy(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
     } as unknown as HTMLElement
 
     const { stop } = addEventListener(customEventTarget, 'change', listener)
@@ -89,7 +90,7 @@ describe('addEventListener', () => {
     })
 
     it('should be ignored if __ddIsTrusted is absent', () => {
-      const listener = jasmine.createSpy()
+      const listener = vi.fn()
       const eventTarget = document.createElement('div')
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
@@ -99,7 +100,7 @@ describe('addEventListener', () => {
     })
 
     it('should be ignored if __ddIsTrusted is false', () => {
-      const listener = jasmine.createSpy()
+      const listener = vi.fn()
       const eventTarget = document.createElement('div')
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
@@ -109,7 +110,7 @@ describe('addEventListener', () => {
     })
 
     it('should not be ignored if __ddIsTrusted is true', () => {
-      const listener = jasmine.createSpy()
+      const listener = vi.fn()
       const eventTarget = document.createElement('div')
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
@@ -120,7 +121,7 @@ describe('addEventListener', () => {
     })
 
     it('should not be ignored if setAllowUntrustedEvents(true) was called', () => {
-      const listener = jasmine.createSpy()
+      const listener = vi.fn()
       const eventTarget = document.createElement('div')
       setAllowUntrustedEvents(true)
 
@@ -134,11 +135,11 @@ describe('addEventListener', () => {
   })
 
   describe('setAllowUntrustedEvents', () => {
-    let listener: jasmine.Spy
+    let listener: Mock<(event: PointerEvent & { type: DOM_EVENT.CLICK }) => void>
     let eventTarget: HTMLElement
 
     beforeEach(() => {
-      listener = jasmine.createSpy()
+      listener = vi.fn()
       eventTarget = document.createElement('div')
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
     })
@@ -193,7 +194,9 @@ describe('addEventListener', () => {
 
     it('should return false if the event listener cannot be added', () => {
       const eventTarget = {
-        addEventListener: jasmine.createSpy().and.throwError('unsupported'),
+        addEventListener: vi.fn().mockImplementation(() => {
+          throw new Error('unsupported')
+        }),
       } as unknown as HTMLElement
 
       expect(isEventSupported(eventTarget, DOM_EVENT.CLICK)).toBe(false)

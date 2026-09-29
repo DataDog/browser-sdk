@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { isSafari } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -242,7 +243,7 @@ describe('serializeDOMAttributes', () => {
         const attributes = serializeDOMAttributes(element, privacyLevel, transaction)
         const actual = valueOfAttribute(attributes, attribute.name) as boolean | string | undefined
         const expected = expectedValueForPrivacyLevel(testCase, element, attribute, privacyLevel)
-        expect(actual).withContext(`${testCase.html} for ${privacyLevel}`).toEqual(expected)
+        expect(actual, `${testCase.html} for ${privacyLevel}`).toEqual(expected)
       }
     }
 
@@ -352,7 +353,7 @@ describe('serializeVirtualAttributes', () => {
     for (const privacyLevel of PRIVACY_LEVELS) {
       const actual = serializeVirtualAttributes(element, privacyLevel, transaction)
       const expected = privacyLevel === NodePrivacyLevel.HIDDEN ? {} : expectedWhenNotHidden
-      expect(actual).withContext(`${element.tagName} ${privacyLevel}`).toEqual(expected)
+      expect(actual, `${element.tagName} ${privacyLevel}`).toEqual(expected)
       after?.(privacyLevel)
     }
   }
@@ -398,9 +399,9 @@ describe('serializeVirtualAttributes', () => {
 
     it('handles link element stylesheets with a relative href after the base URL changed', async () => {
       // A base URL whose directory is '/client/', and a relative href that climbs one level out
-      // of it to reach the stylesheet served at '/base/packages/...'.
+      // of it to reach the stylesheet served at '/packages/...'.
       const baseUrl = `${location.origin}/client/new-quote`
-      const relativeHref = '../base/packages/browser-rum/test/record/relativeStylesheet.css'
+      const relativeHref = '../packages/browser-rum/test/record/relativeStylesheet.css'
 
       // Load the stylesheet for real, in an isolated iframe so that changing the base URL can't
       // affect the rest of the test run.
@@ -419,7 +420,7 @@ describe('serializeVirtualAttributes', () => {
 
       const iframeDocument = iframe.contentDocument!
       const link = iframeDocument.querySelector('link')!
-      expect(link.sheet).withContext('the stylesheet should have loaded').not.toBeNull()
+      expect(link.sheet, 'the stylesheet should have loaded').not.toBeNull()
 
       // Emulate a client-side navigation into a deeper directory. Only the document base URL
       // changes; the stylesheet stays loaded and applied, as it does in the browser. `<base>` is
@@ -577,9 +578,14 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an accessible external stylesheet
-    spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
-      cssRules: [{ cssText: 'p { margin: 0; }' } as CSSRule] as unknown as CSSRuleList,
-    } as CSSStyleSheet)
+    // Use Object.defineProperty instead of vi.spyOn — native CSSImportRule getters
+    // throw "Illegal invocation" when proxied through vi.spyOn.
+    Object.defineProperty(styleNode.sheet!.cssRules[0], 'styleSheet', {
+      get: () => ({
+        cssRules: [{ cssText: 'p { margin: 0; }' } as CSSRule] as unknown as CSSRuleList,
+      }),
+      configurable: true,
+    })
 
     expect(getCssRulesString(styleNode.sheet)).toBe('p { margin: 0; }')
   })
@@ -588,11 +594,16 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an inaccessible external stylesheet
-    spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
-      get cssRules(): CSSRuleList {
-        throw new Error('Cannot access rules')
-      },
-    } as CSSStyleSheet)
+    // Use Object.defineProperty instead of vi.spyOn — native CSSImportRule getters
+    // throw "Illegal invocation" when proxied through vi.spyOn.
+    Object.defineProperty(styleNode.sheet!.cssRules[0], 'styleSheet', {
+      get: () => ({
+        get cssRules(): CSSRuleList {
+          throw new Error('Cannot access rules')
+        },
+      }),
+      configurable: true,
+    })
 
     expect(getCssRulesString(styleNode.sheet)).toBe(`@import url("${CSS_FILE_URL}");`)
   })

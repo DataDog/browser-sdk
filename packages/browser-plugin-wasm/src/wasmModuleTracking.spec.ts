@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { RawError } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -97,7 +98,7 @@ describe('startWasmModuleTracking', () => {
     const module = new WebAssembly.Module(wasmModule)
     const response = { url: 'https://example.com/module.wasm' } as Response
     const originalInstantiateStreaming = WebAssembly.instantiateStreaming
-    const instantiateStreamingSpy = jasmine.createSpy().and.resolveTo({ module })
+    const instantiateStreamingSpy = vi.fn().mockResolvedValue({ module })
     WebAssembly.instantiateStreaming = instantiateStreamingSpy
 
     startWasmModuleTracking()
@@ -120,7 +121,7 @@ describe('startWasmModuleTracking', () => {
     const response = { url: 'https://example.com/module.wasm' } as Response
     const compileOptions = { builtins: ['js-string'] }
     const originalCompileStreaming = WebAssembly.compileStreaming
-    const compileStreamingSpy = jasmine.createSpy().and.resolveTo(module)
+    const compileStreamingSpy = vi.fn().mockResolvedValue(module)
     WebAssembly.compileStreaming = compileStreamingSpy
 
     startWasmModuleTracking()
@@ -130,7 +131,7 @@ describe('startWasmModuleTracking', () => {
         compileOptions
       )
 
-      expect(compileStreamingSpy).toHaveBeenCalledOnceWith(response, compileOptions)
+      expect(compileStreamingSpy).toHaveBeenCalledExactlyOnceWith(response, compileOptions)
     } finally {
       resetWasmModuleRegistryForTesting()
       if (originalCompileStreaming) {

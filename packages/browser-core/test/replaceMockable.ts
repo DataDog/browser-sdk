@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import { mockableReplacements } from '../src/tools/mockable'
 import { registerCleanupTask } from './registerCleanupTask'
 
@@ -27,11 +28,11 @@ export function replaceMockable<T>(value: T, replacement: T): void {
 }
 
 /**
- * Creates a Jasmine spy and registers it as a mock replacement for a mockable function.
+ * Creates a Vitest mock function and registers it as a mock replacement for a mockable function.
  * The mock is automatically cleaned up after each test via registerCleanupTask.
  *
  * @param value - The original function (must be the same reference passed to mockable())
- * @returns A Jasmine spy that can be used for assertions
+ * @returns A Vitest mock function that can be used for assertions
  * @example
  * import { replaceMockableWithSpy } from '@datadog/browser-core/test'
  * import { trackRuntimeError } from '../domain/error/trackRuntimeError'
@@ -42,8 +43,8 @@ export function replaceMockable<T>(value: T, replacement: T): void {
  *   expect(spy).toHaveBeenCalled()
  * })
  */
-export function replaceMockableWithSpy<T extends (...args: any[]) => any>(value: T): jasmine.Spy<T> {
-  const spy = jasmine.createSpy<T>()
+export function replaceMockableWithSpy<T extends (...args: any[]) => any>(value: T): Mock<T> {
+  const spy = vi.fn<T>()
   replaceMockable(value, spy as unknown as T)
   return spy
 }

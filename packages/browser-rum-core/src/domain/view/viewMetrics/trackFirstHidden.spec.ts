@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { clocksOrigin } from '@datadog/js-core/time'
 import { DOM_EVENT } from '@datadog/browser-core'

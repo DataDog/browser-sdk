@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { TIMEOUT_ERROR_MESSAGE } from '@datadog/browser-core'
 import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
 import { waitForPageViewedEvent } from './shopifyAnalytics'
@@ -10,13 +11,13 @@ describe('waitForPageViewedEvent', () => {
     const result = waitForPageViewedEvent(analytics)
     emit('page_viewed', event)
 
-    await expectAsync(result).toBeResolvedTo(event)
+    await expect(result).resolves.toEqual(event)
   })
 
   it('rejects with a timeout error if no page_viewed event fires before the timeout', async () => {
     const { analytics } = createFakeAnalytics()
 
-    await expectAsync(waitForPageViewedEvent(analytics, { timeout: 0 })).toBeRejectedWithError(TIMEOUT_ERROR_MESSAGE)
+    await expect(waitForPageViewedEvent(analytics, { timeout: 0 })).rejects.toThrow(TIMEOUT_ERROR_MESSAGE)
   })
 
   it('resolves rather than timing out if the page_viewed event fires before the timeout elapses', async () => {
@@ -26,6 +27,6 @@ describe('waitForPageViewedEvent', () => {
     const result = waitForPageViewedEvent(analytics, { timeout: 1000 })
     emit('page_viewed', event)
 
-    await expectAsync(result).toBeResolvedTo(event)
+    await expect(result).resolves.toEqual(event)
   })
 })

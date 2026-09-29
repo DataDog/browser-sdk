@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { extractWasmBuildId } from './wasmBinaryParser'
 
 describe('extractWasmBuildId', () => {

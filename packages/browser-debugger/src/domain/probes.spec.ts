@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { ErrorWithCause } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -42,7 +43,7 @@ describe('probes', () => {
       const retrieved = getProbes(DEFAULT_PROBE_FUNCTION_ID)
 
       expect(retrieved).toEqual([
-        jasmine.objectContaining({
+        expect.objectContaining({
           id: probe.id,
         }),
       ])
@@ -103,7 +104,7 @@ describe('probes', () => {
       addProbe(createProbe({ version: 1 }))
 
       expect(() => removeProbe(staleInitializedProbe)).not.toThrow()
-      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([jasmine.objectContaining({ version: 1 })])
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([expect.objectContaining({ version: 1 })])
     })
 
     it('should not throw when passed a stale probe instance that is no longer registered', () => {
@@ -125,9 +126,9 @@ describe('probes', () => {
       initializeProbe(probe)
 
       expect(probe).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           template: 'Test message',
-          msBetweenSampling: jasmine.any(Number),
+          msBetweenSampling: expect.any(Number),
           lastCaptureMs: -Infinity,
         })
       )
@@ -143,9 +144,9 @@ describe('probes', () => {
       initializeProbe(probe)
 
       expect(probe).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           template: 'Value: {x}',
-          evaluateTemplate: jasmine.any(Function),
+          evaluateTemplate: expect.any(Function),
         })
       )
       expect(probe.segments).toBeUndefined() // Should be deleted after initialization
@@ -162,8 +163,8 @@ describe('probes', () => {
       initializeProbe(probe)
 
       expect(probe.condition).toEqual(
-        jasmine.objectContaining({
-          evaluate: jasmine.any(Function),
+        expect.objectContaining({
+          evaluate: expect.any(Function),
         })
       )
     })
@@ -183,9 +184,9 @@ describe('probes', () => {
         error = err
       }
 
-      expect(error).toEqual(jasmine.any(Error))
+      expect(error).toEqual(expect.any(Error))
       expect((error as Error).message).toContain('Cannot compile condition')
-      expect((error as ErrorWithCause).cause).toEqual(jasmine.any(TypeError))
+      expect((error as ErrorWithCause).cause).toEqual(expect.any(TypeError))
     })
 
     it('should calculate msBetweenSampling for snapshot probes', () => {
@@ -250,14 +251,14 @@ describe('probes', () => {
       const compiledCaptureExpressions = probe.compiledCaptureExpressions as CaptureExpressionsWithCache
       expect(compiledCaptureExpressions.expressions.length).toBe(2)
       expect(compiledCaptureExpressions.expressions[0]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: 'arg',
           expression: 'arg',
           capture: { maxReferenceDepth: 3, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 6 },
         })
       )
       expect(compiledCaptureExpressions.expressions[1]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: 'obj.value',
           capture: { maxReferenceDepth: 1, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 2 },
         })
@@ -294,9 +295,9 @@ describe('probes', () => {
         error = err
       }
 
-      expect(error).toEqual(jasmine.any(Error))
+      expect(error).toEqual(expect.any(Error))
       expect((error as Error).message).toContain('Cannot compile capture expression: invalid expr')
-      expect((error as ErrorWithCause).cause).toEqual(jasmine.any(SyntaxError))
+      expect((error as ErrorWithCause).cause).toEqual(expect.any(SyntaxError))
     })
 
     it('should not compile capture expressions when snapshot capture is enabled', () => {

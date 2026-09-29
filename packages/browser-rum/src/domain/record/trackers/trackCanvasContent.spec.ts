@@ -1,3 +1,5 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
+import type { Mock } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
@@ -11,14 +13,14 @@ const WEBGL_CONTEXT_TYPES = ['webgl', 'webgl2'] as const
 describe('trackCanvasContent', () => {
   let canvas: HTMLCanvasElement
   let context: CanvasRenderingContext2D
-  let markCanvasDirtySpy: jasmine.Spy<CanvasManager['markCanvas']>
+  let markCanvasDirtySpy: Mock<CanvasManager['markCanvas']>
   let canvasManager: CanvasManager
   let tracker: Tracker | undefined
 
   beforeEach(() => {
     canvas = document.createElement('canvas')
     context = canvas.getContext('2d')!
-    markCanvasDirtySpy = jasmine.createSpy()
+    markCanvasDirtySpy = vi.fn()
     canvasManager = { ...createCanvasManager(), markCanvas: markCanvasDirtySpy }
 
     registerCleanupTask(() => tracker?.stop())
@@ -71,9 +73,9 @@ describe('trackCanvasContent', () => {
           typeof CanvasRenderingContext2D.prototype[method as keyof CanvasRenderingContext2D] === 'function'
       )
       .forEach(({ draw }) => {
-        markCanvasDirtySpy.calls.reset()
+        markCanvasDirtySpy.mockClear()
         draw()
-        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(canvas, CanvasStatus.Dirty)
+        expect(markCanvasDirtySpy).toHaveBeenCalledExactlyOnceWith(canvas, CanvasStatus.Dirty)
       })
   })
 
@@ -84,7 +86,7 @@ describe('trackCanvasContent', () => {
       if (!webGLContext) {
         return
       }
-      const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+      const setCanvasSnapshotSpy = vi.spyOn(canvasManager, 'setCanvasSnapshot')
       startTracking(true, Infinity, 100, 1000, webGLCanvas)
 
       const drawingOperations = [
@@ -94,13 +96,13 @@ describe('trackCanvasContent', () => {
       ]
 
       for (const draw of drawingOperations) {
-        markCanvasDirtySpy.calls.reset()
-        setCanvasSnapshotSpy.calls.reset()
+        markCanvasDirtySpy.mockClear()
+        setCanvasSnapshotSpy.mockClear()
         draw()
         await Promise.resolve()
 
-        expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(webGLCanvas, jasmine.any(Object))
-        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+        expect(setCanvasSnapshotSpy).toHaveBeenCalledExactlyOnceWith(webGLCanvas, expect.any(Object))
+        expect(markCanvasDirtySpy).toHaveBeenCalledExactlyOnceWith(webGLCanvas, CanvasStatus.Dirty)
       }
     })
   })
@@ -111,7 +113,7 @@ describe('trackCanvasContent', () => {
     if (!webGLContext) {
       return
     }
-    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    const setCanvasSnapshotSpy = vi.spyOn(canvasManager, 'setCanvasSnapshot')
     startTracking(true, 1, 100, 1000, webGLCanvas)
 
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
@@ -120,7 +122,7 @@ describe('trackCanvasContent', () => {
     await Promise.resolve()
 
     expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
-    expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+    expect(markCanvasDirtySpy).toHaveBeenCalledExactlyOnceWith(webGLCanvas, CanvasStatus.Dirty)
   })
 
   it('limits WebGL snapshots to the configured frame rate', async () => {
@@ -130,8 +132,8 @@ describe('trackCanvasContent', () => {
       return
     }
     let now = 1_000
-    spyOn(performance, 'now').and.callFake(() => now)
-    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    vi.spyOn(performance, 'now').mockImplementation(() => now)
+    const setCanvasSnapshotSpy = vi.spyOn(canvasManager, 'setCanvasSnapshot')
     startTracking(true, 1, 100, 1000, webGLCanvas)
 
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
@@ -156,8 +158,8 @@ describe('trackCanvasContent', () => {
       return
     }
     let now = 1_000
-    spyOn(performance, 'now').and.callFake(() => now)
-    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    vi.spyOn(performance, 'now').mockImplementation(() => now)
+    const setCanvasSnapshotSpy = vi.spyOn(canvasManager, 'setCanvasSnapshot')
     startTracking(true, 1, 100, 1000, webGLCanvas)
 
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
@@ -178,13 +180,13 @@ describe('trackCanvasContent', () => {
     if (!webGLContext) {
       return
     }
-    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    const setCanvasSnapshotSpy = vi.spyOn(canvasManager, 'setCanvasSnapshot')
     startTracking(true, 1, 100, 1000, webGLCanvas)
 
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
 
     expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
-    expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+    expect(markCanvasDirtySpy).toHaveBeenCalledExactlyOnceWith(webGLCanvas, CanvasStatus.Dirty)
   })
 
   it('marks the canvas dirty after WebGL2 drawing operations', async () => {
@@ -207,11 +209,11 @@ describe('trackCanvasContent', () => {
     ]
 
     for (const draw of drawingOperations) {
-      markCanvasDirtySpy.calls.reset()
+      markCanvasDirtySpy.mockClear()
       draw()
       await Promise.resolve()
 
-      expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+      expect(markCanvasDirtySpy).toHaveBeenCalledExactlyOnceWith(webGLCanvas, CanvasStatus.Dirty)
     }
   })
 
@@ -241,7 +243,7 @@ describe('trackCanvasContent', () => {
     if (!webGLContext) {
       return
     }
-    const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+    const setCanvasSnapshotSpy = vi.spyOn(canvasManager, 'setCanvasSnapshot')
     startTracking(true, 1, 100, 1000, webGLCanvas, false)
 
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
@@ -271,7 +273,7 @@ describe('trackCanvasContent', () => {
       if (!webGLContext) {
         return
       }
-      const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+      const setCanvasSnapshotSpy = vi.spyOn(canvasManager, 'setCanvasSnapshot')
       startTracking(true, 1, 100, 1000, webGLCanvas)
 
       webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
@@ -281,8 +283,8 @@ describe('trackCanvasContent', () => {
         expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
         expect(markCanvasDirtySpy).not.toHaveBeenCalled()
       } else {
-        expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(webGLCanvas, jasmine.any(Object))
-        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGLCanvas, CanvasStatus.Dirty)
+        expect(setCanvasSnapshotSpy).toHaveBeenCalledExactlyOnceWith(webGLCanvas, expect.any(Object))
+        expect(markCanvasDirtySpy).toHaveBeenCalledExactlyOnceWith(webGLCanvas, CanvasStatus.Dirty)
       }
     })
   })
@@ -293,7 +295,7 @@ describe('trackCanvasContent', () => {
 
     context.fillRect(0, 0, 1, 1)
 
-    expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(canvas, CanvasStatus.Dirty)
+    expect(markCanvasDirtySpy).toHaveBeenCalledExactlyOnceWith(canvas, CanvasStatus.Dirty)
   })
 
   it('does not mark the canvas dirty for non-drawing operations', () => {

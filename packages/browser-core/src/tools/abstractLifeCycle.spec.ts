@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { AbstractLifeCycle } from './abstractLifeCycle'
 
 describe('AbstractLifeCycle', () => {
@@ -13,30 +14,33 @@ describe('AbstractLifeCycle', () => {
 
   it('notifies subscribers', () => {
     const lifeCycle = new LifeCycle()
-    const subscriber1Spy = jasmine.createSpy()
-    const subscriber2Spy = jasmine.createSpy()
+    const subscriber1Spy = vi.fn()
+    const subscriber2Spy = vi.fn()
     lifeCycle.subscribe('foo', subscriber1Spy)
     lifeCycle.subscribe('foo', subscriber2Spy)
 
     lifeCycle.notify('foo', 'bar')
 
-    expect(subscriber1Spy).toHaveBeenCalledOnceWith('bar')
-    expect(subscriber2Spy).toHaveBeenCalledOnceWith('bar')
+    expect(subscriber1Spy).toHaveBeenCalledTimes(1)
+    expect(subscriber1Spy).toHaveBeenCalledWith('bar')
+    expect(subscriber2Spy).toHaveBeenCalledTimes(1)
+    expect(subscriber2Spy).toHaveBeenCalledWith('bar')
   })
 
   it('notifies subscribers for events without data', () => {
     const lifeCycle = new LifeCycle()
-    const subscriberSpy = jasmine.createSpy()
+    const subscriberSpy = vi.fn()
     lifeCycle.subscribe('no_data', subscriberSpy)
 
     lifeCycle.notify('no_data')
 
-    expect(subscriberSpy).toHaveBeenCalledOnceWith(undefined)
+    expect(subscriberSpy).toHaveBeenCalledTimes(1)
+    expect(subscriberSpy).toHaveBeenCalledWith(undefined)
   })
 
   it('does not notify unsubscribed subscribers', () => {
     const lifeCycle = new LifeCycle()
-    const subscriberSpy = jasmine.createSpy()
+    const subscriberSpy = vi.fn()
     lifeCycle.subscribe('foo', subscriberSpy).unsubscribe()
 
     lifeCycle.notify('foo', 'bar')

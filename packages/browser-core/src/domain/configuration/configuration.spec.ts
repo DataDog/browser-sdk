@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { validateAndBuildConfiguration as _validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { RumEvent } from '../../../../browser-rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
@@ -17,10 +18,10 @@ describe('BROWSER_CORE_SCHEMA', () => {
     )
   const clientToken = 'some_client_token'
 
-  let displaySpy: jasmine.Spy<typeof display.error>
+  let displaySpy: Mock<typeof display.error>
 
   beforeEach(() => {
-    displaySpy = spyOn(display, 'error')
+    displaySpy = vi.spyOn(display, 'error')
   })
 
   describe('experimentalFeatures', () => {
@@ -39,22 +40,22 @@ describe('BROWSER_CORE_SCHEMA', () => {
         clientToken,
         enableExperimentalFeatures: ['bar', undefined as any, null as any, 11 as any],
       })
-      expect(isExperimentalFeatureEnabled('bar' as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(undefined as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(null as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(11 as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled('bar' as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(undefined as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(null as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(11 as any)).toBe(false)
     })
   })
 
   describe('validate init configuration', () => {
     it('requires the InitConfiguration to be defined', () => {
       expect(validateAndBuildConfiguration(undefined as unknown as InitConfiguration)).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Configuration must be an object')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('Configuration must be an object')
     })
 
     it('requires clientToken to be defined', () => {
       expect(validateAndBuildConfiguration({} as unknown as InitConfiguration)).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"clientToken" is required')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"clientToken" is required')
     })
 
     it("shouldn't display any error if the configuration is correct", () => {
@@ -66,13 +67,13 @@ describe('BROWSER_CORE_SCHEMA', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, sessionSampleRate: 'foo' } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"sessionSampleRate" must be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"sessionSampleRate" must be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       expect(validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"sessionSampleRate" must be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"sessionSampleRate" must be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       validateAndBuildConfiguration({ clientToken: 'yes', sessionSampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
     })
@@ -81,13 +82,13 @@ describe('BROWSER_CORE_SCHEMA', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 'foo' } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"telemetrySampleRate" must be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"telemetrySampleRate" must be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       expect(validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"telemetrySampleRate" must be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"telemetrySampleRate" must be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       validateAndBuildConfiguration({ clientToken: 'yes', telemetrySampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
     })
@@ -135,7 +136,7 @@ describe('BROWSER_CORE_SCHEMA', () => {
         }
       }
       const configuration = validateAndBuildConfiguration({ clientToken, beforeSend })!
-      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBeFalse()
+      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBe(false)
       expect(configuration.beforeSend!({ view: { url: '/bar' } }, {})).toBeUndefined()
     })
   })
@@ -157,7 +158,7 @@ describe('BROWSER_CORE_SCHEMA', () => {
 
     it('rejects invalid values', () => {
       expect(validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: 'foo' as any })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"trackingConsent" must be one of: "granted", "not-granted"')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"trackingConsent" must be one of: "granted", "not-granted"')
     })
   })
 
@@ -190,7 +191,7 @@ describe('BROWSER_CORE_SCHEMA', () => {
   describe('site parameter validation', () => {
     it('should fail and display an error on an unrecognized site', () => {
       expect(validateAndBuildConfiguration({ clientToken, site: 'foo.com' })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith(
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith(
         '"site" must be a valid Datadog site. More details: https://docs.datadoghq.com/getting_started/site/.'
       )
     })
@@ -199,14 +200,14 @@ describe('BROWSER_CORE_SCHEMA', () => {
   describe('env parameter validation', () => {
     it('should display an error and reject the configuration on invalid env', () => {
       expect(validateAndBuildConfiguration({ clientToken, env: false as any })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"env" must be a non-empty string')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"env" must be a non-empty string')
     })
   })
 
   describe('service parameter validation', () => {
     it('should display an error and reject the configuration on invalid service', () => {
       expect(validateAndBuildConfiguration({ clientToken, service: 1 as any })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"service" must be a non-empty string')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"service" must be a non-empty string')
     })
 
     it('should not reject null', () => {
@@ -219,7 +220,7 @@ describe('BROWSER_CORE_SCHEMA', () => {
   describe('version parameter validation', () => {
     it('should display an error and reject the configuration on invalid version', () => {
       expect(validateAndBuildConfiguration({ clientToken, version: 0 as any })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"version" must be a non-empty string')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith('"version" must be a non-empty string')
     })
   })
 
@@ -234,7 +235,9 @@ describe('BROWSER_CORE_SCHEMA', () => {
       const config = validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: 42 as any })
       expect(config).toBeDefined()
       expect(config!.allowedTrackingOrigins).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('"allowedTrackingOrigins" must be a string, RegExp, or function')
+      expect(displaySpy).toHaveBeenCalledExactlyOnceWith(
+        '"allowedTrackingOrigins" must be a string, RegExp, or function'
+      )
     })
 
     it('should filter out an invalid entry while keeping valid ones', () => {

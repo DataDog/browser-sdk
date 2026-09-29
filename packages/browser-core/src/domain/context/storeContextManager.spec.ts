@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from 'vitest'
 import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import type { Context } from '../../tools/serialisation/context'

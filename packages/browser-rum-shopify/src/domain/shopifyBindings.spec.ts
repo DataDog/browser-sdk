@@ -1,13 +1,14 @@
+import { describe, expect, it, vi } from 'vitest'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { createFakeAnalytics } from '../../test/mockShopifyAnalytics'
 import { initShopifyBindings } from './shopifyBindings'
 
 function createFakeRumPublicApi() {
-  const startView = jasmine.createSpy('startView')
-  const addAction = jasmine.createSpy('addAction')
-  const addError = jasmine.createSpy('addError')
-  const startAction = jasmine.createSpy('startAction')
-  const stopAction = jasmine.createSpy('stopAction')
+  const startView = vi.fn()
+  const addAction = vi.fn()
+  const addError = vi.fn()
+  const startAction = vi.fn()
+  const stopAction = vi.fn()
   const rumPublicApi = { startView, addAction, addError, startAction, stopAction } as unknown as RumPublicApi
   return { rumPublicApi, startView, addAction, addError, startAction, stopAction }
 }
@@ -154,7 +155,7 @@ describe('initShopifyBindings', () => {
       },
     })
 
-    expect(addError).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Boom', stack: 'stack trace' }), {
+    expect(addError).toHaveBeenCalledWith(expect.objectContaining({ message: 'Boom', stack: 'stack trace' }), {
       extensionName: 'my-extension',
       extensionTarget: 'purchase.checkout.block.render',
       extensionErrorType: 'RUNTIME',

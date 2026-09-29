@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { StringRole } from '../../../types'
 import type { StringId } from './stringIds'
 import { createString } from './roles'

@@ -1,9 +1,10 @@
+import { vi } from 'vitest'
 import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from '../src/domain/shopifyAnalytics'
 
 export function createFakeAnalytics() {
   const subscribers = new Map<string, (event: ShopifyPixelEvent) => void>()
   const analytics: ShopifyAnalyticsApi = {
-    subscribe: jasmine.createSpy('subscribe').and.callFake((eventName: string, callback) => {
+    subscribe: vi.fn((eventName: string, callback) => {
       subscribers.set(eventName, callback)
     }),
   }

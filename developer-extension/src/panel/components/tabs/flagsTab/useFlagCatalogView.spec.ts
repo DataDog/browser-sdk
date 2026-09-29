@@ -1,5 +1,6 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
+import { vi, describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '../../../../../../packages/browser-core/test'
 import type { FlagCatalogView } from './useFlagCatalogView'
 import { useFlagCatalogView } from './useFlagCatalogView'
@@ -67,15 +68,17 @@ describe('useFlagCatalogView', () => {
   })
 
   it('debounces the search term before putting it in the request', () => {
-    jasmine.clock().install()
-    registerCleanupTask(() => jasmine.clock().uninstall())
+    vi.useFakeTimers()
+    registerCleanupTask(() => vi.useRealTimers())
 
     const get = mountHook(null)
     act(() => get().setSearch('checkout'))
     // The live value updates immediately, but the request (sent to the server) waits out the debounce.
     expect(get().search).toBe('checkout')
     expect(get().request.search).toBe('')
-    act(() => jasmine.clock().tick(400))
+    act(() => {
+      vi.advanceTimersByTime(400)
+    })
     expect(get().request.search).toBe('checkout')
   })
 })

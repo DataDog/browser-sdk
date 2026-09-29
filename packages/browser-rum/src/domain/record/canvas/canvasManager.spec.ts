@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { registerCleanupTask, waitNextMicrotask } from '@datadog/browser-core/test'
 import { CanvasStatus, createCanvasManager } from './canvasManager'
 import { createCanvasSnapshot } from './canvasSnapshot'
@@ -144,7 +145,7 @@ describe('CanvasManager', () => {
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
-    expect(canvasManager.takeCanvasContentMutations()).toHaveSize(1)
+    expect(canvasManager.takeCanvasContentMutations()).toHaveLength(1)
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 

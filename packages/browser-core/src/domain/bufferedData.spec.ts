@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { clocksNow } from '@datadog/js-core/time'
 import { ConsoleApiName } from '@datadog/js-core/util'
 import type { MockFetch } from '../../test'
@@ -13,33 +14,34 @@ import { ErrorHandling, ErrorSource, type RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 
 describe('startBufferingData', () => {
-  it('collects runtime errors', (done) => {
-    const runtimeErrorObservable = new Observable<RawError>()
-    replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
-    const { observable, stop } = startBufferingData()
-    registerCleanupTask(stop)
+  it('collects runtime errors', () =>
+    new Promise<void>((resolve) => {
+      const runtimeErrorObservable = new Observable<RawError>()
+      replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
+      const { observable, stop } = startBufferingData()
+      registerCleanupTask(stop)
 
-    const rawError = {
-      startClocks: clocksNow(),
-      source: ErrorSource.SOURCE,
-      type: 'Error',
-      stack: 'Error: error!',
-      handling: ErrorHandling.UNHANDLED,
-      causes: undefined,
-      fingerprint: undefined,
-      message: 'error!',
-    }
+      const rawError = {
+        startClocks: clocksNow(),
+        source: ErrorSource.SOURCE,
+        type: 'Error',
+        stack: 'Error: error!',
+        handling: ErrorHandling.UNHANDLED,
+        causes: undefined,
+        fingerprint: undefined,
+        message: 'error!',
+      }
 
-    runtimeErrorObservable.notify(rawError)
+      runtimeErrorObservable.notify(rawError)
 
-    observable.subscribe((data) => {
-      expect(data).toEqual({
-        type: BufferedDataType.RUNTIME_ERROR,
-        data: rawError,
+      observable.subscribe((data) => {
+        expect(data).toEqual({
+          type: BufferedDataType.RUNTIME_ERROR,
+          data: rawError,
+        })
+        resolve()
       })
-      done()
-    })
-  })
+    }))
 
   it('collects fetch requests', async () => {
     mockFetch()
@@ -47,7 +49,7 @@ describe('startBufferingData', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const fetch = window.fetch as MockFetch
     const collected: BufferedData[] = []
-    const bufferedDataCollectedSpy = jasmine.createSpy()
+    const bufferedDataCollectedSpy = vi.fn()
 
     registerCleanupTask(() => {
       stop()
@@ -68,7 +70,7 @@ describe('startBufferingData', () => {
     expect(collected).toEqual([
       {
         type: BufferedDataType.FETCH,
-        data: jasmine.objectContaining({
+        data: expect.objectContaining({
           state: 'start',
           url: 'http://fake-url/',
           method: 'GET',
@@ -76,7 +78,7 @@ describe('startBufferingData', () => {
       },
       {
         type: BufferedDataType.FETCH,
-        data: jasmine.objectContaining({
+        data: expect.objectContaining({
           state: 'resolve',
           url: 'http://fake-url/',
           method: 'GET',
@@ -90,7 +92,7 @@ describe('startBufferingData', () => {
     mockXhr()
     const { observable, stop } = startBufferingData()
     const collected: BufferedData[] = []
-    const bufferedDataCollectedSpy = jasmine.createSpy()
+    const bufferedDataCollectedSpy = vi.fn()
 
     registerCleanupTask(() => {
       stop()
@@ -118,7 +120,7 @@ describe('startBufferingData', () => {
     expect(collected).toEqual([
       {
         type: BufferedDataType.XHR,
-        data: jasmine.objectContaining({
+        data: expect.objectContaining({
           state: 'start',
           url: 'http://fake-url/',
           method: 'GET',
@@ -126,7 +128,7 @@ describe('startBufferingData', () => {
       },
       {
         type: BufferedDataType.XHR,
-        data: jasmine.objectContaining({
+        data: expect.objectContaining({
           state: 'complete',
           url: 'http://fake-url/',
           method: 'GET',
@@ -136,24 +138,25 @@ describe('startBufferingData', () => {
     ])
   })
 
-  it('collects console logs', (done) => {
-    spyOn(console, 'error').and.callFake(noop)
-    const { observable, stop } = startBufferingData()
+  it('collects console logs', () =>
+    new Promise<void>((resolve) => {
+      vi.spyOn(console, 'error').mockImplementation(noop)
+      const { observable, stop } = startBufferingData()
 
-    registerCleanupTask(() => {
-      stop()
-      resetConsoleObservable()
-    })
+      registerCleanupTask(() => {
+        stop()
+        resetConsoleObservable()
+      })
 
-    observable.subscribe((data) => {
-      if (data.type === BufferedDataType.CONSOLE && data.data.api === ConsoleApiName.error) {
-        expect(data.data.message).toContain('buffered data test error')
-        done()
-      }
-    })
+      observable.subscribe((data) => {
+        if (data.type === BufferedDataType.CONSOLE && data.data.api === ConsoleApiName.error) {
+          expect(data.data.message).toContain('buffered data test error')
+          resolve()
+        }
+      })
 
-    /* eslint-disable no-console */
-    console.error('buffered data test error')
-    /* eslint-enable no-console */
-  })
+      /* eslint-disable no-console */
+      console.error('buffered data test error')
+      /* eslint-enable no-console */
+    }))
 })
