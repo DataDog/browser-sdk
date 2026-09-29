@@ -9,14 +9,19 @@ import {
   mockable,
 } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
-import type { EarlyProfiler, RUMProfiler } from '../domain/profiling/types'
-import { startEarlyProfiler } from '../domain/profiling/earlyProfiler'
+import { globalObject } from '@datadog/js-core/util'
+import type { RUMProfiler } from '../domain/profiling/types'
+import { EARLY_PROFILER_GLOBAL_NAME } from '../domain/profiling/earlyProfilerConstants'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
+/** Type of the `window` global set by the early profiler snippet. */
+interface EarlyProfilerGlobal {
+  [EARLY_PROFILER_GLOBAL_NAME]?: unknown
+}
+
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
-  let earlyProfiler: EarlyProfiler | undefined
 
   function onRumStart(
     lifeCycle: LifeCycle,
@@ -31,37 +36,23 @@ export function makeProfilerApi(): ProfilerApi {
     if (!session) {
       // No session tracked, no profiling.
       // Note: No Profiling context is set at this stage.
+      stopEarlyProfilerSnippet()
       return
     }
 
     if (!isProfilingSampled(configuration, session)) {
+      stopEarlyProfilerSnippet()
       return
     }
 
     // Listen to events and add the profiling context to them.
     const profilingContextManager = startProfilingContext(hooks)
 
-    // Start collecting Profiler samples right away, before the profiler chunk
-    // is loaded, so no sample is lost while the chunk is downloading. When
-    // possible, this also adopts the Profiler instance started by the early
-    // profiler snippet, so samples collected before the SDK was loaded are kept
-    // as well.
-    const earlyStart = mockable(startEarlyProfiler)()
-    if (earlyStart.state === 'error') {
-      // Browser support check and Profiler startup errors (e.g. missing
-      // `Document-Policy: js-profiling` header) are handled by the early
-      // profiler, as collection starts before the profiler chunk is loaded.
-      profilingContextManager.set({ status: 'error', error_reason: earlyStart.errorReason })
-      return
-    }
-    earlyProfiler = earlyStart.earlyProfiler
-    profilingContextManager.set({ status: 'running', error_reason: undefined })
-
     mockable(lazyLoadProfiler)()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
           profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
-          stopEarlyProfiler()
+          stopEarlyProfilerSnippet()
           return
         }
 
@@ -71,31 +62,52 @@ export function makeProfilerApi(): ProfilerApi {
           sessionManager,
           profilingContextManager,
           createEncoder,
-          viewHistory,
-          earlyProfiler
+          viewHistory
         )
         profiler.start()
-        // The profiler chunk took over the early collection.
-        earlyProfiler = undefined
       })
       .catch((e: unknown) => {
-        stopEarlyProfiler()
+        stopEarlyProfilerSnippet()
         monitorError(e)
       })
-  }
-
-  function stopEarlyProfiler() {
-    // Stop early collection in case the profiler chunk has not been loaded yet.
-    earlyProfiler?.stop()
-    earlyProfiler = undefined
   }
 
   return {
     onRumStart,
     stop: () => {
-      stopEarlyProfiler()
       profiler?.stop()
+      // In case the profiler chunk has not been loaded yet, also stop the
+      // Profiler instance started by the early profiler snippet. When the chunk
+      // has already taken it over, this is a no-op (the chunk deletes the
+      // snippet global when adopting the instance).
+      stopEarlyProfilerSnippet()
     },
+  }
+}
+
+/**
+ * Stops the Profiler instance started by the early profiler snippet, if any,
+ * and discards its samples.
+ *
+ * The SDK is the only party that knows whether profiling will happen (session
+ * and sampling decisions), so it is responsible for stopping the snippet's
+ * Profiler when it won't: otherwise its samples would stay pinned in memory
+ * until the page is unloaded. The samples cannot be sent without the profiler
+ * chunk anyway.
+ *
+ * Everything else related to the early profiler snippet (validating it,
+ * adopting the Profiler instance, collecting it periodically) is handled by
+ * the profiler chunk.
+ */
+function stopEarlyProfilerSnippet() {
+  const rawGlobal = (globalObject as EarlyProfilerGlobal)[EARLY_PROFILER_GLOBAL_NAME]
+  delete (globalObject as EarlyProfilerGlobal)[EARLY_PROFILER_GLOBAL_NAME]
+  if (typeof rawGlobal !== 'object' || rawGlobal === null) {
+    return
+  }
+  const { profiler } = rawGlobal as { readonly profiler?: { stopped: unknown; stop: () => Promise<unknown> } }
+  if (profiler && profiler.stopped !== true && typeof profiler.stop === 'function') {
+    void profiler.stop().catch(monitorError)
   }
 }
 

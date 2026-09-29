@@ -5,8 +5,8 @@
     <title>Sandbox</title>
     <script>
       // Early profiler snippet: starts collecting Profiler samples before the
-      // SDK is loaded. See `_DD_RUM_EARLY_PROFILER` in
-      // packages/browser-rum/src/domain/profiling/earlyProfiler.ts.
+      // SDK is loaded. See `EARLY_PROFILER_GLOBAL_NAME` in
+      // packages/browser-rum/src/domain/profiling/earlyProfilerConstants.ts.
       window._DD_RUM_EARLY_PROFILER = function (w) {
         try {
           return {

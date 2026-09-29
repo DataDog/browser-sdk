@@ -72,8 +72,8 @@ export type ProfilerStartupErrorReason =
   | 'unexpected-exception'
 
 /**
- * A Profiler instance started before the profiler chunk is loaded, along with
- * the time it started, so the profiler chunk can adopt it and keep the samples
+ * A Profiler instance started by the early profiler snippet, along with the
+ * time it started, so the profiler chunk can adopt it and keep the samples
  * collected while it was downloading.
  */
 export interface EarlyProfilerTakeover {
@@ -82,25 +82,6 @@ export interface EarlyProfilerTakeover {
   /** High resolution time when the Profiler instance started. */
   readonly startClocks: ClocksState
 }
-
-/**
- * Collects Profiler samples before the profiler chunk is loaded.
- *
- * `takeover()` hands the running Profiler instance over to the profiler chunk.
- * It returns `undefined` when collection is currently paused (hidden page), so
- * the caller should start a new Profiler instance instead.
- *
- * `stop()` stops collecting and discards buffered samples.
- */
-export interface EarlyProfiler {
-  readonly takeover: () => EarlyProfilerTakeover | undefined
-  readonly stop: () => void
-}
-
-/** Result of starting the early collection of Profiler samples. */
-export type EarlyProfilerStart =
-  | { readonly state: 'started'; readonly earlyProfiler: EarlyProfiler }
-  | { readonly state: 'error'; readonly errorReason: ProfilerStartupErrorReason }
 
 export interface RUMProfilerConfiguration {
   sampleIntervalMs: number // Sample stack trace every x milliseconds (defaults to 10ms for Unix, 16ms on Windows)

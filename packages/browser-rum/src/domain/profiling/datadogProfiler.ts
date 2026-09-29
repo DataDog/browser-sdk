@@ -18,7 +18,6 @@ import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
-  EarlyProfiler,
   EarlyProfilerTakeover,
   RumProfilerInstance,
   RumProfilerRunningInstance,
@@ -33,6 +32,7 @@ import { createFormDataEmitter } from './transport/formDataEmitter'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { buildProfileEvent } from './transport/buildProfileEvent'
 import { createProfilerInstance } from './createProfilerInstance'
+import { readEarlyProfilerSnippet } from './earlyProfilerSnippet'
 import { DEFAULT_RUM_PROFILER_CONFIGURATION } from './defaultProfilerConfiguration'
 import { createLongTaskHistory } from './longTaskHistory'
 import { createActionHistory } from './actionHistory'
@@ -48,7 +48,6 @@ export function createRumProfiler(
   profilingContextManager: ProfilingContextManager,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
-  earlyProfiler?: EarlyProfiler,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const emitPayload = canUseEventBridge()
@@ -115,10 +114,10 @@ export function createRumProfiler(
       addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
-    // Start profiler instance. When collection was started before this chunk
-    // was loaded (early collection), take over its running Profiler instance to
-    // keep the samples collected while the chunk was downloading.
-    startNextProfilerInstance(earlyProfiler?.takeover())
+    // Start profiler instance. When collection was started by the early
+    // profiler snippet, adopt its running Profiler instance to keep the
+    // samples collected while this chunk was downloading.
+    startNextProfilerInstance(readEarlyProfilerSnippet())
     triggerQuotaCheck()
   }
 
@@ -213,7 +212,7 @@ export function createRumProfiler(
     let profiler: Profiler
     let startClocks: ClocksState
     if (takeover) {
-      // Adopt the Profiler instance started before this chunk was loaded, so
+      // Adopt the Profiler instance started by the early profiler snippet, so
       // the first collected profile covers the early collection period too.
       profiler = takeover.profiler
       startClocks = takeover.startClocks

@@ -1,40 +1,33 @@
+import { deepClone, globalObject } from '@datadog/js-core/util'
+import { BridgeCapability, createIdentityEncoder } from '@datadog/browser-core'
+import { createHooks, LifeCycle } from '@datadog/browser-rum-core'
 import {
   MID_HASH_UUID,
-  replaceMockableWithSpy,
   createSessionManagerMock,
-  replaceMockable,
-  waitNextMicrotask,
   mockEventBridge,
+  registerCleanupTask,
+  replaceMockable,
+  replaceMockableWithSpy,
+  waitNextMicrotask,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
-import { createHooks, LifeCycle } from '@datadog/browser-rum-core'
-import { BridgeCapability, createIdentityEncoder } from '@datadog/browser-core'
-import type { EarlyProfiler } from '../domain/profiling/types'
-import { startEarlyProfiler } from '../domain/profiling/earlyProfiler'
-import { makeProfilerApi } from './profilerApi'
+import { mockProfiler } from '../../test'
+import { EARLY_PROFILER_GLOBAL_NAME } from '../domain/profiling/earlyProfilerConstants'
+import { mockedTrace } from '../domain/profiling/test-utils/mockedTrace'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
+import { makeProfilerApi } from './profilerApi'
+
+interface MockProfilerInstance {
+  stopped: boolean
+}
 
 describe('profilerApi', () => {
-  let startEarlyProfilerSpy: jasmine.Spy
-  let earlyProfilerStopSpy: jasmine.Spy
-  let earlyProfilerTakeoverSpy: jasmine.Spy
-
-  beforeEach(() => {
-    earlyProfilerStopSpy = jasmine.createSpy('earlyProfiler.stop')
-    earlyProfilerTakeoverSpy = jasmine.createSpy('earlyProfiler.takeover').and.returnValue(undefined)
-    const earlyProfiler: EarlyProfiler = {
-      takeover: earlyProfilerTakeoverSpy as EarlyProfiler['takeover'],
-      stop: earlyProfilerStopSpy,
-    }
-    startEarlyProfilerSpy = replaceMockableWithSpy(startEarlyProfiler)
-    startEarlyProfilerSpy.and.returnValue({ state: 'started', earlyProfiler })
-  })
-
   describe('deterministic sampling', () => {
     it('should apply the correction factor for chained sampling on the profiling sample rate', () => {
       // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and profilingSampleRate=60:
       // - Without correction: isSampled(id, 60) → true (50.7 < 60)
       // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
+      const lazyLoadProfilerSpy = replaceMockableWithSpy(lazyLoadProfiler)
       const profilerApi = makeProfilerApi()
 
       profilerApi.onRumStart(
@@ -46,90 +39,117 @@ describe('profilerApi', () => {
         createIdentityEncoder
       )
 
-      expect(startEarlyProfilerSpy).not.toHaveBeenCalled()
+      expect(lazyLoadProfilerSpy).not.toHaveBeenCalled()
     })
   })
 
-  describe('early collection', () => {
+  describe('early profiler snippet', () => {
     let createRumProfilerSpy: jasmine.Spy
     let lazyLoadProfilerSpy: jasmine.Spy
-    let earlyProfilerHandle: EarlyProfiler
+    let instances: Set<unknown>
 
-    beforeEach(() => {
-      createRumProfilerSpy = jasmine
-        .createSpy('createRumProfiler')
-        .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
-      lazyLoadProfilerSpy = jasmine.createSpy('lazyLoadProfiler').and.returnValue(Promise.resolve(createRumProfilerSpy))
-      replaceMockable(lazyLoadProfiler, lazyLoadProfilerSpy)
-      earlyProfilerHandle = { takeover: earlyProfilerTakeoverSpy as EarlyProfiler['takeover'], stop: earlyProfilerStopSpy }
-      startEarlyProfilerSpy.and.returnValue({ state: 'started', earlyProfiler: earlyProfilerHandle })
-    })
+    function setEarlyProfilerSnippet(): MockProfilerInstance {
+      const ProfilerConstructor = globalObject.Profiler as new (options: {
+        sampleInterval: number
+        maxBufferSize: number
+      }) => MockProfilerInstance
+      const profiler = new ProfilerConstructor({ sampleInterval: 10, maxBufferSize: 9000 })
+      ;(globalObject as unknown as { [key: string]: unknown })[EARLY_PROFILER_GLOBAL_NAME] = {
+        profiler,
+        startClocks: { relative: 1, timeStamp: 2 },
+      }
+      return profiler
+    }
 
-    function startApi() {
+    function getEarlyProfilerSnippet() {
+      return (globalObject as unknown as { [key: string]: unknown })[EARLY_PROFILER_GLOBAL_NAME]
+    }
+
+    function startApi(sessionManager = createSessionManagerMock().setId('session-id-1')) {
       const api = makeProfilerApi()
       api.onRumStart(
         new LifeCycle(),
         createHooks(),
         mockRumConfiguration({ profilingSampleRate: 100 }),
-        createSessionManagerMock().setId('session-id-1'),
+        sessionManager,
         mockViewHistory(),
         createIdentityEncoder
       )
       return api
     }
 
-    it('starts early collection synchronously, before the profiler chunk is loaded', () => {
-      lazyLoadProfilerSpy.and.callFake(() => {
-        expect(startEarlyProfilerSpy).toHaveBeenCalled()
-        return Promise.resolve(createRumProfilerSpy)
+    beforeEach(() => {
+      instances = mockProfiler(deepClone(mockedTrace)).instances
+      registerCleanupTask(() => {
+        delete (globalObject as unknown as { [key: string]: unknown })[EARLY_PROFILER_GLOBAL_NAME]
       })
+      createRumProfilerSpy = jasmine
+        .createSpy('createRumProfiler')
+        .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
+      lazyLoadProfilerSpy = replaceMockableWithSpy(lazyLoadProfiler)
+      lazyLoadProfilerSpy.and.returnValue(Promise.resolve(createRumProfilerSpy))
+    })
 
+    it('loads the profiler chunk when the session is sampled for profiling', async () => {
       startApi()
+      await waitNextMicrotask() // let lazyLoadProfiler().then() run
 
-      expect(startEarlyProfilerSpy).toHaveBeenCalled()
       expect(lazyLoadProfilerSpy).toHaveBeenCalled()
-    })
-
-    it('passes the early profiler to the profiler chunk so it can take over early collection', async () => {
-      startApi()
-      await waitNextMicrotask() // let lazyLoadProfiler().then() run
-
       expect(createRumProfilerSpy).toHaveBeenCalled()
-      expect(createRumProfilerSpy.calls.argsFor(0)[6]).toBe(earlyProfilerHandle)
     })
 
-    it('does not stop the early collector once the profiler chunk took over', async () => {
-      const profilerStopSpy = jasmine.createSpy('profiler.stop')
-      createRumProfilerSpy.and.returnValue({ start: jasmine.createSpy(), stop: profilerStopSpy })
-      const api = startApi()
+    it('does not create a Profiler instance on its own', async () => {
+      // Early collection is the snippet's job: without it, the Profiler is only
+      // created by the profiler chunk.
+      startApi()
       await waitNextMicrotask() // let lazyLoadProfiler().then() run
 
-      api.stop()
-
-      // The profiler chunk took over early collection: stopping the SDK goes through it.
-      expect(earlyProfilerStopSpy).not.toHaveBeenCalled()
-      expect(profilerStopSpy).toHaveBeenCalled()
+      expect(instances.size).toBe(0)
     })
 
-    it('does not load the profiler chunk when the early profiler fails to start', () => {
-      startEarlyProfilerSpy.and.returnValue({ state: 'error', errorReason: 'not-supported-by-browser' })
+    it('does not load the profiler chunk and stops the snippet Profiler when the session is not tracked', () => {
+      const snippetProfiler = setEarlyProfilerSnippet()
+      const sessionManager = createSessionManagerMock().setNotTracked()
 
-      startApi()
+      startApi(sessionManager)
 
       expect(lazyLoadProfilerSpy).not.toHaveBeenCalled()
+      expect(snippetProfiler.stopped).toBeTrue()
+      expect(getEarlyProfilerSnippet()).toBeUndefined()
     })
 
-    it('stops the early collector when the profiler chunk fails to load', async () => {
+    it('does not load the profiler chunk and stops the snippet Profiler when the session is not sampled for profiling', () => {
+      const snippetProfiler = setEarlyProfilerSnippet()
+
+      const api = makeProfilerApi()
+      api.onRumStart(
+        new LifeCycle(),
+        createHooks(),
+        mockRumConfiguration({ sessionSampleRate: 60, profilingSampleRate: 60 }),
+        createSessionManagerMock().setId(MID_HASH_UUID),
+        mockViewHistory(),
+        createIdentityEncoder
+      )
+
+      expect(lazyLoadProfilerSpy).not.toHaveBeenCalled()
+      expect(snippetProfiler.stopped).toBeTrue()
+      expect(getEarlyProfilerSnippet()).toBeUndefined()
+    })
+
+    it('stops the snippet Profiler when the profiler chunk fails to load', async () => {
+      const snippetProfiler = setEarlyProfilerSnippet()
       lazyLoadProfilerSpy.and.returnValue(Promise.resolve(undefined))
 
       startApi()
-      await waitNextMicrotask()
+      await waitNextMicrotask() // let lazyLoadProfiler().then() run
 
-      expect(earlyProfilerStopSpy).toHaveBeenCalled()
       expect(createRumProfilerSpy).not.toHaveBeenCalled()
+      expect(snippetProfiler.stopped).toBeTrue()
+      expect(getEarlyProfilerSnippet()).toBeUndefined()
     })
 
-    it('stops the early collector when loading the profiler chunk throws', async () => {
+    it('stops the snippet Profiler when loading the profiler chunk throws', async () => {
+      const snippetProfiler = setEarlyProfilerSnippet()
       lazyLoadProfilerSpy.and.returnValue(Promise.reject(new Error('load error')))
 
       startApi()
@@ -137,16 +157,18 @@ describe('profilerApi', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(earlyProfilerStopSpy).toHaveBeenCalled()
-      expect(createRumProfilerSpy).not.toHaveBeenCalled()
+      expect(snippetProfiler.stopped).toBeTrue()
+      expect(getEarlyProfilerSnippet()).toBeUndefined()
     })
 
-    it('stops the early collector when the SDK is stopped before the profiler chunk is loaded', () => {
-      const api = startApi()
+    it('stops the snippet Profiler when the SDK is stopped before the profiler chunk is loaded', () => {
+      const snippetProfiler = setEarlyProfilerSnippet()
 
+      const api = startApi()
       api.stop()
 
-      expect(earlyProfilerStopSpy).toHaveBeenCalled()
+      expect(snippetProfiler.stopped).toBeTrue()
+      expect(getEarlyProfilerSnippet()).toBeUndefined()
     })
   })
 
