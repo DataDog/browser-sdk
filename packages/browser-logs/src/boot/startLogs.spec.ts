@@ -9,6 +9,9 @@ import {
   DEFAULT_FETCH_MOCK,
   createSessionManagerMock,
   MOCK_SESSION_ID,
+  mockSourceCodeContext,
+  mockReportingObserver,
+  FAKE_REPORT,
 } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
@@ -74,6 +77,170 @@ describe('logs', () => {
   })
 
   describe('request', () => {
+    it('attributes deprecation warnings from the original report without serializing it', async () => {
+      const reportingObserver = mockReportingObserver()
+      mockSourceCodeContext({
+        'Error\n    at deprecatedApi (http://foo.bar/index.js:20:10)': { service: 'checkout', version: '1.2.3' },
+      })
+      const beforeSend = jasmine.createSpy('beforeSend')
+      startLogsWithDefaults({
+        configuration: { beforeSend, forwardReports: ['deprecation'], version: 'shell-version' },
+      })
+
+      reportingObserver.raiseReport('deprecation')
+      clock.tick(FLUSH_DURATION_LIMIT)
+      await interceptor.waitForAllFetchCalls()
+
+      expect(beforeSend).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({
+          status: StatusType.warn,
+          service: 'checkout',
+          version: '1.2.3',
+          ddtags: 'sdk_version:test,service:checkout,version:1.2.3',
+        }),
+        { report: { ...FAKE_REPORT, type: 'deprecation' } }
+      )
+      const log = getLoggedMessage(requests, 0)
+      expect(log).toEqual(
+        jasmine.objectContaining({
+          message: 'deprecation: foo bar Found in http://foo.bar/index.js:20:10',
+          status: StatusType.warn,
+          origin: ErrorSource.REPORT,
+          service: 'checkout',
+          version: '1.2.3',
+          ddtags: 'sdk_version:test,service:checkout,version:1.2.3',
+        })
+      )
+      expect(log.error).toBeUndefined()
+      expect(log.report).toBeUndefined()
+      expect(log.domainContext).toBeUndefined()
+    })
+
+    it('sends source code service and version as attributes and tags for errors passed to a logger', async () => {
+      const stack = 'Error: checkout failed\n    at checkout (https://example.com/checkout.js:42:10)'
+      mockSourceCodeContext({ [stack]: { service: 'checkout', version: '1.2.3', ddDebugId: 'debug-id' } })
+      const beforeSend = jasmine.createSpy('beforeSend')
+      const { logger } = startLogsWithDefaults({ configuration: { beforeSend, version: 'global-version' } })
+      const error = new Error('checkout failed')
+      error.stack = stack
+
+      logger.error('Checkout failed', undefined, error)
+      clock.tick(FLUSH_DURATION_LIMIT)
+      await interceptor.waitForAllFetchCalls()
+
+      expect(beforeSend).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          service: 'checkout',
+          version: '1.2.3',
+          ddtags: 'sdk_version:test,service:checkout,version:1.2.3',
+        }),
+        jasmine.anything()
+      )
+      const log = getLoggedMessage(requests, 0)
+      expect(log).toEqual(
+        jasmine.objectContaining({
+          service: 'checkout',
+          version: '1.2.3',
+          ddtags: 'sdk_version:test,service:checkout,version:1.2.3',
+          _dd: { debug_ids: [{ url: 'https://example.com/checkout.js', id: 'debug-id' }] },
+        })
+      )
+    })
+
+    ;[
+      { context: { service: 'checkout' }, service: 'checkout', version: 'global-version' },
+      { context: { version: '1.2.3' }, service: 'global-service', version: '1.2.3' },
+      { context: { ddDebugId: 'debug-id' }, service: 'global-service', version: 'global-version' },
+    ].forEach(({ context, service, version }) => {
+      it(`preserves other context and configuration values when source code context contains only ${Object.keys(context)[0]}`, () => {
+        const stack = 'Error\n    at checkout (https://example.com/checkout.js:42:10)'
+        mockSourceCodeContext({ [stack]: context })
+        const beforeSend = jasmine.createSpy('beforeSend')
+        const { handleLog, logger, globalContext } = startLogsWithDefaults({
+          configuration: { beforeSend, version: 'global-version' },
+        })
+        globalContext.setContext({ service: 'global-service' })
+
+        handleLog(DEFAULT_MESSAGE, logger, stack)
+
+        expect(beforeSend).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            service,
+            version,
+            ddtags: `sdk_version:test,service:${service},version:${version}`,
+          }),
+          { handlingStack: stack }
+        )
+      })
+    })
+
+    ;['customer-tags', null, { service: 'customer-service', version: 'customer-version', env: 'customer-env' }].forEach(
+      (tags) => {
+        ;['setContext', 'setContextProperty'].forEach((setter) => {
+          it(`preserves customer tags from ${setter}: ${JSON.stringify(tags)}`, async () => {
+            const stack = 'Error\n    at checkout (https://example.com/checkout.js:42:10)'
+            mockSourceCodeContext({ [stack]: { service: 'checkout' } })
+            const beforeSend = jasmine.createSpy('beforeSend')
+            const { handleLog, logger, globalContext } = startLogsWithDefaults({
+              configuration: { beforeSend, version: 'global-version' },
+            })
+            if (setter === 'setContext') {
+              globalContext.setContext({ tags })
+            } else {
+              globalContext.setContextProperty('tags', tags)
+            }
+
+            handleLog(DEFAULT_MESSAGE, logger)
+            expect(beforeSend).toHaveBeenCalledWith(
+              jasmine.objectContaining({ tags, ddtags: 'sdk_version:test,service:service,version:global-version' }),
+              undefined
+            )
+            handleLog(DEFAULT_MESSAGE, logger, stack)
+            expect(beforeSend).toHaveBeenCalledWith(
+              jasmine.objectContaining({ tags, ddtags: 'sdk_version:test,service:checkout,version:global-version' }),
+              { handlingStack: stack }
+            )
+
+            clock.tick(FLUSH_DURATION_LIMIT)
+            await interceptor.waitForAllFetchCalls()
+            const logs = requests[0].body.split('\n').map((log) => JSON.parse(log) as LogsEvent)
+            expect(logs).toEqual([
+              jasmine.objectContaining({ tags, ddtags: 'sdk_version:test,service:service,version:global-version' }),
+              jasmine.objectContaining({ tags, ddtags: 'sdk_version:test,service:checkout,version:global-version' }),
+            ])
+          })
+        })
+      }
+    )
+
+    it('allows logger service/version context and beforeSend tag overrides', async () => {
+      const stack = 'Error\n    at checkout (https://example.com/checkout.js:42:10)'
+      mockSourceCodeContext({ [stack]: { service: 'checkout', version: '1.2.3' } })
+      const { handleLog, logger } = startLogsWithDefaults({
+        configuration: {
+          beforeSend(log) {
+            expect(log.service).toBe('logger-service')
+            expect(log.version).toBe('logger-version')
+            expect(log.ddtags).toBe('sdk_version:test,service:logger-service,version:logger-version')
+            log.service = 'before-send-service'
+            log.ddtags = 'sdk_version:test,service:before-send-service,version:before-send-version'
+          },
+        },
+      })
+      logger.setContext({ service: 'logger-service', version: 'logger-version' })
+
+      handleLog(DEFAULT_MESSAGE, logger, stack)
+      clock.tick(FLUSH_DURATION_LIMIT)
+      await interceptor.waitForAllFetchCalls()
+
+      expect(getLoggedMessage(requests, 0)).toEqual(
+        jasmine.objectContaining({
+          service: 'before-send-service',
+          ddtags: 'sdk_version:test,service:before-send-service,version:before-send-version',
+        })
+      )
+    })
+
     it('should send the needed data', async () => {
       const { handleLog, logger } = startLogsWithDefaults()
 
