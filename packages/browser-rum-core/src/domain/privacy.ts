@@ -182,6 +182,9 @@ export function shouldMaskAttribute(
   if (tagName === 'A' && attributeName === 'href') {
     return true
   }
+  if (tagName === 'FORM' && attributeName === 'action') {
+    return true
+  }
   if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
     return true
   }

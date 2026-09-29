@@ -35,7 +35,6 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
   'rel',
   'download',
   'method',
-  'action',
   'enctype',
   'autocomplete',
 ])
@@ -193,9 +192,12 @@ function extractSafeAttributes(
 }
 
 function isMaskableAttribute(element: Element, name: string): boolean {
-  // `shouldMaskAttribute` only masks `href` on HTML `<a>` elements
+  // `shouldMaskAttribute` only masks these URL attributes on HTML `<a>` and `<form>` elements
   if (name === 'href') {
     return element.tagName === 'A'
+  }
+  if (name === 'action') {
+    return element.tagName === 'FORM'
   }
   return MASKABLE_ATTRIBUTES.includes(name) || (name.startsWith('data-') && name !== PRIVACY_ATTR_NAME)
 }

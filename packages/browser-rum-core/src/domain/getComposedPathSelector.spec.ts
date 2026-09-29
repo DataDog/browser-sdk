@@ -126,6 +126,12 @@ describe('getSelectorFromComposedPath', () => {
         expect(getComposedPathSelector([element], configuration)).toBe('A;')
       })
 
+      it('does not collect the form action when the experimental flag is disabled', () => {
+        const element = appendElementInIsolation('<form action="/users/42/edit" method="post"></form>')
+
+        expect(getComposedPathSelector([element], configuration)).toBe('FORM[method="post"];')
+      })
+
       describe('with the experimental flag enabled', () => {
         beforeEach(() => {
           addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
@@ -149,6 +155,21 @@ describe('getSelectorFromComposedPath', () => {
           expect(getComposedPathSelector([span, link, main], configuration)).toBe(
             'SPAN[title="Continue"].icon;A#checkout-link[aria-label="Checkout"][href="\\/checkout"];MAIN#shop[data-area="checkout"];'
           )
+        })
+
+        it('collects and masks action on form elements', () => {
+          const element = appendElementInIsolation('<form action="/users/42/edit"></form>')
+
+          expect(getComposedPathSelector([element], configuration)).toBe(
+            `FORM[action="${CSS.escape('/users/42/edit')}"];`
+          )
+          expect(getComposedPathSelector([element], maskConfiguration)).toBe(`FORM[action="${CSS.escape('***')}"];`)
+        })
+
+        it('does not collect action on non-form elements', () => {
+          const element = appendElementInIsolation('<div action="/foo"></div>')
+
+          expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
         })
 
         it('does not collect href on non-anchor elements', () => {
