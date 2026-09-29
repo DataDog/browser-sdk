@@ -7,13 +7,14 @@ import {
   getNodePrivacyLevel,
   getTextContent,
   NodePrivacyLevel,
+  isCanvasElement,
+  shouldMaskNode,
 } from '@datadog/browser-rum-core'
 import { StringRole } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitResourceCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds, RoleAnnotatedAttributeChange } from '../encoding'
 import { createAttributeAssignment, createAttributeAssignmentOrDeletion, createString } from '../encoding'
-import { isCanvasElement, isCanvasSizeAttribute } from '../canvas/canvasUtils'
 import { CanvasStatus } from '../canvas/canvasManager'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
@@ -268,12 +269,6 @@ function processAttributeMutations(
 
     const change: RoleAnnotatedAttributeChange = [nodeId]
     for (const [domAttributeName, oldValue] of attributeNames) {
-      if (isCanvasElement(node) && isCanvasSizeAttribute(domAttributeName)) {
-        // Assigning either dimension resets the bitmap even when the attribute value does not change,
-        // so this must run before the "no change since the last snapshot" check below.
-        transaction.scope.canvasManager.resetCanvasBitmap(node)
-      }
-
       if (node.getAttribute(domAttributeName) === oldValue) {
         continue // No change since the last snapshot.
       }
@@ -320,7 +315,7 @@ function processCanvasContentMutations(
       transaction.scope.configuration.defaultPrivacyLevel,
       nodePrivacyLevelCache
     )
-    if (privacyLevel !== NodePrivacyLevel.ALLOW) {
+    if (shouldMaskNode(canvas, privacyLevel)) {
       transaction.scope.canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
       continue
     }

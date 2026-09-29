@@ -188,24 +188,32 @@ export function createPreStartStrategy(
         return
       }
 
-      const sessionManagerPromise = canUseEventBridge()
-        ? startSessionManagerStub()
-        : mockable(startSessionManager)(configuration, trackingConsentState)
-
-      void sessionManagerPromise
-        .then((newSessionManager) => {
-          if (!newSessionManager) {
-            return
-          }
-          sessionManager = newSessionManager
-          startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
-            application: { id: configuration.applicationId },
-          })
-          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata))
-
-          tryStartRum()
+      const onSessionManagerReady = (newSessionManager: SessionManager) => {
+        sessionManager = newSessionManager
+        startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
+          application: { id: configuration.applicationId },
         })
-        .catch(monitorError)
+        addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata))
+
+        tryStartRum()
+      }
+
+      if (canUseEventBridge()) {
+        // When using the event bridge, the session manager is a stub, so it can be created
+        // synchronously and RUM can start within the `init()` call. This matters for
+        // distributed tracing: the tracer only injects headers once it has a tracked session, so
+        // requests issued between `init()` and the session resolution would have been left
+        // untraced, and the sampling decision could not be propagated to the backend.
+        onSessionManagerReady(startSessionManagerStub())
+      } else {
+        void mockable(startSessionManager)(configuration, trackingConsentState)
+          .then((newSessionManager) => {
+            if (newSessionManager) {
+              onSessionManagerReady(newSessionManager)
+            }
+          })
+          .catch(monitorError)
+      }
     })
   }
 

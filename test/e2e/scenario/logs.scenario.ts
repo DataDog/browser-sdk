@@ -2,7 +2,7 @@ import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-lo
 import { ONE_HOUR, ONE_MINUTE } from '@datadog/js-core/time'
 import { SESSION_EXPIRATION_DELAY } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'
-import { createTest, createWorker, npmSetup } from '../lib/framework'
+import { createTest, createWorker, html, npmSetup } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
@@ -81,6 +81,23 @@ test.describe('logs', () => {
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].message).toBe('hello')
+    })
+
+  createTest('send logs with read-only fetch')
+    .withSetup(npmSetup)
+    .withHead(html`
+      <script>
+        Object.defineProperty(window, 'fetch', { writable: false, configurable: false })
+      </script>
+    `)
+    .withLogs()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.log('hello with read-only fetch')
+      })
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('hello with read-only fetch')
     })
 
   createTest('display logs in the console')

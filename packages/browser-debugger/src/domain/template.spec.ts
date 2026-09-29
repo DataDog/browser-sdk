@@ -1,6 +1,15 @@
 import { templateRequiresEvaluation, compileSegments, evaluateProbeMessage, browserInspect } from './template'
 import { formatUnknownError } from './error'
 
+function defineThrowingGetter(obj: object) {
+  Object.defineProperty(obj, 'throwing', {
+    get() {
+      throw new Error('Cannot access property')
+    },
+    enumerable: true,
+  })
+}
+
 describe('template', () => {
   describe('templateRequiresEvaluation', () => {
     it('should return false for undefined segments', () => {
@@ -121,19 +130,17 @@ describe('template', () => {
       expect(result).toBe('[1,2,3]')
     })
 
-    it('should handle circular references gracefully', () => {
+    it('should handle circular references', () => {
       const obj: any = { name: 'test' }
       obj.self = obj
-      const result = browserInspect(obj)
-      // Should either return [Object] or handle the error
-      expect(result).toBeTruthy()
+      expect(browserInspect(obj)).toBe('{"name":"test","self":[Object]}')
     })
 
     it('should not call custom toString when object serialization fails', () => {
       const obj: any = {
         toString: jasmine.createSpy('toString', () => 'custom').and.callThrough(),
       }
-      obj.self = obj
+      defineThrowingGetter(obj)
 
       expect(browserInspect(obj)).toBe('[Object]')
       expect(obj.toString).not.toHaveBeenCalled()
@@ -142,14 +149,14 @@ describe('template', () => {
     it('should use constructor name when object serialization fails', () => {
       class Custom {}
       const obj: any = new Custom()
-      obj.self = obj
+      defineThrowingGetter(obj)
 
       expect(browserInspect(obj)).toBe('[Custom]')
     })
 
     it('should fall back when constructor name access throws', () => {
       const obj: any = {}
-      obj.self = obj
+      defineThrowingGetter(obj)
       Object.defineProperty(obj, 'constructor', {
         get() {
           throw new Error('Cannot access constructor')
@@ -199,12 +206,75 @@ describe('template', () => {
         })
       })
 
+      describe('maxObjectProperties (5)', () => {
+        it('should truncate objects with more than 5 properties', () => {
+          const result = browserInspect({ a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 })
+          expect(result).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 2 more properties}')
+        })
+
+        it('should not truncate objects with 5 or fewer properties', () => {
+          const result = browserInspect({ a: 1, b: 2, c: 3, d: 4, e: 5 })
+          expect(result).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5}')
+        })
+
+        it('should not read omitted properties', () => {
+          const obj = { a: 1, b: 2, c: 3, d: 4, e: 5 }
+          const getter = jasmine.createSpy('getter')
+          Object.defineProperty(obj, 'f', { get: getter, enumerable: true })
+
+          expect(browserInspect(obj)).toBe('{"a":1,"b":2,"c":3,"d":4,"e":5, ... 1 more properties}')
+          expect(getter).not.toHaveBeenCalled()
+        })
+      })
+
       describe('depth (0)', () => {
-        it('should fully stringify plain objects (depth limit applies to arrays)', () => {
-          const nested = { a: { b: { c: { d: 'deep' } } } }
+        it('should show root object but collapse nested objects and arrays', () => {
+          const nested = { a: { b: { c: 'deep' } }, d: [1, 2] }
           const result = browserInspect(nested)
-          // Objects are fully stringified via JSON.stringify
-          expect(result).toBe('{"a":{"b":{"c":{"d":"deep"}}}}')
+          expect(result).toBe('{"a":[Object],"d":[Array]}')
+        })
+
+        it('should inspect property values like array items', () => {
+          const result = browserInspect({
+            str: 'foo',
+            nil: null,
+            undef: undefined,
+            fn: function foo() {
+              return 1
+            },
+          })
+          expect(result).toBe('{"str":"foo","nil":null,"undef":undefined,"fn":[Function: foo]}')
+        })
+
+        it('should inspect objects with a JSON representation through it', () => {
+          expect(browserInspect(new Date(0))).toBe('"1970-01-01T00:00:00.000Z"')
+          expect(browserInspect({ date: new Date(0) })).toBe('{"date":[Object]}')
+        })
+
+        it('should inspect structured JSON representations at root depth', () => {
+          expect(browserInspect({ toJSON: () => ({ a: 1, b: { c: 2 } }) })).toBe('{"a":1,"b":[Object]}')
+          expect(browserInspect({ toJSON: () => [1, { a: 1 }] })).toBe('[1,[Object]]')
+        })
+
+        it('should not apply toJSON of JSON representations', () => {
+          const obj: Record<string, unknown> = { a: 1, toJSON: () => obj }
+          expect(browserInspect(obj)).toBe('{"a":1,"toJSON":[Function: toJSON]}')
+        })
+
+        it('should call toJSON even if its call property is shadowed', () => {
+          const toJSON = Object.assign(() => 'json', { call: undefined })
+          expect(browserInspect({ toJSON })).toBe('"json"')
+        })
+
+        it('should read toJSON once and call it with the root key', () => {
+          const toJSON = jasmine.createSpy('toJSON').and.returnValue('json')
+          const getter = jasmine.createSpy('getter').and.returnValues(toJSON, undefined)
+          const obj = {}
+          Object.defineProperty(obj, 'toJSON', { get: getter })
+
+          expect(browserInspect(obj)).toBe('"json"')
+          expect(getter).toHaveBeenCalledTimes(1)
+          expect(toJSON).toHaveBeenCalledOnceWith('')
         })
 
         it('should show root array but collapse nested arrays at depth 0', () => {

@@ -3,6 +3,7 @@ import {
   isTextNode,
   isCommentNode,
   isElementNode,
+  isCanvasElement,
   isNodeShadowRoot,
   getParentNode,
   getParentElement,
@@ -58,6 +59,21 @@ describe('isElementNode', () => {
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
     it(`should return ${String(result)} for "${String(element)}"`, () => {
       expect(isElementNode(element)).toBe(result)
+    })
+  })
+})
+
+describe('isCanvasElement', () => {
+  const parameters: Array<[Node, boolean]> = [
+    [document.createElement('canvas'), true],
+    [document.createElement('div'), false],
+    [document.createTextNode('canvas'), false],
+  ]
+
+  parameters.forEach(([element, result]) => {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    it(`should return ${String(result)} for "${String(element)}"`, () => {
+      expect(isCanvasElement(element)).toBe(result)
     })
   })
 })

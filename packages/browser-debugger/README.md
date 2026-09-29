@@ -4,6 +4,12 @@ Datadog Live Debugger enables you to capture function execution snapshots, evalu
 
 See the [dedicated Datadog documentation][1] for more details.
 
+## Prerequisites
+
+### Content Security Policy
+
+Probe conditions, dynamic log-message expressions, and capture expressions use `new Function()` to evaluate JavaScript at runtime. If your page has a Content Security Policy (CSP) that restricts script execution, it must permit `'unsafe-eval'` in `script-src` to use these features.
+
 ## Usage
 
 To start collecting data, add [`@datadog/browser-debugger`][2] to your `package.json` file, then initialize it with:
