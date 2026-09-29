@@ -36,7 +36,6 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
   'rel',
   'download',
   'method',
-  'action',
   'enctype',
   'autocomplete',
 ])
