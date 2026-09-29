@@ -19,7 +19,7 @@ import {
   type MockWebSocket,
 } from '@datadog/browser-core/test'
 import type { Duration } from '@datadog/js-core/time'
-import { clocksNow, toServerDuration } from '@datadog/js-core/time'
+import { clocksNow, ONE_HOUR, ONE_MINUTE, toServerDuration } from '@datadog/js-core/time'
 import { globalObject } from '@datadog/js-core/util'
 import { mockRumConfiguration } from '../../../test'
 import type {
@@ -598,6 +598,46 @@ describe('webSocketCollection', () => {
     })
   })
 
+  // A connection is measured on the monotonic clock, and the dates of its later phases are placed
+  // from its connecting date, so a system clock stepping back or forth mid-connection (an NTP step,
+  // a VM resume, a manual correction) corrupts neither its chronology nor its intervals.
+  describe('under a system clock change', () => {
+    it('measures the connection on its own timeline, while each vital stays dated by the system clock', () => {
+      startTracking()
+      const socket = connect({ at: 0 })
+      advanceTo(5)
+      clock.jumpSystemClock(-10 * ONE_MINUTE)
+      completeHandshake(socket, { at: 10 })
+      advanceTo(15)
+      clock.jumpSystemClock(ONE_HOUR)
+      receiveMessage(socket, 30, { at: 20 })
+      callClose(socket, { at: 30 })
+      dispatchClose(socket, { at: 40 })
+
+      const open = single(openPayloads())
+      const closed = single(closedPayloads())
+      expect(single(connectingPayloads()).connecting_date).toBe(clock.timeStamp(0))
+      expect(open.open_date).toBe(clock.timeStamp(10))
+      expect(single(closingPayloads()).closing_date).toBe(clock.timeStamp(30))
+      expect(closed.closed_date).toBe(clock.timeStamp(40))
+      expect(open.connecting_duration).toBe(toServerDuration(10 as Duration))
+      expect(closed.duration).toBe(toServerDuration(40 as Duration))
+      expect(closed.snapshot!.inbound).toEqual(
+        jasmine.objectContaining({
+          time_to_first_message: toServerDuration(10 as Duration),
+          silence_before_close: toServerDuration(20 as Duration),
+        })
+      )
+
+      expect(emittedVitals().map((vital) => vital.date)).toEqual([
+        clock.timeStamp(0),
+        clock.timeStamp(10 - 10 * ONE_MINUTE),
+        clock.timeStamp(30 - 10 * ONE_MINUTE + ONE_HOUR),
+        clock.timeStamp(40 - 10 * ONE_MINUTE + ONE_HOUR),
+      ])
+    })
+  })
+
   describe('tracking end', () => {
     it('reports a connection a flush finalized only once, even when its close event arrives later', () => {
       const tracker = startTracking()
@@ -877,8 +917,9 @@ describe('webSocketCollection', () => {
   // ---------------------------------------------------------------------------
   // Driving time
   //
-  // Dates are given in milliseconds since the spec started, and only ever move forward: time is
-  // ticked rather than set, so that the heartbeat timer fires on the way like it would in a browser.
+  // Dates are given in milliseconds since the spec started, on the monotonic clock so that a jump of
+  // the system clock does not move them, and only ever move forward: time is ticked rather than set,
+  // so that the heartbeat timer fires on the way like it would in a browser.
   // ---------------------------------------------------------------------------
 
   /** Moves time forward to `at`, or leaves it where it is when no date is given. */
@@ -886,7 +927,7 @@ describe('webSocketCollection', () => {
     if (at === undefined) {
       return
     }
-    const now = Date.now() - clock.timeStamp(0)
+    const now = performance.now() - clock.relative(0)
     if (at < now) {
       throw new Error(`Cannot move time back from ${now} to ${at}`)
     }
