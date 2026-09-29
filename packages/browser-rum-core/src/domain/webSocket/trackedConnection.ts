@@ -1,5 +1,5 @@
-import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
-import { elapsed, timeStampNow } from '@datadog/js-core/time'
+import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
+import { elapsed, relativeNow } from '@datadog/js-core/time'
 
 /**
  * Send queue depth, in bytes, from which an outbound message counts as backpressured.
@@ -78,8 +78,8 @@ export interface TrackedConnection {
   /** Increments and returns the version the next snapshot-carrying vital rides on. */
   nextSnapshotVersion: () => number
   recordOpen: (facts: OpenFacts) => void
-  recordInboundMessage: (size: number, at: TimeStamp) => void
-  recordOutboundMessage: (size: number, bufferedAmountPreSend: number, at: TimeStamp) => void
+  recordInboundMessage: (size: number, at: RelativeTime) => void
+  recordOutboundMessage: (size: number, bufferedAmountPreSend: number, at: RelativeTime) => void
   recordClosing: (closingClocks: ClocksState) => void
   /**
    * Ends tracking, whatever the reason. `bufferedAmount` is the send queue depth read from the
@@ -94,7 +94,8 @@ export interface TrackedConnection {
  * beat — so `getState()` is its only query and the phase it reports is data.
  *
  * Nothing here knows about the wire: durations stay in milliseconds and presence rules, omission
- * and unit conversion belong to the serialiser.
+ * and unit conversion belong to the serialiser. Every interval is measured on the monotonic clock, so
+ * that a change of the system clock mid-connection corrupts none of them.
  */
 export function createTrackedConnection({
   id,
@@ -117,14 +118,14 @@ export function createTrackedConnection({
   let snapshotVersion = 0
   // the cursor the silence arithmetic runs on, one per direction: it is what the connection needs
   // to measure a gap, not something it reports
-  let lastInboundMessageAt: TimeStamp | undefined
-  let lastOutboundMessageAt: TimeStamp | undefined
+  let lastInboundMessageAt: RelativeTime | undefined
+  let lastOutboundMessageAt: RelativeTime | undefined
 
   return {
     getState: () => {
       // reads close the silence still in progress: at the tracking end once tracking has ended, so
       // that the terminal snapshot is stable, and at the moment of the read until then
-      const readAt = endClocks ? endClocks.timeStamp : timeStampNow()
+      const readAt = endClocks ? endClocks.relative : relativeNow()
       const hasEnded = endClocks !== undefined
 
       return {
@@ -199,15 +200,15 @@ function createMessageDirectionAggregate(): MessageDirectionAggregate {
  */
 function recordMessage(
   aggregate: MessageDirectionAggregate,
-  lastMessageAt: TimeStamp | undefined,
+  lastMessageAt: RelativeTime | undefined,
   size: number,
-  at: TimeStamp,
+  at: RelativeTime,
   openClocks: ClocksState | undefined
 ) {
   if (lastMessageAt === undefined) {
     // the interval before the first message is the time to first message, not a silence
     if (openClocks) {
-      aggregate.timeToFirstMessage = elapsed(openClocks.timeStamp, at)
+      aggregate.timeToFirstMessage = elapsed(openClocks.relative, at)
     }
   } else {
     aggregate.longestSilence = maxDuration(aggregate.longestSilence, elapsed(lastMessageAt, at))
@@ -224,8 +225,8 @@ function recordMessage(
  */
 function readMessageDirection<Aggregate extends MessageDirectionAggregate>(
   aggregate: Aggregate,
-  lastMessageAt: TimeStamp | undefined,
-  readAt: TimeStamp,
+  lastMessageAt: RelativeTime | undefined,
+  readAt: RelativeTime,
   hasEnded: boolean
 ): Aggregate {
   const read = { ...aggregate }

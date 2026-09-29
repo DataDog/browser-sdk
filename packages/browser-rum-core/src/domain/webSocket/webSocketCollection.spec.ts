@@ -598,6 +598,22 @@ describe('webSocketCollection', () => {
     })
   })
 
+  describe('the dates of the later phases', () => {
+    // they are placed on the monotonic clock, which has sub-millisecond precision, while the schema
+    // wants whole milliseconds
+    it('are reported in whole milliseconds', () => {
+      startTracking()
+      const socket = connect({ at: 0 })
+      completeHandshake(socket, { at: 10.4 })
+      callClose(socket, { at: 20.6 })
+      dispatchClose(socket, { at: 30.5 })
+
+      expect(single(openPayloads()).open_date).toBe(clock.timeStamp(10))
+      expect(single(closingPayloads()).closing_date).toBe(clock.timeStamp(21))
+      expect(single(closedPayloads()).closed_date).toBe(clock.timeStamp(31))
+    })
+  })
+
   // A connection is measured on the monotonic clock, and the dates of its later phases are placed
   // from its connecting date, so a system clock stepping back or forth mid-connection (an NTP step,
   // a VM resume, a manual correction) corrupts neither its chronology nor its intervals.

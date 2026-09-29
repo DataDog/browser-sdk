@@ -1,5 +1,5 @@
 import type { ClocksState, TimeStamp } from '@datadog/js-core/time'
-import { elapsed, toServerDuration } from '@datadog/js-core/time'
+import { addDuration, elapsed, toServerDuration } from '@datadog/js-core/time'
 import { generateUUID } from '@datadog/browser-core'
 import type {
   RawRumWebSocketVitalEvent,
@@ -79,6 +79,11 @@ export type WebSocketVitalPhaseInfo = ConnectingPhaseInfo | OpenPhaseInfo | Clos
  * and dates stay unix milliseconds; the connection accumulates in milliseconds and subtracts
  * nothing, so the two lifetime spans are computed here too.
  *
+ * The connection is measured on its own timeline: every span is taken on the monotonic clock, and
+ * the only date sampled from the system clock is the connecting date, which the dates of the later
+ * phases are placed from. A change of the system clock mid-connection therefore shifts none of them,
+ * while the vital itself stays dated by the system clock, like every other event.
+ *
  * The presence rules live here in full, because the shipped schema enforces almost none of them:
  * identity rides the connecting vital only, the snapshot rides only where something can have been
  * exchanged, and the close-suffixed values ride the terminal snapshot only.
@@ -88,7 +93,8 @@ export function serializeWebSocketVital(
   phaseInfo: WebSocketVitalPhaseInfo
 ): RawRumWebSocketVitalEvent {
   const id = state.id
-  const connectingDate = state.connectingClocks.timeStamp
+  const connectingClocks = state.connectingClocks
+  const connectingDate = connectingClocks.timeStamp
   const date = webSocketVitalClocks(state, phaseInfo).timeStamp
 
   switch (phaseInfo.phase) {
@@ -104,7 +110,7 @@ export function serializeWebSocketVital(
       })
 
     case 'open': {
-      const openDate = phaseInfo.openClocks.timeStamp
+      const openClocks = phaseInfo.openClocks
 
       return toRawVital(date, {
         name: WebSocketVitalName.OPEN,
@@ -112,8 +118,8 @@ export function serializeWebSocketVital(
           id,
           // an open vital cannot exist otherwise, and the constant keeps it self-describing
           open_handshake_succeeded: true,
-          connecting_duration: toServerDuration(elapsed(connectingDate, openDate)),
-          open_date: openDate,
+          connecting_duration: toServerDuration(elapsed(connectingClocks.relative, openClocks.relative)),
+          open_date: toPhaseDate(connectingClocks, openClocks),
           selected_protocol: state.selectedProtocol,
           selected_extensions: state.selectedExtensions,
           snapshot_version: phaseInfo.snapshotVersion,
@@ -127,20 +133,20 @@ export function serializeWebSocketVital(
         name: WebSocketVitalName.CLOSING,
         websocket: {
           id,
-          closing_date: phaseInfo.closingClocks.timeStamp,
+          closing_date: toPhaseDate(connectingClocks, phaseInfo.closingClocks),
           close_initiator: 'client',
         },
       })
 
     case 'closed': {
-      const closedDate = phaseInfo.endClocks.timeStamp
+      const endClocks = phaseInfo.endClocks
 
       return toRawVital(date, {
         name: WebSocketVitalName.CLOSED,
         websocket: {
           id,
-          closed_date: closedDate,
-          duration: toServerDuration(elapsed(connectingDate, closedDate)),
+          closed_date: toPhaseDate(connectingClocks, endClocks),
+          duration: toServerDuration(elapsed(connectingClocks.relative, endClocks.relative)),
           tracking_end_reason: phaseInfo.trackingEndReason,
           close_code: phaseInfo.closeEvent?.code,
           close_reason: phaseInfo.closeEvent?.reason,
@@ -171,6 +177,17 @@ export function webSocketVitalClocks(state: TrackedConnectionState, phaseInfo: W
     case 'closed':
       return phaseInfo.endClocks
   }
+}
+
+/**
+ * The date a phase is reported at: the connecting date, plus the time elapsed since on the monotonic
+ * clock rather than the system clock, which can jump in between. Rounded, because the monotonic clock
+ * has sub-millisecond precision and dates are whole milliseconds.
+ */
+function toPhaseDate(connectingClocks: ClocksState, phaseClocks: ClocksState): TimeStamp {
+  return Math.round(
+    addDuration(connectingClocks.timeStamp, elapsed(connectingClocks.relative, phaseClocks.relative))
+  ) as TimeStamp
 }
 
 /** The envelope every phase rides in, written once: a vital of its own, identifying the phase. */

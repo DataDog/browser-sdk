@@ -237,7 +237,7 @@ export function trackWebSocket(
       }
 
       case 'message-in': {
-        trackedConnections.get(context.instance)?.recordInboundMessage(context.size, context.at.timeStamp)
+        trackedConnections.get(context.instance)?.recordInboundMessage(context.size, context.at.relative)
 
         return
       }
@@ -245,7 +245,7 @@ export function trackWebSocket(
       case 'message-out': {
         trackedConnections
           .get(context.instance)
-          ?.recordOutboundMessage(context.size, context.bufferedAmountPreSend, context.at.timeStamp)
+          ?.recordOutboundMessage(context.size, context.bufferedAmountPreSend, context.at.relative)
 
         return
       }
