@@ -249,6 +249,27 @@ describe('trackedConnection', () => {
         expect(aggregate.longestSilence).toBe(30 as Duration)
       })
 
+      it('closes open silence at an explicit read time, however late the clock has moved', () => {
+        const connection = createOpenConnection()
+
+        recordMessage(connection, 1, relativeAt(20))
+
+        moveClockTo(10_000)
+        expect(connection.getState(relativeAt(50)).snapshot[direction].longestSilence).toBe(30 as Duration)
+      })
+
+      it('keeps the tracking end date over an explicit read time once closed', () => {
+        const connection = createOpenConnection()
+
+        recordMessage(connection, 1, relativeAt(20))
+        connection.recordTrackingEnd(clocksAt(50), 0)
+
+        moveClockTo(10_000)
+        const aggregate = connection.getState(relativeAt(10_000)).snapshot[direction]
+        expect(aggregate.silenceBeforeClose).toBe(30 as Duration)
+        expect(aggregate.longestSilence).toBe(30 as Duration)
+      })
+
       it('has no silence before close while tracking continues', () => {
         const connection = createOpenConnection()
 

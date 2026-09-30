@@ -118,11 +118,12 @@ export function trackWebSocket(
   let heartbeatIntervalId: TimeoutId | undefined
 
   /**
-   * Reports one phase of one connection. The state is read at the moment of emission, so a
-   * snapshot-carrying phase must have recorded whatever it observed before getting here.
+   * Reports one phase of one connection. Snapshot-carrying phases freeze the read at their phase
+   * clocks so the snapshot matches the date the vital reports.
    */
   function emitVital(connection: TrackedConnection, phaseInfo: WebSocketVitalPhaseInfo) {
-    const state = connection.getState()
+    const readAt = phaseInfo.phase === 'open' ? phaseInfo.beatClocks.relative : undefined
+    const state = connection.getState(readAt)
     addWebSocketVital(serializeWebSocketVital(state, phaseInfo), webSocketVitalClocks(state, phaseInfo))
   }
 
