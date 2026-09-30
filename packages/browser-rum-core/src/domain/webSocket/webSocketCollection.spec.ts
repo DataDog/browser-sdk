@@ -348,6 +348,41 @@ describe('webSocketCollection', () => {
       expect(openPayloads().map((payload) => payload.id)).toEqual([idA, idB, idA, idB])
     })
 
+    it('closes each beat snapshot at the beat date even when an earlier emit is delayed', () => {
+      startTracking()
+      openConnection()
+      const socketB = openConnection()
+      receiveMessage(socketB, 1)
+
+      // a slow delivery path on the first connection of the beat: time moves on before the next
+      // connection is read, which is what would stretch longest_silence past the beat date if the
+      // snapshot closed at relativeNow() rather than at beatClocks. setDate (not tick) so we do not
+      // re-enter the heartbeat timer from inside its own handler.
+      const delayMs = 5_000
+      let delayedOnce = false
+      addWebSocketVitalSpy.and.callFake(() => {
+        if (!delayedOnce) {
+          delayedOnce = true
+          clock.setDate(new Date(Date.now() + delayMs))
+        }
+      })
+
+      tickBeats()
+
+      const [, idB] = connectingPayloads().map((payload) => payload.id)
+      const beatVitalOfB = emittedVitals(WebSocketVitalName.OPEN).find(
+        (vital) =>
+          vital.vital.websocket.id === idB &&
+          (vital.vital.websocket as RawRumWebSocketOpenVitalProperties).snapshot_version === 2
+      )!
+      const beatPayloadOfB = beatVitalOfB.vital.websocket as { id: string } & RawRumWebSocketOpenVitalProperties
+
+      expect(beatVitalOfB.date).toBe(clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL))
+      expect(beatPayloadOfB.snapshot.inbound.longest_silence).toBe(
+        toServerDuration(WEBSOCKET_HEARTBEAT_INTERVAL as Duration)
+      )
+    })
+
     it('does not beat a connection whose handshake has not completed', () => {
       startTracking()
       connect()
