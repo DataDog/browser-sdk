@@ -5,9 +5,9 @@ import type {
   BufferedObservable,
   Telemetry,
   SessionManager,
+  Observable,
 } from '@datadog/browser-core'
 import {
-  Observable,
   sendToExtension,
   createPageMayExitObservable,
   canUseEventBridge,
@@ -87,18 +87,8 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
-  // Only for WebSockets
-  const pageUnloadFlushObservable = new Observable<void>()
-
   if (!canUseEventBridge()) {
-    const batch = startRumBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      sessionManager.expireObservable,
-      pageUnloadFlushObservable,
-      createEncoder
-    )
+    const batch = startRumBatch(configuration, lifeCycle, reportError, sessionManager.expireObservable, createEncoder)
     const preparePageExitSubscription = batch.prepareUrgentFlushObservable.subscribe((reason) => {
       lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
     })
@@ -123,8 +113,7 @@ export function startRum(
     initialViewOptions,
     bufferedDataObservable,
     sdkName,
-    reportError,
-    pageUnloadFlushObservable
+    reportError
   )
   cleanupTasks.push(stopRumEventCollection)
   bufferedDataObservable.unbuffer()
@@ -154,8 +143,7 @@ export function startRumEventCollection(
   initialViewOptions: ViewOptions | undefined,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
-  reportError: (message: string) => void,
-  pageUnloadFlushObservable: Observable<void>
+  reportError: (message: string) => void
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -236,7 +224,7 @@ export function startRumEventCollection(
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
-  const webSocketCollection = startWebSocketCollection(lifeCycle, configuration, pageUnloadFlushObservable)
+  const webSocketCollection = startWebSocketCollection(lifeCycle, configuration)
   cleanupTasks.push(webSocketCollection.stop)
 
   const internalContext = startInternalContext(

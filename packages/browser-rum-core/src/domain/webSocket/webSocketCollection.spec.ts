@@ -1,16 +1,13 @@
 import {
   addExperimentalFeatures,
-  DOM_EVENT,
   ExperimentalFeature,
   noop,
-  Observable,
   PageExitReason,
   resetAllowUntrustedEvents,
   setAllowUntrustedEvents,
 } from '@datadog/browser-core'
 import {
   createMockWebSocket,
-  createNewEvent,
   mockClock,
   mockWebSocket,
   registerCleanupTask,
@@ -747,14 +744,8 @@ describe('webSocketCollection', () => {
   })
 
   describe('startWebSocketCollection', () => {
-    let pageUnloadFlushObservable: Observable<void>
-
-    beforeEach(() => {
-      pageUnloadFlushObservable = new Observable<void>()
-    })
-
     function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
-      const collection = startWebSocketCollection(lifeCycle, configuration, pageUnloadFlushObservable)
+      const collection = startWebSocketCollection(lifeCycle, configuration)
       registerCleanupTask(() => collection.stop())
       return collection
     }
@@ -821,12 +812,12 @@ describe('webSocketCollection', () => {
     })
 
     describe('the page unload', () => {
-      it('ends tracking of an open connection when the page is not coming back', () => {
+      it('ends tracking of an open connection when the page is discarded', () => {
         startCollection()
         openConnection()
         advanceTo(40)
 
-        hidePage({ persisted: false })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
 
         expect(single(closedPayloads())).toEqual(
           jasmine.objectContaining({
@@ -842,7 +833,7 @@ describe('webSocketCollection', () => {
         openConnection()
         callClose(openConnection())
 
-        hidePage({ persisted: false })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
 
         expect(closedPayloads().map((payload) => payload.tracking_end_reason)).toEqual([
           WebSocketTrackingEndReason.PAGE_UNLOADED,
@@ -856,7 +847,7 @@ describe('webSocketCollection', () => {
         const socket = openConnection()
         socket.bufferedAmount = 12
 
-        hidePage({ persisted: false })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
 
         const payload = single(closedPayloads())
         expect(payload).toEqual(jasmine.objectContaining({ snapshot_version: 2 }))
@@ -870,7 +861,7 @@ describe('webSocketCollection', () => {
         startCollection()
         const socket = openConnection()
 
-        hidePage({ persisted: false })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
         dispatchClose(socket)
 
         expect(single(closedPayloads()).tracking_end_reason).toBe(WebSocketTrackingEndReason.PAGE_UNLOADED)
@@ -880,7 +871,7 @@ describe('webSocketCollection', () => {
         startCollection()
         dispatchClose(openConnection())
 
-        hidePage({ persisted: false })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
 
         expect(single(closedPayloads()).tracking_end_reason).toBe(WebSocketTrackingEndReason.CLOSE_EVENT)
       })
@@ -889,43 +880,20 @@ describe('webSocketCollection', () => {
         startCollection()
         openConnection()
 
-        hidePage({ persisted: false })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
         tickHeartbeat()
 
         expect(openPayloads()).toHaveSize(1)
       })
 
-      it('asks for a flush once every connection it ended was reported', () => {
-        const closedCountsAtFlush: number[] = []
-        pageUnloadFlushObservable.subscribe(() => closedCountsAtFlush.push(closedPayloads().length))
-        startCollection()
-        openConnection()
-        openConnection()
-
-        hidePage({ persisted: false })
-
-        expect(closedCountsAtFlush).toEqual([2])
-      })
-
-      it('asks for no flush when it had no connection to end', () => {
-        const flushSpy = jasmine.createSpy()
-        pageUnloadFlushObservable.subscribe(flushSpy)
-        startCollection()
-        dispatchClose(openConnection())
-
-        hidePage({ persisted: false })
-
-        expect(flushSpy).not.toHaveBeenCalled()
-      })
-
-      // the connection may survive in the back/forward cache, so it is left to speak for itself
-      it('does not end tracking when the page goes into the back/forward cache', () => {
+      it('does not emit a pulse when the page is discarded', () => {
         startCollection()
         openConnection()
 
-        hidePage({ persisted: true })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
 
-        expect(closedPayloads()).toHaveSize(0)
+        expect(openPayloads()).toHaveSize(1)
+        expect(closedPayloads()).toHaveSize(1)
       })
     })
 
@@ -988,11 +956,6 @@ describe('webSocketCollection', () => {
 
   function expireSession(endClocks = clocksNow()) {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
-  }
-
-  /** The browser hiding the page, either for good or into the back/forward cache. */
-  function hidePage({ persisted }: { persisted: boolean }) {
-    window.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { persisted }))
   }
 
   // ---------------------------------------------------------------------------

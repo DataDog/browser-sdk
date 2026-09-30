@@ -46,8 +46,7 @@ function startRumStub(
     undefined,
     new Observable(),
     undefined,
-    reportError,
-    new Observable<void>()
+    reportError
   )
 
   return {

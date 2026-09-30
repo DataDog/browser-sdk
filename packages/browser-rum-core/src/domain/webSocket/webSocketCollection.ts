@@ -1,12 +1,11 @@
 import type { Observable, TimeoutId } from '@datadog/browser-core'
 import {
-  addEventListener,
   clearInterval,
-  DOM_EVENT,
   ExperimentalFeature,
   generateUUID,
   isExperimentalFeatureEnabled,
   noop,
+  PageExitReason,
   setInterval,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
@@ -52,11 +51,7 @@ export interface WebSocketConnectionTracker {
  * load (see `startBufferingData`). When it is closed, nothing is subscribed nor allocated and the
  * returned stop handle is a no-op.
  */
-export function startWebSocketCollection(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  pageUnloadFlushObservable: Observable<void>
-) {
+export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   if (!isWebSocketCollectionEnabled(configuration)) {
     return { stop: noop }
   }
@@ -69,22 +64,13 @@ export function startWebSocketCollection(
     tracker.flushOpenConnections(endClocks)
   })
 
-  // Emit a pulse on all three reasons to collect fresh data when the connections is likely to be
-  // terminated without a proper close event.
-  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
-    tracker.reportOpenConnections()
-  })
-
-  // A listener of its own rather than a page exit reason: Session Replay stores that reason as a
-  // segment creation reason, whose schema has no `page_hide` member.
-  const { stop: stopPageHideListener } = addEventListener(window, DOM_EVENT.PAGE_HIDE, (event) => {
-    // the connection may survive in the back/forward cache, so it is left to speak for itself
-    if ((event as PageTransitionEvent).persisted) {
-      return
-    }
-    // the page may already be hidden, so no exit flush is coming to send what was just reported
-    if (tracker.flushOpenConnections(clocksNow(), WebSocketTrackingEndReason.PAGE_UNLOADED) > 0) {
-      pageUnloadFlushObservable.notify()
+  // PAGE_DISCARDED ends tracking (page is going away). Other exit reasons only pulse open
+  // connections — Session Replay ignores PAGE_DISCARDED so it never becomes a segment creation reason.
+  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
+    if (reason === PageExitReason.PAGE_DISCARDED) {
+      tracker.flushOpenConnections(clocksNow(), WebSocketTrackingEndReason.PAGE_UNLOADED)
+    } else {
+      tracker.reportOpenConnections()
     }
   })
 
@@ -92,7 +78,6 @@ export function startWebSocketCollection(
     stop: () => {
       sessionExpiredSubscription.unsubscribe()
       prepareUrgentFlushSubscription.unsubscribe()
-      stopPageHideListener()
       tracker.flushOpenConnections()
       tracker.stop()
     },

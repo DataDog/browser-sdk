@@ -1,6 +1,6 @@
 import { createIdentityEncoder, noop, Observable } from '@datadog/browser-core'
 import type { FlushEvent } from '@datadog/browser-core/src/transport/flushController'
-import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
@@ -218,24 +218,16 @@ describe('computeAssembledViewDiff', () => {
 })
 
 describe('startRumBatch', () => {
-  it('sends what it holds on the exit path when a page unload flush is asked for', () => {
+  it('sends what it holds when the page is discarded', () => {
     const interceptor = interceptRequests()
     const lifeCycle = new LifeCycle()
-    const pageUnloadFlushObservable = new Observable<void>()
-    const batch = startRumBatch(
-      mockRumConfiguration(),
-      lifeCycle,
-      noop,
-      new Observable<void>(),
-      pageUnloadFlushObservable,
-      createIdentityEncoder
-    )
+    const batch = startRumBatch(mockRumConfiguration(), lifeCycle, noop, new Observable<void>(), createIdentityEncoder)
     registerCleanupTask(batch.stop)
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.VITAL,
     } as unknown as AssembledRumEvent)
 
-    pageUnloadFlushObservable.notify()
+    window.dispatchEvent(createNewEvent('pagehide', { persisted: false }))
 
     expect(interceptor.requests.map((request) => request.type)).toEqual(['sendBeacon'])
   })
