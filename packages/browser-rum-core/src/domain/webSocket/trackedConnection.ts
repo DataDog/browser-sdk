@@ -48,9 +48,7 @@ export interface OpenFacts {
 }
 
 /**
- * Everything RC1 reports about one connection, as of the moment it is read — and nothing else: the
- * cursor the silence arithmetic runs on stays inside the connection. Rebuilt on every read, so
- * assigning to it changes nothing the connection reports.
+ * The state of a WebSocket connection at a given moment during any phase of its lifecycle.
  */
 export interface TrackedConnectionState extends TrackedConnectionIdentity {
   phase: WebSocketPhase
@@ -83,13 +81,8 @@ export interface TrackedConnection {
 }
 
 /**
- * Our record of one WebSocket: everything RC1 reports about a connection, and the arithmetic that
- * maintains it. It is queried, not drained — the heartbeat reads the same accumulator on every
- * beat — so `getState()` is its only query and the phase it reports is data.
- *
- * Nothing here knows about the wire: durations stay in milliseconds and presence rules, omission
- * and unit conversion belong to the serialiser. Every interval is measured on the monotonic clock, so
- * that a change of the system clock mid-connection corrupts none of them.
+ * A factory to create gatherer objects that hold the data of a WebSocket connection, it performs the necessary
+ * arithmetic to produce snapshots of the state of the connection at different phases of its lifecycle.
  */
 export function createTrackedConnection({
   id,
