@@ -265,6 +265,24 @@ e2e:
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 
+rum-fit-tests:
+  stage: test
+  extends: .test-allowed-branches
+  needs: []
+  when: manual
+  allow_failure: true
+  interruptible: true
+  inherit:
+    # Keep SDK CI settings, especially CURRENT_CI_IMAGE, out of FIT.
+    variables: false
+  trigger:
+    project: DataDog/rum-sdk-integration-test-framework
+    branch: main
+    strategy: depend
+  variables:
+    DYNAMIC_BUILD_RENDER_RULES: web
+    TARGET_SHA_BROWSER_SDK: $CI_COMMIT_SHA
+
 check-licenses:
   extends:
     - .base-configuration
