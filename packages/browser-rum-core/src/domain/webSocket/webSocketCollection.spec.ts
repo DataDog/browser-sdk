@@ -27,17 +27,18 @@ import type {
   RawRumWebSocketClosingVitalProperties,
   RawRumWebSocketConnectingVitalProperties,
   RawRumWebSocketOpenVitalProperties,
+  RawRumWebSocketVitalEvent,
 } from '../../rawRumEvent.types'
-import { WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
+import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
+import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { AddWebSocketVital } from './webSocketCollection'
 import { startWebSocketCollection, trackWebSocket, WEBSOCKET_HEARTBEAT_INTERVAL } from './webSocketCollection'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 describe('webSocketCollection', () => {
   let lifeCycle: LifeCycle
-  let addWebSocketVitalSpy: jasmine.Spy<AddWebSocketVital>
+  let collectedEvents: Array<RawRumEventCollectedData<RawRumWebSocketVitalEvent>>
   let clock: Clock
 
   beforeEach(() => {
@@ -46,7 +47,12 @@ describe('webSocketCollection', () => {
     // the mock socket dispatches untrusted events, which the SDK listeners would otherwise ignore
     setAllowUntrustedEvents(true)
     lifeCycle = new LifeCycle()
-    addWebSocketVitalSpy = jasmine.createSpy()
+    collectedEvents = []
+    lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+      if (data.rawRumEvent.type === RumEventType.VITAL && data.rawRumEvent.vital.type === VitalType.WEBSOCKET) {
+        collectedEvents.push(data as RawRumEventCollectedData<RawRumWebSocketVitalEvent>)
+      }
+    })
     registerCleanupTask(resetAllowUntrustedEvents)
   })
 
@@ -59,15 +65,19 @@ describe('webSocketCollection', () => {
 
       const vitals = emittedVitals()
       const connectionId = single(connectingPayloads()).id
-      expect(vitals.map((vital) => vital.vital.name)).toEqual([
+      expect(vitals.map((event) => event.rawRumEvent.vital.name)).toEqual([
         WebSocketVitalName.CONNECTING,
         WebSocketVitalName.OPEN,
         WebSocketVitalName.CLOSED,
       ])
       expect(connectionId).toMatch(UUID_PATTERN)
-      expect(vitals.map((vital) => vital.vital.websocket.id)).toEqual([connectionId, connectionId, connectionId])
+      expect(vitals.map((event) => event.rawRumEvent.vital.websocket.id)).toEqual([
+        connectionId,
+        connectionId,
+        connectionId,
+      ])
 
-      const vitalIds = vitals.map((vital) => vital.vital.id)
+      const vitalIds = vitals.map((event) => event.rawRumEvent.vital.id)
       vitalIds.forEach((vitalId) => expect(vitalId).toMatch(UUID_PATTERN))
       expect(new Set([...vitalIds, connectionId]).size).toBe(vitals.length + 1)
     })
@@ -118,7 +128,7 @@ describe('webSocketCollection', () => {
       callClose(socket, { at: WEBSOCKET_HEARTBEAT_INTERVAL + 20 })
       dispatchClose(socket, { at: WEBSOCKET_HEARTBEAT_INTERVAL + 30 })
 
-      expect(emittedStartClocks().map((startClocks) => startClocks.timeStamp)).toEqual([
+      expect(emittedVitals().map((event) => event.startClocks.timeStamp)).toEqual([
         clock.timeStamp(5),
         clock.timeStamp(10),
         clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL + 10),
@@ -134,7 +144,7 @@ describe('webSocketCollection', () => {
 
       tracker.flushOpenConnections()
 
-      expect(single(emittedStartClocks(WebSocketVitalName.CLOSED)).timeStamp).toBe(clock.timeStamp(40))
+      expect(single(emittedVitals(WebSocketVitalName.CLOSED)).startClocks.timeStamp).toBe(clock.timeStamp(40))
     })
   })
 
@@ -214,7 +224,7 @@ describe('webSocketCollection', () => {
 
       failHandshake(socket)
 
-      expect(emittedVitals().map((vital) => vital.vital.name)).toEqual([
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
         WebSocketVitalName.CONNECTING,
         WebSocketVitalName.CLOSED,
       ])
@@ -310,7 +320,7 @@ describe('webSocketCollection', () => {
 
       tickHeartbeat(2)
 
-      expect(emittedVitals(WebSocketVitalName.OPEN).map((vital) => vital.date)).toEqual([
+      expect(emittedVitals(WebSocketVitalName.OPEN).map((event) => event.rawRumEvent.date)).toEqual([
         clock.timeStamp(0),
         clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL),
         clock.timeStamp(2 * WEBSOCKET_HEARTBEAT_INTERVAL),
@@ -359,7 +369,7 @@ describe('webSocketCollection', () => {
       // re-enter the heartbeat timer from inside its own handler.
       const delayMs = 5_000
       let delayedOnce = false
-      addWebSocketVitalSpy.and.callFake(() => {
+      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, () => {
         if (!delayedOnce) {
           delayedOnce = true
           clock.setDate(new Date(Date.now() + delayMs))
@@ -370,13 +380,15 @@ describe('webSocketCollection', () => {
 
       const [, idB] = connectingPayloads().map((payload) => payload.id)
       const pulseVitalOfB = emittedVitals(WebSocketVitalName.OPEN).find(
-        (vital) =>
-          vital.vital.websocket.id === idB &&
-          (vital.vital.websocket as RawRumWebSocketOpenVitalProperties).snapshot_version === 2
+        (event) =>
+          event.rawRumEvent.vital.websocket.id === idB &&
+          (event.rawRumEvent.vital.websocket as RawRumWebSocketOpenVitalProperties).snapshot_version === 2
       )!
-      const pulsePayloadOfB = pulseVitalOfB.vital.websocket as { id: string } & RawRumWebSocketOpenVitalProperties
+      const pulsePayloadOfB = pulseVitalOfB.rawRumEvent.vital.websocket as {
+        id: string
+      } & RawRumWebSocketOpenVitalProperties
 
-      expect(pulseVitalOfB.date).toBe(clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL))
+      expect(pulseVitalOfB.rawRumEvent.date).toBe(clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL))
       expect(pulsePayloadOfB.snapshot.inbound.longest_silence).toBe(
         toServerDuration(WEBSOCKET_HEARTBEAT_INTERVAL as Duration)
       )
@@ -483,7 +495,7 @@ describe('webSocketCollection', () => {
       callClose(socket)
       dispatchClose(socket)
 
-      expect(emittedVitals().map((vital) => vital.vital.name)).toEqual([
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
         WebSocketVitalName.CONNECTING,
         WebSocketVitalName.OPEN,
         WebSocketVitalName.CLOSING,
@@ -678,7 +690,7 @@ describe('webSocketCollection', () => {
         })
       )
 
-      expect(emittedVitals().map((vital) => vital.date)).toEqual([
+      expect(emittedVitals().map((event) => event.rawRumEvent.date)).toEqual([
         clock.timeStamp(0),
         clock.timeStamp(10 - 10 * ONE_MINUTE),
         clock.timeStamp(30 - 10 * ONE_MINUTE + ONE_HOUR),
@@ -717,12 +729,7 @@ describe('webSocketCollection', () => {
     })
 
     function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
-      const collection = startWebSocketCollection(
-        lifeCycle,
-        configuration,
-        addWebSocketVitalSpy,
-        pageUnloadFlushObservable
-      )
+      const collection = startWebSocketCollection(lifeCycle, configuration, pageUnloadFlushObservable)
       registerCleanupTask(() => collection.stop())
       return collection
     }
@@ -949,7 +956,7 @@ describe('webSocketCollection', () => {
   // ---------------------------------------------------------------------------
 
   function startTracking() {
-    const tracker = trackWebSocket(initWebSocketObservable(), addWebSocketVitalSpy)
+    const tracker = trackWebSocket(lifeCycle, initWebSocketObservable())
     registerCleanupTask(tracker.stop)
     return tracker
   }
@@ -1067,17 +1074,10 @@ describe('webSocketCollection', () => {
   // Reading emitted vitals
   // ---------------------------------------------------------------------------
 
-  function emittedCalls(name?: WebSocketVitalName) {
-    const calls = addWebSocketVitalSpy.calls.all().map((call) => call.args)
-    return name === undefined ? calls : calls.filter(([rawRumEvent]) => rawRumEvent.vital.name === name)
-  }
-
   function emittedVitals(name?: WebSocketVitalName) {
-    return emittedCalls(name).map(([rawRumEvent]) => rawRumEvent)
-  }
-
-  function emittedStartClocks(name?: WebSocketVitalName) {
-    return emittedCalls(name).map(([, startClocks]) => startClocks)
+    return name === undefined
+      ? collectedEvents
+      : collectedEvents.filter((event) => event.rawRumEvent.vital.name === name)
   }
 
   /** The one item of a list the spec expects to hold exactly one. */
@@ -1095,25 +1095,25 @@ describe('webSocketCollection', () => {
 
   function connectingPayloads() {
     return emittedVitals(WebSocketVitalName.CONNECTING).map(
-      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketConnectingVitalProperties
+      (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketConnectingVitalProperties
     )
   }
 
   function openPayloads() {
     return emittedVitals(WebSocketVitalName.OPEN).map(
-      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketOpenVitalProperties
+      (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketOpenVitalProperties
     )
   }
 
   function closingPayloads() {
     return emittedVitals(WebSocketVitalName.CLOSING).map(
-      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketClosingVitalProperties
+      (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketClosingVitalProperties
     )
   }
 
   function closedPayloads() {
     return emittedVitals(WebSocketVitalName.CLOSED).map(
-      (vital) => vital.vital.websocket as { id: string } & RawRumWebSocketClosedVitalProperties
+      (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketClosedVitalProperties
     )
   }
 })

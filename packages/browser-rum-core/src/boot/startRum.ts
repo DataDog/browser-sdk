@@ -236,12 +236,7 @@ export function startRumEventCollection(
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
-  const webSocketCollection = startWebSocketCollection(
-    lifeCycle,
-    configuration,
-    vitalCollection.addWebSocketVital,
-    pageUnloadFlushObservable
-  )
+  const webSocketCollection = startWebSocketCollection(lifeCycle, configuration, pageUnloadFlushObservable)
   cleanupTasks.push(webSocketCollection.stop)
 
   const internalContext = startInternalContext(

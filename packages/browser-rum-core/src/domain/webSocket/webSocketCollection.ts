@@ -14,7 +14,6 @@ import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import { buildUrl } from '@datadog/js-core/util'
 import type { WebSocketContext } from '../../browser/webSocketObservable'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
-import type { RawRumWebSocketVitalEvent } from '../../rawRumEvent.types'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
@@ -23,9 +22,6 @@ import type { WebSocketTrackingEnd, WebSocketVitalPhaseInfo } from './serializeW
 import { serializeWebSocketVital, webSocketVitalClocks } from './serializeWebSocketVital'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
-
-/** The seam every WebSocket vital reaches the event pipeline through. */
-export type AddWebSocketVital = (rawRumEvent: RawRumWebSocketVitalEvent, startClocks: ClocksState) => void
 
 /**
  * A one flat cadence in every page state that tells how often an open connection reports where it is.
@@ -59,14 +55,13 @@ export interface WebSocketConnectionTracker {
 export function startWebSocketCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  addWebSocketVital: AddWebSocketVital,
   pageUnloadFlushObservable: Observable<void>
 ) {
   if (!isWebSocketCollectionEnabled(configuration)) {
     return { stop: noop }
   }
 
-  const tracker = trackWebSocket(initWebSocketObservable(), addWebSocketVital)
+  const tracker = trackWebSocket(lifeCycle, initWebSocketObservable())
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once; later events on the same WebSocket instance are ignored.
@@ -112,8 +107,8 @@ function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
 }
 
 export function trackWebSocket(
-  webSocketContextObservable: Observable<WebSocketContext>,
-  addWebSocketVital: AddWebSocketVital
+  lifeCycle: LifeCycle,
+  webSocketContextObservable: Observable<WebSocketContext>
 ): WebSocketConnectionTracker {
   const trackedConnections = new Map<WebSocket, TrackedConnection>()
   let heartbeatIntervalId: TimeoutId | undefined
@@ -121,11 +116,19 @@ export function trackWebSocket(
   /**
    * Reports one phase of one connection. Snapshot-carrying phases freeze the read at their phase
    * clocks so the snapshot matches the date the vital reports.
+   *
+   * Emitted straight onto the life cycle rather than through vitalCollection: a WebSocket vital is
+   * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject —
+   * and rejecting one would let a frozen page suppress the heartbeat built to detect it.
    */
   function emitVital(connection: TrackedConnection, phaseInfo: WebSocketVitalPhaseInfo) {
     const readAt = phaseInfo.phase === 'open' ? phaseInfo.pulseClocks.relative : undefined
     const state = connection.getState(readAt)
-    addWebSocketVital(serializeWebSocketVital(state, phaseInfo), webSocketVitalClocks(state, phaseInfo))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+      rawRumEvent: serializeWebSocketVital(state, phaseInfo),
+      startClocks: webSocketVitalClocks(state, phaseInfo),
+      domainContext: {},
+    })
   }
 
   /**
