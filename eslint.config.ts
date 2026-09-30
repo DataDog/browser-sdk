@@ -7,6 +7,7 @@ import jsdocPlugin from 'eslint-plugin-jsdoc'
 // @ts-expect-error -- eslint-plugin-jasmine is not typed
 import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
 import eslintLocalRules from './eslint-local-rules/index.ts'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
@@ -524,5 +525,8 @@ export default defineConfig(
         },
       ],
     },
-  }
+  },
+
+  // Must be last so Prettier can disable conflicting stylistic rules and report format diffs.
+  eslintPluginPrettierRecommended
 )
