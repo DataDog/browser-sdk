@@ -1,11 +1,14 @@
+import {
+  addEventListener,
+  computeBytesCount,
+  instrumentConstructor,
+  instrumentMethod,
+  Observable,
+} from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
 import type { GlobalObject } from '@datadog/js-core/util'
 import { globalObject } from '@datadog/js-core/util'
-import { instrumentConstructor, instrumentMethod } from '../tools/instrumentMethod'
-import { Observable } from '../tools/observable'
-import { computeBytesCount } from '../tools/utils/byteUtils'
-import { addEventListener } from './addEventListener'
 
 type GlobalWithWebSocket = GlobalObject & { WebSocket: typeof WebSocket }
 

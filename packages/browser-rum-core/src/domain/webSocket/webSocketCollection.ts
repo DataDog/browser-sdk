@@ -1,11 +1,10 @@
-import type { Observable, TimeoutId, WebSocketContext } from '@datadog/browser-core'
+import type { Observable, TimeoutId } from '@datadog/browser-core'
 import {
   addEventListener,
   clearInterval,
   DOM_EVENT,
   ExperimentalFeature,
   generateUUID,
-  initWebSocketObservable,
   isExperimentalFeatureEnabled,
   noop,
   setInterval,
@@ -13,6 +12,8 @@ import {
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import { buildUrl } from '@datadog/js-core/util'
+import type { WebSocketContext } from '../../browser/webSocketObservable'
+import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import type { RawRumWebSocketVitalEvent } from '../../rawRumEvent.types'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'

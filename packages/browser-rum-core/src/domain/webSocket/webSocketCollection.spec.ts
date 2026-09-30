@@ -2,7 +2,6 @@ import {
   addExperimentalFeatures,
   DOM_EVENT,
   ExperimentalFeature,
-  initWebSocketObservable,
   noop,
   Observable,
   PageExitReason,
@@ -22,6 +21,7 @@ import type { Duration } from '@datadog/js-core/time'
 import { clocksNow, ONE_HOUR, ONE_MINUTE, toServerDuration } from '@datadog/js-core/time'
 import { globalObject } from '@datadog/js-core/util'
 import { mockRumConfiguration } from '../../../test'
+import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import type {
   RawRumWebSocketClosedVitalProperties,
   RawRumWebSocketClosingVitalProperties,

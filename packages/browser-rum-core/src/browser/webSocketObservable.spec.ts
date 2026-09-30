@@ -1,6 +1,6 @@
-import { createMockWebSocket, mockWebSocket, MockWebSocket, registerCleanupTask } from '../../test'
-import type { Subscription } from '../tools/observable'
-import { setAllowUntrustedEvents } from './addEventListener'
+import type { Subscription } from '@datadog/browser-core'
+import { setAllowUntrustedEvents } from '@datadog/browser-core'
+import { createMockWebSocket, mockWebSocket, MockWebSocket, registerCleanupTask } from '@datadog/browser-core/test'
 import type { WebSocketContext } from './webSocketObservable'
 import { initWebSocketObservable, resetWebSocketObservable } from './webSocketObservable'
 
