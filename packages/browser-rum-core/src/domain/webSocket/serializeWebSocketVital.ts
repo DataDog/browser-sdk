@@ -207,7 +207,6 @@ function serializeSnapshot({ inbound, outbound }: WebSocketSnapshot): RawRumWebS
     outbound: {
       ...serializeMessageDirection(outbound),
       buffered_amount_max: outbound.bufferedAmountMax,
-      backpressured_message_count: outbound.backpressuredMessageCount,
     },
   }
 }

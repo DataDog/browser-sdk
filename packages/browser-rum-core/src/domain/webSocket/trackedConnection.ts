@@ -2,15 +2,6 @@ import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed, relativeNow } from '@datadog/js-core/time'
 
 /**
- * Send queue depth, in bytes, from which an outbound message counts as backpressured.
- *
- * A plain `bufferedAmount > 0` would be wrong: the queue only drains when the browser gets to flush
- * it, so any synchronous burst of sends grows it monotonically and the count would measure
- * burstiness rather than backpressure.
- */
-export const WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES = 65_536
-
-/**
  * Lifecycle phase of a connection, as defined by RFC 6455. Held as explicit data so no reader has
  * to infer it from which fields happen to be populated.
  */
@@ -31,7 +22,6 @@ export interface MessageDirectionAggregate {
 export interface OutboundAggregate extends MessageDirectionAggregate {
   /** Deepest send queue observed, counted after each payload was enqueued. */
   bufferedAmountMax: number
-  backpressuredMessageCount: number
   /** Send queue depth the socket reported when tracking ended. */
   bufferedAmountAtClose?: number
 }
@@ -111,7 +101,6 @@ export function createTrackedConnection({
   const outbound: OutboundAggregate = {
     ...createMessageDirectionAggregate(),
     bufferedAmountMax: 0,
-    backpressuredMessageCount: 0,
   }
   let phase: WebSocketPhase = 'connecting'
   let openClocks: ClocksState | undefined
@@ -166,10 +155,7 @@ export function createTrackedConnection({
     },
 
     recordOutboundMessage: (size, bufferedAmountPreSend, at) => {
-      if (bufferedAmountPreSend >= WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES) {
-        outbound.backpressuredMessageCount += 1
-      }
-      // the peak is counted after the payload is enqueued, from the read taken for backpressure:
+      // the peak is counted after the payload is enqueued, from the pre-send queue depth:
       // `send()` grows the queue by exactly the payload size, whereas reading the socket again
       // could catch a queue the browser has already partly flushed and understate the peak
       outbound.bufferedAmountMax = Math.max(outbound.bufferedAmountMax, bufferedAmountPreSend + size)

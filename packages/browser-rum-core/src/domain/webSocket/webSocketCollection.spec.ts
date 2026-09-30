@@ -30,7 +30,6 @@ import type {
 } from '../../rawRumEvent.types'
 import { WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES } from './trackedConnection'
 import type { AddWebSocketVital } from './webSocketCollection'
 import { startWebSocketCollection, trackWebSocket, WEBSOCKET_HEARTBEAT_INTERVAL } from './webSocketCollection'
 
@@ -594,7 +593,7 @@ describe('webSocketCollection', () => {
       startTracking()
       const socket = openConnection({ at: 10 })
       receiveMessage(socket, 30, { at: 20 })
-      sendMessage(socket, 10, { at: 25, bufferedAmountPreSend: WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES })
+      sendMessage(socket, 10, { at: 25, bufferedAmountPreSend: 100 })
 
       dispatchClose(socket, { at: 40 })
 
@@ -612,8 +611,7 @@ describe('webSocketCollection', () => {
           message_count: 1,
           message_size_total: 10,
           time_to_first_message: toServerDuration(15 as Duration),
-          buffered_amount_max: WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES + 10,
-          backpressured_message_count: 1,
+          buffered_amount_max: 110,
         })
       )
     })

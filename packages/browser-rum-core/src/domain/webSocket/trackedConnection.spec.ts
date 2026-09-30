@@ -8,7 +8,7 @@ import type {
   TrackedConnection,
   TrackedConnectionIdentity,
 } from './trackedConnection'
-import { createTrackedConnection, WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES } from './trackedConnection'
+import { createTrackedConnection } from './trackedConnection'
 
 const CONNECTING_AT = 0
 const OPEN_AT = 10
@@ -308,19 +308,6 @@ describe('trackedConnection', () => {
   })
 
   describe('outbound send queue', () => {
-    it('counts a send as backpressured only from the threshold up', () => {
-      const connection = createOpenConnection()
-
-      connection.recordOutboundMessage(1, WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES - 1, relativeAt(20))
-      expect(outboundOf(connection).backpressuredMessageCount).toBe(0)
-
-      connection.recordOutboundMessage(1, WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES, relativeAt(30))
-      expect(outboundOf(connection).backpressuredMessageCount).toBe(1)
-
-      connection.recordOutboundMessage(1, WEBSOCKET_BACKPRESSURE_THRESHOLD_BYTES * 2, relativeAt(40))
-      expect(outboundOf(connection).backpressuredMessageCount).toBe(2)
-    })
-
     it('reports the peak queue depth after the payload is enqueued', () => {
       const connection = createOpenConnection()
 

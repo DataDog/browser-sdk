@@ -106,13 +106,7 @@ describe('serializeWebSocketVital', () => {
     it('repeats no identity field, and omits what the server did not negotiate', () => {
       const { websocket } = serializeOpen(openState({ url: 'wss://example.com/chat', requestedProtocols: ['chat.v1'] }))
 
-      expect(fieldsOf(websocket)).toEqual([
-        'id',
-        'connecting_duration',
-        'open_date',
-        'snapshot_version',
-        'snapshot',
-      ])
+      expect(fieldsOf(websocket)).toEqual(['id', 'connecting_duration', 'open_date', 'snapshot_version', 'snapshot'])
     })
 
     it('reports neither of the two values a snapshot only holds when tracking ended', () => {
@@ -273,7 +267,6 @@ describe('serializeWebSocketVital', () => {
           longest_silence: nanoseconds(0),
           time_to_first_message: undefined,
           buffered_amount_max: 0,
-          backpressured_message_count: 0,
         },
       })
     })
@@ -294,7 +287,6 @@ describe('serializeWebSocketVital', () => {
               messageSizeTotal: 10,
               messageSizeMax: 10,
               bufferedAmountMax: 70_000,
-              backpressuredMessageCount: 1,
             },
           }),
         })
@@ -314,7 +306,6 @@ describe('serializeWebSocketVital', () => {
         longest_silence: nanoseconds(0),
         time_to_first_message: undefined,
         buffered_amount_max: 70_000,
-        backpressured_message_count: 1,
       })
     })
   })
@@ -412,7 +403,7 @@ describe('serializeWebSocketVital', () => {
 
     return {
       inbound: { ...silentDirection, ...inbound },
-      outbound: { ...silentDirection, bufferedAmountMax: 0, backpressuredMessageCount: 0, ...outbound },
+      outbound: { ...silentDirection, bufferedAmountMax: 0, ...outbound },
     }
   }
 
