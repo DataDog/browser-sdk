@@ -121,13 +121,13 @@ export function trackWebSocket(
    * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject —
    * and rejecting one would let a frozen page suppress the heartbeat built to detect it.
    */
-  function emitVital(connection: TrackedConnection, phaseInfo: WebSocketVitalPhaseInfo) {
+  function emitVital(instance: WebSocket, connection: TrackedConnection, phaseInfo: WebSocketVitalPhaseInfo) {
     const readAt = phaseInfo.phase === 'open' ? phaseInfo.pulseClocks.relative : undefined
     const state = connection.getState(readAt)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       rawRumEvent: serializeWebSocketVital(state, phaseInfo),
       startClocks: webSocketVitalClocks(state, phaseInfo),
-      domainContext: {},
+      domainContext: { webSocket: instance },
     })
   }
 
@@ -137,13 +137,14 @@ export function trackWebSocket(
    * connection reports.
    */
   function endTracking(
+    instance: WebSocket,
     connection: TrackedConnection,
     endClocks: ClocksState,
     bufferedAmount: number,
     trackingEnd: WebSocketTrackingEnd
   ) {
     connection.recordTrackingEnd(endClocks, bufferedAmount)
-    emitVital(connection, {
+    emitVital(instance, connection, {
       phase: 'closed',
       endClocks,
       snapshotVersion: connection.nextSnapshotVersion(),
@@ -159,7 +160,7 @@ export function trackWebSocket(
   function reportOpenConnections() {
     const pulseClocks = clocksNow()
 
-    trackedConnections.forEach((connection) => {
+    trackedConnections.forEach((connection, instance) => {
       const state = connection.getState()
       // the open clocks are read from the connection rather than asserted: the phase implies them,
       // and only checking for both tells the compiler so
@@ -167,7 +168,7 @@ export function trackWebSocket(
         return
       }
 
-      emitVital(connection, {
+      emitVital(instance, connection, {
         phase: 'open',
         openClocks: state.openClocks,
         pulseClocks,
@@ -211,7 +212,7 @@ export function trackWebSocket(
         })
         trackedConnections.set(context.instance, connection)
 
-        emitVital(connection, { phase: 'connecting' })
+        emitVital(context.instance, connection, { phase: 'connecting' })
 
         return
       }
@@ -229,7 +230,7 @@ export function trackWebSocket(
           selectedExtensions: context.extensions || undefined,
         })
 
-        emitVital(connection, {
+        emitVital(context.instance, connection, {
           phase: 'open',
           openClocks: context.openClocks,
           // the first vital of the sequence is taken when the handshake completed; the heartbeat's
@@ -265,7 +266,7 @@ export function trackWebSocket(
 
         connection.recordClosing(context.at)
 
-        emitVital(connection, { phase: 'closing', closingClocks: context.at })
+        emitVital(context.instance, connection, { phase: 'closing', closingClocks: context.at })
 
         return
       }
@@ -278,7 +279,7 @@ export function trackWebSocket(
 
         trackedConnections.delete(context.instance)
 
-        endTracking(connection, context.at, context.bufferedAmountAtClose, {
+        endTracking(context.instance, connection, context.at, context.bufferedAmountAtClose, {
           trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
           closeEvent: { code: context.code, reason: context.reason, wasClean: context.wasClean },
         })
@@ -305,7 +306,7 @@ export function trackWebSocket(
       trackedConnections.forEach((connection, instance) => {
         // no close event happened on this path, so the send queue depth is read from the socket and
         // the close outcome is genuinely absent rather than defaulted
-        endTracking(connection, endClocks, instance.bufferedAmount, { trackingEndReason })
+        endTracking(instance, connection, endClocks, instance.bufferedAmount, { trackingEndReason })
       })
 
       trackedConnections.clear()

@@ -15,7 +15,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
         : T extends typeof RumEventType.LONG_TASK
           ? RumLongTaskEventDomainContext
           : T extends typeof RumEventType.VITAL
-            ? RumVitalEventDomainContext
+            ? RumVitalEventDomainContext | RumWebSocketVitalEventDomainContext
             : never
 
 export interface RumViewEventDomainContext {
@@ -77,4 +77,8 @@ export interface RumLongTaskEventDomainContext {
 
 export interface RumVitalEventDomainContext {
   handlingStack?: string
+}
+
+export interface RumWebSocketVitalEventDomainContext {
+  webSocket: WebSocket
 }

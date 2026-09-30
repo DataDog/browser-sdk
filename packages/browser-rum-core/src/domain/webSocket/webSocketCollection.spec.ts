@@ -22,6 +22,7 @@ import { clocksNow, ONE_HOUR, ONE_MINUTE, toServerDuration } from '@datadog/js-c
 import { globalObject } from '@datadog/js-core/util'
 import { mockRumConfiguration } from '../../../test'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
+import type { RumWebSocketVitalEventDomainContext } from '../../domainContext.types'
 import type {
   RawRumWebSocketClosedVitalProperties,
   RawRumWebSocketClosingVitalProperties,
@@ -643,6 +644,30 @@ describe('webSocketCollection', () => {
     })
   })
 
+  // The live instance lets a consumer read the socket's own state (bufferedAmount, readyState) or
+  // interact with it (close it, inspect its listeners) from a beforeSend/observer callback.
+  describe('the domain context', () => {
+    it('exposes the same socket instance on every vital of the connection lifecycle', () => {
+      startTracking()
+      const socket = connect()
+      expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CONNECTING)))).toBe(socket)
+
+      completeHandshake(socket)
+      expect(webSocketOf(single(emittedVitals(WebSocketVitalName.OPEN)))).toBe(socket)
+
+      tickHeartbeat()
+      const openVitals = emittedVitals(WebSocketVitalName.OPEN)
+      expect(openVitals).toHaveSize(2)
+      expect(webSocketOf(openVitals[1])).toBe(socket)
+
+      callClose(socket)
+      expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CLOSING)))).toBe(socket)
+
+      dispatchClose(socket)
+      expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CLOSED)))).toBe(socket)
+    })
+  })
+
   describe('the dates of the later phases', () => {
     // they are placed on the monotonic clock, which has sub-millisecond precision, while the schema
     // wants whole milliseconds
@@ -1115,5 +1140,10 @@ describe('webSocketCollection', () => {
     return emittedVitals(WebSocketVitalName.CLOSED).map(
       (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketClosedVitalProperties
     )
+  }
+
+  /** The live socket instance a vital's domain context carries. */
+  function webSocketOf(event: RawRumEventCollectedData<RawRumWebSocketVitalEvent>) {
+    return (event.domainContext as RumWebSocketVitalEventDomainContext).webSocket as unknown as MockWebSocket
   }
 })
