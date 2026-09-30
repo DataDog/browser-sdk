@@ -32,9 +32,9 @@ interface OpenPhaseInfo {
   openClocks: ClocksState
   /**
    * When this particular vital was taken, which is what it is dated at. It is the open event on the
-   * first one and the beat on every heartbeat after it, and the two coincide only on the first.
+   * first one and the pulse on every heartbeat after it, and the two coincide only on the first.
    */
-  beatClocks: ClocksState
+  pulseClocks: ClocksState
   snapshotVersion: number
 }
 
@@ -169,7 +169,7 @@ export function webSocketVitalClocks(state: TrackedConnectionState, phaseInfo: W
     case 'connecting':
       return state.connectingClocks
     case 'open':
-      return phaseInfo.beatClocks
+      return phaseInfo.pulseClocks
     case 'closing':
       return phaseInfo.closingClocks
     case 'closed':

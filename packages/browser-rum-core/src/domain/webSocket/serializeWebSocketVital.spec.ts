@@ -55,7 +55,7 @@ describe('serializeWebSocketVital', () => {
 
     it('dates each vital at the moment it reports, in unix milliseconds', () => {
       expect(serializeConnecting().event.date).toBe(timeStampAt(0))
-      expect(serializeOpen(openState(), { beatOffset: 70_000 }).event.date).toBe(timeStampAt(70_000))
+      expect(serializeOpen(openState(), { pulseOffset: 70_000 }).event.date).toBe(timeStampAt(70_000))
       expect(serializeClosing().event.date).toBe(timeStampAt(30))
       expect(serializeClosedOnCloseEvent().event.date).toBe(timeStampAt(50))
     })
@@ -315,7 +315,7 @@ describe('serializeWebSocketVital', () => {
       const state = closedState()
 
       // @ts-expect-error a snapshot rides on the open vital, so its version is required
-      serializeWebSocketVital(state, { phase: 'open', openClocks: state.openClocks!, beatClocks: clocksAt(10) })
+      serializeWebSocketVital(state, { phase: 'open', openClocks: state.openClocks!, pulseClocks: clocksAt(10) })
       // @ts-expect-error a snapshot may ride on the closed vital, so its version is required
       serializeWebSocketVital(state, {
         phase: 'closed',
@@ -416,12 +416,12 @@ describe('serializeWebSocketVital', () => {
     return { event, websocket: event.vital.websocket as ConnectingProperties }
   }
 
-  /** Dated at the open event, as the first open vital is, unless a later beat is given. */
-  function serializeOpen(state = openState(), phaseInfo: { snapshotVersion?: number; beatOffset?: number } = {}) {
+  /** Dated at the open event, as the first open vital is, unless a later pulse is given. */
+  function serializeOpen(state = openState(), phaseInfo: { snapshotVersion?: number; pulseOffset?: number } = {}) {
     const event = serializeWebSocketVital(state, {
       phase: 'open',
       openClocks: state.openClocks!,
-      beatClocks: phaseInfo.beatOffset === undefined ? state.openClocks! : clocksAt(phaseInfo.beatOffset),
+      pulseClocks: phaseInfo.pulseOffset === undefined ? state.openClocks! : clocksAt(phaseInfo.pulseOffset),
       snapshotVersion: phaseInfo.snapshotVersion ?? 1,
     })
     return { event, websocket: event.vital.websocket as OpenProperties }

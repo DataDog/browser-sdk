@@ -43,8 +43,8 @@ export const WEBSOCKET_HEARTBEAT_INTERVAL = ONE_MINUTE
 type UnobservedTrackingEndReason = Exclude<WebSocketTrackingEndReason, typeof WebSocketTrackingEndReason.CLOSE_EVENT>
 
 export interface WebSocketConnectionTracker {
-  /** One beat of every connection in phase `open`, whether the cadence or a page transition asked. */
-  beatOpenConnections: () => void
+  /** Report every connection in phase `open`, whether the cadence or a page transition asked. */
+  reportOpenConnections: () => void
   /** Ends tracking of every tracked connection, and tells how many there were. */
   flushOpenConnections: (endClocks?: ClocksState, trackingEndReason?: UnobservedTrackingEndReason) => number
   stop: () => void
@@ -73,10 +73,10 @@ export function startWebSocketCollection(
     tracker.flushOpenConnections(endClocks)
   })
 
-  // A beat on all three reasons to collect fresh data when the connections is likely to be
+  // Emit a pulse on all three reasons to collect fresh data when the connections is likely to be
   // terminated without a proper close event.
   const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
-    tracker.beatOpenConnections()
+    tracker.reportOpenConnections()
   })
 
   // A listener of its own rather than a page exit reason: Session Replay stores that reason as a
@@ -122,7 +122,7 @@ export function trackWebSocket(
    * clocks so the snapshot matches the date the vital reports.
    */
   function emitVital(connection: TrackedConnection, phaseInfo: WebSocketVitalPhaseInfo) {
-    const readAt = phaseInfo.phase === 'open' ? phaseInfo.beatClocks.relative : undefined
+    const readAt = phaseInfo.phase === 'open' ? phaseInfo.pulseClocks.relative : undefined
     const state = connection.getState(readAt)
     addWebSocketVital(serializeWebSocketVital(state, phaseInfo), webSocketVitalClocks(state, phaseInfo))
   }
@@ -148,12 +148,12 @@ export function trackWebSocket(
   }
 
   /**
-   * One beat: every connection in phase `open` reports where it is, at one date and each with the
-   * next version of its own snapshot. A connection in any other phase does not beat — the closing
-   * phase deliberately included, so that a hung close falls silent instead of looking alive.
+   * One pulse: every connection in phase `open` reports where it is, at one date and each with the
+   * next version of its own snapshot. A connection in any other phase does not emit a pulse — the
+   * closing phase deliberately included, so that a hung close falls silent instead of looking alive.
    */
-  function beatOpenConnections() {
-    const beatClocks = clocksNow()
+  function reportOpenConnections() {
+    const pulseClocks = clocksNow()
 
     trackedConnections.forEach((connection) => {
       const state = connection.getState()
@@ -166,7 +166,7 @@ export function trackWebSocket(
       emitVital(connection, {
         phase: 'open',
         openClocks: state.openClocks,
-        beatClocks,
+        pulseClocks,
         snapshotVersion: connection.nextSnapshotVersion(),
       })
     })
@@ -186,11 +186,11 @@ export function trackWebSocket(
    * connection is open.
    */
   function syncHeartbeat() {
-    const shouldBeat = hasOpenConnection()
+    const shouldRunHeartbeat = hasOpenConnection()
 
-    if (shouldBeat && heartbeatIntervalId === undefined) {
-      heartbeatIntervalId = setInterval(beatOpenConnections, WEBSOCKET_HEARTBEAT_INTERVAL)
-    } else if (!shouldBeat && heartbeatIntervalId !== undefined) {
+    if (shouldRunHeartbeat && heartbeatIntervalId === undefined) {
+      heartbeatIntervalId = setInterval(reportOpenConnections, WEBSOCKET_HEARTBEAT_INTERVAL)
+    } else if (!shouldRunHeartbeat && heartbeatIntervalId !== undefined) {
       clearInterval(heartbeatIntervalId)
       heartbeatIntervalId = undefined
     }
@@ -229,8 +229,8 @@ export function trackWebSocket(
           phase: 'open',
           openClocks: context.openClocks,
           // the first vital of the sequence is taken when the handshake completed; the heartbeat's
-          // later beats are the ones where the two dates part
-          beatClocks: context.openClocks,
+          // later pulses are the ones where the two dates part
+          pulseClocks: context.openClocks,
           snapshotVersion: connection.nextSnapshotVersion(),
         })
 
@@ -295,7 +295,7 @@ export function trackWebSocket(
   })
 
   return {
-    beatOpenConnections,
+    reportOpenConnections,
     flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
       const endedCount = trackedConnections.size
       trackedConnections.forEach((connection, instance) => {

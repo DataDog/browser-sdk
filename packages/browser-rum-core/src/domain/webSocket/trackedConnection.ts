@@ -111,7 +111,7 @@ export function createTrackedConnection({
     getState: (snapshotReadAt) => {
       // reads close the silence still in progress: at the tracking end once tracking has ended, so
       // that the terminal snapshot is stable; at an explicit read time when the caller freezes the
-      // snapshot to a known date (a heartbeat beat); and at the moment of the read until then
+      // snapshot to a known date (a heartbeat pulse); and at the moment of the read until then
       const readAt = endClocks ? endClocks.relative : (snapshotReadAt ?? relativeNow())
       const hasEnded = endClocks !== undefined
 
