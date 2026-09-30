@@ -1213,6 +1213,7 @@ describe('profiler', () => {
 
       expect(profiler.isRunning()).toBe(true)
       expect(profilingContextManager.get()?.status).toBe('running')
+      expect(profilingContextManager.get()?.collection_type).toBe('early')
       // The Profiler instance started before this chunk was loaded is used as
       // is: no new instance was created.
       expect(instances.size).toBe(1)
@@ -1236,11 +1237,12 @@ describe('profiler', () => {
 
     it('starts a new Profiler instance when no early collection was started', async () => {
       const clock = mockClock()
-      const { profiler, instances } = setupProfiler()
+      const { profiler, instances, profilingContextManager } = setupProfiler()
 
       profiler.start()
 
       expect(profiler.isRunning()).toBe(true)
+      expect(profilingContextManager.get()?.collection_type).toBe('standard')
       // No snippet instance to take over: the chunk started its own.
       expect(instances.size).toBe(1)
 

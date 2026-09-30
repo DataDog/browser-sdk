@@ -226,7 +226,14 @@ export function createRumProfiler(
       startClocks = clocksNow()
     }
 
-    profilingContextManager.set({ status: 'running', error_reason: undefined })
+    profilingContextManager.set({
+      status: 'running',
+      error_reason: undefined,
+      // `early` when adopting the instance started by the early profiler
+      // snippet (the first profile covers the early collection period), `standard`
+      // when starting a new Profiler from scratch.
+      collection_type: takeover ? 'early' : 'standard',
+    })
 
     // Kick-off the new instance
     instance = {
