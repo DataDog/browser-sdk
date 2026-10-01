@@ -503,6 +503,9 @@ export interface RawRumWebSocketVitalMessageDirection {
   message_size_total: number
   message_size_max: number
   longest_silence: ServerDuration
+  time_to_first_message?: ServerDuration
+  /** Reported by the closed vital only, and only once a message has been observed. */
+  silence_before_close?: ServerDuration
 }
 
 /** What a phase reports, which is what the serializer builds and the envelope then carries. */
