@@ -93,7 +93,7 @@ export function getPhaseClocks(state: TrackedConnectionState): ClocksState {
     case 'connecting':
       return state.connectingClocks
     case 'open':
-      return state.openClocks
+      return state.pulseClocks
     case 'closing':
       return state.closingClocks
     case 'closed':

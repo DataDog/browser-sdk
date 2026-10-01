@@ -42,6 +42,11 @@ export type TrackedConnectionState = {
   | {
       phase: 'open'
       openClocks: ClocksState
+      /**
+       * When this particular open vital was taken. It is the open event on the first one and the
+       * pulse on every heartbeat after it.
+       */
+      pulseClocks: ClocksState
       selectedProtocol?: string
       selectedExtensions?: string
       snapshotVersion: number
@@ -64,6 +69,11 @@ export interface TrackedConnection {
   getState: () => TrackedConnectionState
   isOpen: () => boolean
   recordOpen: (context: WebSocketOpenContext) => void
+  /**
+   * Sets the pulse the next open vital is dated at, and bumps the snapshot version that vital rides
+   * on. Ignored outside the open phase, which is the only one with a pulse.
+   */
+  recordPulse: (pulseClocks: ClocksState) => void
   recordInboundMessage: (context: WebSocketMessageInContext) => void
   recordOutboundMessage: (context: WebSocketMessageOutContext) => void
   recordClosing: (context: WebSocketClosingContext) => void
@@ -102,7 +112,7 @@ export function createTrackedConnection({
     requestedProtocols: toRequestedProtocols(protocols),
   }
   // continued across phases: the closing phase carries no version, but the closed vital follows the
-  // open one
+  // open ones
   let snapshotVersion = 0
   // the cursor the silence arithmetic runs on, one per direction: it is what the connection needs
   // to measure a gap, not something it reports
@@ -146,12 +156,21 @@ export function createTrackedConnection({
         connectingClocks,
         phase: 'open',
         openClocks,
+        // a copy, as `getState`'s deep clone drops an object it has already seen in the state
+        pulseClocks: { ...openClocks },
         // These are reported as empty strings when none were specified
         selectedProtocol: context.protocol || undefined,
         selectedExtensions: context.extensions || undefined,
         snapshotVersion: nextSnapshotVersion(),
         snapshot,
       }
+    },
+
+    recordPulse: (pulseClocks) => {
+      if (state.phase !== 'open') {
+        return
+      }
+      state = { ...state, pulseClocks, snapshotVersion: nextSnapshotVersion() }
     },
 
     recordInboundMessage: ({ size, at }) => {
