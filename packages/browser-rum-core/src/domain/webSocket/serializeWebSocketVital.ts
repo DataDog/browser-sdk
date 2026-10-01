@@ -6,73 +6,9 @@ import type {
   RawRumWebSocketVitalMessageDirection,
   RawRumWebSocketVitalPayload,
   RawRumWebSocketVitalSnapshot,
-  WebSocketTrackingEndReason,
 } from '../../rawRumEvent.types'
 import { RumEventType, VitalType, WebSocketVitalName } from '../../rawRumEvent.types'
 import type { MessageDirectionAggregate, TrackedConnectionState, WebSocketSnapshot } from './trackedConnection'
-
-/** What a `close` event tells us, and the only thing no tracked connection holds. */
-export interface WebSocketCloseEvent {
-  code: number
-  reason: string
-  wasClean: boolean
-}
-
-interface ConnectingPhaseInfo {
-  phase: 'connecting'
-}
-
-interface OpenPhaseInfo {
-  phase: 'open'
-  /**
-   * When the handshake completed, which is what the vital reports as the open date. It is the
-   * arrival of this phase, so it is carried here rather than read off the connection, where the
-   * phase does not make it required and reading it would mean asserting it away.
-   */
-  openClocks: ClocksState
-  /**
-   * When this particular vital was taken, which is what it is dated at. It is the open event on the
-   * first one and the pulse on every heartbeat after it, and the two coincide only on the first.
-   */
-  pulseClocks: ClocksState
-  snapshotVersion: number
-}
-
-interface ClosingPhaseInfo {
-  phase: 'closing'
-  closingClocks: ClocksState
-}
-
-interface ClosedPhaseInfoCommonProperties {
-  phase: 'closed'
-  endClocks: ClocksState
-  snapshotVersion: number
-}
-
-/**
- * Why tracking ended. The close outcome is reported by, and only by, a real close event, so the
- * reason and the presence of the event are one choice rather than two — nothing in the schema
- * rejects a close code on a session that merely expired.
- */
-export type WebSocketTrackingEnd =
-  | {
-      trackingEndReason: typeof WebSocketTrackingEndReason.CLOSE_EVENT
-      closeEvent: WebSocketCloseEvent
-    }
-  | {
-      trackingEndReason: Exclude<WebSocketTrackingEndReason, typeof WebSocketTrackingEndReason.CLOSE_EVENT>
-      closeEvent?: never
-    }
-
-type ClosedPhaseInfo = ClosedPhaseInfoCommonProperties & WebSocketTrackingEnd
-
-/**
- * What the phase being reported adds to what the connection knows: the clocks of its arrival, the
- * snapshot version wherever a snapshot rides, and the close facts, which arrive with the event
- * rather than living in the connection. Discriminated on the phase because this is the last place
- * the compiler can check the four of them — the shipped schema does not narrow on the vital name.
- */
-export type WebSocketVitalPhaseInfo = ConnectingPhaseInfo | OpenPhaseInfo | ClosingPhaseInfo | ClosedPhaseInfo
 
 /**
  * Maps a tracked connection to the vital of one of its phases. Durations become nanoseconds here
@@ -88,16 +24,13 @@ export type WebSocketVitalPhaseInfo = ConnectingPhaseInfo | OpenPhaseInfo | Clos
  * identity rides the connecting vital only, the snapshot rides only where something can have been
  * exchanged, and the close-suffixed values ride the terminal snapshot only.
  */
-export function serializeWebSocketVital(
-  state: TrackedConnectionState,
-  phaseInfo: WebSocketVitalPhaseInfo
-): RawRumWebSocketVitalEvent {
+export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWebSocketVitalEvent {
   const id = state.id
   const connectingClocks = state.connectingClocks
   const connectingDate = connectingClocks.timeStamp
-  const date = webSocketVitalClocks(state, phaseInfo).timeStamp
+  const date = webSocketVitalClocks(state).timeStamp
 
-  switch (phaseInfo.phase) {
+  switch (state.phase) {
     case 'connecting':
       return toRawVital(date, {
         name: WebSocketVitalName.CONNECTING,
@@ -109,53 +42,47 @@ export function serializeWebSocketVital(
         },
       })
 
-    case 'open': {
-      const openClocks = phaseInfo.openClocks
-
+    case 'open':
       return toRawVital(date, {
         name: WebSocketVitalName.OPEN,
         websocket: {
           id,
-          connecting_duration: toServerDuration(elapsed(connectingClocks.relative, openClocks.relative)),
-          open_date: toPhaseDate(connectingClocks, openClocks),
+          connecting_duration: toServerDuration(elapsed(connectingClocks.relative, state.openClocks.relative)),
+          open_date: toPhaseDate(connectingClocks, state.openClocks),
           selected_protocol: state.selectedProtocol,
           selected_extensions: state.selectedExtensions,
-          snapshot_version: phaseInfo.snapshotVersion,
+          snapshot_version: state.snapshotVersion,
           snapshot: serializeSnapshot(state.snapshot),
         },
       })
-    }
 
     case 'closing':
       return toRawVital(date, {
         name: WebSocketVitalName.CLOSING,
         websocket: {
           id,
-          closing_date: toPhaseDate(connectingClocks, phaseInfo.closingClocks),
+          closing_date: toPhaseDate(connectingClocks, state.closingClocks),
           close_initiator: 'client',
         },
       })
 
-    case 'closed': {
-      const endClocks = phaseInfo.endClocks
-
+    case 'closed':
       return toRawVital(date, {
         name: WebSocketVitalName.CLOSED,
         websocket: {
           id,
-          closed_date: toPhaseDate(connectingClocks, endClocks),
-          duration: toServerDuration(elapsed(connectingClocks.relative, endClocks.relative)),
-          tracking_end_reason: phaseInfo.trackingEndReason,
-          close_code: phaseInfo.closeEvent?.code,
-          close_reason: phaseInfo.closeEvent?.reason,
-          was_clean: phaseInfo.closeEvent?.wasClean,
-          snapshot_version: phaseInfo.snapshotVersion,
+          closed_date: toPhaseDate(connectingClocks, state.endClocks),
+          duration: toServerDuration(elapsed(connectingClocks.relative, state.endClocks.relative)),
+          tracking_end_reason: state.trackingEndReason,
+          close_code: state.closeEvent?.code,
+          close_reason: state.closeEvent?.reason,
+          was_clean: state.closeEvent?.wasClean,
+          snapshot_version: state.snapshotVersion,
           // a connection that never opened exchanged nothing, and reports nothing rather than a
           // zero-filled snapshot
           snapshot: state.openClocks && serializeTerminalSnapshot(state.snapshot),
         },
       })
-    }
   }
 }
 
@@ -164,16 +91,16 @@ export function serializeWebSocketVital(
  * attributes it to a view by, derived once so the two cannot disagree — a vital dated at one moment
  * and attributed to another would be wrong with nothing to catch it.
  */
-export function webSocketVitalClocks(state: TrackedConnectionState, phaseInfo: WebSocketVitalPhaseInfo): ClocksState {
-  switch (phaseInfo.phase) {
+export function webSocketVitalClocks(state: TrackedConnectionState): ClocksState {
+  switch (state.phase) {
     case 'connecting':
       return state.connectingClocks
     case 'open':
-      return phaseInfo.pulseClocks
+      return state.pulseClocks
     case 'closing':
-      return phaseInfo.closingClocks
+      return state.closingClocks
     case 'closed':
-      return phaseInfo.endClocks
+      return state.endClocks
   }
 }
 

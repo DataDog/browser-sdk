@@ -1,5 +1,6 @@
 import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed, relativeNow } from '@datadog/js-core/time'
+import type { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 
 /**
  * Lifecycle phase of a connection, as defined by RFC 6455. Held as explicit data so no reader has
@@ -47,29 +48,79 @@ export interface OpenFacts {
   selectedExtensions?: string
 }
 
-/**
- * The state of a WebSocket connection at a given moment during any phase of its lifecycle.
- */
-export interface TrackedConnectionState extends TrackedConnectionIdentity {
-  phase: WebSocketPhase
-  openClocks?: ClocksState
-  selectedProtocol?: string
-  selectedExtensions?: string
-  closingClocks?: ClocksState
-  /** Set when tracking ended, whatever the reason for it ending (might not be a close event). */
-  endClocks?: ClocksState
-  snapshot: WebSocketSnapshot
+/** What a `close` event tells us. */
+export interface WebSocketCloseEvent {
+  code: number
+  reason: string
+  wasClean: boolean
 }
+
+/**
+ * Why tracking ended. The close outcome is reported by, and only by, a real close event, so the
+ * reason and the presence of the event are one choice rather than two — nothing in the schema
+ * rejects a close code on a session that merely expired.
+ */
+export type WebSocketTrackingEnd =
+  | {
+      trackingEndReason: Extract<WebSocketTrackingEndReason, 'close_event'>
+      closeEvent: WebSocketCloseEvent
+    }
+  | {
+      trackingEndReason: Exclude<WebSocketTrackingEndReason, 'close_event'>
+      closeEvent?: never
+    }
+
+interface ConnectingPhase {
+  phase: 'connecting'
+}
+
+interface OpenPhase extends OpenFacts {
+  phase: 'open'
+  /**
+   * When this particular open vital was taken. It is the open event on the first one and the pulse
+   * on every heartbeat after it; open snapshot reads freeze here.
+   */
+  pulseClocks: ClocksState
+  snapshotVersion: number
+}
+
+// the open facts are absent when `close()` was called during the handshake
+interface ClosingPhase extends Partial<OpenFacts> {
+  phase: 'closing'
+  closingClocks: ClocksState
+}
+
+// the open facts are absent when the connection never opened
+type ClosedPhase = Partial<OpenFacts> & {
+  phase: 'closed'
+  closingClocks?: ClocksState
+  endClocks: ClocksState
+  snapshotVersion: number
+} & WebSocketTrackingEnd
+
+/** What the connection knows by having reached its current phase, narrowed on that phase. */
+type PhaseFacts = ConnectingPhase | OpenPhase | ClosingPhase | ClosedPhase
+
+/**
+ * The state of a WebSocket connection at a given moment, narrowed on the phase so each vital can
+ * read required fields without asserting them away.
+ */
+export type TrackedConnectionState = TrackedConnectionIdentity & PhaseFacts & { snapshot: WebSocketSnapshot }
 
 export interface TrackedConnection {
   /**
-   * Reads the connection as of `readAt` when given, otherwise as of now. Once tracking has ended,
-   * the tracking end date always wins so the terminal snapshot stays stable.
+   * Reads the connection as of its phase clocks: the pulse while open, the tracking end once
+   * closed, and now during connecting/closing.
    */
-  getState: (readAt?: RelativeTime) => TrackedConnectionState
-  /** Increments and returns the version the next snapshot-carrying vital rides on. */
-  nextSnapshotVersion: () => number
+  getState: () => TrackedConnectionState
+  /** The current phase alone, without the snapshot a full state read computes. */
+  getPhase: () => WebSocketPhase
   recordOpen: (facts: OpenFacts) => void
+  /**
+   * Sets the pulse the next open vital (and any open-state read) freezes at, and bumps the snapshot
+   * version that vital rides on. Ignored outside the open phase, which is the only one with a pulse.
+   */
+  recordPulse: (pulseClocks: ClocksState) => void
   recordInboundMessage: (size: number, at: RelativeTime) => void
   recordOutboundMessage: (size: number, bufferedAmountPreSend: number, at: RelativeTime) => void
   recordClosing: (closingClocks: ClocksState) => void
@@ -77,7 +128,7 @@ export interface TrackedConnection {
    * Ends tracking, whatever the reason. `bufferedAmount` is the send queue depth read from the
    * socket at that moment, handed in rather than read here so this module needs no socket.
    */
-  recordTrackingEnd: (endClocks: ClocksState, bufferedAmount: number) => void
+  recordTrackingEnd: (endClocks: ClocksState, bufferedAmount: number, trackingEnd: WebSocketTrackingEnd) => void
 }
 
 /**
@@ -95,55 +146,81 @@ export function createTrackedConnection({
     ...createMessageDirectionAggregate(),
     bufferedAmountMax: 0,
   }
-  let phase: WebSocketPhase = 'connecting'
-  let openClocks: ClocksState | undefined
-  let selectedProtocol: string | undefined
-  let selectedExtensions: string | undefined
-  let closingClocks: ClocksState | undefined
-  let endClocks: ClocksState | undefined
+  // held as one value, so a phase cannot be reached without the facts that come with it
+  let phaseFacts: PhaseFacts = { phase: 'connecting' }
+  // continued across phases: the closing phase carries no version, but the closed vital follows the
+  // open ones
   let snapshotVersion = 0
   // the cursor the silence arithmetic runs on, one per direction: it is what the connection needs
   // to measure a gap, not something it reports
   let lastInboundMessageAt: RelativeTime | undefined
   let lastOutboundMessageAt: RelativeTime | undefined
 
-  return {
-    getState: (snapshotReadAt) => {
-      // reads close the silence still in progress: at the tracking end once tracking has ended, so
-      // that the terminal snapshot is stable; at an explicit read time when the caller freezes the
-      // snapshot to a known date (a heartbeat pulse); and at the moment of the read until then
-      const readAt = endClocks ? endClocks.relative : (snapshotReadAt ?? relativeNow())
-      const hasEnded = endClocks !== undefined
+  function nextSnapshotVersion() {
+    snapshotVersion += 1
+    return snapshotVersion
+  }
 
-      return {
-        phase,
-        id,
-        url,
-        requestedProtocols: requestedProtocols?.slice(),
-        connectingClocks,
-        openClocks,
-        selectedProtocol,
-        selectedExtensions,
-        closingClocks,
-        endClocks,
-        snapshot: {
-          inbound: readMessageDirection(inbound, lastInboundMessageAt, readAt, hasEnded),
-          outbound: readMessageDirection(outbound, lastOutboundMessageAt, readAt, hasEnded),
-        },
+  function readSnapshot(readAt: RelativeTime, hasEnded: boolean): WebSocketSnapshot {
+    return {
+      inbound: readMessageDirection(inbound, lastInboundMessageAt, readAt, hasEnded),
+      outbound: readMessageDirection(outbound, lastOutboundMessageAt, readAt, hasEnded),
+    }
+  }
+
+  function identityFields(): TrackedConnectionIdentity {
+    return {
+      id,
+      url,
+      requestedProtocols: requestedProtocols?.slice(),
+      connectingClocks,
+    }
+  }
+
+  /**
+   * Where reads close the silence still in progress: at the pulse while open, so the vital and the
+   * snapshot agree; at the tracking end once closed, so that the terminal snapshot is stable; and at
+   * the moment of the read otherwise.
+   */
+  function readAtOf(facts: PhaseFacts): RelativeTime {
+    switch (facts.phase) {
+      case 'open':
+        return facts.pulseClocks.relative
+      case 'closed':
+        return facts.endClocks.relative
+      case 'connecting':
+      case 'closing':
+        return relativeNow()
+    }
+  }
+
+  return {
+    getState: () => ({
+      ...identityFields(),
+      ...phaseFacts,
+      snapshot: readSnapshot(readAtOf(phaseFacts), phaseFacts.phase === 'closed'),
+    }),
+
+    getPhase: () => phaseFacts.phase,
+
+    recordOpen: (facts) => {
+      phaseFacts = {
+        ...facts,
+        phase: 'open',
+        pulseClocks: facts.openClocks,
+        snapshotVersion: nextSnapshotVersion(),
       }
     },
 
-    nextSnapshotVersion: () => (snapshotVersion += 1),
-
-    recordOpen: (facts) => {
-      phase = 'open'
-      openClocks = facts.openClocks
-      selectedProtocol = facts.selectedProtocol
-      selectedExtensions = facts.selectedExtensions
+    recordPulse: (clocks) => {
+      if (phaseFacts.phase !== 'open') {
+        return
+      }
+      phaseFacts = { ...phaseFacts, pulseClocks: clocks, snapshotVersion: nextSnapshotVersion() }
     },
 
     recordInboundMessage: (size, at) => {
-      recordMessage(inbound, lastInboundMessageAt, size, at, openClocks)
+      recordMessage(inbound, lastInboundMessageAt, size, at, openClocksOf(phaseFacts))
       lastInboundMessageAt = at
     },
 
@@ -152,21 +229,39 @@ export function createTrackedConnection({
       // `send()` grows the queue by exactly the payload size, whereas reading the socket again
       // could catch a queue the browser has already partly flushed and understate the peak
       outbound.bufferedAmountMax = Math.max(outbound.bufferedAmountMax, bufferedAmountPreSend + size)
-      recordMessage(outbound, lastOutboundMessageAt, size, at, openClocks)
+      recordMessage(outbound, lastOutboundMessageAt, size, at, openClocksOf(phaseFacts))
       lastOutboundMessageAt = at
     },
 
     recordClosing: (clocks) => {
-      phase = 'closing'
-      closingClocks = clocks
+      phaseFacts = { ...openFactsOf(phaseFacts), phase: 'closing', closingClocks: clocks }
     },
 
-    recordTrackingEnd: (clocks, bufferedAmount) => {
-      phase = 'closed'
-      endClocks = clocks
+    recordTrackingEnd: (clocks, bufferedAmount, end) => {
+      phaseFacts = {
+        ...openFactsOf(phaseFacts),
+        closingClocks: 'closingClocks' in phaseFacts ? phaseFacts.closingClocks : undefined,
+        phase: 'closed',
+        endClocks: clocks,
+        snapshotVersion: nextSnapshotVersion(),
+        ...end,
+      }
       outbound.bufferedAmountAtClose = bufferedAmount
     },
   }
+}
+
+function openClocksOf(facts: PhaseFacts): ClocksState | undefined {
+  return facts.phase === 'connecting' ? undefined : facts.openClocks
+}
+
+/** The open facts a phase carries over, none for a connection that has not opened (yet). */
+function openFactsOf(facts: PhaseFacts): Partial<OpenFacts> {
+  if (facts.phase === 'connecting') {
+    return {}
+  }
+  const { openClocks, selectedProtocol, selectedExtensions } = facts
+  return { openClocks, selectedProtocol, selectedExtensions }
 }
 
 function createMessageDirectionAggregate(): MessageDirectionAggregate {
