@@ -71,6 +71,7 @@ describe('trackedConnection', () => {
 
       const state = getStateIn(connection, 'open')
       expect(state.openClocks).toEqual(clocksAt(OPEN_AT))
+      expect(state.pulseClocks).toEqual(clocksAt(OPEN_AT))
       expect(state.selectedProtocol).toBe('chat.v1')
       expect(state.selectedExtensions).toBe('permessage-deflate')
       expect(state.snapshotVersion).toBe(1)
@@ -149,14 +150,20 @@ describe('trackedConnection', () => {
   })
 
   describe('snapshot version', () => {
-    it('starts at 1 on open and increases on tracking end', () => {
+    it('starts at 1 on open and increases on every pulse and on tracking end', () => {
       const connection = createConnectingConnection()
 
       connection.recordOpen({ openClocks: clocksAt(OPEN_AT) })
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 1 }))
 
+      connection.recordPulse(clocksAt(20))
+      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 2 }))
+
+      connection.recordPulse(clocksAt(30))
+      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 3 }))
+
       connection.recordTrackingEnd(clocksAt(40), SESSION_END)
-      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 2 }))
+      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 4 }))
     })
 
     it('is not consumed by reading the state', () => {
@@ -174,6 +181,35 @@ describe('trackedConnection', () => {
       connection.recordTrackingEnd(clocksAt(40), SESSION_END)
 
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 1 }))
+    })
+  })
+
+  describe('pulse clocks', () => {
+    it('dates the open state at the latest pulse, keeping the open date', () => {
+      const connection = createOpenConnection()
+
+      connection.recordPulse(clocksAt(50))
+
+      const state = getStateIn(connection, 'open')
+      expect(state.pulseClocks).toEqual(clocksAt(50))
+      expect(state.openClocks).toEqual(clocksAt(OPEN_AT))
+    })
+
+    const PHASES_WITHOUT_A_PULSE = [
+      { phase: 'connecting', createConnection: createConnectingConnection },
+      { phase: 'closing', createConnection: createClosingConnection },
+      { phase: 'closed', createConnection: createClosedConnection },
+    ]
+
+    PHASES_WITHOUT_A_PULSE.forEach(({ phase, createConnection }) => {
+      it(`ignores a pulse in phase ${phase}, without consuming a snapshot version`, () => {
+        const connection = createConnection()
+        const stateBefore = connection.getState()
+
+        connection.recordPulse(clocksAt(50))
+
+        expect(connection.getState()).toEqual(stateBefore)
+      })
     })
   })
 
@@ -313,6 +349,12 @@ describe('trackedConnection', () => {
   function createClosingConnection() {
     const connection = createOpenConnection()
     connection.recordClosing(clocksAt(30))
+    return connection
+  }
+
+  function createClosedConnection() {
+    const connection = createOpenConnection()
+    connection.recordTrackingEnd(clocksAt(40), SESSION_END)
     return connection
   }
 
