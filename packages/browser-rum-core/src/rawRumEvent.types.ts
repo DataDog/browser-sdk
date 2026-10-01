@@ -432,6 +432,7 @@ export type WebSocketVitalName = (typeof WebSocketVitalName)[keyof typeof WebSoc
 export const WebSocketTrackingEndReason = {
   CLOSE_EVENT: 'close_event',
   SESSION_END: 'session_end',
+  PAGE_UNLOADED: 'page_unloaded',
 } as const
 
 export type WebSocketTrackingEndReason = (typeof WebSocketTrackingEndReason)[keyof typeof WebSocketTrackingEndReason]
