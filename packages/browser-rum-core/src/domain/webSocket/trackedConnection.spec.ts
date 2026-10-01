@@ -106,7 +106,7 @@ describe('trackedConnection', () => {
       connection.recordClosing(clocksAt(30))
       expect(connection.getPhase()).toBe('closing')
 
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      connection.recordTrackingEnd(clocksAt(40), 0, SESSION_END)
       expect(connection.getPhase()).toBe('closed')
     })
 
@@ -120,7 +120,7 @@ describe('trackedConnection', () => {
       it(`turns closed when tracking ends from ${from}`, () => {
         const connection = createConnection()
 
-        connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(40), 0, SESSION_END)
 
         const state = getStateIn(connection, 'closed')
         expect(state.endClocks).toEqual(clocksAt(40))
@@ -131,7 +131,7 @@ describe('trackedConnection', () => {
     it('keeps the closing date when tracking ends after the application closed the socket', () => {
       const connection = createClosingConnection()
 
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      connection.recordTrackingEnd(clocksAt(40), 0, SESSION_END)
 
       const state = getStateIn(connection, 'closed')
       expect(state.closingClocks).toEqual(clocksAt(30))
@@ -140,7 +140,7 @@ describe('trackedConnection', () => {
     it('keeps the close event when tracking ends on a real close', () => {
       const connection = createOpenConnection()
 
-      connection.recordTrackingEnd(clocksAt(40), CLOSE_EVENT_END)
+      connection.recordTrackingEnd(clocksAt(40), 0, CLOSE_EVENT_END)
 
       const state = getStateIn(connection, 'closed')
       expect(state.trackingEndReason).toBe(WebSocketTrackingEndReason.CLOSE_EVENT)
@@ -161,7 +161,7 @@ describe('trackedConnection', () => {
       connection.recordPulse(clocksAt(30))
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 3 }))
 
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      connection.recordTrackingEnd(clocksAt(40), 0, SESSION_END)
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 4 }))
     })
 
@@ -177,7 +177,7 @@ describe('trackedConnection', () => {
     it('bumps on tracking end even when the connection never opened', () => {
       const connection = createConnectingConnection()
 
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      connection.recordTrackingEnd(clocksAt(40), 0, SESSION_END)
 
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 1 }))
     })
@@ -319,7 +319,7 @@ describe('trackedConnection', () => {
         const connection = createOpenConnection()
 
         recordMessage(connection, 1, relativeAt(20))
-        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(50), 0, SESSION_END)
 
         expect(aggregateOf(connection).silenceBeforeClose).toBe(30 as Duration)
       })
@@ -328,7 +328,7 @@ describe('trackedConnection', () => {
         const connection = createOpenConnection()
 
         recordMessage(connection, 1, relativeAt(20))
-        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(50), 0, SESSION_END)
 
         moveClockTo(10_000)
         const aggregate = aggregateOf(connection)
@@ -340,7 +340,7 @@ describe('trackedConnection', () => {
         const connection = createOpenConnection()
 
         recordMessage(connection, 1, relativeAt(20))
-        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(50), 0, SESSION_END)
 
         moveClockTo(10_000)
         const aggregate = aggregateOf(connection)
@@ -359,7 +359,7 @@ describe('trackedConnection', () => {
       it('has no silence before close when the direction was silent', () => {
         const connection = createOpenConnection()
 
-        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(50), 0, SESSION_END)
 
         expect(aggregateOf(connection).silenceBeforeClose).toBeUndefined()
       })
@@ -402,6 +402,18 @@ describe('trackedConnection', () => {
       connection.recordOutboundMessage(10, 50, relativeAt(40))
 
       expect(outboundOf(connection).bufferedAmountMax).toBe(110)
+    })
+
+    it('reports the queue depth handed in at tracking end', () => {
+      const connection = createOpenConnection()
+
+      connection.recordTrackingEnd(clocksAt(50), 100, SESSION_END)
+
+      expect(outboundOf(connection).bufferedAmountAtClose).toBe(100)
+    })
+
+    it('has no queue depth at close while tracking continues', () => {
+      expect(outboundOf(createOpenConnection()).bufferedAmountAtClose).toBeUndefined()
     })
   })
 
@@ -452,7 +464,7 @@ describe('trackedConnection', () => {
 
   function createClosedConnection() {
     const connection = createOpenConnection()
-    connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+    connection.recordTrackingEnd(clocksAt(40), 0, SESSION_END)
     return connection
   }
 

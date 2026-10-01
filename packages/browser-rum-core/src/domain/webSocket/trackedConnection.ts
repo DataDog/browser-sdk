@@ -23,6 +23,8 @@ export interface MessageDirectionAggregate {
 export interface OutboundAggregate extends MessageDirectionAggregate {
   /** Deepest send queue observed, counted after each payload was enqueued. */
   bufferedAmountMax: number
+  /** Send queue depth the socket reported when tracking ended. */
+  bufferedAmountAtClose?: number
 }
 
 export interface WebSocketSnapshot {
@@ -122,8 +124,11 @@ export interface TrackedConnection {
   recordInboundMessage: (size: number, at: RelativeTime) => void
   recordOutboundMessage: (size: number, bufferedAmountPreSend: number, at: RelativeTime) => void
   recordClosing: (closingClocks: ClocksState) => void
-  /** Ends tracking, whatever the reason. */
-  recordTrackingEnd: (endClocks: ClocksState, trackingEnd: WebSocketTrackingEnd) => void
+  /**
+   * Ends tracking, whatever the reason. `bufferedAmount` is the send queue depth read from the
+   * socket at that moment, handed in rather than read here so this module needs no socket.
+   */
+  recordTrackingEnd: (endClocks: ClocksState, bufferedAmount: number, trackingEnd: WebSocketTrackingEnd) => void
 }
 
 /**
@@ -232,7 +237,7 @@ export function createTrackedConnection({
       phaseFacts = { ...openFactsOf(phaseFacts), phase: 'closing', closingClocks: clocks }
     },
 
-    recordTrackingEnd: (clocks, end) => {
+    recordTrackingEnd: (clocks, bufferedAmount, end) => {
       phaseFacts = {
         ...openFactsOf(phaseFacts),
         closingClocks: 'closingClocks' in phaseFacts ? phaseFacts.closingClocks : undefined,
@@ -241,6 +246,7 @@ export function createTrackedConnection({
         snapshotVersion: nextSnapshotVersion(),
         ...end,
       }
+      outbound.bufferedAmountAtClose = bufferedAmount
     },
   }
 }

@@ -111,18 +111,19 @@ describe('serializeWebSocketVital', () => {
       expect(fieldsOf(websocket)).toEqual(['id', 'connecting_duration', 'open_date', 'snapshot_version', 'snapshot'])
     })
 
-    it('reports no silence before close, which a snapshot only holds when tracking ended', () => {
+    it('reports neither of the two values a snapshot only holds when tracking ended', () => {
       const { websocket } = serializeOpen(
         openState({
           snapshot: snapshotOf({
             inbound: { messageCount: 1, silenceBeforeClose: 5 as Duration },
-            outbound: { messageCount: 1, silenceBeforeClose: 5 as Duration },
+            outbound: { messageCount: 1, silenceBeforeClose: 5 as Duration, bufferedAmountAtClose: 128 },
           }),
         })
       )
 
       expect(websocket.snapshot.inbound.silence_before_close).toBeUndefined()
       expect(websocket.snapshot.outbound.silence_before_close).toBeUndefined()
+      expect(websocket.snapshot.outbound.buffered_amount_at_close).toBeUndefined()
     })
   })
 
@@ -209,18 +210,27 @@ describe('serializeWebSocketVital', () => {
       expect(websocket.snapshot_version).toBe(1)
     })
 
-    it('reports the silence before close a snapshot only holds when tracking ended', () => {
+    it('reports the two values a snapshot only holds when tracking ended', () => {
       const { websocket } = serializeClosedOnCloseEvent({
         state: closedState({
           snapshot: snapshotOf({
             inbound: { messageCount: 1, silenceBeforeClose: 5 as Duration },
-            outbound: { messageCount: 2, silenceBeforeClose: 8 as Duration },
+            outbound: { messageCount: 2, silenceBeforeClose: 8 as Duration, bufferedAmountAtClose: 128 },
           }),
         }),
       })
 
       expect(websocket.snapshot!.inbound.silence_before_close).toBe(nanoseconds(5))
       expect(websocket.snapshot!.outbound.silence_before_close).toBe(nanoseconds(8))
+      expect(websocket.snapshot!.outbound.buffered_amount_at_close).toBe(128)
+    })
+
+    it('reports an empty send queue at close as zero rather than omitting it', () => {
+      const { websocket } = serializeClosedOnCloseEvent({
+        state: closedState({ snapshot: snapshotOf({ outbound: { bufferedAmountAtClose: 0 } }) }),
+      })
+
+      expect(websocket.snapshot!.outbound.buffered_amount_at_close).toBe(0)
     })
 
     it('omits the silence before close in a direction that observed no message', () => {

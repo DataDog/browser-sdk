@@ -139,9 +139,9 @@ function serializeSnapshot({ inbound, outbound }: WebSocketSnapshot): RawRumWebS
 }
 
 /**
- * The terminal snapshot, which is the only one reporting the silence before close, measured against
- * the date tracking ended. It is added here rather than by the shared mapping so that a heartbeat
- * cannot carry it — nothing in the schema would reject it if it did.
+ * The terminal snapshot, which is the only one reporting the two values measured against the date
+ * tracking ended. They are added here rather than by the shared mapping so that a heartbeat cannot
+ * carry them — nothing in the schema would reject it if it did.
  */
 function serializeTerminalSnapshot(snapshot: WebSocketSnapshot): RawRumWebSocketVitalSnapshot {
   const { inbound, outbound } = snapshot
@@ -155,6 +155,7 @@ function serializeTerminalSnapshot(snapshot: WebSocketSnapshot): RawRumWebSocket
     outbound: {
       ...serialized.outbound,
       silence_before_close: toServerDuration(outbound.silenceBeforeClose),
+      buffered_amount_at_close: outbound.bufferedAmountAtClose,
     },
   }
 }
