@@ -5,6 +5,7 @@ import type {
   RumVitalWebsocketConnectingEvent,
   RumVitalWebsocketOpenEvent,
 } from '@datadog/browser-rum-core/src/rumEvent.types'
+import { WEBSOCKET_HEARTBEAT_INTERVAL } from '@datadog/browser-rum-core/src/domain/webSocket/webSocketCollection'
 import { expect, test } from '@playwright/test'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest } from '../../lib/framework'
@@ -231,6 +232,70 @@ test.describe('rum websockets', () => {
         expect(vitals.closed).toHaveLength(1)
       })
   })
+
+  test.describe('heartbeat', () => {
+    createTest('beats the open vital with a new snapshot version while the connection stays open')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .withMockClock()
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await page.clock.runFor(WEBSOCKET_HEARTBEAT_INTERVAL)
+        await ws.sendAndExpectEcho()
+        await page.clock.runFor(WEBSOCKET_HEARTBEAT_INTERVAL)
+        await ws.close()
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        const openVitals = sortByDate(vitals.open)
+        expect(openVitals.map((vital) => vital.vital.websocket.snapshot_version)).toEqual([1, 2, 3])
+        expect(openVitals.map((vital) => vital.vital.websocket.snapshot.outbound.message_count)).toEqual([0, 0, 1])
+        expect(vitals.closed[0].vital.websocket.snapshot_version).toBe(4)
+      })
+
+    createTest('stops beating once the connection is closed')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .withMockClock()
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.close()
+        await page.clock.runFor(2 * WEBSOCKET_HEARTBEAT_INTERVAL)
+
+        await flushEvents()
+
+        // only the vital reported when the connection opened
+        expect(getWebSocketVitals(intakeRegistry).open).toHaveLength(1)
+      })
+
+    createTest('beats the open vital when the page is hidden, without waiting for the interval')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await page.evaluate(() => {
+          Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+          document.dispatchEvent(new Event('visibilitychange'))
+          delete (document as { visibilityState?: DocumentVisibilityState }).visibilityState
+          document.dispatchEvent(new Event('visibilitychange'))
+        })
+        await ws.close()
+
+        await flushEvents()
+
+        // the test runs in far less than an interval, so the second one can only come from the page
+        // being hidden
+        const openVitals = sortByDate(getWebSocketVitals(intakeRegistry).open)
+        expect(openVitals.map((vital) => vital.vital.websocket.snapshot_version)).toEqual([1, 2])
+      })
+  })
 })
 
 type WebSocketVital =
@@ -272,4 +337,8 @@ function getWebSocketVitals(intakeRegistry: IntakeRegistry) {
 
 function getConnectionIds(vitals: WebSocketVital[]) {
   return Array.from(new Set(vitals.map((vital) => vital.vital.websocket.id)))
+}
+
+function sortByDate<T extends WebSocketVital>(vitals: T[]) {
+  return [...vitals].sort((a, b) => a.date - b.date)
 }
