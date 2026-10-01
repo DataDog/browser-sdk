@@ -2,6 +2,7 @@ import type { ClocksState, Duration, RelativeTime, ServerDuration, TimeStamp } f
 import type {
   RawRumEvent,
   RawRumWebSocketClosedVitalProperties,
+  RawRumWebSocketClosingVitalProperties,
   RawRumWebSocketConnectingVitalProperties,
   RawRumWebSocketOpenVitalProperties,
 } from '../../rawRumEvent.types'
@@ -26,23 +27,31 @@ describe('serializeWebSocketVital', () => {
     it('names the phase it reports', () => {
       expect(serializeConnecting().event.vital.name).toBe(WebSocketVitalName.CONNECTING)
       expect(serializeOpen().event.vital.name).toBe(WebSocketVitalName.OPEN)
+      expect(serializeClosing().event.vital.name).toBe(WebSocketVitalName.CLOSING)
       expect(serializeClosedOnCloseEvent().event.vital.name).toBe(WebSocketVitalName.CLOSED)
     })
 
     it('reports the connection id on every phase, and a fresh vital id per vital', () => {
-      const events = [serializeConnecting().event, serializeOpen().event, serializeClosedOnCloseEvent().event]
+      const events = [
+        serializeConnecting().event,
+        serializeOpen().event,
+        serializeClosing().event,
+        serializeClosedOnCloseEvent().event,
+      ]
 
       expect(events.map((event) => event.vital.websocket.id)).toEqual([
         'connection-id',
         'connection-id',
         'connection-id',
+        'connection-id',
       ])
-      expect(new Set(events.map((event) => event.vital.id)).size).toBe(3)
+      expect(new Set(events.map((event) => event.vital.id)).size).toBe(4)
     })
 
     it('dates each vital at the moment it reports, in unix milliseconds', () => {
       expect(serializeConnecting().event.date).toBe(timeStampAt(0))
       expect(serializeOpen(openState({ openClocks: clocksAt(120) })).event.date).toBe(timeStampAt(120))
+      expect(serializeClosing().event.date).toBe(timeStampAt(30))
       expect(serializeClosedOnCloseEvent().event.date).toBe(timeStampAt(50))
     })
   })
@@ -93,6 +102,21 @@ describe('serializeWebSocketVital', () => {
       const { websocket } = serializeOpen()
 
       expect(fieldsOf(websocket)).toEqual(['id', 'connecting_duration', 'open_date', 'snapshot_version', 'snapshot'])
+    })
+  })
+
+  describe('the closing vital', () => {
+    it('reports the closing date and the client as the initiator', () => {
+      const { websocket } = serializeClosing()
+
+      expect(websocket.closing_date).toBe(timeStampAt(30))
+      expect(websocket.close_initiator).toBe('client')
+    })
+
+    it('reports no snapshot and no cleanliness: the closed vital carries the terminal ones', () => {
+      const { websocket } = serializeClosing()
+
+      expect(fieldsOf(websocket)).toEqual(['id', 'closing_date', 'close_initiator'])
     })
   })
 
@@ -164,7 +188,7 @@ describe('serializeWebSocketVital', () => {
       expect(websocket.snapshot_version).toBe(1)
     })
 
-    it('reports no closing duration: it is derived from the vital stream', () => {
+    it('reports no close initiator and no closing duration: both are derived from the vital stream', () => {
       const { websocket } = serializeClosedOnCloseEvent()
 
       expect(fieldsOf(websocket)).toEqual([
@@ -294,6 +318,18 @@ describe('serializeWebSocketVital', () => {
     }
   }
 
+  function closingState(
+    state: Partial<Extract<TrackedConnectionState, { phase: 'closing' }>> = {}
+  ): Extract<TrackedConnectionState, { phase: 'closing' }> {
+    return {
+      phase: 'closing',
+      id: 'connection-id',
+      connectingClocks: clocksAt(0),
+      closingClocks: clocksAt(30),
+      ...state,
+    }
+  }
+
   function closedState(state: Partial<Omit<ClosedState, 'phase' | 'trackingEndReason'>> = {}): ClosedState {
     return {
       phase: 'closed',
@@ -361,6 +397,11 @@ describe('serializeWebSocketVital', () => {
     return { event, websocket: event.vital.websocket as OpenProperties }
   }
 
+  function serializeClosing(state = closingState()) {
+    const event = serializeWebSocketVital(state)
+    return { event, websocket: event.vital.websocket as ClosingProperties }
+  }
+
   /** Tracking ended on a close event, which is the only way the close outcome is reported. */
   function serializeClosedOnCloseEvent({ state = closedState() }: { state?: ClosedState } = {}) {
     const event = serializeWebSocketVital(state)
@@ -384,6 +425,7 @@ describe('serializeWebSocketVital', () => {
 
 type ConnectingProperties = { id: string } & RawRumWebSocketConnectingVitalProperties
 type OpenProperties = { id: string } & RawRumWebSocketOpenVitalProperties
+type ClosingProperties = { id: string } & RawRumWebSocketClosingVitalProperties
 type ClosedProperties = { id: string } & RawRumWebSocketClosedVitalProperties
 type ClosedState = Extract<TrackedConnectionState, { phase: 'closed' }>
 

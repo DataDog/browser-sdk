@@ -4,6 +4,7 @@ import { elapsed } from '@datadog/js-core/time'
 import { buildUrl, deepClone } from '@datadog/js-core/util'
 import type {
   WebSocketClosedContext,
+  WebSocketClosingContext,
   WebSocketConnectingContext,
   WebSocketMessageInContext,
   WebSocketMessageOutContext,
@@ -46,6 +47,7 @@ export type TrackedConnectionState = {
       snapshotVersion: number
       snapshot: WebSocketSnapshot
     }
+  | { phase: 'closing'; closingClocks: ClocksState }
   | {
       phase: 'closed'
       endClocks: ClocksState
@@ -64,6 +66,7 @@ export interface TrackedConnection {
   recordOpen: (context: WebSocketOpenContext) => void
   recordInboundMessage: (context: WebSocketMessageInContext) => void
   recordOutboundMessage: (context: WebSocketMessageOutContext) => void
+  recordClosing: (context: WebSocketClosingContext) => void
   /**
    * Ends tracking on a close event. The close outcome is reported by, and only by, a real close
    * event, so this is the one way to end tracking with one.
@@ -98,12 +101,16 @@ export function createTrackedConnection({
     url: sanitizeWebSocketUrl(url),
     requestedProtocols: toRequestedProtocols(protocols),
   }
-  // continued across phases: the closed vital follows the open one
+  // continued across phases: the closing phase carries no version, but the closed vital follows the
+  // open one
   let snapshotVersion = 0
   // the cursor the silence arithmetic runs on, one per direction: it is what the connection needs
   // to measure a gap, not something it reports
   let lastInboundMessageAt: RelativeTime | undefined
   let lastOutboundMessageAt: RelativeTime | undefined
+  // what the time to first message is measured from, kept apart from the state because messages
+  // still arrive while closing, a phase that holds no open date
+  let openClocks: ClocksState | undefined
 
   function nextSnapshotVersion() {
     snapshotVersion += 1
@@ -123,7 +130,7 @@ export function createTrackedConnection({
       trackingEndReason,
       closeEvent,
       snapshotVersion: nextSnapshotVersion(),
-      snapshot: state.phase === 'open' ? snapshot : undefined,
+      snapshot: openClocks ? snapshot : undefined,
     }
   }
 
@@ -132,15 +139,16 @@ export function createTrackedConnection({
 
     isOpen: () => state.phase === 'open',
 
-    recordOpen: ({ openClocks, protocol, extensions }) => {
+    recordOpen: (context) => {
+      openClocks = context.openClocks
       state = {
         id,
         connectingClocks,
         phase: 'open',
         openClocks,
         // These are reported as empty strings when none were specified
-        selectedProtocol: protocol || undefined,
-        selectedExtensions: extensions || undefined,
+        selectedProtocol: context.protocol || undefined,
+        selectedExtensions: context.extensions || undefined,
         snapshotVersion: nextSnapshotVersion(),
         snapshot,
       }
@@ -158,6 +166,10 @@ export function createTrackedConnection({
       snapshot.bufferedAmountMax = Math.max(snapshot.bufferedAmountMax, bufferedAmountPreSend + size)
       recordMessage(snapshot.outbound, lastOutboundMessageAt, size, at.relative)
       lastOutboundMessageAt = at.relative
+    },
+
+    recordClosing: ({ at }) => {
+      state = { id, connectingClocks, phase: 'closing', closingClocks: at }
     },
 
     recordClose: ({ at, code, reason, wasClean }) => {
