@@ -1,10 +1,8 @@
+import { addEventListener, instrumentConstructor, instrumentMethod, Observable } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
 import type { GlobalObject } from '@datadog/js-core/util'
-import { globalObject, computeBytesCount } from '@datadog/js-core/util'
-import { instrumentConstructor, instrumentMethod } from '../tools/instrumentMethod'
-import { Observable } from '../tools/observable'
-import { addEventListener } from './addEventListener'
+import { computeBytesCount, globalObject } from '@datadog/js-core/util'
 
 type GlobalWithWebSocket = GlobalObject & { WebSocket: typeof WebSocket }
 
@@ -25,6 +23,7 @@ export interface WebSocketOpenContext {
   instance: WebSocket
   openClocks: ClocksState
   protocol: string
+  extensions: string
 }
 
 export interface WebSocketMessageInContext {
@@ -128,6 +127,7 @@ function attachInstanceListeners(instance: WebSocket, observable: Observable<Web
       instance,
       openClocks: clocksNow(),
       protocol: instance.protocol || '',
+      extensions: instance.extensions || '',
     })
 
     stopOpen()

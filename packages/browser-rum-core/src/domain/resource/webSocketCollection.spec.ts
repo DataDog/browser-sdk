@@ -1,9 +1,10 @@
-import type { WebSocketContext } from '@datadog/browser-core'
-import { initWebSocketObservable, Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks } from '@datadog/js-core/time'
 import { mockViewHistory } from '../../../test'
+import type { WebSocketContext } from '../../browser/webSocketObservable'
+import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import { VitalType } from '../../rawRumEvent.types'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -68,6 +69,7 @@ describe('webSocketCollection', () => {
       instance: wsInstance,
       openClocks: openClocks ?? relativeToClocks(clock.relative(openRelative)),
       protocol,
+      extensions: '',
     })
   }
 
@@ -548,6 +550,7 @@ describe('webSocketCollection', () => {
         instance: wsInstance,
         openClocks: relativeToClocks(clock.relative(openRelative)),
         protocol,
+        extensions: '',
       })
     }
 
