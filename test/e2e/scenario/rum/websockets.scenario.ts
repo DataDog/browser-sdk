@@ -188,6 +188,49 @@ test.describe('rum websockets', () => {
         expect(url.search).toBe('')
       })
   })
+
+  test.describe('phases', () => {
+    createTest('reports the closing phase of a connection closed before it opened')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, flushBrowserLogs }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.openAndCloseWhileConnecting()
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.open).toHaveLength(0)
+        expect(vitals.closing).toHaveLength(1)
+        expect(vitals.closed).toHaveLength(1)
+        expect(vitals.closed[0].vital.websocket.snapshot).toBeUndefined()
+
+        // Firefox logs connection errors for a socket closed during its handshake. They are expected,
+        // but any other error must still fail the test.
+        withBrowserLogs((logs) => {
+          const errors = logs.filter((log) => log.level === 'error')
+          expect(errors.every((error) => error.message.includes('/ws-echo'))).toBe(true)
+        })
+        flushBrowserLogs()
+      })
+
+    createTest('reports the closing phase once however many times close() is called')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.closeTwice()
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.closing).toHaveLength(1)
+        expect(vitals.closed).toHaveLength(1)
+      })
+  })
 })
 
 type WebSocketVital =
