@@ -2,6 +2,7 @@ import {
   addExperimentalFeatures,
   ExperimentalFeature,
   noop,
+  PageExitReason,
   resetAllowUntrustedEvents,
   setAllowUntrustedEvents,
 } from '@datadog/browser-core'
@@ -706,6 +707,44 @@ describe('webSocketCollection', () => {
 
           expect(emittedVitals()).toHaveSize(collects ? 3 : 0)
         })
+      })
+    })
+
+    // Unlike view tracking, which filters to the unloading reason: a view survives a background
+    // transition, a connection may not, and hidden is the only signal mobile browsers guarantee at
+    // that point.
+    describe('the background-transition pulse', () => {
+      ;[PageExitReason.HIDDEN, PageExitReason.FROZEN, PageExitReason.UNLOADING].forEach((reason) => {
+        it(`emits a pulse for every open connection on a "${reason}" transition`, () => {
+          startCollection()
+          openConnection()
+          openConnection()
+
+          lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
+
+          const [idA, idB] = connectingPayloads().map((payload) => payload.id)
+          expect(openPayloads().map((payload) => payload.id)).toEqual([idA, idB, idA, idB])
+          expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 1, 2, 2])
+        })
+      })
+
+      it('does not emit a pulse for a connection that is not open', () => {
+        startCollection()
+        connect()
+
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+        expect(openPayloads()).toHaveSize(0)
+      })
+
+      it('stops emitting pulses after stop()', () => {
+        const collection = startCollection()
+        openConnection()
+
+        collection.stop()
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+        expect(openPayloads()).toHaveSize(1)
       })
     })
 
