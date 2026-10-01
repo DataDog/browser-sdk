@@ -231,6 +231,17 @@ describe('trackClickActions', () => {
     expect(events[0].frustrationTypes).toEqual([])
   })
 
+  it('ongoing click action is not stopped when the page is discarded', () => {
+    startClickActionsTracking()
+    emulateClick()
+
+    clock.tick(12)
+
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+
+    expect(events.length).toBe(0)
+  })
+
   it('collect click actions even if another one is ongoing', () => {
     startClickActionsTracking()
 
