@@ -3,6 +3,7 @@ import { mockClock } from '@datadog/browser-core/test'
 import type { ClocksState, Duration } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
 import type {
+  WebSocketClosingContext,
   WebSocketConnectingContext,
   WebSocketMessageInContext,
   WebSocketMessageOutContext,
@@ -82,15 +83,40 @@ describe('trackedConnection', () => {
       expect(state.snapshotVersion).toBe(1)
     })
 
+    it('turns closing when the application closes the socket', () => {
+      const connection = createOpenConnection()
+
+      connection.recordClosing(closingContext(clocksAt(30)))
+
+      const state = getStateIn(connection, 'closing')
+      expect(state.closingClocks).toEqual(clocksAt(30))
+    })
+
+    it('turns closing when the socket is closed during the handshake', () => {
+      const connection = createConnectingConnection()
+
+      connection.recordClosing(closingContext(clocksAt(5)))
+
+      const state = getStateIn(connection, 'closing')
+      expect(state.closingClocks).toEqual(clocksAt(5))
+    })
+
     it('is open from the open event until the socket closes or tracking ends', () => {
       expect(createConnectingConnection().isOpen()).toBeFalse()
       expect(createOpenConnection().isOpen()).toBeTrue()
+      expect(createClosingConnection().isOpen()).toBeFalse()
       expect(createClosedConnection().isOpen()).toBeFalse()
     })
 
     const PHASES_TRACKING_CAN_END_FROM = [
       { from: 'connecting', createConnection: createConnectingConnection, hasOpened: false },
       { from: 'open', createConnection: createOpenConnection, hasOpened: true },
+      { from: 'closing', createConnection: createClosingConnection, hasOpened: true },
+      {
+        from: 'closing during the handshake',
+        createConnection: createClosingDuringHandshakeConnection,
+        hasOpened: false,
+      },
     ]
 
     PHASES_TRACKING_CAN_END_FROM.forEach(({ from, createConnection, hasOpened }) => {
@@ -302,6 +328,10 @@ describe('trackedConnection', () => {
     return { state: 'message-out', instance: INSTANCE, size, bufferedAmountPreSend, at }
   }
 
+  function closingContext(at: ClocksState): WebSocketClosingContext {
+    return { state: 'closing', instance: INSTANCE, at }
+  }
+
   // ---------------------------------------------------------------------------
   // Building connections
   // ---------------------------------------------------------------------------
@@ -319,6 +349,18 @@ describe('trackedConnection', () => {
   function createOpenConnection() {
     const connection = createConnectingConnection()
     connection.recordOpen(openContext())
+    return connection
+  }
+
+  function createClosingConnection() {
+    const connection = createOpenConnection()
+    connection.recordClosing(closingContext(clocksAt(30)))
+    return connection
+  }
+
+  function createClosingDuringHandshakeConnection() {
+    const connection = createConnectingConnection()
+    connection.recordClosing(closingContext(clocksAt(5)))
     return connection
   }
 
