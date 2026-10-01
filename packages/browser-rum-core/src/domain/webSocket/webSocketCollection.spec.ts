@@ -1,0 +1,611 @@
+import {
+  addExperimentalFeatures,
+  ExperimentalFeature,
+  noop,
+  resetAllowUntrustedEvents,
+  setAllowUntrustedEvents,
+} from '@datadog/browser-core'
+import {
+  createMockWebSocket,
+  mockClock,
+  mockWebSocket,
+  registerCleanupTask,
+  type Clock,
+  type MockWebSocket,
+} from '@datadog/browser-core/test'
+import type { Duration } from '@datadog/js-core/time'
+import { clocksNow, ONE_HOUR, ONE_MINUTE, toServerDuration } from '@datadog/js-core/time'
+import { mockRumConfiguration } from '../../../test'
+import { initWebSocketObservable } from '../../browser/webSocketObservable'
+import type { RumWebSocketVitalEventDomainContext } from '../../domainContext.types'
+import type {
+  RawRumWebSocketClosedVitalProperties,
+  RawRumWebSocketConnectingVitalProperties,
+  RawRumWebSocketOpenVitalProperties,
+  RawRumWebSocketVitalEvent,
+} from '../../rawRumEvent.types'
+import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
+import type { RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { startWebSocketCollection, trackWebSocket } from './webSocketCollection'
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+describe('webSocketCollection', () => {
+  let lifeCycle: LifeCycle
+  let collectedEvents: Array<RawRumEventCollectedData<RawRumWebSocketVitalEvent>>
+  let clock: Clock
+
+  beforeEach(() => {
+    clock = mockClock()
+    mockWebSocket()
+    // the mock socket dispatches untrusted events, which the SDK listeners would otherwise ignore
+    setAllowUntrustedEvents(true)
+    lifeCycle = new LifeCycle()
+    collectedEvents = []
+    lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+      if (data.rawRumEvent.type === RumEventType.VITAL && data.rawRumEvent.vital.type === VitalType.WEBSOCKET) {
+        collectedEvents.push(data as RawRumEventCollectedData<RawRumWebSocketVitalEvent>)
+      }
+    })
+    registerCleanupTask(resetAllowUntrustedEvents)
+  })
+
+  describe('connection identity', () => {
+    it('reports every vital of a connection under one connection id, and each under a fresh vital id', () => {
+      startTracking()
+      const socket = connect()
+      completeHandshake(socket, { at: 10 })
+      dispatchClose(socket, { at: 20 })
+
+      const vitals = emittedVitals()
+      const connectionId = single(connectingPayloads()).id
+      expect(vitals.map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSED,
+      ])
+      expect(connectionId).toMatch(UUID_PATTERN)
+      expect(vitals.map((event) => event.rawRumEvent.vital.websocket.id)).toEqual([
+        connectionId,
+        connectionId,
+        connectionId,
+      ])
+
+      const vitalIds = vitals.map((event) => event.rawRumEvent.vital.id)
+      vitalIds.forEach((vitalId) => expect(vitalId).toMatch(UUID_PATTERN))
+      expect(new Set([...vitalIds, connectionId]).size).toBe(vitals.length + 1)
+    })
+
+    it('tracks overlapping connections independently, and never merges them', () => {
+      startTracking()
+      const socketA = openConnection({ at: 0 })
+      const socketB = openConnection({ at: 10 })
+      const [idA, idB] = connectingPayloads().map((payload) => payload.id)
+
+      dispatchClose(socketA, { at: 30 })
+
+      expect(idA).not.toBe(idB)
+      expect(closedPayloads().map((payload) => payload.id)).toEqual([idA])
+
+      dispatchClose(socketB, { at: 40 })
+
+      expect(closedPayloads().map((payload) => payload.id)).toEqual([idA, idB])
+    })
+
+    it('ignores every event of a socket it did not see being created', () => {
+      // keeps the instrumentation in place while the socket is created, as it would be for a socket
+      // the application created before the collection started
+      const otherSubscription = initWebSocketObservable().subscribe(noop)
+      registerCleanupTask(() => otherSubscription.unsubscribe())
+      const socket = connect()
+
+      startTracking()
+      completeHandshake(socket)
+      sendMessage(socket, 10)
+      receiveMessage(socket, 10)
+      dispatchClose(socket)
+
+      expect(emittedVitals()).toHaveSize(0)
+    })
+  })
+
+  // They are what the vital is attributed to a view by, so a closed vital lands on the view that
+  // was active when the connection ended rather than on the one it started in.
+  describe('the start clocks each vital is handed over with', () => {
+    it('are the moment the phase it reports happened', () => {
+      startTracking()
+      const socket = connect({ at: 5 })
+      completeHandshake(socket, { at: 10 })
+      dispatchClose(socket, { at: 30 })
+
+      expect(emittedVitals().map((event) => event.startClocks.timeStamp)).toEqual([
+        clock.timeStamp(5),
+        clock.timeStamp(10),
+        clock.timeStamp(30),
+      ])
+    })
+
+    it('are the flush date for a connection a flush finalized', () => {
+      const tracker = startTracking()
+      openConnection()
+      advanceTo(40)
+
+      tracker.flushOpenConnections()
+
+      expect(single(emittedVitals(WebSocketVitalName.CLOSED)).startClocks.timeStamp).toBe(clock.timeStamp(40))
+    })
+  })
+
+  describe('the connecting vital', () => {
+    it('is emitted synchronously from the constructor, dated at the call', () => {
+      startTracking()
+
+      connect({ at: 40 })
+
+      expect(single(connectingPayloads()).connecting_date).toBe(clock.timeStamp(40))
+    })
+
+    it('reports the URL stripped of its query string, including from an encoded path', () => {
+      startTracking()
+      connect({ url: 'wss://example.com:8443/path/socket%3Froom?token=secret&tenant=acme' })
+
+      expect(single(connectingPayloads()).url).toBe('wss://example.com:8443/path/socket%3Froom')
+    })
+
+    it('reports a single requested protocol as a list of one', () => {
+      startTracking()
+      connect({ protocols: 'auth-token' })
+
+      expect(single(connectingPayloads()).requested_protocols).toEqual(['auth-token'])
+    })
+
+    it('reports the requested protocols in the order they were requested', () => {
+      startTracking()
+      connect({ protocols: ['auth-token', 'chat.v1'] })
+
+      expect(single(connectingPayloads()).requested_protocols).toEqual(['auth-token', 'chat.v1'])
+    })
+
+    it('reports no requested protocols when the constructor got none', () => {
+      startTracking()
+      connect()
+
+      expect(single(connectingPayloads()).requested_protocols).toBeUndefined()
+    })
+  })
+
+  describe('the open vital', () => {
+    it('is emitted on the open event, dated at it and carrying the first snapshot version', () => {
+      startTracking()
+      const socket = connect()
+
+      completeHandshake(socket, { at: 10 })
+
+      const open = single(openPayloads())
+      expect(open.open_date).toBe(clock.timeStamp(10))
+      expect(open.snapshot_version).toBe(1)
+    })
+
+    it('reports what the server negotiated', () => {
+      startTracking()
+      const socket = connect()
+
+      completeHandshake(socket, { protocol: 'chat.v1', extensions: 'permessage-deflate' })
+
+      expect(single(openPayloads()).selected_protocol).toBe('chat.v1')
+      expect(single(openPayloads()).selected_extensions).toBe('permessage-deflate')
+    })
+
+    it('reports no negotiated protocol or extensions when the server selected none', () => {
+      startTracking()
+      const socket = connect()
+
+      completeHandshake(socket, { protocol: '', extensions: '' })
+
+      expect(single(openPayloads()).selected_protocol).toBeUndefined()
+      expect(single(openPayloads()).selected_extensions).toBeUndefined()
+    })
+
+    it('is not emitted at all for a handshake that never succeeded', () => {
+      startTracking()
+      const socket = connect()
+
+      failHandshake(socket)
+
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.CLOSED,
+      ])
+    })
+  })
+
+  describe('the closed vital', () => {
+    it('reports the close outcome of a real close event, and the event as the reason', () => {
+      startTracking()
+      const socket = openConnection()
+
+      dispatchClose(socket, { at: 40, code: 1001, reason: 'going away', wasClean: false })
+
+      expect(single(closedPayloads())).toEqual(
+        jasmine.objectContaining({
+          tracking_end_reason: WebSocketTrackingEndReason.CLOSE_EVENT,
+          close_code: 1001,
+          close_reason: 'going away',
+          was_clean: false,
+          closed_date: clock.timeStamp(40),
+        })
+      )
+    })
+
+    it('reports a flush with no close event as the session ending, dated at the flush', () => {
+      const tracker = startTracking()
+      openConnection()
+      advanceTo(40)
+
+      tracker.flushOpenConnections()
+
+      expect(single(closedPayloads())).toEqual(
+        jasmine.objectContaining({
+          tracking_end_reason: WebSocketTrackingEndReason.SESSION_END,
+          closed_date: clock.timeStamp(40),
+        })
+      )
+    })
+
+    it('starts the snapshot sequence at 1 for a connection that never opened', () => {
+      startTracking()
+      const socket = connect()
+
+      failHandshake(socket)
+
+      expect(single(closedPayloads()).snapshot_version).toBe(1)
+    })
+
+    it('continues the snapshot sequence the open vital started, so it holds the highest version', () => {
+      startTracking()
+      const socket = openConnection()
+
+      dispatchClose(socket)
+
+      expect(single(openPayloads()).snapshot_version).toBe(1)
+      expect(single(closedPayloads()).snapshot_version).toBe(2)
+    })
+
+    it('reports the terminal snapshot of the connection', () => {
+      startTracking()
+      const socket = openConnection({ at: 10 })
+      receiveMessage(socket, 30, { at: 20 })
+      sendMessage(socket, 10, { at: 25, bufferedAmountPreSend: 100 })
+      receiveMessage(socket, 50, { at: 32 })
+
+      dispatchClose(socket, { at: 40 })
+
+      const { snapshot } = single(closedPayloads())
+      expect(snapshot!.inbound).toEqual({
+        message_count: 2,
+        message_size_total: 80,
+        message_size_max: 50,
+        longest_silence: toServerDuration(12 as Duration),
+      })
+      expect(snapshot!.outbound).toEqual({
+        message_count: 1,
+        message_size_total: 10,
+        message_size_max: 10,
+        longest_silence: toServerDuration(0 as Duration),
+        buffered_amount_max: 110,
+      })
+    })
+  })
+
+  // The live instance lets a consumer read the socket's own state (bufferedAmount, readyState) or
+  // interact with it (close it, inspect its listeners) from a beforeSend/observer callback.
+  describe('the domain context', () => {
+    it('exposes the same socket instance on every vital of the connection lifecycle', () => {
+      startTracking()
+      const socket = connect()
+      expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CONNECTING)))).toBe(socket)
+
+      completeHandshake(socket)
+      expect(webSocketOf(single(emittedVitals(WebSocketVitalName.OPEN)))).toBe(socket)
+
+      dispatchClose(socket)
+      expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CLOSED)))).toBe(socket)
+    })
+  })
+
+  describe('the dates of the later phases', () => {
+    // they are placed on the monotonic clock, which has sub-millisecond precision, while the schema
+    // wants whole milliseconds
+    it('are reported in whole milliseconds', () => {
+      startTracking()
+      const socket = connect({ at: 0 })
+      completeHandshake(socket, { at: 10.4 })
+      dispatchClose(socket, { at: 30.5 })
+
+      expect(single(openPayloads()).open_date).toBe(clock.timeStamp(10))
+      expect(single(closedPayloads()).closed_date).toBe(clock.timeStamp(31))
+    })
+  })
+
+  // A connection is measured on the monotonic clock, and the dates of its later phases are placed
+  // from its connecting date, so a system clock stepping back or forth mid-connection (an NTP step,
+  // a VM resume, a manual correction) corrupts neither its chronology nor its intervals.
+  describe('under a system clock change', () => {
+    it('measures the connection on its own timeline, while each vital stays dated by the system clock', () => {
+      startTracking()
+      const socket = connect({ at: 0 })
+      advanceTo(5)
+      clock.jumpSystemClock(-10 * ONE_MINUTE)
+      completeHandshake(socket, { at: 10 })
+      receiveMessage(socket, 30, { at: 12 })
+      advanceTo(15)
+      clock.jumpSystemClock(ONE_HOUR)
+      receiveMessage(socket, 30, { at: 20 })
+      dispatchClose(socket, { at: 40 })
+
+      const open = single(openPayloads())
+      const closed = single(closedPayloads())
+      expect(single(connectingPayloads()).connecting_date).toBe(clock.timeStamp(0))
+      expect(open.open_date).toBe(clock.timeStamp(10))
+      expect(closed.closed_date).toBe(clock.timeStamp(40))
+      expect(open.connecting_duration).toBe(toServerDuration(10 as Duration))
+      expect(closed.duration).toBe(toServerDuration(40 as Duration))
+      expect(closed.snapshot!.inbound.longest_silence).toBe(toServerDuration(8 as Duration))
+
+      expect(emittedVitals().map((event) => event.rawRumEvent.date)).toEqual([
+        clock.timeStamp(0),
+        clock.timeStamp(10 - 10 * ONE_MINUTE),
+        clock.timeStamp(40 - 10 * ONE_MINUTE + ONE_HOUR),
+      ])
+    })
+  })
+
+  describe('tracking end', () => {
+    it('reports a connection a flush finalized only once, even when its close event arrives later', () => {
+      const tracker = startTracking()
+      const socket = openConnection()
+
+      tracker.flushOpenConnections()
+      dispatchClose(socket)
+
+      expect(closedPayloads()).toHaveSize(1)
+    })
+
+    it('reports nothing more once stopped', () => {
+      const tracker = startTracking()
+      const socket = connect()
+
+      tracker.stop()
+      dispatchClose(socket)
+
+      expect(closedPayloads()).toHaveSize(0)
+    })
+  })
+
+  describe('startWebSocketCollection', () => {
+    function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
+      const collection = startWebSocketCollection(lifeCycle, configuration)
+      registerCleanupTask(() => collection.stop())
+      return collection
+    }
+
+    describe('opt-in gate', () => {
+      ;(
+        [
+          { trackResources: true, betaTrackWebSockets: true, experimentalFeature: false, collects: true },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: true, collects: true },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: false, collects: false },
+          { trackResources: false, betaTrackWebSockets: true, experimentalFeature: false, collects: false },
+          { trackResources: false, betaTrackWebSockets: false, experimentalFeature: true, collects: false },
+        ] as const
+      ).forEach(({ trackResources, betaTrackWebSockets, experimentalFeature, collects }) => {
+        it(`${collects ? 'collects' : 'does not collect'} with trackResources=${trackResources}, betaTrackWebSockets=${betaTrackWebSockets}, TRACK_WEBSOCKETS=${experimentalFeature}`, () => {
+          if (experimentalFeature) {
+            addExperimentalFeatures([ExperimentalFeature.TRACK_WEBSOCKETS])
+          }
+
+          startCollection(mockRumConfiguration({ trackResources, betaTrackWebSockets }))
+          dispatchClose(openConnection())
+
+          expect(emittedVitals()).toHaveSize(collects ? 3 : 0)
+        })
+      })
+    })
+
+    it('finalizes open connections when the session expires', () => {
+      startCollection()
+      connect()
+      advanceTo(40)
+
+      expireSession()
+
+      expect(single(closedPayloads())).toEqual(
+        jasmine.objectContaining({
+          tracking_end_reason: WebSocketTrackingEndReason.SESSION_END,
+          closed_date: clock.timeStamp(40),
+        })
+      )
+    })
+
+    it('ignores further WebSocket events from the same instance after the session expires', () => {
+      startCollection()
+      const socket = openConnection()
+      sendMessage(socket, 10)
+
+      expireSession()
+
+      expect(closedPayloads()).toHaveSize(1)
+
+      sendMessage(socket, 7)
+      dispatchClose(socket)
+
+      expect(closedPayloads()).toHaveSize(1)
+    })
+
+    it('finalizes open connections on stop(), then ignores their events', () => {
+      const collection = startCollection()
+      const socket = openConnection()
+      advanceTo(40)
+
+      collection.stop()
+      dispatchClose(socket)
+
+      expect(single(closedPayloads())).toEqual(
+        jasmine.objectContaining({
+          tracking_end_reason: WebSocketTrackingEndReason.SESSION_END,
+          closed_date: clock.timeStamp(40),
+        })
+      )
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Setup
+  // ---------------------------------------------------------------------------
+
+  function startTracking() {
+    const tracker = trackWebSocket(lifeCycle, initWebSocketObservable())
+    registerCleanupTask(tracker.stop)
+    return tracker
+  }
+
+  function expireSession(endClocks = clocksNow()) {
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
+  }
+
+  // ---------------------------------------------------------------------------
+  // Driving time
+  //
+  // Dates are given in milliseconds since the spec started, on the monotonic clock so that a jump of
+  // the system clock does not move them, and only ever move forward.
+  // ---------------------------------------------------------------------------
+
+  /** Moves time forward to `at`, or leaves it where it is when no date is given. */
+  function advanceTo(at: number | undefined) {
+    if (at === undefined) {
+      return
+    }
+    const now = performance.now() - clock.relative(0)
+    if (at < now) {
+      throw new Error(`Cannot move time back from ${now} to ${at}`)
+    }
+    clock.tick(at - now)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Driving a socket
+  //
+  // Each helper plays either the application calling the socket API or the browser dispatching an
+  // event on it, at the date it is given.
+  // ---------------------------------------------------------------------------
+
+  interface At {
+    at?: number
+  }
+
+  function connect({
+    at,
+    url = 'wss://example.com/socket',
+    protocols,
+  }: At & { url?: string; protocols?: string | string[] } = {}) {
+    advanceTo(at)
+    return createMockWebSocket(url, protocols)
+  }
+
+  function completeHandshake(
+    socket: MockWebSocket,
+    { at, protocol = '', extensions = '' }: At & { protocol?: string; extensions?: string } = {}
+  ) {
+    advanceTo(at)
+    socket.protocol = protocol
+    socket.extensions = extensions
+    socket.simulateOpen()
+  }
+
+  /** A socket constructed and opened at the same date, for specs that do not care about the handshake. */
+  function openConnection({ at, url }: At & { url?: string } = {}) {
+    const socket = connect({ at, url })
+    completeHandshake(socket)
+    return socket
+  }
+
+  function receiveMessage(socket: MockWebSocket, size: number, { at }: At = {}) {
+    advanceTo(at)
+    socket.simulateIncomingMessage('x'.repeat(size))
+  }
+
+  function sendMessage(
+    socket: MockWebSocket,
+    size: number,
+    { at, bufferedAmountPreSend = 0 }: At & { bufferedAmountPreSend?: number } = {}
+  ) {
+    advanceTo(at)
+    socket.bufferedAmount = bufferedAmountPreSend
+    socket.send('x'.repeat(size))
+  }
+
+  function dispatchClose(
+    socket: MockWebSocket,
+    {
+      at,
+      code = 1000,
+      reason = 'bye',
+      wasClean = true,
+    }: At & { code?: number; reason?: string; wasClean?: boolean } = {}
+  ) {
+    advanceTo(at)
+    socket.simulateClose(code, reason, wasClean)
+  }
+
+  /** The browser failing the connection, whether the handshake never completed or was aborted. */
+  function failHandshake(socket: MockWebSocket, { at }: At = {}) {
+    dispatchClose(socket, { at, code: 1006, reason: '', wasClean: false })
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reading emitted vitals
+  // ---------------------------------------------------------------------------
+
+  function emittedVitals(name?: WebSocketVitalName) {
+    return name === undefined
+      ? collectedEvents
+      : collectedEvents.filter((event) => event.rawRumEvent.vital.name === name)
+  }
+
+  /** The one item of a list the spec expects to hold exactly one. */
+  function single<T>(items: T[]): T {
+    expect(items).toHaveSize(1)
+    return items[0]
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reading phase payloads
+  //
+  // The payload of a phase is picked by the name the collection module chose; the serializer's own
+  // spec is where the compiler checks that a name and its payload agree.
+  // ---------------------------------------------------------------------------
+
+  function connectingPayloads() {
+    return emittedVitals(WebSocketVitalName.CONNECTING).map(
+      (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketConnectingVitalProperties
+    )
+  }
+
+  function openPayloads() {
+    return emittedVitals(WebSocketVitalName.OPEN).map(
+      (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketOpenVitalProperties
+    )
+  }
+
+  function closedPayloads() {
+    return emittedVitals(WebSocketVitalName.CLOSED).map(
+      (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketClosedVitalProperties
+    )
+  }
+
+  /** The live socket instance a vital's domain context carries. */
+  function webSocketOf(event: RawRumEventCollectedData<RawRumWebSocketVitalEvent>) {
+    return (event.domainContext as RumWebSocketVitalEventDomainContext).webSocket as unknown as MockWebSocket
+  }
+})
