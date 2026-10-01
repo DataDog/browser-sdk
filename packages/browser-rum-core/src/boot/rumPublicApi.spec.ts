@@ -55,6 +55,16 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
+  it('sets element context before initialization', () => {
+    const { rumPublicApi } = makeRumPublicApiWithDefaults()
+    const element = document.createElement('section')
+    const context = { productArea: 'purchase' }
+    rumPublicApi.setElementContext(element, { service: 'checkout', version: '2.4.0', context })
+    expect(element).toEqual(
+      jasmine.objectContaining({ dd_service: 'checkout', dd_version: '2.4.0', dd_context: context })
+    )
+  })
+
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi

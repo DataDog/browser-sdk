@@ -17,6 +17,7 @@ import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 import { ActionNameSource } from './actionNameConstants'
+import { setElementContext } from './elementContext'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -95,6 +96,25 @@ describe('trackClickActions', () => {
     button.parentNode!.removeChild(button)
     emptyElement.parentNode!.removeChild(emptyElement)
     input.parentNode!.removeChild(input)
+  })
+
+  it('snapshots element attribution before application handlers change it', () => {
+    startClickActionsTracking()
+    const context = { productArea: 'purchase' }
+    setElementContext(button, { service: 'checkout', version: '2.4.0', context })
+    emulateClick({
+      activity: {},
+      afterPointerDown: () => {
+        context.productArea = 'changed'
+        setElementContext(button, { service: 'changed' })
+      },
+    })
+    clock.tick(EXPIRE_DELAY)
+    expect(events[0].elementContext).toEqual({
+      service: 'checkout',
+      version: '2.4.0',
+      context: { productArea: 'purchase' },
+    })
   })
 
   it('starts a click action when clicking on an element', () => {
@@ -317,6 +337,19 @@ describe('trackClickActions', () => {
   })
 
   describe('rage clicks', () => {
+    it('keeps the first click attribution when combining a rage click', () => {
+      startClickActionsTracking()
+      setElementContext(button, { service: 'checkout', context: { step: 1 } })
+      emulateClick({ activity: { delay: 5 } })
+      setElementContext(button, { service: 'payment', context: { step: 2 } })
+      emulateClick({ activity: { delay: 5 } })
+      emulateClick({ activity: { delay: 5 } })
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
+      expect(events[0].elementContext).toEqual(jasmine.objectContaining({ service: 'checkout', context: { step: 1 } }))
+    })
+
     it('considers a chain of three clicks or more as a single action with "rage" frustration type', () => {
       startClickActionsTracking()
       const firstPointerDownTimeStamp = timeStampNow()
@@ -689,6 +722,24 @@ describe('trackClickActions', () => {
 
     afterEach(() => {
       shadowHost.remove()
+    })
+
+    it('attributes clicks using metadata inside the shadow root and on its host', () => {
+      startClickActionsTracking()
+      setElementContext(shadowHost, { service: 'shell', context: { host: true } })
+      setElementContext(shadowButton, { service: 'checkout' })
+      emulateClick({
+        target: shadowHost,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+      expect(events[0].elementContext).toEqual(
+        jasmine.objectContaining({ service: 'checkout', context: { host: true } })
+      )
     })
 
     it('gets action name from composedPath', () => {

@@ -268,6 +268,176 @@ test.describe('microfrontend', () => {
         })
     })
 
+    test.describe('with element context', () => {
+      createTest('automatic clicks should inherit microfrontend attribution from element properties')
+        .withRum({ ...RUM_CONFIG, trackUserInteractions: true })
+        .withRumSlim()
+        .withSetup(microfrontendSetup)
+        .withBody('<button id="shell-fetch" onclick="fetch(\'/ok\')">Shell fetch</button>')
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await expect(page.locator('#app1-fetch')).toBeVisible()
+          await expect(page.locator('#app2-fetch')).toBeVisible()
+          await page.evaluate(() => {
+            Object.assign(document.getElementById('app1')!, {
+              dd_service: 'mfe-app1-service',
+              dd_version: '1.0.0',
+              dd_context: { microfrontend: 'app1' },
+            })
+            Object.assign(document.getElementById('app2')!, {
+              dd_service: 'mfe-app2-service',
+              dd_version: '0.2.0',
+              dd_context: { microfrontend: 'app2' },
+            })
+          })
+
+          await page.click('#app1-fetch')
+          await page.click('#app2-fetch')
+          await page.click('#shell-fetch')
+          await flushEvents()
+
+          const clicks = intakeRegistry.rumActionEvents.filter((event) => event.action.type === 'click')
+          expect(clicks).toHaveLength(3)
+          expect(clicks).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                service: 'mfe-app1-service',
+                version: '1.0.0',
+                action: expect.objectContaining({ target: { name: 'app1-fetch' } }),
+                context: expect.objectContaining({ microfrontend: 'app1' }),
+              }),
+              expect.objectContaining({
+                service: 'mfe-app2-service',
+                version: '0.2.0',
+                action: expect.objectContaining({ target: { name: 'app2-fetch' } }),
+                context: expect.objectContaining({ microfrontend: 'app2' }),
+              }),
+              expect.objectContaining({
+                service: 'main-service',
+                version: '1.0.0',
+                action: expect.objectContaining({ target: { name: 'Shell fetch' } }),
+              }),
+            ])
+          )
+          expect(
+            clicks.find((event) => event.action.target?.name === 'Shell fetch')!.context?.microfrontend
+          ).toBeUndefined()
+        })
+
+      createTest('automatic clicks should inherit microfrontend attribution from element attribute')
+        .withRum({ ...RUM_CONFIG, trackUserInteractions: true })
+        .withRumSlim()
+        .withSetup(microfrontendSetup)
+        .withBody('<button id="shell-fetch" onclick="fetch(\'/ok\')">Shell fetch</button>')
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await expect(page.locator('#app1-fetch')).toBeVisible()
+          await expect(page.locator('#app2-fetch')).toBeVisible()
+          await page.evaluate(() => {
+            document.getElementById('app1')!.setAttribute(
+              'data-dd-context',
+              JSON.stringify({
+                service: 'mfe-app1-service',
+                version: '1.0.0',
+                context: { microfrontend: 'app1' },
+              })
+            )
+            document.getElementById('app2')!.setAttribute(
+              'data-dd-context',
+              JSON.stringify({
+                service: 'mfe-app2-service',
+                version: '0.2.0',
+                context: { microfrontend: 'app2' },
+              })
+            )
+          })
+
+          await page.click('#app1-fetch')
+          await page.click('#app2-fetch')
+          await page.click('#shell-fetch')
+          await flushEvents()
+
+          const clicks = intakeRegistry.rumActionEvents.filter((event) => event.action.type === 'click')
+          expect(clicks).toHaveLength(3)
+          expect(clicks).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                service: 'mfe-app1-service',
+                version: '1.0.0',
+                action: expect.objectContaining({ target: { name: 'app1-fetch' } }),
+                context: expect.objectContaining({ microfrontend: 'app1' }),
+              }),
+              expect.objectContaining({
+                service: 'mfe-app2-service',
+                version: '0.2.0',
+                action: expect.objectContaining({ target: { name: 'app2-fetch' } }),
+                context: expect.objectContaining({ microfrontend: 'app2' }),
+              }),
+              expect.objectContaining({
+                service: 'main-service',
+                version: '1.0.0',
+                action: expect.objectContaining({ target: { name: 'Shell fetch' } }),
+              }),
+            ])
+          )
+          expect(
+            clicks.find((event) => event.action.target?.name === 'Shell fetch')!.context?.microfrontend
+          ).toBeUndefined()
+        })
+
+      createTest('automatic clicks should inherit microfrontend attribution from element api')
+        .withRum({ ...RUM_CONFIG, trackUserInteractions: true })
+        .withRumSlim()
+        .withSetup(microfrontendSetup)
+        .withBody('<button id="shell-fetch" onclick="fetch(\'/ok\')">Shell fetch</button>')
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await expect(page.locator('#app1-fetch')).toBeVisible()
+          await expect(page.locator('#app2-fetch')).toBeVisible()
+          await page.evaluate(() => {
+            window.DD_RUM!.setElementContext(document.getElementById('app1')!, {
+              service: 'mfe-app1-service',
+              version: '1.0.0',
+              context: { microfrontend: 'app1' },
+            })
+            window.DD_RUM!.setElementContext(document.getElementById('app2')!, {
+              service: 'mfe-app2-service',
+              version: '0.2.0',
+              context: { microfrontend: 'app2' },
+            })
+          })
+
+          await page.click('#app1-fetch')
+          await page.click('#app2-fetch')
+          await page.click('#shell-fetch')
+          await flushEvents()
+
+          const clicks = intakeRegistry.rumActionEvents.filter((event) => event.action.type === 'click')
+          expect(clicks).toHaveLength(3)
+          expect(clicks).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                service: 'mfe-app1-service',
+                version: '1.0.0',
+                action: expect.objectContaining({ target: { name: 'app1-fetch' } }),
+                context: expect.objectContaining({ microfrontend: 'app1' }),
+              }),
+              expect.objectContaining({
+                service: 'mfe-app2-service',
+                version: '0.2.0',
+                action: expect.objectContaining({ target: { name: 'app2-fetch' } }),
+                context: expect.objectContaining({ microfrontend: 'app2' }),
+              }),
+              expect.objectContaining({
+                service: 'main-service',
+                version: '1.0.0',
+                action: expect.objectContaining({ target: { name: 'Shell fetch' } }),
+              }),
+            ])
+          )
+          expect(
+            clicks.find((event) => event.action.target?.name === 'Shell fetch')!.context?.microfrontend
+          ).toBeUndefined()
+        })
+    })
+
     test.describe('with source code bundler plugin', () => {
       createTest('errors from console.error should have service and version from source code context')
         .withRum(RUM_CONFIG)
