@@ -23,6 +23,9 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 import { getRemoteConfigurationId } from './remoteConfiguration'
 import type { RemoteConfigurationMetadata } from './remoteConfigurationCache'
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_SETUP__: string
+
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
 /**
@@ -365,20 +368,24 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enable partial view updates, which reduces bandwidth by sending only changed
    * fields instead of full view events on intermediate updates.
    *
-   * Enabled by default unless a `proxy` is configured, because a proxy may not forward the
-   * `view_update` event type.
+   * Enabled by default when the SDK is loaded from the CDN and no `proxy` is configured.
+   * Disabled by default otherwise, because a proxy may not forward the `view_update` event type.
    *
    * @category Beta
    */
   betaEnableViewUpdates?: boolean | undefined
 
   /**
-   * Enables collection of WebSocket resource events.
+   * Enables collection of WebSocket vital events.
    *
-   * Warning: enabling this option introduces WebSocket resource events to the `beforeSend` hook.
-   * Their domain context is WebSocket-specific and does not contain the XHR, Fetch, or performance
-   * entry fields available on regular resource events. Narrow the context using the existing
-   * `isManual` and `isWebSocket` discriminants before accessing those fields.
+   * Each WebSocket connection reports a vital event (`vital.type: 'websocket'`) for each phase it goes
+   * through (`websocket_connecting`, `websocket_open`, `websocket_closing`, `websocket_closed`), and
+   * open connections report a `websocket_open` vital periodically.
+   *
+   * Warning: enabling this option introduces WebSocket vital events to the `beforeSend` hook. They
+   * cannot be dismissed, and only their `vital.websocket.url`, `vital.websocket.requested_protocols`,
+   * `vital.websocket.selected_protocol` and `vital.websocket.close_reason` fields can be modified,
+   * e.g. to redact sensitive data.
    *
    * @category Beta
    */
@@ -588,10 +595,11 @@ export type RumConfiguration = Omit<
 
 /**
  * Resolves whether partial view updates are enabled. Never enabled when the event bridge is used.
- * Otherwise an explicit `betaEnableViewUpdates` takes precedence, and it defaults to true unless a
- * `proxy` is configured (a proxy may not forward the `view_update` event type yet) or the bundle is
- * the Salesforce build, which customers install as a pinned static resource with no rollback path.
+ * Otherwise an explicit `betaEnableViewUpdates` takes precedence, and it defaults to true for CDN
+ * users that do not go through a proxy: a proxy may not forward the `view_update` event type yet,
+ * and npm users pin an SDK version so they opt in explicitly.
  *
+ * The CDN check is temporary, the next step is to default this to true unless `proxy` is set.
  * TODO next major: remove the option.
  */
 function isViewUpdatesEnabled(
@@ -606,10 +614,10 @@ function isViewUpdatesEnabled(
     return false
   }
 
-  // The Salesforce bundle is installed as a static resource pinned by the customer, so publishing
-  // a new bundle does not roll those deployments back. Keep them out of the default, they can
-  // still opt in explicitly.
-  return explicit ?? (!proxy && sdkName !== 'rum-salesforce')
+  // The Salesforce bundle is a CDN build, but the supported install flow uploads it as a static
+  // resource, so publishing a new bundle does not roll those deployments back. Keep them out of
+  // the default, they can still opt in explicitly.
+  return explicit ?? (__BUILD_ENV__SDK_SETUP__ === 'cdn' && !proxy && sdkName !== 'rum-salesforce')
 }
 
 export function validateAndBuildRumConfiguration(

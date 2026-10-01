@@ -17,7 +17,6 @@ import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import { startSessionContext } from './contexts/sessionContext'
 import { createHooks } from './hooks'
-import { WEBSOCKET_CONNECTING_VITAL_NAME } from './resource/webSocketCollection'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
@@ -211,28 +210,6 @@ describe('rum assembly', () => {
           expect(serverRumEvents[0].context!.foo).toBe('bar')
         })
 
-        it('should allow beforeSend to add protocols to the websocket-connecting vital context', () => {
-          const protocols = ['chat.v1']
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-            partialConfiguration: {
-              beforeSend: (event) => {
-                if (event.type === RumEventType.VITAL && event.vital.name === WEBSOCKET_CONNECTING_VITAL_NAME) {
-                  event.context.protocols = protocols
-                }
-                return true
-              },
-            },
-          })
-
-          notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
-              vital: { name: WEBSOCKET_CONNECTING_VITAL_NAME },
-              context: { url: 'wss://example.com/socket' },
-            }),
-          })
-
-          expect(serverRumEvents[0].context!.protocols).toEqual(protocols)
-        })
       })
 
       describe('allowed customer provided field', () => {
