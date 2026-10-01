@@ -51,6 +51,11 @@ export function createApp(id: string, title: string, borderColor: string) {
     document.body.appendChild(script)
   })
 
+  createButton(container, 'deprecation', () => {
+    // Attribute the report to this bundle rather than the SDK's XHR instrumentation.
+    window.nativeXhrOpen.call(new XMLHttpRequest(), 'GET', '/ok', false)
+  })
+
   // The `boom` call lives in the shared `lib` remote chunk while this handler lives in the app chunk,
   // so the error stack spans both chunks -> the event carries two debug IDs (app chunk + shared lib
   // chunk). The button is created only once `lib` is loaded so `boom` is always available on click.

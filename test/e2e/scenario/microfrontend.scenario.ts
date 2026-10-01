@@ -32,10 +32,10 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
 // Debug IDs are derived from each chunk's content hash, so they're stable across rebuilds
 // (regenerate these constants if app source/deps change). The shared `lib` remote is its own chunk,
 // so its debug ID is the same for every app.
-const APP1_EXPOSE_CHUNK = '__federation_expose_app1-598d1af7dd50c2c437e1-app1.js'
-const APP1_DEBUG_ID = '3ef0960b-c20d-4819-a375-005c066ef179'
-const APP2_EXPOSE_CHUNK = '__federation_expose_app2-e0364289f6ec8c600d47-app2.js'
-const APP2_DEBUG_ID = '9fab59a6-36ab-4225-801b-1345c4fad48a'
+const APP1_EXPOSE_CHUNK = '__federation_expose_app1-d74be1a93aee64b4d047-app1.js'
+const APP1_DEBUG_ID = '4b3d6a63-fb93-4cad-b3ee-f178b7020ba3'
+const APP2_EXPOSE_CHUNK = '__federation_expose_app2-de619ccf294b7d2c971a-app2.js'
+const APP2_DEBUG_ID = '5f3dc267-79ac-4d44-99b9-251f9931b053'
 const LIB_EXPOSE_CHUNK = '__federation_expose_lib-c0a8a100340f04ff2712-lib.js'
 const LIB_DEBUG_ID = '4564c6ea-a5bb-4355-968a-7de8d685fe65'
 
@@ -638,6 +638,7 @@ test.describe('microfrontend', () => {
         { app: 'app2', version: '0.2.0', chunk: APP2_EXPOSE_CHUNK },
       ].forEach(({ app, version, chunk }) => {
         createTest(`deprecation reports from ${app} should have service and version from source code context`)
+          .withHead('<script>window.nativeXhrOpen = XMLHttpRequest.prototype.open</script>')
           .withLogs({
             ...LOGS_CONFIG,
             service: 'shell-service',
