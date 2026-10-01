@@ -296,6 +296,20 @@ describe('webSocketCollection', () => {
         buffered_amount_max: 110,
       })
     })
+
+    it('counts no outbound message the socket discarded after the closing handshake started', () => {
+      startTracking()
+      const socket = openConnection()
+      sendMessage(socket, 10)
+      callClose(socket)
+
+      sendMessage(socket, 500)
+      dispatchClose(socket)
+
+      expect(single(closedPayloads()).snapshot!.outbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 10, message_size_max: 10 })
+      )
+    })
   })
 
   // The live instance lets a consumer read the socket's own state (bufferedAmount, readyState) or
@@ -543,6 +557,12 @@ describe('webSocketCollection', () => {
     advanceTo(at)
     socket.bufferedAmount = bufferedAmountPreSend
     socket.send('x'.repeat(size))
+  }
+
+  /** The application calling `close()`, which is the only way the CLOSING phase is observed. */
+  function callClose(socket: MockWebSocket, { at }: At = {}) {
+    advanceTo(at)
+    socket.close()
   }
 
   function dispatchClose(
