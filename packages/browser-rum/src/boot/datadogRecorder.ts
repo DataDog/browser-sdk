@@ -1,5 +1,12 @@
 import type { HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
-import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop, ErrorSource } from '@datadog/browser-core'
+import {
+  createHttpRequest,
+  addTelemetryDebug,
+  canUseEventBridge,
+  noop,
+  ErrorSource,
+  PageExitReason,
+} from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
@@ -51,8 +58,13 @@ export function startRecording(
   let flushMutations = noop
 
   // This must be registered before the segment and resource collectors so an urgent exit includes queued canvas changes.
-  const { unsubscribe: unsubscribeMutationFlush } = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () =>
-    flushMutations()
+  const { unsubscribe: unsubscribeMutationFlush } = lifeCycle.subscribe(
+    LifeCycleEventType.PREPARE_URGENT_FLUSH,
+    (reason) => {
+      if (reason !== PageExitReason.PAGE_DISCARDED) {
+        flushMutations()
+      }
+    }
   )
   cleanupTasks.push(unsubscribeMutationFlush)
 

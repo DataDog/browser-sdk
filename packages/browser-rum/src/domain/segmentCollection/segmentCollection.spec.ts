@@ -188,6 +188,17 @@ describe('startSegmentCollection', () => {
       })
     })
 
+    describe('flush when the page is discarded', () => {
+      it('does not flush the segment', () => {
+        addRecord(RECORD)
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+        worker.processAllMessages()
+
+        expect(httpRequestSpy.send).not.toHaveBeenCalled()
+        expect(httpRequestSpy.sendOnExit).not.toHaveBeenCalled()
+      })
+    })
+
     describe('flush when the view changes', () => {
       function emulateViewChange() {
         lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)

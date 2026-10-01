@@ -1,6 +1,6 @@
 import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { timeStampNow, timeStampToClocks, relativeToClocks } from '@datadog/js-core/time'
-import { Observable, generateUUID } from '@datadog/browser-core'
+import { Observable, generateUUID, PageExitReason } from '@datadog/browser-core'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -64,7 +64,11 @@ export function trackClickActions(
   let currentClickChain: ClickChain | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
-  lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, stopClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
+    if (reason !== PageExitReason.PAGE_DISCARDED) {
+      stopClickChain()
+    }
+  })
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
@@ -220,8 +224,10 @@ function startClickAction(
     click.stop(endClocks.timeStamp)
   })
 
-  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
-    click.stop(timeStampNow())
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
+    if (reason !== PageExitReason.PAGE_DISCARDED) {
+      click.stop(timeStampNow())
+    }
   })
 
   const stopSubscription = stopObservable.subscribe(() => {
