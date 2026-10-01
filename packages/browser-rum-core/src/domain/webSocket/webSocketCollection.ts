@@ -62,9 +62,16 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
     tracker.flushOpenConnections(endClocks)
   })
 
+  // A page transition may be the last chance to report before the page is frozen or goes away, so
+  // open connections pulse without waiting for the heartbeat.
+  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
+    tracker.reportOpenConnections()
+  })
+
   return {
     stop: () => {
       sessionExpiredSubscription.unsubscribe()
+      prepareUrgentFlushSubscription.unsubscribe()
       tracker.flushOpenConnections()
       tracker.stop()
     },
