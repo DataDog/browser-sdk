@@ -6,7 +6,7 @@ import type { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
  * Lifecycle phase of a connection, as defined by RFC 6455. Held as explicit data so no reader has
  * to infer it from which fields happen to be populated.
  */
-export type WebSocketPhase = 'connecting' | 'open' | 'closed'
+export type WebSocketPhase = 'connecting' | 'open' | 'closing' | 'closed'
 
 export interface MessageDirectionAggregate {
   messageCount: number
@@ -73,15 +73,22 @@ interface OpenPhase extends OpenFacts {
   snapshotVersion: number
 }
 
+// the open facts are absent when `close()` was called during the handshake
+interface ClosingPhase extends Partial<OpenFacts> {
+  phase: 'closing'
+  closingClocks: ClocksState
+}
+
 // the open facts are absent when the connection never opened
 type ClosedPhase = Partial<OpenFacts> & {
   phase: 'closed'
+  closingClocks?: ClocksState
   endClocks: ClocksState
   snapshotVersion: number
 } & WebSocketTrackingEnd
 
 /** What the connection knows by having reached its current phase, narrowed on that phase. */
-type PhaseFacts = ConnectingPhase | OpenPhase | ClosedPhase
+type PhaseFacts = ConnectingPhase | OpenPhase | ClosingPhase | ClosedPhase
 
 /**
  * The state of a WebSocket connection at a given moment, narrowed on the phase so each vital can
@@ -96,6 +103,7 @@ export interface TrackedConnection {
   recordOpen: (facts: OpenFacts) => void
   recordInboundMessage: (size: number, at: RelativeTime) => void
   recordOutboundMessage: (size: number, bufferedAmountPreSend: number, at: RelativeTime) => void
+  recordClosing: (closingClocks: ClocksState) => void
   /** Ends tracking, whatever the reason. */
   recordTrackingEnd: (endClocks: ClocksState, trackingEnd: WebSocketTrackingEnd) => void
 }
@@ -117,7 +125,8 @@ export function createTrackedConnection({
   }
   // held as one value, so a phase cannot be reached without the facts that come with it
   let phaseFacts: PhaseFacts = { phase: 'connecting' }
-  // continued across phases: the closed vital follows the open one
+  // continued across phases: the closing phase carries no version, but the closed vital follows the
+  // open one
   let snapshotVersion = 0
   // the cursor the silence arithmetic runs on, one per direction: it is what the connection needs
   // to measure a gap, not something it reports
@@ -176,9 +185,14 @@ export function createTrackedConnection({
       lastOutboundMessageAt = at
     },
 
+    recordClosing: (clocks) => {
+      phaseFacts = { ...openFactsOf(phaseFacts), phase: 'closing', closingClocks: clocks }
+    },
+
     recordTrackingEnd: (clocks, end) => {
       phaseFacts = {
         ...openFactsOf(phaseFacts),
+        closingClocks: 'closingClocks' in phaseFacts ? phaseFacts.closingClocks : undefined,
         phase: 'closed',
         endClocks: clocks,
         snapshotVersion: nextSnapshotVersion(),

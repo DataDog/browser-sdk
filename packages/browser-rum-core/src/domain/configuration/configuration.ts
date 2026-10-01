@@ -376,7 +376,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables collection of WebSocket vital events.
    *
    * Each WebSocket connection reports a vital event (`vital.type: 'websocket'`) for each phase it goes
-   * through (`websocket_connecting`, `websocket_open`, `websocket_closed`).
+   * through (`websocket_connecting`, `websocket_open`, `websocket_closing`, `websocket_closed`).
    *
    * Warning: enabling this option introduces WebSocket vital events to the `beforeSend` hook.
    *

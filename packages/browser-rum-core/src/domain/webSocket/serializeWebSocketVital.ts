@@ -56,6 +56,16 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
         },
       })
 
+    case 'closing':
+      return toRawVital(date, {
+        name: WebSocketVitalName.CLOSING,
+        websocket: {
+          id,
+          closing_date: toPhaseDate(connectingClocks, state.closingClocks),
+          close_initiator: 'client',
+        },
+      })
+
     case 'closed':
       return toRawVital(date, {
         name: WebSocketVitalName.CLOSED,
@@ -87,6 +97,8 @@ export function webSocketVitalClocks(state: TrackedConnectionState): ClocksState
       return state.connectingClocks
     case 'open':
       return state.openClocks
+    case 'closing':
+      return state.closingClocks
     case 'closed':
       return state.endClocks
   }
