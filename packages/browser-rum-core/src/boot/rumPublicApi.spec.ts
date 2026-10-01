@@ -104,6 +104,16 @@ describe('rum public api', () => {
     /* eslint-enable no-console, @typescript-eslint/unbound-method */
   })
 
+  it('sets element context before initialization', () => {
+    const { rumPublicApi } = makeRumPublicApiWithDefaults()
+    const element = document.createElement('section')
+    const context = { productArea: 'purchase' }
+    rumPublicApi.setElementContext(element, { service: 'checkout', version: '2.4.0', context })
+    expect(element).toEqual(
+      jasmine.objectContaining({ dd_service: 'checkout', dd_version: '2.4.0', dd_context: context })
+    )
+  })
+
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
