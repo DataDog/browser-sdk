@@ -236,6 +236,44 @@ describe('startRecording', () => {
     expect(canvasSendOnExitSpy).toHaveBeenCalledTimes(1)
   })
 
+  it('does not flush queued canvas content when the page is discarded', async () => {
+    const clock = mockClock()
+    const requestIdleCallbackMock = mockRequestIdleCallback()
+    const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
+    spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
+      callback(new Blob([], { type: 'image/png' }))
+    )
+
+    const canvasSendSpy = jasmine.createSpy()
+    const canvasSendOnExitSpy = jasmine.createSpy()
+    const resourceHttpRequest = {
+      observable: new Observable<HttpRequestEvent<ResourcePayload>>(),
+      send: canvasSendSpy,
+      sendOnExit: canvasSendOnExitSpy,
+    }
+
+    setupStartRecording(
+      {
+        sessionReplayCanvasRecording: {
+          enable: true,
+          maxFramesPerSecond: 1,
+          hashingMaxDimension: 100,
+          maxImageDimension: 1000,
+          encodeQuality: 0.5,
+        },
+      },
+      resourceHttpRequest
+    )
+
+    canvas.getContext('2d')!.fillRect(0, 0, 2, 2)
+    clock.tick(1000)
+    await collectAsyncCalls(requestIdleCallbackMock.spy)
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+
+    expect(canvasSendSpy).not.toHaveBeenCalled()
+    expect(canvasSendOnExitSpy).not.toHaveBeenCalled()
+  })
+
   describe('when calling stop()', () => {
     it('flushes queued canvas content before stopping collectors', async () => {
       const clock = mockClock()
