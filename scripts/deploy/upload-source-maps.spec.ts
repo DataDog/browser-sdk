@@ -133,6 +133,14 @@ describe('upload-source-maps', () => {
         },
         {
           command:
+            'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel-v6.js',
+        },
+        {
+          command:
+            'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel.js.map packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel-v6.js.map',
+        },
+        {
+          command:
             'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-v6.js',
         },
         {
@@ -306,6 +314,14 @@ describe('upload-source-maps', () => {
       },
       {
         command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel-staging.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel.js.map packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel-staging.js.map',
+      },
+      {
+        command:
           'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-staging.js',
       },
       {
@@ -442,6 +458,14 @@ describe('upload-source-maps', () => {
       },
       {
         command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel-canary.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel.js.map packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel-canary.js.map',
+      },
+      {
+        command:
           'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-canary.js',
       },
       {
@@ -551,6 +575,14 @@ describe('upload-source-maps', () => {
       {
         command:
           'mv packages/browser-debugger/bundle/datadog-debugger.js.map packages/browser-debugger/bundle/datadog-debugger-v7-canary.js.map',
+      },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel.js packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel-v7-canary.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel.js.map packages/browser-rum-shopify/bundle/datadog-rum-shopify-web-pixel-v7-canary.js.map',
       },
       {
         command:

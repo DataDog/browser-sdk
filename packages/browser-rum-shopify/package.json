@@ -14,8 +14,8 @@
     "!src/**/*.specHelper.ts"
   ],
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules --worker-string --bundle datadog-rum-shopify.js",
-    "build:bundle": "node ../../scripts/build/build-package.ts --worker-string --bundle datadog-rum-shopify.js",
+    "build": "node ../../scripts/build/build-package.ts --modules --worker-string --bundle datadog-rum-shopify.js --bundle datadog-rum-shopify-web-pixel.js=./src/entries/webPixel.ts",
+    "build:bundle": "node ../../scripts/build/build-package.ts --worker-string --bundle datadog-rum-shopify.js --bundle datadog-rum-shopify-web-pixel.js=./src/entries/webPixel.ts",
     "prepack": "yarn build"
   },
   "dependencies": {
