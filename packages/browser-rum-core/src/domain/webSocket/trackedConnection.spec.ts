@@ -76,12 +76,35 @@ describe('trackedConnection', () => {
       expect(state.snapshotVersion).toBe(1)
     })
 
+    it('turns closing when the application closes the socket', () => {
+      const connection = createOpenConnection()
+
+      connection.recordClosing(clocksAt(30))
+
+      const state = getStateIn(connection, 'closing')
+      expect(state.closingClocks).toEqual(clocksAt(30))
+      expect(state.openClocks).toEqual(clocksAt(OPEN_AT))
+    })
+
+    it('turns closing without an open date when the socket is closed during the handshake', () => {
+      const connection = createConnectingConnection()
+
+      connection.recordClosing(clocksAt(5))
+
+      const state = getStateIn(connection, 'closing')
+      expect(state.closingClocks).toEqual(clocksAt(5))
+      expect(state.openClocks).toBeUndefined()
+    })
+
     it('reports the same phase alone as in the full state', () => {
       const connection = createConnectingConnection()
       expect(connection.getPhase()).toBe('connecting')
 
       connection.recordOpen({ openClocks: clocksAt(OPEN_AT) })
       expect(connection.getPhase()).toBe('open')
+
+      connection.recordClosing(clocksAt(30))
+      expect(connection.getPhase()).toBe('closing')
 
       connection.recordTrackingEnd(clocksAt(40), SESSION_END)
       expect(connection.getPhase()).toBe('closed')
@@ -90,6 +113,7 @@ describe('trackedConnection', () => {
     const PHASES_TRACKING_CAN_END_FROM = [
       { from: 'connecting', createConnection: createConnectingConnection },
       { from: 'open', createConnection: createOpenConnection },
+      { from: 'closing', createConnection: createClosingConnection },
     ]
 
     PHASES_TRACKING_CAN_END_FROM.forEach(({ from, createConnection }) => {
@@ -102,6 +126,15 @@ describe('trackedConnection', () => {
         expect(state.endClocks).toEqual(clocksAt(40))
         expect(state.trackingEndReason).toBe(WebSocketTrackingEndReason.SESSION_END)
       })
+    })
+
+    it('keeps the closing date when tracking ends after the application closed the socket', () => {
+      const connection = createClosingConnection()
+
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+
+      const state = getStateIn(connection, 'closed')
+      expect(state.closingClocks).toEqual(clocksAt(30))
     })
 
     it('keeps the close event when tracking ends on a real close', () => {
@@ -274,6 +307,12 @@ describe('trackedConnection', () => {
   function createOpenConnection(identity: Partial<TrackedConnectionIdentity> = {}) {
     const connection = createConnectingConnection(identity)
     connection.recordOpen({ openClocks: clocksAt(OPEN_AT) })
+    return connection
+  }
+
+  function createClosingConnection() {
+    const connection = createOpenConnection()
+    connection.recordClosing(clocksAt(30))
     return connection
   }
 

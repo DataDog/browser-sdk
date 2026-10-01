@@ -412,12 +412,13 @@ export type VitalType = (typeof VitalType)[keyof typeof VitalType]
 /**
  * One WebSocket connection reports a stream of vitals over its lifetime, one per phase it goes
  * through, all sharing the connection id. The name is what tells a consumer which phase it holds —
- * the shipped schema discriminates the payloads by their disjoint required fields rather than by
- * this name, so nothing but this type checks that the two agree.
+ * the shipped schema discriminates the four payloads by their disjoint required fields rather than
+ * by this name, so nothing but this type checks that the two agree.
  */
 export const WebSocketVitalName = {
   CONNECTING: 'websocket_connecting',
   OPEN: 'websocket_open',
+  CLOSING: 'websocket_closing',
   CLOSED: 'websocket_closed',
 } as const
 
@@ -471,6 +472,12 @@ export interface RawRumWebSocketOpenVitalProperties {
   snapshot: RawRumWebSocketVitalSnapshot
 }
 
+export interface RawRumWebSocketClosingVitalProperties {
+  closing_date: TimeStamp
+  /** Always `client`: a close the SDK observes from the application is initiated by it. */
+  close_initiator: 'client'
+}
+
 export interface RawRumWebSocketClosedVitalProperties {
   closed_date: TimeStamp
   duration: ServerDuration
@@ -502,6 +509,7 @@ export interface RawRumWebSocketVitalMessageDirection {
 export type RawRumWebSocketVitalPayload =
   | RawRumWebSocketVitalPayloadOf<typeof WebSocketVitalName.CONNECTING, RawRumWebSocketConnectingVitalProperties>
   | RawRumWebSocketVitalPayloadOf<typeof WebSocketVitalName.OPEN, RawRumWebSocketOpenVitalProperties>
+  | RawRumWebSocketVitalPayloadOf<typeof WebSocketVitalName.CLOSING, RawRumWebSocketClosingVitalProperties>
   | RawRumWebSocketVitalPayloadOf<typeof WebSocketVitalName.CLOSED, RawRumWebSocketClosedVitalProperties>
 
 export type RawRumEvent =
