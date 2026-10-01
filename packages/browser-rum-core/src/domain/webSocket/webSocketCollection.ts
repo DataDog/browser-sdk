@@ -1,9 +1,11 @@
-import type { Observable } from '@datadog/browser-core'
+import type { Observable, TimeoutId } from '@datadog/browser-core'
 import {
+  clearInterval,
   ExperimentalFeature,
   generateUUID,
   isExperimentalFeatureEnabled,
   noop,
+  setInterval,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
@@ -60,9 +62,15 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
     tracker.flushOpenConnections(endClocks)
   })
 
+  // Pulse open connections on urgent flush. PAGE_DISCARDED unload flush is added in a later PR.
+  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
+    tracker.reportOpenConnections()
+  })
+
   return {
     stop: () => {
       sessionExpiredSubscription.unsubscribe()
+      prepareUrgentFlushSubscription.unsubscribe()
       tracker.flushOpenConnections()
       tracker.stop()
     },
@@ -81,6 +89,8 @@ export function trackWebSocket(
   webSocketContextObservable: Observable<WebSocketContext>
 ): WebSocketConnectionTracker {
   const trackedConnections = new Map<WebSocket, TrackedConnection>()
+  let heartbeatIntervalId: TimeoutId | undefined
+
   /**
    * Reports one phase of one connection. The connection already holds the phase clocks and snapshot
    * version the vital needs; open pulses must be written with `recordPulse` first so the
@@ -133,12 +143,28 @@ export function trackWebSocket(
     })
   }
 
+  function hasOpenConnection() {
+    for (const connection of trackedConnections.values()) {
+      if (connection.getPhase() === 'open') {
+        return true
+      }
+    }
+    return false
+  }
+
   /**
    * Follows the timer to the population in phase `open`, so the heartbeat costs nothing while no
    * connection is open.
    */
   function syncHeartbeat() {
-    // pulse deferred to heartbeat PR
+    const shouldRunHeartbeat = hasOpenConnection()
+
+    if (shouldRunHeartbeat && heartbeatIntervalId === undefined) {
+      heartbeatIntervalId = setInterval(reportOpenConnections, WEBSOCKET_HEARTBEAT_INTERVAL)
+    } else if (!shouldRunHeartbeat && heartbeatIntervalId !== undefined) {
+      clearInterval(heartbeatIntervalId)
+      heartbeatIntervalId = undefined
+    }
   }
 
   function handleWebSocketContext(context: WebSocketContext) {

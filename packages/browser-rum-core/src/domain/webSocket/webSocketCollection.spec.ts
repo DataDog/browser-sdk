@@ -118,7 +118,7 @@ describe('webSocketCollection', () => {
   // They are what the vital is attributed to a view by, so a closed vital lands on the view that
   // was active when the connection ended rather than on the one it started in.
   describe('the start clocks each vital is handed over with', () => {
-    xit('are the moment the phase it reports happened', () => {
+    it('are the moment the phase it reports happened', () => {
       startTracking()
       const socket = connect({ at: 5 })
       completeHandshake(socket, { at: 10 })
@@ -232,7 +232,7 @@ describe('webSocketCollection', () => {
   // One flat cadence in every page state, so that a connection held open for an hour is visible
   // while it is open, and one that dies without closing still reports the traffic its last pulse
   // carried.
-  xdescribe('the open heartbeat', () => { // deferred to pulse PR
+  describe('the open heartbeat', () => {
     /**
      * Watches the intervals scheduled at the heartbeat cadence, which is the only way to tell a
      * heartbeat that was never scheduled from one that emits nothing. The global is patched by hand
@@ -588,7 +588,7 @@ describe('webSocketCollection', () => {
       expect(single(closedPayloads()).snapshot_version).toBe(1)
     })
 
-    xit('continues the snapshot sequence the open vitals started, so it holds the highest version', () => {
+    it('continues the snapshot sequence the open vitals started, so it holds the highest version', () => {
       startTracking()
       const socket = openConnection()
       tickHeartbeat(2)
@@ -644,7 +644,7 @@ describe('webSocketCollection', () => {
   // The live instance lets a consumer read the socket's own state (bufferedAmount, readyState) or
   // interact with it (close it, inspect its listeners) from a beforeSend/observer callback.
   describe('the domain context', () => {
-    xit('exposes the same socket instance on every vital of the connection lifecycle', () => {
+    it('exposes the same socket instance on every vital of the connection lifecycle', () => {
       startTracking()
       const socket = connect()
       expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CONNECTING)))).toBe(socket)
@@ -776,7 +776,7 @@ describe('webSocketCollection', () => {
     // Unlike view tracking, which filters to the unloading reason: a view survives a background
     // transition, a connection may not, and hidden is the only signal mobile browsers guarantee at
     // that point.
-    xdescribe('the background-transition pulse', () => { // deferred to pulse PR
+    describe('the background-transition pulse', () => {
       ;[PageExitReason.HIDDEN, PageExitReason.FROZEN, PageExitReason.UNLOADING].forEach((reason) => {
         it(`emits a pulse for every open connection on a "${reason}" transition`, () => {
           startCollection()
