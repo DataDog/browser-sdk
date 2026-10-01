@@ -473,7 +473,7 @@ describe('webSocketCollection', () => {
     })
   })
 
-  xdescribe('the closing vital', () => { // deferred to closing PR
+  describe('the closing vital', () => {
     it('is emitted on the close() call, carrying the closing date and the client as the initiator', () => {
       startTracking()
       const socket = openConnection()
@@ -668,7 +668,7 @@ describe('webSocketCollection', () => {
   describe('the dates of the later phases', () => {
     // they are placed on the monotonic clock, which has sub-millisecond precision, while the schema
     // wants whole milliseconds
-    xit('are reported in whole milliseconds', () => {
+    it('are reported in whole milliseconds', () => {
       startTracking()
       const socket = connect({ at: 0 })
       completeHandshake(socket, { at: 10.4 })
@@ -685,7 +685,7 @@ describe('webSocketCollection', () => {
   // from its connecting date, so a system clock stepping back or forth mid-connection (an NTP step,
   // a VM resume, a manual correction) corrupts neither its chronology nor its intervals.
   describe('under a system clock change', () => {
-    xit('measures the connection on its own timeline, while each vital stays dated by the system clock', () => {
+    it('measures the connection on its own timeline, while each vital stays dated by the system clock', () => {
       startTracking()
       const socket = connect({ at: 0 })
       advanceTo(5)

@@ -17,7 +17,7 @@ const NANOSECONDS_PER_MILLISECOND = 1e6
 
 test.describe('rum websockets', () => {
   test.describe('connection tracking', () => {
-    createTest('reports connecting, open and closed vitals under one connection id')
+    createTest('reports the four phases of a connection closed by the client under one connection id')
       .withRum(RUM_CONFIGURATION)
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -32,8 +32,9 @@ test.describe('rum websockets', () => {
         const vitals = getWebSocketVitals(intakeRegistry)
         expect(vitals.connecting).toHaveLength(1)
         expect(vitals.open).toHaveLength(1)
-        expect(vitals.closing).toHaveLength(0)
+        expect(vitals.closing).toHaveLength(1)
         expect(vitals.closed).toHaveLength(1)
+        expect(vitals.all).toHaveLength(4)
         expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
 
         const closed = vitals.closed[0].vital.websocket
@@ -185,6 +186,50 @@ test.describe('rum websockets', () => {
         expect(url.search).toBe('')
       })
   })
+  test.describe('phases', () => {
+    createTest('reports the closing phase of a connection closed before it opened')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, flushBrowserLogs }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.openAndCloseWhileConnecting()
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.open).toHaveLength(0)
+        expect(vitals.closing).toHaveLength(1)
+        expect(vitals.closed).toHaveLength(1)
+        expect(vitals.closed[0].vital.websocket.snapshot).toBeUndefined()
+
+        // Firefox logs connection errors for a socket closed during its handshake. They are expected,
+        // but any other error must still fail the test.
+        withBrowserLogs((logs) => {
+          const errors = logs.filter((log) => log.level === 'error')
+          expect(errors.every((error) => error.message.includes('/ws-echo'))).toBe(true)
+        })
+        flushBrowserLogs()
+      })
+
+    createTest('reports the closing phase once however many times close() is called')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.closeTwice()
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.closing).toHaveLength(1)
+        expect(vitals.closed).toHaveLength(1)
+      })
+  })
+
+
 })
 
 type WebSocketVital =

@@ -138,7 +138,7 @@ export function trackWebSocket(
    * connection is open.
    */
   function syncHeartbeat() {
-    // PR2: heartbeat pulse deferred to a later stack PR
+    // pulse deferred to heartbeat PR
   }
 
   function handleWebSocketContext(context: WebSocketContext) {
@@ -194,7 +194,15 @@ export function trackWebSocket(
       // reported at most once per connection, which the observable's `readyState` guard is what
       // enforces
       case 'closing': {
-        // PR2: closing vital deferred to a later stack PR
+        const connection = trackedConnections.get(context.instance)
+        if (!connection) {
+          return
+        }
+
+        connection.recordClosing(context.at)
+
+        emitVital(context.instance, connection)
+
         return
       }
 
