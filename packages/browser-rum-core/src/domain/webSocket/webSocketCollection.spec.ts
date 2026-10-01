@@ -811,6 +811,83 @@ describe('webSocketCollection', () => {
       })
     })
 
+    describe('the page unload', () => {
+      it('ends tracking of an open connection when the page is discarded', () => {
+        startCollection()
+        openConnection()
+        advanceTo(40)
+
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+
+        expect(single(closedPayloads())).toEqual(
+          jasmine.objectContaining({
+            tracking_end_reason: WebSocketTrackingEndReason.PAGE_UNLOADED,
+            closed_date: clock.timeStamp(40),
+          })
+        )
+      })
+
+      it('ends tracking of every connection, whatever its phase', () => {
+        startCollection()
+        connect()
+        openConnection()
+        callClose(openConnection())
+
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+
+        expect(closedPayloads().map((payload) => payload.tracking_end_reason)).toEqual([
+          WebSocketTrackingEndReason.PAGE_UNLOADED,
+          WebSocketTrackingEndReason.PAGE_UNLOADED,
+          WebSocketTrackingEndReason.PAGE_UNLOADED,
+        ])
+      })
+
+      it('reports no close outcome, the next snapshot version and the send queue depth read from the socket', () => {
+        startCollection()
+        const socket = openConnection()
+        socket.bufferedAmount = 12
+
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+
+        const payload = single(closedPayloads())
+        expect(payload).toEqual(jasmine.objectContaining({ snapshot_version: 2 }))
+        expect(payload.snapshot?.outbound.buffered_amount_at_close).toBe(12)
+        expect(payload.close_code).toBeUndefined()
+        expect(payload.close_reason).toBeUndefined()
+        expect(payload.was_clean).toBeUndefined()
+      })
+
+      it('reports nothing more for a connection whose close event arrives after the page unloaded', () => {
+        startCollection()
+        const socket = openConnection()
+
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+        dispatchClose(socket)
+
+        expect(single(closedPayloads()).tracking_end_reason).toBe(WebSocketTrackingEndReason.PAGE_UNLOADED)
+      })
+
+      it('reports nothing more for a connection that closed before the page unloaded', () => {
+        startCollection()
+        dispatchClose(openConnection())
+
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+
+        expect(single(closedPayloads()).tracking_end_reason).toBe(WebSocketTrackingEndReason.CLOSE_EVENT)
+      })
+
+      it('replaces open reports with a single closed vital when the page is discarded', () => {
+        startCollection()
+        openConnection()
+
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+        tickPeriodicReport()
+
+        expect(openPayloads()).toHaveSize(1)
+        expect(closedPayloads()).toHaveSize(1)
+      })
+    })
+
     it('finalizes open connections when the session expires', () => {
       startCollection()
       connect()
