@@ -379,7 +379,8 @@ export interface RumInitConfiguration extends InitConfiguration {
    * through (`websocket_connecting`, `websocket_open`, `websocket_closing`, `websocket_closed`), and
    * open connections report a `websocket_open` vital periodically.
    *
-   * Warning: enabling this option introduces WebSocket vital events to the `beforeSend` hook.
+   * Warning: enabling this option introduces WebSocket vital events to the `beforeSend` hook. They
+   * cannot be dismissed.
    *
    * @category Beta
    */
