@@ -1,7 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { Context } from '@datadog/browser-core'
 import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
-import { SKIPPED } from '@datadog/js-core/assembly'
+import { DISCARDED, SKIPPED } from '@datadog/js-core/assembly'
 import { ErrorSource, ErrorHandling, noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
@@ -50,6 +50,7 @@ describe('startLogsAssembly', () => {
     beforeSend = noop
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
+    hooks.assembleEventDefaults.register(() => ({ service: configuration.service, version: configuration.version }))
     startRUMInternalContext(hooks)
     startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
@@ -225,6 +226,54 @@ describe('startLogsAssembly', () => {
   })
 
   describe('ddtags', () => {
+    it('does not send logs discarded by the assembly hook', () => {
+      hooks.assembleEvent.register(() => DISCARDED)
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+
+      expect(serverLogs).toEqual([])
+    })
+
+    it('uses source code tags without changing configured tags for subsequent events', () => {
+      configuration.sdkVersion = 'custom-sdk'
+      configuration.variant = 'custom-variant'
+      configuration.datacenter = 'us1.prod.dog'
+      const { unregister } = hooks.assembleEventDefaults.register(() => ({ version: '2.0.0' }))
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+      unregister()
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+
+      expect(serverLogs[0].ddtags).toEqual(
+        'sdk_version:custom-sdk,env:test,service:service,version:2.0.0,datacenter:us1.prod.dog,variant:custom-variant'
+      )
+      expect(serverLogs[1].ddtags).toEqual(
+        'sdk_version:custom-sdk,env:test,service:service,version:1.0.0,datacenter:us1.prod.dog,variant:custom-variant'
+      )
+    })
+
+    it('replaces the configured service with the source code service while preserving other tags', () => {
+      hooks.assembleEventDefaults.register(() => ({ service: 'checkout' }))
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+        loggerTags: ['foo:bar'],
+      })
+
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:checkout,version:1.0.0,foo:bar')
+    })
+
+    it('replaces the configured version with the source code version while preserving other tags', () => {
+      hooks.assembleEventDefaults.register(() => ({ version: '2.0.0' }))
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+        loggerTags: ['foo:bar'],
+      })
+
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:2.0.0,foo:bar')
+      expect(serverLogs[0].version).toBe('2.0.0')
+      expect(serverLogs[0]).not.toEqual(jasmine.objectContaining({ tags: jasmine.anything() }))
+    })
+
     it('should contain and format the default tags', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
       expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0')
@@ -233,7 +282,7 @@ describe('startLogsAssembly', () => {
     it('should append custom tags', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: DEFAULT_MESSAGE,
-        ddtags: ['foo:bar'],
+        loggerTags: ['foo:bar'],
       })
       expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0,foo:bar')
     })

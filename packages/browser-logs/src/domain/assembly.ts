@@ -27,7 +27,7 @@ export function startLogsAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
-    ({ rawLogsEvent, savedCommonContext = undefined, domainContext, ddtags = [] }) => {
+    ({ rawLogsEvent, savedCommonContext = undefined, domainContext, loggerTags = [] }) => {
       const startTime = toRelativeTime(rawLogsEvent.date)
       const commonContext = savedCommonContext || getCommonContext()
       const assemblyParams: AssembleHookParams = {
@@ -45,19 +45,17 @@ export function startLogsAssembly(
         return
       }
 
-      const defaultDdtags = buildTags(configuration)
-
       const log = combine(
         {
           view: commonContext.view,
         },
         defaultLogsEventAttributes,
         rawLogsEvent,
-        logsEventAttributes,
-        {
-          ddtags: defaultDdtags.concat(ddtags).join(','),
-        }
+        logsEventAttributes
       ) as LogsEvent & Context
+
+      const defaultDdtags = buildTags({ ...configuration, service: log.service, version: log.version })
+      log.ddtags = defaultDdtags.concat(loggerTags).join(',')
 
       if (
         configuration.beforeSend?.(log, domainContext) === false ||

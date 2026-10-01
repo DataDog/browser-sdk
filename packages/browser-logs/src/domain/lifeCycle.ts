@@ -21,5 +21,5 @@ export interface RawLogsEventCollectedData<E extends RawLogsEvent = RawLogsEvent
   rawLogsEvent: E
   savedCommonContext?: CommonContext
   domainContext?: LogsEventDomainContext<E['origin']>
-  ddtags?: string[]
+  loggerTags?: string[]
 }
