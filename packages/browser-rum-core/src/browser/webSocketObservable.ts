@@ -58,6 +58,8 @@ export interface WebSocketClosedContext {
   code: number
   reason: string
   wasClean: boolean
+  /** Bytes still queued in the send buffer when the connection closed. */
+  bufferedAmountAtClose: number
   at: ClocksState
 }
 
@@ -187,6 +189,7 @@ function attachInstanceListeners(instance: WebSocket, observable: Observable<Web
       code: event.code,
       reason: event.reason,
       wasClean: event.wasClean,
+      bufferedAmountAtClose: instance.bufferedAmount,
       at: clocksNow(),
     })
 

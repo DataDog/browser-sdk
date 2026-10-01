@@ -77,7 +77,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
           close_reason: state.closeEvent?.reason,
           was_clean: state.closeEvent?.wasClean,
           snapshot_version: state.snapshotVersion,
-          snapshot: state.snapshot && serializeTerminalSnapshot(state.snapshot, state.silenceBeforeClose),
+          snapshot: state.snapshot && serializeTerminalSnapshot(state.snapshot, state),
         },
       })
   }
@@ -136,13 +136,13 @@ function serializeSnapshot({ inbound, outbound, bufferedAmountMax }: WebSocketSn
 }
 
 /**
- * The terminal snapshot, which also reports the silence before close, measured when tracking ended.
- * Only the closed state holds it, so that a periodic report cannot carry it — nothing in the schema would
- * reject it if it did.
+ * The terminal snapshot, which also reports the values measured when tracking ended. Only the closed
+ * state holds them, so that a periodic report cannot carry them — nothing in the schema would reject
+ * it if it did.
  */
 function serializeTerminalSnapshot(
   snapshot: WebSocketSnapshot,
-  silenceBeforeClose: Extract<TrackedConnectionState, { phase: 'closed' }>['silenceBeforeClose']
+  { silenceBeforeClose, bufferedAmountAtClose }: Extract<TrackedConnectionState, { phase: 'closed' }>
 ): RawRumWebSocketVitalSnapshot {
   const serialized = serializeSnapshot(snapshot)
 
@@ -154,6 +154,7 @@ function serializeTerminalSnapshot(
     outbound: {
       ...serialized.outbound,
       silence_before_close: toServerDuration(silenceBeforeClose.outbound),
+      buffered_amount_at_close: bufferedAmountAtClose,
     },
   }
 }

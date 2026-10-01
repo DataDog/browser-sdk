@@ -544,6 +544,16 @@ describe('webSocketCollection', () => {
       )
     })
 
+    it('reports the send queue depth the close event carried', () => {
+      startTracking()
+      const socket = openConnection()
+      socket.bufferedAmount = 128
+
+      dispatchClose(socket)
+
+      expect(single(closedPayloads()).snapshot!.outbound.buffered_amount_at_close).toBe(128)
+    })
+
     it('reports a flush with no close event as the session ending, dated at the flush', () => {
       const tracker = startTracking()
       openConnection()
@@ -557,6 +567,16 @@ describe('webSocketCollection', () => {
           closed_date: clock.timeStamp(40),
         })
       )
+    })
+
+    it('reports the send queue depth read from the socket when no close event was received', () => {
+      const tracker = startTracking()
+      const socket = openConnection()
+      socket.bufferedAmount = 512
+
+      tracker.flushOpenConnections()
+
+      expect(single(closedPayloads()).snapshot!.outbound.buffered_amount_at_close).toBe(512)
     })
 
     it('starts the snapshot sequence at 1 for a connection that never opened', () => {
