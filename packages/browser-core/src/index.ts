@@ -102,7 +102,14 @@ export { NonErrorPrefix } from './domain/error/error.types'
 export { buildDebugIdByUrl, getSourceCodeContext } from './domain/sourceCodeContext'
 export type { DebugIdEntry } from './domain/sourceCodeContext'
 export type { Context, ContextArray, ContextValue } from './tools/serialisation/context'
-export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies, buildCookieString } from './browser/cookie'
+export {
+  getCookie,
+  getInitCookie,
+  setCookie,
+  deleteCookie,
+  resetInitCookies,
+  buildCookieString,
+} from './browser/cookie'
 export type { CookieOptions } from './browser/cookie'
 export { isCookieStoreSupported } from './browser/cookieAccess'
 export type { CookieAccess, CookieAccessFactory } from './browser/cookieAccess'
