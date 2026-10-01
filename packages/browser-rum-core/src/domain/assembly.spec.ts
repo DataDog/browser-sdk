@@ -8,8 +8,8 @@ import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datad
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
-import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
+import { RumEventType, VitalType, WebSocketVitalName } from '../rawRumEvent.types'
+import type { RumErrorEvent, RumEvent, RumResourceEvent, RumVitalEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -440,6 +440,55 @@ describe('rum assembly', () => {
 
         expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
         expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view events using beforeSend!")
+      })
+
+      it('should not allow dismissing WebSocket vital events', () => {
+        // WebSocket vitals cannot be dismissed one by one: the backend derives each connection from the whole stream,
+        // so a partial stream corrupts it. To collect none, keep betaTrackWebSockets set to false (the default).
+        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+          partialConfiguration: {
+            beforeSend: () => false,
+          },
+        })
+
+        const displaySpy = spyOn(display, 'warn')
+        const webSocketVitalNames = [
+          WebSocketVitalName.CONNECTING,
+          WebSocketVitalName.OPEN,
+          WebSocketVitalName.CLOSING,
+          WebSocketVitalName.CLOSED,
+        ]
+        webSocketVitalNames.forEach((name) => {
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+              vital: { type: VitalType.WEBSOCKET, name },
+            }),
+          })
+        })
+
+        expect((serverRumEvents as RumVitalEvent[]).map((event) => event.vital?.name)).toEqual(webSocketVitalNames)
+        expect(displaySpy).toHaveBeenCalledTimes(webSocketVitalNames.length)
+        expect(displaySpy).toHaveBeenCalledWith("Can't dismiss WebSocket vital events using beforeSend!")
+      })
+
+      it('should allow dismissing vital events other than WebSocket vitals', () => {
+        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+          partialConfiguration: {
+            beforeSend: () => false,
+          },
+        })
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.VITAL),
+        })
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+            vital: { type: VitalType.OPERATION_STEP },
+          }),
+        })
+
+        expect(serverRumEvents.length).toBe(0)
       })
     })
 
