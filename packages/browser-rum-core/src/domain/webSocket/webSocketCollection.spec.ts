@@ -15,6 +15,7 @@ import {
 } from '@datadog/browser-core/test'
 import type { Duration } from '@datadog/js-core/time'
 import { clocksNow, ONE_HOUR, ONE_MINUTE, toServerDuration } from '@datadog/js-core/time'
+import { globalObject } from '@datadog/js-core/util'
 import { mockRumConfiguration } from '../../../test'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import type { RumWebSocketVitalEventDomainContext } from '../../domainContext.types'
@@ -28,7 +29,7 @@ import type {
 import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { startWebSocketCollection, trackWebSocket } from './webSocketCollection'
+import { startWebSocketCollection, trackWebSocket, WEBSOCKET_HEARTBEAT_INTERVAL } from './webSocketCollection'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
@@ -107,6 +108,7 @@ describe('webSocketCollection', () => {
       receiveMessage(socket, 10)
       callClose(socket)
       dispatchClose(socket)
+      tickHeartbeat()
 
       expect(emittedVitals()).toHaveSize(0)
     })
@@ -119,14 +121,16 @@ describe('webSocketCollection', () => {
       startTracking()
       const socket = connect({ at: 5 })
       completeHandshake(socket, { at: 10 })
-      callClose(socket, { at: 20 })
-      dispatchClose(socket, { at: 30 })
+      tickHeartbeat()
+      callClose(socket, { at: WEBSOCKET_HEARTBEAT_INTERVAL + 20 })
+      dispatchClose(socket, { at: WEBSOCKET_HEARTBEAT_INTERVAL + 30 })
 
       expect(emittedVitals().map((event) => event.startClocks.timeStamp)).toEqual([
         clock.timeStamp(5),
         clock.timeStamp(10),
-        clock.timeStamp(20),
-        clock.timeStamp(30),
+        clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL + 10),
+        clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL + 20),
+        clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL + 30),
       ])
     })
 
@@ -221,6 +225,213 @@ describe('webSocketCollection', () => {
         WebSocketVitalName.CONNECTING,
         WebSocketVitalName.CLOSED,
       ])
+    })
+  })
+
+  // One flat cadence in every page state, so that a connection held open for an hour is visible
+  // while it is open, and one that dies without closing still reports the traffic its last pulse
+  // carried.
+  describe('the open heartbeat', () => {
+    /**
+     * Watches the intervals scheduled at the heartbeat cadence, which is the only way to tell a
+     * heartbeat that was never scheduled from one that emits nothing. The global is patched by hand
+     * rather than spied on so that the mocked clock's own teardown, which runs after this one,
+     * restores the real timers.
+     */
+    function watchHeartbeatTimer() {
+      const originalSetInterval = globalObject.setInterval
+      const originalClearInterval = globalObject.clearInterval
+      const pendingIds = new Set<unknown>()
+      let scheduledCount = 0
+
+      globalObject.setInterval = (handler: TimerHandler, timeout?: number) => {
+        const intervalId = originalSetInterval(handler, timeout)
+        if (timeout === WEBSOCKET_HEARTBEAT_INTERVAL) {
+          scheduledCount += 1
+          pendingIds.add(intervalId)
+        }
+        return intervalId
+      }
+      globalObject.clearInterval = (intervalId?: number) => {
+        pendingIds.delete(intervalId)
+        originalClearInterval(intervalId)
+      }
+
+      registerCleanupTask(() => {
+        globalObject.setInterval = originalSetInterval
+        globalObject.clearInterval = originalClearInterval
+      })
+
+      return {
+        isScheduled: () => pendingIds.size > 0,
+        scheduledCount: () => scheduledCount,
+      }
+    }
+
+    it('schedules one shared timer, and only while a connection is in phase open', () => {
+      const timer = watchHeartbeatTimer()
+      startTracking()
+
+      expect(timer.isScheduled()).toBe(false)
+
+      const socketA = openConnection()
+      const socketB = openConnection()
+
+      expect(timer.isScheduled()).toBe(true)
+      expect(timer.scheduledCount()).toBe(1)
+
+      dispatchClose(socketA)
+
+      expect(timer.isScheduled()).toBe(true)
+
+      dispatchClose(socketB)
+
+      expect(timer.isScheduled()).toBe(false)
+    })
+
+    it('schedules the timer again when a connection opens after the last one closed', () => {
+      const timer = watchHeartbeatTimer()
+      startTracking()
+      dispatchClose(openConnection())
+
+      openConnection()
+      tickHeartbeat()
+
+      expect(timer.isScheduled()).toBe(true)
+      expect(timer.scheduledCount()).toBe(2)
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 1, 2])
+    })
+
+    it('emits a pulse for an open connection once per interval, each pulse carrying the next snapshot version', () => {
+      startTracking()
+      openConnection()
+
+      tickHeartbeat(3)
+
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3, 4])
+    })
+
+    it('dates every pulse at the emit, while still reporting the date the handshake completed', () => {
+      startTracking()
+      openConnection()
+
+      tickHeartbeat(2)
+
+      expect(emittedVitals(WebSocketVitalName.OPEN).map((event) => event.rawRumEvent.date)).toEqual([
+        clock.timeStamp(0),
+        clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL),
+        clock.timeStamp(2 * WEBSOCKET_HEARTBEAT_INTERVAL),
+      ])
+      expect(openPayloads().map((payload) => payload.open_date)).toEqual([
+        clock.timeStamp(0),
+        clock.timeStamp(0),
+        clock.timeStamp(0),
+      ])
+    })
+
+    it('reports on each pulse everything exchanged since the connection opened', () => {
+      startTracking()
+      const socket = openConnection()
+
+      tickHeartbeat()
+      receiveMessage(socket, 30)
+      tickHeartbeat()
+
+      expect(openPayloads()[1].snapshot.inbound.message_count).toBe(0)
+      expect(openPayloads()[2].snapshot.inbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 30 })
+      )
+    })
+
+    it('emits a pulse for every open connection on the same tick', () => {
+      startTracking()
+      openConnection()
+      openConnection()
+
+      tickHeartbeat()
+
+      const [idA, idB] = connectingPayloads().map((payload) => payload.id)
+      expect(openPayloads().map((payload) => payload.id)).toEqual([idA, idB, idA, idB])
+    })
+
+    it('does not emit a pulse for a connection whose handshake has not completed', () => {
+      startTracking()
+      connect()
+
+      tickHeartbeat(2)
+
+      expect(openPayloads()).toHaveSize(0)
+    })
+
+    it('stops emitting pulses for a connection once close() started the closing handshake', () => {
+      startTracking()
+      const socket = openConnection()
+      tickHeartbeat()
+
+      callClose(socket)
+      tickHeartbeat(2)
+
+      expect(openPayloads()).toHaveSize(2)
+    })
+
+    it('stops emitting pulses once the last open connection closed', () => {
+      startTracking()
+      const socket = openConnection()
+
+      dispatchClose(socket)
+      tickHeartbeat(3)
+
+      expect(openPayloads()).toHaveSize(1)
+    })
+
+    it('keeps emitting pulses for the connections still open when one of them closes', () => {
+      startTracking()
+      const socketA = openConnection()
+      openConnection()
+
+      dispatchClose(socketA)
+      tickHeartbeat()
+
+      const [, idB] = connectingPayloads().map((payload) => payload.id)
+      expect(openPayloads().filter((payload) => payload.id === idB)).toHaveSize(2)
+      expect(openPayloads()).toHaveSize(3)
+    })
+
+    it('stops emitting pulses for the connections a flush finalized', () => {
+      const tracker = startTracking()
+      openConnection()
+
+      tracker.flushOpenConnections()
+      tickHeartbeat(3)
+
+      expect(openPayloads()).toHaveSize(1)
+    })
+
+    it('stops emitting pulses after stop()', () => {
+      const tracker = startTracking()
+      openConnection()
+
+      tracker.stop()
+      tickHeartbeat(3)
+
+      expect(openPayloads()).toHaveSize(1)
+    })
+
+    // Expected rather than guarded against: one shared timer serves every connection, and both
+    // snapshot versions are correct and ordered.
+    it('emits two pulses for a connection that opened just before a tick, with ordered versions', () => {
+      startTracking()
+      openConnection()
+      openConnection({ at: WEBSOCKET_HEARTBEAT_INTERVAL - 1 })
+
+      advanceTo(WEBSOCKET_HEARTBEAT_INTERVAL)
+
+      const [, lateId] = connectingPayloads().map((payload) => payload.id)
+      expect(
+        openPayloads()
+          .filter((payload) => payload.id === lateId)
+          .map((payload) => payload.snapshot_version)
+      ).toEqual([1, 2])
     })
   })
 
@@ -319,14 +530,15 @@ describe('webSocketCollection', () => {
       expect(single(closedPayloads()).snapshot_version).toBe(1)
     })
 
-    it('continues the snapshot sequence the open vital started, so it holds the highest version', () => {
+    it('continues the snapshot sequence the open vitals started, so it holds the highest version', () => {
       startTracking()
       const socket = openConnection()
+      tickHeartbeat(2)
 
       dispatchClose(socket)
 
-      expect(single(openPayloads()).snapshot_version).toBe(1)
-      expect(single(closedPayloads()).snapshot_version).toBe(2)
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3])
+      expect(single(closedPayloads()).snapshot_version).toBe(4)
     })
 
     it('reports the terminal snapshot of the connection', () => {
@@ -379,6 +591,11 @@ describe('webSocketCollection', () => {
 
       completeHandshake(socket)
       expect(webSocketOf(single(emittedVitals(WebSocketVitalName.OPEN)))).toBe(socket)
+
+      tickHeartbeat()
+      const openVitals = emittedVitals(WebSocketVitalName.OPEN)
+      expect(openVitals).toHaveSize(2)
+      expect(webSocketOf(openVitals[1])).toBe(socket)
 
       callClose(socket)
       expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CLOSING)))).toBe(socket)
@@ -557,7 +774,8 @@ describe('webSocketCollection', () => {
   // Driving time
   //
   // Dates are given in milliseconds since the spec started, on the monotonic clock so that a jump of
-  // the system clock does not move them, and only ever move forward.
+  // the system clock does not move them, and only ever move forward: time is ticked rather than set,
+  // so that the heartbeat timer fires on the way like it would in a browser.
   // ---------------------------------------------------------------------------
 
   /** Moves time forward to `at`, or leaves it where it is when no date is given. */
@@ -570,6 +788,10 @@ describe('webSocketCollection', () => {
       throw new Error(`Cannot move time back from ${now} to ${at}`)
     }
     clock.tick(at - now)
+  }
+
+  function tickHeartbeat(count = 1) {
+    clock.tick(count * WEBSOCKET_HEARTBEAT_INTERVAL)
   }
 
   // ---------------------------------------------------------------------------
