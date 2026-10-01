@@ -36,13 +36,14 @@ describe('trackedConnection', () => {
 
     connection.recordOpen(openContext())
     connection.recordInboundMessage(messageInContext(100, clocksAt(20)))
+    connection.recordReport(clocksAt(20))
 
     const state = getStateIn(connection, 'open')
     state.snapshotVersion = 999
     state.snapshot.inbound.messageCount = 999
 
     const freshState = getStateIn(connection, 'open')
-    expect(freshState.snapshotVersion).toBe(1)
+    expect(freshState.snapshotVersion).toBe(2)
     expect(freshState.snapshot.inbound.messageCount).toBe(1)
   })
 
@@ -213,6 +214,16 @@ describe('trackedConnection', () => {
       expect(state.openClocks).toEqual(clocksAt(OPEN_AT))
     })
 
+    it('freezes the open snapshot at the report, however late the clock has moved', () => {
+      const connection = createOpenConnection()
+
+      connection.recordInboundMessage(messageInContext(1, clocksAt(20)))
+      connection.recordReport(clocksAt(50))
+
+      moveClockTo(10_000)
+      expect(getStateIn(connection, 'open').snapshot.inbound.longestSilence).toBe(30 as Duration)
+    })
+
     const PHASES_WITHOUT_A_REPORT = [
       { phase: 'connecting', createConnection: createConnectingConnection },
       { phase: 'closing', createConnection: createClosingConnection },
@@ -252,6 +263,19 @@ describe('trackedConnection', () => {
         return getStateIn(connection, 'open').snapshot[direction]
       }
 
+      function aggregateAt(connection: TrackedConnection, relative: number): MessageDirectionAggregate {
+        connection.recordReport(clocksAt(relative))
+        return aggregateOf(connection)
+      }
+
+      function closedAggregateOf(connection: TrackedConnection): MessageDirectionAggregate {
+        return getStateIn(connection, 'closed').snapshot![direction]
+      }
+
+      function silenceBeforeCloseOf(connection: TrackedConnection) {
+        return getStateIn(connection, 'closed').silenceBeforeClose[direction]
+      }
+
       it('counts messages, totals their sizes and keeps the largest one', () => {
         const connection = createOpenConnection()
 
@@ -259,7 +283,7 @@ describe('trackedConnection', () => {
         recordMessage(connection, 300, clocksAt(30))
         recordMessage(connection, 200, clocksAt(40))
 
-        const aggregate = aggregateOf(connection)
+        const aggregate = aggregateAt(connection, 40)
         expect(aggregate.messageCount).toBe(3)
         expect(aggregate.messageSizeTotal).toBe(600)
         expect(aggregate.messageSizeMax).toBe(300)
@@ -272,6 +296,16 @@ describe('trackedConnection', () => {
         expect(aggregate.messageSizeTotal).toBe(0)
         expect(aggregate.messageSizeMax).toBe(0)
         expect(aggregate.longestSilence).toBe(0 as Duration)
+        expect(aggregate.timeToFirstMessage).toBeUndefined()
+      })
+
+      it('measures the time to the first message from the open date, and keeps it', () => {
+        const connection = createOpenConnection()
+
+        recordMessage(connection, 1, clocksAt(OPEN_AT + 3))
+        recordMessage(connection, 1, clocksAt(25))
+
+        expect(aggregateAt(connection, 25).timeToFirstMessage).toBe(3 as Duration)
       })
 
       it('reports the longest gap between two messages', () => {
@@ -281,15 +315,81 @@ describe('trackedConnection', () => {
         recordMessage(connection, 1, clocksAt(50)) // gap of 30
         recordMessage(connection, 1, clocksAt(75)) // gap of 25
 
-        expect(aggregateOf(connection).longestSilence).toBe(30 as Duration)
+        expect(aggregateAt(connection, 75).longestSilence).toBe(30 as Duration)
       })
 
-      it('does not count the interval before the first message as a silence', () => {
+      it('includes the gap still open at the report', () => {
+        const connection = createOpenConnection()
+
+        recordMessage(connection, 1, clocksAt(1000))
+        recordMessage(connection, 1, clocksAt(4000)) // gap of 3s, the longest completed one
+
+        expect(aggregateAt(connection, 60_000).longestSilence).toBe(56_000 as Duration)
+        expect(aggregateAt(connection, 300_000).longestSilence).toBe(296_000 as Duration)
+      })
+
+      // The interval before the *first* message is excluded — that is the time to first message —
+      // but the interval since it is a silence like any other, and reporting 0 for it would
+      // contradict the silence before close of the very same payload.
+      it('reports the gap since a single message, before any gap has completed', () => {
         const connection = createOpenConnection()
 
         recordMessage(connection, 1, clocksAt(1000))
 
-        expect(aggregateOf(connection).longestSilence).toBe(0 as Duration)
+        expect(aggregateAt(connection, 1500).longestSilence).toBe(500 as Duration)
+      })
+
+      it('never shrinks across repeated reads', () => {
+        const connection = createOpenConnection()
+
+        recordMessage(connection, 1, clocksAt(1000))
+        const silenceWhileQuiet = aggregateAt(connection, 60_000).longestSilence
+
+        // the message closes that gap at 59.1s and opens a fresh one: the gap it completed is kept
+        recordMessage(connection, 1, clocksAt(60_100))
+        const silenceAfterMessage = aggregateAt(connection, 60_200).longestSilence
+
+        expect(silenceWhileQuiet).toBe(59_000 as Duration)
+        expect(silenceAfterMessage).toBe(59_100 as Duration)
+      })
+
+      it('measures the silence before close from the tracking end date, once closed', () => {
+        const connection = createOpenConnection()
+
+        recordMessage(connection, 1, clocksAt(20))
+        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+
+        expect(silenceBeforeCloseOf(connection)).toBe(30 as Duration)
+      })
+
+      it('freezes the silences at the tracking end date, however late the state is read', () => {
+        const connection = createOpenConnection()
+
+        recordMessage(connection, 1, clocksAt(20))
+        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+
+        moveClockTo(10_000)
+        expect(silenceBeforeCloseOf(connection)).toBe(30 as Duration)
+        expect(closedAggregateOf(connection).longestSilence).toBe(30 as Duration)
+      })
+
+      it('keeps the tracking end date over a later report once closed', () => {
+        const connection = createOpenConnection()
+
+        recordMessage(connection, 1, clocksAt(20))
+        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+
+        connection.recordReport(clocksAt(10_000))
+        expect(silenceBeforeCloseOf(connection)).toBe(30 as Duration)
+        expect(closedAggregateOf(connection).longestSilence).toBe(30 as Duration)
+      })
+
+      it('has no silence before close when the direction was silent', () => {
+        const connection = createOpenConnection()
+
+        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+
+        expect(silenceBeforeCloseOf(connection)).toBeUndefined()
       })
     })
   })
@@ -299,12 +399,12 @@ describe('trackedConnection', () => {
     const connection = createOpenConnection()
 
     connection.recordInboundMessage(messageInContext(100, clocksAt(20)))
-    connection.recordInboundMessage(messageInContext(100, clocksAt(1020)))
-    connection.recordOutboundMessage(messageOutContext(7, 0, clocksAt(520)))
+    connection.recordOutboundMessage(messageOutContext(7, 0, clocksAt(1020)))
 
+    connection.recordReport(clocksAt(1020))
     const { inbound, outbound } = getStateIn(connection, 'open').snapshot
-    expect(inbound.messageCount).toBe(2)
-    expect(inbound.messageSizeTotal).toBe(200)
+    expect(inbound.messageCount).toBe(1)
+    expect(inbound.messageSizeTotal).toBe(100)
     expect(outbound.messageCount).toBe(1)
     expect(outbound.messageSizeTotal).toBe(7)
     // an outbound message closes no inbound gap
@@ -318,6 +418,7 @@ describe('trackedConnection', () => {
 
       // one large send on a socket that never flushed: the queue did reach a megabyte
       connection.recordOutboundMessage(messageOutContext(1_000_000, 0, clocksAt(20)))
+      connection.recordReport(clocksAt(20))
 
       expect(getStateIn(connection, 'open').snapshot.bufferedAmountMax).toBe(1_000_000)
     })
@@ -328,6 +429,7 @@ describe('trackedConnection', () => {
       connection.recordOutboundMessage(messageOutContext(10, 10, clocksAt(20)))
       connection.recordOutboundMessage(messageOutContext(10, 100, clocksAt(30)))
       connection.recordOutboundMessage(messageOutContext(10, 50, clocksAt(40)))
+      connection.recordReport(clocksAt(40))
 
       expect(getStateIn(connection, 'open').snapshot.bufferedAmountMax).toBe(110)
     })
@@ -339,6 +441,11 @@ describe('trackedConnection', () => {
 
   function clocksAt(relative: number): ClocksState {
     return relativeToClocks(clock.relative(relative))
+  }
+
+  /** Moves the clock, which a snapshot taken at a report or at the tracking end must not follow. */
+  function moveClockTo(relative: number) {
+    clock.setDate(new Date(clock.timeStamp(relative)))
   }
 
   // ---------------------------------------------------------------------------
@@ -367,7 +474,6 @@ describe('trackedConnection', () => {
   function closingContext(at: ClocksState): WebSocketClosingContext {
     return { state: 'closing', instance: INSTANCE, at }
   }
-
   // ---------------------------------------------------------------------------
   // Building connections
   // ---------------------------------------------------------------------------
