@@ -13,6 +13,7 @@ import type {
 } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 
+/** Arbitrary relative times at which the connection starts connecting and opens. */
 const CONNECTING_AT = 0
 const OPEN_AT = 10
 

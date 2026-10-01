@@ -20,9 +20,8 @@ import type { MessageDirectionAggregate, TrackedConnectionState, WebSocketSnapsh
  * phases are placed from. A change of the system clock mid-connection therefore shifts none of them,
  * while the vital itself stays dated by the system clock, like every other event.
  *
- * The presence rules live here in full, because the shipped schema enforces almost none of them:
- * identity rides the connecting vital only, and the snapshot rides only where something can have
- * been exchanged.
+ * The schema is not strict about what fields each vital reports, so this function decides which ones
+ * to report based on the connection state.
  */
 export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWebSocketVitalEvent {
   const id = state.id

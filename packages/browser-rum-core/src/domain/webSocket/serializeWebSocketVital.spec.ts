@@ -15,7 +15,7 @@ import type {
 } from './trackedConnection'
 import { serializeWebSocketVital } from './serializeWebSocketVital'
 
-/** Every date in this spec is an offset from it, so the expected values stay readable. */
+/** Arbitrary value: every date in this spec is an offset from it, so the expected values stay readable. */
 const CONNECTING_TIMESTAMP = 1_700_000_000_000
 
 const CLOSE_EVENT: WebSocketCloseEvent = { code: 1000, reason: 'bye', wasClean: true }
