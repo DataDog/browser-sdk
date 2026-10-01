@@ -94,8 +94,8 @@ export function trackWebSocket(
 
   /**
    * Reports one phase of one connection. The connection already holds the phase clocks and snapshot
-   * version the vital needs; open pulses must be written with `recordPulse` first so the vital is
-   * dated at the pulse.
+   * version the vital needs; open pulses must be written with `recordPulse` first so the
+   * snapshot freezes at the vital's date.
    *
    * Emitted straight onto the life cycle rather than through vitalCollection: a WebSocket vital is
    * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject —
@@ -119,9 +119,10 @@ export function trackWebSocket(
     instance: WebSocket,
     connection: TrackedConnection,
     endClocks: ClocksState,
+    bufferedAmount: number,
     trackingEnd: WebSocketTrackingEnd
   ) {
-    connection.recordTrackingEnd(endClocks, trackingEnd)
+    connection.recordTrackingEnd(endClocks, bufferedAmount, trackingEnd)
     emitVital(instance, connection)
   }
 
@@ -240,7 +241,7 @@ export function trackWebSocket(
 
         trackedConnections.delete(context.instance)
 
-        endTracking(context.instance, connection, context.at, {
+        endTracking(context.instance, connection, context.at, context.bufferedAmountAtClose, {
           trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
           closeEvent: { code: context.code, reason: context.reason, wasClean: context.wasClean },
         })
@@ -265,9 +266,9 @@ export function trackWebSocket(
     flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
       const endedCount = trackedConnections.size
       trackedConnections.forEach((connection, instance) => {
-        // no close event happened on this path, so the close outcome is genuinely absent rather
-        // than defaulted
-        endTracking(instance, connection, endClocks, { trackingEndReason })
+        // no close event happened on this path, so the send queue depth is read from the socket and
+        // the close outcome is genuinely absent rather than defaulted
+        endTracking(instance, connection, endClocks, instance.bufferedAmount, { trackingEndReason })
       })
 
       trackedConnections.clear()

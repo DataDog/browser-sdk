@@ -21,8 +21,8 @@ import type { MessageDirectionAggregate, TrackedConnectionState, WebSocketSnapsh
  * while the vital itself stays dated by the system clock, like every other event.
  *
  * The presence rules live here in full, because the shipped schema enforces almost none of them:
- * identity rides the connecting vital only, and the snapshot rides only where something can have
- * been exchanged.
+ * identity rides the connecting vital only, the snapshot rides only where something can have been
+ * exchanged, and the close-suffixed values ride the terminal snapshot only.
  */
 export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWebSocketVitalEvent {
   const id = state.id
@@ -80,7 +80,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
           snapshot_version: state.snapshotVersion,
           // a connection that never opened exchanged nothing, and reports nothing rather than a
           // zero-filled snapshot
-          snapshot: state.openClocks && serializeSnapshot(state.snapshot),
+          snapshot: state.openClocks && serializeTerminalSnapshot(state.snapshot),
         },
       })
   }
@@ -138,11 +138,34 @@ function serializeSnapshot({ inbound, outbound }: WebSocketSnapshot): RawRumWebS
   }
 }
 
+/**
+ * The terminal snapshot, which is the only one reporting the two values measured against the date
+ * tracking ended. They are added here rather than by the shared mapping so that a heartbeat cannot
+ * carry them — nothing in the schema would reject it if it did.
+ */
+function serializeTerminalSnapshot(snapshot: WebSocketSnapshot): RawRumWebSocketVitalSnapshot {
+  const { inbound, outbound } = snapshot
+  const serialized = serializeSnapshot(snapshot)
+
+  return {
+    inbound: {
+      ...serialized.inbound,
+      silence_before_close: toServerDuration(inbound.silenceBeforeClose),
+    },
+    outbound: {
+      ...serialized.outbound,
+      silence_before_close: toServerDuration(outbound.silenceBeforeClose),
+      buffered_amount_at_close: outbound.bufferedAmountAtClose,
+    },
+  }
+}
+
 function serializeMessageDirection(direction: MessageDirectionAggregate): RawRumWebSocketVitalMessageDirection {
   return {
     message_count: direction.messageCount,
     message_size_total: direction.messageSizeTotal,
     message_size_max: direction.messageSizeMax,
+    time_to_first_message: toServerDuration(direction.timeToFirstMessage),
     longest_silence: toServerDuration(direction.longestSilence),
   }
 }
