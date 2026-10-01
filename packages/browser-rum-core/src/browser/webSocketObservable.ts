@@ -6,6 +6,10 @@ import { computeBytesCount, globalObject } from '@datadog/js-core/util'
 
 type GlobalWithWebSocket = GlobalObject & { WebSocket: typeof WebSocket }
 
+// Redefined here in case a 3rd party modified them on the original
+const READY_STATE_CLOSING = 2
+const READY_STATE_CLOSED = 3
+
 function isGlobalWithWebSocket(global: GlobalObject): global is GlobalWithWebSocket {
   return typeof (global as { WebSocket?: unknown }).WebSocket === 'function'
 }
@@ -41,6 +45,12 @@ export interface WebSocketMessageOutContext {
   at: ClocksState
 }
 
+export interface WebSocketClosingContext {
+  state: 'closing'
+  instance: WebSocket
+  at: ClocksState
+}
+
 export interface WebSocketClosedContext {
   state: 'closed'
   instance: WebSocket
@@ -55,6 +65,7 @@ export type WebSocketContext =
   | WebSocketOpenContext
   | WebSocketMessageInContext
   | WebSocketMessageOutContext
+  | WebSocketClosingContext
   | WebSocketClosedContext
 
 let webSocketObservable: Observable<WebSocketContext> | undefined
@@ -113,9 +124,28 @@ function createWebSocketObservable() {
       }
     )
 
+    const { stop: stopInstrumentingClose } = instrumentMethod(
+      globalObject.WebSocket.prototype,
+      'close',
+      ({ target: instance, onPostCall }) => {
+        if (instance.readyState === READY_STATE_CLOSING || instance.readyState === READY_STATE_CLOSED) {
+          return
+        }
+
+        onPostCall(() => {
+          observable.notify({
+            state: 'closing',
+            instance,
+            at: clocksNow(),
+          })
+        })
+      }
+    )
+
     return () => {
       stopInstrumentingConstructor()
       stopInstrumentingSend()
+      stopInstrumentingClose()
     }
   })
 }
