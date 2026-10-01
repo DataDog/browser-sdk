@@ -1,4 +1,5 @@
 import type {
+  Observable,
   DeflateEncoderStreamId,
   Encoder,
   BufferedData,
@@ -7,7 +8,6 @@ import type {
   SessionManager,
 } from '@datadog/browser-core'
 import {
-  Observable,
   sendToExtension,
   createPageMayExitObservable,
   canUseEventBridge,
@@ -17,6 +17,8 @@ import {
   startUserContext,
   startTabContext,
   ErrorSource,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -25,7 +27,7 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
-import { startWebSocketCollection } from '../domain/webSocket/webSocketCollection'
+import { startWebSocketCollection } from '../domain/resource/webSocketCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
@@ -87,18 +89,8 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
-  // Only for WebSockets
-  const pageUnloadFlushObservable = new Observable<void>()
-
   if (!canUseEventBridge()) {
-    const batch = startRumBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      sessionManager.expireObservable,
-      pageUnloadFlushObservable,
-      createEncoder
-    )
+    const batch = startRumBatch(configuration, lifeCycle, reportError, sessionManager.expireObservable, createEncoder)
     const preparePageExitSubscription = batch.prepareUrgentFlushObservable.subscribe((reason) => {
       lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
     })
@@ -123,8 +115,7 @@ export function startRum(
     initialViewOptions,
     bufferedDataObservable,
     sdkName,
-    reportError,
-    pageUnloadFlushObservable
+    reportError
   )
   cleanupTasks.push(stopRumEventCollection)
   bufferedDataObservable.unbuffer()
@@ -154,8 +145,7 @@ export function startRumEventCollection(
   initialViewOptions: ViewOptions | undefined,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
-  reportError: (message: string) => void,
-  pageUnloadFlushObservable: Observable<void>
+  reportError: (message: string) => void
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -236,13 +226,13 @@ export function startRumEventCollection(
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
-  const webSocketCollection = startWebSocketCollection(
-    lifeCycle,
-    configuration,
-    vitalCollection.addWebSocketVital,
-    pageUnloadFlushObservable
-  )
-  cleanupTasks.push(webSocketCollection.stop)
+  if (
+    configuration.trackResources &&
+    (configuration.betaTrackWebSockets || isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_WEBSOCKETS))
+  ) {
+    const webSocketCollection = startWebSocketCollection(lifeCycle, viewHistory, vitalCollection.addDurationVital)
+    cleanupTasks.push(webSocketCollection.stop)
+  }
 
   const internalContext = startInternalContext(
     configuration.applicationId,

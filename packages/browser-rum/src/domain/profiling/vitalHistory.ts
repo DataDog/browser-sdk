@@ -38,36 +38,30 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
       return
     }
 
-    if (rawRumEvent.vital.type === VitalType.WEBSOCKET) {
-      return
-    }
-
-    const vital = rawRumEvent.vital
-
     // For operation step vitals, we only tag profiles with the start step's id.
     // This means that if we receive an end step vital, we need to look for the
     // corresponding start one and update its duration. If we receive a start step vital
     // however, we just store it and wait for the end step.
-    if (vital.type === VitalType.OPERATION_STEP) {
-      if (vital.step_type === 'start') {
+    if (rawRumEvent.vital.type === VitalType.OPERATION_STEP) {
+      if (rawRumEvent.vital.step_type === 'start') {
         history.add(
           {
-            id: vital.id,
-            type: vital.type,
-            operationKey: vital.operation_key,
+            id: rawRumEvent.vital.id,
+            type: rawRumEvent.vital.type,
+            operationKey: rawRumEvent.vital.operation_key,
             startClocks,
-            label: vital.name,
+            label: rawRumEvent.vital.name,
           },
           startClocks.relative
         )
-      } else if (vital.step_type === 'end') {
+      } else if (rawRumEvent.vital.step_type === 'end') {
         const historyEntry = history
           .findAllEntries()
           .find(
             (entry) =>
               entry.value.type === VitalType.OPERATION_STEP &&
-              entry.value.label === vital.name &&
-              entry.value.operationKey === vital.operation_key
+              entry.value.label === rawRumEvent.vital.name &&
+              entry.value.operationKey === rawRumEvent.vital.operation_key
           )
 
         if (!historyEntry) {
@@ -83,7 +77,9 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
 
     // All the other vital types are handled normally (i.e. stored in the
     // history and tagged on the profiles)
-    const historyEntry = history.getEntries(startClocks.relative).find((entry) => entry.value.id === vital.id)
+    const historyEntry = history
+      .getEntries(startClocks.relative)
+      .find((entry) => entry.value.id === rawRumEvent.vital.id)
 
     if (historyEntry) {
       historyEntry.value.duration = duration!
@@ -94,12 +90,12 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
     history
       .add(
         {
-          id: vital.id,
-          type: vital.type,
-          operationKey: vital.operation_key,
+          id: rawRumEvent.vital.id,
+          type: rawRumEvent.vital.type,
+          operationKey: rawRumEvent.vital.operation_key,
           startClocks,
           duration,
-          label: vital.name,
+          label: rawRumEvent.vital.name,
         },
         startClocks.relative
       )
