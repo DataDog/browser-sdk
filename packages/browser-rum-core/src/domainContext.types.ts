@@ -30,6 +30,11 @@ export interface RumActionEventDomainContext {
 
 export interface RumResourceEventDomainContext {
   isManual: false
+  // TODO next major: remove this discriminant along with RumWebSocketResourceEventDomainContext
+  /**
+   * @deprecated WebSocket connections are no longer reported as resource events, so this is always `false`.
+   * It will be removed in the next major version.
+   */
   isWebSocket: false
   performanceEntry: PerformanceResourceTiming | PerformanceNavigationTiming
   xhr: XMLHttpRequest | undefined
@@ -49,6 +54,12 @@ export interface RumManualResourceEventDomainContext {
   isManual: true
 }
 
+// TODO next major: remove this type. WebSocket resource events are no longer produced, but it was
+// exposed to customers who opted in early into betaTrackWebSockets, so removing it would be a breaking change.
+/**
+ * @deprecated WebSocket connections are no longer reported as resource events, so this context is never
+ * produced. It will be removed in the next major version.
+ */
 export interface RumWebSocketResourceEventDomainContext {
   isManual: false
   isWebSocket: true
