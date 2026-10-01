@@ -1,9 +1,9 @@
 import { createBatch, display, Observable, startSessionManager } from '@datadog/browser-core'
-import type { Batch, Context, SessionManager } from '@datadog/browser-core'
+import type { Batch, Context, SessionManager, TrackingConsentState } from '@datadog/browser-core'
 import { mockClock, replaceMockable, waitNextMicrotask } from '@datadog/browser-core/test'
 import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
 import type { ShopifyPixelEvent } from '../domain/shopifyAnalytics'
-import type { WebPixelRumInitConfiguration } from './startWebPixelRum'
+import type { WebPixelApi, WebPixelRumInitConfiguration } from './startWebPixelRum'
 import { startWebPixelRum } from './startWebPixelRum'
 
 const CHECKOUT_URL = 'https://shop.example/checkouts/cn/abc'
@@ -18,8 +18,36 @@ function checkoutEvent<TData>(name: string, data: TData): ShopifyPixelEvent<TDat
   return { ...pageViewedEvent(CHECKOUT_URL), name, data }
 }
 
+function createFakeWebPixelApi({ analyticsProcessingAllowed = true } = {}) {
+  const { analytics, emit } = createFakeAnalytics()
+  let notifyConsent: ((event: { customerPrivacy: { analyticsProcessingAllowed: boolean } }) => void) | undefined
+  const api: WebPixelApi = {
+    analytics,
+    browser: { cookie: { get: () => Promise.resolve(''), set: () => Promise.resolve('') } },
+    init: { customerPrivacy: { analyticsProcessingAllowed } },
+    customerPrivacy: {
+      subscribe: (_eventName, callback) => {
+        notifyConsent = callback
+      },
+    },
+  }
+  return {
+    api,
+    emit,
+    setConsent: (allowed: boolean) => notifyConsent?.({ customerPrivacy: { analyticsProcessingAllowed: allowed } }),
+  }
+}
+
 describe('startWebPixelRum', () => {
-  function setup({ isSessionTracked = true } = {}) {
+  function setup({
+    isSessionTracked = true,
+    analyticsProcessingAllowed = true,
+    initConfiguration = INIT_CONFIGURATION,
+  }: {
+    isSessionTracked?: boolean
+    analyticsProcessingAllowed?: boolean
+    initConfiguration?: WebPixelRumInitConfiguration
+  } = {}) {
     const clock = mockClock()
     const batch = {
       add: jasmine.createSpy<(event: Context) => void>('add'),
@@ -38,19 +66,21 @@ describe('startWebPixelRum', () => {
       .and.returnValue(Promise.resolve(sessionManager as unknown as SessionManager))
     replaceMockable(startSessionManager, startSessionManagerSpy)
 
-    const { analytics, emit } = createFakeAnalytics()
-    const browser = { cookie: { get: () => Promise.resolve(''), set: () => Promise.resolve('') } }
-    const api = startWebPixelRum(INIT_CONFIGURATION, { analytics, browser })
+    const { api: webPixelApi, emit, setConsent } = createFakeWebPixelApi({ analyticsProcessingAllowed })
+    const api = startWebPixelRum(initConfiguration, webPixelApi)
 
     // Events are processed once the session manager is ready
-    const emitAndWait = async (name: string, event: ShopifyPixelEvent) => {
-      emit(name, event)
+    const flush = async () => {
       for (let i = 0; i < 5; i += 1) {
         await waitNextMicrotask()
       }
     }
+    const emitAndWait = async (name: string, event: ShopifyPixelEvent) => {
+      emit(name, event)
+      await flush()
+    }
 
-    return { api, analytics, batch, clock, emitAndWait, sessionManager, startSessionManagerSpy }
+    return { api, batch, clock, emitAndWait, flush, sessionManager, setConsent, startSessionManagerSpy }
   }
 
   function viewUpdates(batch: { upsert: jasmine.Spy }) {
@@ -59,16 +89,12 @@ describe('startWebPixelRum', () => {
 
   it('does not start without an application id', () => {
     const displayErrorSpy = spyOn(display, 'error')
-    const { analytics } = createFakeAnalytics()
-    const browser = { cookie: { get: () => Promise.resolve(''), set: () => Promise.resolve('') } }
+    const { api: webPixelApi } = createFakeWebPixelApi()
 
-    const api = startWebPixelRum({ clientToken: 'client-token' } as WebPixelRumInitConfiguration, {
-      analytics,
-      browser,
-    })
+    const api = startWebPixelRum({ clientToken: 'client-token' } as WebPixelRumInitConfiguration, webPixelApi)
 
     expect(api).toBeUndefined()
-    expect(analytics.subscribe).not.toHaveBeenCalled()
+    expect(webPixelApi.analytics.subscribe).not.toHaveBeenCalled()
     expect(displayErrorSpy).toHaveBeenCalled()
   })
 
@@ -237,5 +263,50 @@ describe('startWebPixelRum', () => {
 
     expect(batch.upsert).not.toHaveBeenCalled()
     expect(batch.add).not.toHaveBeenCalled()
+  })
+
+  describe('customer privacy', () => {
+    it('does not start the session before the visitor consents to analytics', async () => {
+      const { batch, emitAndWait, startSessionManagerSpy } = setup({ analyticsProcessingAllowed: false })
+
+      await emitAndWait('page_viewed', pageViewedEvent(CHECKOUT_URL))
+
+      expect(startSessionManagerSpy).not.toHaveBeenCalled()
+      expect(batch.upsert).not.toHaveBeenCalled()
+    })
+
+    it('collects the events received before consent once the visitor consents', async () => {
+      const { batch, emitAndWait, flush, setConsent } = setup({ analyticsProcessingAllowed: false })
+      await emitAndWait('page_viewed', pageViewedEvent(CHECKOUT_URL))
+
+      setConsent(true)
+      await flush()
+
+      expect(batch.upsert).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ view: jasmine.objectContaining({ url: CHECKOUT_URL }) }),
+        jasmine.any(String)
+      )
+    })
+
+    it('forwards consent changes to the session manager', async () => {
+      const { emitAndWait, setConsent, startSessionManagerSpy } = setup()
+      await emitAndWait('page_viewed', pageViewedEvent(CHECKOUT_URL))
+      const trackingConsentState = startSessionManagerSpy.calls.mostRecent().args[1] as TrackingConsentState
+
+      setConsent(false)
+
+      expect(trackingConsentState.isGranted()).toBeFalse()
+    })
+
+    it('collects without consent when bypassing customer privacy', async () => {
+      const { batch, emitAndWait } = setup({
+        analyticsProcessingAllowed: false,
+        initConfiguration: { ...INIT_CONFIGURATION, bypassCustomerPrivacy: true },
+      })
+
+      await emitAndWait('page_viewed', pageViewedEvent(CHECKOUT_URL))
+
+      expect(batch.upsert).toHaveBeenCalledTimes(1)
+    })
   })
 })

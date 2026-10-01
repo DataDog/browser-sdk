@@ -19,11 +19,15 @@ the storefront through the top frame cookies.
 ```js
 import { register } from '@shopify/web-pixels-extension'
 
-register(({ analytics, browser, settings }) => {
+register(({ analytics, browser, init, customerPrivacy, settings }) => {
   importScripts('https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-shopify-web-pixel.js')
-  self.DD_RUM_WEB_PIXEL.init(JSON.parse(settings.rumConfig), { analytics, browser })
+  self.DD_RUM_WEB_PIXEL.init(JSON.parse(settings.rumConfig), { analytics, browser, init, customerPrivacy })
 })
 ```
+
+By default, data is only collected once the visitor consents to analytics, following Shopify's
+[customer privacy][4] status. Set `bypassCustomerPrivacy: true` to collect regardless of consent;
+the pixel extension must then declare no privacy purposes, or Shopify won't run it without consent.
 
 See the [dedicated Datadog documentation][1] for the installation process.
 
@@ -32,3 +36,4 @@ See the [dedicated Datadog documentation][1] for the installation process.
 [1]: https://docs.datadoghq.com/integrations/rum-shopify
 [2]: https://www.npmjs.com/package/@datadog/browser-rum
 [3]: https://shopify.dev/docs/apps/build/marketing/build-web-pixels
+[4]: https://shopify.dev/docs/api/web-pixels-api/pixel-privacy
