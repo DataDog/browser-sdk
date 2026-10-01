@@ -495,6 +495,8 @@ export interface RawRumWebSocketVitalSnapshot {
   inbound: RawRumWebSocketVitalMessageDirection
   outbound: RawRumWebSocketVitalMessageDirection & {
     buffered_amount_max: number
+    /** Reported by the closed vital only. */
+    buffered_amount_at_close?: number
   }
 }
 

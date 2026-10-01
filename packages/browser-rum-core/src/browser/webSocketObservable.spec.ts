@@ -359,6 +359,22 @@ describe('webSocketObservable', () => {
         expect(closeContexts[0].wasClean).toBe(wasClean)
         expect(closeContexts[0].at.timeStamp).toEqual(jasmine.any(Number))
       })
+
+      it('reports the bytes still queued in the send buffer at close', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        const bufferedAmount = 1024
+        ws.bufferedAmount = bufferedAmount
+        ws.simulateClose(1006, '', false)
+
+        expect(getContexts('closed')[0].bufferedAmountAtClose).toBe(bufferedAmount)
+      })
+
+      it('reports a zero buffered amount when the send buffer drained', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateClose(1000, 'bye', true)
+
+        expect(getContexts('closed')[0].bufferedAmountAtClose).toBe(0)
+      })
     })
 
     describe('subscription lifecycle', () => {

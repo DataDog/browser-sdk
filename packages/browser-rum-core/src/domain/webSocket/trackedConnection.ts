@@ -64,6 +64,8 @@ export type TrackedConnectionState = {
       snapshotVersion: number
       /** Omitted when the connection never opened: it exchanged nothing, so it reports nothing. */
       snapshot?: WebSocketSnapshot
+      /** Send queue depth the socket reported when tracking ended. */
+      bufferedAmountAtClose: number
       /** Interval from the last message to the tracking end date, in each direction that observed one. */
       silenceBeforeClose: { inbound?: Duration; outbound?: Duration }
     }
@@ -87,8 +89,16 @@ export interface TrackedConnection {
    * event, so this is the one way to end tracking with one.
    */
   recordClose: (context: WebSocketClosedContext) => void
-  /** Ends tracking without a close event, so with no close outcome to report. */
-  recordTrackingEnd: (endClocks: ClocksState, trackingEndReason: UnobservedTrackingEndReason) => void
+  /**
+   * Ends tracking without a close event, so with no close outcome to report. `bufferedAmount` is the
+   * send queue depth read from the socket at that moment, handed in rather than read here so this
+   * module needs no socket.
+   */
+  recordTrackingEnd: (
+    endClocks: ClocksState,
+    trackingEndReason: UnobservedTrackingEndReason,
+    bufferedAmount: number
+  ) => void
 }
 
 /**
@@ -144,6 +154,7 @@ export function createTrackedConnection({
   function endTracking(
     endClocks: ClocksState,
     trackingEndReason: WebSocketTrackingEndReason,
+    bufferedAmountAtClose: number,
     closeEvent?: { code: number; reason: string; wasClean: boolean }
   ) {
     state = {
@@ -155,6 +166,7 @@ export function createTrackedConnection({
       closeEvent,
       snapshotVersion: nextSnapshotVersion(),
       snapshot: openClocks ? readSnapshot(endClocks.relative) : undefined,
+      bufferedAmountAtClose,
       silenceBeforeClose: {
         inbound: silenceSince(lastInboundMessageAt, endClocks.relative),
         outbound: silenceSince(lastOutboundMessageAt, endClocks.relative),
@@ -214,12 +226,12 @@ export function createTrackedConnection({
       state = { id, connectingClocks, phase: 'closing', closingClocks: at }
     },
 
-    recordClose: ({ at, code, reason, wasClean }) => {
-      endTracking(at, WebSocketTrackingEndReason.CLOSE_EVENT, { code, reason, wasClean })
+    recordClose: ({ at, code, reason, wasClean, bufferedAmountAtClose }) => {
+      endTracking(at, WebSocketTrackingEndReason.CLOSE_EVENT, bufferedAmountAtClose, { code, reason, wasClean })
     },
 
-    recordTrackingEnd: (endClocks, trackingEndReason) => {
-      endTracking(endClocks, trackingEndReason)
+    recordTrackingEnd: (endClocks, trackingEndReason, bufferedAmount) => {
+      endTracking(endClocks, trackingEndReason, bufferedAmount)
     },
   }
 }

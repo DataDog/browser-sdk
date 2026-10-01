@@ -66,7 +66,7 @@ describe('trackedConnection', () => {
       connection.recordOpen(openContext())
       expect(connection.getState().id).toBe(id)
 
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
       expect(connection.getState().id).toBe(id)
     })
 
@@ -125,7 +125,7 @@ describe('trackedConnection', () => {
       it(`turns closed when tracking ends from ${from}`, () => {
         const connection = createConnection()
 
-        connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
 
         const state = getStateIn(connection, 'closed')
         expect(state.endClocks).toEqual(clocksAt(40))
@@ -135,7 +135,7 @@ describe('trackedConnection', () => {
       it(`holds a snapshot only if the connection had opened, when tracking ends from ${from}`, () => {
         const connection = createConnection()
 
-        connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
 
         expect(getStateIn(connection, 'closed').snapshot).toEqual(hasOpened ? jasmine.any(Object) : undefined)
       })
@@ -150,6 +150,7 @@ describe('trackedConnection', () => {
         code: 1000,
         reason: 'bye',
         wasClean: true,
+        bufferedAmountAtClose: 0,
         at: clocksAt(40),
       })
 
@@ -162,7 +163,7 @@ describe('trackedConnection', () => {
     it('holds no close event when tracking ends without one', () => {
       const connection = createOpenConnection()
 
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
 
       expect(getStateIn(connection, 'closed').closeEvent).toBeUndefined()
     })
@@ -181,7 +182,7 @@ describe('trackedConnection', () => {
       connection.recordReport(clocksAt(30))
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 3 }))
 
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 4 }))
     })
 
@@ -197,7 +198,7 @@ describe('trackedConnection', () => {
     it('bumps on tracking end even when the connection never opened', () => {
       const connection = createConnectingConnection()
 
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
 
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 1 }))
     })
@@ -357,7 +358,7 @@ describe('trackedConnection', () => {
         const connection = createOpenConnection()
 
         recordMessage(connection, 1, clocksAt(20))
-        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(50), SESSION_END, 0)
 
         expect(silenceBeforeCloseOf(connection)).toBe(30 as Duration)
       })
@@ -366,7 +367,7 @@ describe('trackedConnection', () => {
         const connection = createOpenConnection()
 
         recordMessage(connection, 1, clocksAt(20))
-        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(50), SESSION_END, 0)
 
         moveClockTo(10_000)
         expect(silenceBeforeCloseOf(connection)).toBe(30 as Duration)
@@ -377,7 +378,7 @@ describe('trackedConnection', () => {
         const connection = createOpenConnection()
 
         recordMessage(connection, 1, clocksAt(20))
-        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(50), SESSION_END, 0)
 
         connection.recordReport(clocksAt(10_000))
         expect(silenceBeforeCloseOf(connection)).toBe(30 as Duration)
@@ -387,7 +388,7 @@ describe('trackedConnection', () => {
       it('has no silence before close when the direction was silent', () => {
         const connection = createOpenConnection()
 
-        connection.recordTrackingEnd(clocksAt(50), SESSION_END)
+        connection.recordTrackingEnd(clocksAt(50), SESSION_END, 0)
 
         expect(silenceBeforeCloseOf(connection)).toBeUndefined()
       })
@@ -432,6 +433,30 @@ describe('trackedConnection', () => {
       connection.recordReport(clocksAt(40))
 
       expect(getStateIn(connection, 'open').snapshot.bufferedAmountMax).toBe(110)
+    })
+
+    it('reports the queue depth handed in at tracking end', () => {
+      const connection = createOpenConnection()
+
+      connection.recordTrackingEnd(clocksAt(50), SESSION_END, 100)
+
+      expect(getStateIn(connection, 'closed').bufferedAmountAtClose).toBe(100)
+    })
+
+    it('reports the queue depth the close event carried', () => {
+      const connection = createOpenConnection()
+
+      connection.recordClose({
+        state: 'closed',
+        instance: INSTANCE,
+        code: 1000,
+        reason: 'bye',
+        wasClean: true,
+        bufferedAmountAtClose: 64,
+        at: clocksAt(50),
+      })
+
+      expect(getStateIn(connection, 'closed').bufferedAmountAtClose).toBe(64)
     })
   })
 
@@ -508,7 +533,7 @@ describe('trackedConnection', () => {
 
   function createClosedConnection() {
     const connection = createOpenConnection()
-    connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+    connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
     return connection
   }
 

@@ -235,8 +235,8 @@ export function trackWebSocket(
     flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
       const endedCount = trackedConnections.size
       trackedConnections.forEach((connection, instance) => {
-        // No close event
-        connection.recordTrackingEnd(endClocks, trackingEndReason)
+        // No close event, so the send queue depth is read from the socket
+        connection.recordTrackingEnd(endClocks, trackingEndReason, instance.bufferedAmount)
         emitVital(instance, connection)
       })
 
