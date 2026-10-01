@@ -355,6 +355,43 @@ describe('webSocketCollection', () => {
       expect(openPayloads().map((payload) => payload.id)).toEqual([idA, idB, idA, idB])
     })
 
+    it('closes each pulse snapshot at the pulse date even when an earlier emit is delayed', () => {
+      startTracking()
+      openConnection()
+      const socketB = openConnection()
+      receiveMessage(socketB, 1)
+
+      // a slow delivery path on the first connection of the pulse: time moves on before the next
+      // connection is read, which is what would stretch longest_silence past the pulse date if the
+      // snapshot closed at relativeNow() rather than at pulseClocks. setDate (not tick) so we do not
+      // re-enter the heartbeat timer from inside its own handler.
+      const delayMs = 5_000
+      let delayedOnce = false
+      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, () => {
+        if (!delayedOnce) {
+          delayedOnce = true
+          clock.setDate(new Date(Date.now() + delayMs))
+        }
+      })
+
+      tickHeartbeat()
+
+      const [, idB] = connectingPayloads().map((payload) => payload.id)
+      const pulseVitalOfB = emittedVitals(WebSocketVitalName.OPEN).find(
+        (event) =>
+          event.rawRumEvent.vital.websocket.id === idB &&
+          (event.rawRumEvent.vital.websocket as RawRumWebSocketOpenVitalProperties).snapshot_version === 2
+      )!
+      const pulsePayloadOfB = pulseVitalOfB.rawRumEvent.vital.websocket as {
+        id: string
+      } & RawRumWebSocketOpenVitalProperties
+
+      expect(pulseVitalOfB.rawRumEvent.date).toBe(clock.timeStamp(WEBSOCKET_HEARTBEAT_INTERVAL))
+      expect(pulsePayloadOfB.snapshot.inbound.longest_silence).toBe(
+        toServerDuration(WEBSOCKET_HEARTBEAT_INTERVAL as Duration)
+      )
+    })
+
     it('does not emit a pulse for a connection whose handshake has not completed', () => {
       startTracking()
       connect()
@@ -542,29 +579,31 @@ describe('webSocketCollection', () => {
       expect(single(closedPayloads()).snapshot_version).toBe(4)
     })
 
-    it('reports the terminal snapshot of the connection', () => {
+    it('reports the terminal snapshot of the connection, timed from the open date', () => {
       startTracking()
       const socket = openConnection({ at: 10 })
       receiveMessage(socket, 30, { at: 20 })
       sendMessage(socket, 10, { at: 25, bufferedAmountPreSend: 100 })
-      receiveMessage(socket, 50, { at: 32 })
 
       dispatchClose(socket, { at: 40 })
 
       const { snapshot } = single(closedPayloads())
-      expect(snapshot!.inbound).toEqual({
-        message_count: 2,
-        message_size_total: 80,
-        message_size_max: 50,
-        longest_silence: toServerDuration(12 as Duration),
-      })
-      expect(snapshot!.outbound).toEqual({
-        message_count: 1,
-        message_size_total: 10,
-        message_size_max: 10,
-        longest_silence: toServerDuration(0 as Duration),
-        buffered_amount_max: 110,
-      })
+      expect(snapshot!.inbound).toEqual(
+        jasmine.objectContaining({
+          message_count: 1,
+          message_size_total: 30,
+          time_to_first_message: toServerDuration(10 as Duration),
+          silence_before_close: toServerDuration(20 as Duration),
+        })
+      )
+      expect(snapshot!.outbound).toEqual(
+        jasmine.objectContaining({
+          message_count: 1,
+          message_size_total: 10,
+          time_to_first_message: toServerDuration(15 as Duration),
+          buffered_amount_max: 110,
+        })
+      )
     })
 
     it('counts no outbound message the socket discarded after the closing handshake started', () => {
@@ -632,7 +671,6 @@ describe('webSocketCollection', () => {
       advanceTo(5)
       clock.jumpSystemClock(-10 * ONE_MINUTE)
       completeHandshake(socket, { at: 10 })
-      receiveMessage(socket, 30, { at: 12 })
       advanceTo(15)
       clock.jumpSystemClock(ONE_HOUR)
       receiveMessage(socket, 30, { at: 20 })
@@ -647,7 +685,12 @@ describe('webSocketCollection', () => {
       expect(closed.closed_date).toBe(clock.timeStamp(40))
       expect(open.connecting_duration).toBe(toServerDuration(10 as Duration))
       expect(closed.duration).toBe(toServerDuration(40 as Duration))
-      expect(closed.snapshot!.inbound.longest_silence).toBe(toServerDuration(8 as Duration))
+      expect(closed.snapshot!.inbound).toEqual(
+        jasmine.objectContaining({
+          time_to_first_message: toServerDuration(10 as Duration),
+          silence_before_close: toServerDuration(20 as Duration),
+        })
+      )
 
       expect(emittedVitals().map((event) => event.rawRumEvent.date)).toEqual([
         clock.timeStamp(0),

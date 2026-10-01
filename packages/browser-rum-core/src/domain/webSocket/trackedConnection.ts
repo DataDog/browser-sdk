@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
-import { elapsed } from '@datadog/js-core/time'
+import { elapsed, relativeNow } from '@datadog/js-core/time'
 import type { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 
 /**
@@ -12,8 +12,12 @@ export interface MessageDirectionAggregate {
   messageCount: number
   messageSizeTotal: number
   messageSizeMax: number
-  /** Longest interval between two messages. */
+  /** Offset from the open date to the first message, kept once set. */
+  timeToFirstMessage?: Duration
+  /** Longest interval between two messages, including the one still open at read time. */
   longestSilence: Duration
+  /** Interval from the last message to the tracking end date. Derived on read, once closed. */
+  silenceBeforeClose?: Duration
 }
 
 export interface OutboundAggregate extends MessageDirectionAggregate {
@@ -72,7 +76,7 @@ interface OpenPhase extends OpenFacts {
   phase: 'open'
   /**
    * When this particular open vital was taken. It is the open event on the first one and the pulse
-   * on every heartbeat after it.
+   * on every heartbeat after it; open snapshot reads freeze here.
    */
   pulseClocks: ClocksState
   snapshotVersion: number
@@ -102,13 +106,17 @@ type PhaseFacts = ConnectingPhase | OpenPhase | ClosingPhase | ClosedPhase
 export type TrackedConnectionState = TrackedConnectionIdentity & PhaseFacts & { snapshot: WebSocketSnapshot }
 
 export interface TrackedConnection {
+  /**
+   * Reads the connection as of its phase clocks: the pulse while open, the tracking end once
+   * closed, and now during connecting/closing.
+   */
   getState: () => TrackedConnectionState
   /** The current phase alone, without the snapshot a full state read computes. */
   getPhase: () => WebSocketPhase
   recordOpen: (facts: OpenFacts) => void
   /**
-   * Sets the pulse the next open vital is dated at, and bumps the snapshot version that vital rides
-   * on. Ignored outside the open phase, which is the only one with a pulse.
+   * Sets the pulse the next open vital (and any open-state read) freezes at, and bumps the snapshot
+   * version that vital rides on. Ignored outside the open phase, which is the only one with a pulse.
    */
   recordPulse: (pulseClocks: ClocksState) => void
   recordInboundMessage: (size: number, at: RelativeTime) => void
@@ -148,10 +156,10 @@ export function createTrackedConnection({
     return snapshotVersion
   }
 
-  function readSnapshot(): WebSocketSnapshot {
+  function readSnapshot(readAt: RelativeTime, hasEnded: boolean): WebSocketSnapshot {
     return {
-      inbound: { ...inbound },
-      outbound: { ...outbound },
+      inbound: readMessageDirection(inbound, lastInboundMessageAt, readAt, hasEnded),
+      outbound: readMessageDirection(outbound, lastOutboundMessageAt, readAt, hasEnded),
     }
   }
 
@@ -164,11 +172,28 @@ export function createTrackedConnection({
     }
   }
 
+  /**
+   * Where reads close the silence still in progress: at the pulse while open, so the vital and the
+   * snapshot agree; at the tracking end once closed, so that the terminal snapshot is stable; and at
+   * the moment of the read otherwise.
+   */
+  function readAtOf(facts: PhaseFacts): RelativeTime {
+    switch (facts.phase) {
+      case 'open':
+        return facts.pulseClocks.relative
+      case 'closed':
+        return facts.endClocks.relative
+      case 'connecting':
+      case 'closing':
+        return relativeNow()
+    }
+  }
+
   return {
     getState: () => ({
       ...identityFields(),
       ...phaseFacts,
-      snapshot: readSnapshot(),
+      snapshot: readSnapshot(readAtOf(phaseFacts), phaseFacts.phase === 'closed'),
     }),
 
     getPhase: () => phaseFacts.phase,
@@ -190,7 +215,7 @@ export function createTrackedConnection({
     },
 
     recordInboundMessage: (size, at) => {
-      recordMessage(inbound, lastInboundMessageAt, size, at)
+      recordMessage(inbound, lastInboundMessageAt, size, at, openClocksOf(phaseFacts))
       lastInboundMessageAt = at
     },
 
@@ -199,7 +224,7 @@ export function createTrackedConnection({
       // `send()` grows the queue by exactly the payload size, whereas reading the socket again
       // could catch a queue the browser has already partly flushed and understate the peak
       outbound.bufferedAmountMax = Math.max(outbound.bufferedAmountMax, bufferedAmountPreSend + size)
-      recordMessage(outbound, lastOutboundMessageAt, size, at)
+      recordMessage(outbound, lastOutboundMessageAt, size, at, openClocksOf(phaseFacts))
       lastOutboundMessageAt = at
     },
 
@@ -218,6 +243,10 @@ export function createTrackedConnection({
       }
     },
   }
+}
+
+function openClocksOf(facts: PhaseFacts): ClocksState | undefined {
+  return facts.phase === 'connecting' ? undefined : facts.openClocks
 }
 
 /** The open facts a phase carries over, none for a connection that has not opened (yet). */
@@ -246,16 +275,46 @@ function recordMessage(
   aggregate: MessageDirectionAggregate,
   lastMessageAt: RelativeTime | undefined,
   size: number,
-  at: RelativeTime
+  at: RelativeTime,
+  openClocks: ClocksState | undefined
 ) {
-  // the interval before the first message is not a silence
-  if (lastMessageAt !== undefined) {
+  if (lastMessageAt === undefined) {
+    // the interval before the first message is the time to first message, not a silence
+    if (openClocks) {
+      aggregate.timeToFirstMessage = elapsed(openClocks.relative, at)
+    }
+  } else {
     aggregate.longestSilence = maxDuration(aggregate.longestSilence, elapsed(lastMessageAt, at))
   }
 
   aggregate.messageCount += 1
   aggregate.messageSizeTotal += size
   aggregate.messageSizeMax = Math.max(aggregate.messageSizeMax, size)
+}
+
+/**
+ * Copies a direction's aggregate, deriving the two values that depend on when it is read rather
+ * than on what was recorded.
+ */
+function readMessageDirection<Aggregate extends MessageDirectionAggregate>(
+  aggregate: Aggregate,
+  lastMessageAt: RelativeTime | undefined,
+  readAt: RelativeTime,
+  hasEnded: boolean
+): Aggregate {
+  const read = { ...aggregate }
+
+  if (lastMessageAt !== undefined) {
+    const silenceSinceLastMessage = elapsed(lastMessageAt, readAt)
+    // counting the gap still open is what makes the value meaningful on a repeated read: a socket
+    // quiet for five minutes reports five minutes rather than the last gap it happened to complete
+    read.longestSilence = maxDuration(read.longestSilence, silenceSinceLastMessage)
+    if (hasEnded) {
+      read.silenceBeforeClose = silenceSinceLastMessage
+    }
+  }
+
+  return read
 }
 
 function maxDuration(first: Duration, second: Duration) {
