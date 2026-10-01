@@ -70,6 +70,11 @@ interface ConnectingPhase {
 
 interface OpenPhase extends OpenFacts {
   phase: 'open'
+  /**
+   * When this particular open vital was taken. It is the open event on the first one and the pulse
+   * on every heartbeat after it.
+   */
+  pulseClocks: ClocksState
   snapshotVersion: number
 }
 
@@ -101,6 +106,11 @@ export interface TrackedConnection {
   /** The current phase alone, without the snapshot a full state read computes. */
   getPhase: () => WebSocketPhase
   recordOpen: (facts: OpenFacts) => void
+  /**
+   * Sets the pulse the next open vital is dated at, and bumps the snapshot version that vital rides
+   * on. Ignored outside the open phase, which is the only one with a pulse.
+   */
+  recordPulse: (pulseClocks: ClocksState) => void
   recordInboundMessage: (size: number, at: RelativeTime) => void
   recordOutboundMessage: (size: number, bufferedAmountPreSend: number, at: RelativeTime) => void
   recordClosing: (closingClocks: ClocksState) => void
@@ -126,7 +136,7 @@ export function createTrackedConnection({
   // held as one value, so a phase cannot be reached without the facts that come with it
   let phaseFacts: PhaseFacts = { phase: 'connecting' }
   // continued across phases: the closing phase carries no version, but the closed vital follows the
-  // open one
+  // open ones
   let snapshotVersion = 0
   // the cursor the silence arithmetic runs on, one per direction: it is what the connection needs
   // to measure a gap, not something it reports
@@ -167,8 +177,16 @@ export function createTrackedConnection({
       phaseFacts = {
         ...facts,
         phase: 'open',
+        pulseClocks: facts.openClocks,
         snapshotVersion: nextSnapshotVersion(),
       }
+    },
+
+    recordPulse: (clocks) => {
+      if (phaseFacts.phase !== 'open') {
+        return
+      }
+      phaseFacts = { ...phaseFacts, pulseClocks: clocks, snapshotVersion: nextSnapshotVersion() }
     },
 
     recordInboundMessage: (size, at) => {
