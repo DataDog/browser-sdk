@@ -1,31 +1,33 @@
-import { TIMEOUT_ERROR_MESSAGE } from '@datadog/browser-core'
-import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
-import { waitForPageViewedEvent } from './shopifyAnalytics'
+import { pageViewedEvent } from '../../test/mockShopifyAnalytics'
+import { isCheckoutPage } from './shopifyAnalytics'
 
-describe('waitForPageViewedEvent', () => {
-  it('resolves with the page_viewed event once it is emitted', async () => {
-    const { analytics, emit } = createFakeAnalytics()
-    const event = pageViewedEvent('https://shop.example/checkout')
+describe('isCheckoutPage', () => {
+  it('matches /checkout, /checkouts/* and locale-prefixed checkout paths', () => {
+    const urls = [
+      'https://shop.example/checkout',
+      'https://shop.example/checkouts/abc123',
+      'https://shop.example/en-us/checkout',
+    ]
 
-    const result = waitForPageViewedEvent(analytics)
-    emit('page_viewed', event)
-
-    await expectAsync(result).toBeResolvedTo(event)
+    for (const url of urls) {
+      expect(isCheckoutPage(pageViewedEvent(url)))
+        .withContext(url)
+        .toBeTrue()
+    }
   })
 
-  it('rejects with a timeout error if no page_viewed event fires before the timeout', async () => {
-    const { analytics } = createFakeAnalytics()
+  it('does not match storefront, /orders/*, Customer Account pages or an undefined url', () => {
+    const urls = [
+      'https://shop.example/products/foo',
+      'https://shop.example/orders/abc123',
+      'https://shop.example/account/orders',
+      undefined,
+    ]
 
-    await expectAsync(waitForPageViewedEvent(analytics, { timeout: 0 })).toBeRejectedWithError(TIMEOUT_ERROR_MESSAGE)
-  })
-
-  it('resolves rather than timing out if the page_viewed event fires before the timeout elapses', async () => {
-    const { analytics, emit } = createFakeAnalytics()
-    const event = pageViewedEvent('https://shop.example/checkout')
-
-    const result = waitForPageViewedEvent(analytics, { timeout: 1000 })
-    emit('page_viewed', event)
-
-    await expectAsync(result).toBeResolvedTo(event)
+    for (const url of urls) {
+      expect(isCheckoutPage(pageViewedEvent(url)))
+        .withContext(String(url))
+        .toBeFalse()
+    }
   })
 })

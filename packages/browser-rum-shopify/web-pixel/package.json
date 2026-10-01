@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/webPixel.js",
+  "module": "../esm/entries/webPixel.mjs",
+  "types": "../cjs/entries/webPixel.d.ts"
+}
