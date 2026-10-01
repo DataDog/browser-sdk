@@ -91,11 +91,42 @@ test.describe('rum websockets', () => {
         expect(closed.was_clean).toBeUndefined()
         expect(closedVital.session.id).toBe(vitals.connecting[0].session.id)
 
+        // the session expiry closes the view history too, and the closed vital must still get a view
         expect(closedVital.view.id).toBe(vitals.connecting[0].view.id)
         const associatedView = intakeRegistry.rumViewEvents.find((event) => event.view.id === closedVital.view.id)
         expect(associatedView).toBeDefined()
         const viewEndTime = associatedView!.date + associatedView!.view.time_spent / NANOSECONDS_PER_MILLISECOND
         expect(closedVital.date).toBeLessThanOrEqual(viewEndTime)
+      })
+
+    createTest('ends tracking with page_unloaded when the page unloads with the connection still open')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        test.skip(
+          browserName === 'firefox',
+          'Firefox closes the socket and fires its close event before pagehide, so a real close ends tracking first'
+        )
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.sendAndExpectEcho()
+
+        // flushing navigates away, which unloads the page for good
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.closing).toHaveLength(0)
+        expect(vitals.closed).toHaveLength(1)
+        expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
+        const closed = vitals.closed[0].vital.websocket
+        expect(closed.tracking_end_reason).toBe('page_unloaded')
+        expect(closed.close_code).toBeUndefined()
+        expect(closed.close_reason).toBeUndefined()
+        expect(closed.was_clean).toBeUndefined()
+        expect(closed.snapshot_version).toBe(vitals.open.length + 1)
+        expect(closed.snapshot!.outbound.message_count).toBe(1)
+        expect(closed.snapshot!.inbound.message_count).toBe(1)
       })
 
     createTest('reports session_end when the session is stopped, then renewed by user activity')
@@ -107,6 +138,7 @@ test.describe('rum websockets', () => {
         await ws.open()
         await page.evaluate(() => {
           window.DD_RUM!.stopSession()
+          // Generate user activity to trigger session renewal
           document.documentElement.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
         })
 
@@ -176,8 +208,8 @@ test.describe('rum websockets', () => {
         expect(vitals.closed[0].view.name).toBe('view-b')
         expect(vitals.connecting[0].view.id).not.toBe(vitals.closed[0].view.id)
       })
-
   })
+
   test.describe('phases', () => {
     createTest('reports the closing phase of a connection closed before it opened')
       .withRum(RUM_CONFIGURATION)
@@ -220,7 +252,6 @@ test.describe('rum websockets', () => {
         expect(vitals.closed).toHaveLength(1)
       })
   })
-
 
   test.describe('heartbeat', () => {
     createTest('beats the open vital with a new snapshot version while the connection stays open')
@@ -308,7 +339,6 @@ test.describe('rum websockets', () => {
         expect(openVitals.map((vital) => vital.vital.websocket.snapshot_version)).toEqual([1, 2])
       })
   })
-
 
   test.describe('beforeSend', () => {
     createTest('keeps WebSocket vitals that beforeSend dismisses, but not other vitals')

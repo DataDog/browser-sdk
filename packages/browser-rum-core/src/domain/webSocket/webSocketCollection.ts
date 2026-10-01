@@ -5,6 +5,7 @@ import {
   generateUUID,
   isExperimentalFeatureEnabled,
   noop,
+  PageExitReason,
   setInterval,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
@@ -62,9 +63,14 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
     tracker.flushOpenConnections(endClocks)
   })
 
-  // Pulse open connections on urgent flush. PAGE_DISCARDED unload flush is added in a later PR.
-  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
-    tracker.reportOpenConnections()
+  // PAGE_DISCARDED ends tracking (page is going away). Other exit reasons only pulse open
+  // connections — Session Replay ignores PAGE_DISCARDED so it never becomes a segment creation reason.
+  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
+    if (reason === PageExitReason.PAGE_DISCARDED) {
+      tracker.flushOpenConnections(clocksNow(), WebSocketTrackingEndReason.PAGE_UNLOADED)
+    } else {
+      tracker.reportOpenConnections()
+    }
   })
 
   return {

@@ -46,6 +46,18 @@ describe('createPageMayExitObservable', () => {
     expect(onExitSpy).not.toHaveBeenCalled()
   })
 
+  it('notifies page_discarded when pagehide fires without bfcache', () => {
+    window.dispatchEvent(createNewEvent('pagehide', { persisted: false }))
+
+    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.PAGE_DISCARDED })
+  })
+
+  it('does not notify when pagehide fires for bfcache', () => {
+    window.dispatchEvent(createNewEvent('pagehide', { persisted: true }))
+
+    expect(onExitSpy).not.toHaveBeenCalled()
+  })
+
   function emulatePageVisibilityChange(visibility: 'visible' | 'hidden') {
     setPageVisibility(visibility)
     document.dispatchEvent(createNewEvent('visibilitychange'))

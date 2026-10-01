@@ -59,6 +59,16 @@ describe('replayResourceCollection', () => {
     expect(sendOnExit).toHaveBeenCalledTimes(1)
   })
 
+  it('does not re-send pending resources when the page is discarded', () => {
+    const { httpRequest, sendOnExit } = createHttpRequestSpy()
+    const { emitResource, lifeCycle } = startCollection(httpRequest)
+
+    emitResource('hash1', CONTENT)
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+
+    expect(sendOnExit).not.toHaveBeenCalled()
+  })
+
   it('does not re-send a resource whose upload succeeded', () => {
     const { httpRequest, observable, send, sendOnExit } = createHttpRequestSpy()
     const { emitResource, lifeCycle } = startCollection(httpRequest)
