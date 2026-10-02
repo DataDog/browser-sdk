@@ -1414,50 +1414,6 @@ describe('api', () => {
     })
   })
 
-  // TODO: Remove together with the pre-handle guard in consumeEntry (see api.ts).
-  describe('instrumentation built before the invocation handle contract', () => {
-    // Pre-handle codegen: onEntry's result is discarded, so the exit hooks get the probes array.
-    function callWithProbesArray(a: number, b: number): number {
-      const probes: any = getProbes(DEFAULT_PROBE_FUNCTION_ID)
-      try {
-        if (probes) {
-          onEntry(probes, thisArg, { a, b })
-        }
-        const sum = a + b
-        return probes ? (onReturn(probes, sum, thisArg, { a, b }, { sum }) as number) : sum
-      } catch (error) {
-        if (probes) {
-          onThrow(probes, error, thisArg, { a, b })
-        }
-        throw error
-      }
-    }
-
-    beforeEach(() => {
-      addProbe(createProbe({ sampling: { snapshotsPerSecond: Infinity } }))
-    })
-
-    it('should return the value to the caller and capture nothing', () => {
-      expect(callWithProbesArray(1, 2)).toBe(3)
-      expect(mockBatchAdd).not.toHaveBeenCalled()
-    })
-
-    it('should leave the probe registry usable', () => {
-      callWithProbesArray(1, 2)
-
-      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([jasmine.objectContaining({ id: 'test-probe' })])
-      expect(() => clearProbes()).not.toThrow()
-    })
-
-    it('should let the application exception through unchanged', () => {
-      const probes: any = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, {})
-
-      expect(() => onThrow(probes, new Error('application error'), thisArg, {})).not.toThrow()
-      expect(mockBatchAdd).not.toHaveBeenCalled()
-    })
-  })
-
   describe('snapshot timeout', () => {
     function hasTimeoutMarker(value: any): boolean {
       if (!value || typeof value !== 'object') {
@@ -1682,6 +1638,247 @@ describe('api', () => {
         x: { type: 'Object', notCapturedReason: 'timeout' },
         this: { type: 'Object', notCapturedReason: 'timeout' },
       })
+    })
+  })
+
+  describe('RUM actions', () => {
+    let startActionSpy: jasmine.Spy
+    let stopActionSpy: jasmine.Spy
+
+    beforeEach(() => {
+      startActionSpy = jasmine.createSpy('startAction')
+      stopActionSpy = jasmine.createSpy('stopAction')
+      ;(window as any).DD_RUM = { startAction: startActionSpy, stopAction: stopActionSpy }
+
+      registerCleanupTask(() => {
+        delete (window as any).DD_RUM
+      })
+    })
+
+    function createEntryProbe(overrides: Partial<Probe> = {}) {
+      return createProbe({ evaluateAt: 'ENTRY', sampling: { snapshotsPerSecond: Infinity }, ...overrides })
+    }
+
+    function callProbedFunction(args: Record<string, any> = {}) {
+      // Like instrumented code, skip the exit hook when no probe captured the invocation
+      const invocation = onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg, args)
+      if (invocation) {
+        onReturn(invocation, null, thisArg, args)
+      }
+    }
+
+    it('should start an action on entry and stop it on return', () => {
+      addProbe(createEntryProbe({ id: 'probe-1', version: 2 }))
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const invocation = onEntry(probes, thisArg)!
+
+      expect(startActionSpy).toHaveBeenCalledOnceWith('probe: testMethod (test.js)', {
+        actionKey: jasmine.any(String),
+        context: {
+          debugger: {
+            probe: { id: 'probe-1', version: 2, location: { method: 'testMethod', type: 'test.js' } },
+            snapshot: { id: jasmine.any(String) },
+          },
+        },
+      })
+      expect(stopActionSpy).not.toHaveBeenCalled()
+
+      onReturn(invocation, null, thisArg)
+
+      const { actionKey } = startActionSpy.calls.argsFor(0)[1]
+      expect(stopActionSpy).toHaveBeenCalledOnceWith('probe: testMethod (test.js)', {
+        actionKey,
+        context: { debugger: { outcome: 'return', error: undefined } },
+      })
+    })
+
+    it('should link the action to the snapshot sent for the same hit', () => {
+      addProbe(createEntryProbe())
+
+      callProbedFunction()
+
+      const snapshotId = mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.id
+      expect(startActionSpy.calls.argsFor(0)[1].context.debugger.snapshot.id).toBe(snapshotId)
+    })
+
+    it('should stop the action with the error type when the function throws', () => {
+      addProbe(createEntryProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onThrow(onEntry(probes, thisArg)!, new TypeError('secret message'), thisArg)
+
+      expect(stopActionSpy).toHaveBeenCalledOnceWith(jasmine.any(String), {
+        actionKey: jasmine.any(String),
+        context: { debugger: { outcome: 'throw', error: { type: 'TypeError' } } },
+      })
+    })
+
+    it('should omit the error type when the thrown value is not an error', () => {
+      addProbe(createEntryProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onThrow(onEntry(probes, thisArg)!, 'not an error', thisArg)
+
+      expect(stopActionSpy.calls.argsFor(0)[1].context).toEqual({
+        debugger: { outcome: 'throw', error: undefined },
+      })
+    })
+
+    it('should only start an action on the first hit of a probe', () => {
+      addProbe(createEntryProbe())
+
+      callProbedFunction()
+      callProbedFunction()
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+      expect(startActionSpy).toHaveBeenCalledTimes(1)
+      expect(stopActionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not start an action when the condition is false, and wait for a hit where it is true', () => {
+      addProbe(
+        createEntryProbe({
+          when: {
+            dsl: 'x > 5',
+            json: { gt: [{ ref: 'x' }, 5] },
+          },
+        })
+      )
+
+      callProbedFunction({ x: 1 })
+      expect(startActionSpy).not.toHaveBeenCalled()
+
+      callProbedFunction({ x: 10 })
+      expect(startActionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not start an action when the hit is sampled out', () => {
+      const clock = mockClock()
+      addProbe(createEntryProbe({ sampling: { snapshotsPerSecond: 1 } }))
+      delete (window as any).DD_RUM
+
+      // Sampled in, but RUM is not loaded yet: the probe stays armed
+      callProbedFunction()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+
+      // RUM is loaded, but the hit is sampled out
+      ;(window as any).DD_RUM = { startAction: startActionSpy, stopAction: stopActionSpy }
+      callProbedFunction()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(startActionSpy).not.toHaveBeenCalled()
+
+      clock.tick(1000)
+      callProbedFunction()
+      expect(startActionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not start an action for EXIT probes', () => {
+      addProbe(createEntryProbe({ evaluateAt: 'EXIT' }))
+
+      callProbedFunction()
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(startActionSpy).not.toHaveBeenCalled()
+    })
+
+    it('should not start an action when the condition fails to evaluate', () => {
+      addProbe(
+        createEntryProbe({
+          when: {
+            dsl: 'missing.value',
+            json: { getmember: [{ ref: 'missing' }, 'value'] },
+          },
+        })
+      )
+
+      callProbedFunction()
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(startActionSpy).not.toHaveBeenCalled()
+    })
+
+    it('should start a new action once the probe is replaced', () => {
+      const probe = createEntryProbe()
+      addProbe(probe)
+      callProbedFunction()
+
+      removeProbe(probe.id)
+      addProbe(createEntryProbe({ id: probe.id, version: 1 }))
+      callProbedFunction()
+
+      expect(startActionSpy).toHaveBeenCalledTimes(2)
+      expect(startActionSpy.calls.argsFor(1)[1].context.debugger.probe.version).toBe(1)
+    })
+
+    it('should give each action its own key so a replacement probe cannot stop an in-flight action', () => {
+      const probe = createEntryProbe()
+      addProbe(probe)
+      const invocation = onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg)!
+
+      removeProbe(probe.id)
+      addProbe(createEntryProbe({ id: probe.id, version: 1 }))
+      callProbedFunction()
+      onReturn(invocation, null, thisArg)
+
+      const startKeys = startActionSpy.calls.allArgs().map(([, options]) => options.actionKey as string)
+      const stopKeys = stopActionSpy.calls.allArgs().map(([, options]) => options.actionKey as string)
+      expect(startKeys[0]).not.toBe(startKeys[1])
+      expect(stopKeys).toEqual([startKeys[1], startKeys[0]])
+    })
+
+    it('should only stop the action from the invocation that started it', () => {
+      addProbe(createEntryProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const invocationA = onEntry(probes, thisArg)!
+      const invocationB = onEntry(probes, thisArg)!
+
+      onReturn(invocationB, null, thisArg)
+      expect(stopActionSpy).not.toHaveBeenCalled()
+
+      onReturn(invocationA, null, thisArg)
+      expect(stopActionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should stop an in-flight action when all probes are cleared', () => {
+      addProbe(createEntryProbe())
+
+      const invocation = onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg)!
+      clearProbes()
+      onReturn(invocation, null, thisArg)
+
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(stopActionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should stop the action only once when the exit hooks run twice', () => {
+      addProbe(createEntryProbe())
+
+      const invocation = onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg)!
+      onReturn(invocation, null, thisArg)
+      onThrow(invocation, new Error('test'), thisArg)
+
+      expect(stopActionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not start an action when trackProbeHitsAsRumActions is false', () => {
+      initTransport({ trackProbeHitsAsRumActions: false })
+      addProbe(createEntryProbe())
+
+      callProbedFunction()
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(startActionSpy).not.toHaveBeenCalled()
+    })
+
+    it('should still send the snapshot when the RUM API throws', () => {
+      startActionSpy.and.throwError('start failed')
+      stopActionSpy.and.throwError('stop failed')
+      addProbe(createEntryProbe())
+
+      expect(() => callProbedFunction()).not.toThrow()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
   })
 

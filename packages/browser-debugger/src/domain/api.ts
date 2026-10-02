@@ -23,6 +23,7 @@ import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 import { display } from './display'
 import { formatThrowable } from './error'
 import { evaluateCaptureExpressions } from './captureExpressions'
+import { startProbeRumAction, stopProbeRumAction } from './rumAction'
 
 const globalObj = globalObject as BrowserWindow
 
@@ -150,6 +151,7 @@ export function onEntry(
         evaluationErrors,
         entry,
         stack: isSnapshotProducingProbe(probe) ? captureStackTrace(1) : undefined,
+        rumAction: shouldTrackProbeHitsAsRumActions() ? startProbeRumAction(probe) : undefined,
       })
     }
   } catch (error) {
@@ -164,14 +166,23 @@ export function onEntry(
  * Take a probe's entry state out of an invocation handle. Emptying the slot keeps one snapshot per
  * probe per invocation when a function reaches two exit hooks (`try { return a } finally
  * { return b }`, or an exit hook that throws into the generated catch): the first exit wins.
+ *
+ * Also stops the entry's RUM action, even if the probe was discarded, so it isn't left open.
  */
-function consumeEntry(invocation: InvocationHandle, index: number): ActiveEntry | undefined {
+function consumeEntry(
+  invocation: InvocationHandle,
+  index: number,
+  outcome: 'return' | 'throw',
+  error?: unknown
+): ActiveEntry | undefined {
   const entry = invocation[index]
-  // TODO: Remove once every instrumented bundle forwards the handle; older ones pass the probes array.
-  if (!entry?.probe) {
+  if (!entry) {
     return undefined
   }
   invocation[index] = undefined
+  if (entry.rumAction) {
+    stopProbeRumAction(entry.rumAction, outcome, error)
+  }
   return entry.probe.discarded ? undefined : entry
 }
 
@@ -197,7 +208,7 @@ export function onReturn(
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (let i = 0; i < invocation.length; i++) {
-    const result = consumeEntry(invocation, i)
+    const result = consumeEntry(invocation, i, 'return')
     if (!result) {
       continue
     }
@@ -281,7 +292,7 @@ export function onThrow(invocation: InvocationHandle, error: unknown, self: any,
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (let i = 0; i < invocation.length; i++) {
-    const result = consumeEntry(invocation, i)
+    const result = consumeEntry(invocation, i, 'throw', error)
     if (!result) {
       continue
     }
@@ -391,7 +402,7 @@ function queueDebuggerSnapshot(result: ActiveEntry): void {
     },
     debugger: {
       snapshot: {
-        id: generateUUID(),
+        id: result.rumAction?.snapshotId ?? generateUUID(),
         timestamp: result.timestamp!,
         probe: {
           id: probe.id,
@@ -470,6 +481,10 @@ function detectThreadName() {
     return 'web-worker'
   }
   return 'unknown'
+}
+
+function shouldTrackProbeHitsAsRumActions(): boolean {
+  return debuggerConfig !== undefined && debuggerConfig.trackProbeHitsAsRumActions !== false
 }
 
 function isSnapshotProducingProbe(probe: InitializedProbe): boolean {
