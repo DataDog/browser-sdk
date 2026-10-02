@@ -176,8 +176,7 @@ function consumeEntry(
   error?: unknown
 ): ActiveEntry | undefined {
   const entry = invocation[index]
-  // TODO: Remove once every instrumented bundle forwards the handle; older ones pass the probes array.
-  if (!entry?.probe) {
+  if (!entry) {
     return undefined
   }
   invocation[index] = undefined

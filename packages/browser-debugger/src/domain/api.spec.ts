@@ -1414,50 +1414,6 @@ describe('api', () => {
     })
   })
 
-  // TODO: Remove together with the pre-handle guard in consumeEntry (see api.ts).
-  describe('instrumentation built before the invocation handle contract', () => {
-    // Pre-handle codegen: onEntry's result is discarded, so the exit hooks get the probes array.
-    function callWithProbesArray(a: number, b: number): number {
-      const probes: any = getProbes(DEFAULT_PROBE_FUNCTION_ID)
-      try {
-        if (probes) {
-          onEntry(probes, thisArg, { a, b })
-        }
-        const sum = a + b
-        return probes ? (onReturn(probes, sum, thisArg, { a, b }, { sum }) as number) : sum
-      } catch (error) {
-        if (probes) {
-          onThrow(probes, error, thisArg, { a, b })
-        }
-        throw error
-      }
-    }
-
-    beforeEach(() => {
-      addProbe(createProbe({ sampling: { snapshotsPerSecond: Infinity } }))
-    })
-
-    it('should return the value to the caller and capture nothing', () => {
-      expect(callWithProbesArray(1, 2)).toBe(3)
-      expect(mockBatchAdd).not.toHaveBeenCalled()
-    })
-
-    it('should leave the probe registry usable', () => {
-      callWithProbesArray(1, 2)
-
-      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([jasmine.objectContaining({ id: 'test-probe' })])
-      expect(() => clearProbes()).not.toThrow()
-    })
-
-    it('should let the application exception through unchanged', () => {
-      const probes: any = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, thisArg, {})
-
-      expect(() => onThrow(probes, new Error('application error'), thisArg, {})).not.toThrow()
-      expect(mockBatchAdd).not.toHaveBeenCalled()
-    })
-  })
-
   describe('snapshot timeout', () => {
     function hasTimeoutMarker(value: any): boolean {
       if (!value || typeof value !== 'object') {
