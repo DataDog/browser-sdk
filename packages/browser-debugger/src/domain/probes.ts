@@ -96,6 +96,7 @@ export interface InitializedProbe extends Probe {
   eventsSentInLifetime: number
   lifetimeBudgetWarningEmitted: boolean
   discarded: boolean
+  rumActionStarted: boolean
 }
 
 // Pre-populate with a placeholder key to help V8 optimize property lookups.
@@ -412,6 +413,7 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
   ;(probe as InitializedProbe).eventsSentInLifetime = 0
   ;(probe as InitializedProbe).lifetimeBudgetWarningEmitted = false
   ;(probe as InitializedProbe).discarded = false
+  ;(probe as InitializedProbe).rumActionStarted = false
 }
 
 function normalizeProbeLifetimeLimit(limit: number | undefined, defaultLimit: number): number {

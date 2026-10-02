@@ -2,6 +2,7 @@ import type { StackFrame } from './stacktrace'
 import type { EvaluationError } from './condition'
 import type { Throwable } from './error'
 import type { InitializedProbe } from './probes'
+import type { ProbeRumAction } from './rumAction'
 
 type CapturedFields = Record<string, any>
 
@@ -41,6 +42,7 @@ export interface ActiveEntry {
   duration?: number
   return?: ActiveEntryReturn
   exception?: unknown
+  rumAction?: ProbeRumAction
 }
 
 /**
