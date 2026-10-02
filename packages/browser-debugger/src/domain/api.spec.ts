@@ -1906,6 +1906,51 @@ describe('api', () => {
       expect(stopActionSpy).toHaveBeenCalledTimes(1)
     })
 
+    describe('with instrumentation built before the invocation handle contract', () => {
+      // Pre-handle codegen: onEntry's result is discarded, so the exit hooks get the probes array.
+      function callWithProbesArray(exit: 'return' | 'throw') {
+        const probes: any = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+        onEntry(probes, thisArg)
+        if (exit === 'return') {
+          onReturn(probes, null, thisArg)
+        } else {
+          onThrow(probes, new TypeError('test'), thisArg)
+        }
+      }
+
+      it('should stop the action when the function returns', () => {
+        addProbe(createEntryProbe())
+
+        callWithProbesArray('return')
+
+        const { actionKey } = startActionSpy.calls.argsFor(0)[1]
+        expect(stopActionSpy).toHaveBeenCalledOnceWith(jasmine.any(String), {
+          actionKey,
+          context: { debugger: { outcome: 'return', error: undefined } },
+        })
+      })
+
+      it('should stop the action when the function throws', () => {
+        addProbe(createEntryProbe())
+
+        callWithProbesArray('throw')
+
+        expect(stopActionSpy.calls.argsFor(0)[1].context).toEqual({
+          debugger: { outcome: 'throw', error: { type: 'TypeError' } },
+        })
+      })
+
+      it('should only start and stop one action across hits', () => {
+        addProbe(createEntryProbe())
+
+        callWithProbesArray('return')
+        callWithProbesArray('return')
+
+        expect(startActionSpy).toHaveBeenCalledTimes(1)
+        expect(stopActionSpy).toHaveBeenCalledTimes(1)
+      })
+    })
+
     it('should not start an action when trackProbeHitsAsRumActions is false', () => {
       initTransport({ trackProbeHitsAsRumActions: false })
       addProbe(createEntryProbe())
