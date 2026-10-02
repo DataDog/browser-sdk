@@ -1,6 +1,6 @@
 import { ErrorHandling, ErrorSource, noop } from '@datadog/browser-core'
 import type { MockReportingObserver } from '@datadog/browser-core/test'
-import { mockReportingObserver, mockSourceCodeContext } from '@datadog/browser-core/test'
+import { FAKE_REPORT, mockReportingObserver, mockSourceCodeContext } from '@datadog/browser-core/test'
 import type { RawReportLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -36,6 +36,7 @@ describe('reports', () => {
     ))
 
     reportingObserver.raiseReport('intervention')
+    expect(rawLogsEvents[0].domainContext).toEqual({ report: FAKE_REPORT })
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
       error: {
         kind: 'NavigatorVibrate',
@@ -85,6 +86,10 @@ describe('reports', () => {
     ))
 
     reportingObserver.raiseReport('deprecation')
+
+    expect(rawLogsEvents[0].domainContext).toEqual({
+      report: jasmine.objectContaining({ ...FAKE_REPORT, type: 'deprecation' }),
+    })
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
       date: jasmine.any(Number),

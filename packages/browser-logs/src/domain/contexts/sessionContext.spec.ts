@@ -9,7 +9,7 @@ import { startSessionContext } from './sessionContext'
 describe('session context', () => {
   let hook: AssembleHook
   let sessionManager: SessionManager
-  const configuration = { service: 'foo' } as LogsConfiguration
+  const configuration = { service: 'foo', version: '1.0.0' } as LogsConfiguration
 
   beforeEach(() => {
     hook = createHook()
@@ -17,7 +17,7 @@ describe('session context', () => {
   })
 
   describe('assemble  hook', () => {
-    it('should set service', () => {
+    it('should set the configured service and version', () => {
       startSessionContext(hook, configuration, sessionManager)
 
       const defaultLogAttributes = hook.trigger({
@@ -26,7 +26,8 @@ describe('session context', () => {
         domainContext: undefined,
       } as AssembleHookParams) as DefaultLogsEventAttributes
 
-      expect(defaultLogAttributes.service).toEqual(jasmine.any(String))
+      expect(defaultLogAttributes.service).toBe('foo')
+      expect(defaultLogAttributes.version).toBe('1.0.0')
     })
 
     it('should discard logs if session is not tracked', () => {
@@ -51,7 +52,8 @@ describe('session context', () => {
       } as AssembleHookParams)
 
       expect(defaultLogAttributes).toEqual({
-        service: jasmine.any(String),
+        service: 'foo',
+        version: '1.0.0',
         session_id: jasmine.any(String),
         session: { id: jasmine.any(String) },
       })
@@ -69,7 +71,8 @@ describe('session context', () => {
       } as AssembleHookParams)
 
       expect(defaultLogAttributes).toEqual({
-        service: jasmine.any(String),
+        service: 'foo',
+        version: '1.0.0',
         session_id: undefined,
         session: undefined,
       })

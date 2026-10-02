@@ -3,6 +3,7 @@ declare module 'lib/lib' {
 }
 
 interface Window {
+  nativeXhrOpen: XMLHttpRequest['open']
   DD_RUM: {
     addError: (error: Error) => void
     addAction: (name: string, context?: any) => void

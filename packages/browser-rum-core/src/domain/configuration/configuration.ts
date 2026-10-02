@@ -373,12 +373,16 @@ export interface RumInitConfiguration extends InitConfiguration {
   betaEnableViewUpdates?: boolean | undefined
 
   /**
-   * Enables collection of WebSocket resource events.
+   * Enables collection of WebSocket vital events.
    *
-   * Warning: enabling this option introduces WebSocket resource events to the `beforeSend` hook.
-   * Their domain context is WebSocket-specific and does not contain the XHR, Fetch, or performance
-   * entry fields available on regular resource events. Narrow the context using the existing
-   * `isManual` and `isWebSocket` discriminants before accessing those fields.
+   * Each WebSocket connection reports a vital event (`vital.type: 'websocket'`) for each phase it goes
+   * through (`websocket_connecting`, `websocket_open`, `websocket_closing`, `websocket_closed`), and
+   * open connections report a `websocket_open` vital periodically.
+   *
+   * Warning: enabling this option introduces WebSocket vital events to the `beforeSend` hook. They
+   * cannot be dismissed, and only their `vital.websocket.url`, `vital.websocket.requested_protocols`,
+   * `vital.websocket.selected_protocol` and `vital.websocket.close_reason` fields can be modified,
+   * e.g. to redact sensitive data.
    *
    * @category Beta
    */

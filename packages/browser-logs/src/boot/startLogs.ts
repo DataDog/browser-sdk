@@ -23,6 +23,7 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import type { Hooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 import { startSessionContext } from '../domain/contexts/sessionContext'
+import { startSourceCodeMfeContext } from '../domain/contexts/sourceCodeMfeContext'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -51,6 +52,7 @@ export function startLogs(
   const globalContext = startGlobalContext(assembleHook, configuration, LOGS_STORAGE_KEY, false)
   startRUMInternalContext(hooks)
   startTabContext(assembleHook)
+  startSourceCodeMfeContext(assembleHook)
 
   startNetworkErrorCollection(configuration, lifeCycle, bufferedDataObservable)
   startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
