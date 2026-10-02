@@ -9,12 +9,14 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPageActivityEnd'
 import { getSelectorFromElement } from '../getSelectorFromElement'
 import { getNodePrivacyLevel } from '../privacy'
+import type { NodePrivacyLevelCache } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startEventTracker } from '../eventTracker'
 import type { StoppedEvent, DiscardedEvent, EventTracker } from '../eventTracker'
 import { getComposedPathSelector } from '../getComposedPathSelector'
+import { getClickTargetAttributes } from '../getClickTargetAttributes'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -41,6 +43,7 @@ export interface ClickAction {
   target?: {
     selector: string | undefined
     composedPathSelector?: string
+    composedPathAttributes?: Record<string, string>
     width: number
     height: number
   }
@@ -248,13 +251,19 @@ function computeClickActionBase(
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
+  const composedPath = event.composedPath()
+  const composedPathSelector = getComposedPathSelector(composedPath, configuration)
+  // Elements are visited target-first, and privacy levels are derived from ancestors, so this
+  // cache turns most lookups into O(1) hits within a single composedPath walk. It's also passed
+  // to getActionNameFromElement below, since it walks the same (or an overlapping) ancestor chain.
+  const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
+  const composedPathAttributes = getClickTargetAttributes(composedPath, configuration, nodePrivacyLevelCache)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
 
-  const { name, nameSource } = getActionNameFromElement(target, configuration, nodePrivacyLevel)
+  const { name, nameSource } = getActionNameFromElement(target, configuration, nodePrivacyLevel, nodePrivacyLevelCache)
 
   return {
     type: ActionType.CLICK,
@@ -263,6 +272,7 @@ function computeClickActionBase(
       height: Math.round(rect.height),
       selector,
       composedPathSelector: composedPathSelector || undefined,
+      composedPathAttributes,
     },
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element
