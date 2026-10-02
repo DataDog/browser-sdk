@@ -1,3 +1,5 @@
+export { MUTATION_PROCESS_MIN_DELAY } from './mutationBatch'
+export type { EmitResourceCallback } from './record.types'
 export { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
 export { record } from './record'
 export type { ChangeDecoder } from './encoding'

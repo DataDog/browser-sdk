@@ -2,35 +2,16 @@
 
 ## Overview
 
-This package bundles the RUM SDK together with a `shopifyPlugin` that translates Shopify Web
-Pixel events into RUM API calls, so Shopify's Custom Pixel sandbox only needs to load a single
-script.
+This package bundles the Datadog RUM Browser SDK together with a `shopifyPlugin` that translates
+Shopify Web Pixel events into RUM API calls, so a Shopify Custom Pixel only needs to load a
+single script.
 
-Exposes `window.DD_RUM`, same public API as [`@datadog/browser-rum`](../rum), plus
+Exposes `window.DD_RUM`, the same public API as [`@datadog/browser-rum`][2], plus
 `DD_RUM.shopifyPlugin(configuration)`.
 
-## Setup
+See the [dedicated Datadog documentation][1] for the installation process.
 
-In a Custom Pixel, pass the sandbox's `analytics` global to the plugin:
+<!-- Note: all URLs should be absolute -->
 
-```javascript
-DD_RUM.onReady(function () {
-  DD_RUM.init({
-    applicationId: '<YOUR_DATADOG_APPLICATION_ID>',
-    clientToken: '<YOUR_DATADOG_CLIENT_TOKEN>',
-    site: '<YOUR_DATADOG_SITE>',
-    service: '<YOUR_SERVICE_NAME>',
-    env: '<YOUR_ENV_NAME>',
-    version: '1.0.0',
-    sessionSampleRate: 100,
-    plugins: [DD_RUM.shopifyPlugin({ shopifyAnalytics: analytics })],
-  })
-})
-```
-
-The plugin patches sandboxed iframe APIs, wires Shopify Web Pixel events to the RUM public API,
-and forces configuration suited to the Pixel sandbox (e.g. `trackViewsManually: true`,
-`sessionReplaySampleRate: 0`).
-
-On storefront pages (outside the Pixel sandbox), don't include the plugin — see the
-[RUM package](../rum/README.md) documentation for `init()` options.
+[1]: https://docs.datadoghq.com/integrations/rum-shopify
+[2]: https://www.npmjs.com/package/@datadog/browser-rum

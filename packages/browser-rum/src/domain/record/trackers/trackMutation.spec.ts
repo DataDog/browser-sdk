@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, noop } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
@@ -57,7 +57,7 @@ describe('trackMutation', () => {
         }
         emitStats(stats)
 
-        const mutationTracker = trackMutation(sandbox.ownerDocument, emitRecord, emitStats, scope)
+        const mutationTracker = trackMutation(sandbox.ownerDocument, emitRecord, noop, emitStats, scope)
         registerCleanupTask(() => {
           mutationTracker.stop()
         })
@@ -444,6 +444,7 @@ describe('trackMutation', () => {
 
     it('removes a canvas from dirty canvases when it is removed', async () => {
       const canvasManager = createCanvasManager()
+      const forgetCanvasSpy = spyOn(canvasManager, 'forgetCanvas').and.callThrough()
       const scope = createRecordingScopeForTesting({ canvasManager })
       let canvas!: HTMLCanvasElement
 
@@ -451,14 +452,15 @@ describe('trackMutation', () => {
         '<canvas></canvas>',
         (sandbox) => {
           canvas = sandbox as HTMLCanvasElement
-          expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
+          expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
 
           canvas.remove()
         },
         { scope }
       )
 
-      expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
+      expect(forgetCanvasSpy).toHaveBeenCalledOnceWith(canvas)
+      expect(canvasManager.takeCapturableCanvases()).toEqual([])
     })
   })
 
@@ -568,42 +570,6 @@ describe('trackMutation', () => {
         { configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } }
       )
       expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['data-foo', '***']]]])
-    })
-
-    it('marks a canvas dirty when a size attribute changes', async () => {
-      const canvasManager = createCanvasManager()
-      const scope = createRecordingScopeForTesting({ canvasManager })
-      let canvas!: HTMLCanvasElement
-
-      await recordMutationOf(
-        '<canvas></canvas>',
-        (sandbox) => {
-          canvas = sandbox as HTMLCanvasElement
-          canvasManager.markCanvasClean(canvas)
-          canvas.setAttribute('width', '101')
-        },
-        { scope }
-      )
-
-      expect(canvasManager.isCanvasDirty(canvas)).toBeTrue()
-    })
-
-    it('does not mark a canvas dirty when an unrelated attribute changes', async () => {
-      const canvasManager = createCanvasManager()
-      const scope = createRecordingScopeForTesting({ canvasManager })
-      let canvas!: HTMLCanvasElement
-
-      await recordMutationOf(
-        '<canvas></canvas>',
-        (sandbox) => {
-          canvas = sandbox as HTMLCanvasElement
-          canvasManager.markCanvasClean(canvas)
-          canvas.setAttribute('class', 'foo')
-        },
-        { scope }
-      )
-
-      expect(canvasManager.isCanvasDirty(canvas)).toBeFalse()
     })
   })
 

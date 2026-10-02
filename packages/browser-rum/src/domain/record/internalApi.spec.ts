@@ -2,6 +2,7 @@ import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecor
 import { ChangeType, RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../browser-rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
+import { sanitizeUrl } from './utils/sanitizeUrl'
 import { createChangeDecoder } from './encoding'
 
 describe('takeFullSnapshot', () => {
@@ -11,7 +12,7 @@ describe('takeFullSnapshot', () => {
         {
           data: {
             height: jasmine.any(Number),
-            href: window.location.href,
+            href: sanitizeUrl(window.location.href),
             width: jasmine.any(Number),
           },
           type: RecordType.Meta,

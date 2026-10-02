@@ -36,6 +36,7 @@ export function startReportCollection(configuration: LogsConfiguration, lifeCycl
         _dd: { debug_ids: rawError.debugIds },
         status,
       },
+      domainContext: { report: rawError.originalError },
     })
   })
 

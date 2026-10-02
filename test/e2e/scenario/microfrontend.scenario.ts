@@ -32,10 +32,10 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
 // Debug IDs are derived from each chunk's content hash, so they're stable across rebuilds
 // (regenerate these constants if app source/deps change). The shared `lib` remote is its own chunk,
 // so its debug ID is the same for every app.
-const APP1_EXPOSE_CHUNK = '__federation_expose_app1-0b975610772143724d2f-app1.js'
-const APP1_DEBUG_ID = '33164643-dc2f-4bf0-8440-b443adfa15c3'
-const APP2_EXPOSE_CHUNK = '__federation_expose_app2-8042c1cdfd7c71d0bf47-app2.js'
-const APP2_DEBUG_ID = 'cb80d79d-2dfc-4bc0-9872-92b454fb59e1'
+const APP1_EXPOSE_CHUNK = '__federation_expose_app1-d74be1a93aee64b4d047-app1.js'
+const APP1_DEBUG_ID = '4b3d6a63-fb93-4cad-b3ee-f178b7020ba3'
+const APP2_EXPOSE_CHUNK = '__federation_expose_app2-de619ccf294b7d2c971a-app2.js'
+const APP2_DEBUG_ID = '5f3dc267-79ac-4d44-99b9-251f9931b053'
 const LIB_EXPOSE_CHUNK = '__federation_expose_lib-c0a8a100340f04ff2712-lib.js'
 const LIB_DEBUG_ID = '4564c6ea-a5bb-4355-968a-7de8d685fe65'
 
@@ -631,6 +631,154 @@ test.describe('microfrontend', () => {
   })
 
   test.describe('Logs service and version attribution', () => {
+    test.describe('with source code bundler plugin', () => {
+      // Chromium reports each deprecation only once per page, so test each bundle separately.
+      ;[
+        { app: 'app1', version: '1.0.0', chunk: APP1_EXPOSE_CHUNK },
+        { app: 'app2', version: '0.2.0', chunk: APP2_EXPOSE_CHUNK },
+      ].forEach(({ app, version, chunk }) => {
+        createTest(`deprecation reports from ${app} should have service and version from source code context`)
+          .withHead('<script>window.nativeXhrOpen = XMLHttpRequest.prototype.open</script>')
+          .withLogs({
+            ...LOGS_CONFIG,
+            service: 'shell-service',
+            version: 'shell-version',
+            forwardReports: ['deprecation'],
+          })
+          .withSetup(microfrontendSetup)
+          .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+            test.skip(browserName !== 'chromium', 'Deprecation reports require Chromium ReportingObserver')
+
+            await page.click(`#${app}-deprecation`)
+            await flushEvents()
+
+            expect(intakeRegistry.logsEvents).toMatchObject([
+              {
+                origin: 'report',
+                status: 'warn',
+                message: expect.stringContaining('deprecation: Synchronous'),
+                service: `mfe-${app}-service`,
+                version,
+                ddtags: expect.stringContaining(`service:mfe-${app}-service,version:${version}`),
+              },
+            ])
+            const log = intakeRegistry.logsEvents[0]
+            expect(log.message).toContain(chunk)
+            expect(log.error).toBeUndefined()
+            expect(log.ddtags).not.toContain('service:shell-service')
+            expect(log.ddtags).not.toContain('version:shell-version')
+          })
+      })
+
+      createTest('CSP violation reports should have service and version from source code context')
+        .withLogs({
+          ...LOGS_CONFIG,
+          service: 'shell-service',
+          version: 'shell-version',
+          forwardReports: ['csp_violation'],
+        })
+        .withSetup(microfrontendSetup)
+        .run(async ({ intakeRegistry, flushEvents, page, browserName, withBrowserLogs }) => {
+          await page.click('#app1-csp-violation')
+          await page.click('#app2-csp-violation')
+          await flushEvents()
+
+          expect(intakeRegistry.logsEvents).toMatchObject([
+            {
+              origin: 'report',
+              service: 'mfe-app1-service',
+              version: '1.0.0',
+              ddtags: expect.stringContaining('service:mfe-app1-service,version:1.0.0'),
+              error: { stack: expect.stringContaining(APP1_EXPOSE_CHUNK) },
+            },
+            {
+              origin: 'report',
+              service: 'mfe-app2-service',
+              version: '0.2.0',
+              ddtags: expect.stringContaining('service:mfe-app2-service,version:0.2.0'),
+              error: { stack: expect.stringContaining(APP2_EXPOSE_CHUNK) },
+            },
+          ])
+
+          for (const log of intakeRegistry.logsEvents) {
+            expect(log.message).toMatch(
+              /^csp_violation: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive$/
+            )
+            expect(log.ddtags).not.toContain('version:shell-version')
+            expect(log.ddtags).not.toContain('service:shell-service')
+          }
+
+          withBrowserLogs((browserLogs) => {
+            // Firefox also warns that each blocked script failed to load.
+            expect(browserLogs).toHaveLength(browserName === 'firefox' ? 4 : 2)
+          })
+        })
+
+      createTest('errors from console.error should have service and version from source code context')
+        .withLogs({ ...LOGS_CONFIG, service: 'shell-service', version: 'shell-version' })
+        .withSetup(microfrontendSetup)
+        .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+          await page.click('#app1-console-error')
+          await page.click('#app2-console-error')
+          await flushEvents()
+
+          expect(intakeRegistry.logsEvents).toMatchObject([
+            {
+              message: 'app1-console-error',
+              service: 'mfe-app1-service',
+              version: '1.0.0',
+              ddtags: expect.stringContaining('service:mfe-app1-service,version:1.0.0'),
+            },
+            {
+              message: 'app2-console-error',
+              service: 'mfe-app2-service',
+              version: '0.2.0',
+              ddtags: expect.stringContaining('service:mfe-app2-service,version:0.2.0'),
+            },
+          ])
+
+          for (const log of intakeRegistry.logsEvents) {
+            expect(log.ddtags).not.toContain('version:shell-version')
+            expect(log.ddtags).not.toContain('service:shell-service')
+          }
+
+          withBrowserLogs((browserLogs) => {
+            expect(browserLogs).toHaveLength(2)
+          })
+        })
+
+      createTest('runtime errors should have service and version from source code context')
+        .withLogs({ ...LOGS_CONFIG, service: 'shell-service', version: 'shell-version' })
+        .withSetup(microfrontendSetup)
+        .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+          await page.click('#app1-runtime-error')
+          await page.click('#app2-runtime-error')
+          await flushEvents()
+
+          expect(intakeRegistry.logsEvents).toMatchObject([
+            {
+              service: 'mfe-app1-service',
+              version: '1.0.0',
+              ddtags: expect.stringContaining('service:mfe-app1-service,version:1.0.0'),
+            },
+            {
+              service: 'mfe-app2-service',
+              version: '0.2.0',
+              ddtags: expect.stringContaining('service:mfe-app2-service,version:0.2.0'),
+            },
+          ])
+
+          for (const log of intakeRegistry.logsEvents) {
+            expect(log.ddtags).not.toContain('version:shell-version')
+            expect(log.ddtags).not.toContain('service:shell-service')
+          }
+
+          withBrowserLogs((browserLogs) => {
+            expect(browserLogs).toHaveLength(2)
+          })
+        })
+    })
+
     createTest('expose handling stack for console.log')
       .withLogs(LOGS_CONFIG)
       .withLogsInit((configuration) => {

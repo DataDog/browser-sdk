@@ -313,7 +313,7 @@ export async function startSessionManager(
   }
 }
 
-export function startSessionManagerStub(): Promise<SessionManager> {
+export function startSessionManagerStub(): SessionManager {
   const stubSessionId = generateUUID()
   let sessionContext: SessionContext = {
     id: stubSessionId,
@@ -321,7 +321,7 @@ export function startSessionManagerStub(): Promise<SessionManager> {
     anonymousId: undefined,
     createdAt: timeStampNow(),
   }
-  return Promise.resolve({
+  return {
     findSession: () => sessionContext,
     findTrackedSession: () => sessionContext,
     renewObservable: new Observable(),
@@ -333,7 +333,7 @@ export function startSessionManagerStub(): Promise<SessionManager> {
         ...state,
       }
     },
-  })
+  }
 }
 
 export function stopSessionManager() {

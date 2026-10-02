@@ -1,5 +1,5 @@
 import { globalObject } from '@datadog/js-core/util'
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPublicApi, RumPluginOnInitOptions } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { appendElement } from '../../../browser-rum-core/test'
 import {
@@ -26,7 +26,7 @@ function initPlugin() {
   const { publicApi, startViewSpy } = createPublicApi()
   const plugin = nextjsPlugin()
   // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-  plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
+  plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } } as RumPluginOnInitOptions)
   return { plugin, publicApi, startViewSpy }
 }
 
@@ -60,7 +60,7 @@ describe('nextjsPlugin', () => {
     const { publicApi } = createPublicApi()
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-    nextjsPlugin().onInit({ publicApi, initConfiguration })
+    nextjsPlugin().onInit({ publicApi, initConfiguration } as RumPluginOnInitOptions)
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
@@ -139,7 +139,7 @@ describe('nextjsPlugin', () => {
       nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
-      })
+      } as RumPluginOnInitOptions)
 
       expect(callbackSpy).toHaveBeenCalledTimes(1)
       expect(callbackSpy.calls.mostRecent().args[0]).toBe(publicApi)
@@ -153,7 +153,7 @@ describe('nextjsPlugin', () => {
       nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
-      })
+      } as RumPluginOnInitOptions)
 
       onRumInit(callbackSpy)
 

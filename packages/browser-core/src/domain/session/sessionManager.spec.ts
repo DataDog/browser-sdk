@@ -978,14 +978,14 @@ describe('startSessionManager', () => {
 })
 
 describe('startSessionManagerStub', () => {
-  it('should always return a tracked session', async () => {
-    const sessionManager = await startSessionManagerStub()
+  it('should always return a tracked session', () => {
+    const sessionManager = startSessionManagerStub()
     expect(sessionManager.findTrackedSession()).toBeDefined()
     expect(sessionManager.findTrackedSession()!.id).toBeDefined()
   })
 
-  it('should allow updating session state', async () => {
-    const sessionManager = await startSessionManagerStub()
+  it('should allow updating session state', () => {
+    const sessionManager = startSessionManagerStub()
 
     sessionManager.updateSessionState({ extra: 'value' })
 

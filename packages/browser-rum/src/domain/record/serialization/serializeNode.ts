@@ -10,12 +10,13 @@ import {
   getScrollX,
   getScrollY,
   isElementNode,
+  isCanvasElement,
 } from '@datadog/browser-rum-core'
 import type { RoleAnnotatedStringLiteral } from '../../../types'
 import { MediaInteractionType, StringRole } from '../../../types'
 import type { NodeId, StyleSheetId } from '../encoding'
 import { createAttributeAssignment, createString } from '../encoding'
-import { isCanvasElement } from '../canvas/canvasUtils'
+import { CanvasStatus } from '../canvas/canvasManager'
 import type { InsertionCursor } from './insertionCursor'
 import type { SerializationTransaction } from './serializationTransaction'
 import { serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'
@@ -149,7 +150,7 @@ function serializeElementNode(
   transaction.addNode(insertionPoint, encodedElementName(element), ...domAttributes)
 
   if (isCanvasElement(element)) {
-    transaction.scope.canvasManager.markCanvasDirty(element)
+    transaction.scope.canvasManager.markCanvas(element, CanvasStatus.Dirty)
   }
 
   const {

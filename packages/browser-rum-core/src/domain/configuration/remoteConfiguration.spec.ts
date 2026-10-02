@@ -1,4 +1,5 @@
 import { ONE_MINUTE } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { DefaultPrivacyLevel, display, setCookie, deleteCookie, createContextManager } from '@datadog/browser-core'
 import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
@@ -90,6 +91,7 @@ describe('remoteConfiguration', () => {
             defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
           },
         },
+        lastModified: undefined,
       })
     })
 
@@ -126,7 +128,47 @@ describe('remoteConfiguration', () => {
       )
 
       const fetchResult = await fetchRemoteConfiguration(configuration)
-      expect(fetchResult).toEqual({ ok: true, value: { profiling: { sampleRate: 10 } } })
+      expect(fetchResult).toEqual({ ok: true, value: { profiling: { sampleRate: 10 } }, lastModified: undefined })
+    })
+
+    describe('last-modified header', () => {
+      function withFetchReturningHeaders(headers: Record<string, string>) {
+        interceptor.withFetch(() =>
+          Promise.resolve({
+            ok: true,
+            headers: new Headers(headers),
+            json: () => Promise.resolve({ profiling: { sampleRate: 10 } }),
+          })
+        )
+      }
+
+      it('should expose the publish time as epoch milliseconds', async () => {
+        withFetchReturningHeaders({ 'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT' })
+
+        const fetchResult = await fetchRemoteConfiguration(configuration)
+
+        expect(fetchResult).toEqual({
+          ok: true,
+          value: { profiling: { sampleRate: 10 } },
+          lastModified: 1445412480000,
+        })
+      })
+
+      it('should be undefined when the header is absent', async () => {
+        withFetchReturningHeaders({})
+
+        const fetchResult = await fetchRemoteConfiguration(configuration)
+
+        expect((fetchResult as { lastModified?: number }).lastModified).toBeUndefined()
+      })
+
+      it('should be undefined when the header is not a valid date', async () => {
+        withFetchReturningHeaders({ 'last-modified': 'not-a-date' })
+
+        const fetchResult = await fetchRemoteConfiguration(configuration)
+
+        expect((fetchResult as { lastModified?: number }).lastModified).toBeUndefined()
+      })
     })
 
     it('should return an error if the remote config does not contain rum or profiling', async () => {
@@ -818,7 +860,10 @@ describe('remoteConfiguration', () => {
     let displaySpy: jasmine.Spy
 
     function withCachedEntry(config: RemoteConfiguration) {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ version: CACHE_VERSION, config, fetchedAt: 1000 }))
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({ version: CACHE_VERSION, config, metadata: { lastSynced: 1000, syncId: 'sync-id' } })
+      )
     }
 
     function withFetchSuccess(config: RemoteConfiguration = FRESH_RUM_CONFIG) {
@@ -854,7 +899,7 @@ describe('remoteConfiguration', () => {
 
       const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
-      expect(result).toBe(initConfiguration)
+      expect(result!.initConfiguration).toBe(initConfiguration)
       await flushBackgroundSync()
     })
 
@@ -865,8 +910,30 @@ describe('remoteConfiguration', () => {
       const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
       expect(result).toBeDefined()
-      expect(result!.applicationId).toBe('cached-app')
-      expect(result!.clientToken).toBe('xxx')
+      expect(result!.initConfiguration.applicationId).toBe('cached-app')
+      expect(result!.initConfiguration.clientToken).toBe('xxx')
+      await flushBackgroundSync()
+    })
+
+    it('should return the applied metadata on cache hit', async () => {
+      withCachedEntry(CACHED_RUM_CONFIG)
+      withFetchSuccess()
+
+      const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+      expect(result!.metadata!.lastSynced).toEqual(1000 as TimeStamp)
+      expect(result!.metadata!.syncId).toBe('sync-id')
+      // exact stamping behaviour is covered in remoteConfigurationCache.spec.ts
+      expect(result!.metadata!.firstApplied!).toBeGreaterThan(0)
+      await flushBackgroundSync()
+    })
+
+    it('should not return metadata on cache miss', async () => {
+      withFetchSuccess()
+
+      const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+      expect(result!.metadata).toBeUndefined()
       await flushBackgroundSync()
     })
 
@@ -876,7 +943,7 @@ describe('remoteConfiguration', () => {
 
       const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
-      expect(result).toBe(initConfiguration)
+      expect(result!.initConfiguration).toBe(initConfiguration)
       expect(localStorage.getItem(CACHE_KEY)).toBeNull()
       await flushBackgroundSync()
     })
@@ -890,6 +957,22 @@ describe('remoteConfiguration', () => {
       const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
       expect(stored.config).toEqual(FRESH_RUM_CONFIG)
       expect(stored.version).toBe(CACHE_VERSION)
+    })
+
+    it('should store the publish time from the background fetch response', async () => {
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          headers: new Headers({ 'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT' }),
+          json: () => Promise.resolve(FRESH_RUM_CONFIG),
+        })
+      )
+
+      getRemoteConfiguration(initConfiguration, supportedContextManagers)
+      await flushBackgroundSync()
+
+      const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
+      expect(stored.metadata.lastModified).toBe(1445412480000)
     })
 
     it('should not overwrite cache when background fetch fails', async () => {
@@ -933,7 +1016,7 @@ describe('remoteConfiguration', () => {
         const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
         expect(result).toBeDefined()
-        expect(result!.applicationId).toBe('cached-app')
+        expect(result!.initConfiguration.applicationId).toBe('cached-app')
         await flushBackgroundSync()
       })
 

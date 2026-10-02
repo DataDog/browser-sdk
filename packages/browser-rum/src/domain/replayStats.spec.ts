@@ -1,4 +1,4 @@
-import { getReplayStats, MAX_STATS_HISTORY, addSegment, addRecord, addWroteData } from './replayStats'
+import { getReplayStats, MAX_STATS_HISTORY, addSegment, addRecord, addResource, addWroteData } from './replayStats'
 
 describe('replayStats', () => {
   describe('getReplayStats', () => {
@@ -25,6 +25,14 @@ describe('replayStats', () => {
       addRecord('view-id')
       addRecord('view-id')
       expect(getReplayStats('view-id')!.records_count).toBe(2)
+    })
+  })
+
+  describe('addResource', () => {
+    it('increments the view resources count', () => {
+      addResource('view-id')
+      addResource('view-id')
+      expect(getReplayStats('view-id')!.resources_count).toBe(2)
     })
   })
 

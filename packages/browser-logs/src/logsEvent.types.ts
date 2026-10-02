@@ -24,6 +24,10 @@ export interface LogsEvent {
    */
   service?: string
   /**
+   * The version for this application
+   */
+  version?: string
+  /**
    * Tags of the log
    */
   ddtags?: string
@@ -104,6 +108,18 @@ export interface LogsEvent {
       source: string
       type?: string
       stack?: string
+    }>
+    /**
+     * The language or platform impacting the error stack trace format
+     */
+    source_type?: 'browser' | 'browser+wasm'
+    /**
+     * WebAssembly modules available for stack trace symbolication
+     */
+    wasm_modules?: Array<{
+      url: string
+      build_id: string
+      debug_info_type?: 'dwarf' | 'sourcemap' | 'unknown'
     }>
 
     [k: string]: unknown

@@ -1,9 +1,9 @@
 import type { ClocksState } from '@datadog/js-core/time'
-import type { Observable, BufferedData } from '@datadog/browser-core'
+import { combine, ConsoleApiName } from '@datadog/js-core/util'
 import type { Context } from '@datadog/js-core/util'
+import type { Observable, BufferedData } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { BufferedDataType, ErrorSource } from '@datadog/browser-core'
-import { ConsoleApiName } from '@datadog/js-core/util'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -36,15 +36,17 @@ export function startConsoleCollection(
       return
     }
     const collectedData: RawLogsEventCollectedData<RawLogsEvent> = {
-      rawLogsEvent: {
-        date: timeStampNow(),
-        message: log.message,
-        origin: ErrorSource.CONSOLE,
-        error: log.error && createErrorFieldFromRawError(log.error),
-        _dd: log.error && { debug_ids: log.error.debugIds },
-        status: LogStatusForApi[log.api],
-      },
-      messageContext: log.error?.context,
+      rawLogsEvent: combine(
+        {
+          date: timeStampNow(),
+          message: log.message,
+          origin: ErrorSource.CONSOLE,
+          error: log.error && createErrorFieldFromRawError(log.error),
+          _dd: log.error && { debug_ids: log.error.debugIds },
+          status: LogStatusForApi[log.api],
+        },
+        log.error?.context
+      ),
       domainContext: {
         handlingStack: log.handlingStack,
       },

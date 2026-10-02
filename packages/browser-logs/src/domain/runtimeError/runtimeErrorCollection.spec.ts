@@ -173,6 +173,6 @@ describe('runtime error collection', () => {
       },
     })
 
-    expect(rawLogsEvents[0].messageContext).toEqual({ foo: 'bar' })
+    expect(rawLogsEvents[0].rawLogsEvent).toEqual(jasmine.objectContaining({ foo: 'bar' }))
   })
 })

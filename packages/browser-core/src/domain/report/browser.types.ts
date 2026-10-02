@@ -1,6 +1,6 @@
 export type ReportType = DeprecationReport['type'] | InterventionReport['type']
 
-interface Report {
+export interface Report {
   type: ReportType
   url: string
   body: DeprecationReportBody | InterventionReportBody

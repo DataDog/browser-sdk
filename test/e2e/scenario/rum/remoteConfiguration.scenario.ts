@@ -263,11 +263,12 @@ test.describe('remote configuration', () => {
 
         await page.waitForFunction((key) => localStorage.getItem(key) !== null, CACHE_KEY)
         const stored = await page.evaluate(
-          (key) => JSON.parse(localStorage.getItem(key)!) as { version: number; config: object },
+          (key) => JSON.parse(localStorage.getItem(key)!) as { version: number; config: object; metadata: object },
           CACHE_KEY
         )
-        expect(stored.version).toBe(2)
+        expect(stored.version).toBe(3)
         expect(stored.config).toEqual({ rum: { applicationId: RC_APP_ID, sessionSampleRate: 1 } })
+        expect(stored.metadata).toEqual(expect.objectContaining({ lastSynced: expect.any(Number) }))
       })
 
     createTest('should resolve an option value from a cookie')
@@ -494,7 +495,11 @@ test.describe('remote configuration', () => {
  * outer one wraps it as a valid JS string literal with proper escaping.
  */
 function seedCache(remoteConfig: RemoteConfiguration) {
-  const entry = JSON.stringify({ version: 2, config: remoteConfig, fetchedAt: 1000 })
+  const entry = JSON.stringify({
+    version: 3,
+    config: remoteConfig,
+    metadata: { lastSynced: 1000, syncId: 'e2e-sync-id' },
+  })
   return html`<script>
     localStorage.setItem('${CACHE_KEY}', ${JSON.stringify(entry)})
   </script>`

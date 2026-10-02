@@ -28,11 +28,16 @@ const FILES = [
   // Polyfill globalThis for older browsers (e.g. Chrome 63) that don't support it.
   // Required because @angular/core uses globalThis internally.
   { pattern: 'test/unit/globalThisPolyfill.js', watched: false },
+  // Polyfill Object.hasOwn for older browsers (e.g. Chrome 80) that don't support it.
+  // Required because @angular/core >= 22.1.3 uses Object.hasOwn internally.
+  { pattern: 'test/unit/objectHasOwnPolyfill.js', watched: false },
   // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
   // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
   // `afterEach` hooks.
   'packages/browser-core/test/forEach.spec.ts',
   'packages/browser-rum/test/record/toto.css',
+  // Served but not injected into the runner page, so its rules don't leak into other specs.
+  { pattern: 'packages/browser-rum/test/record/relativeStylesheet.css', included: false, watched: false },
 ]
 
 const FILES_SPECS = [
