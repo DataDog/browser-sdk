@@ -42,7 +42,7 @@
     "@angular/compiler": "22.1.6",
     "@angular/core": "22.1.6",
     "@angular/platform-browser": "22.1.6",
-    "@angular/router": "22.1.6",
+    "@angular/router": "22.2.0",
     "rxjs": "7.8.2"
   }
 }
