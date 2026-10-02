@@ -45,12 +45,12 @@ export function startProbeRumAction(probe: InitializedProbe): ProbeRumAction | u
     return
   }
 
+  probe.rumActionStarted = true
+
   const action: ProbeRumAction = {
     name: `probe: ${probe.where.methodName} (${probe.where.typeName})`,
     snapshotId: generateUUID(),
   }
-  probe.rumActionStarted = true
-  probe.openRumAction = action
 
   try {
     rum.startAction(action.name, {
@@ -81,16 +81,7 @@ export function startProbeRumAction(probe: InitializedProbe): ProbeRumAction | u
  * Stop a RUM custom action started by {@link startProbeRumAction} when the instrumented function
  * returns or throws.
  */
-export function stopProbeRumAction(
-  probe: InitializedProbe,
-  action: ProbeRumAction,
-  outcome: 'return' | 'throw',
-  error?: unknown
-): void {
-  if (probe.openRumAction === action) {
-    probe.openRumAction = undefined
-  }
-
+export function stopProbeRumAction(action: ProbeRumAction, outcome: 'return' | 'throw', error?: unknown): void {
   try {
     const errorType = outcome === 'throw' ? getErrorType(error) : undefined
     ;(globalObject as BrowserWindow).DD_RUM?.stopAction?.(action.name, {
@@ -104,16 +95,6 @@ export function stopProbeRumAction(
     })
   } catch (error) {
     monitorError(error)
-  }
-}
-
-/**
- * Stop the RUM action a probe left open, if any. Used for instrumentation built before the
- * invocation handle contract, whose exit hooks can't be paired with the invocation that started it.
- */
-export function stopOpenProbeRumAction(probe: InitializedProbe, outcome: 'return' | 'throw', error?: unknown): void {
-  if (probe.openRumAction) {
-    stopProbeRumAction(probe, probe.openRumAction, outcome, error)
   }
 }
 

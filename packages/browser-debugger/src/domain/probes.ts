@@ -8,7 +8,6 @@ import type { TemplateSegment } from './template'
 import { formatUnknownError } from './error'
 import type { CaptureOptions } from './capture'
 import type { ExpressionNode } from './expression'
-import type { ProbeRumAction } from './rumAction'
 
 // Sampling rate limits
 const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_GLOBALLY = 25
@@ -98,7 +97,6 @@ export interface InitializedProbe extends Probe {
   lifetimeBudgetWarningEmitted: boolean
   discarded: boolean
   rumActionStarted: boolean
-  openRumAction: ProbeRumAction | undefined
 }
 
 // Pre-populate with a placeholder key to help V8 optimize property lookups.
@@ -416,7 +414,6 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
   ;(probe as InitializedProbe).lifetimeBudgetWarningEmitted = false
   ;(probe as InitializedProbe).discarded = false
   ;(probe as InitializedProbe).rumActionStarted = false
-  ;(probe as InitializedProbe).openRumAction = undefined
 }
 
 function normalizeProbeLifetimeLimit(limit: number | undefined, defaultLimit: number): number {

@@ -23,7 +23,7 @@ import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 import { display } from './display'
 import { formatThrowable } from './error'
 import { evaluateCaptureExpressions } from './captureExpressions'
-import { startProbeRumAction, stopOpenProbeRumAction, stopProbeRumAction } from './rumAction'
+import { startProbeRumAction, stopProbeRumAction } from './rumAction'
 
 const globalObj = globalObject as BrowserWindow
 
@@ -178,14 +178,11 @@ function consumeEntry(
   const entry = invocation[index]
   // TODO: Remove once every instrumented bundle forwards the handle; older ones pass the probes array.
   if (!entry?.probe) {
-    if (entry) {
-      stopOpenProbeRumAction(entry as unknown as InitializedProbe, outcome, error)
-    }
     return undefined
   }
   invocation[index] = undefined
   if (entry.rumAction) {
-    stopProbeRumAction(entry.probe, entry.rumAction, outcome, error)
+    stopProbeRumAction(entry.rumAction, outcome, error)
   }
   return entry.probe.discarded ? undefined : entry
 }
