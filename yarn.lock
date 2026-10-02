@@ -116,17 +116,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/router@npm:22.1.6":
-  version: 22.1.6
-  resolution: "@angular/router@npm:22.1.6"
+"@angular/router@npm:22.2.0":
+  version: 22.2.0
+  resolution: "@angular/router@npm:22.2.0"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/common": 22.1.6
-    "@angular/core": 22.1.6
-    "@angular/platform-browser": 22.1.6
+    "@angular/common": 22.2.0
+    "@angular/core": 22.2.0
+    "@angular/platform-browser": 22.2.0
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/8fd2c69b5b2cb2970ff2695f19dd2f8c9cfc08dd6b7256777d0ef4d00f7d3b38e4f312debc8b157bac6526ae8bca6335e3b885da979ff88ae9c7f8ba3bc93bde
+  checksum: 10c0/6b31cd16a6c28682073def1c1acc36c180f789a417ef3ead1593c29d488b6d2428fd3f133ed3a7c4f62e93dd1a8dffdfe14fd2c62714246738253dad91c71dbf
   languageName: node
   linkType: hard
 
@@ -499,7 +499,7 @@ __metadata:
     "@angular/compiler": "npm:22.1.6"
     "@angular/core": "npm:22.1.6"
     "@angular/platform-browser": "npm:22.1.6"
-    "@angular/router": "npm:22.1.6"
+    "@angular/router": "npm:22.2.0"
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
