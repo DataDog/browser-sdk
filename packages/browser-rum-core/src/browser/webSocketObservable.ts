@@ -1,13 +1,21 @@
+import {
+  addEventListener,
+  computeBytesCount,
+  instrumentConstructor,
+  instrumentMethod,
+  Observable,
+} from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
 import type { GlobalObject } from '@datadog/js-core/util'
 import { globalObject } from '@datadog/js-core/util'
-import { instrumentConstructor, instrumentMethod } from '../tools/instrumentMethod'
-import { Observable } from '../tools/observable'
-import { computeBytesCount } from '../tools/utils/byteUtils'
-import { addEventListener } from './addEventListener'
 
 type GlobalWithWebSocket = GlobalObject & { WebSocket: typeof WebSocket }
+
+// Redefined here in case a 3rd party modified them on the original
+const READY_STATE_OPEN = 1
+const READY_STATE_CLOSING = 2
+const READY_STATE_CLOSED = 3
 
 function isGlobalWithWebSocket(global: GlobalObject): global is GlobalWithWebSocket {
   return typeof (global as { WebSocket?: unknown }).WebSocket === 'function'
@@ -26,6 +34,7 @@ export interface WebSocketOpenContext {
   instance: WebSocket
   openClocks: ClocksState
   protocol: string
+  extensions: string
 }
 
 export interface WebSocketMessageInContext {
@@ -43,12 +52,20 @@ export interface WebSocketMessageOutContext {
   at: ClocksState
 }
 
+export interface WebSocketClosingContext {
+  state: 'closing'
+  instance: WebSocket
+  at: ClocksState
+}
+
 export interface WebSocketClosedContext {
   state: 'closed'
   instance: WebSocket
   code: number
   reason: string
   wasClean: boolean
+  /** Bytes still queued in the send buffer when the connection closed. */
+  bufferedAmountAtClose: number
   at: ClocksState
 }
 
@@ -57,6 +74,7 @@ export type WebSocketContext =
   | WebSocketOpenContext
   | WebSocketMessageInContext
   | WebSocketMessageOutContext
+  | WebSocketClosingContext
   | WebSocketClosedContext
 
 let webSocketObservable: Observable<WebSocketContext> | undefined
@@ -100,6 +118,13 @@ function createWebSocketObservable() {
       globalObject.WebSocket.prototype,
       'send',
       ({ target: instance, parameters: [data], onPostCall }) => {
+        // only an OPEN socket sends: per spec the payload is rejected before the handshake completed
+        // and silently discarded once the socket is closing or closed, and a payload that never
+        // reached the wire is not an outbound message
+        if (instance.readyState !== READY_STATE_OPEN) {
+          return
+        }
+
         const size = computePayloadSize(data)
         const bufferedAmountPreSend = instance.bufferedAmount
 
@@ -115,9 +140,28 @@ function createWebSocketObservable() {
       }
     )
 
+    const { stop: stopInstrumentingClose } = instrumentMethod(
+      globalObject.WebSocket.prototype,
+      'close',
+      ({ target: instance, onPostCall }) => {
+        if (instance.readyState === READY_STATE_CLOSING || instance.readyState === READY_STATE_CLOSED) {
+          return
+        }
+
+        onPostCall(() => {
+          observable.notify({
+            state: 'closing',
+            instance,
+            at: clocksNow(),
+          })
+        })
+      }
+    )
+
     return () => {
       stopInstrumentingConstructor()
       stopInstrumentingSend()
+      stopInstrumentingClose()
     }
   })
 }
@@ -129,6 +173,7 @@ function attachInstanceListeners(instance: WebSocket, observable: Observable<Web
       instance,
       openClocks: clocksNow(),
       protocol: instance.protocol || '',
+      extensions: instance.extensions || '',
     })
 
     stopOpen()
@@ -150,6 +195,7 @@ function attachInstanceListeners(instance: WebSocket, observable: Observable<Web
       code: event.code,
       reason: event.reason,
       wasClean: event.wasClean,
+      bufferedAmountAtClose: instance.bufferedAmount,
       at: clocksNow(),
     })
 
