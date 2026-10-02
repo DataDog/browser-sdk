@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
@@ -6,7 +7,7 @@ import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { trackRouteChangeViewMetrics } from './trackRouteChangeViewMetrics'
 
 describe('trackRouteChangeViewMetrics', () => {
-  let scheduleViewUpdate: jasmine.Spy<() => void>
+  let scheduleViewUpdate: Mock<() => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let activeObserverCount: (entryType: RumPerformanceEntryType) => number
 
@@ -18,7 +19,7 @@ describe('trackRouteChangeViewMetrics', () => {
   }
 
   beforeEach(() => {
-    scheduleViewUpdate = jasmine.createSpy()
+    scheduleViewUpdate = vi.fn()
   })
 
   it('should report LCP from the soft-navigation entry seeded ICP', () => {

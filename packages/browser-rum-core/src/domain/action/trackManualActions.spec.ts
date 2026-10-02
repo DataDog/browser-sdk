@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Duration, ServerDuration } from '@datadog/js-core/time'
 import { Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -47,12 +48,12 @@ describe('trackManualActions', () => {
       clock.tick(500)
       stopAction('user_login')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       expect(rawRumEvents[0].duration).toBe(500 as Duration)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           type: RumEventType.ACTION,
-          action: jasmine.objectContaining({
+          action: expect.objectContaining({
             target: { name: 'user_login' },
             type: ActionType.CUSTOM,
           }),
@@ -68,7 +69,7 @@ describe('trackManualActions', () => {
 
       stopAction('checkout')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
       expect(actionEvent.action.id).toEqual(actionId[0])
     })
@@ -78,7 +79,7 @@ describe('trackManualActions', () => {
       clock.tick(500)
       stopAction('checkout')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
       expect(actionEvent.action.loading_time).toBe((500 * 1e6) as ServerDuration)
     })
@@ -90,11 +91,11 @@ describe('trackManualActions', () => {
         startAction('test_action', { type: actionType })
         stopAction('test_action')
 
-        expect(rawRumEvents).toHaveSize(1)
+        expect(rawRumEvents).toHaveLength(1)
         expect(rawRumEvents[0].rawRumEvent).toEqual(
-          jasmine.objectContaining({
+          expect.objectContaining({
             type: RumEventType.ACTION,
-            action: jasmine.objectContaining({
+            action: expect.objectContaining({
               type: actionType,
             }),
           })
@@ -112,20 +113,20 @@ describe('trackManualActions', () => {
       startAction('action3')
       stopAction('action3')
 
-      expect(rawRumEvents).toHaveSize(3)
+      expect(rawRumEvents).toHaveLength(3)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.SCROLL }),
+        expect.objectContaining({
+          action: expect.objectContaining({ type: ActionType.SCROLL }),
         })
       )
       expect(rawRumEvents[1].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.SWIPE }),
+        expect.objectContaining({
+          action: expect.objectContaining({ type: ActionType.SWIPE }),
         })
       )
       expect(rawRumEvents[2].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.CUSTOM }),
+        expect.objectContaining({
+          action: expect.objectContaining({ type: ActionType.CUSTOM }),
         })
       )
     })
@@ -142,7 +143,7 @@ describe('trackManualActions', () => {
       clock.tick(100)
       stopAction('click', { actionKey: 'button1' })
 
-      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents).toHaveLength(2)
       expect(rawRumEvents[0].duration).toBe(100 as Duration)
       expect(rawRumEvents[1].duration).toBe(200 as Duration)
     })
@@ -152,21 +153,21 @@ describe('trackManualActions', () => {
       startAction('foo', { actionKey: 'bar' })
 
       const actionIds = actionContexts.findActionId()
-      expect(Array.isArray(actionIds)).toBeTrue()
+      expect(Array.isArray(actionIds)).toBe(true)
       expect(actionIds.length).toBe(2)
 
       stopAction('foo bar')
       stopAction('foo', { actionKey: 'bar' })
 
-      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents).toHaveLength(2)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ target: { name: 'foo bar' } }),
+        expect.objectContaining({
+          action: expect.objectContaining({ target: { name: 'foo bar' } }),
         })
       )
       expect(rawRumEvents[1].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ target: { name: 'foo' } }),
+        expect.objectContaining({
+          action: expect.objectContaining({ target: { name: 'foo' } }),
         })
       )
     })
@@ -197,7 +198,7 @@ describe('trackManualActions', () => {
 
       stopAction('complex-action')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
       expect(actionEvent.action.error?.count).toBe(2)
       expect(actionEvent.action.resource?.count).toBe(1)
@@ -218,7 +219,7 @@ describe('trackManualActions', () => {
 
       stopAction('error-action')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
       expect(actionEvent.action.frustration?.type).toEqual([FrustrationType.ERROR_CLICK])
     })
@@ -227,7 +228,7 @@ describe('trackManualActions', () => {
       startAction('success-action')
       stopAction('success-action')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
       expect(actionEvent.action.frustration?.type).toEqual([])
     })
@@ -248,7 +249,7 @@ describe('trackManualActions', () => {
 
       stopAction('multi-error-action')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
       expect(actionEvent.action.frustration?.type).toEqual([FrustrationType.ERROR_CLICK])
       expect(actionEvent.action.error?.count).toBe(2)

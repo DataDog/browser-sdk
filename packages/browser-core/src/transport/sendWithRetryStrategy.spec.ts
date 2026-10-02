@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { mockClock, setNavigatorOnLine } from '../../test'
 import type { Clock } from '../../test'
 import { Observable } from '../tools/observable'
@@ -19,7 +20,7 @@ describe('sendWithRetryStrategy', () => {
   let state: RetryState<Payload>
   let sendRequest: (payload?: Partial<Payload>) => Payload
   let clock: Clock
-  let reportErrorSpy: jasmine.Spy<jasmine.Func>
+  let reportErrorSpy: Mock<(...args: any[]) => any>
   const observedEvents: HttpRequestEvent[] = []
 
   function mockSend() {
@@ -47,7 +48,7 @@ describe('sendWithRetryStrategy', () => {
     sendMock = mockSend()
     state = newRetryState()
     clock = mockClock()
-    reportErrorSpy = jasmine.createSpy('reportError')
+    reportErrorSpy = vi.fn()
     const observable = new Observable<HttpRequestEvent>()
     observable.subscribe((event) => observedEvents.push(event))
     sendRequest = (payload) => {
@@ -168,7 +169,7 @@ describe('sendWithRetryStrategy', () => {
       expect(reportErrorSpy).toHaveBeenCalledWith(
         `Reached max logs events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`
       )
-      reportErrorSpy.calls.reset()
+      reportErrorSpy.mockClear()
       expect(latestEvents()).toEqual([
         { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: payload0 },
       ])

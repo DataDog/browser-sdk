@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import type { CatalogFlag, FlagCatalogRequest } from './flagsRequests'
 import { fetchFlagCatalog, fetchFlagsByKeys } from './flagsRequests'
 
@@ -14,7 +15,7 @@ describe('flagsRequests', () => {
     }
 
     function mockResponse(body: unknown) {
-      return spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response(JSON.stringify(body))))
+      return vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(new Response(JSON.stringify(body))))
     }
 
     it('requests one page server-side (active-only, offset from page) and returns the server total', async () => {
@@ -48,7 +49,7 @@ describe('flagsRequests', () => {
 
       const page = await fetchFlagCatalog('tok', 'datad0g.com', { ...baseRequest, page: 3, pageSize: 20 })
 
-      const [requestUrl, requestInit] = spy.calls.argsFor(0) as [string, RequestInit]
+      const [requestUrl, requestInit] = spy.mock.calls[0] as [string, RequestInit]
       const url = new URL(requestUrl)
       expect(url.pathname).toBe('/api/ui/ffe/feature-flags')
       expect(url.searchParams.get('page[limit]')).toBe('20')
@@ -73,7 +74,7 @@ describe('flagsRequests', () => {
         createdBy: null,
       })
 
-      const [requestUrl] = spy.calls.argsFor(0) as [string, RequestInit]
+      const [requestUrl] = spy.mock.calls[0] as [string, RequestInit]
       const url = new URL(requestUrl)
       expect(url.searchParams.get('search')).toBe('checkout')
       expect(url.searchParams.getAll('value_type')).toEqual(['BOOLEAN', 'STRING'])
@@ -90,7 +91,7 @@ describe('flagsRequests', () => {
         createdBy: 'user-uuid',
       })
 
-      const url = new URL(spy.calls.argsFor(0)[0] as string)
+      const url = new URL(spy.mock.calls[0][0] as string)
       expect(url.searchParams.get('created_by')).toBe('user-uuid')
       // Regular tags and team tags ride the same `tags` param; the server splits them by prefix.
       expect(url.searchParams.getAll('tags')).toEqual(['beta', 'team:alpha', 'team:gamma'])
@@ -99,13 +100,13 @@ describe('flagsRequests', () => {
     it('omits created_by when "My feature flags" is off', async () => {
       const spy = mockResponse({ data: [], meta: { page: { total: 0 } } })
       await fetchFlagCatalog('tok', 'datad0g.com', baseRequest)
-      expect(new URL(spy.calls.argsFor(0)[0] as string).searchParams.has('created_by')).toBe(false)
+      expect(new URL(spy.mock.calls[0][0] as string).searchParams.has('created_by')).toBe(false)
     })
 
     it('omits the search param when the term is empty', async () => {
       const spy = mockResponse({ data: [], meta: { page: { total: 0 } } })
       await fetchFlagCatalog('tok', 'datad0g.com', baseRequest)
-      const [requestUrl] = spy.calls.argsFor(0) as [string, RequestInit]
+      const [requestUrl] = spy.mock.calls[0] as [string, RequestInit]
       expect(new URL(requestUrl).searchParams.has('search')).toBe(false)
     })
 
@@ -230,18 +231,16 @@ describe('flagsRequests', () => {
     })
 
     it('throws on a non-ok response', async () => {
-      spyOn(globalThis, 'fetch').and.returnValue(
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(
         Promise.resolve(new Response('err', { status: 500, statusText: 'Server Error' }))
       )
-      await expectAsync(fetchFlagCatalog('tok', 'datad0g.com', baseRequest)).toBeRejectedWithError(
-        /Failed to fetch flag catalog/
-      )
+      await expect(fetchFlagCatalog('tok', 'datad0g.com', baseRequest)).rejects.toThrow(/Failed to fetch flag catalog/)
     })
   })
 
   describe('fetchFlagsByKeys', () => {
     it('fetches each key exactly (active-only) and returns the flags that resolve', async () => {
-      const spy = spyOn(globalThis, 'fetch').and.callFake((input) => {
+      const spy = vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
         const key = new URL(input as string).searchParams.get('key')
         const data = key === 'missing' ? [] : [{ attributes: { key, name: `Name ${key}`, value_type: 'STRING' } }]
         return Promise.resolve(new Response(JSON.stringify({ data })))
@@ -250,7 +249,7 @@ describe('flagsRequests', () => {
       const { flags, missingKeys } = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a', 'missing', 'flag-b'])
 
       expect(spy).toHaveBeenCalledTimes(3)
-      const firstUrl = new URL(spy.calls.argsFor(0)[0] as string)
+      const firstUrl = new URL(spy.mock.calls[0][0] as string)
       expect(firstUrl.searchParams.get('key')).toBe('flag-a')
       // Active-only: an archived flag sharing the key would win the dedupe and describe the override
       // against the wrong type and variants.
@@ -262,7 +261,7 @@ describe('flagsRequests', () => {
     it('does not call a key missing when the response body has no data array', async () => {
       // A 2xx that isn't the expected envelope (proxy interstitial, schema change) is tolerated so
       // the section still renders, but it is not evidence the flag is gone.
-      spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response(JSON.stringify({ errors: ['x'] }))))
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(new Response(JSON.stringify({ errors: ['x'] }))))
 
       const { flags, missingKeys } = await fetchFlagsByKeys('tok', 'datad0g.com', ['flag-a'])
       expect(flags).toEqual([])
@@ -270,13 +269,13 @@ describe('flagsRequests', () => {
     })
 
     it('makes no request and returns nothing for an empty key list', async () => {
-      const spy = spyOn(globalThis, 'fetch')
+      const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('{}')))
       expect(await fetchFlagsByKeys('tok', 'datad0g.com', [])).toEqual({ flags: [], missingKeys: [] })
       expect(spy).not.toHaveBeenCalled()
     })
 
     it('drops a key whose request fails, keeps the ones that resolve, and does not call it missing', async () => {
-      spyOn(globalThis, 'fetch').and.callFake((input) => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
         const key = new URL(input as string).searchParams.get('key')
         if (key === 'boom') {
           return Promise.resolve(new Response('nope', { status: 500, statusText: 'X' }))

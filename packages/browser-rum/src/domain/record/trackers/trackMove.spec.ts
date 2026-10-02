@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
@@ -7,14 +8,14 @@ import { trackMove } from './trackMove'
 import type { Tracker } from './tracker.types'
 
 describe('trackMove', () => {
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitRecordCallback: Mock<EmitRecordCallback>
   let moveTracker: Tracker
 
   beforeEach(() => {
     const scope = createRecordingScopeForTesting()
     takeFullSnapshotForTesting(scope)
 
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     moveTracker = trackMove(emitRecordCallback, scope)
     registerCleanupTask(() => {
       moveTracker.stop()
@@ -27,14 +28,14 @@ describe('trackMove', () => {
 
     expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.MouseMove,
         positions: [
           {
             x: 1,
             y: 2,
-            id: jasmine.any(Number),
+            id: expect.any(Number),
             timeOffset: 0,
           },
         ],
@@ -48,14 +49,14 @@ describe('trackMove', () => {
 
     expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.TouchMove,
         positions: [
           {
             x: 1,
             y: 2,
-            id: jasmine.any(Number),
+            id: expect.any(Number),
             timeOffset: 0,
           },
         ],

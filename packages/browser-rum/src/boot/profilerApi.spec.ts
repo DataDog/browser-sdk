@@ -1,3 +1,4 @@
+import { vi, describe, expect, it, beforeEach, type Mock } from 'vitest'
 import {
   MID_HASH_UUID,
   replaceMockableWithSpy,
@@ -36,12 +37,10 @@ describe('profilerApi', () => {
   })
 
   describe('bridge mode', () => {
-    let createRumProfilerSpy: jasmine.Spy
+    let createRumProfilerSpy: Mock
 
     beforeEach(() => {
-      createRumProfilerSpy = jasmine
-        .createSpy('createRumProfiler')
-        .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
+      createRumProfilerSpy = vi.fn().mockReturnValue({ start: vi.fn(), stop: vi.fn() })
       replaceMockable(isProfilingSupported, () => true)
       replaceMockable(lazyLoadProfiler, () => Promise.resolve(createRumProfilerSpy))
     })

@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { InitConfiguration } from '@datadog/browser-core'
 import {
@@ -29,12 +30,12 @@ import {
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', applicationId: 'xxx' }
 
 describe('validateAndBuildRumConfiguration', () => {
-  let displayErrorSpy: jasmine.Spy<typeof display.error>
-  let displayWarnSpy: jasmine.Spy<typeof display.warn>
+  let displayErrorSpy: Mock<typeof display.error>
+  let displayWarnSpy: Mock<typeof display.warn>
 
   beforeEach(() => {
-    displayErrorSpy = spyOn(display, 'error')
-    displayWarnSpy = spyOn(display, 'warn')
+    displayErrorSpy = vi.spyOn(display, 'error')
+    displayWarnSpy = vi.spyOn(display, 'warn')
   })
 
   describe('applicationId', () => {
@@ -42,7 +43,7 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, applicationId: undefined as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"applicationId" is required')
+      expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith('"applicationId" is required')
     })
   })
 
@@ -100,14 +101,18 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"sessionReplaySampleRate" must be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith(
+        '"sessionReplaySampleRate" must be a number between 0 and 100'
+      )
 
-      displayErrorSpy.calls.reset()
+      displayErrorSpy.mockClear()
 
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 200 })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"sessionReplaySampleRate" must be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith(
+        '"sessionReplaySampleRate" must be a number between 0 and 100'
+      )
     })
   })
 
@@ -126,11 +131,11 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"traceSampleRate" must be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith('"traceSampleRate" must be a number between 0 and 100')
 
-      displayErrorSpy.calls.reset()
+      displayErrorSpy.mockClear()
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"traceSampleRate" must be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith('"traceSampleRate" must be a number between 0 and 100')
     })
   })
 
@@ -250,14 +255,15 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingUrls: ['foo'] })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith('Service needs to be configured when tracing is enabled')
     })
 
     it('does not validate the configuration if a single valid value is provided without service', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingUrls: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
+      expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith('Service needs to be configured when tracing is enabled')
     })
   })
 
@@ -298,49 +304,49 @@ describe('validateAndBuildRumConfiguration', () => {
 
   describe('trackUserInteractions', () => {
     it('defaults to true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBe(true)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: true })!
           .trackUserInteractions
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: false })!
           .trackUserInteractions
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: 'foo' as any })!
           .trackUserInteractions
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
   describe('trackViewsManually', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackViewsManually).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackViewsManually).toBe(false)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: true })!
           .trackViewsManually
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: false })!
           .trackViewsManually
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: 'foo' as any })!
           .trackViewsManually
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
@@ -348,18 +354,18 @@ describe('validateAndBuildRumConfiguration', () => {
     it('defaults to false', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION })!.startSessionReplayRecordingManually
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, startSessionReplayRecordingManually: true })!
           .startSessionReplayRecordingManually
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, startSessionReplayRecordingManually: false })!
           .startSessionReplayRecordingManually
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
@@ -368,7 +374,7 @@ describe('validateAndBuildRumConfiguration', () => {
           ...DEFAULT_INIT_CONFIGURATION,
           startSessionReplayRecordingManually: 'foo' as any,
         })!.startSessionReplayRecordingManually
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
@@ -454,7 +460,7 @@ describe('validateAndBuildRumConfiguration', () => {
             sessionReplayCanvasRecording: true as any,
           })
         ).toBeUndefined()
-        expect(displayErrorSpy).toHaveBeenCalledOnceWith('"sessionReplayCanvasRecording" is not a valid object')
+        expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith('"sessionReplayCanvasRecording" is not a valid object')
       })
 
       it('requires the enable option', () => {
@@ -464,7 +470,7 @@ describe('validateAndBuildRumConfiguration', () => {
             sessionReplayCanvasRecording: {} as any,
           })
         ).toBeUndefined()
-        expect(displayErrorSpy.calls.allArgs()).toEqual([
+        expect(displayErrorSpy.mock.calls).toEqual([
           ['"enable" is required'],
           ['"sessionReplayCanvasRecording" is not a valid object'],
         ])
@@ -511,76 +517,76 @@ describe('validateAndBuildRumConfiguration', () => {
 
   describe('enablePrivacyForActionName', () => {
     it('defaults to true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBe(true)
     })
 
     it('is false when the option is false', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: false })!
           .enablePrivacyForActionName
-      ).toBeFalse()
+      ).toBe(false)
     })
   })
 
   describe('trackResources', () => {
     it('defaults to true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBe(true)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: true })!.trackResources
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: false })!.trackResources
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: 'foo' as any })!
           .trackResources
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
   describe('betaTrackWebSockets', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaTrackWebSockets).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaTrackWebSockets).toBe(false)
     })
 
     it('is true when the option is enabled', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaTrackWebSockets: true })!
           .betaTrackWebSockets
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
   describe('betaEnableViewUpdates', () => {
     it('defaults to true without a proxy', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBe(true)
     })
 
     it('defaults to false with a proxy', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })!
           .betaEnableViewUpdates
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('defaults to false with a proxy function', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: () => 'https://proxy.example.com' })!
           .betaEnableViewUpdates
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('honors an explicit false without a proxy', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })!
           .betaEnableViewUpdates
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('honors an explicit true with a proxy', () => {
@@ -590,13 +596,13 @@ describe('validateAndBuildRumConfiguration', () => {
           betaEnableViewUpdates: true,
           proxy: 'https://proxy.example.com',
         })!.betaEnableViewUpdates
-      ).toBeTrue()
+      ).toBe(true)
     })
 
     it('is false when the event bridge is used', () => {
       // The bridge replaces the batch transport, so no view_update can ever be created.
       mockEventBridge()
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBe(false)
     })
 
     it('is false when the event bridge is used, even if the option is explicitly enabled', () => {
@@ -604,14 +610,14 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })!
           .betaEnableViewUpdates
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('defaults to false for the Salesforce bundle', () => {
       // The Salesforce bundle is installed as a pinned static resource with no rollback path.
       expect(
         validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce')!.betaEnableViewUpdates
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('is true for the Salesforce bundle when the option is explicitly enabled', () => {
@@ -620,20 +626,20 @@ describe('validateAndBuildRumConfiguration', () => {
           { ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true },
           'rum-salesforce'
         )!.betaEnableViewUpdates
-      ).toBeTrue()
+      ).toBe(true)
     })
 
     it('defaults to true for other bundles', () => {
-      expect(
-        validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-shopify')!.betaEnableViewUpdates
-      ).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-shopify')!.betaEnableViewUpdates).toBe(
+        true
+      )
     })
 
     it('does not validate the configuration if it is not a boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: 'yes' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"betaEnableViewUpdates" must be a boolean')
+      expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith('"betaEnableViewUpdates" must be a boolean')
     })
   })
 
@@ -762,7 +768,7 @@ describe('validateAndBuildRumConfiguration', () => {
           validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: 42 as any })!
             .trackResourceHeaders
         ).toEqual([])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith(
           'trackResourceHeaders should be true or an array of MatchHeader'
         )
       })
@@ -772,7 +778,7 @@ describe('validateAndBuildRumConfiguration', () => {
           validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: [] })!
             .trackResourceHeaders
         ).toEqual([])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith(
           'trackResourceHeaders is an empty array, no headers will be captured'
         )
       })
@@ -784,7 +790,7 @@ describe('validateAndBuildRumConfiguration', () => {
         })!.trackResourceHeaders
 
         expect(result).toEqual([{ name: 'x-valid' }, { name: 'x-also-valid' }])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[1] should be a MatchHeader object')
+        expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith('trackResourceHeaders[1] should be a MatchHeader object')
       })
 
       it('accepts a MatchHeader without name', () => {
@@ -803,7 +809,7 @@ describe('validateAndBuildRumConfiguration', () => {
         })!.trackResourceHeaders
 
         expect(result).toEqual([])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[0].name should be a MatchOption')
+        expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith('trackResourceHeaders[0].name should be a MatchOption')
       })
 
       it('warns and skips item with invalid url', () => {
@@ -813,7 +819,7 @@ describe('validateAndBuildRumConfiguration', () => {
         })!.trackResourceHeaders
 
         expect(result).toEqual([])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[0].url should be a MatchOption')
+        expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith('trackResourceHeaders[0].url should be a MatchOption')
       })
 
       it('warns and skips item with invalid location', () => {
@@ -823,7 +829,7 @@ describe('validateAndBuildRumConfiguration', () => {
         })!.trackResourceHeaders
 
         expect(result).toEqual([])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith(
           "trackResourceHeaders[0].location should be 'request', 'response', or 'any'"
         )
       })
@@ -835,30 +841,30 @@ describe('validateAndBuildRumConfiguration', () => {
         })!.trackResourceHeaders
 
         expect(result).toEqual([])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[0].extractor should be a RegExp')
+        expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith('trackResourceHeaders[0].extractor should be a RegExp')
       })
     })
   })
 
   describe('trackLongTasks', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBe(true)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: true })!.trackLongTasks
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: false })!.trackLongTasks
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: 'foo' as any })!
           .trackLongTasks
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
@@ -916,8 +922,9 @@ describe('validateAndBuildRumConfiguration', () => {
             { match: 'final', propagatorTypes: ['b3multi'] },
           ],
         }
+        expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_propagators).toHaveLength(4)
         expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_propagators).toEqual(
-          jasmine.arrayWithExactContents(['datadog', 'b3', 'b3multi', 'tracecontext'])
+          expect.arrayContaining(['datadog', 'b3', 'b3multi', 'tracecontext'])
         )
       })
 
@@ -1001,7 +1008,7 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         plugins: [plugin],
       })
-      expect(configuration!.plugins).toEqual([jasmine.objectContaining(plugin)])
+      expect(configuration!.plugins).toEqual([expect.objectContaining(plugin)])
     })
   })
   describe('trackFeatureFlagsForEvents', () => {
@@ -1091,7 +1098,8 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         allowedGraphQlUrls: 'not-an-array' as any,
       })
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith('allowedGraphQlUrls should be an array')
+      expect(displayWarnSpy).toHaveBeenCalledTimes(1)
+      expect(displayWarnSpy).toHaveBeenCalledWith('allowedGraphQlUrls should be an array')
     })
   })
 })
@@ -1099,32 +1107,32 @@ describe('validateAndBuildRumConfiguration', () => {
 describe('serializeRumConfiguration', () => {
   describe('beta_enable_view_updates', () => {
     it('reports the effective default without a proxy', () => {
-      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeTrue()
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBe(true)
     })
 
     it('reports the effective default with a proxy', () => {
       expect(
         serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, proxy: 'https://proxy.example.com' })
           .beta_enable_view_updates
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('reports an explicitly disabled option', () => {
       expect(
         serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: false })
           .beta_enable_view_updates
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('reports false when the event bridge is used', () => {
       mockEventBridge()
-      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBeFalse()
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).beta_enable_view_updates).toBe(false)
     })
 
     it('reports false for the Salesforce bundle', () => {
-      expect(
-        serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce').beta_enable_view_updates
-      ).toBeFalse()
+      expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION, 'rum-salesforce').beta_enable_view_updates).toBe(
+        false
+      )
     })
 
     it('reports false when the event bridge is used, even if the option is explicitly enabled', () => {
@@ -1132,7 +1140,7 @@ describe('serializeRumConfiguration', () => {
       expect(
         serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaEnableViewUpdates: true })
           .beta_enable_view_updates
-      ).toBeFalse()
+      ).toBe(false)
     })
   })
 

@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { isThenable, waitForThenable, TIMEOUT_ERROR_MESSAGE } from './thenable'
 import { noop } from './utils/functionUtils'
 
@@ -32,11 +33,11 @@ describe('waitForThenable', () => {
   })
 
   it('rejects with the thenable rejection reason when it settles before the timeout', async () => {
-    await expectAsync(waitForThenable(Promise.reject(new Error('boom')), 1000)).toBeRejectedWithError('boom')
+    await expect(waitForThenable(Promise.reject(new Error('boom')), 1000)).rejects.toThrow('boom')
   })
 
   it('rejects with a timeout error when the thenable does not settle in time', async () => {
     const neverSettles = new Promise(noop)
-    await expectAsync(waitForThenable(neverSettles, 0)).toBeRejectedWithError(TIMEOUT_ERROR_MESSAGE)
+    await expect(waitForThenable(neverSettles, 0)).rejects.toThrow(TIMEOUT_ERROR_MESSAGE)
   })
 })

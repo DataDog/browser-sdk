@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { Context } from '@datadog/browser-core'
 import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
@@ -92,7 +93,7 @@ describe('startLogsAssembly', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           view: COMMON_CONTEXT.view,
         })
       )
@@ -110,7 +111,7 @@ describe('startLogsAssembly', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, savedCommonContext })
 
       expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           view: savedCommonContext.view,
         })
       )
@@ -157,7 +158,7 @@ describe('startLogsAssembly', () => {
     it('should include raw log', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
-      expect(serverLogs[0]).toEqual(jasmine.objectContaining(DEFAULT_MESSAGE))
+      expect(serverLogs[0]).toEqual(expect.objectContaining(DEFAULT_MESSAGE))
     })
   })
 
@@ -194,7 +195,7 @@ describe('startLogsAssembly', () => {
       })
 
       expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           view: {
             referrer: 'referrer_from_defaultLogsEventAttributes',
             url: 'url_from_defaultLogsEventAttributes',
@@ -271,7 +272,7 @@ describe('startLogsAssembly', () => {
 
       expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:2.0.0,foo:bar')
       expect(serverLogs[0].version).toBe('2.0.0')
-      expect(serverLogs[0]).not.toEqual(jasmine.objectContaining({ tags: jasmine.anything() }))
+      expect(serverLogs[0]).not.toEqual(expect.objectContaining({ tags: expect.anything() }))
     })
 
     it('should contain and format the default tags', () => {
@@ -323,7 +324,7 @@ describe('logs limitation', () => {
   let lifeCycle: LifeCycle
   let hooks: Hooks
   let serverLogs: Array<LogsEvent & Context> = []
-  let reportErrorSpy: jasmine.Spy<jasmine.Func>
+  let reportErrorSpy: Mock<(...args: any[]) => any>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
@@ -336,7 +337,7 @@ describe('logs limitation', () => {
     }
 
     beforeSend = noop
-    reportErrorSpy = jasmine.createSpy('reportError')
+    reportErrorSpy = vi.fn()
     startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy, 1)
     clock = mockClock()
   })

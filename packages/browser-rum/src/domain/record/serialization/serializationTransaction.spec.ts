@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { ChangeType, RecordType, StringRole } from '../../../types'
 import { createString } from '../encoding'
@@ -96,8 +97,8 @@ describe('SerializationTransaction', () => {
   })
 
   it('emits a Change record with ImageContent', () => {
-    const emitRecord = jasmine.createSpy<EmitRecordCallback>()
-    const emitStats = jasmine.createSpy<EmitStatsCallback>()
+    const emitRecord = vi.fn<EmitRecordCallback>()
+    const emitStats = vi.fn<EmitStatsCallback>()
     const scope = createRecordingScopeForTesting()
     const nodeId = 42 as NodeId
     const resourceHash = '100x100-abc123'
@@ -111,7 +112,7 @@ describe('SerializationTransaction', () => {
         transaction.setImageContent(nodeId, createString(StringRole.ResourceId, resourceHash))
       }
     )
-    expect(emitRecord).toHaveBeenCalledOnceWith({
+    expect(emitRecord).toHaveBeenCalledExactlyOnceWith({
       type: RecordType.Change,
       timestamp: 123,
       data: [

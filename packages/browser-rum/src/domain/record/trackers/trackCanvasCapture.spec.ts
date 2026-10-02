@@ -1,3 +1,5 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
+import type { Mock } from 'vitest'
 import { globalObject } from '@datadog/js-core/util'
 import { timeStampNow } from '@datadog/js-core/time'
 import {
@@ -28,8 +30,8 @@ describe('trackCanvasCapture', () => {
   let scope: ReturnType<typeof createRecordingScopeForTesting>
   let tracker: Tracker
   let clock: Clock
-  let toBlobSpy: jasmine.Spy
-  let emitRecord: jasmine.Spy<EmitRecordCallback>
+  let toBlobSpy: Mock<HTMLCanvasElement['toBlob']>
+  let emitRecord: Mock<EmitRecordCallback>
 
   const maskingByPrivacyLevel: Record<NodePrivacyLevel, boolean> = {
     [NodePrivacyLevel.ALLOW]: false,
@@ -51,7 +53,7 @@ describe('trackCanvasCapture', () => {
     canvasContext = canvas.getContext('2d')!
     canvasManager = createCanvasManager()
     document.body.appendChild(canvas)
-    toBlobSpy = spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback) => {
+    toBlobSpy = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback: BlobCallback) => {
       callback(new Blob([], { type: 'image/webp' }))
     })
 
@@ -62,7 +64,7 @@ describe('trackCanvasCapture', () => {
   })
 
   function startTracking(
-    emitResource: jasmine.Spy<EmitResourceCallback> = jasmine.createSpy(),
+    emitResource: Mock<EmitResourceCallback> = vi.fn(),
     maxImageDimension = 1000,
     hashingMaxDimension = 100
   ) {
@@ -79,9 +81,9 @@ describe('trackCanvasCapture', () => {
       },
     })
     scope.nodeIds.getOrInsert(canvas)
-    emitRecord = jasmine.createSpy<EmitRecordCallback>()
+    emitRecord = vi.fn<EmitRecordCallback>()
     tracker = trackCanvasCapture(scope, () => {
-      serializeMutations(timeStampNow(), [], emitRecord, emitResource, jasmine.createSpy<EmitStatsCallback>(), scope)
+      serializeMutations(timeStampNow(), [], emitRecord, emitResource, vi.fn<EmitStatsCallback>(), scope)
     })
     return emitResource
   }
@@ -137,12 +139,12 @@ describe('trackCanvasCapture', () => {
     markCanvasDirtyAndWaitForCapture()
     await waitForCanvasCapture()
 
-    expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob), jasmine.any(Function))
+    expect(onCanvasCapture).toHaveBeenCalledExactlyOnceWith(expect.any(String), expect.any(Blob), expect.any(Function))
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
   it('looks up the node ID before reading canvas pixels', async () => {
-    const drawImageSpy = spyOn(CanvasRenderingContext2D.prototype, 'drawImage').and.callThrough()
+    const drawImageSpy = vi.spyOn(CanvasRenderingContext2D.prototype, 'drawImage')
     startTracking()
     scope.nodeIds.delete(canvas)
 
@@ -176,19 +178,19 @@ describe('trackCanvasCapture', () => {
     markCanvasDirtyAndWaitForCapture()
     await collectAsyncCalls(onCanvasCapture, 1)
     await waitForCanvasCapture()
-    const onDiscard = onCanvasCapture.calls.argsFor(0)[2] as () => void
+    const onDiscard = onCanvasCapture.mock.calls[0][2] as () => void
     onDiscard()
 
     clock.tick(1000)
     await collectAsyncCalls(onCanvasCapture, 2)
 
-    expect(onCanvasCapture.calls.argsFor(1)[0]).toBe(onCanvasCapture.calls.argsFor(0)[0])
+    expect(onCanvasCapture.mock.calls[1][0]).toBe(onCanvasCapture.mock.calls[0][0])
   })
 
   it('hashes and emits the same immutable canvas snapshot', async () => {
     let resolveFirstDigest!: () => void
     let isFirstDigest = true
-    const digestSpy = jasmine.createSpy().and.callFake((_algorithm: AlgorithmIdentifier, data: BufferSource) => {
+    const digestSpy = vi.fn().mockImplementation((_algorithm: AlgorithmIdentifier, data: BufferSource) => {
       const bytes = ArrayBuffer.isView(data)
         ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
         : new Uint8Array(data)
@@ -205,7 +207,7 @@ describe('trackCanvasCapture', () => {
     replaceMockable(globalObject.crypto?.subtle, { digest: digestSpy } as unknown as SubtleCrypto)
     // The emitted image is the assertion here, so it has to be a real WebP rather than the empty
     // blob the suite stubs in.
-    toBlobSpy.and.callThrough()
+    toBlobSpy.mockReset()
 
     draw('red')
     const onCanvasCapture = startTracking()
@@ -219,19 +221,19 @@ describe('trackCanvasCapture', () => {
     await collectAsyncCalls(onCanvasCapture, 1)
     await waitForCanvasCapture()
 
-    expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[1]), [255, 0, 0, 255])
+    expectPixelApprox(await firstPixelOf(onCanvasCapture.mock.calls[0][1]), [255, 0, 0, 255])
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
     clock.tick(1000)
     await collectAsyncCalls(onCanvasCapture, 2)
 
-    expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(1)[1]), [0, 0, 255, 255])
-    expect(onCanvasCapture.calls.argsFor(1)[0]).not.toBe(onCanvasCapture.calls.argsFor(0)[0])
+    expectPixelApprox(await firstPixelOf(onCanvasCapture.mock.calls[1][1]), [0, 0, 255, 255])
+    expect(onCanvasCapture.mock.calls[1][0]).not.toBe(onCanvasCapture.mock.calls[0][0])
   })
 
   it('uses a WebGL snapshot captured before its drawing buffer is discarded', async () => {
-    toBlobSpy.and.callThrough()
+    toBlobSpy.mockReset()
     draw('red')
     const snapshot = createCanvasSnapshot(canvas, 1000)!
     const onCanvasCapture = startTracking()
@@ -241,7 +243,7 @@ describe('trackCanvasCapture', () => {
     markCanvasDirtyAndWaitForCapture()
     await collectAsyncCalls(onCanvasCapture, 1)
 
-    expectPixelApprox(await firstPixelOf(onCanvasCapture.calls.argsFor(0)[1]), [255, 0, 0, 255])
+    expectPixelApprox(await firstPixelOf(onCanvasCapture.mock.calls[0][1]), [255, 0, 0, 255])
   })
 
   const nodeIdentityChanges: Array<{ description: string; change: () => NodeId | undefined }> = [
@@ -282,9 +284,9 @@ describe('trackCanvasCapture', () => {
       expect(onCanvasCapture).toHaveBeenCalledTimes(2)
       if (currentNodeId !== undefined) {
         expect(currentNodeId).not.toBe(previousNodeId)
-        expect(emitRecord.calls.argsFor(1)[0]).toEqual(
-          jasmine.objectContaining({
-            data: jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]]),
+        expect(emitRecord.mock.calls[1][0]).toEqual(
+          expect.objectContaining({
+            data: expect.arrayContaining([[ChangeType.ImageContent, [currentNodeId, expect.any(Number)]]]),
           })
         )
       }
@@ -315,7 +317,7 @@ describe('trackCanvasCapture', () => {
       resolveFirstDigest = resolve
     })
     let isFirstDigest = true
-    const digestSpy = jasmine.createSpy().and.callFake(() => {
+    const digestSpy = vi.fn().mockImplementation(() => {
       if (isFirstDigest) {
         isFirstDigest = false
         return firstDigestPromise
@@ -329,7 +331,7 @@ describe('trackCanvasCapture', () => {
   function deferFirstBlob(): () => void {
     let resolveFirstBlob!: BlobCallback
     let isFirstBlob = true
-    toBlobSpy.and.callFake((callback: BlobCallback) => {
+    toBlobSpy.mockImplementation((callback: BlobCallback) => {
       if (isFirstBlob) {
         isFirstBlob = false
         resolveFirstBlob = callback
@@ -363,10 +365,14 @@ describe('trackCanvasCapture', () => {
       clock.tick(1000)
       await waitForCanvasCapture()
 
-      expect(onCanvasCapture).toHaveBeenCalledOnceWith(jasmine.any(String), jasmine.any(Blob), jasmine.any(Function))
-      expect(emitRecord.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
-          data: jasmine.arrayContaining([[ChangeType.ImageContent, [currentNodeId, jasmine.any(Number)]]]),
+      expect(onCanvasCapture).toHaveBeenCalledExactlyOnceWith(
+        expect.any(String),
+        expect.any(Blob),
+        expect.any(Function)
+      )
+      expect(emitRecord.mock.calls[0][0]).toEqual(
+        expect.objectContaining({
+          data: expect.arrayContaining([[ChangeType.ImageContent, [currentNodeId, expect.any(Number)]]]),
         })
       )
     })
@@ -374,7 +380,9 @@ describe('trackCanvasCapture', () => {
 
   it('leaves the canvas dirty when emitting the canvas resource fails', async () => {
     draw('red')
-    const onCanvasCapture = jasmine.createSpy<EmitResourceCallback>().and.throwError('resource failed')
+    const onCanvasCapture: Mock<EmitResourceCallback> = vi.fn().mockImplementation(() => {
+      throw new Error('resource failed')
+    })
     startTracking(onCanvasCapture)
 
     markCanvasDirtyAndWaitForCapture()
@@ -385,9 +393,9 @@ describe('trackCanvasCapture', () => {
 
   it('does not mark the canvas as tainted when emitting the canvas resource throws a SecurityError', async () => {
     draw('red')
-    const onCanvasCapture = jasmine
-      .createSpy<EmitResourceCallback>()
-      .and.throwError(new DOMException('resource emission failed', 'SecurityError'))
+    const onCanvasCapture: Mock<EmitResourceCallback> = vi.fn().mockImplementation(() => {
+      throw new DOMException('resource emission failed', 'SecurityError')
+    })
     startTracking(onCanvasCapture)
 
     markCanvasDirtyAndWaitForCapture()
@@ -397,7 +405,7 @@ describe('trackCanvasCapture', () => {
   })
 
   it('leaves the canvas dirty when hashing is unavailable', async () => {
-    spyOn(HTMLCanvasElement.prototype, 'getContext').and.returnValue(null)
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
     const onCanvasCapture = startTracking()
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
@@ -409,7 +417,7 @@ describe('trackCanvasCapture', () => {
   })
 
   it('stops trying to capture a canvas when taking the snapshot throws', async () => {
-    const drawImageSpy = spyOn(CanvasRenderingContext2D.prototype, 'drawImage').and.callFake(() => {
+    const drawImageSpy = vi.spyOn(CanvasRenderingContext2D.prototype, 'drawImage').mockImplementation(() => {
       throw new DOMException('canvas is tainted', 'SecurityError')
     })
     startTracking()
@@ -418,7 +426,7 @@ describe('trackCanvasCapture', () => {
     await waitForCanvasCapture()
 
     expect(drawImageSpy).toHaveBeenCalledTimes(1)
-    expect(drawImageSpy.calls.argsFor(0).slice(0, 5)).toEqual([canvas, 0, 0, 2, 2])
+    expect(drawImageSpy.mock.calls[0].slice(0, 5)).toEqual([canvas, 0, 0, 2, 2])
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { MockZoneJs } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockZoneJs } from '@datadog/browser-core/test'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
@@ -8,27 +9,28 @@ const DOM_MUTATION_OBSERVABLE_DURATION = 16
 
 describe('domMutationObservable', () => {
   function domMutationSpec(mutate: (root: HTMLElement) => void, { expectedMutations }: { expectedMutations: number }) {
-    return (done: DoneFn) => {
-      const root = document.createElement('div')
-      root.setAttribute('data-test', 'foo')
-      root.appendChild(document.createElement('span'))
-      root.appendChild(document.createTextNode('foo'))
-      document.body.appendChild(root)
+    return () =>
+      new Promise<void>((resolve) => {
+        const root = document.createElement('div')
+        root.setAttribute('data-test', 'foo')
+        root.appendChild(document.createElement('span'))
+        root.appendChild(document.createTextNode('foo'))
+        document.body.appendChild(root)
 
-      const domMutationObservable = createDOMMutationObservable()
+        const domMutationObservable = createDOMMutationObservable()
 
-      let counter = 0
-      const domMutationSubscription = domMutationObservable.subscribe(() => (counter += 1))
+        let counter = 0
+        const domMutationSubscription = domMutationObservable.subscribe(() => (counter += 1))
 
-      mutate(root)
+        mutate(root)
 
-      setTimeout(() => {
-        expect(counter).toBe(expectedMutations)
-        root.parentNode!.removeChild(root)
-        domMutationSubscription.unsubscribe()
-        done()
-      }, DOM_MUTATION_OBSERVABLE_DURATION)
-    }
+        setTimeout(() => {
+          expect(counter).toBe(expectedMutations)
+          root.parentNode!.removeChild(root)
+          domMutationSubscription.unsubscribe()
+          resolve()
+        }, DOM_MUTATION_OBSERVABLE_DURATION)
+      })
   }
 
   it(

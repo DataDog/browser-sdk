@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import type { BrowserWindow } from '@datadog/browser-rum-core'
 import {
@@ -11,18 +12,7 @@ import { ChangeType } from '../../../types'
 
 import { serializeHtml } from '../test/serializeHtml.specHelper'
 
-describe('serializeNode for form elements', () => {
-  let originalTimeout: number
-
-  beforeAll(() => {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
-  })
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
-  })
-
+describe('serializeNode for form elements', { timeout: 10000 }, () => {
   describe('<input type="button">', () => {
     it('serializes the element', async () => {
       const record = await serializeHtml('<input type="button" value="Click here"></input>')

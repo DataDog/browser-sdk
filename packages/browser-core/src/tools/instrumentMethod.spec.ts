@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
@@ -21,7 +22,7 @@ describe('instrumentMethod', () => {
       const object = { method: () => 1 }
       Object.defineProperty(object, 'method', { writable: false, configurable })
       const descriptor = Object.getOwnPropertyDescriptor(object, 'method')!
-      const instrumentationSpy = jasmine.createSpy()
+      const instrumentationSpy = vi.fn()
 
       const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
       registerCleanupTask(stop)
@@ -43,7 +44,7 @@ describe('instrumentMethod', () => {
       },
     }
     const descriptor = Object.getOwnPropertyDescriptor(object, 'method')!
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
 
     const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
     registerCleanupTask(stop)
@@ -61,7 +62,7 @@ describe('instrumentMethod', () => {
     const object = { method: () => 1 }
     Object.defineProperty(object, 'method', { configurable: false })
     const descriptor = Object.getOwnPropertyDescriptor(object, 'method')!
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
 
     const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
     registerCleanupTask(stop)
@@ -87,7 +88,7 @@ describe('instrumentMethod', () => {
     }
     Object.defineProperty(object, 'method', { configurable: false })
     const descriptor = Object.getOwnPropertyDescriptor(object, 'method')!
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
 
     const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
     registerCleanupTask(stop)
@@ -102,15 +103,15 @@ describe('instrumentMethod', () => {
   })
 
   it('calls the instrumentation before the original method', () => {
-    const originalSpy = jasmine.createSpy()
-    const instrumentationSpy = jasmine.createSpy()
+    const originalSpy = vi.fn()
+    const instrumentationSpy = vi.fn()
     const object = { method: originalSpy }
 
     instrumentMethod(object, 'method', instrumentationSpy)
 
     object.method()
 
-    expect(instrumentationSpy).toHaveBeenCalledBefore(originalSpy)
+    expect(instrumentationSpy.mock.invocationCallOrder[0]).toBeLessThan(originalSpy.mock.invocationCallOrder[0])
   })
 
   it('does not set a method originally undefined', () => {
@@ -124,7 +125,7 @@ describe('instrumentMethod', () => {
   it('sets an event handler even if it was originally undefined', () => {
     const object: { onevent?: () => void } = { onevent: undefined }
 
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
     instrumentMethod(object, 'onevent', instrumentationSpy)
 
     expect(object.onevent).toBeDefined()
@@ -136,27 +137,28 @@ describe('instrumentMethod', () => {
   it('do not set an event handler even if the event is not supported (i.e. property does not exist on object)', () => {
     const object: { onevent?: () => void } = {}
 
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
     instrumentMethod(object, 'onevent', instrumentationSpy)
 
-    expect('onevent' in object).toBeFalse()
+    expect('onevent' in object).toBe(false)
   })
 
   it('calls the instrumentation with method target and parameters', () => {
     const object = { method: (a: number, b: number) => a + b }
-    const instrumentationSpy = jasmine.createSpy<(call: InstrumentedMethodCall<typeof object, 'method'>) => void>()
+    const instrumentationSpy = vi.fn<(call: InstrumentedMethodCall<typeof object, 'method'>) => void>()
     instrumentMethod(object, 'method', instrumentationSpy)
 
     object.method(2, 3)
 
-    expect(instrumentationSpy).toHaveBeenCalledOnceWith({
+    expect(instrumentationSpy).toHaveBeenCalledTimes(1)
+    expect(instrumentationSpy).toHaveBeenCalledWith({
       target: object,
-      parameters: jasmine.any(Object),
-      onPostCall: jasmine.any(Function),
+      parameters: expect.any(Object),
+      onPostCall: expect.any(Function),
       handlingStack: undefined,
     })
-    expect(instrumentationSpy.calls.mostRecent().args[0].parameters[0]).toBe(2)
-    expect(instrumentationSpy.calls.mostRecent().args[0].parameters[1]).toBe(3)
+    expect(instrumentationSpy.mock.lastCall![0].parameters[0]).toBe(2)
+    expect(instrumentationSpy.mock.lastCall![0].parameters[1]).toBe(3)
   })
 
   it('allows replacing a parameter', () => {
@@ -179,17 +181,18 @@ describe('instrumentMethod', () => {
 
   it('calls the "onPostCall" callback with the original method result', () => {
     const object = { method: () => 1 }
-    const onPostCallSpy = jasmine.createSpy()
+    const onPostCallSpy = vi.fn()
     instrumentMethod(object, 'method', ({ onPostCall }) => onPostCall(onPostCallSpy))
 
     object.method()
 
-    expect(onPostCallSpy).toHaveBeenCalledOnceWith(1)
+    expect(onPostCallSpy).toHaveBeenCalledTimes(1)
+    expect(onPostCallSpy).toHaveBeenCalledWith(1)
   })
 
   it('allows other instrumentations from third parties', () => {
     const object = { method: () => 1 }
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
     instrumentMethod(object, 'method', instrumentationSpy)
 
     thirdPartyInstrumentation(object)
@@ -200,7 +203,7 @@ describe('instrumentMethod', () => {
 
   it('computes the handling stack', () => {
     const object = { method: () => 1 }
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
     instrumentMethod(object, 'method', instrumentationSpy, { computeHandlingStack: true })
 
     function foo() {
@@ -209,15 +212,15 @@ describe('instrumentMethod', () => {
 
     foo()
 
-    expect(instrumentationSpy.calls.mostRecent().args[0].handlingStack).toEqual(
-      jasmine.stringMatching(/^HandlingStack: instrumented method\n {2}at foo @/)
+    expect(instrumentationSpy.mock.lastCall![0].handlingStack).toEqual(
+      expect.stringMatching(/^HandlingStack: instrumented method\n {2}at foo @/)
     )
   })
 
   describe('stop()', () => {
     it('does not call the instrumentation anymore', () => {
       const object = { method: () => 1 }
-      const instrumentationSpy = jasmine.createSpy()
+      const instrumentationSpy = vi.fn()
       const { stop } = instrumentMethod(object, 'method', () => instrumentationSpy)
 
       stop()
@@ -241,7 +244,7 @@ describe('instrumentMethod', () => {
 
       it('does not call the instrumentation', () => {
         const object = { method: () => 1 }
-        const instrumentationSpy = jasmine.createSpy()
+        const instrumentationSpy = vi.fn()
         const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
 
         thirdPartyInstrumentation(object)
@@ -298,7 +301,7 @@ describe('instrumentConstructor', () => {
     const descriptor = Object.getOwnPropertyDescriptor(container, 'MyClass')!
     const prototype = MyClass.prototype
     const constructorDescriptor = Object.getOwnPropertyDescriptor(prototype, 'constructor')!
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
 
     const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
     registerCleanupTask(stop)
@@ -315,14 +318,15 @@ describe('instrumentConstructor', () => {
 
   it('calls the instrumentation when the constructor is called with new', () => {
     const container = { MyClass }
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
     instrumentConstructor(container, 'MyClass', instrumentationSpy)
 
     const instance = new container.MyClass(42)
 
-    expect(instrumentationSpy).toHaveBeenCalledOnceWith({
+    expect(instrumentationSpy).toHaveBeenCalledOnce()
+    expect(instrumentationSpy).toHaveBeenCalledWith({
       parameters: [42],
-      onPostCall: jasmine.any(Function),
+      onPostCall: expect.any(Function),
       handlingStack: undefined,
     })
     expect(instance.value).toBe(42)
@@ -331,7 +335,7 @@ describe('instrumentConstructor', () => {
 
   it('allows other instrumentations from third parties', () => {
     const container = { MyClass }
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
     instrumentConstructor(container, 'MyClass', instrumentationSpy)
 
     thirdPartyConstructorWrap(container)
@@ -345,7 +349,7 @@ describe('instrumentConstructor', () => {
 
   it('computes the handling stack', () => {
     const container = { MyClass }
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
     instrumentConstructor(container, 'MyClass', instrumentationSpy, { computeHandlingStack: true })
 
     function foo() {
@@ -354,14 +358,14 @@ describe('instrumentConstructor', () => {
 
     foo()
 
-    expect(instrumentationSpy.calls.mostRecent().args[0].handlingStack).toEqual(
-      jasmine.stringMatching(/^HandlingStack: instrumented constructor\n {2}at foo @/)
+    expect(instrumentationSpy.mock.calls[instrumentationSpy.mock.calls.length - 1][0].handlingStack).toEqual(
+      expect.stringMatching(/^HandlingStack: instrumented constructor\n {2}at foo @/)
     )
   })
 
   it('does not call the instrumentation when the constructor is invoked without new', () => {
     const container = { MyClass }
-    const instrumentationSpy = jasmine.createSpy()
+    const instrumentationSpy = vi.fn()
     instrumentConstructor(container, 'MyClass', instrumentationSpy)
 
     // Bare `[[Call]]` has no `new.target`; the original class constructor throws before any work.
@@ -379,20 +383,20 @@ describe('instrumentConstructor', () => {
     const instance = new container.MyClass(1)
 
     // The instance is recognized both as the original class and as the instrumented value.
-    expect(instance instanceof MyClass).toBeTrue()
-    expect(instance instanceof container.MyClass).toBeTrue()
+    expect(instance instanceof MyClass).toBe(true)
+    expect(instance instanceof container.MyClass).toBe(true)
   })
 
   it('keeps the constructor prototype property non-writable after instrumentation', () => {
     const originalPrototypeDescriptor = Object.getOwnPropertyDescriptor(MyClass, 'prototype')!
-    expect(originalPrototypeDescriptor.writable).toBeFalse()
+    expect(originalPrototypeDescriptor.writable).toBe(false)
 
     const container = { MyClass }
     const { stop } = instrumentConstructor(container, 'MyClass', noop)
     registerCleanupTask(stop)
 
     const instrumentedPrototypeDescriptor = Object.getOwnPropertyDescriptor(container.MyClass, 'prototype')!
-    expect(instrumentedPrototypeDescriptor.writable).toBeFalse()
+    expect(instrumentedPrototypeDescriptor.writable).toBe(false)
   })
 
   it('exposes the instrumented constructor as instance.constructor', () => {
@@ -471,18 +475,21 @@ describe('instrumentConstructor', () => {
     container.MyClass = class extends OurInstrumentation {}
 
     const instance = new container.MyClass(99)
-    expect(instance instanceof container.MyClass).toBeTrue()
+    expect(instance instanceof container.MyClass).toBe(true)
   })
 
   it('passes the constructed instance to onPostCall', () => {
     const container = { MyClass }
-    const postCallCallbackSpy = jasmine.createSpy()
+    const postCallCallbackSpy = vi.fn()
     instrumentConstructor(container, 'MyClass', ({ onPostCall }) => onPostCall(postCallCallbackSpy))
 
     const instance = new container.MyClass(7)
 
-    expect(postCallCallbackSpy).toHaveBeenCalledOnceWith(instance)
-    expect((postCallCallbackSpy.calls.mostRecent().args[0] as MyClassInstance).value).toBe(7)
+    expect(postCallCallbackSpy).toHaveBeenCalledOnce()
+    expect(postCallCallbackSpy).toHaveBeenCalledWith(instance)
+    expect(
+      (postCallCallbackSpy.mock.calls[postCallCallbackSpy.mock.calls.length - 1][0] as MyClassInstance).value
+    ).toBe(7)
   })
 
   it('does not instrument a constructor that does not exist', () => {
@@ -497,7 +504,7 @@ describe('instrumentConstructor', () => {
   describe('stop()', () => {
     it('constructs without calling the instrumentation when calling new Original()', () => {
       const container = { MyClass }
-      const instrumentationSpy = jasmine.createSpy()
+      const instrumentationSpy = vi.fn()
       const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
 
       stop()
@@ -505,13 +512,13 @@ describe('instrumentConstructor', () => {
       const instance = new container.MyClass(5)
 
       expect(instrumentationSpy).not.toHaveBeenCalled()
-      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance instanceof MyClass).toBe(true)
       expect(instance.value).toBe(5)
     })
 
     it('constructs without calling the instrumentation when calling the instrumentation reference', () => {
       const container = { MyClass }
-      const instrumentationSpy = jasmine.createSpy()
+      const instrumentationSpy = vi.fn()
       const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
 
       const OurInstrumentation = container.MyClass
@@ -521,7 +528,7 @@ describe('instrumentConstructor', () => {
       const instance = new OurInstrumentation(5)
 
       expect(instrumentationSpy).not.toHaveBeenCalled()
-      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance instanceof MyClass).toBe(true)
       expect(instance.value).toBe(5)
     })
 
@@ -540,7 +547,7 @@ describe('instrumentConstructor', () => {
 
       it('does not call the instrumentation when constructing after stop()', () => {
         const container = { MyClass }
-        const instrumentationSpy = jasmine.createSpy()
+        const instrumentationSpy = vi.fn()
         const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
 
         thirdPartyConstructorWrap(container)
@@ -552,7 +559,7 @@ describe('instrumentConstructor', () => {
         expect(instrumentationSpy).not.toHaveBeenCalled()
         expect(instance.value).toBe(5)
         expect(instance.thirdPartyTag).toBe(THIRD_PARTY_CONSTRUCTOR_TAG)
-        expect(instance instanceof MyClass).toBeTrue()
+        expect(instance instanceof MyClass).toBe(true)
       })
     })
 
@@ -574,7 +581,7 @@ describe('instrumentConstructor', () => {
       // and loses the subclass prototype methods.
       const instance = new Sub(5)
 
-      expect(instance instanceof Sub).toBeTrue()
+      expect(instance instanceof Sub).toBe(true)
       expect(instance.extra()).toBe('sub')
       expect(instance.value).toBe(5)
     })
@@ -701,18 +708,19 @@ describe('instrumentSetter', () => {
   })
 
   it('calls the original setter', () => {
-    const originalSetterSpy = jasmine.createSpy()
+    const originalSetterSpy = vi.fn()
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: originalSetterSpy, configurable: true })
 
     instrumentSetter(object, 'foo', noop)
 
     object.foo = 1
-    expect(originalSetterSpy).toHaveBeenCalledOnceWith(1)
+    expect(originalSetterSpy).toHaveBeenCalledTimes(1)
+    expect(originalSetterSpy).toHaveBeenCalledWith(1)
   })
 
   it('calls the instrumentation asynchronously', () => {
-    const instrumentationSetterSpy = jasmine.createSpy()
+    const instrumentationSetterSpy = vi.fn()
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })
 
@@ -721,12 +729,13 @@ describe('instrumentSetter', () => {
     object.foo = 1
     expect(instrumentationSetterSpy).not.toHaveBeenCalled()
     clock.tick(0)
-    expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 1)
+    expect(instrumentationSetterSpy).toHaveBeenCalledTimes(1)
+    expect(instrumentationSetterSpy).toHaveBeenCalledWith(object, 1)
   })
 
   it('does not use the Zone.js setTimeout function', () => {
-    const zoneJsSetTimeoutSpy = jasmine.createSpy()
-    zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
+    const zoneJsSetTimeoutSpy = vi.fn()
+    zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy as any)
 
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })
@@ -742,15 +751,17 @@ describe('instrumentSetter', () => {
   it('allows other instrumentations from third parties', () => {
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })
-    const instrumentationSetterSpy = jasmine.createSpy()
+    const instrumentationSetterSpy = vi.fn()
     instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
     const thirdPartyInstrumentationSpy = thirdPartyInstrumentation(object)
 
     object.foo = 2
-    expect(thirdPartyInstrumentationSpy).toHaveBeenCalledOnceWith(2)
+    expect(thirdPartyInstrumentationSpy).toHaveBeenCalledTimes(1)
+    expect(thirdPartyInstrumentationSpy).toHaveBeenCalledWith(2)
     clock.tick(0)
-    expect(instrumentationSetterSpy).toHaveBeenCalledOnceWith(object, 2)
+    expect(instrumentationSetterSpy).toHaveBeenCalledTimes(1)
+    expect(instrumentationSetterSpy).toHaveBeenCalledWith(object, 2)
   })
 
   describe('stop()', () => {
@@ -771,7 +782,7 @@ describe('instrumentSetter', () => {
     it('does not call the instrumentation anymore', () => {
       const object = {} as { foo: number }
       Object.defineProperty(object, 'foo', { set: noop, configurable: true })
-      const instrumentationSetterSpy = jasmine.createSpy()
+      const instrumentationSetterSpy = vi.fn()
       const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
       stop()
@@ -785,7 +796,7 @@ describe('instrumentSetter', () => {
     it('does not call instrumentation pending in the event loop via setTimeout', () => {
       const object = {} as { foo: number }
       Object.defineProperty(object, 'foo', { set: noop, configurable: true })
-      const instrumentationSetterSpy = jasmine.createSpy()
+      const instrumentationSetterSpy = vi.fn()
       const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
       object.foo = 2
@@ -812,7 +823,7 @@ describe('instrumentSetter', () => {
       it('does not call the instrumentation', () => {
         const object = {} as { foo: number }
         Object.defineProperty(object, 'foo', { set: noop, configurable: true })
-        const instrumentationSetterSpy = jasmine.createSpy()
+        const instrumentationSetterSpy = vi.fn()
         const { stop } = instrumentSetter(object, 'foo', instrumentationSetterSpy)
 
         thirdPartyInstrumentation(object)
@@ -830,7 +841,7 @@ describe('instrumentSetter', () => {
   function thirdPartyInstrumentation(object: { foo: number }) {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const originalSetter = Object.getOwnPropertyDescriptor(object, 'foo')!.set
-    const thirdPartyInstrumentationSpy = jasmine.createSpy().and.callFake(function (this: any, value) {
+    const thirdPartyInstrumentationSpy = vi.fn().mockImplementation(function (this: any, value) {
       if (originalSetter) {
         originalSetter.call(this, value)
       }

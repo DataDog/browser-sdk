@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
 import { DISCARDED, createHook } from '@datadog/js-core/assembly'
@@ -27,9 +28,9 @@ describe('session context', () => {
     sessionManager.setId('00000000-0000-0000-0000-000000000123')
     const recorderApi = { ...noopRecorderApi }
 
-    const isRecordingSpy = spyOn(recorderApi, 'isRecording')
-    const getReplayStatsSpy = spyOn(recorderApi, 'getReplayStats')
-    const findViewSpy = spyOn(viewHistory, 'findView').and.returnValue(fakeView)
+    const isRecordingSpy = vi.spyOn(recorderApi, 'isRecording')
+    const getReplayStatsSpy = vi.spyOn(recorderApi, 'getReplayStats')
+    const findViewSpy = vi.spyOn(viewHistory, 'findView').mockReturnValue(fakeView)
 
     const configuration = mockRumConfiguration({ sessionReplaySampleRate: 100, ...configOverride })
     startSessionContext(hook, configuration, sessionManager, recorderApi, viewHistory)
@@ -39,7 +40,7 @@ describe('session context', () => {
 
   it('should set id and type', () => {
     const { hook, isRecordingSpy } = setup()
-    isRecordingSpy.and.returnValue(true)
+    isRecordingSpy.mockReturnValue(true)
 
     const defaultRumEventAttributes = hook.trigger({
       eventType: 'action',
@@ -48,8 +49,8 @@ describe('session context', () => {
 
     expect(defaultRumEventAttributes).toEqual({
       type: 'action',
-      session: jasmine.objectContaining({
-        id: jasmine.any(String),
+      session: expect.objectContaining({
+        id: expect.any(String),
         type: SessionType.USER,
       }),
     })
@@ -58,13 +59,13 @@ describe('session context', () => {
   it('should set hasReplay when recording has started (isRecording) on events', () => {
     const { hook, isRecordingSpy, getReplayStatsSpy } = setup()
 
-    isRecordingSpy.and.returnValue(true)
+    isRecordingSpy.mockReturnValue(true)
     const eventWithHasReplay = hook.trigger({
       eventType: 'action',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
 
-    isRecordingSpy.and.returnValue(false)
+    isRecordingSpy.mockReturnValue(false)
     const eventWithoutHasReplay = hook.trigger({
       eventType: 'action',
       startTime: 0 as RelativeTime,
@@ -79,13 +80,13 @@ describe('session context', () => {
   it('should set hasReplay when there are Replay stats on view events', () => {
     const { hook, getReplayStatsSpy, isRecordingSpy } = setup()
 
-    getReplayStatsSpy.and.returnValue(fakeStats)
+    getReplayStatsSpy.mockReturnValue(fakeStats)
     const eventWithHasReplay = hook.trigger({
       eventType: 'view',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
 
-    getReplayStatsSpy.and.returnValue(undefined)
+    getReplayStatsSpy.mockReturnValue(undefined)
     const eventWithoutHasReplay = hook.trigger({
       eventType: 'view',
       startTime: 0 as RelativeTime,
@@ -100,13 +101,13 @@ describe('session context', () => {
   it('should set session.is_active when the session is active', () => {
     const { hook, findViewSpy } = setup()
 
-    findViewSpy.and.returnValue({ ...fakeView, sessionIsActive: true })
+    findViewSpy.mockReturnValue({ ...fakeView, sessionIsActive: true })
     const eventWithActiveSession = hook.trigger({
       eventType: 'view',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
 
-    findViewSpy.and.returnValue({ ...fakeView, sessionIsActive: false })
+    findViewSpy.mockReturnValue({ ...fakeView, sessionIsActive: false })
     const eventWithoutActiveSession = hook.trigger({
       eventType: 'view',
       startTime: 0 as RelativeTime,
@@ -146,7 +147,7 @@ describe('session context', () => {
 
   it('should discard the event if no view', () => {
     const { hook, findViewSpy } = setup()
-    findViewSpy.and.returnValue(undefined)
+    findViewSpy.mockReturnValue(undefined)
     const defaultRumEventAttributes = hook.trigger({
       eventType: 'view',
       startTime: 0 as RelativeTime,
