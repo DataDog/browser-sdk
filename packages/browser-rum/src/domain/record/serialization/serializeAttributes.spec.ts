@@ -113,6 +113,8 @@ describe('serializeDOMAttributes', () => {
       // contexts.
       { html: '<a href="value">', expectedBehavior: 'maskable' },
       { html: '<div href="value">', expectedBehavior: 'always-unmasked' },
+      { html: '<form action="value">', expectedBehavior: 'maskable' },
+      { html: '<div action="value">', expectedBehavior: 'always-unmasked' },
       { html: '<iframe srcdoc="value">', expectedBehavior: 'maskable' },
       { html: '<div srcdoc="value">', expectedBehavior: 'always-unmasked' },
       { html: '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">', expectedBehavior: 'maskable-image' },
