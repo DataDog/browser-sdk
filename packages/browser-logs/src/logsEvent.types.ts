@@ -24,6 +24,10 @@ export interface LogsEvent {
    */
   service?: string
   /**
+   * The version for this application
+   */
+  version?: string
+  /**
    * Tags of the log
    */
   ddtags?: string

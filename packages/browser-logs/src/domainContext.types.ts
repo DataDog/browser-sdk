@@ -1,4 +1,4 @@
-import type { ErrorSource } from '@datadog/browser-core'
+import type { ErrorSource, RawReportError } from '@datadog/browser-core'
 
 export type LogsEventDomainContext<T extends ErrorSource = any> = T extends typeof ErrorSource.NETWORK
   ? NetworkLogsEventDomainContext
@@ -6,7 +6,9 @@ export type LogsEventDomainContext<T extends ErrorSource = any> = T extends type
     ? ConsoleLogsEventDomainContext
     : T extends typeof ErrorSource.LOGGER
       ? LoggerLogsEventDomainContext
-      : undefined
+      : T extends typeof ErrorSource.REPORT
+        ? ReportLogsEventDomainContext
+        : undefined
 
 export interface NetworkLogsEventDomainContext {
   handlingStack?: string
@@ -18,4 +20,8 @@ export interface ConsoleLogsEventDomainContext {
 
 export interface LoggerLogsEventDomainContext {
   handlingStack: string
+}
+
+export interface ReportLogsEventDomainContext {
+  report: RawReportError['originalError']
 }

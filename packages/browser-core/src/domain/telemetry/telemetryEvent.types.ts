@@ -494,9 +494,17 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
         [k: string]: unknown
       }
       /**
-       * The percentage of sessions with Profiling enabled
+       * The percentage of sessions with Continuous profiling enabled
        */
       profiling_sample_rate?: number
+      /**
+       * The percentage of sessions with Application Launch profiling enabled. For mobile SDKs, this is the sampling rate of application launch profiling
+       */
+      profiling_application_launch_sample_rate?: number
+      /**
+       * Whether collecting a profile when an ANR occurs is enabled on Android
+       */
+      profiling_anr_enabled?: boolean
       /**
        * Whether trace baggage is propagated to child spans
        */

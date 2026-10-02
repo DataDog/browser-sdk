@@ -25,6 +25,7 @@ export type {
   NetworkLogsEventDomainContext,
   ConsoleLogsEventDomainContext,
   LoggerLogsEventDomainContext,
+  ReportLogsEventDomainContext,
 } from '../domainContext.types'
 
 /**
