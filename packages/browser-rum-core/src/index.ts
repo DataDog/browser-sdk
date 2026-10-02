@@ -64,6 +64,18 @@ export type { RumPlugin, OnRumStartOptions, RumPluginOnInitOptions } from './dom
 export type { MouseEventOnElement } from './domain/action/listenActionEvents'
 export { supportPerformanceTimingEvent } from './browser/performanceObservable'
 export { RumPerformanceEntryType } from './browser/performanceObservable'
+/**
+ * @internal
+ * Exposed for first-party Datadog plugin packages (e.g. browser-plugin-long-task) that need to
+ * build raw events from browser performance entries themselves. Not committed as stable public
+ * API yet.
+ */
+export { createPerformanceObservable } from './browser/performanceObservable'
+export type {
+  RumPerformanceLongTaskTiming,
+  RumPerformanceLongAnimationFrameTiming,
+  RumPerformanceScriptTiming,
+} from './browser/performanceObservable'
 export type { AllowedRawRumEvent } from './domain/event/eventCollection'
 export type {
   DurationVitalStart,

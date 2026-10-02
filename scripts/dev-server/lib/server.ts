@@ -22,6 +22,9 @@ const PACKAGES_WITH_BUNDLE = [
   'browser-worker',
   'browser-debugger',
   'browser-rum-shopify',
+  // SPIKE-ONLY: serves the long-task plugin spike for sandbox verification. Remove with the rest
+  // of the spike.
+  'browser-plugin-long-task',
 ]
 
 export function runServer({ writeIntakeFile = true }: { writeIntakeFile?: boolean } = {}): void {

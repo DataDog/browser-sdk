@@ -470,6 +470,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-plugin-long-task@workspace:packages/browser-plugin-long-task":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-plugin-long-task@workspace:packages/browser-plugin-long-task"
+  dependencies:
+    "@datadog/browser-core": "workspace:*"
+    "@datadog/browser-rum-core": "workspace:*"
+    "@datadog/js-core": "workspace:*"
+  peerDependencies:
+    "@datadog/browser-core": "workspace:*"
+    "@datadog/browser-rum-core": "workspace:*"
+    "@datadog/js-core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-plugin-wasm@workspace:packages/browser-plugin-wasm":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-plugin-wasm@workspace:packages/browser-plugin-wasm"

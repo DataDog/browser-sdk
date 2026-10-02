@@ -44,7 +44,8 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
-import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
+// SPIKE: startLongTaskCollection import removed. Long tasks now live in the
+// @datadog/browser-plugin-long-task package (feasibility spike, see Early investigation doc).
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
@@ -217,8 +218,7 @@ export function startRumEventCollection(
   const resourceCollection = startResourceCollection(lifeCycle, configuration)
   cleanupTasks.push(resourceCollection.stop)
 
-  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
-  cleanupTasks.push(stopLongTaskCollection)
+  // SPIKE: long-task collection removed from core. See @datadog/browser-plugin-long-task.
 
   const { addError } = startErrorCollection(lifeCycle, bufferedDataObservable)
 
