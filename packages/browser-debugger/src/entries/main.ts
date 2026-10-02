@@ -123,6 +123,16 @@ export interface DebuggerInitConfiguration {
   maxUnreachableDuration?: number
 
   /**
+   * Whether to start a RUM custom action on the first hit of each probe, if the RUM Browser SDK is
+   * loaded on the page. Only probes evaluated at function entry are tracked, and the action lasts
+   * until the instrumented function returns or throws.
+   *
+   * @category Data Collection
+   * @defaultValue true
+   */
+  trackProbeHitsAsRumActions?: boolean
+
+  /**
    * A proxy URL for routing SDK requests. When set, delivery API requests are
    * sent to `{proxy}/api/unstable/debugger/frontend/probes` instead of the
    * default Datadog API host derived from `site`.
