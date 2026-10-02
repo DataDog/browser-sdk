@@ -1,7 +1,7 @@
 import type { Hook } from '@datadog/js-core/assembly'
 import { SKIPPED } from '@datadog/js-core/assembly'
+import type { Context } from '@datadog/js-core/util'
 import type { SessionManager } from '../session/sessionManager'
-import type { Context } from '../../tools/serialisation/context'
 
 export function startTelemetrySessionContext(
   assembleTelemetryHook: Hook<any, any>,

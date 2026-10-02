@@ -15,7 +15,8 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "workspace:*"
+    "@datadog/browser-core": "workspace:*",
+    "@datadog/js-core": "workspace:*"
   },
   "repository": {
     "type": "git",

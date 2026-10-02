@@ -1,4 +1,5 @@
-import type { Context, SessionManager } from '@datadog/browser-core'
+import type { SessionManager } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { createBatch } from '@datadog/browser-core'
 import { createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/js-core/transport'
 import type { LogsConfiguration } from '../domain/configuration'

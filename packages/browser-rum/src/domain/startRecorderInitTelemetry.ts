@@ -1,4 +1,5 @@
-import type { Context, Telemetry, Observable } from '@datadog/browser-core'
+import type { Telemetry, Observable } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { elapsed, timeStampNow } from '@datadog/js-core/time'
 import type { Duration, TimeStamp } from '@datadog/js-core/time'
 import { TelemetryMetrics, addTelemetryMetrics, noop } from '@datadog/browser-core'

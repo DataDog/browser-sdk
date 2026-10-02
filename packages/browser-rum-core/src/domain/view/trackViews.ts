@@ -8,7 +8,8 @@ import {
   isRelativeTime,
 } from '@datadog/js-core/time'
 import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
-import type { Subscription, Context, ContextValue } from '@datadog/browser-core'
+import type { Subscription } from '@datadog/browser-core'
+import type { Context, ContextValue } from '@datadog/js-core/util'
 import {
   noop,
   PageExitReason,
@@ -21,10 +22,10 @@ import {
   setTimeout,
   Observable,
   createContextManager,
-  mockable,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
+import { mockable } from '@datadog/js-core/util'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

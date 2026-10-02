@@ -1,4 +1,5 @@
-import type { Context, EventRateLimiter } from '@datadog/browser-core'
+import type { EventRateLimiter } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { ErrorSource, buildTags, createEventRateLimiter } from '@datadog/browser-core'
 import { toRelativeTime } from '@datadog/js-core/time'
 import { DISCARDED } from '@datadog/js-core/assembly'

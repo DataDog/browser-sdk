@@ -1,6 +1,7 @@
 import { createHook } from '@datadog/js-core/assembly'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED, INTAKE_SITE_US1 } from '@datadog/js-core/transport'
 import { callMonitored } from '@datadog/js-core/monitor'
+import type { Context } from '@datadog/js-core/util'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { addExperimentalFeatures } from '../../tools/experimentalFeatures'
@@ -13,7 +14,6 @@ import {
   registerCleanupTask,
   createNewEvent,
 } from '../../../test'
-import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import {

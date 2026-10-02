@@ -1,4 +1,4 @@
-import type { Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 
 // eslint-disable-next-line no-restricted-syntax
 export class Deflate {
