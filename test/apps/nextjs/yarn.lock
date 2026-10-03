@@ -331,12 +331,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:26.5.1":
-  version: 26.5.1
-  resolution: "@types/node@npm:26.5.1"
+"@types/node@npm:26.6.3":
+  version: 26.6.3
+  resolution: "@types/node@npm:26.6.3"
   dependencies:
     undici-types: "npm:~8.9.0"
-  checksum: 10c0/40aa7aa4c099c8a08bf39b5bcb15eaf2cc073666c2191b1d9ac8243ce6b68b23ace904a044c521f6d310b70e94514b531be5f4fc184f141a7ce7f0679ebc7bb3
+  checksum: 10c0/51070287167d157d246a5ad83e6ead93aa310bbd9cc880ecd1f244a00c2a31491620f997fbbb6ba4ce164388694827999ec68c1d16c3fb64c1037056e64613c7
   languageName: node
   linkType: hard
 
@@ -468,7 +468,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "nextjs@workspace:."
   dependencies:
-    "@types/node": "npm:26.5.1"
+    "@types/node": "npm:26.6.3"
     "@types/react": "npm:19.3.0"
     "@types/react-dom": "npm:19.3.0"
     next: "npm:16.3.6"
