@@ -12,26 +12,42 @@ export function mockProfiler(mockedTrace: ProfilerTrace) {
   class MockProfiler {
     /** Sample interval in ms. */
     readonly sampleInterval: number
+    /** Init options the instance was created with. */
+    readonly initOptions: ProfilerInitOptions
     /** True if profiler is stopped. */
-    readonly stopped: boolean
+    stopped: boolean
+    private readonly sampleBufferFullListeners = new Set<(ev?: unknown) => void>()
 
     constructor(options: ProfilerInitOptions) {
       this.sampleInterval = options.sampleInterval
+      this.initOptions = options
       this.stopped = false
+
+      instances.add(this)
 
       return this
     }
 
     stop(): Promise<ProfilerTrace> {
+      this.stopped = true
       return Promise.resolve(mockedTrace)
     }
 
-    addEventListener(): void {
-      return
+    addEventListener(type: string, listener: (ev?: unknown) => void): void {
+      if (type === 'samplebufferfull') {
+        this.sampleBufferFullListeners.add(listener)
+      }
     }
 
-    removeEventListener(): void {
-      return
+    removeEventListener(type: string, listener: (ev?: unknown) => void): void {
+      if (type === 'samplebufferfull') {
+        this.sampleBufferFullListeners.delete(listener)
+      }
+    }
+
+    /** Simulates the sample buffer filling up. */
+    triggerSampleBufferFull(): void {
+      this.sampleBufferFullListeners.forEach((listener) => listener())
     }
 
     dispatchEvent(): boolean {

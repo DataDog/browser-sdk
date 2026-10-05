@@ -1,6 +1,6 @@
-import { globalObject } from '@datadog/js-core/util'
 import type { Profiler } from '@datadog/js-core/util'
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
+import type { ClocksState } from '@datadog/js-core/time'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
@@ -8,7 +8,6 @@ import {
   clearTimeout,
   setTimeout,
   DOM_EVENT,
-  display,
   mockable,
   isSampled,
   correctedChildSampleRate,
@@ -19,6 +18,7 @@ import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
+  EarlyProfilerTakeover,
   RumProfilerInstance,
   RumProfilerRunningInstance,
   RUMProfiler,
@@ -31,18 +31,15 @@ import { createBridgeEmitter } from './transport/profilingBridge'
 import { createFormDataEmitter } from './transport/formDataEmitter'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { buildProfileEvent } from './transport/buildProfileEvent'
+import { createProfilerInstance } from './createProfilerInstance'
+import { readEarlyProfilerSnippet } from './earlyProfilerSnippet'
+import { DEFAULT_RUM_PROFILER_CONFIGURATION } from './defaultProfilerConfiguration'
 import { createLongTaskHistory } from './longTaskHistory'
 import { createActionHistory } from './actionHistory'
 import { createVitalHistory } from './vitalHistory'
 import { checkProfilingQuota } from './quotaCheck'
 import type { QuotaReason } from './quotaCheck'
 import { buildProfilerDebugIds } from './profilerDebugIds'
-
-export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
-  sampleIntervalMs: 10, // Sample stack trace every 10ms
-  collectIntervalMs: 60000, // Collect data every minute
-  minProfileDurationMs: 5000, // Require at least 5 seconds of profile data to reduce noise and cost
-}
 
 export function createRumProfiler(
   configuration: RumConfiguration,
@@ -117,8 +114,10 @@ export function createRumProfiler(
       addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
-    // Start profiler instance
-    startNextProfilerInstance()
+    // Start profiler instance. When collection was started by the early
+    // profiler snippet, adopt its running Profiler instance to keep the
+    // samples collected while this chunk was downloading.
+    startNextProfilerInstance(readEarlyProfilerSnippet())
     triggerQuotaCheck()
   }
 
@@ -202,15 +201,7 @@ export function createRumProfiler(
     }
   }
 
-  function startNextProfilerInstance(): void {
-    // These APIs might be unavailable in some browsers
-    const profilerConstructor = globalObject.Profiler
-
-    if (!profilerConstructor) {
-      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
-      throw new Error('RUM Profiler is not supported in this browser.')
-    }
-
+  function startNextProfilerInstance(takeover?: EarlyProfilerTakeover): void {
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
       collectProfilerInstance(instance)
@@ -219,36 +210,35 @@ export function createRumProfiler(
     const { cleanupTasks } = addEventListeners(instance)
 
     let profiler: Profiler
-    try {
-      // We have to create new Profiler each time we start a new instance
-      profiler = new profilerConstructor({
-        sampleInterval: profilerConfiguration.sampleIntervalMs,
-        // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-        maxBufferSize: Math.round(
-          (profilerConfiguration.collectIntervalMs * 1.5) / profilerConfiguration.sampleIntervalMs
-        ),
-      })
-    } catch (e) {
-      if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
-        // Missing Response Header (`js-profiling`) that is required to enable the profiler.
-        // We should suggest the user to enable the Response Header in their server configuration.
-        display.warn(
-          '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
-          e
-        )
-        profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
-      } else {
-        profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
+    let startClocks: ClocksState
+    if (takeover) {
+      // Adopt the Profiler instance started by the early profiler snippet, so
+      // the first collected profile covers the early collection period too.
+      profiler = takeover.profiler
+      startClocks = takeover.startClocks
+    } else {
+      const created = createProfilerInstance(profilerConfiguration)
+      if (created.state === 'error') {
+        profilingContextManager.set({ status: 'error', error_reason: created.errorReason })
+        return
       }
-      return
+      profiler = created.profiler
+      startClocks = clocksNow()
     }
 
-    profilingContextManager.set({ status: 'running', error_reason: undefined })
+    profilingContextManager.set({
+      status: 'running',
+      error_reason: undefined,
+      // `early` when adopting the instance started by the early profiler
+      // snippet (the first profile covers the early collection period), `standard`
+      // when starting a new Profiler from scratch.
+      collection_type: takeover ? 'early' : 'standard',
+    })
 
     // Kick-off the new instance
     instance = {
       state: 'running',
-      startClocks: clocksNow(),
+      startClocks,
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       views: [],

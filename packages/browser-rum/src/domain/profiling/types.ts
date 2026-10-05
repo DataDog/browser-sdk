@@ -1,6 +1,7 @@
 import type { Profiler } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
 import type { TimeoutId } from '@datadog/browser-core'
+import type { ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type { LongTaskContext } from './longTaskHistory'
 
@@ -60,6 +61,30 @@ export interface RUMProfiler {
 export interface ProfilingPayload {
   profile: BrowserProfileEvent
   trace: BrowserProfilerTrace
+}
+
+/**
+ * Reason why starting a Profiler instance failed.
+ *
+ * Derived from the `error_reason` values of the profiling internal context
+ * (auto-generated schema), excluding `failed-to-lazy-load` which is a profiler
+ * chunk loading error, not a Profiler construction error.
+ */
+export type ProfilerStartupErrorReason = Exclude<
+  NonNullable<ProfilingInternalContextSchema['error_reason']>,
+  'failed-to-lazy-load'
+>
+
+/**
+ * A Profiler instance started by the early profiler snippet, along with the
+ * time it started, so the profiler chunk can adopt it and keep the samples
+ * collected while it was downloading.
+ */
+export interface EarlyProfilerTakeover {
+  /** The running Profiler instance to adopt. */
+  readonly profiler: Profiler
+  /** High resolution time when the Profiler instance started. */
+  readonly startClocks: ClocksState
 }
 
 export interface RUMProfilerConfiguration {
