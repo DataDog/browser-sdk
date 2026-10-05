@@ -3,7 +3,8 @@ import type { ClocksState } from '@datadog/js-core/time'
 import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
 import { monitorError } from '@datadog/js-core/monitor'
-import { combine } from '@datadog/js-core/util'
+import type { Context } from '@datadog/js-core/util'
+import { combine, mockable } from '@datadog/js-core/util'
 import {
   BROWSER_CORE_SCHEMA,
   buildTags,
@@ -13,13 +14,12 @@ import {
   ErrorHandling,
   ErrorSource,
   generateUUID,
-  mockable,
   setInterval,
   startSessionManager,
   throttle,
   TrackingConsent,
 } from '@datadog/browser-core'
-import type { Context, InitConfiguration, SessionManager } from '@datadog/browser-core'
+import type { InitConfiguration, SessionManager } from '@datadog/browser-core'
 import type { RawRumActionEvent, RawRumEvent } from '@datadog/browser-rum-core'
 import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from '../domain/shopifyAnalytics'
 import { getPageUrl } from '../domain/shopifyAnalytics'
@@ -209,7 +209,7 @@ export function startWebPixelRum(
   function startCollection(sessionManager: SessionManager): Collection {
     const batch = mockable(createBatch)({
       endpoints: [createEndpointBuilder(configuration!, 'rum')],
-      reportError: (message) => display.error(message),
+      reportError: (message: string) => display.error(message),
     })
 
     const ddtags = buildTags(configuration!).join(',')

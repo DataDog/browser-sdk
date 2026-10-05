@@ -1,5 +1,6 @@
+import type { Context } from '@datadog/js-core/util'
 import { createBatch, display, Observable, startSessionManager } from '@datadog/browser-core'
-import type { Batch, Context, SessionManager, TrackingConsentState } from '@datadog/browser-core'
+import type { Batch, SessionManager, TrackingConsentState } from '@datadog/browser-core'
 import { mockClock, replaceMockable, waitNextMicrotask } from '@datadog/browser-core/test'
 import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
 import type { ShopifyPixelEvent } from '../domain/shopifyAnalytics'
