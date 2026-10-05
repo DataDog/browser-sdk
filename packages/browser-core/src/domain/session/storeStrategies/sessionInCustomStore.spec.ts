@@ -67,5 +67,28 @@ describe('session in custom store strategy', () => {
       expect(sessionCookieAccess).toHaveBeenCalledOnceWith('_dd_s_v2', cookieOptions)
       expect(cookieAccess.values[0]).toContain('id=abc')
     })
+
+    it('does not read the legacy cookie', async () => {
+      mockCookies()
+        .getCookies()
+        .push({
+          name: LEGACY_SESSION_STORE_KEY,
+          value: 'id=legacy-id&created=123&c=0',
+          expires: Date.now() + 60_000,
+        })
+      const cookieAccess = createMockCookieAccess()
+      const strategy = initCustomStrategy(
+        { type: 'custom', cookieOptions: {} },
+        mockBaseConfiguration({ sessionCookieAccess: () => cookieAccess })
+      )
+
+      let capturedState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        capturedState = state
+        return state
+      }, 'updateState')
+
+      expect(capturedState).toEqual({})
+    })
   })
 })

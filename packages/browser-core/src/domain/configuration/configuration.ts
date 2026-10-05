@@ -257,8 +257,8 @@ export interface InitConfiguration {
   variant?: string | undefined
 
   /**
-   * [Internal option] Cookie access used by the cookie session store instead of `document.cookie`
-   * or the Cookie Store API.
+   * [Internal option] Factory providing custom cookie access for cookie-based session persistence.
+   * Replaces `document.cookie` and the Cookie Store API access.
    *
    * @internal
    */
