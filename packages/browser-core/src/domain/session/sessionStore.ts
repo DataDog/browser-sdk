@@ -15,7 +15,7 @@ import { selectMemorySessionStoreStrategy, initMemorySessionStoreStrategy } from
 export async function selectSessionStoreStrategyType(
   configuration: Configuration
 ): Promise<SessionStoreStrategyType | undefined> {
-  const persistenceList = normalizePersistenceList(configuration.sessionPersistence)
+  const persistenceList = normalizePersistenceList(configuration)
 
   for (const persistence of persistenceList) {
     const strategyType = await selectStrategyForPersistence(persistence, configuration)
@@ -27,15 +27,16 @@ export async function selectSessionStoreStrategyType(
   return undefined
 }
 
-function normalizePersistenceList(sessionPersistence: SessionPersistence[] | undefined): SessionPersistence[] {
+function normalizePersistenceList({ sessionPersistence, sessionCookieAccess }: Configuration): SessionPersistence[] {
   if (sessionPersistence !== undefined) {
     return sessionPersistence
   }
 
-  // In worker environments, default to memory since cookie and localStorage are not available
+  // In worker environments, default to memory since cookie and localStorage are not available,
+  // unless the integration provides its own cookie access
   // TODO: make it work when we start using Cookie Store API
   // @see https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
-  if (isWorkerEnvironment) {
+  if (isWorkerEnvironment && !sessionCookieAccess) {
     return [SessionPersistence.MEMORY]
   }
 

@@ -304,6 +304,17 @@ describe('cookieAccess', () => {
       expect(displayErrorSpy).toHaveBeenCalled()
     })
 
+    it('returns false and logs when the access factory throws', async () => {
+      const displayErrorSpy = spyOn(display, 'error')
+
+      const result = await areCookiesAuthorized(() => {
+        throw new Error('boom')
+      }, COOKIE_OPTIONS)
+
+      expect(result).toBe(false)
+      expect(displayErrorSpy).toHaveBeenCalled()
+    })
+
     it('cleans up the test cookie after the check', async () => {
       const deleteSpy = jasmine.createSpy('delete').and.returnValue(Promise.resolve())
       const access: CookieAccess = {

@@ -30,8 +30,9 @@ export async function areCookiesAuthorized(
   // the test cookie lifetime
   const testCookieName = `${TEST_COOKIE_NAME_PREFIX}${generateUUID()}`
   const testCookieValue = 'test'
-  const access = createAccess(testCookieName, cookieOptions)
+  let access: CookieAccess | undefined
   try {
+    access = createAccess(testCookieName, cookieOptions)
     await access.getAllAndSet(() => ({ value: testCookieValue, expireDelay: ONE_MINUTE }))
     const values = await access.getAll()
     return values.includes(testCookieValue)
@@ -40,7 +41,7 @@ export async function areCookiesAuthorized(
     return false
   } finally {
     try {
-      await access.delete()
+      await access?.delete()
     } catch {
       // Best-effort cleanup
     }
