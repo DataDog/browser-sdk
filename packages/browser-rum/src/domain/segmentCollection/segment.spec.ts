@@ -1,4 +1,5 @@
-import type { DeflateEncoder, Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { DeflateEncoder } from '@datadog/browser-core'
+import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { noop, DeflateEncoderStreamId } from '@datadog/browser-core'
 import { setDebugMode } from '@datadog/js-core/util'

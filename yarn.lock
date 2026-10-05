@@ -706,6 +706,7 @@ __metadata:
   resolution: "@datadog/browser-worker@workspace:packages/browser-worker"
   dependencies:
     "@datadog/browser-core": "workspace:*"
+    "@datadog/js-core": "workspace:*"
     webpack: "npm:5.111.0"
   languageName: unknown
   linkType: soft

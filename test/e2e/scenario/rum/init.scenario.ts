@@ -1,4 +1,4 @@
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { test, expect } from '@playwright/test'
 import type { IntakeRegistry, BrowserLog } from '../../lib/framework'
 import { createTest, createWorker } from '../../lib/framework'

@@ -1,5 +1,10 @@
 declare const __BUILD_ENV__SDK_VERSION__: string
 
+/**
+ * Registry of mock replacements used by {@link mockable} in test builds.
+ *
+ * Exposed so test helpers (e.g. `replaceMockable`) can register and clean up mocks.
+ */
 export const mockableReplacements = new Map<unknown, unknown>()
 
 /**
@@ -9,7 +14,7 @@ export const mockableReplacements = new Map<unknown, unknown>()
  *
  * @example
  * // In source file:
- * import { mockable } from '../tools/mockable'
+ * import { mockable } from '@datadog/js-core/util'
  * export function formatNavigationEntry(): string {
  *   const navigationEntry = mockable(getNavigationEntry)()
  *   ...

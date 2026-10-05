@@ -1,6 +1,6 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import type { LogsInitConfiguration, LogsGlobal } from '@datadog/browser-logs'
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 
 declare global {
   interface Window {

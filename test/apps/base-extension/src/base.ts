@@ -2,7 +2,7 @@ import { datadogRum } from '@datadog/browser-rum'
 import { datadogLogs } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 
 declare global {
   interface Window {

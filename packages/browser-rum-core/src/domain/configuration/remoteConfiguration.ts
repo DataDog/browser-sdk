@@ -1,4 +1,5 @@
-import type { createContextManager, Context } from '@datadog/browser-core'
+import type { createContextManager } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { display, mapValues, getCookie, addTelemetryMetrics, TelemetryMetrics, fetch } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
 import { isIndexableObject } from '@datadog/js-core/util'

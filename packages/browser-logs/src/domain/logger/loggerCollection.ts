@@ -1,6 +1,6 @@
 import { timeStampNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import { ErrorSource } from '@datadog/browser-core'
 import { originalConsoleMethods, globalConsole, ConsoleApiName, combine } from '@datadog/js-core/util'
 import type { CommonContext, RawLogsEvent } from '../../rawLogsEvent.types'
