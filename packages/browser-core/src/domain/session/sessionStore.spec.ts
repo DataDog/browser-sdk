@@ -21,7 +21,7 @@ describe('session store', () => {
 
       it('returns custom strategy when a session cookie access is provided', async () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
-          mockBaseConfiguration({ sessionCookieAccess: createDocumentCookieAccess })
+          mockBaseConfiguration({ sessionCookieAccessFactory: createDocumentCookieAccess })
         )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'custom' }))
       })

@@ -32,7 +32,7 @@ describe('session in custom store strategy', () => {
       const cookieAccess = createMockCookieAccess()
 
       const strategyType = await selectCustomStrategy(
-        mockBaseConfiguration({ sessionCookieAccess: () => cookieAccess })
+        mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
       )
 
       expect(strategyType).toEqual({ type: 'custom', cookieOptions: jasmine.any(Object) })
@@ -45,7 +45,7 @@ describe('session in custom store strategy', () => {
       cookieAccess.getAll = () => Promise.resolve([])
 
       const strategyType = await selectCustomStrategy(
-        mockBaseConfiguration({ sessionCookieAccess: () => cookieAccess })
+        mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
       )
 
       expect(strategyType).toBeUndefined()
@@ -55,16 +55,16 @@ describe('session in custom store strategy', () => {
   describe('initCustomStrategy', () => {
     it('persists the session through the session cookie access', async () => {
       const cookieAccess = createMockCookieAccess()
-      const sessionCookieAccess = jasmine.createSpy('sessionCookieAccess').and.returnValue(cookieAccess)
+      const sessionCookieAccessFactory = jasmine.createSpy('sessionCookieAccessFactory').and.returnValue(cookieAccess)
       const cookieOptions = {}
 
       const strategy = initCustomStrategy(
         { type: 'custom', cookieOptions },
-        mockBaseConfiguration({ sessionCookieAccess })
+        mockBaseConfiguration({ sessionCookieAccessFactory })
       )
       await strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
 
-      expect(sessionCookieAccess).toHaveBeenCalledOnceWith('_dd_s_v2', cookieOptions)
+      expect(sessionCookieAccessFactory).toHaveBeenCalledOnceWith('_dd_s_v2', cookieOptions)
       expect(cookieAccess.values[0]).toContain('id=abc')
     })
 
@@ -79,7 +79,7 @@ describe('session in custom store strategy', () => {
       const cookieAccess = createMockCookieAccess()
       const strategy = initCustomStrategy(
         { type: 'custom', cookieOptions: {} },
-        mockBaseConfiguration({ sessionCookieAccess: () => cookieAccess })
+        mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
       )
 
       let capturedState: SessionState | undefined

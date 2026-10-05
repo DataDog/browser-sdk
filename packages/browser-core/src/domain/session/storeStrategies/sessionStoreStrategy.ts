@@ -17,7 +17,7 @@ export interface CookieSessionStoreStrategyType {
   cookieApi: CookieApi
 }
 
-// Cookie persistence through the `sessionCookieAccess` provided by the integration
+// Cookie persistence through the `sessionCookieAccessFactory` provided by the integration
 export interface CustomSessionStoreStrategyType {
   type: 'custom'
   cookieOptions: CookieOptions

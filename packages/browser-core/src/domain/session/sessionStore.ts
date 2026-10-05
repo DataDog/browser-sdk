@@ -28,7 +28,7 @@ export async function selectSessionStoreStrategyType(
   return undefined
 }
 
-function normalizePersistenceList({ sessionPersistence, sessionCookieAccess }: Configuration): SessionPersistence[] {
+function normalizePersistenceList({ sessionPersistence, sessionCookieAccessFactory }: Configuration): SessionPersistence[] {
   if (sessionPersistence !== undefined) {
     return sessionPersistence
   }
@@ -37,7 +37,7 @@ function normalizePersistenceList({ sessionPersistence, sessionCookieAccess }: C
   // unless the integration provides its own cookie access
   // TODO: make it work when we start using Cookie Store API
   // @see https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
-  if (isWorkerEnvironment && !sessionCookieAccess) {
+  if (isWorkerEnvironment && !sessionCookieAccessFactory) {
     return [SessionPersistence.MEMORY]
   }
 
@@ -51,7 +51,7 @@ function selectStrategyForPersistence(
   switch (persistence) {
     case SessionPersistence.COOKIE:
       // A custom cookie access replaces the browser cookie APIs
-      return configuration.sessionCookieAccess
+      return configuration.sessionCookieAccessFactory
         ? selectCustomStrategy(configuration)
         : selectCookieStrategy(configuration)
 

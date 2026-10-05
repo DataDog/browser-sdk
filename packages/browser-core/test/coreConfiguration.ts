@@ -40,7 +40,7 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   source: 'browser',
   sdkVersion: '1.0.0',
   variant: 'variant',
-  sessionCookieAccess: createDocumentCookieAccess,
+  sessionCookieAccessFactory: createDocumentCookieAccess,
 }
 
 export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
@@ -82,7 +82,7 @@ export type MapInitConfigurationKey<Key extends string> =
           | 'datacenter'
           | 'replica'
           | 'enableExperimentalFeatures'
-          | 'sessionCookieAccess'
+          | 'sessionCookieAccessFactory'
       ? never
       : // Other keys are simply snake cased
         CamelToSnakeCase<Key>

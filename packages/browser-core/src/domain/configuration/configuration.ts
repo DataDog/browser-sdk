@@ -262,7 +262,7 @@ export interface InitConfiguration {
    *
    * @internal
    */
-  sessionCookieAccess?: CookieAccessFactory | undefined
+  sessionCookieAccessFactory?: CookieAccessFactory | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -337,7 +337,7 @@ export const BROWSER_CORE_SCHEMA = {
   datacenter: { type: 'string' },
   sdkVersion: { type: 'string' },
   variant: { type: 'string' },
-  sessionCookieAccess: { type: 'function', signature: undefined as CookieAccessFactory | undefined },
+  sessionCookieAccessFactory: { type: 'function', signature: undefined as CookieAccessFactory | undefined },
 } as const
 
 export type Configuration = InferredConfig<typeof BROWSER_CORE_SCHEMA>
