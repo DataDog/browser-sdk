@@ -9,7 +9,6 @@ export const LEGACY_SESSION_STORE_KEY = '_dd_s'
 export const enum CookieApi {
   DOCUMENT_COOKIE,
   COOKIE_STORE,
-  CUSTOM,
 }
 
 export interface CookieSessionStoreStrategyType {
@@ -18,8 +17,15 @@ export interface CookieSessionStoreStrategyType {
   cookieApi: CookieApi
 }
 
+// Cookie persistence through the `sessionCookieAccess` provided by the integration
+export interface CustomSessionStoreStrategyType {
+  type: 'custom'
+  cookieOptions: CookieOptions
+}
+
 export type SessionStoreStrategyType =
   | CookieSessionStoreStrategyType
+  | CustomSessionStoreStrategyType
   | { type: typeof SessionPersistence.LOCAL_STORAGE }
   | { type: typeof SessionPersistence.MEMORY }
 

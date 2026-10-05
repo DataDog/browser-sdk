@@ -52,10 +52,7 @@ function createMockCookieAccess() {
   }
 }
 
-function setupCookieStrategy(
-  partialConfiguration: Partial<Configuration> = {},
-  cookieApi: CookieApi = CookieApi.DOCUMENT_COOKIE
-) {
+function setupCookieStrategy(partialConfiguration: Partial<Configuration> = {}) {
   const configuration = mockBaseConfiguration({ trackAnonymousUser: true, ...partialConfiguration })
   const cookieOptions = buildCookieOptions(configuration)!
 
@@ -63,7 +60,10 @@ function setupCookieStrategy(
   replaceMockable(createCookieAccess, () => mockCookieAccess)
 
   return {
-    strategy: initCookieStrategy({ type: SessionPersistence.COOKIE, cookieOptions, cookieApi }, configuration),
+    strategy: initCookieStrategy(
+      { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.DOCUMENT_COOKIE },
+      configuration
+    ),
     cookieOptions,
     mockCookie,
   }
@@ -304,43 +304,6 @@ describe('session in cookie strategy', () => {
       const strategy = await selectCookieStrategy(mockBaseConfiguration())
       expect(strategy).toBeUndefined()
     })
-
-    it('returns the custom strategy when a session cookie access is provided', async () => {
-      const documentCookieGetSpy = spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const documentCookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-      const { mockCookieAccess } = createMockCookieAccess()
-
-      const strategy = await selectCookieStrategy(
-        mockBaseConfiguration({ sessionCookieAccess: () => mockCookieAccess })
-      )
-
-      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.CUSTOM }))
-      expect(documentCookieGetSpy).not.toHaveBeenCalled()
-      expect(documentCookieSetSpy).not.toHaveBeenCalled()
-    })
-
-    it('returns undefined when the provided session cookie access cannot write', async () => {
-      const { mockCookieAccess } = createMockCookieAccess()
-      mockCookieAccess.getAll = () => Promise.resolve([])
-
-      const strategy = await selectCookieStrategy(
-        mockBaseConfiguration({ sessionCookieAccess: () => mockCookieAccess })
-      )
-
-      expect(strategy).toBeUndefined()
-    })
-  })
-
-  describe('createCookieAccess', () => {
-    it('uses the provided session cookie access for the custom cookie API', () => {
-      const { mockCookieAccess } = createMockCookieAccess()
-      const sessionCookieAccess = jasmine.createSpy().and.returnValue(mockCookieAccess)
-      const configuration = mockBaseConfiguration({ sessionCookieAccess })
-      const cookieOptions = buildCookieOptions(configuration)!
-
-      expect(createCookieAccess(CookieApi.CUSTOM, cookieOptions, configuration)).toBe(mockCookieAccess)
-      expect(sessionCookieAccess).toHaveBeenCalledOnceWith('_dd_s_v2', cookieOptions)
-    })
   })
 
   describe('migration from legacy cookie', () => {
@@ -379,19 +342,6 @@ describe('session in cookie strategy', () => {
       }, 'updateState')
 
       expect(capturedState!.id).toBe('new-id')
-    })
-
-    it('should not read from legacy cookie with a custom cookie access', async () => {
-      setLegacyCookie('id=legacy-id&created=123&c=0')
-      const { strategy } = setupCookieStrategy({}, CookieApi.CUSTOM)
-
-      let capturedState: SessionState | undefined
-      await strategy.setSessionState((state) => {
-        capturedState = state
-        return state
-      }, 'updateState')
-
-      expect(capturedState).toEqual({})
     })
 
     it('should not read from legacy cookie on subsequent calls', async () => {

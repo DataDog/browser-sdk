@@ -1,6 +1,7 @@
 import { globalObject } from '@datadog/js-core/util'
 import { mockBaseConfiguration, replaceMockable } from '../../../test'
 import { display } from '../../tools/display'
+import { createDocumentCookieAccess } from '../../browser/cookieAccess'
 import { selectSessionStoreStrategyType } from './sessionStore'
 import { SessionPersistence } from './sessionConstants'
 
@@ -16,6 +17,13 @@ describe('session store', () => {
         disableCookies()
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(mockBaseConfiguration())
         expect(sessionStoreStrategyType).toBeUndefined()
+      })
+
+      it('returns custom strategy when a session cookie access is provided', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          mockBaseConfiguration({ sessionCookieAccess: createDocumentCookieAccess })
+        )
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'custom' }))
       })
 
       it('returns cookie strategy when sessionPersistence is cookie', async () => {
