@@ -4,7 +4,7 @@ import type { Batch, SessionManager, TrackingConsentState } from '@datadog/brows
 import { mockClock, replaceMockable, waitNextMicrotask } from '@datadog/browser-core/test'
 import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
 import type { ShopifyPixelEvent } from '../domain/shopifyAnalytics'
-import type { WebPixelApi, WebPixelRumInitConfiguration } from './startWebPixelRum'
+import type { WebPixelApi, WebPixelRumInitConfiguration } from '../domain/webPixelUtils'
 import { startWebPixelRum } from './startWebPixelRum'
 
 const CHECKOUT_URL = 'https://shop.example/checkouts/cn/abc'

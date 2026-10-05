@@ -1,4 +1,4 @@
-import { clocksNow, elapsed, toServerDuration } from '@datadog/js-core/time'
+import { clocksNow } from '@datadog/js-core/time'
 import type { ClocksState } from '@datadog/js-core/time'
 import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
@@ -6,25 +6,34 @@ import { monitorError } from '@datadog/js-core/monitor'
 import type { Context } from '@datadog/js-core/util'
 import { combine, mockable } from '@datadog/js-core/util'
 import {
-  BROWSER_CORE_SCHEMA,
   buildTags,
   createBatch,
   createTrackingConsentState,
   display,
-  generateUUID,
   setInterval,
   startSessionManager,
   throttle,
   TrackingConsent,
 } from '@datadog/browser-core'
-import type { InitConfiguration, SessionManager } from '@datadog/browser-core'
-import type { DefaultRumEventAttributes, ViewLoadingType } from '@datadog/browser-rum-core'
-import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from '../domain/shopifyAnalytics'
+import type { SessionManager } from '@datadog/browser-core'
+import type { DefaultRumEventAttributes } from '@datadog/browser-rum-core'
 import { getPageUrl } from '../domain/shopifyAnalytics'
+import type { ShopifyPixelEvent } from '../domain/shopifyAnalytics'
 import type { ElementData, ErrorData } from '../domain/shopifyBindings'
 import { isCheckoutPage } from '../domain/shopifyBindings'
-import type { ShopifyBrowserApi } from '../domain/shopifyCookieAccess'
 import { createShopifyCookieAccessFactory } from '../domain/shopifyCookieAccess'
+import type { ActiveView, ShopifyCheckout, WebPixelApi, WebPixelRumInitConfiguration } from '../domain/webPixelUtils'
+import {
+  buildActionEvent,
+  buildCommonAttributes,
+  buildErrorEvent,
+  buildViewEvent,
+  CHECKOUT_EVENTS,
+  createView,
+  getCheckoutContext,
+  toTrackingConsent,
+  WEB_PIXEL_SCHEMA,
+} from '../domain/webPixelUtils'
 
 /**
  * RUM for a Shopify Web Pixel app extension: a strict sandbox Web Worker, with no DOM. Instead of
@@ -32,66 +41,9 @@ import { createShopifyCookieAccessFactory } from '../domain/shopifyCookieAccess'
  * attached to the session shared with the storefront through the top frame cookies.
  */
 
-const WEB_PIXEL_SCHEMA = {
-  ...BROWSER_CORE_SCHEMA,
-  applicationId: { type: 'string', required: true },
-  bypassCustomerPrivacy: { type: 'boolean', default: false },
-} as const
-
-export type WebPixelRumInitConfiguration = InitConfiguration & {
-  applicationId: string
-  /**
-   * Collect data regardless of the visitor's consent. Only effective if the pixel extension
-   * declares no privacy purposes: otherwise Shopify doesn't run it without consent.
-   */
-  bypassCustomerPrivacy?: boolean
-}
-
-/**
- * See https://shopify.dev/docs/api/web-pixels-api/pixel-privacy
- */
-export interface ShopifyCustomerPrivacyStatus {
-  analyticsProcessingAllowed: boolean
-}
-
-export interface WebPixelApi {
-  analytics: ShopifyAnalyticsApi
-  browser: ShopifyBrowserApi
-  init: { customerPrivacy: ShopifyCustomerPrivacyStatus }
-  customerPrivacy: {
-    subscribe: (
-      eventName: 'visitorConsentCollected',
-      callback: (event: { customerPrivacy: ShopifyCustomerPrivacyStatus }) => void
-    ) => void
-  }
-}
-
-// Shopify standard checkout events, collected as custom actions
-// https://shopify.dev/docs/api/web-pixels-api/standard-events
-export const CHECKOUT_EVENTS = [
-  'checkout_started',
-  'checkout_contact_info_submitted',
-  'checkout_address_info_submitted',
-  'checkout_shipping_info_submitted',
-  'payment_info_submitted',
-  'checkout_completed',
-]
-
 // Same values as the RUM SDK view collection
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 const SESSION_KEEP_ALIVE_INTERVAL = 5 * 60 * 1000
-
-interface ActiveView {
-  id: string
-  url: string
-  referrer: string
-  loadingType: ViewLoadingType
-  startClocks: ClocksState
-  endClocks?: ClocksState
-  documentVersion: number
-  actionCount: number
-  errorCount: number
-}
 
 interface Collection {
   expandOrRenewSession: () => void
@@ -118,15 +70,11 @@ export function startWebPixelRum(
   }
 
   const trackingConsentState = createTrackingConsentState(
-    configuration.bypassCustomerPrivacy || init.customerPrivacy.analyticsProcessingAllowed
-      ? TrackingConsent.GRANTED
-      : TrackingConsent.NOT_GRANTED
+    configuration.bypassCustomerPrivacy ? TrackingConsent.GRANTED : toTrackingConsent(init.customerPrivacy)
   )
   if (!configuration.bypassCustomerPrivacy) {
     customerPrivacy.subscribe('visitorConsentCollected', (event) => {
-      trackingConsentState.update(
-        event.customerPrivacy.analyticsProcessingAllowed ? TrackingConsent.GRANTED : TrackingConsent.NOT_GRANTED
-      )
+      trackingConsentState.update(toTrackingConsent(event.customerPrivacy))
     })
   }
 
@@ -229,20 +177,7 @@ export function startWebPixelRum(
       if (!session || !view) {
         return
       }
-      return combine(
-        {
-          _dd: { format_version: 2 as const, sdk_name: 'rum-shopify-web-pixel' },
-          application: { id: configuration!.applicationId },
-          source: 'browser' as const,
-          service: configuration!.service,
-          version: configuration!.version,
-          session: { id: session.id, type: 'user' as const },
-          view: { id: view.id, url: view.url, referrer: view.referrer },
-          usr: session.anonymousId && configuration!.trackAnonymousUser ? { anonymous_id: session.anonymousId } : undefined,
-          ddtags,
-        },
-        rawEvent
-      ) as unknown as Context
+      return combine(buildCommonAttributes(configuration!, session, view, ddtags), rawEvent) as unknown as Context
     }
 
     function sendViewUpdate() {
@@ -250,28 +185,7 @@ export function startWebPixelRum(
         return
       }
       view.documentVersion += 1
-      const timeSpent = elapsed(view.startClocks.relative, (view.endClocks ?? clocksNow()).relative)
-      const event = assemble(
-        {
-          type: 'view',
-          date: view.startClocks.timeStamp,
-          _dd: {
-            document_version: view.documentVersion,
-            configuration: { session_sample_rate: configuration!.sessionSampleRate },
-          },
-          view: {
-            action: { count: view.actionCount },
-            error: { count: view.errorCount },
-            resource: { count: 0 },
-            long_task: { count: 0 },
-            frustration: { count: 0 },
-            is_active: !view.endClocks,
-            loading_type: view.loadingType,
-            time_spent: toServerDuration(timeSpent),
-          },
-        },
-        view.startClocks
-      )
+      const event = assemble(buildViewEvent(view, clocksNow(), configuration!.sessionSampleRate), view.startClocks)
       if (event) {
         // The latest version of a view replaces the previous ones still waiting in the batch
         batch.upsert(event, view.id)
@@ -288,16 +202,7 @@ export function startWebPixelRum(
     function startView(url: string, startClocks: ClocksState) {
       const previousView = view
       endView(startClocks)
-      view = {
-        id: generateUUID(),
-        url,
-        referrer: previousView?.url ?? '',
-        loadingType: previousView ? 'route_change' : 'initial_load',
-        startClocks,
-        documentVersion: 0,
-        actionCount: 0,
-        errorCount: 0,
-      }
+      view = createView(url, startClocks, previousView)
       sendViewUpdate()
     }
 
@@ -307,15 +212,7 @@ export function startWebPixelRum(
       startView,
 
       addAction(type, name, context, startClocks) {
-        const event = assemble(
-          {
-            type: 'action',
-            date: startClocks.timeStamp,
-            action: { id: generateUUID(), type, target: { name } },
-            context,
-          },
-          startClocks
-        )
+        const event = assemble(buildActionEvent(type, name, context, startClocks), startClocks)
         if (event) {
           view!.actionCount += 1
           batch.add(event)
@@ -324,22 +221,7 @@ export function startWebPixelRum(
       },
 
       addError(message, stack, context, startClocks) {
-        const event = assemble(
-          {
-            type: 'error',
-            date: startClocks.timeStamp,
-            error: {
-              id: generateUUID(),
-              message,
-              stack,
-              source: 'custom',
-              handling: 'handled',
-              source_type: 'browser',
-            },
-            context,
-          },
-          startClocks
-        )
+        const event = assemble(buildErrorEvent(message, stack, context, startClocks), startClocks)
         if (event) {
           view!.errorCount += 1
           batch.add(event)
@@ -347,27 +229,5 @@ export function startWebPixelRum(
         }
       },
     }
-  }
-}
-
-interface ShopifyCheckout {
-  token?: string
-  currencyCode?: string
-  totalPrice?: { amount?: number }
-  order?: { id?: string }
-}
-
-// Only non-personal checkout fields: Shopify events also carry the buyer's contact and address
-function getCheckoutContext(checkout: ShopifyCheckout | undefined): Context | undefined {
-  if (!checkout) {
-    return
-  }
-  return {
-    checkout: {
-      token: checkout.token,
-      currency: checkout.currencyCode,
-      total_price: checkout.totalPrice?.amount,
-      order_id: checkout.order?.id,
-    },
   }
 }
