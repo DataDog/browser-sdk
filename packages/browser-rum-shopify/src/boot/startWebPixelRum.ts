@@ -11,8 +11,6 @@ import {
   createBatch,
   createTrackingConsentState,
   display,
-  ErrorHandling,
-  ErrorSource,
   generateUUID,
   setInterval,
   startSessionManager,
@@ -20,7 +18,7 @@ import {
   TrackingConsent,
 } from '@datadog/browser-core'
 import type { InitConfiguration, SessionManager } from '@datadog/browser-core'
-import type { RawRumActionEvent, RawRumEvent } from '@datadog/browser-rum-core'
+import type { DefaultRumEventAttributes, ViewLoadingType } from '@datadog/browser-rum-core'
 import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from '../domain/shopifyAnalytics'
 import { getPageUrl } from '../domain/shopifyAnalytics'
 import type { ElementData, ErrorData } from '../domain/shopifyBindings'
@@ -87,7 +85,7 @@ interface ActiveView {
   id: string
   url: string
   referrer: string
-  loadingType: 'initial_load' | 'route_change'
+  loadingType: ViewLoadingType
   startClocks: ClocksState
   endClocks?: ClocksState
   documentVersion: number
@@ -101,15 +99,6 @@ interface Collection {
   addAction: (type: 'custom' | 'click', name: string, context: Context | undefined, startClocks: ClocksState) => void
   addError: (message: string, stack: string | undefined, context: Context | undefined, startClocks: ClocksState) => void
 }
-
-// Events before assembly, as produced by the RUM SDK collections. The view `_dd` only carries what
-// applies here: there is no Session Replay in the worker.
-type RawEvent =
-  | RawRumActionEvent
-  | Extract<RawRumEvent, { type: 'error' }>
-  | (Omit<Extract<RawRumEvent, { type: 'view' }>, '_dd'> & {
-      _dd: { document_version: number; configuration: { session_sample_rate: number } }
-    })
 
 export function startWebPixelRum(
   initConfiguration: WebPixelRumInitConfiguration,
@@ -235,7 +224,7 @@ export function startWebPixelRum(
       }
     })
 
-    function assemble(rawEvent: RawEvent, startClocks: ClocksState) {
+    function assemble(rawEvent: DefaultRumEventAttributes, startClocks: ClocksState) {
       const session = sessionManager.findTrackedSession(startClocks.relative)
       if (!session || !view) {
         return
@@ -249,7 +238,7 @@ export function startWebPixelRum(
           version: configuration!.version,
           session: { id: session.id, type: 'user' as const },
           view: { id: view.id, url: view.url, referrer: view.referrer },
-          usr: session.anonymousId ? { anonymous_id: session.anonymousId } : undefined,
+          usr: session.anonymousId && configuration!.trackAnonymousUser ? { anonymous_id: session.anonymousId } : undefined,
           ddtags,
         },
         rawEvent
@@ -343,8 +332,8 @@ export function startWebPixelRum(
               id: generateUUID(),
               message,
               stack,
-              source: ErrorSource.CUSTOM,
-              handling: ErrorHandling.HANDLED,
+              source: 'custom',
+              handling: 'handled',
               source_type: 'browser',
             },
             context,

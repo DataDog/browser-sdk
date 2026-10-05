@@ -118,6 +118,14 @@ describe('startWebPixelRum', () => {
     )
   })
 
+  it('does not send the anonymous id when trackAnonymousUser is disabled', async () => {
+    const { batch, emitAndWait } = setup({ initConfiguration: { ...INIT_CONFIGURATION, trackAnonymousUser: false } })
+
+    await emitAndWait('page_viewed', pageViewedEvent(CHECKOUT_URL))
+
+    expect(viewUpdates(batch)[0].usr).toBeUndefined()
+  })
+
   it('does not start the session on storefront pages', async () => {
     const { emitAndWait, startSessionManagerSpy } = setup()
 
