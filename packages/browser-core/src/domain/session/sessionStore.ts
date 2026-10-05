@@ -28,7 +28,10 @@ export async function selectSessionStoreStrategyType(
   return undefined
 }
 
-function normalizePersistenceList({ sessionPersistence, sessionCookieAccessFactory }: Configuration): SessionPersistence[] {
+function normalizePersistenceList({
+  sessionPersistence,
+  sessionCookieAccessFactory,
+}: Configuration): SessionPersistence[] {
   if (sessionPersistence !== undefined) {
     return sessionPersistence
   }
