@@ -16,6 +16,13 @@ export interface CookieOptions {
 }
 
 export function setCookie(name: string, value: string, expireDelay: number = 0, options?: CookieOptions) {
+  document.cookie = buildCookieString(name, value, expireDelay, options)
+}
+
+/**
+ * Builds a `document.cookie`-style string, for APIs that set cookies from such a string.
+ */
+export function buildCookieString(name: string, value: string, expireDelay: number = 0, options?: CookieOptions) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
   const expires = `expires=${date.toUTCString()}`
@@ -23,7 +30,7 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
   const domain = options?.domain ? `;domain=${options.domain}` : ''
   const secure = options?.secure ? ';secure' : ''
   const partitioned = options?.partitioned ? ';partitioned' : ''
-  document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
+  return `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
 }
 
 /**

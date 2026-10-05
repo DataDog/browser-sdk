@@ -100,8 +100,17 @@ export {
 export { NonErrorPrefix } from './domain/error/error.types'
 export { buildDebugIdByUrl, getSourceCodeContext } from './domain/sourceCodeContext'
 export type { DebugIdEntry } from './domain/sourceCodeContext'
-export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
+export {
+  getCookie,
+  getInitCookie,
+  setCookie,
+  deleteCookie,
+  resetInitCookies,
+  buildCookieString,
+} from './browser/cookie'
+export type { CookieOptions } from './browser/cookie'
 export { isCookieStoreSupported } from './browser/cookieAccess'
+export type { CookieAccess, CookieAccessFactory } from './browser/cookieAccess'
 export type { WeakRef, WeakRefConstructor } from './browser/browser.types'
 export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
