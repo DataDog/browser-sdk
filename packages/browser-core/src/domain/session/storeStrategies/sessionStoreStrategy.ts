@@ -9,6 +9,7 @@ export const LEGACY_SESSION_STORE_KEY = '_dd_s'
 export const enum CookieApi {
   DOCUMENT_COOKIE,
   COOKIE_STORE,
+  CUSTOM,
 }
 
 export interface CookieSessionStoreStrategyType {

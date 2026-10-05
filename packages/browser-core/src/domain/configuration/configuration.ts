@@ -4,6 +4,7 @@ import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
+import type { CookieAccessFactory } from '../../browser/cookieAccess'
 
 /**
  * Default privacy level for the browser SDK.
@@ -254,6 +255,14 @@ export interface InitConfiguration {
    * @internal
    */
   variant?: string | undefined
+
+  /**
+   * [Internal option] Cookie access used by the cookie session store instead of `document.cookie`
+   * or the Cookie Store API.
+   *
+   * @internal
+   */
+  sessionCookieAccess?: CookieAccessFactory | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -328,6 +337,7 @@ export const BROWSER_CORE_SCHEMA = {
   datacenter: { type: 'string' },
   sdkVersion: { type: 'string' },
   variant: { type: 'string' },
+  sessionCookieAccess: { type: 'function', signature: undefined as CookieAccessFactory | undefined },
 } as const
 
 export type Configuration = InferredConfig<typeof BROWSER_CORE_SCHEMA>
