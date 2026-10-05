@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { RumInternalContext, Context } from '@datadog/browser-core'
+import type { RumInternalContext } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum'
 import { createLogger } from '../../common/logger'

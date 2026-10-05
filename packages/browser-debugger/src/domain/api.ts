@@ -1,5 +1,6 @@
 import { globalObject } from '@datadog/js-core/util'
-import type { Batch, ContextValue } from '@datadog/browser-core'
+import type { Batch } from '@datadog/browser-core'
+import type { ContextValue } from '@datadog/js-core/util'
 import { timeStampNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import { buildDebugIdByUrl, buildTag, generateUUID, mergeArrays } from '@datadog/browser-core'

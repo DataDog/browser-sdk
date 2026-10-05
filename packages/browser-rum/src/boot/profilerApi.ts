@@ -6,8 +6,8 @@ import {
   canUseEventBridge,
   correctedChildSampleRate,
   isSampled,
-  mockable,
 } from '@datadog/browser-core'
+import { mockable } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'

@@ -1,5 +1,4 @@
-import { mockable } from '@datadog/browser-core'
-import { globalObject } from '@datadog/js-core/util'
+import { globalObject, mockable } from '@datadog/js-core/util'
 import type { CanvasSnapshot } from './canvasSnapshot'
 import { createDownscaledCanvas } from './canvasSnapshot'
 

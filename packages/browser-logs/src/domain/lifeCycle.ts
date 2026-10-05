@@ -1,5 +1,5 @@
 import { AbstractLifeCycle } from '@datadog/browser-core'
-import type { Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import type { LogsEvent } from '../logsEvent.types'
 import type { CommonContext, RawLogsEvent } from '../rawLogsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'

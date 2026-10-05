@@ -1,4 +1,5 @@
-import type { Payload, Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { Payload } from '@datadog/browser-core'
+import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import type { BrowserSegmentMetadata } from '../../types'
 import type { SerializationMetric, SerializationStats } from '../record'
 
