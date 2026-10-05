@@ -15,6 +15,7 @@ const baseShopifyRumConfiguration = {
 }
 
 const STOREFRONT_URL = 'https://custom-pixel-e2e.myshopify.com/'
+const WEB_PIXEL_PRODUCT_PATH = '/products/the-collection-snowboard-liquid'
 const PRODUCT_URL = 'https://custom-pixel-e2e.myshopify.com/products/the-multi-managed-snowboard'
 
 // Mirrors browser-rum-shopify's CHECKOUT_PATH (shopifyBindings.ts). Also matches the thank-you
@@ -196,6 +197,103 @@ test.describe(() => {
         { target: 'delivery_postal_code', viewUrl: expect.stringMatching(CHECKOUT_PATH) },
         { target: 'summary_pay_button', viewUrl: expect.stringMatching(CHECKOUT_PATH) },
       ])
+
+      withBrowserLogs((logs) => {
+        const unexpected = logs.filter((log) => log.level === 'error' && !isKnownStoreNoise(log))
+        expect(unexpected).toHaveLength(0)
+      })
+      flushBrowserLogs()
+    })
+
+  // Flow: storefront -> product -> checkout -> thank you -> back to storefront. The storefront SDK and
+  // the Web Pixel SDK share one session through the top frame cookies.
+  createTest('shopify web pixel app keeps one session from storefront to thank you page')
+    .withShopifyApp('web-pixel')
+    .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs, flushBrowserLogs }) => {
+      test.setTimeout(180_000)
+      const storeUrl = new URL(page.url()).origin
+
+      // The store is in the EU: the Web Pixel app declares analytics purposes, so Shopify only runs
+      // it once the visitor consents
+      await page.getByRole('button', { name: 'Accept' }).click()
+
+      await page.goto(`${storeUrl}${WEB_PIXEL_PRODUCT_PATH}`)
+      await page.waitForLoadState('networkidle')
+      await page.evaluate(async () => {
+        const product = (await (await fetch(`${location.pathname}.js`)).json()) as { variants: Array<{ id: number }> }
+        await fetch('/cart/add.js', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ items: [{ id: product.variants[0].id, quantity: 1 }] }),
+        })
+      })
+      await page.goto(`${storeUrl}/checkout`)
+      await page.waitForLoadState('networkidle')
+
+      const fill = async (name: string | RegExp, value: string, role: 'textbox' | 'combobox' = 'textbox') => {
+        const input = page.getByRole(role, { name })
+        await input.click()
+        await input.fill(value)
+      }
+      await fill('Email', 'ex@example.com')
+      await fill('First name', 'Test')
+      await fill('Last name', 'Buyer')
+      await fill('Address', 'Calle Mayor 1', 'combobox')
+      await page.keyboard.press('Escape')
+      await fill('Postal code', '28001')
+      await fill('City', 'Madrid')
+
+      // Bogus Gateway: card number "1" always succeeds
+      const cardField = (name: string, field: string) =>
+        page.frameLocator(`iframe[name^="card-fields-${field}-"]`).getByRole('textbox', { name })
+      await cardField('Card number', 'number').fill('1')
+      await cardField('Expiration date (MM / YY)', 'expiry').fill('12 / 30')
+      await cardField('Security code', 'verification_value').fill('123')
+      await page.waitForTimeout(500)
+      await page.getByRole('button', { name: 'Pay now' }).click()
+      await expect(page.getByRole('heading', { name: /thank you/i })).toBeVisible({ timeout: 60_000 })
+
+      // The Web Pixel worker has no page exit to flush on, and is terminated when leaving the page:
+      // wait for its batch (flushed at least every 30s) before navigating away
+      await expect
+        .poll(
+          () => intakeRegistry.rumActionEvents.some((event) => event.action.target?.name === 'checkout_completed'),
+          {
+            timeout: 40_000,
+          }
+        )
+        .toBe(true)
+
+      await page.goto(storeUrl)
+      await page.waitForLoadState('networkidle')
+      await flushEvents()
+
+      expect(new Set(intakeRegistry.rumEvents.map((event) => event.session.id)).size).toBe(1)
+
+      const orderedViews = [...intakeRegistry.rumViewEvents]
+        .sort((a, b) => a.date - b.date)
+        .filter((event, index, events) => events.findIndex((e) => e.view.id === event.view.id) === index)
+      expect(orderedViews.map((event) => [event._dd.sdk_name, event.view.url])).toEqual([
+        ['rum-shopify', `${storeUrl}/`],
+        ['rum-shopify', `${storeUrl}${WEB_PIXEL_PRODUCT_PATH}`],
+        ['rum-shopify-web-pixel', expect.stringMatching(CHECKOUT_PATH)],
+        ['rum-shopify-web-pixel', expect.stringMatching(THANK_YOU_PATH)],
+        ['rum-shopify', `${storeUrl}/`],
+      ])
+
+      const webPixelActions = intakeRegistry.rumActionEvents
+        .filter((event) => event._dd.sdk_name === 'rum-shopify-web-pixel')
+        .map((event) => event.action.target?.name)
+      expect(webPixelActions).toEqual(
+        expect.arrayContaining([
+          'checkout_started',
+          'checkout_contact_info_submitted',
+          'checkout_address_info_submitted',
+          'checkout_shipping_info_submitted',
+          'payment_info_submitted',
+          'checkout_completed',
+        ])
+      )
 
       withBrowserLogs((logs) => {
         const unexpected = logs.filter((log) => log.level === 'error' && !isKnownStoreNoise(log))
