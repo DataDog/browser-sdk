@@ -37,13 +37,35 @@ import { createShopifyCookieAccessFactory } from '../domain/shopifyCookieAccess'
 const WEB_PIXEL_SCHEMA = {
   ...BROWSER_CORE_SCHEMA,
   applicationId: { type: 'string', required: true },
+  bypassCustomerPrivacy: { type: 'boolean', default: false },
 } as const
 
-export type WebPixelRumInitConfiguration = InitConfiguration & { applicationId: string }
+export type WebPixelRumInitConfiguration = InitConfiguration & {
+  applicationId: string
+  /**
+   * Collect data regardless of the visitor's consent. Only effective if the pixel extension
+   * declares no privacy purposes: otherwise Shopify doesn't run it without consent.
+   */
+  bypassCustomerPrivacy?: boolean
+}
+
+/**
+ * See https://shopify.dev/docs/api/web-pixels-api/pixel-privacy
+ */
+export interface ShopifyCustomerPrivacyStatus {
+  analyticsProcessingAllowed: boolean
+}
 
 export interface WebPixelApi {
   analytics: ShopifyAnalyticsApi
   browser: ShopifyBrowserApi
+  init: { customerPrivacy: ShopifyCustomerPrivacyStatus }
+  customerPrivacy: {
+    subscribe: (
+      eventName: 'visitorConsentCollected',
+      callback: (event: { customerPrivacy: ShopifyCustomerPrivacyStatus }) => void
+    ) => void
+  }
 }
 
 // Shopify standard checkout events, collected as custom actions
@@ -89,7 +111,10 @@ type RawEvent =
       _dd: { document_version: number; configuration: { session_sample_rate: number } }
     })
 
-export function startWebPixelRum(initConfiguration: WebPixelRumInitConfiguration, { analytics, browser }: WebPixelApi) {
+export function startWebPixelRum(
+  initConfiguration: WebPixelRumInitConfiguration,
+  { analytics, browser, init, customerPrivacy }: WebPixelApi
+) {
   const configuration = validateAndBuildConfiguration(
     {
       ...initConfiguration,
@@ -103,20 +128,33 @@ export function startWebPixelRum(initConfiguration: WebPixelRumInitConfiguration
     return
   }
 
+  const trackingConsentState = createTrackingConsentState(
+    configuration.bypassCustomerPrivacy || init.customerPrivacy.analyticsProcessingAllowed
+      ? TrackingConsent.GRANTED
+      : TrackingConsent.NOT_GRANTED
+  )
+  if (!configuration.bypassCustomerPrivacy) {
+    customerPrivacy.subscribe('visitorConsentCollected', (event) => {
+      trackingConsentState.update(
+        event.customerPrivacy.analyticsProcessingAllowed ? TrackingConsent.GRANTED : TrackingConsent.NOT_GRANTED
+      )
+    })
+  }
+
   let collection: Promise<Collection | undefined> | undefined
 
   // Shopify also runs the pixel on storefront pages, where the storefront SDK owns the session
   // cookie: writing it from both contexts at once could create two sessions. So the session only
-  // starts on the first checkout page view, where the storefront SDK doesn't run.
+  // starts on the first checkout page view, where the storefront SDK doesn't run, once the visitor
+  // consents. The session manager then expires and renews the session as consent changes.
   function startCollectionOnce() {
-    // Shopify only runs the pixel once the visitor consents to its privacy purposes
-    collection ??= mockable(startSessionManager)(
-      configuration!,
-      createTrackingConsentState(TrackingConsent.GRANTED)
-    ).then((sessionManager) => sessionManager && startCollection(sessionManager))
+    collection ??= new Promise<void>((resolve) => trackingConsentState.onGrantedOnce(resolve))
+      .then(() => mockable(startSessionManager)(configuration!, trackingConsentState))
+      .then((sessionManager) => sessionManager && startCollection(sessionManager))
   }
 
-  // Shopify events can arrive before the session is resolved: queue them, keeping their time.
+  // Shopify events can arrive before consent or before the session is resolved: queue them,
+  // keeping their time, like the RUM SDK does before consent.
   // Every Shopify event is buyer activity, which keeps the session alive.
   function whenReady(callback: (collection: Collection, startClocks: ClocksState) => void) {
     const startClocks = clocksNow()
