@@ -43,6 +43,7 @@ export interface SessionManager {
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
+  expandOrRenew: () => void
   updateSessionState: (state: Partial<SessionState>) => void
 }
 
@@ -201,11 +202,7 @@ export async function startSessionManager(
     })
 
     if (!isWorkerEnvironment) {
-      trackActivity(() => {
-        if (trackingConsentState.isGranted()) {
-          throttledExpandOrRenew()
-        }
-      })
+      trackActivity(expandOrRenewOnActivity)
       trackVisibility(() => {
         if (!sessionExpired) {
           strategy.setSessionState((state) => expandOnly(state), 'expandOnVisibility').catch(monitorError)
@@ -238,6 +235,7 @@ export async function startSessionManager(
       renewObservable,
       expireObservable,
       expire,
+      expandOrRenew: expandOrRenewOnActivity,
       updateSessionState: (partialState) => {
         strategy.setSessionState((state) => ({ ...state, ...partialState }), 'updateState').catch(monitorError)
       },
@@ -270,6 +268,12 @@ export async function startSessionManager(
       // Mutate the session context in the history for replay forced changes
 
       previousSession.isReplayForced = !!newState.forcedReplay
+    }
+  }
+
+  function expandOrRenewOnActivity() {
+    if (trackingConsentState.isGranted()) {
+      throttledExpandOrRenew()
     }
   }
 
@@ -327,6 +331,7 @@ export function startSessionManagerStub(): SessionManager {
     renewObservable: new Observable(),
     expireObservable: new Observable(),
     expire: noop,
+    expandOrRenew: noop,
     updateSessionState: (state) => {
       sessionContext = {
         ...sessionContext,

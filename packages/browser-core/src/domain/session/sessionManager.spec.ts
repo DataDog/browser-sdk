@@ -185,6 +185,52 @@ describe('startSessionManager', () => {
   })
 
   describe('session renewal', () => {
+    it('should renew on expandOrRenew() after expiration', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+      const renewSpy = jasmine.createSpy('renew')
+      sessionManager.renewObservable.subscribe(renewSpy)
+      const initialId = sessionManager.findSession()!.id
+
+      sessionManager.expire()
+      clock.tick(ONE_SECOND)
+      sessionManager.expandOrRenew()
+      await collectAsyncCalls(sessionObservableSpy, 3)
+
+      expect(renewSpy).toHaveBeenCalledTimes(1)
+      expect(sessionManager.findSession()!.id).toBeDefined()
+      expect(sessionManager.findSession()!.id).not.toBe(initialId)
+    })
+
+    it('should not renew on expandOrRenew() when tracking consent is not granted', async () => {
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+      const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
+
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
+      fakeStrategy.setSessionState.calls.reset()
+
+      sessionManager.expandOrRenew()
+      clock.tick(ONE_SECOND)
+
+      expect(fakeStrategy.setSessionState.calls.count()).toBe(0)
+      expect(sessionManager.findSession()).toBeUndefined()
+    })
+
+    it('should share the throttle between expandOrRenew() and DOM activity', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+      fakeStrategy.setSessionState.calls.reset()
+
+      sessionManager.expandOrRenew()
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      sessionManager.expandOrRenew()
+
+      expect(fakeStrategy.setSessionState.calls.count()).toBe(1)
+
+      clock.tick(ONE_SECOND)
+
+      expect(fakeStrategy.setSessionState.calls.count()).toBe(2)
+    })
+
     it('should renew on user activity after expiration', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
@@ -308,6 +354,19 @@ describe('startSessionManager', () => {
     beforeEach(() => {
       setPageVisibility('hidden')
       registerCleanupTask(restorePageVisibility)
+    })
+
+    it('should expand session duration on expandOrRenew() without changing its id', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+      const initialId = sessionManager.findSession()!.id
+      const initialExpire = Number(fakeStrategy.getInternalState().expire)
+
+      clock.tick(ONE_SECOND)
+      sessionManager.expandOrRenew()
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
+      expect(Number(fakeStrategy.getInternalState().expire)).toBeGreaterThan(initialExpire)
+      expect(sessionManager.findSession()!.id).toBe(initialId)
     })
 
     it('should expand session duration on activity', async () => {
