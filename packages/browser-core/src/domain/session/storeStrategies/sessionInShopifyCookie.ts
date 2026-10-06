@@ -3,22 +3,22 @@ import { buildCookieOptions } from '../../configuration'
 import { areCookiesAuthorized } from '../../../browser/cookieAccess'
 import { createCookieSessionStore } from './sessionInCookie'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
-import type { CustomSessionStoreStrategyType, SessionStoreStrategy } from './sessionStoreStrategy'
+import type { ShopifySessionStoreStrategyType, SessionStoreStrategy } from './sessionStoreStrategy'
 
-export async function selectCustomStrategy(
+export async function selectShopifyCookieStrategy(
   configuration: Configuration
-): Promise<CustomSessionStoreStrategyType | undefined> {
+): Promise<ShopifySessionStoreStrategyType | undefined> {
   const cookieOptions = buildCookieOptions(configuration)
   if (cookieOptions && (await areCookiesAuthorized(configuration.sessionCookieAccessFactory!, cookieOptions))) {
-    return { type: 'custom', cookieOptions }
+    return { type: 'shopify', cookieOptions }
   }
 }
 
-export function initCustomStrategy(
-  { cookieOptions }: CustomSessionStoreStrategyType,
+export function initShopifyCookieStrategy(
+  { cookieOptions }: ShopifySessionStoreStrategyType,
   configuration: Configuration
 ): SessionStoreStrategy {
   const cookieAccess = configuration.sessionCookieAccessFactory!(SESSION_STORE_KEY, cookieOptions)
-  // The legacy cookie is read through `document.cookie`, which a custom cookie access exists to avoid
+  // The legacy cookie is read through `document.cookie`, which is not available in the Web Pixel worker
   return createCookieSessionStore(cookieAccess, cookieOptions, configuration, { readLegacyCookie: false })
 }

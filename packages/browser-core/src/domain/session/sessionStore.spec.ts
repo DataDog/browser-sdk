@@ -19,11 +19,11 @@ describe('session store', () => {
         expect(sessionStoreStrategyType).toBeUndefined()
       })
 
-      it('returns custom strategy when a session cookie access is provided', async () => {
+      it('returns Shopify cookie strategy when a session cookie access is provided', async () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           mockBaseConfiguration({ sessionCookieAccessFactory: createDocumentCookieAccess })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'custom' }))
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'shopify' }))
       })
 
       it('returns cookie strategy when sessionPersistence is cookie', async () => {

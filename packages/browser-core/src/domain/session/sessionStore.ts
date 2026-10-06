@@ -6,7 +6,7 @@ import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStra
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { selectMemorySessionStoreStrategy, initMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
-import { selectCustomStrategy, initCustomStrategy } from './storeStrategies/sessionInCustomStore'
+import { selectShopifyCookieStrategy, initShopifyCookieStrategy } from './storeStrategies/sessionInShopifyCookie'
 
 /**
  * Selects the correct session store strategy type based on the configuration and storage
@@ -53,9 +53,9 @@ function selectStrategyForPersistence(
 ): Promise<SessionStoreStrategyType | undefined> | SessionStoreStrategyType | undefined {
   switch (persistence) {
     case SessionPersistence.COOKIE:
-      // A custom cookie access replaces the browser cookie APIs
+      // The Shopify Web Pixel cookie access replaces the browser cookie APIs
       return configuration.sessionCookieAccessFactory
-        ? selectCustomStrategy(configuration)
+        ? selectShopifyCookieStrategy(configuration)
         : selectCookieStrategy(configuration)
 
     case SessionPersistence.LOCAL_STORAGE:
@@ -81,7 +81,7 @@ export function getSessionStoreStrategy(
       return initLocalStorageStrategy()
     case SessionPersistence.MEMORY:
       return initMemorySessionStoreStrategy()
-    case 'custom':
-      return initCustomStrategy(sessionStoreStrategyType, configuration)
+    case 'shopify':
+      return initShopifyCookieStrategy(sessionStoreStrategyType, configuration)
   }
 }

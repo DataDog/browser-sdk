@@ -17,15 +17,15 @@ export interface CookieSessionStoreStrategyType {
   cookieApi: CookieApi
 }
 
-// Cookie persistence through the `sessionCookieAccessFactory` provided by the integration
-export interface CustomSessionStoreStrategyType {
-  type: 'custom'
+// Cookie persistence through the Shopify Web Pixel `browser.cookie` API, provided as `sessionCookieAccessFactory`
+export interface ShopifySessionStoreStrategyType {
+  type: 'shopify'
   cookieOptions: CookieOptions
 }
 
 export type SessionStoreStrategyType =
   | CookieSessionStoreStrategyType
-  | CustomSessionStoreStrategyType
+  | ShopifySessionStoreStrategyType
   | { type: typeof SessionPersistence.LOCAL_STORAGE }
   | { type: typeof SessionPersistence.MEMORY }
 

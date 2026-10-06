@@ -3,7 +3,7 @@ import { Observable } from '../../../tools/observable'
 import type { CookieAccess } from '../../../browser/cookieAccess'
 import type { SessionState } from '../sessionState'
 import { LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
-import { initCustomStrategy, selectCustomStrategy } from './sessionInCustomStore'
+import { initShopifyCookieStrategy, selectShopifyCookieStrategy } from './sessionInShopifyCookie'
 
 function createMockCookieAccess(): CookieAccess & { values: string[] } {
   return {
@@ -24,18 +24,18 @@ function createMockCookieAccess(): CookieAccess & { values: string[] } {
   }
 }
 
-describe('session in custom store strategy', () => {
-  describe('selectCustomStrategy', () => {
-    it('returns the custom strategy when the session cookie access works, without using document.cookie', async () => {
+describe('session in Shopify cookie strategy', () => {
+  describe('selectShopifyCookieStrategy', () => {
+    it('returns the Shopify cookie strategy when the session cookie access works, without using document.cookie', async () => {
       const documentCookieGetSpy = spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const documentCookieSetSpy = spyOnProperty(document, 'cookie', 'set')
       const cookieAccess = createMockCookieAccess()
 
-      const strategyType = await selectCustomStrategy(
+      const strategyType = await selectShopifyCookieStrategy(
         mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
       )
 
-      expect(strategyType).toEqual({ type: 'custom', cookieOptions: jasmine.any(Object) })
+      expect(strategyType).toEqual({ type: 'shopify', cookieOptions: jasmine.any(Object) })
       expect(documentCookieGetSpy).not.toHaveBeenCalled()
       expect(documentCookieSetSpy).not.toHaveBeenCalled()
     })
@@ -44,7 +44,7 @@ describe('session in custom store strategy', () => {
       const cookieAccess = createMockCookieAccess()
       cookieAccess.getAll = () => Promise.resolve([])
 
-      const strategyType = await selectCustomStrategy(
+      const strategyType = await selectShopifyCookieStrategy(
         mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
       )
 
@@ -52,14 +52,14 @@ describe('session in custom store strategy', () => {
     })
   })
 
-  describe('initCustomStrategy', () => {
+  describe('initShopifyCookieStrategy', () => {
     it('persists the session through the session cookie access', async () => {
       const cookieAccess = createMockCookieAccess()
       const sessionCookieAccessFactory = jasmine.createSpy('sessionCookieAccessFactory').and.returnValue(cookieAccess)
       const cookieOptions = {}
 
-      const strategy = initCustomStrategy(
-        { type: 'custom', cookieOptions },
+      const strategy = initShopifyCookieStrategy(
+        { type: 'shopify', cookieOptions },
         mockBaseConfiguration({ sessionCookieAccessFactory })
       )
       await strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
@@ -77,8 +77,8 @@ describe('session in custom store strategy', () => {
           expires: Date.now() + 60_000,
         })
       const cookieAccess = createMockCookieAccess()
-      const strategy = initCustomStrategy(
-        { type: 'custom', cookieOptions: {} },
+      const strategy = initShopifyCookieStrategy(
+        { type: 'shopify', cookieOptions: {} },
         mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
       )
 
