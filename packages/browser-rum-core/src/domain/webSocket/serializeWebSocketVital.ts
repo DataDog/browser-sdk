@@ -27,7 +27,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
   const id = state.id
   const connectingClocks = state.connectingClocks
   const connectingDate = connectingClocks.timeStamp
-  const date = webSocketVitalClocks(state).timeStamp
+  const date = getPhaseClocks(state).timeStamp
 
   switch (state.phase) {
     case 'connecting':
@@ -80,7 +80,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
  * attributes it to a view by, derived once so the two cannot disagree — a vital dated at one moment
  * and attributed to another would be wrong with nothing to catch it.
  */
-export function webSocketVitalClocks(state: TrackedConnectionState): ClocksState {
+export function getPhaseClocks(state: TrackedConnectionState): ClocksState {
   switch (state.phase) {
     case 'connecting':
       return state.connectingClocks
