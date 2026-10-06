@@ -51,6 +51,36 @@ runBasePluginErrorTests(
 )
 
 test.describe('plugin: nextjs', () => {
+  createTest('should create only one view when a root layout client chunk is delayed')
+    .withRum()
+    .withBasePath('/?delay-client-chunk')
+    .withNextjsApp('app')
+    .run(async ({ page, baseUrl, flushEvents, intakeRegistry }) => {
+      await page.waitForFunction(() => performance.getEntriesByName('root-hydration-marker').length === 1)
+      await flushEvents()
+      intakeRegistry.empty()
+
+      let delayedChunks = 0
+      await page.route('**/_next/static/chunks/*.js', async (route) => {
+        const response = await route.fetch()
+        // Find the sibling's chunk without depending on its generated filename.
+        if ((await response.text()).includes('root-hydration-marker')) {
+          delayedChunks++
+          await new Promise((resolve) => setTimeout(resolve, 150))
+        }
+        await route.fulfill({ response })
+      })
+
+      await page.goto(baseUrl)
+      await page.waitForFunction(() => performance.getEntriesByName('root-hydration-marker').length === 1)
+      await flushEvents()
+
+      expect(delayedChunks).toBe(1)
+      const views = [...new Map(intakeRegistry.rumViewEvents.map((event) => [event.view.id, event.view])).values()]
+      expect([...new Set(views.map((view) => view.url))]).toEqual([baseUrl])
+      expect(views).toHaveLength(1)
+    })
+
   createTest('should not be affected by parallel routes')
     .withRum()
     .withNextjsApp('app')
