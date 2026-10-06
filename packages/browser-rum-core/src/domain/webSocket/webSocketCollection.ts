@@ -9,7 +9,7 @@ import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { serializeWebSocketVital, webSocketVitalClocks } from './serializeWebSocketVital'
+import { serializeWebSocketVital, getPhaseClocks } from './serializeWebSocketVital'
 import type { TrackedConnection, WebSocketTrackingEnd } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 
@@ -73,7 +73,7 @@ export function trackWebSocket(
     const state = connection.getState()
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       rawRumEvent: serializeWebSocketVital(state),
-      startClocks: webSocketVitalClocks(state),
+      startClocks: getPhaseClocks(state),
       domainContext: { webSocket: instance },
     })
   }
