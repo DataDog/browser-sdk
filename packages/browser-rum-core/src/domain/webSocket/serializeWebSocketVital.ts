@@ -67,9 +67,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
           close_reason: state.closeEvent?.reason,
           was_clean: state.closeEvent?.wasClean,
           snapshot_version: state.snapshotVersion,
-          // a connection that never opened exchanged nothing, and reports nothing rather than a
-          // zero-filled snapshot
-          snapshot: state.hasOpened ? serializeSnapshot(state.snapshot) : undefined,
+          snapshot: state.snapshot && serializeSnapshot(state.snapshot),
         },
       })
   }
