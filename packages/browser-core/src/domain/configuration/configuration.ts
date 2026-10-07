@@ -257,12 +257,12 @@ export interface InitConfiguration {
   variant?: string | undefined
 
   /**
-   * [Internal option] Factory providing custom cookie access for cookie-based session persistence.
+   * [Internal option] Factory providing Shopify Web Pixel cookie access for session persistence.
    * Replaces `document.cookie` and the Cookie Store API access.
    *
    * @internal
    */
-  sessionCookieAccessFactory?: CookieAccessFactory | undefined
+  shopifyCookieAccessFactory?: CookieAccessFactory | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -337,7 +337,7 @@ export const BROWSER_CORE_SCHEMA = {
   datacenter: { type: 'string' },
   sdkVersion: { type: 'string' },
   variant: { type: 'string' },
-  sessionCookieAccessFactory: { type: 'function', signature: undefined as CookieAccessFactory | undefined },
+  shopifyCookieAccessFactory: { type: 'function', signature: undefined as CookieAccessFactory | undefined },
 } as const
 
 export type Configuration = InferredConfig<typeof BROWSER_CORE_SCHEMA>

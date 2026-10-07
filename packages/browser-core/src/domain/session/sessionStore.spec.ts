@@ -21,7 +21,7 @@ describe('session store', () => {
 
       it('returns Shopify cookie strategy when a session cookie access is provided', async () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
-          mockBaseConfiguration({ sessionCookieAccessFactory: createDocumentCookieAccess })
+          mockBaseConfiguration({ shopifyCookieAccessFactory: createDocumentCookieAccess })
         )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'shopify' }))
       })

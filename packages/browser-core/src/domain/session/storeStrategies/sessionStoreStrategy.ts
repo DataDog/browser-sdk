@@ -17,7 +17,7 @@ export interface CookieSessionStoreStrategyType {
   cookieApi: CookieApi
 }
 
-// Cookie persistence through the Shopify Web Pixel `browser.cookie` API, provided as `sessionCookieAccessFactory`
+// Cookie persistence through the Shopify Web Pixel `browser.cookie` API, provided as `shopifyCookieAccessFactory`
 export interface ShopifySessionStoreStrategyType {
   type: 'shopify'
   cookieOptions: CookieOptions

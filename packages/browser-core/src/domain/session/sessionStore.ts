@@ -30,7 +30,7 @@ export async function selectSessionStoreStrategyType(
 
 function normalizePersistenceList({
   sessionPersistence,
-  sessionCookieAccessFactory,
+  shopifyCookieAccessFactory,
 }: Configuration): SessionPersistence[] {
   if (sessionPersistence !== undefined) {
     return sessionPersistence
@@ -40,7 +40,7 @@ function normalizePersistenceList({
   // unless the integration provides its own cookie access
   // TODO: make it work when we start using Cookie Store API
   // @see https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
-  if (isWorkerEnvironment && !sessionCookieAccessFactory) {
+  if (isWorkerEnvironment && !shopifyCookieAccessFactory) {
     return [SessionPersistence.MEMORY]
   }
 
@@ -54,7 +54,7 @@ function selectStrategyForPersistence(
   switch (persistence) {
     case SessionPersistence.COOKIE:
       // The Shopify Web Pixel cookie access replaces the browser cookie APIs
-      return configuration.sessionCookieAccessFactory
+      return configuration.shopifyCookieAccessFactory
         ? selectShopifyCookieStrategy(configuration)
         : selectCookieStrategy(configuration)
 

@@ -32,7 +32,7 @@ describe('session in Shopify cookie strategy', () => {
       const cookieAccess = createMockCookieAccess()
 
       const strategyType = await selectShopifyCookieStrategy(
-        mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
+        mockBaseConfiguration({ shopifyCookieAccessFactory: () => cookieAccess })
       )
 
       expect(strategyType).toEqual({ type: 'shopify', cookieOptions: jasmine.any(Object) })
@@ -45,7 +45,7 @@ describe('session in Shopify cookie strategy', () => {
       cookieAccess.getAll = () => Promise.resolve([])
 
       const strategyType = await selectShopifyCookieStrategy(
-        mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
+        mockBaseConfiguration({ shopifyCookieAccessFactory: () => cookieAccess })
       )
 
       expect(strategyType).toBeUndefined()
@@ -55,16 +55,16 @@ describe('session in Shopify cookie strategy', () => {
   describe('initShopifyCookieStrategy', () => {
     it('persists the session through the session cookie access', async () => {
       const cookieAccess = createMockCookieAccess()
-      const sessionCookieAccessFactory = jasmine.createSpy('sessionCookieAccessFactory').and.returnValue(cookieAccess)
+      const shopifyCookieAccessFactory = jasmine.createSpy('shopifyCookieAccessFactory').and.returnValue(cookieAccess)
       const cookieOptions = {}
 
       const strategy = initShopifyCookieStrategy(
         { type: 'shopify', cookieOptions },
-        mockBaseConfiguration({ sessionCookieAccessFactory })
+        mockBaseConfiguration({ shopifyCookieAccessFactory })
       )
       await strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
 
-      expect(sessionCookieAccessFactory).toHaveBeenCalledOnceWith('_dd_s_v2', cookieOptions)
+      expect(shopifyCookieAccessFactory).toHaveBeenCalledOnceWith('_dd_s_v2', cookieOptions)
       expect(cookieAccess.values[0]).toContain('id=abc')
     })
 
@@ -79,7 +79,7 @@ describe('session in Shopify cookie strategy', () => {
       const cookieAccess = createMockCookieAccess()
       const strategy = initShopifyCookieStrategy(
         { type: 'shopify', cookieOptions: {} },
-        mockBaseConfiguration({ sessionCookieAccessFactory: () => cookieAccess })
+        mockBaseConfiguration({ shopifyCookieAccessFactory: () => cookieAccess })
       )
 
       let capturedState: SessionState | undefined
