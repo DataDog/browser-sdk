@@ -153,6 +153,11 @@ export function trackWebSocket(
     }
   }
 
+  function clearTrackedConnections() {
+    trackedConnections.clear()
+    syncHeartbeat()
+  }
+
   function handleWebSocketContext(context: WebSocketContext) {
     switch (context.state) {
       case 'connecting': {
@@ -243,14 +248,12 @@ export function trackWebSocket(
         emitVital(instance, connection)
       })
 
-      trackedConnections.clear()
-      syncHeartbeat()
+      clearTrackedConnections()
       return endedCount
     },
     stop: () => {
       subscription.unsubscribe()
-      trackedConnections.clear()
-      syncHeartbeat()
+      clearTrackedConnections()
     },
   }
 }
