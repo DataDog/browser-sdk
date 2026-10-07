@@ -18,6 +18,10 @@ import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 
 export interface DebuggerBuildMetadata {
   version?: string
+  /**
+   * Sourcemap debug ID of the instrumented build
+   */
+  debugId?: string
 }
 
 /**
@@ -192,6 +196,12 @@ function resolveDebuggerVersion(initConfiguration: DebuggerInitConfiguration): s
   return initConfiguration.version ?? buildVersion
 }
 
+function resolveBuildDebugId(): string | undefined {
+  // The build metadata is injected in the bundle by the build plugin, so don't trust its shape
+  const debugId: unknown = (globalObject as BrowserWindow).__DD_LIVE_DEBUGGER_BUILD__?.debugId
+  return typeof debugId === 'string' && debugId ? debugId : undefined
+}
+
 /**
  * Create the public API for the Live Debugger
  */
@@ -221,6 +231,7 @@ function makeDebuggerPublicApi(): DatadogDebugger {
         proxy: resolvedConfiguration.proxy,
         env: resolvedConfiguration.env,
         version: resolvedConfiguration.version,
+        debugId: resolveBuildDebugId(),
         pollInterval: resolvedConfiguration.pollInterval,
         maxUnreachableDuration: resolvedConfiguration.maxUnreachableDuration,
       })
