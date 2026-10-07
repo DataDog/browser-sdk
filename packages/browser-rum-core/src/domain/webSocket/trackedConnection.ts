@@ -16,14 +16,11 @@ export interface MessageDirectionAggregate {
   longestSilence: Duration
 }
 
-export interface OutboundAggregate extends MessageDirectionAggregate {
-  /** Deepest send queue observed, counted after each payload was enqueued. */
-  bufferedAmountMax: number
-}
-
 export interface WebSocketSnapshot {
   inbound: MessageDirectionAggregate
-  outbound: OutboundAggregate
+  outbound: MessageDirectionAggregate
+  /** Deepest send queue observed, counted after each payload was enqueued. */
+  bufferedAmountMax: number
 }
 
 /** What is known about a connection from the constructor call, and never changes afterwards. */
@@ -101,10 +98,8 @@ export function createTrackedConnection({
   connectingClocks,
 }: TrackedConnectionIdentity): TrackedConnection {
   const inbound = createMessageDirectionAggregate()
-  const outbound: OutboundAggregate = {
-    ...createMessageDirectionAggregate(),
-    bufferedAmountMax: 0,
-  }
+  const outbound = createMessageDirectionAggregate()
+  let bufferedAmountMax = 0
   // held as one value, so a phase cannot be reached without the facts that come with it
   let phaseFacts: PhaseFacts = { phase: 'connecting' }
   // continued across phases: the closed vital follows the open one
@@ -123,6 +118,7 @@ export function createTrackedConnection({
     return {
       inbound: { ...inbound },
       outbound: { ...outbound },
+      bufferedAmountMax,
     }
   }
 
@@ -161,7 +157,7 @@ export function createTrackedConnection({
       // the peak is counted after the payload is enqueued, from the pre-send queue depth:
       // `send()` grows the queue by exactly the payload size, whereas reading the socket again
       // could catch a queue the browser has already partly flushed and understate the peak
-      outbound.bufferedAmountMax = Math.max(outbound.bufferedAmountMax, bufferedAmountPreSend + size)
+      bufferedAmountMax = Math.max(bufferedAmountMax, bufferedAmountPreSend + size)
       recordMessage(outbound, lastOutboundMessageAt, size, at)
       lastOutboundMessageAt = at
     },

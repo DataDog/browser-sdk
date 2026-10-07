@@ -115,12 +115,12 @@ function toRawVital(date: TimeStamp, payload: RawRumWebSocketVitalPayload): RawR
  * The values that change from one vital of a connection to the next. The two directions measure the
  * same things, so the mapping is written once and applied to each of them.
  */
-function serializeSnapshot({ inbound, outbound }: WebSocketSnapshot): RawRumWebSocketVitalSnapshot {
+function serializeSnapshot({ inbound, outbound, bufferedAmountMax }: WebSocketSnapshot): RawRumWebSocketVitalSnapshot {
   return {
     inbound: serializeMessageDirection(inbound),
     outbound: {
       ...serializeMessageDirection(outbound),
-      buffered_amount_max: outbound.bufferedAmountMax,
+      buffered_amount_max: bufferedAmountMax,
     },
   }
 }

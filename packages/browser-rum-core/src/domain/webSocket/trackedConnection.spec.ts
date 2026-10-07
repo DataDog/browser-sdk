@@ -5,7 +5,6 @@ import { relativeToClocks } from '@datadog/js-core/time'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 import type {
   MessageDirectionAggregate,
-  OutboundAggregate,
   TrackedConnection,
   TrackedConnectionIdentity,
   TrackedConnectionState,
@@ -240,7 +239,7 @@ describe('trackedConnection', () => {
       // one large send on a socket that never flushed: the queue did reach a megabyte
       connection.recordOutboundMessage(1_000_000, 0, relativeAt(20))
 
-      expect(outboundOf(connection).bufferedAmountMax).toBe(1_000_000)
+      expect(connection.getState().snapshot.bufferedAmountMax).toBe(1_000_000)
     })
 
     it('reports the deepest queue observed across sends', () => {
@@ -250,7 +249,7 @@ describe('trackedConnection', () => {
       connection.recordOutboundMessage(10, 100, relativeAt(30))
       connection.recordOutboundMessage(10, 50, relativeAt(40))
 
-      expect(outboundOf(connection).bufferedAmountMax).toBe(110)
+      expect(connection.getState().snapshot.bufferedAmountMax).toBe(110)
     })
   })
 
@@ -293,9 +292,5 @@ describe('trackedConnection', () => {
     const state = connection.getState()
     expect(state.phase).toBe(phase)
     return state as Extract<TrackedConnectionState, { phase: Phase }>
-  }
-
-  function outboundOf(connection: TrackedConnection): OutboundAggregate {
-    return connection.getState().snapshot.outbound
   }
 })
