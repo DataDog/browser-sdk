@@ -139,7 +139,7 @@ export interface FlagsByKeysResult {
  * and mapResources keeps whichever the server listed first, so including archived ones would risk
  * describing the override against the wrong flag's type and variants. An override on a flag archived
  * here therefore reads as absent, which the row reports as archived or deleted.
- * 
+ *
  * Unlike the catalog, this lookup does not filter out server-only flags. These are flags the user has
  * already overridden; if one has become server-only (e.g. its SDK availability changed after the
  * override was set), filtering it out would make it look archived or deleted instead of showing its
