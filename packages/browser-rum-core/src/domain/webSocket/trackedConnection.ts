@@ -64,24 +64,14 @@ export type WebSocketTrackingEnd =
       closeEvent?: never
     }
 
-interface ConnectingPhase {
-  phase: 'connecting'
-}
-
-interface OpenPhase extends OpenFacts {
-  phase: 'open'
-  snapshotVersion: number
-}
-
-// the open facts are absent when the connection never opened
-type ClosedPhase = Partial<OpenFacts> & {
-  phase: 'closed'
-  endClocks: ClocksState
-  snapshotVersion: number
-} & WebSocketTrackingEnd
-
-/** What the connection knows by having reached its current phase, narrowed on that phase. */
-type PhaseFacts = ConnectingPhase | OpenPhase | ClosedPhase
+/**
+ * What the connection knows by having reached its current phase, narrowed on that phase. Each phase
+ * holds what its own vital reports, and carries nothing over from the phases before it.
+ */
+type PhaseFacts =
+  | { phase: 'connecting' }
+  | (OpenFacts & { phase: 'open'; snapshotVersion: number })
+  | ({ phase: 'closed'; endClocks: ClocksState; snapshotVersion: number; hasOpened: boolean } & WebSocketTrackingEnd)
 
 /**
  * The state of a WebSocket connection at a given moment, narrowed on the phase so each vital can
@@ -178,23 +168,14 @@ export function createTrackedConnection({
 
     recordTrackingEnd: (clocks, end) => {
       phaseFacts = {
-        ...openFactsOf(phaseFacts),
         phase: 'closed',
         endClocks: clocks,
         snapshotVersion: nextSnapshotVersion(),
+        hasOpened: phaseFacts.phase === 'open',
         ...end,
       }
     },
   }
-}
-
-/** The open facts a phase carries over, none for a connection that has not opened (yet). */
-function openFactsOf(facts: PhaseFacts): Partial<OpenFacts> {
-  if (facts.phase === 'connecting') {
-    return {}
-  }
-  const { openClocks, selectedProtocol, selectedExtensions } = facts
-  return { openClocks, selectedProtocol, selectedExtensions }
 }
 
 function createMessageDirectionAggregate(): MessageDirectionAggregate {

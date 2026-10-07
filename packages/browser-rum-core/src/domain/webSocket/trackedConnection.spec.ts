@@ -88,11 +88,11 @@ describe('trackedConnection', () => {
     })
 
     const PHASES_TRACKING_CAN_END_FROM = [
-      { from: 'connecting', createConnection: createConnectingConnection },
-      { from: 'open', createConnection: createOpenConnection },
+      { from: 'connecting', createConnection: createConnectingConnection, hasOpened: false },
+      { from: 'open', createConnection: createOpenConnection, hasOpened: true },
     ]
 
-    PHASES_TRACKING_CAN_END_FROM.forEach(({ from, createConnection }) => {
+    PHASES_TRACKING_CAN_END_FROM.forEach(({ from, createConnection, hasOpened }) => {
       it(`turns closed when tracking ends from ${from}`, () => {
         const connection = createConnection()
 
@@ -101,6 +101,14 @@ describe('trackedConnection', () => {
         const state = getStateIn(connection, 'closed')
         expect(state.endClocks).toEqual(clocksAt(40))
         expect(state.trackingEndReason).toBe(WebSocketTrackingEndReason.SESSION_END)
+      })
+
+      it(`tells whether the connection had opened when tracking ends from ${from}`, () => {
+        const connection = createConnection()
+
+        connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+
+        expect(getStateIn(connection, 'closed').hasOpened).toBe(hasOpened)
       })
     })
 
