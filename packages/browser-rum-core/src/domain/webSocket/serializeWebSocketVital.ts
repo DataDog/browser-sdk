@@ -77,7 +77,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
           close_reason: state.closeEvent?.reason,
           was_clean: state.closeEvent?.wasClean,
           snapshot_version: state.snapshotVersion,
-          snapshot: state.snapshot && serializeSnapshot(state.snapshot),
+          snapshot: state.snapshot && serializeTerminalSnapshot(state.snapshot, state),
         },
       })
   }
@@ -135,11 +135,36 @@ function serializeSnapshot({ inbound, outbound, bufferedAmountMax }: WebSocketSn
   }
 }
 
+/**
+ * The terminal snapshot, which also reports the values measured when tracking ended. Only the closed
+ * state holds them, so that a periodic report cannot carry them — nothing in the schema would reject
+ * it if it did.
+ */
+function serializeTerminalSnapshot(
+  snapshot: WebSocketSnapshot,
+  { silenceBeforeClose, bufferedAmountAtClose }: Extract<TrackedConnectionState, { phase: 'closed' }>
+): RawRumWebSocketVitalSnapshot {
+  const serialized = serializeSnapshot(snapshot)
+
+  return {
+    inbound: {
+      ...serialized.inbound,
+      silence_before_close: toServerDuration(silenceBeforeClose.inbound),
+    },
+    outbound: {
+      ...serialized.outbound,
+      silence_before_close: toServerDuration(silenceBeforeClose.outbound),
+      buffered_amount_at_close: bufferedAmountAtClose,
+    },
+  }
+}
+
 function serializeMessageDirection(direction: MessageDirectionAggregate): RawRumWebSocketVitalMessageDirection {
   return {
     message_count: direction.messageCount,
     message_size_total: direction.messageSizeTotal,
     message_size_max: direction.messageSizeMax,
+    time_to_first_message: toServerDuration(direction.timeToFirstMessage),
     longest_silence: toServerDuration(direction.longestSilence),
   }
 }

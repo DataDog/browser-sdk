@@ -189,6 +189,34 @@ describe('serializeWebSocketVital', () => {
       expect(websocket.snapshot_version).toBe(1)
     })
 
+    it('reports the two values a snapshot only holds when tracking ended', () => {
+      const { websocket } = serializeClosedOnCloseEvent({
+        state: closedState({
+          silenceBeforeClose: { inbound: 5 as Duration, outbound: 8 as Duration },
+          bufferedAmountAtClose: 128,
+        }),
+      })
+
+      expect(websocket.snapshot!.inbound.silence_before_close).toBe(nanoseconds(5))
+      expect(websocket.snapshot!.outbound.silence_before_close).toBe(nanoseconds(8))
+      expect(websocket.snapshot!.outbound.buffered_amount_at_close).toBe(128)
+    })
+
+    it('reports an empty send queue at close as zero rather than omitting it', () => {
+      const { websocket } = serializeClosedOnCloseEvent({
+        state: closedState({ bufferedAmountAtClose: 0 }),
+      })
+
+      expect(websocket.snapshot!.outbound.buffered_amount_at_close).toBe(0)
+    })
+
+    it('omits the silence before close in a direction that observed no message', () => {
+      const { websocket } = serializeClosedOnCloseEvent()
+
+      expect(websocket.snapshot!.inbound.silence_before_close).toBeUndefined()
+      expect(websocket.snapshot!.outbound.silence_before_close).toBeUndefined()
+    })
+
     it('reports no close initiator and no closing duration: both are derived from the vital stream', () => {
       const { websocket } = serializeClosedOnCloseEvent()
 
@@ -216,12 +244,14 @@ describe('serializeWebSocketVital', () => {
           message_size_total: 0,
           message_size_max: 0,
           longest_silence: nanoseconds(0),
+          time_to_first_message: undefined,
         },
         outbound: {
           message_count: 0,
           message_size_total: 0,
           message_size_max: 0,
           longest_silence: nanoseconds(0),
+          time_to_first_message: undefined,
           buffered_amount_max: 0,
         },
       })
@@ -235,6 +265,7 @@ describe('serializeWebSocketVital', () => {
               messageCount: 3,
               messageSizeTotal: 300,
               messageSizeMax: 200,
+              timeToFirstMessage: 4 as Duration,
               longestSilence: 12 as Duration,
             },
             outbound: {
@@ -251,6 +282,7 @@ describe('serializeWebSocketVital', () => {
         message_count: 3,
         message_size_total: 300,
         message_size_max: 200,
+        time_to_first_message: nanoseconds(4),
         longest_silence: nanoseconds(12),
       })
       expect(websocket.snapshot.outbound).toEqual({
@@ -258,6 +290,7 @@ describe('serializeWebSocketVital', () => {
         message_size_total: 10,
         message_size_max: 10,
         longest_silence: nanoseconds(0),
+        time_to_first_message: undefined,
         buffered_amount_max: 70_000,
       })
     })
@@ -269,6 +302,13 @@ describe('serializeWebSocketVital', () => {
       serializeWebSocketVital({ ...openState(), snapshotVersion: undefined })
       // @ts-expect-error a snapshot may ride on the closed vital, so its version is required
       serializeWebSocketVital({ ...closedState(), snapshotVersion: undefined })
+    })
+
+    it('rejects the values measured when tracking ended on any state but the closed one', () => {
+      // @ts-expect-error a periodic report reports no send queue depth at close
+      serializeWebSocketVital({ ...openState(), bufferedAmountAtClose: 128 })
+      // @ts-expect-error a periodic report reports no silence before close
+      serializeWebSocketVital({ ...openState(), silenceBeforeClose: { inbound: 5 as Duration } })
     })
   })
 
@@ -340,6 +380,8 @@ describe('serializeWebSocketVital', () => {
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
+      bufferedAmountAtClose: 0,
+      silenceBeforeClose: {},
       snapshot: snapshotOf(),
       ...state,
       trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
@@ -357,6 +399,8 @@ describe('serializeWebSocketVital', () => {
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 1,
+      bufferedAmountAtClose: 0,
+      silenceBeforeClose: {},
       ...state,
       trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
       closeEvent: state.closeEvent ?? CLOSE_EVENT,
@@ -420,6 +464,8 @@ describe('serializeWebSocketVital', () => {
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
+      bufferedAmountAtClose: 0,
+      silenceBeforeClose: {},
       snapshot: snapshotOf(),
       trackingEndReason: WebSocketTrackingEndReason.SESSION_END,
     })
