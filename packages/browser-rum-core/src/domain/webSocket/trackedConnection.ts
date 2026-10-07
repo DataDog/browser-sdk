@@ -44,7 +44,7 @@ export type TrackedConnectionState = {
       openClocks: ClocksState
       /**
        * When this particular open vital was taken. It is the open event on the first one and the
-       * pulse on every heartbeat after it.
+       * pulse on every periodic report after it.
        */
       pulseClocks: ClocksState
       selectedProtocol?: string

@@ -5,7 +5,7 @@ import type {
   RumVitalWebsocketConnectingEvent,
   RumVitalWebsocketOpenEvent,
 } from '@datadog/browser-rum-core/src/rumEvent.types'
-import { WEBSOCKET_HEARTBEAT_INTERVAL } from '@datadog/browser-rum-core/src/domain/webSocket/webSocketCollection'
+import { WEBSOCKET_PERIODIC_REPORT_INTERVAL } from '@datadog/browser-rum-core/src/domain/webSocket/webSocketCollection'
 import { expect, test } from '@playwright/test'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest } from '../../lib/framework'
@@ -233,8 +233,8 @@ test.describe('rum websockets', () => {
       })
   })
 
-  test.describe('heartbeat', () => {
-    createTest('beats the open vital with a new snapshot version while the connection stays open')
+  test.describe('periodic report', () => {
+    createTest('reports the open vital with a new snapshot version while the connection stays open')
       .withRum(RUM_CONFIGURATION)
       .withBody(WebSocketPage.testBody())
       .withMockClock()
@@ -242,9 +242,9 @@ test.describe('rum websockets', () => {
         const ws = new WebSocketPage(page)
 
         await ws.open()
-        await page.clock.runFor(WEBSOCKET_HEARTBEAT_INTERVAL)
+        await page.clock.runFor(WEBSOCKET_PERIODIC_REPORT_INTERVAL)
         await ws.sendAndExpectEcho()
-        await page.clock.runFor(WEBSOCKET_HEARTBEAT_INTERVAL)
+        await page.clock.runFor(WEBSOCKET_PERIODIC_REPORT_INTERVAL)
         await ws.close()
 
         await flushEvents()
@@ -256,7 +256,7 @@ test.describe('rum websockets', () => {
         expect(vitals.closed[0].vital.websocket.snapshot_version).toBe(4)
       })
 
-    createTest('stops beating once the connection is closed')
+    createTest('stops reporting once the connection is closed')
       .withRum(RUM_CONFIGURATION)
       .withBody(WebSocketPage.testBody())
       .withMockClock()
@@ -265,7 +265,7 @@ test.describe('rum websockets', () => {
 
         await ws.open()
         await ws.close()
-        await page.clock.runFor(2 * WEBSOCKET_HEARTBEAT_INTERVAL)
+        await page.clock.runFor(2 * WEBSOCKET_PERIODIC_REPORT_INTERVAL)
 
         await flushEvents()
 
@@ -273,7 +273,7 @@ test.describe('rum websockets', () => {
         expect(getWebSocketVitals(intakeRegistry).open).toHaveLength(1)
       })
 
-    createTest('beats the open vital when the page is hidden, without waiting for the interval')
+    createTest('reports the open vital when the page is hidden, without waiting for the interval')
       .withRum(RUM_CONFIGURATION)
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page }) => {

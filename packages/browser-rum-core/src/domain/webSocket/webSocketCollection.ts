@@ -25,11 +25,11 @@ import { createTrackedConnection } from './trackedConnection'
  * the silence threshold the reducer synthesises a close after.
  *
  * 60s is the rate Chrome throttles a hidden tab's chained timers to,
- * so it's the nominal value for the heartbeat interval.
+ * so it's the nominal value for the periodic report interval.
  *
  * It is meant to be cheap to change, we might tune it after collecting data.
  */
-export const WEBSOCKET_HEARTBEAT_INTERVAL = ONE_MINUTE
+export const WEBSOCKET_PERIODIC_REPORT_INTERVAL = ONE_MINUTE
 
 /** A reason tracking ends for without the SDK observing any close event. */
 export type UnobservedTrackingEndReason = Exclude<
@@ -64,7 +64,7 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
   })
 
   // A page transition may be the last chance to report before the page is frozen or goes away, so
-  // open connections pulse without waiting for the heartbeat.
+  // open connections pulse without waiting for the periodic report.
   const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
     tracker.reportOpenConnections()
   })
@@ -91,7 +91,7 @@ export function trackWebSocket(
   webSocketContextObservable: Observable<WebSocketContext>
 ): WebSocketConnectionTracker {
   const trackedConnections = new Map<WebSocket, TrackedConnection>()
-  let heartbeatIntervalId: TimeoutId | undefined
+  let reportIntervalId: TimeoutId | undefined
 
   /**
    * Reports one phase of one connection. The connection already holds the phase clocks and snapshot
@@ -100,7 +100,7 @@ export function trackWebSocket(
    *
    * Emitted straight onto the life cycle rather than through vitalCollection: a WebSocket vital is
    * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject —
-   * and rejecting one would let a frozen page suppress the heartbeat built to detect it.
+   * and rejecting one would let a frozen page suppress the periodic report built to detect it.
    */
   function emitVital(instance: WebSocket, connection: TrackedConnection) {
     const state = connection.getState()
@@ -139,23 +139,23 @@ export function trackWebSocket(
   }
 
   /**
-   * Follows the timer to the population in phase `open`, so the heartbeat costs nothing while no
-   * connection is open.
+   * Follows the timer to the population in phase `open`, so the periodic report costs nothing while
+   * no connection is open.
    */
-  function syncHeartbeat() {
-    const shouldRunHeartbeat = hasOpenConnection()
+  function reportOpenConnectionsPeriodically() {
+    const shouldReport = hasOpenConnection()
 
-    if (shouldRunHeartbeat && heartbeatIntervalId === undefined) {
-      heartbeatIntervalId = setInterval(reportOpenConnections, WEBSOCKET_HEARTBEAT_INTERVAL)
-    } else if (!shouldRunHeartbeat && heartbeatIntervalId !== undefined) {
-      clearInterval(heartbeatIntervalId)
-      heartbeatIntervalId = undefined
+    if (shouldReport && reportIntervalId === undefined) {
+      reportIntervalId = setInterval(reportOpenConnections, WEBSOCKET_PERIODIC_REPORT_INTERVAL)
+    } else if (!shouldReport && reportIntervalId !== undefined) {
+      clearInterval(reportIntervalId)
+      reportIntervalId = undefined
     }
   }
 
   function clearTrackedConnections() {
     trackedConnections.clear()
-    syncHeartbeat()
+    reportOpenConnectionsPeriodically()
   }
 
   function handleWebSocketContext(context: WebSocketContext) {
@@ -176,7 +176,7 @@ export function trackWebSocket(
         }
 
         // recordOpen sets pulseClocks to the open date and bumps the first snapshot version; the
-        // heartbeat's later pulses are the ones where the two dates part
+        // later periodic reports are the ones where the two dates part
         connection.recordOpen(context)
 
         emitVital(context.instance, connection)
@@ -233,7 +233,7 @@ export function trackWebSocket(
     // after every phase change rather than at the ones that happen to matter, so none can be missed.
     // Messages are the one hot path here and change no phase, so they are the exception
     if (context.state !== 'message-in' && context.state !== 'message-out') {
-      syncHeartbeat()
+      reportOpenConnectionsPeriodically()
     }
   })
 
