@@ -11,7 +11,6 @@ import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js
 import type { Subscription, Context, ContextValue } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import {
-  noop,
   PageExitReason,
   shallowClone,
   generateUUID,
@@ -21,7 +20,7 @@ import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import { mockable, setInterval, clearInterval, setTimeout, Observable } from '@datadog/js-core/util'
+import { mockable, setInterval, clearInterval, setTimeout, Observable, noop } from '@datadog/js-core/util'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

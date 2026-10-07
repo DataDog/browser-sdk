@@ -1,6 +1,6 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
+import { noop } from '@datadog/js-core/util'
 import { ONE_MINUTE, elapsed } from '@datadog/js-core/time'
-import { noop } from '@datadog/browser-core'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
 import {
   createPerformanceObservable,

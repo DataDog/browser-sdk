@@ -1,5 +1,5 @@
+import { noop } from '@datadog/js-core/util'
 import { type Duration, relativeToClocks, type RelativeTime } from '@datadog/js-core/time'
-import { noop } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, RumEventType } from '@datadog/browser-rum-core'
 import { createRawRumEvent } from '@datadog/browser-rum-core/test'
 import { createActionHistory } from './actionHistory'

@@ -1,5 +1,4 @@
-import { noop } from '@datadog/browser-core'
-import { clearTimeout, setTimeout } from '@datadog/js-core/util'
+import { clearTimeout, setTimeout, noop } from '@datadog/js-core/util'
 import type { TimeoutId } from '@datadog/js-core/util'
 import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'

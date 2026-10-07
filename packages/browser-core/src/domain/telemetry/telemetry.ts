@@ -7,6 +7,7 @@ import {
   jsonStringify,
   BufferedObservable,
   Observable,
+  noop,
 } from '@datadog/js-core/util'
 import type { Hook } from '@datadog/js-core/assembly'
 import type { RecursivePartial, Context } from '@datadog/js-core/util'
@@ -32,7 +33,6 @@ import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
-import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,

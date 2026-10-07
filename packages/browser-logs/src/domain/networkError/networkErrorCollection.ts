@@ -7,14 +7,13 @@ import {
   initFetchObservable,
   computeStackTrace,
   toStackTraceString,
-  noop,
   isServerError,
   ResponseBodyAction,
   safeTruncate,
   buildDebugIdByUrl,
   getStackTraceUrls,
 } from '@datadog/browser-core'
-import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
+import { ONE_KIBI_BYTE, noop } from '@datadog/js-core/util'
 import { isIntakeUrl } from '@datadog/js-core/transport'
 import type { LogsConfiguration } from '../configuration'
 

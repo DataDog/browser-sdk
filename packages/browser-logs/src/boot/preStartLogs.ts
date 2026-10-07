@@ -6,7 +6,6 @@ import {
   display,
   displayAlreadyInitializedError,
   initFeatureFlags,
-  noop,
   buildAccountContextManager,
   CustomerContextKey,
   bufferContextCalls,
@@ -21,7 +20,7 @@ import {
   startTelemetrySessionContext,
   isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
-import { BufferedObservable, mockable } from '@datadog/js-core/util'
+import { BufferedObservable, mockable, noop } from '@datadog/js-core/util'
 import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'

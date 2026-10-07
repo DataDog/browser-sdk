@@ -1,5 +1,5 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { RecordingScope } from '../recordingScope'
 import { createRecordingScope } from '../recordingScope'

@@ -1,4 +1,4 @@
-import { isWorkerEnvironment, mockable, BufferedObservable } from '@datadog/js-core/util'
+import { isWorkerEnvironment, mockable, BufferedObservable, noop } from '@datadog/js-core/util'
 import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
@@ -10,7 +10,6 @@ import {
   canUseEventBridge,
   displayAlreadyInitializedError,
   willSyntheticsInjectRum,
-  noop,
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,

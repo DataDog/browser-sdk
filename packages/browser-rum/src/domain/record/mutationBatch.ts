@@ -1,4 +1,5 @@
-import { noop, throttle, requestIdleCallback } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
+import { throttle, requestIdleCallback } from '@datadog/browser-core'
 import type { MutationRecord } from '@datadog/js-core/dom'
 
 /**

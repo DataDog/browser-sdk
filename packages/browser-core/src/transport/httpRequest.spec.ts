@@ -1,4 +1,5 @@
 import type { EndpointBuilder } from '@datadog/js-core/transport'
+import { noop } from '@datadog/js-core/util'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { Request } from '../../test'
 import {
@@ -10,7 +11,6 @@ import {
   NETWORK_ERROR_FETCH_MOCK,
   wait,
 } from '../../test'
-import { noop } from '../tools/utils/functionUtils'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 import { createHttpRequest, fetchStrategy, RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 

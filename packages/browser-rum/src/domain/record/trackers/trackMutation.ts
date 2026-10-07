@@ -1,5 +1,5 @@
+import { noop } from '@datadog/js-core/util'
 import { monitor } from '@datadog/js-core/monitor'
-import { noop } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { getMutationObserverConstructor } from '@datadog/js-core/dom'

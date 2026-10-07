@@ -1,5 +1,5 @@
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
-import { noop } from '../../src'
+import { noop } from '@datadog/js-core/util'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export type MockFetchManager = ReturnType<typeof mockFetch>

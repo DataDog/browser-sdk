@@ -1,8 +1,8 @@
+import { noop } from '@datadog/js-core/util'
 import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
 import { instrumentConstructor, instrumentMethod, instrumentSetter } from './instrumentMethod'
-import { noop } from './utils/functionUtils'
 
 describe('instrumentMethod', () => {
   const THIRD_PARTY_RESULT = 42

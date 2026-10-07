@@ -1,6 +1,7 @@
 import type { EncoderResult } from '@datadog/browser-core'
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
-import { noop, DeflateEncoderStreamId } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
+import { DeflateEncoderStreamId } from '@datadog/browser-core'
 import { MockWorker } from '../../../test'
 import { createDeflateEncoder } from './deflateEncoder'
 

@@ -1,7 +1,7 @@
 import type { DeflateEncoder, DeflateWorker, Telemetry, SessionManager } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
 import {
   canUseEventBridge,
-  noop,
   BridgeCapability,
   bridgeSupports,
   DeflateEncoderStreamId,

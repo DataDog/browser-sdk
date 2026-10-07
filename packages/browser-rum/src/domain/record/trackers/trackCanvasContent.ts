@@ -1,4 +1,5 @@
-import { instrumentMethod, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
+import { instrumentMethod } from '@datadog/browser-core'
 import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'

@@ -3,12 +3,11 @@ import type { Duration } from '@datadog/js-core/time'
 import type { BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   findLast,
-  noop,
   createIdentityEncoder,
   addExperimentalFeatures,
   ExperimentalFeature,
 } from '@datadog/browser-core'
-import { Observable, BufferedObservable } from '@datadog/js-core/util'
+import { Observable, BufferedObservable, noop } from '@datadog/js-core/util'
 import type { Clock, SessionManagerMock } from '@datadog/browser-core/test'
 import {
   createNewEvent,
