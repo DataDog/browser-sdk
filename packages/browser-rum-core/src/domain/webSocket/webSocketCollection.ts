@@ -13,7 +13,10 @@ import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 
 /** A reason tracking ends for without the SDK observing any close event. */
-type UnobservedTrackingEndReason = Exclude<WebSocketTrackingEndReason, typeof WebSocketTrackingEndReason.CLOSE_EVENT>
+export type UnobservedTrackingEndReason = Exclude<
+  WebSocketTrackingEndReason,
+  typeof WebSocketTrackingEndReason.CLOSE_EVENT
+>
 
 export interface WebSocketConnectionTracker {
   /** Ends tracking of every tracked connection, and tells how many there were. */
