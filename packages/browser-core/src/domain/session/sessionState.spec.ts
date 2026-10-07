@@ -1,5 +1,6 @@
-import { dateNow } from '@datadog/js-core/time'
+import { describe, expect, it } from 'vitest'
 import type { TimeStamp } from '@datadog/js-core/time'
+import { dateNow } from '@datadog/js-core/time'
 import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
@@ -114,7 +115,7 @@ describe('session state utilities', () => {
       const session = { ...LIVE_SESSION }
       const now = dateNow()
       expandSessionState(session)
-      expect(session.expire).toBeGreaterThanOrEqual(now + SESSION_EXPIRATION_DELAY)
+      expect(Number(session.expire)).toBeGreaterThanOrEqual(now + SESSION_EXPIRATION_DELAY)
     })
   })
 })

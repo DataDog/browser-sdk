@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import type { TimeStamp } from '@datadog/js-core/time'
@@ -143,7 +144,9 @@ describe('remoteConfigurationCache', () => {
       })
 
       it('should return error when localStorage.getItem throws', () => {
-        spyOn(Storage.prototype, 'getItem').and.throwError('SecurityError')
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+          throw new Error('SecurityError')
+        })
 
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
@@ -176,7 +179,7 @@ describe('remoteConfigurationCache', () => {
         expect(cache.read()).toEqual({
           status: 'hit',
           config: VALID_CONFIG,
-          metadata: { lastSynced: clock.timeStamp(0), syncId: jasmine.any(String) as unknown as string },
+          metadata: { lastSynced: clock.timeStamp(0), syncId: expect.any(String) },
         })
       })
 
@@ -193,7 +196,7 @@ describe('remoteConfigurationCache', () => {
           metadata: {
             lastModified: 1500,
             lastSynced: clock.timeStamp(5000),
-            syncId: jasmine.any(String) as unknown as string,
+            syncId: expect.any(String),
           },
         })
       })
@@ -235,7 +238,9 @@ describe('remoteConfigurationCache', () => {
       })
 
       it('should silently swallow localStorage.setItem errors', () => {
-        spyOn(Storage.prototype, 'setItem').and.throwError('QuotaExceededError')
+        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+          throw new Error('QuotaExceededError')
+        })
 
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
@@ -321,7 +326,9 @@ describe('remoteConfigurationCache', () => {
       })
 
       it('should silently swallow localStorage.removeItem errors', () => {
-        spyOn(Storage.prototype, 'removeItem').and.throwError('SecurityError')
+        vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+          throw new Error('SecurityError')
+        })
 
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 

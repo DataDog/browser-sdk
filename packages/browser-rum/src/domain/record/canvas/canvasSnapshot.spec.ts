@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { CanvasSnapshot } from './canvasSnapshot'
 import { captureCanvasImage, createCanvasSnapshot } from './canvasSnapshot'
@@ -24,7 +25,7 @@ describe('createCanvasSnapshot', () => {
 
   it('does not take a snapshot when no 2d context is available', () => {
     const canvas = createCanvas(2, 2)
-    spyOn(HTMLCanvasElement.prototype, 'getContext').and.returnValue(null)
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
     expect(createCanvasSnapshot(canvas, 1000)).toBeUndefined()
   })

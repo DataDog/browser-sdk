@@ -1,6 +1,7 @@
-import type { BufferedData, ConsoleLog, RawError } from '@datadog/browser-core'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { clocksNow } from '@datadog/js-core/time'
 import { ConsoleApiName } from '@datadog/js-core/util'
+import type { BufferedData, ConsoleLog, RawError } from '@datadog/browser-core'
 import { BufferedDataType, ErrorHandling, ErrorSource, Observable, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
@@ -64,16 +65,16 @@ describe('console collection', () => {
       } as ConsoleLog)
 
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         message: 'foo bar',
         status,
         origin: ErrorSource.CONSOLE,
-        error: whatever(),
+        error: undefined,
         _dd: undefined,
       })
 
       expect(rawLogsEvents[0].domainContext).toEqual({
-        handlingStack: jasmine.any(String),
+        handlingStack: expect.any(String),
       })
     })
 
@@ -151,13 +152,6 @@ describe('console collection', () => {
       error: makeRawError({ context: { foo: 'bar' } }),
     })
 
-    expect(rawLogsEvents[0].rawLogsEvent).toEqual(jasmine.objectContaining({ foo: 'bar' }))
+    expect(rawLogsEvents[0].rawLogsEvent).toEqual(expect.objectContaining({ foo: 'bar' }))
   })
 })
-
-function whatever() {
-  return {
-    asymmetricMatch: () => true,
-    jasmineToString: () => '<whatever>',
-  }
-}

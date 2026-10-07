@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createMemoryRouter as createMemoryRouterV7 } from 'react-router-dom'
 import { createMemoryRouter as createMemoryRouterV6 } from 'react-router-dom-6'
@@ -14,17 +15,17 @@ describe('createRouter', () => {
 
   for (const { label, createMemoryRouter } of versions) {
     describe(label, () => {
-      let startViewSpy: jasmine.Spy<(name?: string | object) => void>
+      let startViewSpy: ReturnType<typeof vi.fn>
       let router: ReturnType<typeof createMemoryRouter>
 
       beforeEach(() => {
-        startViewSpy = jasmine.createSpy()
+        startViewSpy = vi.fn()
         initializeReactPlugin({
           configuration: {
             router: true,
           },
           publicApi: {
-            startView: startViewSpy,
+            startView: startViewSpy as never,
           },
         })
 
@@ -45,34 +46,34 @@ describe('createRouter', () => {
       })
 
       it('creates a new view when the router navigates', async () => {
-        startViewSpy.calls.reset()
+        startViewSpy.mockClear()
         await router.navigate('/bar')
         expect(startViewSpy).toHaveBeenCalledWith('/bar')
       })
 
       it('creates a new view when the router navigates to a nested route', async () => {
         await router.navigate('/bar')
-        startViewSpy.calls.reset()
+        startViewSpy.mockClear()
         await router.navigate('/bar/nested')
         expect(startViewSpy).toHaveBeenCalledWith('/bar/nested')
       })
 
       it('creates a new view with the fallback route', async () => {
-        startViewSpy.calls.reset()
+        startViewSpy.mockClear()
         await router.navigate('/non-existent')
         expect(startViewSpy).toHaveBeenCalledWith('/non-existent')
       })
 
       it('does not create a new view when navigating to the same URL', async () => {
         await router.navigate('/bar')
-        startViewSpy.calls.reset()
+        startViewSpy.mockClear()
         await router.navigate('/bar')
         expect(startViewSpy).not.toHaveBeenCalled()
       })
 
       it('does not create a new view when just changing query parameters', async () => {
         await router.navigate('/bar')
-        startViewSpy.calls.reset()
+        startViewSpy.mockClear()
         await router.navigate('/bar?baz=1')
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -111,23 +112,23 @@ describe('wrapCreateRouter — initial error forwarding', () => {
 
   it('forwards a synchronous buffer replay (react-router ≥7.15.1)', () => {
     const { fakeRouter } = buildFakeRouter(errorOpts)
-    const spy = jasmine.createSpy<AnyRouterSubscriber>()
+    const spy = vi.fn<AnyRouterSubscriber>()
     fakeRouter.subscribe(spy)
-    expect(spy).toHaveBeenCalledOnceWith(fakeRouter.state, errorOpts)
+    expect(spy).toHaveBeenCalledExactlyOnceWith(fakeRouter.state, errorOpts)
   })
 
   it('forwards an async newErrors notification that fires before the next subscriber attaches', () => {
     const { fakeRouter, notify } = buildFakeRouter()
     notify(errorOpts)
-    const spy = jasmine.createSpy<AnyRouterSubscriber>()
+    const spy = vi.fn<AnyRouterSubscriber>()
     fakeRouter.subscribe(spy)
-    expect(spy).toHaveBeenCalledOnceWith(fakeRouter.state, errorOpts)
+    expect(spy).toHaveBeenCalledExactlyOnceWith(fakeRouter.state, errorOpts)
   })
 
   it('does not forward when there is no error', () => {
     const { fakeRouter, notify } = buildFakeRouter()
     notify(normalOpts)
-    const spy = jasmine.createSpy<AnyRouterSubscriber>()
+    const spy = vi.fn<AnyRouterSubscriber>()
     fakeRouter.subscribe(spy)
     expect(spy).not.toHaveBeenCalled()
   })
@@ -148,7 +149,7 @@ describe('wrapCreateRouter — initial error forwarding', () => {
     }
     wrapCreateRouter((_r: unknown[], _o?: unknown) => fakeRouter)([], {})
 
-    const routerProvider = jasmine.createSpy<AnyRouterSubscriber>()
+    const routerProvider = vi.fn<AnyRouterSubscriber>()
     fakeRouter.subscribe(routerProvider)
 
     // Broadcast as react-router would for a post-mount navigation error
@@ -157,7 +158,7 @@ describe('wrapCreateRouter — initial error forwarding', () => {
     }
     expect(routerProvider).toHaveBeenCalledTimes(1)
 
-    const resubscribed = jasmine.createSpy<AnyRouterSubscriber>()
+    const resubscribed = vi.fn<AnyRouterSubscriber>()
     fakeRouter.subscribe(resubscribed)
     expect(resubscribed).not.toHaveBeenCalled()
   })

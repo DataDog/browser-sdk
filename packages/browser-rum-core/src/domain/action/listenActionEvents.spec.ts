@@ -1,18 +1,19 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
   let actionEventsHooks: {
-    onPointerUp: jasmine.Spy<ActionEventsHooks<object>['onPointerUp']>
-    onPointerDown: jasmine.Spy<ActionEventsHooks<object>['onPointerDown']>
+    onPointerUp: Mock<ActionEventsHooks<object>['onPointerUp']>
+    onPointerDown: Mock<ActionEventsHooks<object>['onPointerDown']>
   }
   let stopListenEvents: () => void
 
   beforeEach(() => {
     actionEventsHooks = {
-      onPointerUp: jasmine.createSpy(),
-      onPointerDown: jasmine.createSpy().and.returnValue({}),
+      onPointerUp: vi.fn(),
+      onPointerDown: vi.fn().mockReturnValue({}),
     }
     ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
   })
@@ -23,7 +24,8 @@ describe('listenActionEvents', () => {
 
   it('listen to pointerdown events', () => {
     emulateClick()
-    expect(actionEventsHooks.onPointerDown).toHaveBeenCalledOnceWith(jasmine.objectContaining({ type: 'pointerdown' }))
+    expect(actionEventsHooks.onPointerDown).toHaveBeenCalledTimes(1)
+    expect(actionEventsHooks.onPointerDown).toHaveBeenCalledWith(expect.objectContaining({ type: 'pointerdown' }))
   })
 
   it('ignore non-primary pointerdown events', () => {
@@ -37,10 +39,11 @@ describe('listenActionEvents', () => {
 
   it('listen to pointerup events', () => {
     emulateClick()
-    expect(actionEventsHooks.onPointerUp).toHaveBeenCalledOnceWith(
+    expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    expect(actionEventsHooks.onPointerUp).toHaveBeenCalledWith(
       {},
-      jasmine.objectContaining({ type: 'pointerup' }),
-      jasmine.any(Function)
+      expect.objectContaining({ type: 'pointerup' }),
+      expect.any(Function)
     )
   })
 
@@ -50,21 +53,21 @@ describe('listenActionEvents', () => {
   })
 
   it('can abort click lifecycle by returning undefined from the onPointerDown callback', () => {
-    actionEventsHooks.onPointerDown.and.returnValue(undefined)
+    actionEventsHooks.onPointerDown.mockReturnValue(undefined)
     emulateClick()
     expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
   })
 
   it('passes the context created in onPointerDown to onPointerUp', () => {
     const context = {}
-    actionEventsHooks.onPointerDown.and.returnValue(context)
+    actionEventsHooks.onPointerDown.mockReturnValue(context)
     emulateClick()
-    expect(actionEventsHooks.onPointerUp.calls.mostRecent().args[0]).toBe(context)
+    expect(actionEventsHooks.onPointerUp.mock.lastCall![0]).toBe(context)
   })
 
   it('ignore "click" events if no "pointerdown" event happened since the previous "click" event', () => {
     emulateClick()
-    actionEventsHooks.onPointerUp.calls.reset()
+    actionEventsHooks.onPointerUp.mockClear()
 
     window.dispatchEvent(createNewEvent('click', { target: document.body }))
 
@@ -140,7 +143,7 @@ describe('listenActionEvents', () => {
     })
 
     function hasSelectionChanged() {
-      return actionEventsHooks.onPointerUp.calls.mostRecent().args[2]().selection
+      return actionEventsHooks.onPointerUp.mock.lastCall![2]().selection
     }
 
     function emulateNodeSelection(
@@ -200,7 +203,7 @@ describe('listenActionEvents', () => {
       window.dispatchEvent(createNewEvent('input'))
     }
     function hasInputUserActivity() {
-      return actionEventsHooks.onPointerUp.calls.mostRecent().args[2]().input
+      return actionEventsHooks.onPointerUp.mock.lastCall![2]().input
     }
   })
 
@@ -235,7 +238,7 @@ describe('listenActionEvents', () => {
       window.dispatchEvent(createNewEvent('scroll'))
     }
     function hasScrollUserActivity() {
-      return actionEventsHooks.onPointerUp.calls.mostRecent().args[2]().scroll
+      return actionEventsHooks.onPointerUp.mock.lastCall![2]().scroll
     }
   })
 

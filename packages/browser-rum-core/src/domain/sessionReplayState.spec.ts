@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { SessionContext } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { BridgeCapability } from '@datadog/browser-core'

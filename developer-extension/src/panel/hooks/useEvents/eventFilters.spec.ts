@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { RumEvent } from '../../../../../packages/browser-rum-core/src/rumEvent.types'
 import type { LogsEvent } from '../../../../../packages/browser-logs/src/logsEvent.types'
 import { isSafari } from '../../../../../packages/browser-core/src/tools/utils/browserDetection'

@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
 import { clocksNow, clocksOrigin } from '@datadog/js-core/time'
 import { noop, Observable } from '@datadog/browser-core'
@@ -32,7 +33,7 @@ describe('trackLoadingTime', () => {
   let clock: Clock
   let domMutationObservable: Observable<RumMutationRecord[]>
   let windowOpenObservable: Observable<void>
-  let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
+  let loadingTimeCallback: Mock<(loadingTime: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void
   let stopLoadingTimeTracking = noop
   let performanceBufferMock: GlobalPerformanceBufferMock
@@ -68,7 +69,7 @@ describe('trackLoadingTime', () => {
     clock = mockClock()
     domMutationObservable = new Observable()
     windowOpenObservable = new Observable()
-    loadingTimeCallback = jasmine.createSpy<(loadingTime: Duration) => void>()
+    loadingTimeCallback = vi.fn<(loadingTime: Duration) => void>()
   })
 
   afterEach(() => {
@@ -86,7 +87,8 @@ describe('trackLoadingTime', () => {
 
     emulatePageActivityDuringViewLoading()
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
+    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
+    expect(loadingTimeCallback).toHaveBeenCalledWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
@@ -98,7 +100,8 @@ describe('trackLoadingTime', () => {
     setLoadEvent(entry.loadEventEnd)
     clock.tick(PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(entry.loadEventEnd)
+    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
+    expect(loadingTimeCallback).toHaveBeenCalledWith(entry.loadEventEnd)
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
@@ -111,7 +114,8 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify([createMutationRecord()])
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(LOAD_EVENT_AFTER_ACTIVITY_TIMING))
+    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
+    expect(loadingTimeCallback).toHaveBeenCalledWith(clock.relative(LOAD_EVENT_AFTER_ACTIVITY_TIMING))
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
@@ -125,7 +129,8 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify([createMutationRecord()])
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
+    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
+    expect(loadingTimeCallback).toHaveBeenCalledWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 
   it('should use computed loading time from time origin for initial view', () => {
@@ -147,9 +152,8 @@ describe('trackLoadingTime', () => {
     domMutationObservable.notify([createMutationRecord()])
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(
-      clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP)
-    )
+    expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
+    expect(loadingTimeCallback).toHaveBeenCalledWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP))
   })
 
   it('should discard loading time if page is hidden before activity', () => {
@@ -161,9 +165,10 @@ describe('trackLoadingTime', () => {
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
 
-  it('should not discard loading time if page was hidden before the view start', () => {
+  it('should not discard loading time if page was hidden before the view start', (ctx) => {
     if (!supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
-      pending('Performance Timing Event is not supported')
+      ctx.skip(true, 'VisibilityState performance entry not supported')
+      return
     }
 
     performanceBufferMock.addPerformanceEntry({
@@ -181,9 +186,10 @@ describe('trackLoadingTime', () => {
     expect(loadingTimeCallback).toHaveBeenCalled()
   })
 
-  it('should discard loading time if page was hidden during the loading time', () => {
+  it('should discard loading time if page was hidden during the loading time', (ctx) => {
     if (!supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
-      pending('Performance Timing Event is not supported')
+      ctx.skip(true, 'VisibilityState performance entry not supported')
+      return
     }
 
     clock.tick(RANDOM_VIEW_START)

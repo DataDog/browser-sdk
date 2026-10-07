@@ -1,0 +1,60 @@
+// Vitest global setup — replaces packages/browser-core/test/forEach.spec.ts
+//
+// This file runs before each test file in the browser context.
+// It sets up the same global state that Karma's forEach.spec.ts provided.
+
+import { beforeEach, afterEach } from 'vitest'
+import { stopMonitorErrorCollection } from '@datadog/js-core/monitor'
+import { setDebugMode } from '@datadog/js-core/util'
+import { resetManageResourceTimingBufferFull } from '../../packages/browser-rum-core/src/browser/performanceObservable'
+import { resetValueHistoryGlobals } from '../../packages/browser-core/src/tools/valueHistory'
+import { resetFetchObservable } from '../../packages/browser-core/src/browser/fetchObservable'
+import { resetConsoleObservable } from '../../packages/browser-core/src/domain/console/consoleObservable'
+import { resetXhrObservable } from '../../packages/browser-core/src/browser/xhrObservable'
+import { resetWebSocketObservable } from '../../packages/browser-core/src/browser/webSocketObservable'
+import { resetGetCurrentSite } from '../../packages/browser-core/src/browser/cookie'
+import { resetReplayStats } from '../../packages/browser-rum/src/domain/replayStats'
+import { resetInteractionCountPolyfill } from '../../packages/browser-rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
+import { resetTelemetry } from '../../packages/browser-core/src/domain/telemetry'
+import { resetSampleDecisionCache } from '../../packages/browser-core/src/domain/sampler'
+import { resetAllowUntrustedEvents } from '../../packages/browser-core/src/browser/addEventListener'
+import { resetExperimentalFeatures } from '../../packages/browser-core/src/tools/experimentalFeatures'
+import { startLeakDetection } from '../../packages/browser-core/test'
+
+beforeEach(() => {
+  ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
+  // prevent 'Some of your tests did a full page reload!' issue
+  window.onbeforeunload = () => 'stop'
+  startLeakDetection()
+  // Note: clearing cookies should be done in `beforeEach` rather than `afterEach`, because in some
+  // cases the test patches the `document.cookie` getter (ex: `spyOnProperty(document, 'cookie',
+  // 'get')`), which would prevent the `clearAllCookies` function from working properly.
+  clearAllCookies()
+})
+
+afterEach(() => {
+  // reset globals
+  delete (window as any).DD_LOGS
+  delete (window as any).DD_RUM
+  resetValueHistoryGlobals()
+  resetFetchObservable()
+  resetConsoleObservable()
+  resetXhrObservable()
+  resetWebSocketObservable()
+  resetGetCurrentSite()
+  resetReplayStats()
+  stopMonitorErrorCollection()
+  setDebugMode(false)
+  resetTelemetry()
+  resetInteractionCountPolyfill()
+  resetSampleDecisionCache()
+  resetExperimentalFeatures()
+  resetManageResourceTimingBufferFull()
+  resetAllowUntrustedEvents()
+})
+
+function clearAllCookies() {
+  document.cookie.split(';').forEach((c) => {
+    document.cookie = c.replace(/=.*/, `=;expires=${new Date(0).toUTCString()};path=/;samesite=strict`)
+  })
+}

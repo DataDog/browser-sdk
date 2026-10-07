@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import {
   collectAsyncCalls,
@@ -50,7 +51,7 @@ describe('startSessionManager', () => {
   }
   let fakeStrategy: ReturnType<typeof createFakeSessionStoreStrategy>
   let clock: Clock
-  let sessionObservableSpy!: jasmine.Spy
+  let sessionObservableSpy: Mock<(...args: any[]) => any>
 
   /**
    * Creates a fresh fake strategy and updates the mockable reference.
@@ -64,7 +65,7 @@ describe('startSessionManager', () => {
   let currentStoreType: SessionStoreStrategyType | undefined
 
   beforeEach(() => {
-    sessionObservableSpy = jasmine.createSpy('sessionObservable')
+    sessionObservableSpy = vi.fn()
     clock = mockClock()
     fakeStrategy = createFakeSessionStoreStrategy()
     fakeStrategy.sessionObservable.subscribe(sessionObservableSpy)
@@ -98,7 +99,7 @@ describe('startSessionManager', () => {
 
   describe('initialization', () => {
     it('should not start if no session store strategy type is configured', async () => {
-      const displayWarnSpy = spyOn(display, 'warn')
+      const displayWarnSpy = vi.spyOn(display, 'warn')
       currentStoreType = undefined
 
       const sessionManager = await startSessionManager(
@@ -118,7 +119,7 @@ describe('startSessionManager', () => {
     })
 
     it('should resolve with undefined if session initialization fails', async () => {
-      fakeStrategy.setSessionState.and.returnValue(Promise.reject(new Error('storage failure')))
+      fakeStrategy.setSessionState.mockReturnValue(Promise.reject(new Error('storage failure')))
 
       const sessionManager = await startSessionManager(
         { sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
@@ -203,7 +204,7 @@ describe('startSessionManager', () => {
 
     it('should renew on user activity after expiration', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const renewSpy = jasmine.createSpy('renew')
+      const renewSpy = vi.fn()
       sessionManager.renewObservable.subscribe(renewSpy)
 
       const initialId = sessionManager.findSession()!.id
@@ -231,7 +232,7 @@ describe('startSessionManager', () => {
       registerCleanupTask(restorePageVisibility)
 
       const sessionManager = await startSessionManagerWithDefaults()
-      const renewSpy = jasmine.createSpy('renew')
+      const renewSpy = vi.fn()
       sessionManager.renewObservable.subscribe(renewSpy)
 
       sessionManager.expire()
@@ -248,7 +249,7 @@ describe('startSessionManager', () => {
       // Wait for throttle to clear.
       clock.tick(ONE_SECOND)
 
-      const callCountBefore = fakeStrategy.setSessionState.calls.count()
+      const callCountBefore = fakeStrategy.setSessionState.mock.calls.length
 
       // Multiple rapid clicks within the throttle window
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
@@ -256,20 +257,20 @@ describe('startSessionManager', () => {
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       // Only one call (leading edge) should have fired immediately
-      expect(fakeStrategy.setSessionState.calls.count() - callCountBefore).toBe(1)
+      expect(fakeStrategy.setSessionState.mock.calls.length - callCountBefore).toBe(1)
 
       // After throttle delay, the trailing call fires (from the queued clicks)
       clock.tick(ONE_SECOND)
 
       // Leading (1) + trailing (1) = 2 calls total
-      expect(fakeStrategy.setSessionState.calls.count() - callCountBefore).toBe(2)
+      expect(fakeStrategy.setSessionState.mock.calls.length - callCountBefore).toBe(2)
     })
   })
 
   describe('session expiration', () => {
     it('should fire expireObservable when session expires', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const expireSpy = jasmine.createSpy('expire')
+      const expireSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSpy)
 
       sessionManager.expire()
@@ -279,7 +280,7 @@ describe('startSessionManager', () => {
 
     it('should only fire expireObservable once for multiple expire calls', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const expireSpy = jasmine.createSpy('expire')
+      const expireSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSpy)
 
       sessionManager.expire()
@@ -396,7 +397,7 @@ describe('startSessionManager', () => {
 
     it('should expire session after SESSION_EXPIRATION_DELAY without any activity in a hidden tab', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const expireSpy = jasmine.createSpy('expire')
+      const expireSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSpy)
 
       expect(sessionManager.findSession()).toBeDefined()
@@ -413,7 +414,7 @@ describe('startSessionManager', () => {
     it('should expire session after SESSION_TIME_OUT_DELAY even on a continuously visible page', async () => {
       setPageVisibility('visible')
       const sessionManager = await startSessionManagerWithDefaults()
-      const expireSpy = jasmine.createSpy('expire')
+      const expireSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSpy)
 
       expect(sessionManager.findSession()).toBeDefined()
@@ -437,7 +438,7 @@ describe('startSessionManager', () => {
   describe('cross-tab changes (simulateExternalChange)', () => {
     it('should not adopt a session created by another tab when it replaces our session directly', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const renewSpy = jasmine.createSpy('renew')
+      const renewSpy = vi.fn()
       sessionManager.renewObservable.subscribe(renewSpy)
 
       // Another tab expires our session and immediately starts a new one
@@ -469,7 +470,7 @@ describe('startSessionManager', () => {
 
     it('should fire expireObservable when external change removes the session', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const expireSpy = jasmine.createSpy('expire')
+      const expireSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSpy)
 
       fakeStrategy.simulateExternalChange({ isExpired: EXPIRED })
@@ -480,7 +481,7 @@ describe('startSessionManager', () => {
 
     it('should not adopt a session created by another tab after expiry', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const renewSpy = jasmine.createSpy('renew')
+      const renewSpy = vi.fn()
       sessionManager.renewObservable.subscribe(renewSpy)
 
       // First expire
@@ -559,9 +560,9 @@ describe('startSessionManager', () => {
 
       const initResolvers: Array<() => void> = []
       const delayedStrategy = createFakeSessionStoreStrategy()
-      delayedStrategy.setSessionState = jasmine
-        .createSpy('setSessionState')
-        .and.callFake((fn: (state: SessionState) => SessionState): Promise<void> => {
+      delayedStrategy.setSessionState = vi
+        .fn()
+        .mockImplementation((fn: (state: SessionState) => SessionState): Promise<void> => {
           fn({})
           return new Promise<void>((resolve) => {
             initResolvers.push(resolve)
@@ -570,7 +571,7 @@ describe('startSessionManager', () => {
 
       fakeStrategy = delayedStrategy
 
-      const sessionManagerResolution = jasmine.createSpy('sessionManagerResolution')
+      const sessionManagerResolution = vi.fn()
       void startSessionManager(
         {
           sessionSampleRate: 100,
@@ -594,9 +595,9 @@ describe('startSessionManager', () => {
 
       const initResolvers: Array<() => void> = []
       const delayedStrategy = createFakeSessionStoreStrategy()
-      delayedStrategy.setSessionState = jasmine
-        .createSpy('setSessionState')
-        .and.callFake((fn: (state: SessionState) => SessionState): Promise<void> => {
+      delayedStrategy.setSessionState = vi
+        .fn()
+        .mockImplementation((fn: (state: SessionState) => SessionState): Promise<void> => {
           fn({})
           return new Promise<void>((resolve) => {
             initResolvers.push(resolve)
@@ -637,9 +638,9 @@ describe('startSessionManager', () => {
       const initResolvers: Array<() => void> = []
       const setStateCalls: Array<(state: SessionState) => SessionState> = []
       const delayedStrategy = createFakeSessionStoreStrategy()
-      delayedStrategy.setSessionState = jasmine
-        .createSpy('setSessionState')
-        .and.callFake((fn: (state: SessionState) => SessionState): Promise<void> => {
+      delayedStrategy.setSessionState = vi
+        .fn()
+        .mockImplementation((fn: (state: SessionState) => SessionState): Promise<void> => {
           setStateCalls.push(fn)
           fn({})
           return new Promise<void>((resolve) => {
@@ -866,11 +867,11 @@ describe('startSessionManager', () => {
   describe('updateSessionState', () => {
     it('should merge partial state via setSessionState', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const callCountBefore = fakeStrategy.setSessionState.calls.count()
+      const callCountBefore = fakeStrategy.setSessionState.mock.calls.length
 
       sessionManager.updateSessionState({ extra: 'value' })
 
-      expect(fakeStrategy.setSessionState.calls.count()).toBe(callCountBefore + 1)
+      expect(fakeStrategy.setSessionState.mock.calls.length).toBe(callCountBefore + 1)
       expect(fakeStrategy.getInternalState().extra).toBe('value')
     })
 
@@ -924,8 +925,8 @@ describe('startSessionManager', () => {
       const firstManager = await startSessionManagerWithDefaults()
       const secondManager = await startSessionManagerWithDefaults()
 
-      const expireSpy1 = jasmine.createSpy('expire1')
-      const expireSpy2 = jasmine.createSpy('expire2')
+      const expireSpy1 = vi.fn()
+      const expireSpy2 = vi.fn()
 
       firstManager?.expireObservable.subscribe(expireSpy1)
       secondManager?.expireObservable.subscribe(expireSpy2)
@@ -967,16 +968,16 @@ describe('startSessionManager', () => {
       // Wait for throttle to clear
       clock.tick(ONE_SECOND)
 
-      const callCountAfterStop = fakeStrategy.setSessionState.calls.count()
+      const callCountAfterStop = fakeStrategy.setSessionState.mock.calls.length
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
-      expect(fakeStrategy.setSessionState.calls.count()).toBe(callCountAfterStop)
+      expect(fakeStrategy.setSessionState.mock.calls.length).toBe(callCountAfterStop)
     })
 
     it('should unsubscribe from strategy observable after stopSessionManager', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const renewSpy = jasmine.createSpy('renew')
+      const renewSpy = vi.fn()
       sessionManager.renewObservable.subscribe(renewSpy)
 
       stopSessionManager()

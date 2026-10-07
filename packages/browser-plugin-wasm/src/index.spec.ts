@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { createHook } from '@datadog/js-core/assembly'
 import type { RumPlugin } from '@datadog/browser-rum-core'
 import type { LogsPlugin } from '@datadog/browser-logs'

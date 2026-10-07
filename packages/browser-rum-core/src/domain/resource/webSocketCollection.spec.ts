@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { WebSocketContext } from '@datadog/browser-core'
 import { initWebSocketObservable, Observable } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
@@ -40,10 +41,7 @@ describe('webSocketCollection', () => {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
   }
 
-  function startTracking(
-    viewHistory = mockViewHistory(),
-    addDurationVital: (vital: DurationVital) => void = jasmine.createSpy()
-  ) {
+  function startTracking(viewHistory = mockViewHistory(), addDurationVital: (vital: DurationVital) => void = vi.fn()) {
     return trackWebSocket(lifeCycle, wsObservable, viewHistory, addDurationVital)
   }
 
@@ -103,23 +101,23 @@ describe('webSocketCollection', () => {
       notifyConnecting()
       notifyOpen(10)
       notifyClosed(40, 1000, 'bye', true)
-      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeTrue()
+      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBe(true)
 
       notifyConnecting()
       notifyOpen(10)
       tracker.flushOpenConnections('session_end')
-      expect(webSocketCompleteEvents[1].handshakeSucceeded).toBeTrue()
+      expect(webSocketCompleteEvents[1].handshakeSucceeded).toBe(true)
     })
 
     it('is false when the open event never fired before completion', () => {
       const tracker = startTracking()
       notifyConnecting()
       notifyClosed(25, 1006, 'abnormal', false)
-      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeFalse()
+      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBe(false)
 
       notifyConnecting()
       tracker.flushOpenConnections('session_end')
-      expect(webSocketCompleteEvents[1].handshakeSucceeded).toBeFalse()
+      expect(webSocketCompleteEvents[1].handshakeSucceeded).toBe(false)
     })
   })
 
@@ -145,7 +143,7 @@ describe('webSocketCollection', () => {
     expect(webSocket.trackingEndReason).toBe('close_event')
     expect(webSocket.closeCode).toBe(closeCode)
     expect(webSocket.closeReason).toBe(closeReason)
-    expect(webSocket.wasClean).toBeTrue()
+    expect(webSocket.wasClean).toBe(true)
     expect(webSocket.url).toBe(url)
     expect(webSocket.protocol).toBe(protocol)
     expect(webSocket.messagesIn).toEqual({ count: 1, size: messageInSize })
@@ -361,7 +359,7 @@ describe('webSocketCollection', () => {
       [relativeStartViewB]: { id: 'view-B', startClocks: relativeToClocks(relativeStartViewB) },
     }
     const viewHistory = mockViewHistory()
-    spyOn(viewHistory, 'findView').and.callFake((startTime?: RelativeTime) =>
+    vi.spyOn(viewHistory, 'findView').mockImplementation((startTime?: RelativeTime) =>
       startTime !== undefined ? viewByRelative[startTime as number] : undefined
     )
 
@@ -384,7 +382,7 @@ describe('webSocketCollection', () => {
 
     expect(webSocketCompleteEvents.length).toBe(1)
     expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')
-    expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeTrue()
+    expect(webSocketCompleteEvents[0].handshakeSucceeded).toBe(true)
     expect(webSocketCompleteEvents[0].closeCode).toBeUndefined()
     expect(webSocketCompleteEvents[0].closeReason).toBeUndefined()
     expect(webSocketCompleteEvents[0].wasClean).toBeUndefined()
@@ -412,12 +410,12 @@ describe('webSocketCollection', () => {
 
   describe('websocket-connecting vital', () => {
     it('emits a duration-0 vital on connecting', () => {
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
+      const addDurationVital = vi.fn<(vital: DurationVital) => void>()
       startTracking(mockViewHistory(), addDurationVital)
       notifyConnecting()
 
-      expect(addDurationVital).toHaveBeenCalledOnceWith(
-        jasmine.objectContaining({
+      expect(addDurationVital).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
           name: WEBSOCKET_CONNECTING_VITAL_NAME,
           type: VitalType.DURATION,
           duration: 0,
@@ -426,17 +424,15 @@ describe('webSocketCollection', () => {
     })
 
     it('uses a fresh UUID as the vital id and the connectionId in the context', () => {
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
+      const addDurationVital = vi.fn<(vital: DurationVital) => void>()
       startTracking(mockViewHistory(), addDurationVital)
       notifyConnecting()
       notifyClosed(1, 1000, 'bye', true)
 
-      const vital = addDurationVital.calls.first().args[0]
+      const vital = addDurationVital.mock.calls[0][0]
       expect(vital.id).not.toBe(webSocketCompleteEvents[0].connectionId)
       expect(vital.id).toMatch(UUID_PATTERN)
-      expect(vital.context).toEqual(
-        jasmine.objectContaining({ connection_id: webSocketCompleteEvents[0].connectionId })
-      )
+      expect(vital.context).toEqual(expect.objectContaining({ connection_id: webSocketCompleteEvents[0].connectionId }))
     })
 
     it('includes the sanitized URL and connection_id, without constructor protocols', () => {
@@ -446,10 +442,10 @@ describe('webSocketCollection', () => {
         [relativeStartView]: { id: 'view-start', startClocks: relativeToClocks(relativeStartView) },
       }
       const viewHistory = mockViewHistory()
-      spyOn(viewHistory, 'findView').and.callFake((startTime?: RelativeTime) =>
+      vi.spyOn(viewHistory, 'findView').mockImplementation((startTime?: RelativeTime) =>
         startTime !== undefined ? viewByRelative[startTime as number] : undefined
       )
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
+      const addDurationVital = vi.fn<(vital: DurationVital) => void>()
 
       startTracking(viewHistory, addDurationVital)
       notifyConnecting(startView, 'wss://example.com/socket?token=secret&tenant=acme', undefined, [
@@ -458,7 +454,7 @@ describe('webSocketCollection', () => {
       ])
       notifyClosed(1, 1000, 'bye', true)
 
-      const vital = addDurationVital.calls.first().args[0]
+      const vital = addDurationVital.mock.calls[0][0]
       expect(vital.context).toEqual({
         url: 'wss://example.com/socket',
         connection_id: webSocketCompleteEvents[0].connectionId,
@@ -467,26 +463,26 @@ describe('webSocketCollection', () => {
 
     ;(['auth-token', ['auth-token', 'chat.v1']] as Array<string | string[]>).forEach((protocols) => {
       it(`does not include constructor protocols in the vital context when provided as ${typeof protocols === 'string' ? 'a string' : 'an array'}`, () => {
-        const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
+        const addDurationVital = vi.fn<(vital: DurationVital) => void>()
         startTracking(mockViewHistory(), addDurationVital)
 
         notifyConnecting(0, 'wss://example.com/socket', undefined, protocols)
 
-        const context = addDurationVital.calls.mostRecent().args[0].context
-        expect('protocols' in context).toBeFalse()
+        const context = addDurationVital.mock.lastCall![0].context
+        expect('protocols' in context).toBe(false)
       })
     })
   })
 
   describe('websocket-closed vital', () => {
     it('emits a duration-0 vital at close time on a close event', () => {
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
+      const addDurationVital = vi.fn<(vital: DurationVital) => void>()
       startTracking(mockViewHistory(), addDurationVital)
       notifyConnecting()
       notifyClosed(40, 1000, 'bye', true)
 
-      const connectingVital = addDurationVital.calls.argsFor(0)[0]
-      const closedVital = addDurationVital.calls.argsFor(1)[0]
+      const connectingVital = addDurationVital.mock.calls[0][0]
+      const closedVital = addDurationVital.mock.calls[1][0]
 
       expect(closedVital.name).toBe(WEBSOCKET_CLOSED_VITAL_NAME)
       expect(closedVital.type).toBe(VitalType.DURATION)
@@ -500,14 +496,14 @@ describe('webSocketCollection', () => {
     })
 
     it('emits a duration-0 vital at flush time on a session_end flush', () => {
-      const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
+      const addDurationVital = vi.fn<(vital: DurationVital) => void>()
       const tracker = startTracking(mockViewHistory(), addDurationVital)
       const endClocks = relativeToClocks(clock.relative(40))
       notifyConnecting()
       tracker.flushOpenConnections('session_end', endClocks)
 
-      const connectingVital = addDurationVital.calls.argsFor(0)[0]
-      const closedVital = addDurationVital.calls.argsFor(1)[0]
+      const connectingVital = addDurationVital.mock.calls[0][0]
+      const closedVital = addDurationVital.mock.calls[1][0]
 
       expect(closedVital.name).toBe(WEBSOCKET_CLOSED_VITAL_NAME)
       expect(closedVital.type).toBe(VitalType.DURATION)
@@ -528,7 +524,7 @@ describe('webSocketCollection', () => {
     const singletonObservable = () => initWebSocketObservable()
 
     function startCollection() {
-      const collection = startWebSocketCollection(lifeCycle, mockViewHistory(), jasmine.createSpy())
+      const collection = startWebSocketCollection(lifeCycle, mockViewHistory(), vi.fn())
       registerCleanupTask(() => collection.stop())
       return collection
     }
@@ -582,7 +578,7 @@ describe('webSocketCollection', () => {
       expect(webSocketCompleteEvents.length).toBe(1)
       expect(webSocketCompleteEvents[0].trackingEndReason).toBe('session_end')
       expect(webSocketCompleteEvents[0].endClocks).toEqual(endClocks)
-      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBeFalse()
+      expect(webSocketCompleteEvents[0].handshakeSucceeded).toBe(false)
       expect(webSocketCompleteEvents[0].closeCode).toBeUndefined()
       expect(webSocketCompleteEvents[0].closeReason).toBeUndefined()
       expect(webSocketCompleteEvents[0].wasClean).toBeUndefined()

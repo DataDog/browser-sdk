@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from 'vitest'
 import type { Context } from '@datadog/js-core/util'
 import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'

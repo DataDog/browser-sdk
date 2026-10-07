@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { registerCleanupTask, replaceMockable } from '../../../../../../packages/browser-core/test'
 import {
   clearStoredTokens,
@@ -89,15 +90,15 @@ describe('oauth', () => {
 
     it('aborts when the redirect domain does not match the selected site', async () => {
       mockChromeIdentity(({ state }) => `https://ext-id.chromiumapp.org/?code=abc&state=${state}&domain=datadoghq.com`)
-      const fetchSpy = spyOn(globalThis, 'fetch')
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response())
 
-      await expectAsync(loginWithOAuth('datad0g.com')).toBeRejectedWithError(/but "datad0g.com" was selected/)
+      await expect(loginWithOAuth('datad0g.com')).rejects.toThrow(/but "datad0g.com" was selected/)
       expect(fetchSpy).not.toHaveBeenCalled()
     })
 
     it('exchanges the code when the redirect domain matches the selected site', async () => {
       mockChromeIdentity(({ state }) => `https://ext-id.chromiumapp.org/?code=abc&state=${state}&domain=datad0g.com`)
-      spyOn(globalThis, 'fetch').and.returnValue(
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(
         Promise.resolve(new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 })))
       )
 
@@ -114,7 +115,7 @@ describe('oauth', () => {
         return `https://ext-id.chromiumapp.org/?code=abc&state=${state}`
       })
       // Fresh Response per call — two logins each read the token-exchange body once.
-      spyOn(globalThis, 'fetch').and.callFake(() =>
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
         Promise.resolve(new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 })))
       )
 
@@ -127,7 +128,7 @@ describe('oauth', () => {
 
     it('proceeds when the redirect omits a domain', async () => {
       mockChromeIdentity(({ state }) => `https://ext-id.chromiumapp.org/?code=abc&state=${state}`)
-      spyOn(globalThis, 'fetch').and.returnValue(
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(
         Promise.resolve(new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 })))
       )
 
@@ -141,7 +142,7 @@ describe('oauth', () => {
         requestedScopes.push(new URL(url).searchParams.get('scope')!)
         return `https://ext-id.chromiumapp.org/?code=abc&state=${state}`
       })
-      spyOn(globalThis, 'fetch').and.returnValue(
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(
         Promise.resolve(new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 })))
       )
 
@@ -169,7 +170,7 @@ describe('oauth', () => {
         ;(globalThis as any).chrome = previousChrome
       })
 
-      await expectAsync(loginWithOAuth('datad0g.com')).toBeRejectedWithError(/did not approve/)
+      await expect(loginWithOAuth('datad0g.com')).rejects.toThrow(/did not approve/)
       expect(attempts).toBe(1)
     })
 
@@ -180,7 +181,7 @@ describe('oauth', () => {
         return `https://ext-id.chromiumapp.org/?error=access_denied&state=${state}`
       })
 
-      await expectAsync(loginWithOAuth('datad0g.com')).toBeRejectedWithError(/access_denied/)
+      await expect(loginWithOAuth('datad0g.com')).rejects.toThrow(/access_denied/)
       expect(attempts).toBe(1)
     })
   })
@@ -190,12 +191,12 @@ describe('oauth', () => {
 
     it('revokes the refresh token and clears local tokens', async () => {
       await storeTokens({ accessToken: 'a1', refreshToken: 'r1', expiresAt: Date.now() + 10 * 60_000 })
-      const fetchSpy = spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response('', { status: 200 })))
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(new Response('', { status: 200 })))
 
       expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: true })
       expect(await loadStoredTokens()).toBeNull()
 
-      const [url, init] = fetchSpy.calls.argsFor(0) as [string, RequestInit]
+      const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
       expect(url).toBe('https://dd.datad0g.com/oauth2/v1/revoke')
       expect((init.headers as Record<string, string>).Authorization).toBe('Bearer a1')
       const body = new URLSearchParams(init.body as string)
@@ -207,17 +208,17 @@ describe('oauth', () => {
 
     it('revokes the access token when there is no refresh token', async () => {
       await storeTokens({ accessToken: 'a1', expiresAt: Date.now() + 10 * 60_000 })
-      const fetchSpy = spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response('', { status: 200 })))
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(new Response('', { status: 200 })))
 
       expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: true })
-      const body = new URLSearchParams((fetchSpy.calls.argsFor(0)[1] as RequestInit).body as string)
+      const body = new URLSearchParams((fetchSpy.mock.calls[0][1] as RequestInit).body as string)
       expect(body.get('token')).toBe('a1')
       expect(body.get('token_type_hint')).toBe('access_token')
     })
 
     it('still clears local tokens when the revocation is refused', async () => {
       await storeTokens({ accessToken: 'a1', refreshToken: 'r1', expiresAt: Date.now() + 10 * 60_000 })
-      spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response('', { status: 400 })))
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(new Response('', { status: 400 })))
 
       expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: false })
       expect(await loadStoredTokens()).toBeNull()
@@ -225,14 +226,14 @@ describe('oauth', () => {
 
     it('still clears local tokens when the network fails', async () => {
       await storeTokens({ accessToken: 'a1', refreshToken: 'r1', expiresAt: Date.now() + 10 * 60_000 })
-      spyOn(globalThis, 'fetch').and.returnValue(Promise.reject(new TypeError('Failed to fetch')))
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.reject(new TypeError('Failed to fetch')))
 
       expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: false })
       expect(await loadStoredTokens()).toBeNull()
     })
 
     it('reports success without a request when there is nothing left to revoke', async () => {
-      const fetchSpy = spyOn(globalThis, 'fetch')
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response())
 
       expect(await revokeAndClearTokens('datad0g.com')).toEqual({ revoked: true })
       expect(fetchSpy).not.toHaveBeenCalled()
@@ -253,7 +254,7 @@ describe('oauth', () => {
 
     it('refreshes an expired token and persists the new one', async () => {
       await storeTokens({ accessToken: 'old', refreshToken: 'r1', expiresAt: Date.now() - 1 })
-      spyOn(globalThis, 'fetch').and.returnValue(
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(
         Promise.resolve(new Response(JSON.stringify({ access_token: 'fresh', refresh_token: 'r2', expires_in: 3600 })))
       )
 
@@ -265,7 +266,7 @@ describe('oauth', () => {
 
     it('keeps the previous refresh token when the refresh response omits one', async () => {
       await storeTokens({ accessToken: 'old', refreshToken: 'r1', expiresAt: Date.now() - 1 })
-      spyOn(globalThis, 'fetch').and.returnValue(
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(
         Promise.resolve(new Response(JSON.stringify({ access_token: 'fresh', expires_in: 3600 })))
       )
 
@@ -275,7 +276,7 @@ describe('oauth', () => {
 
     it('clears tokens and returns null when the refresh token is invalid_grant', async () => {
       await storeTokens({ accessToken: 'old', refreshToken: 'r1', expiresAt: Date.now() - 1 })
-      spyOn(globalThis, 'fetch').and.returnValue(
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(
         Promise.resolve(new Response(JSON.stringify({ error: 'invalid_grant' }), { status: 400 }))
       )
 
@@ -285,25 +286,29 @@ describe('oauth', () => {
 
     it('keeps the stored token and rethrows on a transient refresh failure after expiry', async () => {
       await storeTokens({ accessToken: 'old', refreshToken: 'r1', expiresAt: Date.now() - 1 })
-      spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response('server error', { status: 503 })))
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(new Response('server error', { status: 503 })))
 
-      await expectAsync(getValidAccessToken('datad0g.com')).toBeRejected()
+      await expect(getValidAccessToken('datad0g.com')).rejects.toThrow()
       expect((await loadStoredTokens())?.refreshToken).toBe('r1')
     })
 
     it('keeps the stored token and rethrows on a network error during refresh after expiry', async () => {
       await storeTokens({ accessToken: 'old', refreshToken: 'r1', expiresAt: Date.now() - 1 })
-      spyOn(globalThis, 'fetch').and.returnValue(Promise.reject(new TypeError('Failed to fetch')))
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.reject(new TypeError('Failed to fetch')))
 
-      await expectAsync(getValidAccessToken('datad0g.com')).toBeRejected()
+      await expect(getValidAccessToken('datad0g.com')).rejects.toThrow()
       expect((await loadStoredTokens())?.refreshToken).toBe('r1')
     })
 
     it('coalesces concurrent refreshes into a single token request', async () => {
       await storeTokens({ accessToken: 'old', refreshToken: 'r1', expiresAt: Date.now() - 1 })
-      const fetchSpy = spyOn(globalThis, 'fetch').and.returnValue(
-        Promise.resolve(new Response(JSON.stringify({ access_token: 'fresh', refresh_token: 'r2', expires_in: 3600 })))
-      )
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockReturnValue(
+          Promise.resolve(
+            new Response(JSON.stringify({ access_token: 'fresh', refresh_token: 'r2', expires_in: 3600 }))
+          )
+        )
 
       const [first, second] = await Promise.all([
         getValidAccessToken('datad0g.com'),
@@ -320,7 +325,7 @@ describe('oauth', () => {
       // Expires in 30s (inside the 60s skew) so we refresh early — but the token is still valid, so a
       // transient failure should fall back to it rather than failing the caller.
       await storeTokens({ accessToken: 'still-valid', refreshToken: 'r1', expiresAt: Date.now() + 30_000 })
-      spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(new Response('server error', { status: 503 })))
+      vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(new Response('server error', { status: 503 })))
 
       expect(await getValidAccessToken('datad0g.com')).toBe('still-valid')
       expect((await loadStoredTokens())?.refreshToken).toBe('r1')
