@@ -75,15 +75,10 @@ describe('trackedConnection', () => {
       expect(state.snapshotVersion).toBe(1)
     })
 
-    it('reports the same phase alone as in the full state', () => {
-      const connection = createConnectingConnection()
-      expect(connection.getPhase()).toBe('connecting')
-
-      connection.recordOpen({ openClocks: clocksAt(OPEN_AT) })
-      expect(connection.getPhase()).toBe('open')
-
-      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
-      expect(connection.getPhase()).toBe('closed')
+    it('is open from the open event until the socket closes or tracking ends', () => {
+      expect(createConnectingConnection().isOpen()).toBeFalse()
+      expect(createOpenConnection().isOpen()).toBeTrue()
+      expect(createClosedConnection().isOpen()).toBeFalse()
     })
 
     const PHASES_TRACKING_CAN_END_FROM = [
@@ -281,6 +276,12 @@ describe('trackedConnection', () => {
   function createOpenConnection(identity: Partial<TrackedConnectionIdentity> = {}) {
     const connection = createConnectingConnection(identity)
     connection.recordOpen({ openClocks: clocksAt(OPEN_AT) })
+    return connection
+  }
+
+  function createClosedConnection() {
+    const connection = createOpenConnection()
+    connection.recordTrackingEnd(clocksAt(40), SESSION_END)
     return connection
   }
 

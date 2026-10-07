@@ -78,8 +78,7 @@ export type TrackedConnectionState = TrackedConnectionIdentity & PhaseFacts & { 
 
 export interface TrackedConnection {
   getState: () => TrackedConnectionState
-  /** The current phase alone, without the snapshot a full state read computes. */
-  getPhase: () => WebSocketPhase
+  isOpen: () => boolean
   recordOpen: (facts: OpenFacts) => void
   recordInboundMessage: (size: number, at: RelativeTime) => void
   recordOutboundMessage: (size: number, bufferedAmountPreSend: number, at: RelativeTime) => void
@@ -138,7 +137,7 @@ export function createTrackedConnection({
       snapshot: readSnapshot(),
     }),
 
-    getPhase: () => phaseFacts.phase,
+    isOpen: () => phaseFacts.phase === 'open',
 
     recordOpen: (facts) => {
       phaseFacts = {
