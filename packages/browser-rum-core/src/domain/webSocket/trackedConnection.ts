@@ -10,6 +10,7 @@ import type {
   WebSocketOpenContext,
 } from '../../browser/webSocketObservable'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
+import type { UnobservedTrackingEndReason } from './webSocketCollection'
 
 export interface MessageDirectionAggregate {
   messageCount: number
@@ -69,10 +70,7 @@ export interface TrackedConnection {
    */
   recordClose: (context: WebSocketClosedContext) => void
   /** Ends tracking without a close event, so with no close outcome to report. */
-  recordTrackingEnd: (
-    endClocks: ClocksState,
-    trackingEndReason: Exclude<WebSocketTrackingEndReason, typeof WebSocketTrackingEndReason.CLOSE_EVENT>
-  ) => void
+  recordTrackingEnd: (endClocks: ClocksState, trackingEndReason: UnobservedTrackingEndReason) => void
 }
 
 /**
