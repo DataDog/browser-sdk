@@ -20,6 +20,11 @@ test.describe('recorder canvas resource upload', () => {
       })
       .withBody(html`<canvas id="canvas" width="10" height="10"></canvas>`)
       .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        test.skip(
+          !!process.env.CI && browserName === 'firefox' && contextType !== '2d',
+          'Headless Firefox cannot create WebGL/WebGL2 contexts in our Linux CI image'
+        )
+
         await page.evaluate(drawCanvas, { contextType, preserveDrawingBuffer })
 
         await expect.poll(() => intakeRegistry.replayResourceRequests.length).toBe(1)
