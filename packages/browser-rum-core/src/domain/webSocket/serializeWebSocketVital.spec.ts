@@ -259,9 +259,9 @@ describe('serializeWebSocketVital', () => {
         id: 'connection-id',
         url: 'wss://example.com/socket',
         connectingClocks: clocksAt(0),
-        openClocks: clocksAt(10),
         endClocks: clocksAt(50),
         snapshotVersion: 2,
+        hasOpened: true,
         snapshot: snapshotOf(),
         trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
       })
@@ -270,9 +270,9 @@ describe('serializeWebSocketVital', () => {
         id: 'connection-id',
         url: 'wss://example.com/socket',
         connectingClocks: clocksAt(0),
-        openClocks: clocksAt(10),
         endClocks: clocksAt(50),
         snapshotVersion: 2,
+        hasOpened: true,
         snapshot: snapshotOf(),
         trackingEndReason: WebSocketTrackingEndReason.SESSION_END,
         // @ts-expect-error tracking that ended without a close event has no close outcome to report
@@ -338,9 +338,9 @@ describe('serializeWebSocketVital', () => {
       id: 'connection-id',
       url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
-      openClocks: clocksAt(10),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
+      hasOpened: true,
       snapshot: snapshotOf(),
       ...state,
       trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
@@ -348,9 +348,9 @@ describe('serializeWebSocketVital', () => {
     }
   }
 
-  /** A connection whose handshake never succeeded, and which therefore holds no open clocks. */
+  /** A connection whose handshake never succeeded. */
   function neverOpenedClosedState(
-    state: Partial<Omit<ClosedOnCloseEventState, 'phase' | 'trackingEndReason' | 'openClocks'>> = {}
+    state: Partial<Omit<ClosedOnCloseEventState, 'phase' | 'trackingEndReason' | 'hasOpened'>> = {}
   ): ClosedOnCloseEventState {
     return {
       phase: 'closed',
@@ -359,6 +359,7 @@ describe('serializeWebSocketVital', () => {
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 1,
+      hasOpened: false,
       snapshot: snapshotOf(),
       ...state,
       trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
@@ -412,9 +413,9 @@ describe('serializeWebSocketVital', () => {
       id: 'connection-id',
       url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
-      openClocks: clocksAt(10),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
+      hasOpened: true,
       snapshot: snapshotOf(),
       trackingEndReason: WebSocketTrackingEndReason.SESSION_END,
     })
