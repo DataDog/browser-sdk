@@ -1,8 +1,7 @@
 import type { Observable } from '@datadog/browser-core'
-import { ExperimentalFeature, generateUUID, isExperimentalFeatureEnabled, noop } from '@datadog/browser-core'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, noop } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
-import { buildUrl } from '@datadog/js-core/util'
 import type { WebSocketContext } from '../../browser/webSocketObservable'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
@@ -10,7 +9,7 @@ import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { serializeWebSocketVital, getPhaseClocks } from './serializeWebSocketVital'
-import type { TrackedConnection, WebSocketTrackingEnd } from './trackedConnection'
+import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 
 /** A reason tracking ends for without the SDK observing any close event. */
@@ -78,30 +77,10 @@ export function trackWebSocket(
     })
   }
 
-  /**
-   * Ends tracking, whichever terminal came first, and reports the connection's last vital. The
-   * snapshot version continues the sequence the open vital started, so this is the highest one the
-   * connection reports.
-   */
-  function endTracking(
-    instance: WebSocket,
-    connection: TrackedConnection,
-    endClocks: ClocksState,
-    trackingEnd: WebSocketTrackingEnd
-  ) {
-    connection.recordTrackingEnd(endClocks, trackingEnd)
-    emitVital(instance, connection)
-  }
-
   function handleWebSocketContext(context: WebSocketContext) {
     switch (context.state) {
       case 'connecting': {
-        const connection = createTrackedConnection({
-          id: generateUUID(),
-          url: sanitizeWebSocketUrl(context.url),
-          requestedProtocols: toRequestedProtocols(context.protocols),
-          connectingClocks: context.startClocks,
-        })
+        const connection = createTrackedConnection(context)
         trackedConnections.set(context.instance, connection)
 
         emitVital(context.instance, connection)
@@ -115,12 +94,7 @@ export function trackWebSocket(
           return
         }
 
-        connection.recordOpen({
-          openClocks: context.openClocks,
-          // These are reported as empty strings when none were specified
-          selectedProtocol: context.protocol || undefined,
-          selectedExtensions: context.extensions || undefined,
-        })
+        connection.recordOpen(context)
 
         emitVital(context.instance, connection)
 
@@ -128,15 +102,13 @@ export function trackWebSocket(
       }
 
       case 'message-in': {
-        trackedConnections.get(context.instance)?.recordInboundMessage(context.size, context.at.relative)
+        trackedConnections.get(context.instance)?.recordInboundMessage(context)
 
         return
       }
 
       case 'message-out': {
-        trackedConnections
-          .get(context.instance)
-          ?.recordOutboundMessage(context.size, context.bufferedAmountPreSend, context.at.relative)
+        trackedConnections.get(context.instance)?.recordOutboundMessage(context)
 
         return
       }
@@ -149,10 +121,8 @@ export function trackWebSocket(
 
         trackedConnections.delete(context.instance)
 
-        endTracking(context.instance, connection, context.at, {
-          trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
-          closeEvent: { code: context.code, reason: context.reason, wasClean: context.wasClean },
-        })
+        connection.recordClose(context)
+        emitVital(context.instance, connection)
 
         return
       }
@@ -167,7 +137,8 @@ export function trackWebSocket(
       trackedConnections.forEach((connection, instance) => {
         // no close event happened on this path, so the close outcome is genuinely absent rather
         // than defaulted
-        endTracking(instance, connection, endClocks, { trackingEndReason })
+        connection.recordTrackingEnd(endClocks, trackingEndReason)
+        emitVital(instance, connection)
       })
 
       trackedConnections.clear()
@@ -178,19 +149,4 @@ export function trackWebSocket(
       trackedConnections.clear()
     },
   }
-}
-
-/**
- * The constructor takes either a single protocol or a list of them; a connection that requested
- * none reports nothing rather than an empty list.
- */
-function toRequestedProtocols(protocols: string | string[] | undefined) {
-  const requestedProtocols = typeof protocols === 'string' ? [protocols] : protocols
-  return requestedProtocols && requestedProtocols.length > 0 ? requestedProtocols : undefined
-}
-
-function sanitizeWebSocketUrl(url: string) {
-  const sanitizedUrl = buildUrl(url)
-  sanitizedUrl.search = ''
-  return sanitizedUrl.href
 }

@@ -1,26 +1,25 @@
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
-import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 import type {
-  MessageDirectionAggregate,
-  TrackedConnection,
-  TrackedConnectionIdentity,
-  TrackedConnectionState,
-  WebSocketPhase,
-} from './trackedConnection'
+  WebSocketConnectingContext,
+  WebSocketMessageInContext,
+  WebSocketMessageOutContext,
+  WebSocketOpenContext,
+} from '../../browser/webSocketObservable'
+import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
+import type { MessageDirectionAggregate, TrackedConnection, TrackedConnectionState } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 
 /** Arbitrary relative times at which the connection starts connecting and opens. */
 const CONNECTING_AT = 0
 const OPEN_AT = 10
 
-const SESSION_END = { trackingEndReason: WebSocketTrackingEndReason.SESSION_END } as const
-const CLOSE_EVENT_END = {
-  trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
-  closeEvent: { code: 1000, reason: 'bye', wasClean: true },
-} as const
+const SESSION_END = WebSocketTrackingEndReason.SESSION_END
+
+/** The connection reads nothing from the socket itself, so the contexts carry a stand-in. */
+const INSTANCE = {} as WebSocket
 
 describe('trackedConnection', () => {
   let clock: Clock
@@ -30,43 +29,51 @@ describe('trackedConnection', () => {
   })
 
   it('hands out a state to read, which cannot be used to write', () => {
-    const connection = createOpenConnection({ requestedProtocols: ['chat.v1'] })
-    connection.recordInboundMessage(100, relativeAt(20))
+    const connection = createConnectingConnection({ protocols: ['chat.v1'] })
+    getStateIn(connection, 'connecting').requestedProtocols!.push('injected')
+    expect(getStateIn(connection, 'connecting').requestedProtocols).toEqual(['chat.v1'])
+
+    connection.recordOpen(openContext())
+    connection.recordInboundMessage(messageInContext(100, clocksAt(20)))
 
     const state = getStateIn(connection, 'open')
     state.snapshotVersion = 999
     state.snapshot.inbound.messageCount = 999
-    state.requestedProtocols!.push('injected')
 
     const freshState = getStateIn(connection, 'open')
     expect(freshState.snapshotVersion).toBe(1)
     expect(freshState.snapshot.inbound.messageCount).toBe(1)
-    expect(freshState.requestedProtocols).toEqual(['chat.v1'])
   })
 
   describe('phase', () => {
     it('starts connecting, carrying the identity it was created with', () => {
-      const state = createConnectingConnection({
-        id: 'some-connection-id',
-        url: 'wss://example.com/chat',
-        requestedProtocols: ['auth-token', 'chat.v1'],
-      }).getState()
+      const state = getStateIn(
+        createConnectingConnection({ url: 'wss://example.com/chat', protocols: ['auth-token', 'chat.v1'] }),
+        'connecting'
+      )
 
-      expect(state.phase).toBe('connecting')
-      expect(state.id).toBe('some-connection-id')
       expect(state.url).toBe('wss://example.com/chat')
       expect(state.requestedProtocols).toEqual(['auth-token', 'chat.v1'])
       expect(state.connectingClocks).toEqual(clocksAt(CONNECTING_AT))
     })
 
+    it('keeps its id across phases', () => {
+      const connection = createConnectingConnection()
+      const { id } = connection.getState()
+
+      connection.recordOpen(openContext())
+      expect(connection.getState().id).toBe(id)
+
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+      expect(connection.getState().id).toBe(id)
+    })
+
     it('turns open on the open event, keeping what the server negotiated', () => {
       const connection = createConnectingConnection()
 
-      connection.recordOpen({
-        openClocks: clocksAt(OPEN_AT),
-        selectedProtocol: 'chat.v1',
-        selectedExtensions: 'permessage-deflate',
-      })
+      connection.recordOpen(
+        openContext({ openClocks: clocksAt(OPEN_AT), protocol: 'chat.v1', extensions: 'permessage-deflate' })
+      )
 
       const state = getStateIn(connection, 'open')
       expect(state.openClocks).toEqual(clocksAt(OPEN_AT))
@@ -97,23 +104,39 @@ describe('trackedConnection', () => {
         expect(state.trackingEndReason).toBe(WebSocketTrackingEndReason.SESSION_END)
       })
 
-      it(`tells whether the connection had opened when tracking ends from ${from}`, () => {
+      it(`holds a snapshot only if the connection had opened, when tracking ends from ${from}`, () => {
         const connection = createConnection()
 
         connection.recordTrackingEnd(clocksAt(40), SESSION_END)
 
-        expect(getStateIn(connection, 'closed').hasOpened).toBe(hasOpened)
+        expect(getStateIn(connection, 'closed').snapshot).toEqual(hasOpened ? jasmine.any(Object) : undefined)
       })
     })
 
     it('keeps the close event when tracking ends on a real close', () => {
       const connection = createOpenConnection()
 
-      connection.recordTrackingEnd(clocksAt(40), CLOSE_EVENT_END)
+      connection.recordClose({
+        state: 'closed',
+        instance: INSTANCE,
+        code: 1000,
+        reason: 'bye',
+        wasClean: true,
+        at: clocksAt(40),
+      })
 
       const state = getStateIn(connection, 'closed')
+      expect(state.endClocks).toEqual(clocksAt(40))
       expect(state.trackingEndReason).toBe(WebSocketTrackingEndReason.CLOSE_EVENT)
-      expect(state.closeEvent).toEqual(CLOSE_EVENT_END.closeEvent)
+      expect(state.closeEvent).toEqual({ code: 1000, reason: 'bye', wasClean: true })
+    })
+
+    it('holds no close event when tracking ends without one', () => {
+      const connection = createOpenConnection()
+
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END)
+
+      expect(getStateIn(connection, 'closed').closeEvent).toBeUndefined()
     })
   })
 
@@ -121,7 +144,7 @@ describe('trackedConnection', () => {
     it('starts at 1 on open and increases on tracking end', () => {
       const connection = createConnectingConnection()
 
-      connection.recordOpen({ openClocks: clocksAt(OPEN_AT) })
+      connection.recordOpen(openContext())
       expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 1 }))
 
       connection.recordTrackingEnd(clocksAt(40), SESSION_END)
@@ -151,28 +174,28 @@ describe('trackedConnection', () => {
   const DIRECTIONS = [
     {
       direction: 'inbound' as const,
-      recordMessage: (connection: TrackedConnection, size: number, at: RelativeTime) =>
-        connection.recordInboundMessage(size, at),
+      recordMessage: (connection: TrackedConnection, size: number, at: ClocksState) =>
+        connection.recordInboundMessage(messageInContext(size, at)),
     },
     {
       direction: 'outbound' as const,
-      recordMessage: (connection: TrackedConnection, size: number, at: RelativeTime) =>
-        connection.recordOutboundMessage(size, 0, at),
+      recordMessage: (connection: TrackedConnection, size: number, at: ClocksState) =>
+        connection.recordOutboundMessage(messageOutContext(size, 0, at)),
     },
   ]
 
   DIRECTIONS.forEach(({ direction, recordMessage }) => {
     describe(`${direction} messages`, () => {
       function aggregateOf(connection: TrackedConnection): MessageDirectionAggregate {
-        return connection.getState().snapshot[direction]
+        return getStateIn(connection, 'open').snapshot[direction]
       }
 
       it('counts messages, totals their sizes and keeps the largest one', () => {
         const connection = createOpenConnection()
 
-        recordMessage(connection, 100, relativeAt(20))
-        recordMessage(connection, 300, relativeAt(30))
-        recordMessage(connection, 200, relativeAt(40))
+        recordMessage(connection, 100, clocksAt(20))
+        recordMessage(connection, 300, clocksAt(30))
+        recordMessage(connection, 200, clocksAt(40))
 
         const aggregate = aggregateOf(connection)
         expect(aggregate.messageCount).toBe(3)
@@ -192,9 +215,9 @@ describe('trackedConnection', () => {
       it('reports the longest gap between two messages', () => {
         const connection = createOpenConnection()
 
-        recordMessage(connection, 1, relativeAt(20))
-        recordMessage(connection, 1, relativeAt(50)) // gap of 30
-        recordMessage(connection, 1, relativeAt(75)) // gap of 25
+        recordMessage(connection, 1, clocksAt(20))
+        recordMessage(connection, 1, clocksAt(50)) // gap of 30
+        recordMessage(connection, 1, clocksAt(75)) // gap of 25
 
         expect(aggregateOf(connection).longestSilence).toBe(30 as Duration)
       })
@@ -202,7 +225,7 @@ describe('trackedConnection', () => {
       it('does not count the interval before the first message as a silence', () => {
         const connection = createOpenConnection()
 
-        recordMessage(connection, 1, relativeAt(1000))
+        recordMessage(connection, 1, clocksAt(1000))
 
         expect(aggregateOf(connection).longestSilence).toBe(0 as Duration)
       })
@@ -213,11 +236,11 @@ describe('trackedConnection', () => {
   it('keeps the two directions apart', () => {
     const connection = createOpenConnection()
 
-    connection.recordInboundMessage(100, relativeAt(20))
-    connection.recordInboundMessage(100, relativeAt(1020))
-    connection.recordOutboundMessage(7, 0, relativeAt(520))
+    connection.recordInboundMessage(messageInContext(100, clocksAt(20)))
+    connection.recordInboundMessage(messageInContext(100, clocksAt(1020)))
+    connection.recordOutboundMessage(messageOutContext(7, 0, clocksAt(520)))
 
-    const { inbound, outbound } = connection.getState().snapshot
+    const { inbound, outbound } = getStateIn(connection, 'open').snapshot
     expect(inbound.messageCount).toBe(2)
     expect(inbound.messageSizeTotal).toBe(200)
     expect(outbound.messageCount).toBe(1)
@@ -232,19 +255,19 @@ describe('trackedConnection', () => {
       const connection = createOpenConnection()
 
       // one large send on a socket that never flushed: the queue did reach a megabyte
-      connection.recordOutboundMessage(1_000_000, 0, relativeAt(20))
+      connection.recordOutboundMessage(messageOutContext(1_000_000, 0, clocksAt(20)))
 
-      expect(connection.getState().snapshot.bufferedAmountMax).toBe(1_000_000)
+      expect(getStateIn(connection, 'open').snapshot.bufferedAmountMax).toBe(1_000_000)
     })
 
     it('reports the deepest queue observed across sends', () => {
       const connection = createOpenConnection()
 
-      connection.recordOutboundMessage(10, 10, relativeAt(20))
-      connection.recordOutboundMessage(10, 100, relativeAt(30))
-      connection.recordOutboundMessage(10, 50, relativeAt(40))
+      connection.recordOutboundMessage(messageOutContext(10, 10, clocksAt(20)))
+      connection.recordOutboundMessage(messageOutContext(10, 100, clocksAt(30)))
+      connection.recordOutboundMessage(messageOutContext(10, 50, clocksAt(40)))
 
-      expect(connection.getState().snapshot.bufferedAmountMax).toBe(110)
+      expect(getStateIn(connection, 'open').snapshot.bufferedAmountMax).toBe(110)
     })
   })
 
@@ -256,26 +279,46 @@ describe('trackedConnection', () => {
     return relativeToClocks(clock.relative(relative))
   }
 
-  function relativeAt(relative: number): RelativeTime {
-    return clock.relative(relative)
+  // ---------------------------------------------------------------------------
+  // Building the contexts the observable notifies
+  // ---------------------------------------------------------------------------
+
+  function openContext(context: Partial<WebSocketOpenContext> = {}): WebSocketOpenContext {
+    return {
+      state: 'open',
+      instance: INSTANCE,
+      openClocks: clocksAt(OPEN_AT),
+      protocol: '',
+      extensions: '',
+      ...context,
+    }
+  }
+
+  function messageInContext(size: number, at: ClocksState): WebSocketMessageInContext {
+    return { state: 'message-in', instance: INSTANCE, size, at }
+  }
+
+  function messageOutContext(size: number, bufferedAmountPreSend: number, at: ClocksState): WebSocketMessageOutContext {
+    return { state: 'message-out', instance: INSTANCE, size, bufferedAmountPreSend, at }
   }
 
   // ---------------------------------------------------------------------------
   // Building connections
   // ---------------------------------------------------------------------------
 
-  function createConnectingConnection(identity: Partial<TrackedConnectionIdentity> = {}) {
+  function createConnectingConnection(context: Partial<WebSocketConnectingContext> = {}) {
     return createTrackedConnection({
-      id: 'connection-id',
+      state: 'connecting',
+      instance: INSTANCE,
       url: 'wss://example.com/socket',
-      connectingClocks: clocksAt(CONNECTING_AT),
-      ...identity,
+      startClocks: clocksAt(CONNECTING_AT),
+      ...context,
     })
   }
 
-  function createOpenConnection(identity: Partial<TrackedConnectionIdentity> = {}) {
-    const connection = createConnectingConnection(identity)
-    connection.recordOpen({ openClocks: clocksAt(OPEN_AT) })
+  function createOpenConnection() {
+    const connection = createConnectingConnection()
+    connection.recordOpen(openContext())
     return connection
   }
 
@@ -286,7 +329,7 @@ describe('trackedConnection', () => {
   }
 
   /** Reads the state, failing the spec unless it is in `phase`, and narrows it to that phase. */
-  function getStateIn<Phase extends WebSocketPhase>(
+  function getStateIn<Phase extends TrackedConnectionState['phase']>(
     connection: TrackedConnection,
     phase: Phase
   ): Extract<TrackedConnectionState, { phase: Phase }> {

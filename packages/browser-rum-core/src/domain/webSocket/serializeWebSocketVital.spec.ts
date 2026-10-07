@@ -6,18 +6,13 @@ import type {
   RawRumWebSocketOpenVitalProperties,
 } from '../../rawRumEvent.types'
 import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
-import type {
-  MessageDirectionAggregate,
-  TrackedConnectionState,
-  WebSocketCloseEvent,
-  WebSocketSnapshot,
-} from './trackedConnection'
+import type { MessageDirectionAggregate, TrackedConnectionState, WebSocketSnapshot } from './trackedConnection'
 import { serializeWebSocketVital } from './serializeWebSocketVital'
 
 /** Arbitrary value: every date in this spec is an offset from it, so the expected values stay readable. */
 const CONNECTING_TIMESTAMP = 1_700_000_000_000
 
-const CLOSE_EVENT: WebSocketCloseEvent = { code: 1000, reason: 'bye', wasClean: true }
+const CLOSE_EVENT = { code: 1000, reason: 'bye', wasClean: true }
 
 describe('serializeWebSocketVital', () => {
   describe('envelope', () => {
@@ -95,7 +90,7 @@ describe('serializeWebSocketVital', () => {
     })
 
     it('repeats no identity field, and omits what the server did not negotiate', () => {
-      const { websocket } = serializeOpen(openState({ url: 'wss://example.com/chat', requestedProtocols: ['chat.v1'] }))
+      const { websocket } = serializeOpen()
 
       expect(fieldsOf(websocket)).toEqual(['id', 'connecting_duration', 'open_date', 'snapshot_version', 'snapshot'])
     })
@@ -250,34 +245,6 @@ describe('serializeWebSocketVital', () => {
       // @ts-expect-error a snapshot may ride on the closed vital, so its version is required
       serializeWebSocketVital({ ...closedState(), snapshotVersion: undefined })
     })
-
-    it('requires the close event of a close the connection reported, and rejects it otherwise', () => {
-      // @ts-expect-error the close outcome is reported by, and only by, a real close event
-      serializeWebSocketVital({
-        phase: 'closed',
-        id: 'connection-id',
-        url: 'wss://example.com/socket',
-        connectingClocks: clocksAt(0),
-        endClocks: clocksAt(50),
-        snapshotVersion: 2,
-        hasOpened: true,
-        snapshot: snapshotOf(),
-        trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
-      })
-      serializeWebSocketVital({
-        phase: 'closed',
-        id: 'connection-id',
-        url: 'wss://example.com/socket',
-        connectingClocks: clocksAt(0),
-        endClocks: clocksAt(50),
-        snapshotVersion: 2,
-        hasOpened: true,
-        snapshot: snapshotOf(),
-        trackingEndReason: WebSocketTrackingEndReason.SESSION_END,
-        // @ts-expect-error tracking that ended without a close event has no close outcome to report
-        closeEvent: CLOSE_EVENT,
-      })
-    })
   })
 
   // ---------------------------------------------------------------------------
@@ -309,7 +276,6 @@ describe('serializeWebSocketVital', () => {
       id: 'connection-id',
       url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
-      snapshot: snapshotOf(),
       ...state,
     }
   }
@@ -320,7 +286,6 @@ describe('serializeWebSocketVital', () => {
     return {
       phase: 'open',
       id: 'connection-id',
-      url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
       openClocks: clocksAt(10),
       snapshotVersion: 1,
@@ -329,17 +294,13 @@ describe('serializeWebSocketVital', () => {
     }
   }
 
-  function closedState(
-    state: Partial<Omit<ClosedOnCloseEventState, 'phase' | 'trackingEndReason'>> = {}
-  ): ClosedOnCloseEventState {
+  function closedState(state: Partial<Omit<ClosedState, 'phase' | 'trackingEndReason'>> = {}): ClosedState {
     return {
       phase: 'closed',
       id: 'connection-id',
-      url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
-      hasOpened: true,
       snapshot: snapshotOf(),
       ...state,
       trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
@@ -349,17 +310,14 @@ describe('serializeWebSocketVital', () => {
 
   /** A connection whose handshake never succeeded. */
   function neverOpenedClosedState(
-    state: Partial<Omit<ClosedOnCloseEventState, 'phase' | 'trackingEndReason' | 'hasOpened'>> = {}
-  ): ClosedOnCloseEventState {
+    state: Partial<Omit<ClosedState, 'phase' | 'trackingEndReason' | 'snapshot'>> = {}
+  ): ClosedState {
     return {
       phase: 'closed',
       id: 'connection-id',
-      url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 1,
-      hasOpened: false,
-      snapshot: snapshotOf(),
       ...state,
       trackingEndReason: WebSocketTrackingEndReason.CLOSE_EVENT,
       closeEvent: state.closeEvent ?? CLOSE_EVENT,
@@ -404,9 +362,7 @@ describe('serializeWebSocketVital', () => {
   }
 
   /** Tracking ended on a close event, which is the only way the close outcome is reported. */
-  function serializeClosedOnCloseEvent({
-    state = closedState(),
-  }: { state?: Extract<TrackedConnectionState, { phase: 'closed' }> } = {}) {
+  function serializeClosedOnCloseEvent({ state = closedState() }: { state?: ClosedState } = {}) {
     const event = serializeWebSocketVital(state)
     return { event, websocket: event.vital.websocket as ClosedProperties }
   }
@@ -416,11 +372,9 @@ describe('serializeWebSocketVital', () => {
     const event = serializeWebSocketVital({
       phase: 'closed',
       id: 'connection-id',
-      url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
-      hasOpened: true,
       snapshot: snapshotOf(),
       trackingEndReason: WebSocketTrackingEndReason.SESSION_END,
     })
@@ -431,7 +385,7 @@ describe('serializeWebSocketVital', () => {
 type ConnectingProperties = { id: string } & RawRumWebSocketConnectingVitalProperties
 type OpenProperties = { id: string } & RawRumWebSocketOpenVitalProperties
 type ClosedProperties = { id: string } & RawRumWebSocketClosedVitalProperties
-type ClosedOnCloseEventState = Extract<TrackedConnectionState, { phase: 'closed'; trackingEndReason: 'close_event' }>
+type ClosedState = Extract<TrackedConnectionState, { phase: 'closed' }>
 
 /**
  * The fields a payload actually reports, which is what the presence rules are about — a field held
