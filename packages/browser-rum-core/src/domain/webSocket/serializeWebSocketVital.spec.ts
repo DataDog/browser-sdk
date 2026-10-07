@@ -8,7 +8,6 @@ import type {
 import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
 import type {
   MessageDirectionAggregate,
-  OutboundAggregate,
   TrackedConnectionState,
   WebSocketCloseEvent,
   WebSocketSnapshot,
@@ -222,8 +221,8 @@ describe('serializeWebSocketVital', () => {
               messageCount: 1,
               messageSizeTotal: 10,
               messageSizeMax: 10,
-              bufferedAmountMax: 70_000,
             },
+            bufferedAmountMax: 70_000,
           }),
         })
       )
@@ -375,12 +374,18 @@ describe('serializeWebSocketVital', () => {
   function snapshotOf({
     inbound,
     outbound,
-  }: { inbound?: Partial<MessageDirectionAggregate>; outbound?: Partial<OutboundAggregate> } = {}): WebSocketSnapshot {
+    bufferedAmountMax = 0,
+  }: {
+    inbound?: Partial<MessageDirectionAggregate>
+    outbound?: Partial<MessageDirectionAggregate>
+    bufferedAmountMax?: number
+  } = {}): WebSocketSnapshot {
     const silentDirection = { messageCount: 0, messageSizeTotal: 0, messageSizeMax: 0, longestSilence: 0 as Duration }
 
     return {
       inbound: { ...silentDirection, ...inbound },
-      outbound: { ...silentDirection, bufferedAmountMax: 0, ...outbound },
+      outbound: { ...silentDirection, ...outbound },
+      bufferedAmountMax,
     }
   }
 
