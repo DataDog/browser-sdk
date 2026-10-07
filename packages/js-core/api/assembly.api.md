@@ -10,7 +10,7 @@ export function createHook<Params, Result>(): Hook<Params, Result>;
 // @public
 export const DISCARDED = "DISCARDED";
 
-// @public (undocumented)
+// @public
 export type DISCARDED = typeof DISCARDED;
 
 // @public
@@ -24,7 +24,7 @@ export interface Hook<Params, Result> {
 // @public
 export const SKIPPED = "SKIPPED";
 
-// @public (undocumented)
+// @public
 export type SKIPPED = typeof SKIPPED;
 
 // (No @packageDocumentation comment for this package)

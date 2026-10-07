@@ -18,10 +18,15 @@ export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName
 
 /** Console methods pre-bound to the original (unpatched) console implementation. */
 export interface Display {
+  /** Original `console.debug`. */
   debug: typeof console.debug
+  /** Original `console.log`. */
   log: typeof console.log
+  /** Original `console.info`. */
   info: typeof console.info
+  /** Original `console.warn`. */
   warn: typeof console.warn
+  /** Original `console.error`. */
   error: typeof console.error
 }
 

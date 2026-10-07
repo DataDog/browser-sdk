@@ -4,28 +4,64 @@ import { Observable } from '../util/observable'
 import { getZoneJsOriginalValue } from '../util/getZoneJsOriginalValue'
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
+
+/**
+ * A mutation record describing a change to the text content of a `CharacterData` node (text,
+ * comment, CDATA section).
+ */
 export interface CharacterDataMutationRecord {
+  /** Discriminant of the {@link MutationRecord} union. */
   type: 'characterData'
+  /** The node whose data changed. */
   target: Node
+  /** The node data before the change. */
   oldValue: string | null
 }
 
+/**
+ * A mutation record describing a change to an attribute of an element.
+ */
 export interface AttributesMutationRecord {
+  /** Discriminant of the {@link MutationRecord} union. */
   type: 'attributes'
+  /** The element whose attribute changed. */
   target: Element
+  /** The attribute value before the change, or `null` if the attribute was absent. */
   oldValue: string | null
+  /** The local name of the changed attribute. */
   attributeName: string
 }
 
+/**
+ * A mutation record describing nodes added to or removed from the children of a node.
+ */
 export interface ChildListMutationRecord {
+  /** Discriminant of the {@link MutationRecord} union. */
   type: 'childList'
+  /** The node whose children changed. */
   target: Node
+  /** The nodes that were added. */
   addedNodes: NodeList
+  /** The nodes that were removed. */
   removedNodes: NodeList
 }
 
+/**
+ * A narrowed, discriminated version of the native `MutationRecord`, exposing only the fields
+ * relevant to each mutation `type`.
+ */
 export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRecord | ChildListMutationRecord
 
+/**
+ * Creates an {@link Observable} notifying batches of DOM mutations happening anywhere in the
+ * document (attributes, character data and child lists, including old values).
+ *
+ * The underlying `MutationObserver` is created lazily on first subscription and disconnected when
+ * the last observer unsubscribes. It uses the Zone.js-free constructor returned by
+ * {@link getMutationObserverConstructor}.
+ *
+ * @returns An observable of mutation record batches.
+ */
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
 
@@ -48,6 +84,13 @@ export interface BrowserWindow extends Window {
   Zone?: unknown
 }
 
+/**
+ * Returns the native `MutationObserver` constructor, bypassing the Zone.js patched one when Angular
+ * is used (see the comments below for the rationale).
+ *
+ * @returns The original `MutationObserver` constructor, or `window.MutationObserver` when Zone.js is
+ * not present or its original cannot be retrieved.
+ */
 export function getMutationObserverConstructor(): MutationObserverConstructor {
   let constructor: MutationObserverConstructor | undefined
   const browserWindow = window as BrowserWindow

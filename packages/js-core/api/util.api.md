@@ -4,12 +4,10 @@
 
 ```ts
 
-// @public (undocumented)
+// @public
 export class BufferedObservable<T> extends Observable<T> {
     constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
-    // (undocumented)
     notify(data: T): void;
-    // (undocumented)
     subscribe(observer: Observer<T>): Subscription;
     unbuffer(): void;
 }
@@ -28,22 +26,22 @@ export { clearTimeout_2 as clearTimeout }
 // @public
 export function combine<A, B>(a: A, b: B): Combined<A, B>;
 
-// @public (undocumented)
+// @public
 export function combine<A, B, C>(a: A, b: B, c: C): Combined<Combined<A, B>, C>;
 
-// @public (undocumented)
+// @public
 export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): Combined<Combined<Combined<A, B>, C>, D>;
 
-// @public (undocumented)
+// @public
 export function combine<A, B, C, D, E>(a: A, b: B, c: C, d: D, e: E): Combined<Combined<Combined<Combined<A, B>, C>, D>, E>;
 
-// @public (undocumented)
+// @public
 export function combine<A, B, C, D, E, F>(a: A, b: B, c: C, d: D, e: E, f: F): Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>;
 
-// @public (undocumented)
+// @public
 export function combine<A, B, C, D, E, F, G>(a: A, b: B, c: C, d: D, e: E, f: F, g: G): Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>;
 
-// @public (undocumented)
+// @public
 export function combine<A, B, C, D, E, F, G, H>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): Combined<Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>, H>;
 
 // @public
@@ -66,7 +64,6 @@ export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName
 
 // @public
 export interface Context {
-    // (undocumented)
     [x: string]: ContextValue;
 }
 
@@ -117,9 +114,8 @@ interface CookieStore_2 extends EventTarget {
 }
 export { CookieStore_2 as CookieStore }
 
-// @internal (undocumented)
+// @internal
 interface CookieStoreEventMap_2 {
-    // (undocumented)
     change: CookieChangeEvent_2;
 }
 export { CookieStoreEventMap_2 as CookieStoreEventMap }
@@ -147,15 +143,10 @@ export function detachToJsonMethod(value: object): () => void;
 
 // @public
 export interface Display {
-    // (undocumented)
     debug: typeof console.debug;
-    // (undocumented)
     error: typeof console.error;
-    // (undocumented)
     info: typeof console.info;
-    // (undocumented)
     log: typeof console.log;
-    // (undocumented)
     warn: typeof console.warn;
 }
 
@@ -210,7 +201,7 @@ export function jsonStringify(value: unknown, replacer?: Array<string | number>,
 // @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
-// @public (undocumented)
+// @public
 export function mergeObservables<T>(...observables: Array<Observable<T>>): Observable<T>;
 
 // @public
@@ -242,7 +233,7 @@ export interface NetworkInformation {
 // @public
 export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 'wifi' | 'wimax' | 'other' | 'unknown';
 
-// @public (undocumented)
+// @public
 export function noop(): void;
 
 // @public
@@ -250,22 +241,16 @@ export function normalizeUrl(url: string): string;
 
 // @public
 export interface ObjectWithToJsonMethod {
-    // (undocumented)
     toJSON?: () => unknown;
 }
 
-// @public (undocumented)
+// @public
 export class Observable<T> {
     constructor(onFirstSubscribe?: ((observable: Observable<T>) => (() => void) | void) | undefined);
-    // (undocumented)
     protected addObserver(observer: Observer<T>): void;
-    // (undocumented)
     notify(data: T): void;
-    // (undocumented)
     protected observers: Array<Observer<T>>;
-    // (undocumented)
     protected removeObserver(observer: Observer<T>): void;
-    // (undocumented)
     subscribe(observer: Observer<T>): Subscription;
 }
 
@@ -356,9 +341,8 @@ export { setInterval_2 as setInterval }
 function setTimeout_2(callback: () => void, delay?: number): TimeoutId;
 export { setTimeout_2 as setTimeout }
 
-// @public (undocumented)
+// @public
 export interface Subscription {
-    // (undocumented)
     unsubscribe: () => void;
 }
 
@@ -367,9 +351,7 @@ export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
 
 // @public
 export interface Uint8ArrayBuffer extends Uint8Array {
-    // (undocumented)
     readonly buffer: ArrayBuffer;
-    // (undocumented)
     subarray(begin?: number, end?: number): Uint8ArrayBuffer;
 }
 

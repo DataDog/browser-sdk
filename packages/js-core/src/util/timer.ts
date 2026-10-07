@@ -14,7 +14,7 @@ export type TimeoutId = ReturnType<GlobalObject['setTimeout']>
 /**
  * Zone.js-safe wrapper for `setTimeout`.
  *
- * Looks up the original `setTimeout` via {@link getZoneJsOriginalValue} to bypass any Zone.js
+ * Looks up the original `setTimeout` via `getZoneJsOriginalValue` to bypass any Zone.js
  * patch, preventing the resource-exhaustion issues that Zone.js-patched timers can cause.
  *
  * @param callback - Function to invoke after `delay` milliseconds.
