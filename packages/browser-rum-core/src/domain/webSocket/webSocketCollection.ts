@@ -138,24 +138,17 @@ export function trackWebSocket(
     return false
   }
 
-  /**
-   * Follows the timer to the population in phase `open`, so the periodic report costs nothing while
-   * no connection is open.
-   */
-  function reportOpenConnectionsPeriodically() {
-    const shouldReport = hasOpenConnection()
-
-    if (shouldReport && reportIntervalId === undefined) {
-      reportIntervalId = setInterval(reportOpenConnections, WEBSOCKET_PERIODIC_REPORT_INTERVAL)
-    } else if (!shouldReport && reportIntervalId !== undefined) {
-      clearInterval(reportIntervalId)
-      reportIntervalId = undefined
+  function startOpenConnectionsPeriodicReport() {
+    if (reportIntervalId !== undefined) {
+      return
     }
+
+    reportIntervalId = setInterval(reportOpenConnections, WEBSOCKET_PERIODIC_REPORT_INTERVAL)
   }
 
-  function clearTrackedConnections() {
-    trackedConnections.clear()
-    reportOpenConnectionsPeriodically()
+  function stopOpenConnectionsPeriodicReport() {
+    clearInterval(reportIntervalId)
+    reportIntervalId = undefined
   }
 
   function handleWebSocketContext(context: WebSocketContext) {
@@ -229,7 +222,11 @@ export function trackWebSocket(
     // After key phase transitions to keep the report only when there's an active pool
     // of WebSockets.
     if (context.state !== 'message-in' && context.state !== 'message-out') {
-      reportOpenConnectionsPeriodically()
+      if (hasOpenConnection()) {
+        startOpenConnectionsPeriodicReport()
+      } else {
+        stopOpenConnectionsPeriodicReport()
+      }
     }
   })
 
@@ -243,12 +240,14 @@ export function trackWebSocket(
         emitVital(instance, connection)
       })
 
-      clearTrackedConnections()
+      trackedConnections.clear()
+      stopOpenConnectionsPeriodicReport()
       return endedCount
     },
     stop: () => {
       subscription.unsubscribe()
-      clearTrackedConnections()
+      trackedConnections.clear()
+      stopOpenConnectionsPeriodicReport()
     },
   }
 }
