@@ -42,10 +42,7 @@ export type TrackedConnectionState = {
   | {
       phase: 'open'
       openClocks: ClocksState
-      /**
-       * When this particular open vital was taken. It is the open event on the first one and the
-       * periodic report on every one after it.
-       */
+      /** When this particular open vital was created, on the open event or on the periodic report. */
       reportClocks: ClocksState
       selectedProtocol?: string
       selectedExtensions?: string

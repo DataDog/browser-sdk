@@ -175,8 +175,6 @@ export function trackWebSocket(
           return
         }
 
-        // recordOpen sets reportClocks to the open date and bumps the first snapshot version; the
-        // later periodic reports are the ones where the two dates part
         connection.recordOpen(context)
 
         emitVital(context.instance, connection)
@@ -196,8 +194,6 @@ export function trackWebSocket(
         return
       }
 
-      // reported at most once per connection, which the observable's `readyState` guard is what
-      // enforces
       case 'closing': {
         const connection = trackedConnections.get(context.instance)
         if (!connection) {
@@ -230,8 +226,8 @@ export function trackWebSocket(
   const subscription = webSocketContextObservable.subscribe((context) => {
     handleWebSocketContext(context)
 
-    // after every phase change rather than at the ones that happen to matter, so none can be missed.
-    // Messages are the one hot path here and change no phase, so they are the exception
+    // After key phase transitions to keep the report only when there's an active pool
+    // of WebSockets.
     if (context.state !== 'message-in' && context.state !== 'message-out') {
       reportOpenConnectionsPeriodically()
     }
@@ -242,8 +238,7 @@ export function trackWebSocket(
     flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
       const endedCount = trackedConnections.size
       trackedConnections.forEach((connection, instance) => {
-        // no close event happened on this path, so the close outcome is genuinely absent rather
-        // than defaulted
+        // No close event
         connection.recordTrackingEnd(endClocks, trackingEndReason)
         emitVital(instance, connection)
       })
