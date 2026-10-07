@@ -30,7 +30,9 @@ export type RelativeTime = number & { r: 'Time relative to navigation start' } &
 
 /** Pair of a relative time and its corresponding absolute timestamp. */
 export interface ClocksState {
+  /** The time relative to navigation start. */
   relative: RelativeTime
+  /** The corresponding absolute Unix timestamp. */
   timeStamp: TimeStamp
 }
 
@@ -64,6 +66,7 @@ export function timeStampNow(): TimeStamp {
  * @returns The elapsed duration in milliseconds.
  */
 export function elapsed(start: TimeStamp, end: TimeStamp): Duration
+/** Computes the elapsed duration, in milliseconds, between two relative times. */
 export function elapsed(start: RelativeTime, end: RelativeTime): Duration
 export function elapsed(start: number, end: number) {
   return (end - start) as Duration
@@ -76,6 +79,7 @@ export function elapsed(start: number, end: number) {
  * @returns The duration in nanoseconds, or `undefined` if the input is `undefined`.
  */
 export function toServerDuration(duration: Duration): ServerDuration
+/** Converts an optional {@link Duration} to a {@link ServerDuration}, passing `undefined` through. */
 export function toServerDuration(duration: Duration | undefined): ServerDuration | undefined
 export function toServerDuration(duration: Duration | undefined) {
   if (typeof duration !== 'number') {
@@ -90,7 +94,9 @@ export function toServerDuration(duration: Duration | undefined) {
  * @returns `a + b` typed as `TimeStamp`, `RelativeTime`, or `Duration` depending on the overload.
  */
 export function addDuration(a: TimeStamp, b: Duration): TimeStamp
+/** Adds a {@link Duration} to a {@link RelativeTime}. */
 export function addDuration(a: RelativeTime, b: Duration): RelativeTime
+/** Adds two {@link Duration} values. */
 export function addDuration(a: Duration, b: Duration): Duration
 export function addDuration(a: number, b: number) {
   return a + b

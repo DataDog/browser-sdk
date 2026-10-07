@@ -105,8 +105,11 @@ type Combined<A, B> = A extends null ? B : B extends null ? A : Merged<A, B>
  * combine({ a: { x: 1 } }, { a: { y: 2 } }) // { a: { x: 1, y: 2 } }
  */
 export function combine<A, B>(a: A, b: B): Combined<A, B>
+/** Same as the two-source `combine` overload, for 3 sources. */
 export function combine<A, B, C>(a: A, b: B, c: C): Combined<Combined<A, B>, C>
+/** Same as the two-source `combine` overload, for 4 sources. */
 export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): Combined<Combined<Combined<A, B>, C>, D>
+/** Same as the two-source `combine` overload, for 5 sources. */
 export function combine<A, B, C, D, E>(
   a: A,
   b: B,
@@ -114,6 +117,7 @@ export function combine<A, B, C, D, E>(
   d: D,
   e: E
 ): Combined<Combined<Combined<Combined<A, B>, C>, D>, E>
+/** Same as the two-source `combine` overload, for 6 sources. */
 export function combine<A, B, C, D, E, F>(
   a: A,
   b: B,
@@ -122,6 +126,7 @@ export function combine<A, B, C, D, E, F>(
   e: E,
   f: F
 ): Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>
+/** Same as the two-source `combine` overload, for 7 sources. */
 export function combine<A, B, C, D, E, F, G>(
   a: A,
   b: B,
@@ -131,6 +136,7 @@ export function combine<A, B, C, D, E, F, G>(
   f: F,
   g: G
 ): Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>
+/** Same as the two-source `combine` overload, for 8 sources. */
 export function combine<A, B, C, D, E, F, G, H>(
   a: A,
   b: B,

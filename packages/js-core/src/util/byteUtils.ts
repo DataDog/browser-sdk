@@ -17,8 +17,15 @@ const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
  * Used throughout the SDK for deflate output and buffer concatenation.
  */
 export interface Uint8ArrayBuffer extends Uint8Array {
+  /** The underlying `ArrayBuffer`. */
   readonly buffer: ArrayBuffer
 
+  /**
+   * Returns a view on a portion of this buffer, preserving the `ArrayBuffer`-backed type.
+   *
+   * @param begin - Start index (inclusive). Defaults to 0.
+   * @param end - End index (exclusive). Defaults to the buffer length.
+   */
   subarray(begin?: number, end?: number): Uint8ArrayBuffer
 }
 
