@@ -131,7 +131,7 @@ describe('serializeNode for DOM nodes', () => {
       await serializeHtml('<div><canvas></canvas><div><canvas></canvas></div></div>', {
         scope,
         after: (target) => {
-          expect(scope.canvasManager.getDirtyCanvases()).toEqual(
+          expect(scope.canvasManager.takeCapturableCanvases()).toEqual(
             Array.from((target as Element).querySelectorAll('canvas'))
           )
         },

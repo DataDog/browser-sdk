@@ -34,7 +34,7 @@ export function startViewCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
   )
 
-  hooks.assemble.register(({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
+  hooks.assembleEventDefaults.register(({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const view = viewHistory.findView(startTime)
 
     if (!view) {

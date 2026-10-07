@@ -41,6 +41,7 @@ export function createSessionManagerMock(): SessionManagerMock {
     },
     expireObservable: new Observable(),
     renewObservable: new Observable(),
+    expandOrRenew: noop,
     updateSessionState: noop,
     setId(newId) {
       id = newId

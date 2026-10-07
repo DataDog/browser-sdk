@@ -118,6 +118,30 @@ test.describe('recorder', () => {
       })
   })
 
+  test.describe('meta record', () => {
+    createTest('record the page URL')
+      .withRum()
+      .run(async ({ intakeRegistry, flushEvents, baseUrl }) => {
+        await flushEvents()
+
+        expect(findMeta(intakeRegistry.replaySegments[0])!.data.href).toBe(baseUrl)
+      })
+
+    createTest('record the page URL without its query string or fragment')
+      .withRum()
+      .run(async ({ intakeRegistry, flushEvents, page, baseUrl }) => {
+        await page.evaluate(() => {
+          history.pushState(null, '', '/user/1234?token=should-not-leak#fragment-should-not-leak')
+        })
+
+        await flushEvents()
+
+        const hrefs = intakeRegistry.replaySegments.map((segment) => findMeta(segment)!.data.href)
+        expect(hrefs).toEqual([baseUrl, new URL('/user/1234', baseUrl).href])
+        expect(hrefs.join()).not.toContain('should-not-leak')
+      })
+  })
+
   test.describe('mutations observer', () => {
     const body = html`
       <p>mutation observer</p>

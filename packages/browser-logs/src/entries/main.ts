@@ -19,11 +19,13 @@ export { StatusType } from '../domain/logger/isAuthorized'
 export type { LoggerConfiguration, LogsPublicApi as DatadogLogs } from '../boot/logsPublicApi'
 export type { LogsInitConfiguration, LogsBeforeSend } from '../domain/configuration'
 export type { LogsEvent } from '../logsEvent.types'
+export type { LogsPlugin, OnLogsStartOptions, OnInitOptions } from '../domain/plugins'
 export type {
   LogsEventDomainContext,
   NetworkLogsEventDomainContext,
   ConsoleLogsEventDomainContext,
   LoggerLogsEventDomainContext,
+  ReportLogsEventDomainContext,
 } from '../domainContext.types'
 
 /**

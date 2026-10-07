@@ -132,8 +132,6 @@ describe('logger collection', () => {
           message: 'message',
           status: StatusType.error,
           _dd: { debug_ids: undefined },
-        },
-        messageContext: {
           foo: 'from-logger',
           bar: 'from-message',
         },
@@ -141,8 +139,19 @@ describe('logger collection', () => {
         domainContext: {
           handlingStack: HANDLING_STACK,
         },
-        ddtags: [],
+        loggerTags: [],
       })
+    })
+
+    it('message context should take precedence over native raw log fields', () => {
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { message: 'from-message-context' } },
+        logger,
+        HANDLING_STACK,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0].rawLogsEvent.message).toEqual('from-message-context')
     })
 
     it('should send the saved date when present', () => {
@@ -182,16 +191,16 @@ describe('logger collection', () => {
     })
   })
 
-  describe('ddtags', () => {
+  describe('logger tags', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.http)
     })
 
-    it('should contain the ddtags of the logger', () => {
+    it('should contain the tags of the logger', () => {
       logger.addTag('tag1', 'value1')
       handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
 
-      expect(rawLogsEvents[0].ddtags).toEqual(['tag1:value1'])
+      expect(rawLogsEvents[0].loggerTags).toEqual(['tag1:value1'])
     })
 
     it('should ignore the tags of the message context', () => {
@@ -202,14 +211,14 @@ describe('logger collection', () => {
         COMMON_CONTEXT
       )
 
-      expect(rawLogsEvents[0].ddtags).toEqual([])
+      expect(rawLogsEvents[0].loggerTags).toEqual([])
     })
 
     it('should ignore the tags of the logger context', () => {
       logger.setContext({ ddtags: ['tag1:value1'] })
       handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
 
-      expect(rawLogsEvents[0].ddtags).toEqual([])
+      expect(rawLogsEvents[0].loggerTags).toEqual([])
     })
   })
 })

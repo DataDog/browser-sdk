@@ -309,6 +309,7 @@ export type RumErrorEvent = CommonProperties &
       readonly source_type?:
         | 'android'
         | 'browser'
+        | 'browser+wasm'
         | 'ios'
         | 'react-native'
         | 'flutter'
@@ -422,6 +423,24 @@ export type RumErrorEvent = CommonProperties &
          * CPU architecture from the library.
          */
         readonly arch?: string
+        [k: string]: unknown
+      }[]
+      /**
+       * WebAssembly modules available for stack trace symbolication.
+       */
+      readonly wasm_modules?: {
+        /**
+         * URL identifying the WebAssembly module.
+         */
+        readonly url: string
+        /**
+         * Build ID used to identify the WebAssembly debug symbols.
+         */
+        readonly build_id: string
+        /**
+         * Debug information format used to symbolicate the WebAssembly module.
+         */
+        readonly debug_info_type?: 'dwarf' | 'sourcemap' | 'unknown'
         [k: string]: unknown
       }[]
       /**
@@ -835,7 +854,8 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other'
       /**
-       * Whether the resource was served from the device's local cache
+       * @deprecated
+       * Whether the resource was served from the device's local cache (deprecated in favor of `delivery_type`/`transfer_size`)
        */
       readonly local_cache_hit?: boolean
       /**
@@ -1149,6 +1169,10 @@ export interface CommonProperties {
      * User defined name of the view
      */
     name?: string
+    /**
+     * Whether this view was synthetically created to carry view-less events
+     */
+    readonly is_fake?: boolean
     [k: string]: unknown
   }
   /**
@@ -1442,6 +1466,24 @@ export interface CommonProperties {
      * UUID of the stream
      */
     readonly id: string
+    [k: string]: unknown
+  }
+  /**
+   * Execution context properties
+   */
+  readonly execution_context?: {
+    /**
+     * UUID of the execution context
+     */
+    readonly id: string
+    /**
+     * Type of the execution context
+     */
+    readonly type: 'main-process' | 'renderer-process' | 'utility-process'
+    /**
+     * Execution context name
+     */
+    readonly name?: string
     [k: string]: unknown
   }
   [k: string]: unknown

@@ -10,6 +10,10 @@ export function isElementNode(node: Node): node is Element {
   return node.nodeType === Node.ELEMENT_NODE
 }
 
+export function isCanvasElement(node: Node): node is HTMLCanvasElement {
+  return isElementNode(node) && node.tagName === 'CANVAS'
+}
+
 export function isNodeShadowHost(node: Node): node is Element & { shadowRoot: ShadowRoot } {
   return isElementNode(node) && Boolean(node.shadowRoot)
 }

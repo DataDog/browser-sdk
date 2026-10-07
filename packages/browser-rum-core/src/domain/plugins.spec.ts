@@ -1,10 +1,9 @@
-import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { RumInitConfiguration } from './configuration'
-import type { RumPlugin } from './plugins'
+import type { RumPluginOnInitOptions, RumPlugin } from './plugins'
 import { callPluginsOnInit, callPluginsOnRumStart } from './plugins'
 
 describe('callPluginsOnInit', () => {
-  const PARAMETER = { initConfiguration: {} as RumInitConfiguration, publicApi: {} as RumPublicApi }
+  const PARAMETER = { initConfiguration: {}, publicApi: {} } as RumPluginOnInitOptions
 
   it('calls onInit on each plugin', () => {
     const plugin1 = { name: 'a', onInit: jasmine.createSpy() } satisfies RumPlugin
@@ -87,7 +86,7 @@ describe('callPluginsOnInit', () => {
     } satisfies RumPlugin
     const initConfiguration = {} as RumInitConfiguration
 
-    await callPluginsOnInit([plugin1, plugin2], { initConfiguration, publicApi: {} as RumPublicApi })
+    await callPluginsOnInit([plugin1, plugin2], { initConfiguration, publicApi: {} } as RumPluginOnInitOptions)
 
     expect(clientTokenSeenByPlugin2).toBeUndefined()
   })

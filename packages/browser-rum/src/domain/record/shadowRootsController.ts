@@ -1,5 +1,5 @@
 import type { RecordingScope } from './recordingScope.ts'
-import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+import type { EmitRecordCallback, EmitResourceCallback, EmitStatsCallback } from './record.types'
 import { trackInput, trackMutation, trackScroll } from './trackers'
 
 interface ShadowRootController {
@@ -19,6 +19,7 @@ export interface ShadowRootsController {
 
 export const initShadowRootsController = (
   emitRecord: EmitRecordCallback,
+  emitResource: EmitResourceCallback,
   emitStats: EmitStatsCallback
 ): ShadowRootsController => {
   const controllerByShadowRoot = new Map<ShadowRoot, ShadowRootController>()
@@ -28,7 +29,7 @@ export const initShadowRootsController = (
       if (controllerByShadowRoot.has(shadowRoot)) {
         return
       }
-      const mutationTracker = trackMutation(shadowRoot, emitRecord, emitStats, scope)
+      const mutationTracker = trackMutation(shadowRoot, emitRecord, emitResource, emitStats, scope)
       // The change event does not bubble up across the shadow root, we have to listen on the shadow root
       const inputTracker = trackInput(shadowRoot, emitRecord, emitStats, scope)
       // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root

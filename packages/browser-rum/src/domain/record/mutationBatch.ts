@@ -18,9 +18,18 @@ export const MUTATION_PROCESS_MIN_DELAY = 16
 export function createMutationBatch(processMutationBatch: (mutations: MutationRecord[]) => void) {
   let cancelScheduledFlush = noop
   let pendingMutations: MutationRecord[] = []
+  let flushScheduled = false
+
+  function scheduleFlush() {
+    if (!flushScheduled) {
+      flushScheduled = true
+      cancelScheduledFlush = requestIdleCallback(throttledFlush, { timeout: MUTATION_PROCESS_MAX_DELAY })
+    }
+  }
 
   function flush() {
     cancelScheduledFlush()
+    flushScheduled = false
     processMutationBatch(pendingMutations)
     pendingMutations = []
   }
@@ -31,13 +40,13 @@ export function createMutationBatch(processMutationBatch: (mutations: MutationRe
 
   return {
     addMutations: (mutations: MutationRecord[]) => {
-      if (pendingMutations.length === 0) {
-        cancelScheduledFlush = requestIdleCallback(throttledFlush, { timeout: MUTATION_PROCESS_MAX_DELAY })
-      }
+      scheduleFlush()
       for (const mutation of mutations) {
         pendingMutations.push(mutation)
       }
     },
+
+    notifyContentMutated: scheduleFlush,
 
     flush,
 

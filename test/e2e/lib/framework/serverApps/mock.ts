@@ -14,9 +14,17 @@ import { workerSetup } from '../pageSetups'
 import { rawDataToString } from '../../helpers/rawDataToString'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
+const WASM_MODULE_WITH_BUILD_ID = [
+  0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 7, 7, 1, 3, 114, 117, 110, 0, 0, 10, 5, 1, 3, 0, 0, 11, 0,
+  11, 8, 98, 117, 105, 108, 100, 95, 105, 100, 0xab, 0xcd,
+]
+const WASM_MODULE_WITH_SOURCE_MAP = [
+  0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 7, 7, 1, 3, 114, 117, 110, 0, 0, 10, 5, 1, 3, 0, 0, 11, 0,
+  18, 16, 115, 111, 117, 114, 99, 101, 77, 97, 112, 112, 105, 110, 103, 85, 82, 76, 0,
+]
 
 export function createMockServerApp(servers: Servers, setup: string, setupOptions?: SetupOptions): MockServerApp {
-  const { remoteConfiguration, worker } = setupOptions ?? {}
+  const { remoteConfiguration, worker, allowWasmUnsafeEval } = setupOptions ?? {}
   const app = express()
   let largeResponseBytesWritten = 0
 
@@ -49,6 +57,14 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
   app.get('/large-response', (_req, res) => {
     const chunkText = 'foofoobarbar\n'.repeat(50)
     generateLargeResponse(res, chunkText)
+  })
+
+  app.get('/test-module.wasm', (_req, res) => {
+    res.type('application/wasm').send(Buffer.from(WASM_MODULE_WITH_BUILD_ID))
+  })
+
+  app.get('/test-module-sourcemap.wasm', (_req, res) => {
+    res.type('application/wasm').send(Buffer.from(WASM_MODULE_WITH_SOURCE_MAP))
   })
 
   app.get('/sw.js', (_req, res) => {
@@ -180,7 +196,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
       'Content-Security-Policy',
       [
         `connect-src ${servers.datadogHttpApi.origin} ${servers.base.origin} ${webSocketUrl} ${servers.crossOrigin.origin} https://quota.browser-intake-datadoghq.com`,
-        `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
+        `script-src 'self' 'unsafe-inline'${allowWasmUnsafeEval ? " 'wasm-unsafe-eval'" : ''} ${servers.crossOrigin.origin}`,
         "worker-src blob: 'self'",
       ].join(';')
     )

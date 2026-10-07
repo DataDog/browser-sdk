@@ -22,6 +22,8 @@ export type { PublicApi } from './boot/init'
 export { defineGlobal, makePublicApi } from './boot/init'
 export { displayAlreadyInitializedError } from './boot/displayAlreadyInitializedError'
 export { initReportObservable, RawReportType } from './domain/report/reportObservable'
+export type { RawReportError } from './domain/report/reportObservable'
+export type { Report } from './domain/report/browser.types'
 export type {
   Telemetry,
   RawTelemetryEvent,

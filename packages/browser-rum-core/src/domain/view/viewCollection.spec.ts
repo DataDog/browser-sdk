@@ -265,7 +265,7 @@ describe('viewCollection', () => {
     it('should add view properties from the history', () => {
       setupViewCollection({ trackViewsManually: true }, VIEW)
 
-      const defaultRumEventAttributes = hooks.assemble.trigger({
+      const defaultRumEventAttributes = hooks.assembleEventDefaults.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -286,7 +286,7 @@ describe('viewCollection', () => {
     it('should discard the event if no view', () => {
       const viewHistoryEntry = undefined
       setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
-      const defaultRumEventAttributes = hooks.assemble.trigger({
+      const defaultRumEventAttributes = hooks.assembleEventDefaults.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)

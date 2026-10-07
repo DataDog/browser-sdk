@@ -2,14 +2,14 @@ import type { RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager } from '@datadog/browser-core'
 import { createHook, DISCARDED } from '@datadog/js-core/assembly'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
-import type { AssembleHook, DefaultLogsEventAttributes } from '../hooks'
+import type { AssembleHook, AssembleHookParams, DefaultLogsEventAttributes } from '../hooks'
 import type { LogsConfiguration } from '../configuration'
 import { startSessionContext } from './sessionContext'
 
 describe('session context', () => {
   let hook: AssembleHook
   let sessionManager: SessionManager
-  const configuration = { service: 'foo' } as LogsConfiguration
+  const configuration = { service: 'foo', version: '1.0.0' } as LogsConfiguration
 
   beforeEach(() => {
     hook = createHook()
@@ -17,14 +17,17 @@ describe('session context', () => {
   })
 
   describe('assemble  hook', () => {
-    it('should set service', () => {
+    it('should set the configured service and version', () => {
       startSessionContext(hook, configuration, sessionManager)
 
       const defaultLogAttributes = hook.trigger({
         startTime: 0 as RelativeTime,
-      }) as DefaultLogsEventAttributes
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams) as DefaultLogsEventAttributes
 
-      expect(defaultLogAttributes.service).toEqual(jasmine.any(String))
+      expect(defaultLogAttributes.service).toBe('foo')
+      expect(defaultLogAttributes.version).toBe('1.0.0')
     })
 
     it('should discard logs if session is not tracked', () => {
@@ -32,7 +35,9 @@ describe('session context', () => {
 
       const defaultLogAttributes = hook.trigger({
         startTime: 0 as RelativeTime,
-      })
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
 
       expect(defaultLogAttributes).toBe(DISCARDED)
     })
@@ -42,10 +47,13 @@ describe('session context', () => {
 
       const defaultLogAttributes = hook.trigger({
         startTime: 0 as RelativeTime,
-      })
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
 
       expect(defaultLogAttributes).toEqual({
-        service: jasmine.any(String),
+        service: 'foo',
+        version: '1.0.0',
         session_id: jasmine.any(String),
         session: { id: jasmine.any(String) },
       })
@@ -58,10 +66,13 @@ describe('session context', () => {
 
       const defaultLogAttributes = hook.trigger({
         startTime: 0 as RelativeTime,
-      })
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
 
       expect(defaultLogAttributes).toEqual({
-        service: jasmine.any(String),
+        service: 'foo',
+        version: '1.0.0',
         session_id: undefined,
         session: undefined,
       })

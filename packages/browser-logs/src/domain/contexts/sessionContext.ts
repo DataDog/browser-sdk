@@ -27,6 +27,7 @@ export function startSessionContext(
 
     return {
       service: configuration.service,
+      version: configuration.version,
       session_id: session ? session.id : undefined,
       session: session ? { id: session.id } : undefined,
     }
