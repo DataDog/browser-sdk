@@ -44,9 +44,9 @@ export type TrackedConnectionState = {
       openClocks: ClocksState
       /**
        * When this particular open vital was taken. It is the open event on the first one and the
-       * pulse on every periodic report after it.
+       * periodic report on every one after it.
        */
-      pulseClocks: ClocksState
+      reportClocks: ClocksState
       selectedProtocol?: string
       selectedExtensions?: string
       snapshotVersion: number
@@ -70,10 +70,10 @@ export interface TrackedConnection {
   isOpen: () => boolean
   recordOpen: (context: WebSocketOpenContext) => void
   /**
-   * Sets the pulse the next open vital is dated at, and bumps the snapshot version that vital rides
-   * on. Ignored outside the open phase, which is the only one with a pulse.
+   * Sets the date the next open vital is reported at, and bumps the snapshot version that vital
+   * rides on. Ignored outside the open phase, which is the only one reported periodically.
    */
-  recordPulse: (pulseClocks: ClocksState) => void
+  recordReport: (reportClocks: ClocksState) => void
   recordInboundMessage: (context: WebSocketMessageInContext) => void
   recordOutboundMessage: (context: WebSocketMessageOutContext) => void
   recordClosing: (context: WebSocketClosingContext) => void
@@ -157,7 +157,7 @@ export function createTrackedConnection({
         phase: 'open',
         openClocks,
         // a copy, as `getState`'s deep clone drops an object it has already seen in the state
-        pulseClocks: { ...openClocks },
+        reportClocks: { ...openClocks },
         // These are reported as empty strings when none were specified
         selectedProtocol: context.protocol || undefined,
         selectedExtensions: context.extensions || undefined,
@@ -166,11 +166,11 @@ export function createTrackedConnection({
       }
     },
 
-    recordPulse: (pulseClocks) => {
+    recordReport: (reportClocks) => {
       if (state.phase !== 'open') {
         return
       }
-      state = { ...state, pulseClocks, snapshotVersion: nextSnapshotVersion() }
+      state = { ...state, reportClocks, snapshotVersion: nextSnapshotVersion() }
     },
 
     recordInboundMessage: ({ size, at }) => {
