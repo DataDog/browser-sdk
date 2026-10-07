@@ -64,7 +64,7 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
   })
 
   // A page transition may be the last chance to report before the page is frozen or goes away, so
-  // open connections pulse without waiting for the periodic report.
+  // open connections are reported without waiting for the next periodic report.
   const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
     tracker.reportOpenConnections()
   })
@@ -95,8 +95,8 @@ export function trackWebSocket(
 
   /**
    * Reports one phase of one connection. The connection already holds the phase clocks and snapshot
-   * version the vital needs; open pulses must be written with `recordPulse` first so the vital is
-   * dated at the pulse.
+   * version the vital needs; open reports must be written with `recordReport` first so the vital is
+   * dated at the report.
    *
    * Emitted straight onto the life cycle rather than through vitalCollection: a WebSocket vital is
    * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject —
@@ -112,19 +112,19 @@ export function trackWebSocket(
   }
 
   /**
-   * One pulse: every connection in phase `open` reports where it is, at one date and each with the
-   * next version of its own snapshot. A connection in any other phase does not emit a pulse — the
+   * One report: every connection in phase `open` reports where it is, at one date and each with the
+   * next version of its own snapshot. A connection in any other phase does not emit a report — the
    * closing phase deliberately included, so that a hung close falls silent instead of looking alive.
    */
   function reportOpenConnections() {
-    const pulseClocks = clocksNow()
+    const reportClocks = clocksNow()
 
     trackedConnections.forEach((connection, instance) => {
       if (!connection.isOpen()) {
         return
       }
 
-      connection.recordPulse(pulseClocks)
+      connection.recordReport(reportClocks)
       emitVital(instance, connection)
     })
   }
@@ -175,7 +175,7 @@ export function trackWebSocket(
           return
         }
 
-        // recordOpen sets pulseClocks to the open date and bumps the first snapshot version; the
+        // recordOpen sets reportClocks to the open date and bumps the first snapshot version; the
         // later periodic reports are the ones where the two dates part
         connection.recordOpen(context)
 

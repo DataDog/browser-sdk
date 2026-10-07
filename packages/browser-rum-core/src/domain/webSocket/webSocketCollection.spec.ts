@@ -230,7 +230,7 @@ describe('webSocketCollection', () => {
   })
 
   // One flat cadence in every page state, so that a connection held open for an hour is visible
-  // while it is open, and one that dies without closing still reports the traffic its last pulse
+  // while it is open, and one that dies without closing still reports the traffic its last report
   // carried.
   describe('the periodic report of open connections', () => {
     /**
@@ -303,7 +303,7 @@ describe('webSocketCollection', () => {
       expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 1, 2])
     })
 
-    it('emits a pulse for an open connection once per interval, each pulse carrying the next snapshot version', () => {
+    it('emits a report for an open connection once per interval, each report carrying the next snapshot version', () => {
       startTracking()
       openConnection()
 
@@ -312,7 +312,7 @@ describe('webSocketCollection', () => {
       expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3, 4])
     })
 
-    it('dates every pulse at the emit, while still reporting the date the handshake completed', () => {
+    it('dates every report at the emit, while still reporting the date the handshake completed', () => {
       startTracking()
       openConnection()
 
@@ -330,7 +330,7 @@ describe('webSocketCollection', () => {
       ])
     })
 
-    it('reports on each pulse everything exchanged since the connection opened', () => {
+    it('carries on each report everything exchanged since the connection opened', () => {
       startTracking()
       const socket = openConnection()
 
@@ -344,7 +344,7 @@ describe('webSocketCollection', () => {
       )
     })
 
-    it('emits a pulse for every open connection on the same tick', () => {
+    it('emits a report for every open connection on the same tick', () => {
       startTracking()
       openConnection()
       openConnection()
@@ -355,7 +355,7 @@ describe('webSocketCollection', () => {
       expect(openPayloads().map((payload) => payload.id)).toEqual([idA, idB, idA, idB])
     })
 
-    it('does not emit a pulse for a connection whose handshake has not completed', () => {
+    it('does not emit a report for a connection whose handshake has not completed', () => {
       startTracking()
       connect()
 
@@ -364,7 +364,7 @@ describe('webSocketCollection', () => {
       expect(openPayloads()).toHaveSize(0)
     })
 
-    it('stops emitting pulses for a connection once close() started the closing handshake', () => {
+    it('stops emitting reports for a connection once close() started the closing handshake', () => {
       startTracking()
       const socket = openConnection()
       tickPeriodicReport()
@@ -375,7 +375,7 @@ describe('webSocketCollection', () => {
       expect(openPayloads()).toHaveSize(2)
     })
 
-    it('stops emitting pulses once the last open connection closed', () => {
+    it('stops emitting reports once the last open connection closed', () => {
       startTracking()
       const socket = openConnection()
 
@@ -385,7 +385,7 @@ describe('webSocketCollection', () => {
       expect(openPayloads()).toHaveSize(1)
     })
 
-    it('keeps emitting pulses for the connections still open when one of them closes', () => {
+    it('keeps emitting reports for the connections still open when one of them closes', () => {
       startTracking()
       const socketA = openConnection()
       openConnection()
@@ -398,7 +398,7 @@ describe('webSocketCollection', () => {
       expect(openPayloads()).toHaveSize(3)
     })
 
-    it('stops emitting pulses for the connections a flush finalized', () => {
+    it('stops emitting reports for the connections a flush finalized', () => {
       const tracker = startTracking()
       openConnection()
 
@@ -408,7 +408,7 @@ describe('webSocketCollection', () => {
       expect(openPayloads()).toHaveSize(1)
     })
 
-    it('stops emitting pulses after stop()', () => {
+    it('stops emitting reports after stop()', () => {
       const tracker = startTracking()
       openConnection()
 
@@ -420,7 +420,7 @@ describe('webSocketCollection', () => {
 
     // Expected rather than guarded against: one shared timer serves every connection, and both
     // snapshot versions are correct and ordered.
-    it('emits two pulses for a connection that opened just before a tick, with ordered versions', () => {
+    it('emits two reports for a connection that opened just before a tick, with ordered versions', () => {
       startTracking()
       openConnection()
       openConnection({ at: WEBSOCKET_PERIODIC_REPORT_INTERVAL - 1 })
@@ -713,9 +713,9 @@ describe('webSocketCollection', () => {
     // Unlike view tracking, which filters to the unloading reason: a view survives a background
     // transition, a connection may not, and hidden is the only signal mobile browsers guarantee at
     // that point.
-    describe('the background-transition pulse', () => {
+    describe('the background-transition report', () => {
       ;[PageExitReason.HIDDEN, PageExitReason.FROZEN, PageExitReason.UNLOADING].forEach((reason) => {
-        it(`emits a pulse for every open connection on a "${reason}" transition`, () => {
+        it(`emits a report for every open connection on a "${reason}" transition`, () => {
           startCollection()
           openConnection()
           openConnection()
@@ -728,7 +728,7 @@ describe('webSocketCollection', () => {
         })
       })
 
-      it('does not emit a pulse for a connection that is not open', () => {
+      it('does not emit a report for a connection that is not open', () => {
         startCollection()
         connect()
 
@@ -737,7 +737,7 @@ describe('webSocketCollection', () => {
         expect(openPayloads()).toHaveSize(0)
       })
 
-      it('stops emitting pulses after stop()', () => {
+      it('stops emitting reports after stop()', () => {
         const collection = startCollection()
         openConnection()
 
