@@ -2,6 +2,7 @@ import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-c
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement, mockRumConfiguration } from '../../test'
 import { getComposedPathSelector, CHARACTER_LIMIT, ATTRIBUTE_VALUE_LIMIT } from './getComposedPathSelector'
+import type { BrowserWindow } from './privacy'
 import { NodePrivacyLevel } from './privacyConstants'
 
 const configuration = mockRumConfiguration()
@@ -175,14 +176,45 @@ describe('getSelectorFromComposedPath', () => {
           expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
         })
 
+        it('does not collect generated data-* attributes', () => {
+          const element = appendElementInIsolation('<div data-v-7ba5bd90 data-area="cart"></div>')
+
+          expect(getComposedPathSelector([element], configuration)).toBe('DIV[data-area="cart"];')
+        })
+
+        it('collects stable attributes like the other safe attributes', () => {
+          const value = 'a'.repeat(ATTRIBUTE_VALUE_LIMIT + 50)
+          const element = appendElementInIsolation(`<div data-dd-privacy="hidden" data-testid="${value}"></div>`)
+
+          // Not dropped from hidden elements, and not truncated
+          expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-testid="${value}"];`)
+        })
+
+        it('escapes attribute names', () => {
+          const element = appendElementInIsolation('<div data-a;b="x" data-on:click="y"></div>')
+
+          expect(getComposedPathSelector([element], configuration)).toBe('DIV[data-a\\;b="x"][data-on\\:click="y"];')
+        })
+
         it('masks values under the mask privacy level', () => {
           const element = appendElementInIsolation(
-            '<a href="/orders/42" aria-label="Jane" data-email="jane@example.com" data-testid="btn"></a>'
+            '<a href="/orders/42" aria-label="Jane" name="n" title="t" alt="a" data-email="jane@example.com" data-testid="btn"></a>'
           )
 
           expect(getComposedPathSelector([element], maskConfiguration)).toBe(
-            `A[aria-label="${CSS.escape('***')}"][data-email="${CSS.escape('***')}"][data-testid="btn"][href="${CSS.escape('***')}"];`
+            `A[alt="${CSS.escape('***')}"][aria-label="${CSS.escape('***')}"][data-email="${CSS.escape('***')}"][data-testid="btn"][href="${CSS.escape('***')}"][name="${CSS.escape('***')}"][title="${CSS.escape('***')}"];`
           )
+        })
+
+        it('masks values whatever the value of enablePrivacyForActionName', () => {
+          const element = appendElementInIsolation('<div title="Jane"></div>')
+
+          expect(
+            getComposedPathSelector(
+              [element],
+              mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, enablePrivacyForActionName: false })
+            )
+          ).toBe(`DIV[title="${CSS.escape('***')}"];`)
         })
 
         it('masks values when the element privacy level is mask', () => {
@@ -191,10 +223,20 @@ describe('getSelectorFromComposedPath', () => {
           expect(getComposedPathSelector([element], configuration)).toBe(`DIV[title="${CSS.escape('***')}"];`)
         })
 
-        it('does not mask allowlisted values under the mask-unless-allowlisted privacy level', () => {
-          ;(window as any).$DD_ALLOW = new Set(['checkout'])
+        it('masks allowlisted values under the mask privacy level', () => {
+          ;(window as BrowserWindow).$DD_ALLOW = new Set(['checkout'])
           registerCleanupTask(() => {
-            delete (window as any).$DD_ALLOW
+            delete (window as BrowserWindow).$DD_ALLOW
+          })
+          const element = appendElementInIsolation('<div title="Checkout"></div>')
+
+          expect(getComposedPathSelector([element], maskConfiguration)).toBe(`DIV[title="${CSS.escape('***')}"];`)
+        })
+
+        it('does not mask allowlisted values under the mask-unless-allowlisted privacy level', () => {
+          ;(window as BrowserWindow).$DD_ALLOW = new Set(['checkout'])
+          registerCleanupTask(() => {
+            delete (window as BrowserWindow).$DD_ALLOW
           })
           const element = appendElementInIsolation('<div title="Checkout" aria-label="Jane"></div>')
 
@@ -215,6 +257,20 @@ describe('getSelectorFromComposedPath', () => {
               mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, actionNameAttribute: 'title' })
             )
           ).toBe(`DIV[title="${CSS.escape('***')}"];`)
+        })
+
+        it('masks the action name attribute when its name contains digits', () => {
+          const element = appendElementInIsolation('<div data-ga4-label="Jane"></div>')
+
+          expect(
+            getComposedPathSelector(
+              [element],
+              mockRumConfiguration({
+                defaultPrivacyLevel: NodePrivacyLevel.MASK,
+                actionNameAttribute: 'data-ga4-label',
+              })
+            )
+          ).toBe(`DIV[data-ga4-label="${CSS.escape('***')}"];`)
         })
 
         it('does not collect maskable attributes from hidden elements', () => {
@@ -339,17 +395,14 @@ describe('getSelectorFromComposedPath', () => {
       })
 
       it('does not split an attribute when truncating', () => {
-        const attribute = `[data-testid="${'a'.repeat(100)}"]`
+        const value = 'a'.repeat(100)
         const composedPath = Array.from({ length: 30 }, () =>
-          appendElementInIsolation(`<div data-testid="${'a'.repeat(100)}"></div>`)
+          appendElementInIsolation(`<div data-testid="${value}"></div>`)
         )
         const result = getComposedPathSelector(composedPath, configuration)
 
-        expect(result.length).toBeLessThanOrEqual(CHARACTER_LIMIT)
-        const segments = result.split(';')
-        const lastSegment = segments[segments.length - 1]
-        expect(['', 'DIV', `DIV${attribute}`]).toContain(lastSegment)
-        expect(segments.slice(0, -1).every((segment) => segment === `DIV${attribute}`)).toBeTrue()
+        // 17 elements of 120 characters use 2040 characters: only the tag name of the 18th fits
+        expect(result).toBe(`${`DIV[data-testid="${value}"];`.repeat(17)}DIV`)
       })
 
       it('stops before a token that does not fit', () => {
