@@ -4,6 +4,7 @@ import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
   noop,
+  PageExitReason,
   setInterval,
 } from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
@@ -63,10 +64,13 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
     tracker.flushOpenConnections(endClocks)
   })
 
-  // A page transition may be the last chance to report before the page is frozen or goes away, so
-  // open connections are reported without waiting for the next periodic report.
-  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
-    tracker.reportOpenConnections()
+  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
+    if (reason === PageExitReason.PAGE_DISCARDED) {
+      // Page is going away.
+      tracker.flushOpenConnections(clocksNow(), WebSocketTrackingEndReason.PAGE_UNLOADED)
+    } else {
+      tracker.reportOpenConnections()
+    }
   })
 
   return {
