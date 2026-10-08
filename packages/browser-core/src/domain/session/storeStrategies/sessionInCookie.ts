@@ -54,7 +54,7 @@ export function initCookieStrategy(
 ): SessionStoreStrategy {
   const { cookieOptions, cookieApi } = sessionStoreStrategyType
   const cookieAccess = mockable(createCookieAccess)(cookieApi, cookieOptions)
-  return createCookieSessionStore(cookieAccess, cookieOptions, configuration)
+  return createCookieSessionStore(cookieAccess, cookieOptions, configuration, { readLegacyCookie: true })
 }
 
 /**
@@ -63,7 +63,8 @@ export function initCookieStrategy(
 export function createCookieSessionStore(
   cookieAccess: CookieAccess,
   cookieOptions: CookieOptions,
-  configuration: Configuration
+  configuration: Configuration,
+  { readLegacyCookie }: { readLegacyCookie: boolean }
 ): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
@@ -83,7 +84,7 @@ export function createCookieSessionStore(
     return cookieAccess.getAllAndSet((cookieValues) => {
       let currentState = findMatchingSessionState(cookieValues, opts)
 
-      if (isFirstCall && isEmptyObject(currentState)) {
+      if (readLegacyCookie && isFirstCall && isEmptyObject(currentState)) {
         currentState = findMatchingSessionState(getCookies(LEGACY_SESSION_STORE_KEY), opts)
       }
       isFirstCall = false

@@ -27,5 +27,6 @@ export function initCustomCookieStrategy(
   configuration: Configuration
 ): SessionStoreStrategy {
   const cookieAccess = createCustomCookieAccess(cookieStore, SESSION_STORE_KEY, cookieOptions)
-  return createCookieSessionStore(cookieAccess, cookieOptions, configuration)
+  // The legacy cookie is read through `document.cookie`, which may not be available where a custom store is used
+  return createCookieSessionStore(cookieAccess, cookieOptions, configuration, { readLegacyCookie: false })
 }
