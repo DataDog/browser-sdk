@@ -1642,13 +1642,19 @@ describe('api', () => {
   })
 
   describe('RUM actions', () => {
+    let addActionSpy: jasmine.Spy
     let startActionSpy: jasmine.Spy
     let stopActionSpy: jasmine.Spy
 
+    function installRum() {
+      ;(window as any).DD_RUM = { addAction: addActionSpy, startAction: startActionSpy, stopAction: stopActionSpy }
+    }
+
     beforeEach(() => {
+      addActionSpy = jasmine.createSpy('addAction')
       startActionSpy = jasmine.createSpy('startAction')
       stopActionSpy = jasmine.createSpy('stopAction')
-      ;(window as any).DD_RUM = { startAction: startActionSpy, stopAction: stopActionSpy }
+      installRum()
 
       registerCleanupTask(() => {
         delete (window as any).DD_RUM
@@ -1691,6 +1697,7 @@ describe('api', () => {
         actionKey,
         context: { debugger: { outcome: 'return', error: undefined } },
       })
+      expect(addActionSpy).not.toHaveBeenCalled()
     })
 
     it('should link the action to the snapshot sent for the same hit', () => {
@@ -1763,7 +1770,7 @@ describe('api', () => {
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       // RUM is loaded, but the hit is sampled out
-      ;(window as any).DD_RUM = { startAction: startActionSpy, stopAction: stopActionSpy }
+      installRum()
       callProbedFunction()
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       expect(startActionSpy).not.toHaveBeenCalled()
@@ -1771,15 +1778,6 @@ describe('api', () => {
       clock.tick(1000)
       callProbedFunction()
       expect(startActionSpy).toHaveBeenCalledTimes(1)
-    })
-
-    it('should not start an action for EXIT probes', () => {
-      addProbe(createEntryProbe({ evaluateAt: 'EXIT' }))
-
-      callProbedFunction()
-
-      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      expect(startActionSpy).not.toHaveBeenCalled()
     })
 
     it('should not start an action when the condition fails to evaluate', () => {
@@ -1879,6 +1877,126 @@ describe('api', () => {
 
       expect(() => callProbedFunction()).not.toThrow()
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    describe('for EXIT probes', () => {
+      function createExitProbe(overrides: Partial<Probe> = {}) {
+        return createProbe({ evaluateAt: 'EXIT', sampling: { snapshotsPerSecond: Infinity }, ...overrides })
+      }
+
+      it('should add a point-in-time action on return instead of starting one on entry', () => {
+        addProbe(createExitProbe({ id: 'probe-1', version: 2 }))
+
+        const invocation = onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg)!
+        expect(addActionSpy).not.toHaveBeenCalled()
+
+        onReturn(invocation, null, thisArg)
+
+        expect(addActionSpy).toHaveBeenCalledOnceWith('probe: testMethod (test.js)', {
+          debugger: {
+            probe: { id: 'probe-1', version: 2, location: { method: 'testMethod', type: 'test.js' } },
+            snapshot: { id: jasmine.any(String) },
+            outcome: 'return',
+            error: undefined,
+          },
+        })
+        expect(startActionSpy).not.toHaveBeenCalled()
+        expect(stopActionSpy).not.toHaveBeenCalled()
+      })
+
+      it('should link the action to the snapshot sent for the same hit', () => {
+        addProbe(createExitProbe())
+
+        callProbedFunction()
+
+        const snapshotId = mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.id
+        expect(addActionSpy.calls.argsFor(0)[1].debugger.snapshot.id).toBe(snapshotId)
+      })
+
+      it('should add the action with the error type when the function throws', () => {
+        addProbe(createExitProbe())
+
+        onThrow(onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg)!, new TypeError('secret message'), thisArg)
+
+        const context = addActionSpy.calls.argsFor(0)[1]
+        expect(context.debugger.outcome).toBe('throw')
+        expect(context.debugger.error).toEqual({ type: 'TypeError' })
+        expect(context.debugger.snapshot.id).toBe(mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.id)
+      })
+
+      it('should only add an action on the first hit of a probe', () => {
+        addProbe(createExitProbe())
+
+        callProbedFunction()
+        callProbedFunction()
+
+        expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+        expect(addActionSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should not add an action when the condition is false, and wait for a hit where it is true', () => {
+        addProbe(
+          createExitProbe({
+            when: {
+              dsl: 'x > 5',
+              json: { gt: [{ ref: 'x' }, 5] },
+            },
+          })
+        )
+
+        callProbedFunction({ x: 1 })
+        expect(addActionSpy).not.toHaveBeenCalled()
+
+        callProbedFunction({ x: 10 })
+        expect(addActionSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should not add an action when the condition fails to evaluate', () => {
+        addProbe(
+          createExitProbe({
+            when: {
+              dsl: 'missing.value',
+              json: { getmember: [{ ref: 'missing' }, 'value'] },
+            },
+          })
+        )
+
+        callProbedFunction()
+
+        expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+        expect(addActionSpy).not.toHaveBeenCalled()
+      })
+
+      it('should keep the probe armed until RUM is loaded', () => {
+        addProbe(createExitProbe())
+        delete (window as any).DD_RUM
+
+        callProbedFunction()
+
+        installRum()
+        callProbedFunction()
+
+        expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+        expect(addActionSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should not add an action when trackProbeHitsAsRumActions is false', () => {
+        initTransport({ trackProbeHitsAsRumActions: false })
+        addProbe(createExitProbe())
+
+        callProbedFunction()
+
+        expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+        expect(addActionSpy).not.toHaveBeenCalled()
+      })
+
+      it('should still send the snapshot when the RUM API throws', () => {
+        addActionSpy.and.throwError('add failed')
+        addProbe(createExitProbe())
+
+        expect(() => callProbedFunction()).not.toThrow()
+        expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      })
     })
   })
 

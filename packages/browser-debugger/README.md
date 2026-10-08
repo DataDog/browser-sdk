@@ -32,7 +32,7 @@ If provided, `version` should be set to the immutable deployed browser build ide
 
 ## RUM actions
 
-When the [RUM Browser SDK][4] is loaded on the page, the first hit of each probe starts a RUM custom action named `probe: <function> (<file>)`. The action lasts until the instrumented function returns or throws, and its context includes the probe, the ID of the snapshot sent for that hit, and the outcome (`return` or `throw`, with the error type). Only hits that pass sampling and the probe condition count, and only probes evaluated at function entry are tracked. To disable this, set `trackProbeHitsAsRumActions: false` in `init()`.
+When the [RUM Browser SDK][4] is loaded on the page, the first hit of each probe creates a RUM custom action named `probe: <function> (<file>)`. For probes evaluated at function entry, the action lasts until the instrumented function returns or throws. For probes evaluated at function exit, the action is a point in time at the function exit. The action's context includes the probe, the ID of the snapshot sent for that hit, and the outcome (`return` or `throw`, with the error type). Only hits that pass sampling and the probe condition count. To disable this, set `trackProbeHitsAsRumActions: false` in `init()`.
 
 ## Troubleshooting
 
