@@ -1,5 +1,6 @@
 import { ONE_MINUTE, ONE_SECOND, dateNow } from '@datadog/js-core/time'
 import { globalObject, mockable } from '@datadog/js-core/util'
+import { monitorError } from '@datadog/js-core/monitor'
 import { setInterval, clearInterval } from '../tools/timer'
 import { Observable } from '../tools/observable'
 import { display } from '../tools/display'
@@ -184,10 +185,27 @@ export function createCustomCookieAccess(
   cookieName: string,
   cookieOptions: CookieOptions
 ): CookieAccess {
+  let previousValues: string[] | undefined
+
   async function getAll() {
     const value = await cookieStore.get(cookieName)
     return value ? [value] : []
   }
+
+  function notifyIfChanged(values: string[]) {
+    if (previousValues !== undefined && String(values) !== String(previousValues)) {
+      observable.notify()
+    }
+    previousValues = values
+  }
+
+  // Custom stores have no change event: poll them, like the `document.cookie` access does
+  const observable = new Observable<void>(() => {
+    const intervalId = setInterval(() => {
+      getAll().then(notifyIfChanged).catch(monitorError)
+    }, WATCH_COOKIE_INTERVAL_DELAY)
+    return () => clearInterval(intervalId)
+  })
 
   return {
     getAll,
@@ -195,13 +213,14 @@ export function createCustomCookieAccess(
     async getAllAndSet(cb) {
       const { value, expireDelay } = cb(await getAll())
       await cookieStore.set(buildCookieString(cookieName, value, expireDelay, cookieOptions))
+      notifyIfChanged([value])
     },
 
     async delete() {
       await cookieStore.set(buildCookieString(cookieName, '', 0, cookieOptions))
+      notifyIfChanged([])
     },
 
-    // no change notifications, custom stores have no change event.
-    observable: new Observable<void>(),
+    observable,
   }
 }
