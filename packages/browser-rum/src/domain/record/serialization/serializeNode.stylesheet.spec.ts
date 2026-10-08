@@ -263,4 +263,55 @@ describe('serializeNode for stylesheets', () => {
       ])
     })
   })
+
+  describe('for shadow roots with adopted stylesheets', () => {
+    it('serializes a stylesheet shared by several shadow roots only once', async () => {
+      if (!isAdoptedStyleSheetsSupported()) {
+        pending('No adoptedStyleSheets support.')
+      }
+
+      const record = await serializeHtml(
+        `
+        <div>
+          <span class="a"></span>
+          <span class="a"></span>
+          <span class="b"></span>
+        </div>
+        `,
+        {
+          before(target: Node): void {
+            const window = target.ownerDocument!.defaultView!
+            const sheetA = new window.CSSStyleSheet()
+            sheetA.insertRule(css)
+            const sheetB = new window.CSSStyleSheet()
+            sheetB.insertRule(dynamicCss)
+            ;(target as HTMLElement).querySelectorAll('span').forEach((host) => {
+              host.attachShadow({ mode: 'open' }).adoptedStyleSheets = [host.className === 'a' ? sheetA : sheetB]
+            })
+          },
+          after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
+            expect(stats).toEqual({
+              cssText: { count: 2, max: 21, sum: 41 },
+              serializationDuration: jasmine.anything(),
+            })
+          },
+        }
+      )
+      expect(record?.data).toEqual([
+        [
+          ChangeType.AddNode,
+          [null, 'DIV'],
+          [1, 'SPAN', ['class', 'a']],
+          [1, '#shadow-root'],
+          [3, 'SPAN', ['class', 'a']],
+          [1, '#shadow-root'],
+          [5, 'SPAN', ['class', 'b']],
+          [1, '#shadow-root'],
+        ],
+        [ChangeType.AddStyleSheet, [[css]], [[dynamicCss]]],
+        // Shadow roots 2 and 4 share stylesheet 0; shadow root 6 uses stylesheet 1.
+        [ChangeType.AttachedStyleSheets, [2, 0], [4, 0], [6, 1]],
+      ])
+    })
+  })
 })

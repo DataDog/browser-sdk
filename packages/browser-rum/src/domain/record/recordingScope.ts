@@ -20,6 +20,12 @@ export interface RecordingScope {
   elementsScrollPositions: ElementsScrollPositions
   eventIds: EventIds
   nodeIds: NodeIds
+  /**
+   * The `adoptedStyleSheets` of each serialized #document or #shadow-root node, as of
+   * the last time they were serialized. Used to detect changes to `adoptedStyleSheets`
+   * after a node has been serialized.
+   */
+  serializedAdoptedStyleSheets: Map<Document | ShadowRoot, CSSStyleSheet[]>
   shadowRootsController: ShadowRootsController
   stringIds: StringIds
   styleSheetIds: StyleSheetIds
@@ -40,6 +46,7 @@ export function createRecordingScope(
     resetIds(): void {
       scope.eventIds.clear()
       scope.nodeIds.clear()
+      scope.serializedAdoptedStyleSheets.clear()
       scope.stringIds.clear()
       scope.styleSheetIds.clear()
       scope.canvasManager.reset()
@@ -50,6 +57,7 @@ export function createRecordingScope(
     elementsScrollPositions,
     eventIds,
     nodeIds,
+    serializedAdoptedStyleSheets: new Map(),
     shadowRootsController,
     stringIds,
     styleSheetIds,

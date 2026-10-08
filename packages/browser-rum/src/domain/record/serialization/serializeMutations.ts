@@ -19,6 +19,7 @@ import { CanvasStatus } from '../canvas/canvasManager'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind, serializeInTransaction } from './serializationTransaction'
 import { serializeNode } from './serializeNode'
+import { serializeAdoptedStyleSheetsChanges } from './serializeStyleSheets'
 import { createChildInsertionCursor } from './insertionCursor'
 import { getElementInputValue, normalizedTagName } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
@@ -109,6 +110,7 @@ function processMutations(
   processCharacterDataMutations(characterDataMutations, firstNewNodeId, nodePrivacyLevelCache, transaction)
   processAttributeMutations(attributeMutations, firstNewNodeId, nodePrivacyLevelCache, transaction)
   processCanvasContentMutations(nodePrivacyLevelCache, emitResource, transaction)
+  serializeAdoptedStyleSheetsChanges(transaction)
 }
 
 function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransaction): void {
@@ -127,6 +129,7 @@ function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransac
 
       if (isNodeShadowHost(node)) {
         transaction.scope.shadowRootsController.removeShadowRoot(node.shadowRoot)
+        transaction.scope.serializedAdoptedStyleSheets.delete(node.shadowRoot)
       }
 
       // Forget this node's identity. If it's added to the DOM again in another mutation,

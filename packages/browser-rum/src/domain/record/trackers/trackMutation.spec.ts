@@ -1,5 +1,5 @@
 import { DefaultPrivacyLevel, noop } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
@@ -805,5 +805,151 @@ describe('trackMutation', () => {
         })
       })
     }
+  })
+
+  describe('adoptedStyleSheets changes', () => {
+    const css = 'div { color: green; }'
+    const otherCss = 'span { color: red; }'
+
+    let shadowRoot: ShadowRoot
+    let sheet: CSSStyleSheet
+    let otherSheet: CSSStyleSheet
+
+    beforeEach(() => {
+      if (!isAdoptedStyleSheetsSupported()) {
+        pending('No adoptedStyleSheets support.')
+      }
+    })
+
+    // Serializes `<div><span id="host"></span></div>`, where the host's shadow root has
+    // the given initial adopted stylesheets. Node ids: DIV=0, SPAN=1, #shadow-root=2.
+    function recordAdoptedStyleSheetsMutationOf(
+      initialSheets: (sheets: { sheet: CSSStyleSheet; otherSheet: CSSStyleSheet }) => CSSStyleSheet[],
+      mutation: (sandbox: HTMLElement) => void,
+      options: { scope?: RecordingScope } = {}
+    ) {
+      return recordMutationOf('<div><span id="host"></span></div>', mutation, {
+        ...options,
+        beforeFullSnapshot(sandbox: HTMLElement): void {
+          const window = sandbox.ownerDocument.defaultView!
+          sheet = new window.CSSStyleSheet()
+          sheet.insertRule(css)
+          otherSheet = new window.CSSStyleSheet()
+          otherSheet.insertRule(otherCss)
+          shadowRoot = sandbox.querySelector('#host')!.attachShadow({ mode: 'open' })
+          shadowRoot.adoptedStyleSheets = initialSheets({ sheet, otherSheet })
+        },
+      })
+    }
+
+    it('emits a mutation when a stylesheet is adopted after the shadow root was serialized', async () => {
+      const { fullSnapshot, mutation } = await recordAdoptedStyleSheetsMutationOf(
+        () => [],
+        () => {
+          shadowRoot.adoptedStyleSheets = [sheet]
+        }
+      )
+      expect(fullSnapshot.data).toEqual([
+        [ChangeType.AddNode, [null, 'DIV'], [1, 'SPAN', ['id', 'host']], [1, '#shadow-root']],
+      ])
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddStyleSheet, [[css]]],
+        [ChangeType.AttachedStyleSheets, [2, 0]],
+      ])
+    })
+
+    it('emits a mutation when a stylesheet is pushed to adoptedStyleSheets in place', async () => {
+      const { mutation } = await recordAdoptedStyleSheetsMutationOf(
+        () => [],
+        () => {
+          shadowRoot.adoptedStyleSheets.push(sheet)
+        }
+      )
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddStyleSheet, [[css]]],
+        [ChangeType.AttachedStyleSheets, [2, 0]],
+      ])
+    })
+
+    it('reuses the id of already serialized stylesheets', async () => {
+      const { fullSnapshot, mutation } = await recordAdoptedStyleSheetsMutationOf(
+        ({ sheet }) => [sheet],
+        () => {
+          shadowRoot.adoptedStyleSheets = [otherSheet, sheet]
+        }
+      )
+      expect(fullSnapshot.data).toEqual([
+        [ChangeType.AddNode, [null, 'DIV'], [1, 'SPAN', ['id', 'host']], [1, '#shadow-root']],
+        [ChangeType.AddStyleSheet, [[css]]],
+        [ChangeType.AttachedStyleSheets, [2, 0]],
+      ])
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddStyleSheet, [[otherCss]]],
+        [ChangeType.AttachedStyleSheets, [2, 1, 0]],
+      ])
+    })
+
+    it('emits a mutation when all adopted stylesheets are removed', async () => {
+      const { mutation } = await recordAdoptedStyleSheetsMutationOf(
+        ({ sheet }) => [sheet],
+        () => {
+          shadowRoot.adoptedStyleSheets = []
+        }
+      )
+      expect(mutation?.data).toEqual([[ChangeType.AttachedStyleSheets, [2]]])
+    })
+
+    it('does not emit a mutation when adoptedStyleSheets is reassigned with the same stylesheets', async () => {
+      const { mutation } = await recordAdoptedStyleSheetsMutationOf(
+        ({ sheet, otherSheet }) => [sheet, otherSheet],
+        () => {
+          shadowRoot.adoptedStyleSheets = [sheet, otherSheet]
+        }
+      )
+      expect(mutation).toBeUndefined()
+    })
+
+    it('does not emit a mutation for the shadow root of a removed host', async () => {
+      const scope = createRecordingScopeForTesting()
+      const { mutation } = await recordAdoptedStyleSheetsMutationOf(
+        () => [],
+        (sandbox: HTMLElement) => {
+          sandbox.querySelector('#host')!.remove()
+          shadowRoot.adoptedStyleSheets = [sheet]
+        },
+        { scope }
+      )
+      expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
+      expect(scope.serializedAdoptedStyleSheets.has(shadowRoot)).toBeFalse()
+    })
+
+    it('emits a single mutation for a shadow root serialized in the same batch', async () => {
+      const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
+        const document = sandbox.ownerDocument
+        const lateSheet = new document.defaultView!.CSSStyleSheet()
+        lateSheet.insertRule(css)
+        const host = document.createElement('span')
+        sandbox.appendChild(host)
+        host.attachShadow({ mode: 'open' }).adoptedStyleSheets = [lateSheet]
+      })
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddNode, [1, 'SPAN'], [1, '#shadow-root']],
+        [ChangeType.AddStyleSheet, [[css]]],
+        [ChangeType.AttachedStyleSheets, [2, 0]],
+      ])
+    })
+
+    it('forgets serialized adopted stylesheets when ids are reset', async () => {
+      const scope = createRecordingScopeForTesting()
+      await recordAdoptedStyleSheetsMutationOf(
+        ({ sheet }) => [sheet],
+        () => {
+          expect(scope.serializedAdoptedStyleSheets.get(shadowRoot)).toEqual([sheet])
+          scope.resetIds()
+          expect(scope.serializedAdoptedStyleSheets.size).toBe(0)
+        },
+        { scope }
+      )
+    })
   })
 })
