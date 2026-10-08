@@ -2,9 +2,9 @@ import { safeTruncate, isExperimentalFeatureEnabled, ExperimentalFeature } from 
 import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
-import { getNodePrivacyLevel, maskDisallowedTextContent, shouldMaskAttribute } from './privacy'
+import { getNodePrivacyLevel, isAllowlisted, shouldMaskAttribute } from './privacy'
 import type { NodePrivacyLevelCache } from './privacy'
-import { CENSORED_STRING_MARK, NodePrivacyLevel, PRIVACY_ATTR_NAME } from './privacyConstants'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from './privacyConstants'
 import {
   STABLE_ATTRIBUTES,
   isGeneratedValue,
@@ -41,7 +41,7 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
 ])
 
 /**
- * Attributes that can contain PII, collected masked behind an experimental flag (like `data-*`)
+ * Attributes that can contain PII, collected behind an experimental flag (like `data-*`) when not masked
  */
 const MASKABLE_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt']
 
@@ -84,7 +84,7 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
     ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES
   )
     ? {
-        // Do not exempt the action name attribute from masking
+        // Do not exempt the action name attribute from privacy
         configuration: { ...configuration, actionNameAttribute: undefined },
         // Shared across the path
         nodePrivacyLevelCache: new Map(),
@@ -150,7 +150,7 @@ function computePositionDataString(element: Element): string {
 }
 
 /**
- * Extracts the safe attributes, and the masked attributes when masking is enabled, sorted
+ * Extracts the safe attributes, and the unmasked maskable attributes when enabled, sorted
  */
 function extractAttributes(
   element: Element,
@@ -169,13 +169,13 @@ function extractAttributes(
       if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN || nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
         continue
       }
-      let value = attribute.value
-      if (shouldMaskAttribute(element.tagName, name, value, nodePrivacyLevel, masking.configuration)) {
-        // Only mask-unless-allowlisted uses the allowlist
-        value =
-          nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
-            ? maskDisallowedTextContent(value, CENSORED_STRING_MARK)
-            : CENSORED_STRING_MARK
+      const value = attribute.value
+      // Drop masked values: `***` is not useful and uses the character budget
+      if (
+        shouldMaskAttribute(element.tagName, name, value, nodePrivacyLevel, masking.configuration) &&
+        !(nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED && isAllowlisted(value))
+      ) {
+        continue
       }
       // `data-*` names can contain separators
       result.push(getAttributeValueSelector(CSS.escape(name), safeTruncate(value, ATTRIBUTE_VALUE_LIMIT)))

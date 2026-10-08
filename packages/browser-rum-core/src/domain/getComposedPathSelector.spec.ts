@@ -196,17 +196,15 @@ describe('getSelectorFromComposedPath', () => {
           expect(getComposedPathSelector([element], configuration)).toBe('DIV[data-a\\;b="x"][data-on\\:click="y"];')
         })
 
-        it('masks values under the mask privacy level', () => {
+        it('drops masked values under the mask privacy level', () => {
           const element = appendElementInIsolation(
             '<a href="/orders/42" aria-label="Jane" name="n" title="t" alt="a" data-email="jane@example.com" data-testid="btn"></a>'
           )
 
-          expect(getComposedPathSelector([element], maskConfiguration)).toBe(
-            `A[alt="${CSS.escape('***')}"][aria-label="${CSS.escape('***')}"][data-email="${CSS.escape('***')}"][data-testid="btn"][href="${CSS.escape('***')}"][name="${CSS.escape('***')}"][title="${CSS.escape('***')}"];`
-          )
+          expect(getComposedPathSelector([element], maskConfiguration)).toBe('A[data-testid="btn"];')
         })
 
-        it('masks values whatever the value of enablePrivacyForActionName', () => {
+        it('drops masked values whatever the value of enablePrivacyForActionName', () => {
           const element = appendElementInIsolation('<div title="Jane"></div>')
 
           expect(
@@ -214,23 +212,23 @@ describe('getSelectorFromComposedPath', () => {
               [element],
               mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, enablePrivacyForActionName: false })
             )
-          ).toBe(`DIV[title="${CSS.escape('***')}"];`)
+          ).toBe('DIV;')
         })
 
-        it('masks values when the element privacy level is mask', () => {
+        it('drops masked values when the element privacy level is mask', () => {
           const element = appendElementInIsolation('<div data-dd-privacy="mask" title="Jane"></div>')
 
-          expect(getComposedPathSelector([element], configuration)).toBe(`DIV[title="${CSS.escape('***')}"];`)
+          expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
         })
 
-        it('masks allowlisted values under the mask privacy level', () => {
+        it('drops allowlisted values under the mask privacy level', () => {
           ;(window as BrowserWindow).$DD_ALLOW = new Set(['checkout'])
           registerCleanupTask(() => {
             delete (window as BrowserWindow).$DD_ALLOW
           })
           const element = appendElementInIsolation('<div title="Checkout"></div>')
 
-          expect(getComposedPathSelector([element], maskConfiguration)).toBe(`DIV[title="${CSS.escape('***')}"];`)
+          expect(getComposedPathSelector([element], maskConfiguration)).toBe('DIV;')
         })
 
         it('does not mask allowlisted values under the mask-unless-allowlisted privacy level', () => {
@@ -245,10 +243,10 @@ describe('getSelectorFromComposedPath', () => {
               [element],
               mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED })
             )
-          ).toBe(`DIV[aria-label="${CSS.escape('***')}"][title="Checkout"];`)
+          ).toBe('DIV[title="Checkout"];')
         })
 
-        it('masks the action name attribute when it is a maskable attribute', () => {
+        it('drops the masked action name attribute when it is a maskable attribute', () => {
           const element = appendElementInIsolation('<div title="Jane"></div>')
 
           expect(
@@ -256,10 +254,10 @@ describe('getSelectorFromComposedPath', () => {
               [element],
               mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, actionNameAttribute: 'title' })
             )
-          ).toBe(`DIV[title="${CSS.escape('***')}"];`)
+          ).toBe('DIV;')
         })
 
-        it('masks the action name attribute when its name contains digits', () => {
+        it('drops the masked action name attribute when its name contains digits', () => {
           const element = appendElementInIsolation('<div data-ga4-label="Jane"></div>')
 
           expect(
@@ -270,7 +268,7 @@ describe('getSelectorFromComposedPath', () => {
                 actionNameAttribute: 'data-ga4-label',
               })
             )
-          ).toBe(`DIV[data-ga4-label="${CSS.escape('***')}"];`)
+          ).toBe('DIV;')
         })
 
         it('does not collect maskable attributes from hidden elements', () => {
