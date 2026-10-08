@@ -83,13 +83,12 @@ export interface InitConfiguration {
    *
    * Note: 'memory' option is only for use with single-page applications. All page loads will start a new session, likely resulting in an increase in total number of RUM sessions
    *
-   * [Internal] A custom cookie store (`{ get, set }`) can be provided to persist the session cookie through a host API instead of `document.cookie`.
+   * [Internal] A custom cookie store can be provided to persist the session cookie through a host API instead of `document.cookie`.
    *
    * @category Session Persistence
    * @defaultValue "cookie"
    */
-  sessionPersistence?:
-    SessionPersistence | CustomCookieStore | Array<SessionPersistence | CustomCookieStore> | undefined
+  sessionPersistence?: SessionPersistence | SessionPersistence[] | CustomCookieStore | undefined
 
   /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
