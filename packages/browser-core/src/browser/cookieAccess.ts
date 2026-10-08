@@ -1,12 +1,13 @@
 import { ONE_MINUTE, ONE_SECOND, dateNow } from '@datadog/js-core/time'
 import { globalObject, mockable } from '@datadog/js-core/util'
+import { monitorError } from '@datadog/js-core/monitor'
 import { setInterval, clearInterval } from '../tools/timer'
 import { Observable } from '../tools/observable'
 import { display } from '../tools/display'
 import { generateUUID } from '../tools/utils/stringUtils'
 import { addTelemetryDebug } from '../domain/telemetry'
 import { addEventListener, DOM_EVENT, isEventSupported } from './addEventListener'
-import { deleteCookie, getCookies, setCookie } from './cookie'
+import { buildCookieString, deleteCookie, getCookies, setCookie } from './cookie'
 import type { CookieOptions } from './cookie'
 
 export interface CookieAccess {
@@ -17,6 +18,14 @@ export interface CookieAccess {
 }
 
 export type CookieAccessFactory = (cookieName: string, cookieOptions: CookieOptions) => CookieAccess
+
+/**
+ * Cookie API provided by the host environment.
+ */
+export interface CustomCookieStore {
+  get(name: string): Promise<string>
+  set(cookieString: string): Promise<unknown>
+}
 
 // Used to identify capability-probe cookies so their write failures aren't reported as telemetry:
 // failing to write them is an expected outcome (it triggers the document.cookie fallback), not a bug.
@@ -30,8 +39,9 @@ export async function areCookiesAuthorized(
   // the test cookie lifetime
   const testCookieName = `${TEST_COOKIE_NAME_PREFIX}${generateUUID()}`
   const testCookieValue = 'test'
-  const access = createAccess(testCookieName, cookieOptions)
+  let access: CookieAccess | undefined
   try {
+    access = createAccess(testCookieName, cookieOptions)
     await access.getAllAndSet(() => ({ value: testCookieValue, expireDelay: ONE_MINUTE }))
     const values = await access.getAll()
     return values.includes(testCookieValue)
@@ -40,7 +50,7 @@ export async function areCookiesAuthorized(
     return false
   } finally {
     try {
-      await access.delete()
+      await access?.delete()
     } catch {
       // Best-effort cleanup
     }
@@ -168,4 +178,49 @@ export function createDocumentCookieAccess(cookieName: string, cookieOptions: Co
 export function isCookieStoreSupported(): boolean {
   const cookieStore = mockable(globalObject.cookieStore)
   return Boolean(cookieStore && isEventSupported(cookieStore, DOM_EVENT.CHANGE))
+}
+
+export function createCustomCookieAccess(
+  cookieStore: CustomCookieStore,
+  cookieName: string,
+  cookieOptions: CookieOptions
+): CookieAccess {
+  let previousValues: string[] | undefined
+
+  async function getAll() {
+    const value = await cookieStore.get(cookieName)
+    return value ? [value] : []
+  }
+
+  function notifyIfChanged(values: string[]) {
+    if (previousValues !== undefined && String(values) !== String(previousValues)) {
+      observable.notify()
+    }
+    previousValues = values
+  }
+
+  // Custom stores have no change event: poll them, like the `document.cookie` access does
+  const observable = new Observable<void>(() => {
+    const intervalId = setInterval(() => {
+      getAll().then(notifyIfChanged).catch(monitorError)
+    }, WATCH_COOKIE_INTERVAL_DELAY)
+    return () => clearInterval(intervalId)
+  })
+
+  return {
+    getAll,
+
+    async getAllAndSet(cb) {
+      const { value, expireDelay } = cb(await getAll())
+      await cookieStore.set(buildCookieString(cookieName, value, expireDelay, cookieOptions))
+      notifyIfChanged([value])
+    },
+
+    async delete() {
+      await cookieStore.set(buildCookieString(cookieName, '', 0, cookieOptions))
+      notifyIfChanged([])
+    },
+
+    observable,
+  }
 }
