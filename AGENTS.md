@@ -46,6 +46,8 @@ yarn lint
 yarn format
 ```
 
+See the `running-tests` skill for the full command reference, including compatibility checks, performance benchmarks, BrowserStack, and pinned-browser E2E.
+
 ## Monorepo Structure
 
 ```
@@ -130,6 +132,8 @@ For deeper context, see:
 ## Commit Messages
 
 Use gitmoji conventions — see `docs/DEVELOPMENT.md` for the full reference.
+
+See the `writing-commits-and-prs` skill for the full commit and PR workflow (gitmoji choice, signing, PR template, CI title check).
 
 ## Manual Testing with Chrome MCP
 
