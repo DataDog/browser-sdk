@@ -1,7 +1,7 @@
 import { ONE_MINUTE, dateNow } from '@datadog/js-core/time'
 import { globalObject } from '@datadog/js-core/util'
 import type { Clock } from '../../test'
-import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
+import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable, waitNextMicrotask } from '../../test'
 import { display } from '../tools/display'
 import { detectVersion, isChromium } from '../tools/utils/browserDetection'
 import type { CookieOptions } from './cookie'
@@ -10,6 +10,7 @@ import type { CookieAccess } from './cookieAccess'
 import {
   areCookiesAuthorized,
   createCookieStoreAccess,
+  createCustomCookieAccess,
   createDocumentCookieAccess,
   isCookieStoreSupported,
   WATCH_COOKIE_INTERVAL_DELAY,
@@ -304,6 +305,17 @@ describe('cookieAccess', () => {
       expect(displayErrorSpy).toHaveBeenCalled()
     })
 
+    it('returns false and logs when the access factory throws', async () => {
+      const displayErrorSpy = spyOn(display, 'error')
+
+      const result = await areCookiesAuthorized(() => {
+        throw new Error('boom')
+      }, COOKIE_OPTIONS)
+
+      expect(result).toBe(false)
+      expect(displayErrorSpy).toHaveBeenCalled()
+    })
+
     it('cleans up the test cookie after the check', async () => {
       const deleteSpy = jasmine.createSpy('delete').and.returnValue(Promise.resolve())
       const access: CookieAccess = {
@@ -360,6 +372,79 @@ describe('cookieAccess', () => {
       replaceMockable(globalObject.cookieStore, cookieStore as unknown as typeof globalObject.cookieStore)
 
       expect(isCookieStoreSupported()).toBe(false)
+    })
+  })
+
+  describe('createCustomCookieAccess', () => {
+    function setup(initialValue = '') {
+      let value = initialValue
+      const cookieStore = {
+        get: jasmine.createSpy('get').and.callFake(() => Promise.resolve(value)),
+        set: jasmine.createSpy('set').and.returnValue(Promise.resolve('')),
+      }
+      const cookieAccess = createCustomCookieAccess(cookieStore, '_dd_s_v2', {})
+      return { cookieStore, cookieAccess, setValue: (newValue: string) => (value = newValue) }
+    }
+
+    it('reads the cookie value from the cookie store', async () => {
+      const { cookieStore, cookieAccess } = setup('id=abc')
+
+      expect(await cookieAccess.getAll()).toEqual(['id=abc'])
+      expect(cookieStore.get).toHaveBeenCalledWith('_dd_s_v2')
+    })
+
+    it('returns no value when the cookie is not set', async () => {
+      const { cookieAccess } = setup()
+
+      expect(await cookieAccess.getAll()).toEqual([])
+    })
+
+    it('writes the value computed from the current one, with the cookie attributes', async () => {
+      const { cookieStore, cookieAccess } = setup('id=abc')
+
+      await cookieAccess.getAllAndSet((values) => ({ value: `${values[0]}&expire=1`, expireDelay: 1000 }))
+
+      expect(cookieStore.set).toHaveBeenCalledOnceWith(
+        jasmine.stringMatching(/^_dd_s_v2=id=abc&expire=1;expires=[^;]+;path=\/;samesite=strict$/)
+      )
+    })
+
+    it('deletes the cookie with an expired empty value', async () => {
+      const { cookieStore, cookieAccess } = setup('id=abc')
+
+      await cookieAccess.delete()
+
+      expect(cookieStore.set).toHaveBeenCalledOnceWith(jasmine.stringMatching(/^_dd_s_v2=;expires=/))
+    })
+
+    it('notifies when the cookie is changed from another context', async () => {
+      const clock = mockClock()
+      const { cookieAccess, setValue } = setup('id=abc')
+      const spy = jasmine.createSpy('change')
+      cookieAccess.observable.subscribe(spy)
+
+      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+      expect(spy).not.toHaveBeenCalled()
+
+      setValue('id=def')
+      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
+
+    it('notifies after writing a new value', async () => {
+      const { cookieAccess } = setup('id=abc')
+      const spy = jasmine.createSpy('change')
+      cookieAccess.observable.subscribe(spy)
+
+      await cookieAccess.getAllAndSet(() => ({ value: 'id=abc', expireDelay: 1000 }))
+      expect(spy).not.toHaveBeenCalled()
+
+      await cookieAccess.getAllAndSet(() => ({ value: 'id=def', expireDelay: 1000 }))
+      expect(spy).toHaveBeenCalledTimes(1)
     })
   })
 })

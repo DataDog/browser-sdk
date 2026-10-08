@@ -53,10 +53,22 @@ export function initCookieStrategy(
   configuration: Configuration
 ): SessionStoreStrategy {
   const { cookieOptions, cookieApi } = sessionStoreStrategyType
+  const cookieAccess = mockable(createCookieAccess)(cookieApi, cookieOptions)
+  return createCookieSessionStore(cookieAccess, cookieOptions, configuration, { readLegacyCookie: true })
+}
+
+/**
+ * Session store persisting the session in the `_dd_s_v2` cookie through the given cookie access.
+ */
+export function createCookieSessionStore(
+  cookieAccess: CookieAccess,
+  cookieOptions: CookieOptions,
+  configuration: Configuration,
+  { readLegacyCookie }: { readLegacyCookie: boolean }
+): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
-  const cookieAccess = mockable(createCookieAccess)(cookieApi, cookieOptions)
   let isFirstCall = true
 
   cookieAccess.observable.subscribe(() => {
@@ -72,7 +84,7 @@ export function initCookieStrategy(
     return cookieAccess.getAllAndSet((cookieValues) => {
       let currentState = findMatchingSessionState(cookieValues, opts)
 
-      if (isFirstCall && isEmptyObject(currentState)) {
+      if (readLegacyCookie && isFirstCall && isEmptyObject(currentState)) {
         currentState = findMatchingSessionState(getCookies(LEGACY_SESSION_STORE_KEY), opts)
       }
       isFirstCall = false
