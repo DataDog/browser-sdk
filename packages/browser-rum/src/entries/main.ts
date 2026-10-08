@@ -14,6 +14,7 @@ import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { makeProfilerApi } from '../boot/profilerApi'
+import { startEarlyProfiler } from '../domain/profiling/earlyProfilerEagerStart'
 
 export type {
   User,
@@ -84,6 +85,22 @@ export { DEFAULT_TRACKED_RESOURCE_HEADERS, CanvasRecordingQuality } from '@datad
 const recorderApi = makeRecorderApi()
 
 const profilerApi = makeProfilerApi()
+
+/**
+ * PROF-16083 prod-test build — "SDK Early Collection at eval" (S3 variant):
+ * the early data collection moment (SDK bundle evaluation, like
+ * `startBufferingData()` for resources and errors) is extended to also start
+ * the Profiler. In this build it starts unconditionally — the build itself is
+ * the experiment — while the peek guard above keeps any snippet-started
+ * instance (which covers a longer window) untouched.
+ *
+ * The running instance is exposed through the same `window` global as the
+ * early profiler snippet, so the profiler chunk adopts it as its first
+ * periodic instance when it loads. The SDK stops the instance and discards
+ * its samples at init when profiling won't happen (no session, not sampled,
+ * unsupported browser), or when the profiler chunk fails to load.
+ */
+startEarlyProfiler()
 
 /**
  * The global RUM instance. Use this to call RUM methods.
