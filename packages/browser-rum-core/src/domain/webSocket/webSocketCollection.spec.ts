@@ -57,7 +57,7 @@ describe('webSocketCollection', () => {
   describe('connection identity', () => {
     it('reports every vital of a connection under one connection id, and each under a fresh vital id', () => {
       startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
       completeHandshake(socket, { at: 10 })
       dispatchClose(socket, { at: 20 })
 
@@ -82,8 +82,8 @@ describe('webSocketCollection', () => {
 
     it('tracks overlapping connections independently, and never merges them', () => {
       startTracking()
-      const socketA = openConnection({ at: 0 })
-      const socketB = openConnection({ at: 10 })
+      const socketA = createOpenConnection({ at: 0 })
+      const socketB = createOpenConnection({ at: 10 })
       const [idA, idB] = connectingPayloads().map((payload) => payload.id)
 
       dispatchClose(socketA, { at: 30 })
@@ -101,7 +101,7 @@ describe('webSocketCollection', () => {
       // the application created before the collection started
       const otherSubscription = initWebSocketObservable().subscribe(noop)
       registerCleanupTask(() => otherSubscription.unsubscribe())
-      const socket = connect()
+      const socket = createConnectingConnection()
 
       startTracking()
       completeHandshake(socket)
@@ -120,7 +120,7 @@ describe('webSocketCollection', () => {
   describe('the start clocks each vital is handed over with', () => {
     it('are the moment the phase it reports happened', () => {
       startTracking()
-      const socket = connect({ at: 5 })
+      const socket = createConnectingConnection({ at: 5 })
       completeHandshake(socket, { at: 10 })
       tickPeriodicReport()
       callClose(socket, { at: WEBSOCKET_PERIODIC_REPORT_INTERVAL + 20 })
@@ -137,7 +137,7 @@ describe('webSocketCollection', () => {
 
     it('are the flush date for a connection a flush finalized', () => {
       const tracker = startTracking()
-      openConnection()
+      createOpenConnection()
       advanceTo(40)
 
       tracker.flushOpenConnections()
@@ -150,35 +150,35 @@ describe('webSocketCollection', () => {
     it('is emitted synchronously from the constructor, dated at the call', () => {
       startTracking()
 
-      connect({ at: 40 })
+      createConnectingConnection({ at: 40 })
 
       expect(single(connectingPayloads()).connecting_date).toBe(clock.timeStamp(40))
     })
 
     it('reports the URL stripped of its query string, including from an encoded path', () => {
       startTracking()
-      connect({ url: 'wss://example.com:8443/path/socket%3Froom?token=secret&tenant=acme' })
+      createConnectingConnection({ url: 'wss://example.com:8443/path/socket%3Froom?token=secret&tenant=acme' })
 
       expect(single(connectingPayloads()).url).toBe('wss://example.com:8443/path/socket%3Froom')
     })
 
     it('reports a single requested protocol as a list of one', () => {
       startTracking()
-      connect({ protocols: 'auth-token' })
+      createConnectingConnection({ protocols: 'auth-token' })
 
       expect(single(connectingPayloads()).requested_protocols).toEqual(['auth-token'])
     })
 
     it('reports the requested protocols in the order they were requested', () => {
       startTracking()
-      connect({ protocols: ['auth-token', 'chat.v1'] })
+      createConnectingConnection({ protocols: ['auth-token', 'chat.v1'] })
 
       expect(single(connectingPayloads()).requested_protocols).toEqual(['auth-token', 'chat.v1'])
     })
 
     it('reports no requested protocols when the constructor got none', () => {
       startTracking()
-      connect()
+      createConnectingConnection()
 
       expect(single(connectingPayloads()).requested_protocols).toBeUndefined()
     })
@@ -187,7 +187,7 @@ describe('webSocketCollection', () => {
   describe('the open vital', () => {
     it('is emitted on the open event, dated at it and carrying the first snapshot version', () => {
       startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
 
       completeHandshake(socket, { at: 10 })
 
@@ -198,7 +198,7 @@ describe('webSocketCollection', () => {
 
     it('reports what the server negotiated', () => {
       startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
 
       completeHandshake(socket, { protocol: 'chat.v1', extensions: 'permessage-deflate' })
 
@@ -208,7 +208,7 @@ describe('webSocketCollection', () => {
 
     it('reports no negotiated protocol or extensions when the server selected none', () => {
       startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
 
       completeHandshake(socket, { protocol: '', extensions: '' })
 
@@ -218,7 +218,7 @@ describe('webSocketCollection', () => {
 
     it('is not emitted at all for a handshake that never succeeded', () => {
       startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
 
       failHandshake(socket)
 
@@ -275,8 +275,8 @@ describe('webSocketCollection', () => {
 
       expect(timer.isScheduled()).toBe(false)
 
-      const socketA = openConnection()
-      const socketB = openConnection()
+      const socketA = createOpenConnection()
+      const socketB = createOpenConnection()
 
       expect(timer.isScheduled()).toBe(true)
       expect(timer.scheduledCount()).toBe(1)
@@ -293,9 +293,9 @@ describe('webSocketCollection', () => {
     it('schedules the timer again when a connection opens after the last one closed', () => {
       const timer = watchPeriodicReportTimer()
       startTracking()
-      dispatchClose(openConnection())
+      dispatchClose(createOpenConnection())
 
-      openConnection()
+      createOpenConnection()
       tickPeriodicReport()
 
       expect(timer.isScheduled()).toBe(true)
@@ -305,7 +305,7 @@ describe('webSocketCollection', () => {
 
     it('emits a report for an open connection once per interval, each report carrying the next snapshot version', () => {
       startTracking()
-      openConnection()
+      createOpenConnection()
 
       tickPeriodicReport(3)
 
@@ -314,7 +314,7 @@ describe('webSocketCollection', () => {
 
     it('dates every report at the emit, while still reporting the date the handshake completed', () => {
       startTracking()
-      openConnection()
+      createOpenConnection()
 
       tickPeriodicReport(2)
 
@@ -332,7 +332,7 @@ describe('webSocketCollection', () => {
 
     it('carries on each report everything exchanged since the connection opened', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
 
       tickPeriodicReport()
       receiveMessage(socket, 30)
@@ -346,8 +346,8 @@ describe('webSocketCollection', () => {
 
     it('emits a report for every open connection on the same tick', () => {
       startTracking()
-      openConnection()
-      openConnection()
+      createOpenConnection()
+      createOpenConnection()
 
       tickPeriodicReport()
 
@@ -357,8 +357,8 @@ describe('webSocketCollection', () => {
 
     it('closes each report snapshot at the report date even when an earlier emit is delayed', () => {
       startTracking()
-      openConnection()
-      const socketB = openConnection()
+      createOpenConnection()
+      const socketB = createOpenConnection()
       receiveMessage(socketB, 1)
 
       // a slow delivery path on the first connection of the report: time moves on before the next
@@ -394,7 +394,7 @@ describe('webSocketCollection', () => {
 
     it('does not emit a report for a connection whose handshake has not completed', () => {
       startTracking()
-      connect()
+      createConnectingConnection()
 
       tickPeriodicReport(2)
 
@@ -403,7 +403,7 @@ describe('webSocketCollection', () => {
 
     it('stops emitting reports for a connection once close() started the closing handshake', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
       tickPeriodicReport()
 
       callClose(socket)
@@ -414,7 +414,7 @@ describe('webSocketCollection', () => {
 
     it('stops emitting reports once the last open connection closed', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
 
       dispatchClose(socket)
       tickPeriodicReport(3)
@@ -424,8 +424,8 @@ describe('webSocketCollection', () => {
 
     it('keeps emitting reports for the connections still open when one of them closes', () => {
       startTracking()
-      const socketA = openConnection()
-      openConnection()
+      const socketA = createOpenConnection()
+      createOpenConnection()
 
       dispatchClose(socketA)
       tickPeriodicReport()
@@ -437,7 +437,7 @@ describe('webSocketCollection', () => {
 
     it('stops emitting reports for the connections a flush finalized', () => {
       const tracker = startTracking()
-      openConnection()
+      createOpenConnection()
 
       tracker.flushOpenConnections()
       tickPeriodicReport(3)
@@ -447,7 +447,7 @@ describe('webSocketCollection', () => {
 
     it('stops emitting reports after stop()', () => {
       const tracker = startTracking()
-      openConnection()
+      createOpenConnection()
 
       tracker.stop()
       tickPeriodicReport(3)
@@ -459,8 +459,8 @@ describe('webSocketCollection', () => {
     // snapshot versions are correct and ordered.
     it('emits two reports for a connection that opened just before a tick, with ordered versions', () => {
       startTracking()
-      openConnection()
-      openConnection({ at: WEBSOCKET_PERIODIC_REPORT_INTERVAL - 1 })
+      createOpenConnection()
+      createOpenConnection({ at: WEBSOCKET_PERIODIC_REPORT_INTERVAL - 1 })
 
       advanceTo(WEBSOCKET_PERIODIC_REPORT_INTERVAL)
 
@@ -476,7 +476,7 @@ describe('webSocketCollection', () => {
   describe('the closing vital', () => {
     it('is emitted on the close() call, carrying the closing date and the client as the initiator', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
 
       callClose(socket, { at: 30 })
 
@@ -488,7 +488,7 @@ describe('webSocketCollection', () => {
 
     it('is reported between the open and the closed vital', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
 
       callClose(socket)
       dispatchClose(socket)
@@ -503,7 +503,7 @@ describe('webSocketCollection', () => {
 
     it('takes no snapshot version from the sequence the snapshot-carrying vitals share', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
 
       callClose(socket)
       dispatchClose(socket)
@@ -514,7 +514,7 @@ describe('webSocketCollection', () => {
 
     it('is emitted for a close() during the handshake, whose failure then reports an unclean close', () => {
       startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
 
       callClose(socket, { at: 5 })
       // the browser fails a connection aborted mid-handshake
@@ -529,7 +529,7 @@ describe('webSocketCollection', () => {
   describe('the closed vital', () => {
     it('reports the close outcome of a real close event, and the event as the reason', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
 
       dispatchClose(socket, { at: 40, code: 1001, reason: 'going away', wasClean: false })
 
@@ -546,7 +546,7 @@ describe('webSocketCollection', () => {
 
     it('reports the send queue depth the close event carried', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
       socket.bufferedAmount = 128
 
       dispatchClose(socket)
@@ -556,7 +556,7 @@ describe('webSocketCollection', () => {
 
     it('reports a flush with no close event as the session ending, dated at the flush', () => {
       const tracker = startTracking()
-      openConnection()
+      createOpenConnection()
       advanceTo(40)
 
       tracker.flushOpenConnections()
@@ -571,7 +571,7 @@ describe('webSocketCollection', () => {
 
     it('reports the send queue depth read from the socket when no close event was received', () => {
       const tracker = startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
       socket.bufferedAmount = 512
 
       tracker.flushOpenConnections()
@@ -581,7 +581,7 @@ describe('webSocketCollection', () => {
 
     it('starts the snapshot sequence at 1 for a connection that never opened', () => {
       startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
 
       failHandshake(socket)
 
@@ -590,7 +590,7 @@ describe('webSocketCollection', () => {
 
     it('continues the snapshot sequence the open vitals started, so it holds the highest version', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
       tickPeriodicReport(2)
 
       dispatchClose(socket)
@@ -601,7 +601,7 @@ describe('webSocketCollection', () => {
 
     it('reports the terminal snapshot of the connection, timed from the open date', () => {
       startTracking()
-      const socket = openConnection({ at: 10 })
+      const socket = createOpenConnection({ at: 10 })
       receiveMessage(socket, 30, { at: 20 })
       sendMessage(socket, 10, { at: 25, bufferedAmountPreSend: 100 })
 
@@ -628,7 +628,7 @@ describe('webSocketCollection', () => {
 
     it('counts no outbound message the socket discarded after the closing handshake started', () => {
       startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
       sendMessage(socket, 10)
       callClose(socket)
 
@@ -646,7 +646,7 @@ describe('webSocketCollection', () => {
   describe('the domain context', () => {
     it('exposes the same socket instance on every vital of the connection lifecycle', () => {
       startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
       expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CONNECTING)))).toBe(socket)
 
       completeHandshake(socket)
@@ -670,7 +670,7 @@ describe('webSocketCollection', () => {
     // wants whole milliseconds
     it('are reported in whole milliseconds', () => {
       startTracking()
-      const socket = connect({ at: 0 })
+      const socket = createConnectingConnection({ at: 0 })
       completeHandshake(socket, { at: 10.4 })
       callClose(socket, { at: 20.6 })
       dispatchClose(socket, { at: 30.5 })
@@ -687,7 +687,7 @@ describe('webSocketCollection', () => {
   describe('under a system clock change', () => {
     it('measures the connection on its own timeline, while each vital stays dated by the system clock', () => {
       startTracking()
-      const socket = connect({ at: 0 })
+      const socket = createConnectingConnection({ at: 0 })
       advanceTo(5)
       clock.jumpSystemClock(-10 * ONE_MINUTE)
       completeHandshake(socket, { at: 10 })
@@ -724,7 +724,7 @@ describe('webSocketCollection', () => {
   describe('tracking end', () => {
     it('reports a connection a flush finalized only once, even when its close event arrives later', () => {
       const tracker = startTracking()
-      const socket = openConnection()
+      const socket = createOpenConnection()
 
       tracker.flushOpenConnections()
       dispatchClose(socket)
@@ -734,7 +734,7 @@ describe('webSocketCollection', () => {
 
     it('reports nothing more once stopped', () => {
       const tracker = startTracking()
-      const socket = connect()
+      const socket = createConnectingConnection()
 
       tracker.stop()
       dispatchClose(socket)
@@ -766,7 +766,7 @@ describe('webSocketCollection', () => {
           }
 
           startCollection(mockRumConfiguration({ trackResources, betaTrackWebSockets }))
-          dispatchClose(openConnection())
+          dispatchClose(createOpenConnection())
 
           expect(emittedVitals()).toHaveSize(collects ? 3 : 0)
         })
@@ -780,8 +780,8 @@ describe('webSocketCollection', () => {
       ;[PageExitReason.HIDDEN, PageExitReason.FROZEN, PageExitReason.UNLOADING].forEach((reason) => {
         it(`emits a report for every open connection on a "${reason}" transition`, () => {
           startCollection()
-          openConnection()
-          openConnection()
+          createOpenConnection()
+          createOpenConnection()
 
           lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
 
@@ -793,7 +793,7 @@ describe('webSocketCollection', () => {
 
       it('does not emit a report for a connection that is not open', () => {
         startCollection()
-        connect()
+        createConnectingConnection()
 
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
 
@@ -802,7 +802,7 @@ describe('webSocketCollection', () => {
 
       it('stops emitting reports after stop()', () => {
         const collection = startCollection()
-        openConnection()
+        createOpenConnection()
 
         collection.stop()
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
@@ -814,7 +814,7 @@ describe('webSocketCollection', () => {
     describe('the page unload', () => {
       it('ends tracking of an open connection when the page is discarded', () => {
         startCollection()
-        openConnection()
+        createOpenConnection()
         advanceTo(40)
 
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
@@ -829,9 +829,9 @@ describe('webSocketCollection', () => {
 
       it('ends tracking of every connection, whatever its phase', () => {
         startCollection()
-        connect()
-        openConnection()
-        callClose(openConnection())
+        createConnectingConnection()
+        createOpenConnection()
+        callClose(createOpenConnection())
 
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
 
@@ -844,7 +844,7 @@ describe('webSocketCollection', () => {
 
       it('reports no close outcome, the next snapshot version and the send queue depth read from the socket', () => {
         startCollection()
-        const socket = openConnection()
+        const socket = createOpenConnection()
         socket.bufferedAmount = 12
 
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
@@ -859,7 +859,7 @@ describe('webSocketCollection', () => {
 
       it('reports nothing more for a connection whose close event arrives after the page unloaded', () => {
         startCollection()
-        const socket = openConnection()
+        const socket = createOpenConnection()
 
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
         dispatchClose(socket)
@@ -869,7 +869,7 @@ describe('webSocketCollection', () => {
 
       it('reports nothing more for a connection that closed before the page unloaded', () => {
         startCollection()
-        dispatchClose(openConnection())
+        dispatchClose(createOpenConnection())
 
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
 
@@ -878,7 +878,7 @@ describe('webSocketCollection', () => {
 
       it('replaces open reports with a single closed vital when the page is discarded', () => {
         startCollection()
-        openConnection()
+        createOpenConnection()
 
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
         tickPeriodicReport()
@@ -890,7 +890,7 @@ describe('webSocketCollection', () => {
 
     it('finalizes open connections when the session expires', () => {
       startCollection()
-      connect()
+      createConnectingConnection()
       advanceTo(40)
 
       expireSession()
@@ -905,7 +905,7 @@ describe('webSocketCollection', () => {
 
     it('ignores further WebSocket events from the same instance after the session expires', () => {
       startCollection()
-      const socket = openConnection()
+      const socket = createOpenConnection()
       sendMessage(socket, 10)
 
       expireSession()
@@ -920,7 +920,7 @@ describe('webSocketCollection', () => {
 
     it('finalizes open connections on stop(), then ignores their events', () => {
       const collection = startCollection()
-      const socket = openConnection()
+      const socket = createOpenConnection()
       advanceTo(40)
 
       collection.stop()
@@ -984,7 +984,7 @@ describe('webSocketCollection', () => {
     at?: number
   }
 
-  function connect({
+  function createConnectingConnection({
     at,
     url = 'wss://example.com/socket',
     protocols,
@@ -1004,8 +1004,8 @@ describe('webSocketCollection', () => {
   }
 
   /** A socket constructed and opened at the same date, for specs that do not care about the handshake. */
-  function openConnection({ at, url }: At & { url?: string } = {}) {
-    const socket = connect({ at, url })
+  function createOpenConnection({ at, url }: At & { url?: string } = {}) {
+    const socket = createConnectingConnection({ at, url })
     completeHandshake(socket)
     return socket
   }
