@@ -186,7 +186,7 @@ describe('getSelectorFromComposedPath', () => {
           const value = 'a'.repeat(ATTRIBUTE_VALUE_LIMIT + 50)
           const element = appendElementInIsolation(`<div data-dd-privacy="hidden" data-testid="${value}"></div>`)
 
-          // Not dropped from hidden elements, and not truncated
+          // Kept on hidden elements, not truncated
           expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-testid="${value}"];`)
         })
 
@@ -401,7 +401,7 @@ describe('getSelectorFromComposedPath', () => {
         )
         const result = getComposedPathSelector(composedPath, configuration)
 
-        // 17 elements of 120 characters use 2040 characters: only the tag name of the 18th fits
+        // 17 elements use 2040 characters: only the 18th tag name fits
         expect(result).toBe(`${`DIV[data-testid="${value}"];`.repeat(17)}DIV`)
       })
 

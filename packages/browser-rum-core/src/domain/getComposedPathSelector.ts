@@ -41,10 +41,7 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
 ])
 
 /**
- * Attributes that can contain PII. They are collected behind an experimental flag, and masked
- * with `shouldMaskAttribute` according to the node privacy level, whatever the value of
- * `enablePrivacyForActionName`. `data-*` attributes, except the stable and generated ones, are also
- * collected this way.
+ * Attributes that can contain PII, collected masked behind an experimental flag (like `data-*`)
  */
 const MASKABLE_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt']
 
@@ -63,12 +60,12 @@ interface MaskingContext {
  *
  * This function:
  * 1. Filters out non-Element items (Document, Window, ShadowRoot)
- * 2. Extracts the selector tokens of each element, with masked attribute values when needed
- * 3. Truncates the selector string between two tokens if it exceeds the character limit
+ * 2. Extracts the selector tokens of each element
+ * 3. Truncates the selector string between tokens if it exceeds the character limit
  * 4. Returns the selector string
  *
  * @param composedPath - The composedPath from a MouseEvent
- * @param configuration - The RUM configuration, for the action name attribute and the privacy level
+ * @param configuration - The RUM configuration
  * @returns A selector string
  */
 export function getComposedPathSelector(composedPath: EventTarget[], configuration: RumConfiguration): string {
@@ -87,9 +84,9 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
     ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES
   )
     ? {
-        // Unlike the action name and session replay, do not exempt the action name attribute from masking
+        // Do not exempt the action name attribute from masking
         configuration: { ...configuration, actionNameAttribute: undefined },
-        // Shared across the path, so each ancestor privacy level is computed once
+        // Shared across the path
         nodePrivacyLevelCache: new Map(),
       }
     : undefined
@@ -97,7 +94,7 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
   let result = ''
   for (const element of elements) {
     for (const token of getSelectorTokensFromElement(element, allowedAttributes, masking)) {
-      // Truncate between tokens, so an attribute key and value are never split
+      // Never split an attribute key and value
       if (result.length + token.length > CHARACTER_LIMIT) {
         return result
       }
@@ -108,8 +105,7 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
 }
 
 /**
- * Extracts the selector tokens (tag name, id, attributes, classes, position) of an element,
- * followed by the `;` separator. Missing tokens are empty strings.
+ * Extracts the selector tokens of an element, followed by `;`
  */
 function getSelectorTokensFromElement(
   element: Element,
@@ -154,8 +150,7 @@ function computePositionDataString(element: Element): string {
 }
 
 /**
- * Extracts the safe (allowlisted) attributes from an element, and the maskable attributes when a
- * masking context is provided. The attributes are sorted by their selector string.
+ * Extracts the safe attributes, and the masked attributes when masking is enabled, sorted
  */
 function extractAttributes(
   element: Element,
@@ -176,13 +171,13 @@ function extractAttributes(
       }
       let value = attribute.value
       if (shouldMaskAttribute(element.tagName, name, value, nodePrivacyLevel, masking.configuration)) {
-        // Only the mask-unless-allowlisted level uses the allowlist, like the action name text
+        // Only mask-unless-allowlisted uses the allowlist
         value =
           nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
             ? maskDisallowedTextContent(value, CENSORED_STRING_MARK)
             : CENSORED_STRING_MARK
       }
-      // Unlike the allowlisted names, `data-*` names can contain separators: escape them
+      // `data-*` names can contain separators
       result.push(getAttributeValueSelector(CSS.escape(name), safeTruncate(value, ATTRIBUTE_VALUE_LIMIT)))
     } else if (allowedAttributes.includes(name)) {
       result.push(getAttributeValueSelector(name, attribute.value))
@@ -197,9 +192,7 @@ function isMaskableAttribute(element: Element, name: string, allowedAttributes: 
     return element.tagName === 'A'
   }
   if (name.startsWith('data-')) {
-    // `shouldMaskAttribute` never masks the privacy and stable attributes, so stable attributes stay
-    // safe attributes. Generated names (ex: Vue `data-v-<hash>`) are skipped like generated classes,
-    // except the action name attribute, which stays masked.
+    // Skip stable names (kept raw) and generated names (ex: Vue `data-v-<hash>`), except the action name attribute
     return (
       name !== PRIVACY_ATTR_NAME &&
       !STABLE_ATTRIBUTES.includes(name) &&
