@@ -1,4 +1,5 @@
 import type { CookieOptions } from '../../../browser/cookie'
+import type { CustomCookieStore } from '../../../browser/cookieAccess'
 import type { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import type { Observable } from '../../../tools/observable'
@@ -9,8 +10,6 @@ export const LEGACY_SESSION_STORE_KEY = '_dd_s'
 export const enum CookieApi {
   DOCUMENT_COOKIE,
   COOKIE_STORE,
-  // Provided by the integration through the `sessionCookieAccess` init option
-  CUSTOM,
 }
 
 export interface CookieSessionStoreStrategyType {
@@ -19,8 +18,16 @@ export interface CookieSessionStoreStrategyType {
   cookieApi: CookieApi
 }
 
+// Cookie persistence through a cookie store provided in `sessionPersistence`
+export interface CustomCookieSessionStoreStrategyType {
+  type: 'custom-cookie'
+  cookieOptions: CookieOptions
+  cookieStore: CustomCookieStore
+}
+
 export type SessionStoreStrategyType =
   | CookieSessionStoreStrategyType
+  | CustomCookieSessionStoreStrategyType
   | { type: typeof SessionPersistence.LOCAL_STORAGE }
   | { type: typeof SessionPersistence.MEMORY }
 

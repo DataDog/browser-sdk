@@ -34,12 +34,6 @@ export async function selectCookieStrategy(
     return undefined
   }
 
-  if (configuration.sessionCookieAccess) {
-    return (await areCookiesAuthorized(configuration.sessionCookieAccess, cookieOptions))
-      ? { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.CUSTOM }
-      : undefined
-  }
-
   if (isCookieStoreSupported() && (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions))) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
   }
@@ -59,10 +53,21 @@ export function initCookieStrategy(
   configuration: Configuration
 ): SessionStoreStrategy {
   const { cookieOptions, cookieApi } = sessionStoreStrategyType
+  const cookieAccess = mockable(createCookieAccess)(cookieApi, cookieOptions)
+  return createCookieSessionStore(cookieAccess, cookieOptions, configuration)
+}
+
+/**
+ * Session store persisting the session in the `_dd_s_v2` cookie through the given cookie access.
+ */
+export function createCookieSessionStore(
+  cookieAccess: CookieAccess,
+  cookieOptions: CookieOptions,
+  configuration: Configuration
+): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
-  const cookieAccess = mockable(createCookieAccess)(cookieApi, cookieOptions, configuration)
   let isFirstCall = true
 
   cookieAccess.observable.subscribe(() => {
@@ -78,9 +83,7 @@ export function initCookieStrategy(
     return cookieAccess.getAllAndSet((cookieValues) => {
       let currentState = findMatchingSessionState(cookieValues, opts)
 
-      // The legacy cookie is read through `document.cookie`, which a custom cookie access exists
-      // to avoid
-      if (isFirstCall && isEmptyObject(currentState) && cookieApi !== CookieApi.CUSTOM) {
+      if (isFirstCall && isEmptyObject(currentState)) {
         currentState = findMatchingSessionState(getCookies(LEGACY_SESSION_STORE_KEY), opts)
       }
       isFirstCall = false
@@ -98,9 +101,7 @@ export function initCookieStrategy(
       fn: (sessionState: SessionState) => SessionState,
       _operation: SessionStateOperation
     ): Promise<void> {
-      // Web Locks can't coordinate with a custom cookie access, which may write from another
-      // context (and may throw synchronously there, e.g. in sandboxed frames)
-      if (cookieApi !== CookieApi.CUSTOM && typeof navigator !== 'undefined' && navigator.locks) {
+      if (typeof navigator !== 'undefined' && navigator.locks) {
         await navigator.locks
           .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
           .catch((error: unknown) => {
@@ -135,19 +136,10 @@ function isContextGoingAwayError(error: unknown): boolean {
   )
 }
 
-export function createCookieAccess(
-  cookieApi: CookieApi,
-  cookieOptions: CookieOptions,
-  configuration: Configuration
-): CookieAccess {
-  switch (cookieApi) {
-    case CookieApi.CUSTOM:
-      return configuration.sessionCookieAccess!(SESSION_STORE_KEY, cookieOptions)
-    case CookieApi.COOKIE_STORE:
-      return createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions)
-    case CookieApi.DOCUMENT_COOKIE:
-      return createDocumentCookieAccess(SESSION_STORE_KEY, cookieOptions)
-  }
+export function createCookieAccess(cookieApi: CookieApi, cookieOptions: CookieOptions): CookieAccess {
+  return cookieApi === CookieApi.COOKIE_STORE
+    ? createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions)
+    : createDocumentCookieAccess(SESSION_STORE_KEY, cookieOptions)
 }
 
 function findMatchingSessionState(items: string[], opts: string): SessionState {

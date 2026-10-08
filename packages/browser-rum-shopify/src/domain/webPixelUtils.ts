@@ -6,7 +6,6 @@ import { BROWSER_CORE_SCHEMA, generateUUID, TrackingConsent } from '@datadog/bro
 import type { InitConfiguration } from '@datadog/browser-core'
 import type { DefaultRumEventAttributes, ViewLoadingType } from '@datadog/browser-rum-core'
 import type { ShopifyAnalyticsApi } from './shopifyAnalytics'
-import type { ShopifyBrowserApi } from './shopifyCookieAccess'
 
 export const WEB_PIXEL_SCHEMA = {
   ...BROWSER_CORE_SCHEMA,
@@ -30,6 +29,17 @@ export type WebPixelRumInitConfiguration = InitConfiguration & {
  */
 export interface ShopifyCustomerPrivacyStatus {
   analyticsProcessingAllowed: boolean
+}
+
+/**
+ * Subset of the Web Pixel `browser` API. Its methods run asynchronously in the top frame.
+ * See https://shopify.dev/docs/api/web-pixels-api/standard-api/browser
+ */
+export interface ShopifyBrowserApi {
+  cookie: {
+    get: (name: string) => Promise<string>
+    set: (cookie: string) => Promise<string>
+  }
 }
 
 export interface WebPixelApi {

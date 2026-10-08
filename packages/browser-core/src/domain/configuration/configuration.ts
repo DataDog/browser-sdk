@@ -4,7 +4,7 @@ import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
-import type { CookieAccessFactory } from '../../browser/cookieAccess'
+import type { CustomCookieStore } from '../../browser/cookieAccess'
 
 /**
  * Default privacy level for the browser SDK.
@@ -83,10 +83,13 @@ export interface InitConfiguration {
    *
    * Note: 'memory' option is only for use with single-page applications. All page loads will start a new session, likely resulting in an increase in total number of RUM sessions
    *
+   * [Internal] A custom cookie store (`{ get, set }`) can be provided to persist the session cookie through a host API instead of `document.cookie`.
+   *
    * @category Session Persistence
    * @defaultValue "cookie"
    */
-  sessionPersistence?: SessionPersistence | SessionPersistence[] | undefined
+  sessionPersistence?:
+    SessionPersistence | CustomCookieStore | Array<SessionPersistence | CustomCookieStore> | undefined
 
   /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
@@ -255,15 +258,6 @@ export interface InitConfiguration {
    * @internal
    */
   variant?: string | undefined
-
-  /**
-   * [Internal option] Cookie access used by the cookie session store instead of `document.cookie`
-   * or the Cookie Store API. Lets integrations running where neither is available (e.g. a Shopify
-   * Web Pixel worker) persist the session in the top frame cookies.
-   *
-   * @internal
-   */
-  sessionCookieAccess?: CookieAccessFactory | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -321,10 +315,19 @@ export const BROWSER_CORE_SCHEMA = {
   // Passthroughs
   source: { type: 'enum', values: ['browser', 'flutter', 'unity'] as const, default: 'browser', strict: false },
   sessionPersistence: {
-    type: 'enum',
-    values: ['cookie', 'local-storage', 'memory'] as const,
+    type: 'union',
     multiple: true,
     strict: false,
+    variants: [
+      { type: 'enum', values: ['cookie', 'local-storage', 'memory'] as const },
+      {
+        type: 'schema',
+        schema: {
+          get: { type: 'function', required: true, signature: undefined as CustomCookieStore['get'] | undefined },
+          set: { type: 'function', required: true, signature: undefined as CustomCookieStore['set'] | undefined },
+        },
+      },
+    ],
   },
   replica: {
     type: 'schema',
@@ -338,10 +341,14 @@ export const BROWSER_CORE_SCHEMA = {
   datacenter: { type: 'string' },
   sdkVersion: { type: 'string' },
   variant: { type: 'string' },
-  sessionCookieAccess: { type: 'function', signature: undefined as CookieAccessFactory | undefined },
 } as const
 
 export type Configuration = InferredConfig<typeof BROWSER_CORE_SCHEMA>
+
+// the telemetry schema has no custom cookie store value, it is reported as the cookie persistence it relies on
+function serializeSessionPersistence(sessionPersistence: SessionPersistence | CustomCookieStore | undefined) {
+  return typeof sessionPersistence === 'object' ? 'cookie' : sessionPersistence
+}
 
 export function serializeConfiguration(initConfiguration: InitConfiguration) {
   return {
@@ -356,9 +363,11 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
     track_anonymous_user: initConfiguration.trackAnonymousUser,
-    session_persistence: Array.isArray(initConfiguration.sessionPersistence)
-      ? initConfiguration.sessionPersistence[0]
-      : initConfiguration.sessionPersistence,
+    session_persistence: serializeSessionPersistence(
+      Array.isArray(initConfiguration.sessionPersistence)
+        ? initConfiguration.sessionPersistence[0]
+        : initConfiguration.sessionPersistence
+    ),
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,

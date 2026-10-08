@@ -21,7 +21,6 @@ import { getPageUrl } from '../domain/shopifyAnalytics'
 import type { ShopifyPixelEvent } from '../domain/shopifyAnalytics'
 import type { ElementData, ErrorData } from '../domain/shopifyBindings'
 import { isCheckoutPage } from '../domain/shopifyBindings'
-import { createShopifyCookieAccessFactory } from '../domain/shopifyCookieAccess'
 import type { ActiveView, ShopifyCheckout, WebPixelApi, WebPixelRumInitConfiguration } from '../domain/webPixelUtils'
 import {
   buildActionEvent,
@@ -57,11 +56,9 @@ export function startWebPixelRum(
   { analytics, browser, init, customerPrivacy }: WebPixelApi
 ) {
   const configuration = validateAndBuildConfiguration(
-    {
-      ...initConfiguration,
-      sessionPersistence: 'cookie',
-      sessionCookieAccess: createShopifyCookieAccessFactory(browser),
-    },
+    // A Web Pixel worker has no `document.cookie` nor Cookie Store API: persist the session in the
+    // top frame cookies through `browser.cookie`, to share the storefront session
+    { ...initConfiguration, sessionPersistence: browser.cookie },
     WEB_PIXEL_SCHEMA,
     display
   )
