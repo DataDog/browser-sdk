@@ -42,11 +42,11 @@ One-time setup: `yarn test:e2e:setup` for E2E, plus `yarn test:e2e:setup:pinned`
 
 ## Common Mistakes
 
-| Mistake                                                                       | Fix                                                                                                           |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Running `npmSetup`/app-based E2E or perf tests right after editing SDK source | `yarn build:apps` first, otherwise they use stale packages                                                    |
-| E2E passes locally, fails in CI on `<test> > npm`                             | Locally only `bundle` runs. Temporarily add `.withSetup(npmSetup)` to the test, run `yarn build:apps`, re-run |
-| Expecting `yarn test:e2e` to cover all browsers                               | Locally only chromium runs unless you pass `--project`                                                        |
-| `*-pinned` projects fail on missing browsers                                  | `yarn test:e2e:setup:pinned` once                                                                             |
-| Leaving `fit`/`fdescribe` in a spec                                           | `yarn lint` fails (`jasmine/no-focused-tests`). `test.only` fails E2E in CI (`forbidOnly`)                    |
-| Passing a path to `yarn test:script`                                          | Run `node --test` on the file directly                                                                        |
+| Mistake                                                                       | Fix                                                                                                                           |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Running `npmSetup`/app-based E2E or perf tests right after editing SDK source | `yarn build:apps` first, otherwise they use stale packages                                                                    |
+| E2E passes locally, fails in CI on `<test> > npm`                             | Locally only `bundle` runs. `yarn build:apps`, then `CI=1 yarn test:e2e -g "<test>"` runs `async`, `npm` and `bundle` like CI |
+| Expecting `yarn test:e2e` to cover all browsers                               | Locally only chromium runs unless you pass `--project`                                                                        |
+| `*-pinned` projects fail on missing browsers                                  | `yarn test:e2e:setup:pinned` once                                                                                             |
+| Leaving `fit`/`fdescribe` in a spec                                           | `yarn lint` fails (`jasmine/no-focused-tests`). `test.only` fails E2E in CI (`forbidOnly`)                                    |
+| Passing a path to `yarn test:script`                                          | Run `node --test` on the file directly                                                                                        |

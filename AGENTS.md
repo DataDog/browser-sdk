@@ -46,7 +46,7 @@ yarn lint
 yarn format
 ```
 
-See the `running-tests` skill for the full command reference, including compatibility checks, performance benchmarks, BrowserStack, and pinned-browser E2E.
+Before running E2E or performance tests, or when a test passes locally but fails in CI, read the `running-tests` skill (`.claude/skills/running-tests/SKILL.md`). It also covers compatibility checks, BrowserStack, and pinned browsers.
 
 ## Monorepo Structure
 
@@ -129,12 +129,6 @@ For deeper context, see:
 - Example: `telemetryEvent.types.ts` is generated from the `rum-events-format` schema repository
 - Any changes to these files require a **corresponding PR in the upstream source repo first**, then regeneration
 
-## Commit Messages
-
-Use gitmoji conventions — see `docs/DEVELOPMENT.md` for the full reference.
-
-See the `writing-commits-and-prs` skill for the full commit and PR workflow (gitmoji choice, signing, PR template, CI title check).
-
 ## Manual Testing with Chrome MCP
 
 `yarn dev` serves the sandbox at `http://localhost:8080` (increments port if busy). The sandbox page (`sandbox/index.html`) loads the SDK bundles and calls `DD_LOGS.init()` / `DD_RUM.init()`.
@@ -145,5 +139,4 @@ To test with specific config options (e.g. `forwardErrorsToLogs: true`), just ed
 
 - Branch naming: `<username>/<feature>` (e.g., `john.doe/fix-session-bug`)
 - Always branch from `main` unless explicitly decided otherwise
-- PR title **must** follow commit message convention (see `docs/DEVELOPMENT.md`)
-- PR template at `.github/PULL_REQUEST_TEMPLATE.md` - use it for all PRs
+- Commit messages and PR titles start with a gitmoji (CI checks PR titles). Before committing or opening a PR, read the `writing-commits-and-prs` skill (`.claude/skills/writing-commits-and-prs/SKILL.md`): gitmoji choice, signing, PR template.
