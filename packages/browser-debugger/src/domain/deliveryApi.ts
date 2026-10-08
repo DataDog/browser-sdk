@@ -27,6 +27,7 @@ export interface DeliveryApiConfiguration {
   proxy?: string
   env?: string
   version?: string
+  debugId?: string
   pollInterval?: number
   maxUnreachableDuration?: number
 }
@@ -89,6 +90,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
     clientVersion: __BUILD_ENV__SDK_VERSION__,
     env: config.env,
     serviceVersion: config.version,
+    debugId: config.debugId,
   }
 
   sessionAbortController = new AbortController()

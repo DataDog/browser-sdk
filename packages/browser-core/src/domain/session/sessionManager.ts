@@ -43,10 +43,6 @@ export interface SessionManager {
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
-  /**
-   * Signals user activity: expands the session, or renews it if it expired. The session manager
-   * observes activity through DOM events, so this is for integrations that can't, such as workers.
-   */
   expandOrRenew: () => void
   updateSessionState: (state: Partial<SessionState>) => void
 }

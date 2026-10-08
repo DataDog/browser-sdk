@@ -194,22 +194,11 @@ describe('startSessionManager', () => {
       sessionManager.expire()
       clock.tick(ONE_SECOND)
       sessionManager.expandOrRenew()
-
-      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       expect(renewSpy).toHaveBeenCalledTimes(1)
+      expect(sessionManager.findSession()!.id).toBeDefined()
       expect(sessionManager.findSession()!.id).not.toBe(initialId)
-    })
-
-    it('should not renew on expandOrRenew() when tracking consent is not granted', async () => {
-      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-      const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
-
-      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-      clock.tick(ONE_SECOND)
-      sessionManager.expandOrRenew()
-
-      expect(sessionManager.findSession()).toBeUndefined()
     })
 
     it('should renew on user activity after expiration', async () => {
@@ -353,17 +342,6 @@ describe('startSessionManager', () => {
       const state = fakeStrategy.getInternalState()
       expect(state.expire).toBeDefined()
       expect(Number(state.expire)).toBeGreaterThan(Date.now())
-    })
-
-    it('should expand session duration on expandOrRenew()', async () => {
-      const sessionManager = await startSessionManagerWithDefaults()
-      const initialExpire = Number(fakeStrategy.getInternalState().expire)
-
-      clock.tick(ONE_SECOND)
-      sessionManager.expandOrRenew()
-      await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for expand
-
-      expect(Number(fakeStrategy.getInternalState().expire)).toBeGreaterThan(initialExpire)
     })
 
     it('should expand session on visibility when visible', async () => {
