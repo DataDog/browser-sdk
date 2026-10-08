@@ -18,7 +18,8 @@ export interface CatalogFlag {
 
 /**
  * Filters + pagination sent to the server so the FFE endpoint does the work — the extension never
- * loads the whole catalog. The server applies all of these itself: `search` matches name/key/tags,
+ * loads the whole catalog. Server-only flags are always excluded (see fetchFlagCatalog). The server
+ * applies all of these itself: `search` matches name/key/tags,
  * `tags` are AND-ed, `value_type` is OR-ed, `created_by` is an IN-list, and `team:<handle>` tags are
  * OR-ed among themselves then AND-ed with regular tags (see dd-source ffe-service). `page` is 1-based.
  *
@@ -96,6 +97,9 @@ export function fetchFlagCatalog(token: string, site: string, request: FlagCatal
   // Active only: an archived and an active flag can share a key and land on the same page, which
   // would render as duplicate rows and collide React keys.
   url.searchParams.set('is_archived', 'false')
+  // Client-available only: a browser page can't evaluate a server-only flag, so listing one would
+  // offer an override that never applies. The server matches CLIENT or ALL flags.
+  url.searchParams.set('distribution_channel', 'CLIENT')
   if (request.search) {
     url.searchParams.set('search', request.search)
   }
@@ -135,6 +139,11 @@ export interface FlagsByKeysResult {
  * and mapResources keeps whichever the server listed first, so including archived ones would risk
  * describing the override against the wrong flag's type and variants. An override on a flag archived
  * here therefore reads as absent, which the row reports as archived or deleted.
+ *
+ * Unlike the catalog, this lookup does not filter out server-only flags. These are flags the user has
+ * already overridden; if one has become server-only (e.g. its SDK availability changed after the
+ * override was set), filtering it out would make it look archived or deleted instead of showing its
+ * real details.
  */
 export async function fetchFlagsByKeys(token: string, site: string, keys: string[]): Promise<FlagsByKeysResult> {
   const host = getFlagsApiHost(site)
