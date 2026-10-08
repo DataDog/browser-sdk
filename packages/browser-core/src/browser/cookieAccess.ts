@@ -6,7 +6,7 @@ import { display } from '../tools/display'
 import { generateUUID } from '../tools/utils/stringUtils'
 import { addTelemetryDebug } from '../domain/telemetry'
 import { addEventListener, DOM_EVENT, isEventSupported } from './addEventListener'
-import { deleteCookie, getCookies, setCookie } from './cookie'
+import { buildCookieString, deleteCookie, getCookies, setCookie } from './cookie'
 import type { CookieOptions } from './cookie'
 
 export interface CookieAccess {
@@ -17,6 +17,14 @@ export interface CookieAccess {
 }
 
 export type CookieAccessFactory = (cookieName: string, cookieOptions: CookieOptions) => CookieAccess
+
+/**
+ * Cookie API provided by the host environment.
+ */
+export interface CustomCookieStore {
+  get(name: string): Promise<string>
+  set(cookieString: string): Promise<unknown>
+}
 
 // Used to identify capability-probe cookies so their write failures aren't reported as telemetry:
 // failing to write them is an expected outcome (it triggers the document.cookie fallback), not a bug.
@@ -169,4 +177,31 @@ export function createDocumentCookieAccess(cookieName: string, cookieOptions: Co
 export function isCookieStoreSupported(): boolean {
   const cookieStore = mockable(globalObject.cookieStore)
   return Boolean(cookieStore && isEventSupported(cookieStore, DOM_EVENT.CHANGE))
+}
+
+export function createCustomCookieAccess(
+  cookieStore: CustomCookieStore,
+  cookieName: string,
+  cookieOptions: CookieOptions
+): CookieAccess {
+  async function getAll() {
+    const value = await cookieStore.get(cookieName)
+    return value ? [value] : []
+  }
+
+  return {
+    getAll,
+
+    async getAllAndSet(cb) {
+      const { value, expireDelay } = cb(await getAll())
+      await cookieStore.set(buildCookieString(cookieName, value, expireDelay, cookieOptions))
+    },
+
+    async delete() {
+      await cookieStore.set(buildCookieString(cookieName, '', 0, cookieOptions))
+    },
+
+    // no change notifications, custom stores have no change event.
+    observable: new Observable<void>(),
+  }
 }

@@ -1,7 +1,6 @@
 import { globalObject } from '@datadog/js-core/util'
-import { mockBaseConfiguration, replaceMockable } from '../../../test'
+import { createFakeCustomCookieStore, mockBaseConfiguration, replaceMockable } from '../../../test'
 import { display } from '../../tools/display'
-import { createDocumentCookieAccess } from '../../browser/cookieAccess'
 import { selectSessionStoreStrategyType } from './sessionStore'
 import { SessionPersistence } from './sessionConstants'
 
@@ -19,11 +18,12 @@ describe('session store', () => {
         expect(sessionStoreStrategyType).toBeUndefined()
       })
 
-      it('returns Shopify cookie strategy when a session cookie access is provided', async () => {
+      it('returns custom cookie strategy when sessionPersistence is a cookie store', async () => {
+        const { cookieStore } = createFakeCustomCookieStore()
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
-          mockBaseConfiguration({ shopifyCookieAccessFactory: createDocumentCookieAccess })
+          mockBaseConfiguration({ sessionPersistence: [cookieStore] })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'shopify' }))
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: 'custom-cookie', cookieStore }))
       })
 
       it('returns cookie strategy when sessionPersistence is cookie', async () => {

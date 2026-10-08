@@ -1,12 +1,13 @@
 import { isWorkerEnvironment } from '@datadog/js-core/util'
 import type { Configuration } from '../configuration'
+import type { CustomCookieStore } from '../../browser/cookieAccess'
 import { display } from '../../tools/display'
 import { SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { selectMemorySessionStoreStrategy, initMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
-import { selectShopifyCookieStrategy, initShopifyCookieStrategy } from './storeStrategies/sessionInShopifyCookie'
+import { selectCustomCookieStrategy, initCustomCookieStrategy } from './storeStrategies/sessionInCustomCookie'
 
 /**
  * Selects the correct session store strategy type based on the configuration and storage
@@ -30,17 +31,15 @@ export async function selectSessionStoreStrategyType(
 
 function normalizePersistenceList({
   sessionPersistence,
-  shopifyCookieAccessFactory,
-}: Configuration): SessionPersistence[] {
+}: Configuration): Array<SessionPersistence | CustomCookieStore> {
   if (sessionPersistence !== undefined) {
     return sessionPersistence
   }
 
-  // In worker environments, default to memory since cookie and localStorage are not available,
-  // unless the integration provides its own cookie access
+  // In worker environments, default to memory since cookie and localStorage are not available
   // TODO: make it work when we start using Cookie Store API
   // @see https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
-  if (isWorkerEnvironment && !shopifyCookieAccessFactory) {
+  if (isWorkerEnvironment) {
     return [SessionPersistence.MEMORY]
   }
 
@@ -48,15 +47,16 @@ function normalizePersistenceList({
 }
 
 function selectStrategyForPersistence(
-  persistence: SessionPersistence,
+  persistence: SessionPersistence | CustomCookieStore,
   configuration: Configuration
 ): Promise<SessionStoreStrategyType | undefined> | SessionStoreStrategyType | undefined {
+  if (typeof persistence === 'object') {
+    return selectCustomCookieStrategy(persistence, configuration)
+  }
+
   switch (persistence) {
     case SessionPersistence.COOKIE:
-      // The Shopify Web Pixel cookie access replaces the browser cookie APIs
-      return configuration.shopifyCookieAccessFactory
-        ? selectShopifyCookieStrategy(configuration)
-        : selectCookieStrategy(configuration)
+      return selectCookieStrategy(configuration)
 
     case SessionPersistence.LOCAL_STORAGE:
       return selectLocalStorageStrategy()
@@ -81,7 +81,7 @@ export function getSessionStoreStrategy(
       return initLocalStorageStrategy()
     case SessionPersistence.MEMORY:
       return initMemorySessionStoreStrategy()
-    case 'shopify':
-      return initShopifyCookieStrategy(sessionStoreStrategyType, configuration)
+    case 'custom-cookie':
+      return initCustomCookieStrategy(sessionStoreStrategyType, configuration)
   }
 }
