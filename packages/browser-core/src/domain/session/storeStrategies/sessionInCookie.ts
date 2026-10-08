@@ -63,7 +63,7 @@ export function initCookieStrategy(
 export function createCookieSessionStore(
   cookieAccess: CookieAccess,
   cookieOptions: CookieOptions,
-  configuration: Configuration,
+  configuration: Configuration
 ): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
