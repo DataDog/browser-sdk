@@ -42,9 +42,14 @@ yarn typecheck
 # Linting
 yarn lint
 
-# Format code
+# Check formatting (Prettier `--check`: reports issues, does not modify files)
 yarn format
+
+# Fix formatting
+yarn format --write
 ```
+
+Always format through the `yarn format` script (add `--write` to fix) rather than invoking `yarn prettier` directly, so the same files and options as CI are used. Run it after any edit, especially scripted or bulk ones, and check its output: CI fails on unformatted files.
 
 ## Monorepo Structure
 
