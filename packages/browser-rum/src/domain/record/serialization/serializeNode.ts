@@ -14,12 +14,12 @@ import {
 } from '@datadog/browser-rum-core'
 import type { RoleAnnotatedStringLiteral } from '../../../types'
 import { MediaInteractionType, StringRole } from '../../../types'
-import type { NodeId, StyleSheetId } from '../encoding'
 import { createAttributeAssignment, createString } from '../encoding'
 import { CanvasStatus } from '../canvas/canvasManager'
 import type { InsertionCursor } from './insertionCursor'
 import type { SerializationTransaction } from './serializationTransaction'
 import { serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'
+import { serializeAdoptedStyleSheets } from './serializeStyleSheets'
 import { normalizedTagName } from './serializationUtils'
 
 export function serializeNode(
@@ -104,7 +104,7 @@ function serializeDocumentNode(
   const { nodeId, insertionPoint } = cursor.advance(document)
   transaction.addNode(insertionPoint, createString(StringRole.NodeName, '#document'))
   transaction.setScrollPosition(nodeId, getScrollX(), getScrollY())
-  serializeStyleSheets(document.adoptedStyleSheets, nodeId, transaction)
+  serializeAdoptedStyleSheets(document, nodeId, transaction)
 }
 
 function serializeDocumentFragmentNode(
@@ -121,7 +121,7 @@ function serializeDocumentFragmentNode(
 
   transaction.addNode(insertionPoint, createString(StringRole.NodeName, '#shadow-root'))
   transaction.scope.shadowRootsController.addShadowRoot(documentFragment, transaction.scope)
-  serializeStyleSheets(documentFragment.adoptedStyleSheets, nodeId, transaction)
+  serializeAdoptedStyleSheets(documentFragment, nodeId, transaction)
 }
 
 function serializeDocumentTypeNode(
@@ -223,33 +223,6 @@ function serializeHiddenNodePlaceholder(
   )
   const { width, height } = node.getBoundingClientRect()
   transaction.setSize(nodeId, width, height)
-}
-
-function serializeStyleSheets(
-  sheets: CSSStyleSheet[] | undefined,
-  nodeId: NodeId,
-  transaction: SerializationTransaction
-): void {
-  if (!sheets || sheets.length === 0) {
-    return undefined
-  }
-
-  transaction.attachStyleSheets(
-    nodeId,
-    sheets.map((sheet) => serializeStyleSheet(sheet, transaction))
-  )
-}
-
-function serializeStyleSheet(sheet: CSSStyleSheet, transaction: SerializationTransaction): StyleSheetId {
-  const rules = Array.from(sheet.cssRules || sheet.rules, (rule) => createString(StringRole.Css, rule.cssText))
-  const mediaList =
-    sheet.media.length > 0 ? Array.from(sheet.media).map((medium) => createString(StringRole.Css, medium)) : undefined
-  transaction.addMetric(
-    'cssText',
-    rules.reduce((totalLength, rule) => totalLength + rule.string.length, 0)
-  )
-  transaction.addStyleSheet(rules, mediaList, sheet.disabled)
-  return transaction.scope.styleSheetIds.getOrInsert(sheet)
 }
 
 function encodedElementName(element: Element): RoleAnnotatedStringLiteral {
