@@ -417,7 +417,6 @@ function queueDebuggerSnapshot(result: ActiveEntry): void {
           id: probe.id,
           version: probe.version,
           location: {
-            // TODO: Are our hardcoded where.* keys correct according to the spec?
             method: probe.where.methodName,
             type: probe.where.typeName,
           },
