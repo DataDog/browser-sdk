@@ -4,7 +4,10 @@ import { queueMicrotask } from './queueMicrotask'
  * Handle returned by {@link Observable.subscribe}, used to stop receiving notifications.
  */
 export interface Subscription {
-  /** Removes the observer from the observable. Calling it more than once has no effect. */
+  /**
+   * Removes the observer from the observable. Call it only once: calling it again when no observer
+   * is left runs the observable teardown again.
+   */
   unsubscribe: () => void
 }
 
@@ -154,6 +157,10 @@ export class BufferedObservable<T> extends Observable<T> {
   /**
    * Registers `observer`. Buffered values are replayed to it in a microtask, after which it
    * receives new values as they are notified. Unsubscribing during the replay stops it.
+   *
+   * Values notified between this call and the replay microtask are delivered through the buffer.
+   * Once {@link BufferedObservable.unbuffer} has run, nothing is buffered anymore, so such values are
+   * not delivered to the new observer.
    *
    * @param observer - Function called with each buffered and subsequently notified value.
    * @returns A {@link Subscription} to stop receiving notifications.

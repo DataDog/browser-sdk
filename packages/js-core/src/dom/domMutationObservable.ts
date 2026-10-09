@@ -14,7 +14,10 @@ export interface CharacterDataMutationRecord {
   type: 'characterData'
   /** The node whose data changed. */
   target: Node
-  /** The node data before the change. */
+  /**
+   * The node data before the change, if the observer requested it (`characterDataOldValue`);
+   * `null` otherwise. Always `null` for records from {@link createDOMMutationObservable}.
+   */
   oldValue: string | null
 }
 
@@ -26,7 +29,11 @@ export interface AttributesMutationRecord {
   type: 'attributes'
   /** The element whose attribute changed. */
   target: Element
-  /** The attribute value before the change, or `null` if the attribute was absent. */
+  /**
+   * The attribute value before the change, if the observer requested it (`attributeOldValue`);
+   * `null` otherwise or if the attribute was absent. Always `null` for records from
+   * {@link createDOMMutationObservable}.
+   */
   oldValue: string | null
   /** The local name of the changed attribute. */
   attributeName: string
@@ -54,13 +61,15 @@ export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRec
 
 /**
  * Creates an {@link Observable} notifying batches of DOM mutations happening anywhere in the
- * document (attributes, character data and child lists, including old values).
+ * document (attributes, character data and child lists). Old values are not recorded, so
+ * `oldValue` is always `null`.
  *
  * The underlying `MutationObserver` is created lazily on first subscription and disconnected when
  * the last observer unsubscribes. It uses the Zone.js-free constructor returned by
- * {@link getMutationObserverConstructor}.
+ * {@link getMutationObserverConstructor}; subscribing throws if `MutationObserver` is not
+ * available.
  *
- * @returns An observable of mutation record batches.
+ * @returns An observable of mutation record batches, as reported by `MutationObserver`.
  */
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
@@ -86,10 +95,15 @@ export interface BrowserWindow extends Window {
 
 /**
  * Returns the native `MutationObserver` constructor, bypassing the Zone.js patched one when Angular
- * is used (see the comments below for the rationale).
+ * is used.
+ *
+ * Zone.js wraps `MutationObserver` to propagate its async context, and with some Angular setups
+ * this makes observer callbacks run in an infinite loop, freezing the page. Using the unpatched
+ * constructor avoids it.
  *
  * @returns The original `MutationObserver` constructor, or `window.MutationObserver` when Zone.js is
- * not present or its original cannot be retrieved.
+ * not present or its original cannot be retrieved. Despite the return type, this is `undefined` in
+ * environments without `MutationObserver`.
  */
 export function getMutationObserverConstructor(): MutationObserverConstructor {
   let constructor: MutationObserverConstructor | undefined
