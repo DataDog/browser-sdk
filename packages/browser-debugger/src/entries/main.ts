@@ -127,9 +127,10 @@ export interface DebuggerInitConfiguration {
   maxUnreachableDuration?: number
 
   /**
-   * Whether to start a RUM custom action on the first hit of each probe, if the RUM Browser SDK is
-   * loaded on the page. Only probes evaluated at function entry are tracked, and the action lasts
-   * until the instrumented function returns or throws.
+   * Whether to create a RUM custom action on the first hit of each probe, if the RUM Browser SDK is
+   * loaded on the page. For probes evaluated at function entry, the action lasts until the
+   * instrumented function returns or throws. For probes evaluated at function exit, the action is a
+   * point in time at the function exit.
    *
    * @category Data Collection
    * @defaultValue true

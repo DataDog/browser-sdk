@@ -24,7 +24,7 @@ import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 import { display } from './display'
 import { formatThrowable } from './error'
 import { evaluateCaptureExpressions } from './captureExpressions'
-import { startProbeRumAction, stopProbeRumAction } from './rumAction'
+import { addExitProbeRumAction, startProbeRumAction, stopProbeRumAction } from './rumAction'
 
 const globalObj = globalObject as BrowserWindow
 
@@ -261,6 +261,10 @@ export function onReturn(
           }
         }
       }
+
+      if (shouldTrackProbeHitsAsRumActions()) {
+        result.rumAction = addExitProbeRumAction(probe, 'return')
+      }
     }
 
     if (probe.captureSnapshot) {
@@ -344,6 +348,10 @@ export function onThrow(invocation: InvocationHandle, error: unknown, self: any,
             continue
           }
         }
+      }
+
+      if (shouldTrackProbeHitsAsRumActions()) {
+        result.rumAction = addExitProbeRumAction(probe, 'throw', error)
       }
     }
 
