@@ -16,8 +16,8 @@ export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: bool
 /**
  * Names of the DOM events listened to by the SDKs.
  *
- * Using this enum instead of string literals keeps event names consistent and lets the minifier
- * inline them (it is a `const enum`).
+ * Using this enum instead of string literals keeps event names consistent across the SDKs. Each
+ * member's value is the DOM event name.
  */
 export const enum DOM_EVENT {
   /** `beforeunload`: the window is about to be unloaded. */
@@ -133,14 +133,21 @@ type EventMapFor<T> = T extends Window
                     : Record<never, never>
 
 /**
- * Add an event listener to an event target object (Window, Element, mock object...).  This provides
- * a few conveniences compared to using `element.addEventListener` directly:
+ * Adds an event listener to an event target (Window, Element, mock object...). Compared to calling
+ * `eventTarget.addEventListener` directly, it:
  *
- * * supports IE11 by: using an option object only if needed and emulating the `once` option
+ * - uses the unpatched `addEventListener` / `removeEventListener`, bypassing Zone.js and overrides
+ * such as Salesforce LWC's, so listeners don't trigger extra framework work;
+ * - wraps the listener with `monitor`, so errors it throws are reported instead of propagated;
+ * - ignores untrusted events when configured to (see {@link setAllowUntrustedEvents});
+ * - passes an options object only when `passive` is set, and emulates `once`;
+ * - returns a `stop` function to remove the listener.
  *
- * * wraps the listener with a `monitor` function
- *
- * * returns a `stop` function to remove the listener
+ * @param eventTarget - The target to listen on.
+ * @param eventName - The event to listen for; its type narrows the `listener` event type.
+ * @param listener - Called with each received event.
+ * @param options - `capture`, `passive`, and `once` (the listener is removed after its first call).
+ * @returns An object whose `stop` function removes the listener.
  */
 export function addEventListener<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
   eventTarget: Target,
@@ -152,16 +159,18 @@ export function addEventListener<Target extends EventTarget, EventName extends k
 }
 
 /**
- * Add event listeners to an event target object (Window, Element, mock object...).  This provides
- * a few conveniences compared to using `element.addEventListener` directly:
+ * Adds the same listener for several events on an event target. Behaves like
+ * {@link addEventListener}, except that with `once: true` the listener is called at most once in
+ * total, even if several of the events are received.
  *
- * * supports IE11 by: using an option object only if needed and emulating the `once` option
- *
- * * wraps the listener with a `monitor` function
- *
- * * returns a `stop` function to remove the listener
- *
- * * with `once: true`, the listener will be called at most once, even if different events are listened
+ * @param eventTarget - The target to listen on.
+ * @param eventNames - The events to listen for.
+ * @param listener - Called with each received event.
+ * @param options - Listener options.
+ * @param options.once - Remove all listeners after the first call.
+ * @param options.capture - Listen during the capture phase.
+ * @param options.passive - Declare that the listener never calls `preventDefault()`.
+ * @returns An object whose `stop` function removes the listeners for all `eventNames`.
  */
 export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
   eventTarget: Target,
@@ -232,9 +241,12 @@ let allowUntrustedEventsFromConfiguration: boolean | undefined
  * (events with `isTrusted: false`, typically dispatched by scripts).
  *
  * Until this is called, events are not filtered. Once set to `false`, untrusted events are ignored
- * unless marked with `__ddIsTrusted` (see {@link TrustableEvent}). When several SDKs share this
- * setting (e.g. RUM and Logs), the most permissive value wins: once set to `true`, later calls
- * cannot set it back to `false`.
+ * unless marked with `__ddIsTrusted` (see {@link TrustableEvent}). The most permissive value wins:
+ * once set to `true`, later calls cannot set it back to `false`.
+ *
+ * The setting is module-level state, so it is only shared by SDKs that use the same
+ * `@datadog/js-core` module instance (e.g. RUM and Logs installed from npm in the same bundle). SDKs
+ * loaded as separate CDN bundles each have their own copy.
  *
  * @param value - `true` to accept untrusted events; `false` or `undefined` to ignore them.
  */
@@ -247,8 +259,9 @@ export function setAllowUntrustedEvents(value: boolean | undefined) {
 
 /**
  * Resets the setting configured by {@link setAllowUntrustedEvents} to its initial, unset state.
+ * Intended for tests.
  *
- * @internal Intended for tests.
+ * @internal
  */
 export function resetAllowUntrustedEvents() {
   allowUntrustedEventsFromConfiguration = undefined

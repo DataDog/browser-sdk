@@ -25,6 +25,7 @@ export interface Uint8ArrayBuffer extends Uint8Array {
    *
    * @param begin - Start index (inclusive). Defaults to 0.
    * @param end - End index (exclusive). Defaults to the buffer length.
+   * @returns A new view sharing the same underlying `ArrayBuffer` (no copy).
    */
   subarray(begin?: number, end?: number): Uint8ArrayBuffer
 }
