@@ -421,7 +421,8 @@ describe('cookieAccess', () => {
       const clock = mockClock()
       const { cookieAccess, setValue } = setup('id=abc')
       const spy = jasmine.createSpy('change')
-      cookieAccess.observable.subscribe(spy)
+      const subscription = cookieAccess.observable.subscribe(spy)
+      registerCleanupTask(() => subscription.unsubscribe())
 
       clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
       await waitNextMicrotask()
@@ -438,7 +439,8 @@ describe('cookieAccess', () => {
     it('notifies after writing a new value', async () => {
       const { cookieAccess } = setup('id=abc')
       const spy = jasmine.createSpy('change')
-      cookieAccess.observable.subscribe(spy)
+      const subscription = cookieAccess.observable.subscribe(spy)
+      registerCleanupTask(() => subscription.unsubscribe())
 
       await cookieAccess.getAllAndSet(() => ({ value: 'id=abc', expireDelay: 1000 }))
       expect(spy).not.toHaveBeenCalled()
