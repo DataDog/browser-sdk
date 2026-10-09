@@ -39,6 +39,7 @@ export function jsonStringify(
  * serializing to avoid faulty overrides on some websites.
  */
 export interface ObjectWithToJsonMethod {
+  /** Custom JSON serialization hook, as used by `JSON.stringify`. */
   toJSON?: () => unknown
 }
 
