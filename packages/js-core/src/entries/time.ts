@@ -23,14 +23,15 @@ export type ServerDuration = number & { s: 'Duration in ns' }
 export type TimeStamp = number & { t: 'Epoch time' }
 
 /**
- * Time relative to the navigation start, in milliseconds. Used for timing events relative to
- * when the page was loaded (sourced from `performance.now()`).
+ * Time relative to the `performance.now()` time origin, in milliseconds: the navigation start in
+ * browsers, the process start in Node.js. Used for timing events relative to when the page (or
+ * process) started.
  */
 export type RelativeTime = number & { r: 'Time relative to navigation start' } & { d: 'Duration in ms' }
 
 /** Pair of a relative time and its corresponding absolute timestamp. */
 export interface ClocksState {
-  /** The time relative to navigation start. */
+  /** The time relative to the time origin (navigation start in browsers, process start in Node.js). */
   relative: RelativeTime
   /** The corresponding absolute Unix timestamp, in milliseconds. */
   timeStamp: TimeStamp

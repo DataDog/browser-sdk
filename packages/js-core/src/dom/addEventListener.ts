@@ -86,7 +86,7 @@ export const enum DOM_EVENT {
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
   /** `selectionchange`: the current text selection changed. */
   SELECTION_CHANGE = 'selectionchange',
-  /** `storage`: a storage area (localStorage) was modified in another document. */
+  /** `storage`: a Web Storage area (`localStorage` or `sessionStorage`) was modified in another document. */
   STORAGE = 'storage',
   /** `unhandledrejection`: a promise was rejected without a rejection handler. */
   UNHANDLED_REJECTION = 'unhandledrejection',
