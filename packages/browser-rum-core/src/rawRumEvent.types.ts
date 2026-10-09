@@ -346,6 +346,8 @@ export interface RawRumLongAnimationFrameEvent {
 }
 
 export interface RawRumActionEvent {
+  service?: string
+  version?: string
   date: TimeStamp
   type: typeof RumEventType.ACTION
   action: {

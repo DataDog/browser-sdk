@@ -51,6 +51,8 @@ import type {
 import { callPluginsOnRumStart } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
+import type { ElementContext } from '../domain/action/elementContext'
+import { setElementContext } from '../domain/action/elementContext'
 import type { ActionOptions } from '../domain/action/trackManualActions'
 import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import { createPreStartStrategy } from './preStartRum'
@@ -168,6 +170,20 @@ export interface RumPublicApi extends PublicApi {
    * @param context - Context of the action
    */
   addAction: (name: string, context?: object) => void
+
+  /**
+   * Set service, version, and custom context for clicks on an element and its descendants.
+   * Replaces the element's programmatic metadata. Can be called before init().
+   * Metadata is captured on pointerdown, including ancestors across shadow roots.
+   * Context is merged recursively; closer elements take precedence. On the same element,
+   * programmatic properties take precedence over the data-dd-context JSON attribute.
+   * Service and version are inherited independently from the closest element defining each.
+   *
+   * @category Context - Action
+   * @param element - Element to annotate
+   * @param context - Attribution and custom context
+   */
+  setElementContext: (element: Element, context: ElementContext) => void
 
   /**
    * Start tracking a custom action.
@@ -792,6 +808,8 @@ export function makeRumPublicApi(
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
+
+    setElementContext: monitor(setElementContext),
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')

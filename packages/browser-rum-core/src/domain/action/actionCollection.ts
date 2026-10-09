@@ -127,6 +127,7 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
       },
       ...(isAuto
         ? {
+            ...action.elementContext,
             _dd: {
               action: {
                 target: {
