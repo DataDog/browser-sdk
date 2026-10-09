@@ -20,6 +20,10 @@ export default function (config) {
       // Exclude developer-extension from BrowserStack because it is is only compatible with Chrome
       // so there is no point to test it on other browsers.
       'developer-extension/**',
+      // Angular's signal debugging requires FinalizationRegistry, absent in Chrome/Edge 80 and Firefox 78.
+      ...(filteredConfigurations.some(({ id }) => ['chrome-desktop', 'edge', 'firefox'].includes(id))
+        ? ['packages/browser-rum-angular/**']
+        : []),
     ],
     plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
