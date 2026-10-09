@@ -1,6 +1,10 @@
-import { safeTruncate } from '@datadog/browser-core'
+import { safeTruncate, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
 import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
+import type { RumConfiguration } from './configuration'
+import { getNodePrivacyLevel, isAllowlisted, shouldMaskAttribute } from './privacy'
+import type { NodePrivacyLevelCache } from './privacy'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from './privacyConstants'
 import {
   STABLE_ATTRIBUTES,
   isGeneratedValue,
@@ -32,24 +36,39 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
   'rel',
   'download',
   'method',
-  'action',
   'enctype',
   'autocomplete',
 ])
+
+/**
+ * Attributes that can contain PII, collected behind an experimental flag (like `data-*`) when not masked
+ */
+const MASKABLE_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt']
+
+/**
+ * Same limit as the action name
+ */
+export const ATTRIBUTE_VALUE_LIMIT = 100
+
+interface MaskingContext {
+  configuration: RumConfiguration
+  nodePrivacyLevelCache: NodePrivacyLevelCache
+}
 
 /**
  * Extracts a selector string from a MouseEvent composedPath.
  *
  * This function:
  * 1. Filters out non-Element items (Document, Window, ShadowRoot)
- * 2. Extracts a selector string from each element
- * 3. Truncates the selector string if it exceeds the character limit
+ * 2. Extracts the selector tokens of each element
+ * 3. Truncates the selector string between tokens if it exceeds the character limit
  * 4. Returns the selector string
  *
  * @param composedPath - The composedPath from a MouseEvent
+ * @param configuration - The RUM configuration
  * @returns A selector string
  */
-export function getComposedPathSelector(composedPath: EventTarget[], actionNameAttribute: string | undefined): string {
+export function getComposedPathSelector(composedPath: EventTarget[], configuration: RumConfiguration): string {
   // Filter to only include Element nodes
   const elements = composedPath.filter(
     (el): el is Element => el instanceof Element && !FILTERED_TAGNAMES.includes(el.tagName)
@@ -59,38 +78,53 @@ export function getComposedPathSelector(composedPath: EventTarget[], actionNameA
     return ''
   }
 
+  const { actionNameAttribute } = configuration
   const allowedAttributes = actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
+  const masking: MaskingContext | undefined = isExperimentalFeatureEnabled(
+    ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES
+  )
+    ? {
+        // Do not exempt the action name attribute from privacy
+        configuration: { ...configuration, actionNameAttribute: undefined },
+        // Shared across the path
+        nodePrivacyLevelCache: new Map(),
+      }
+    : undefined
 
   let result = ''
   for (const element of elements) {
-    const part = getSelectorStringFromElement(element, allowedAttributes)
-    result += part
-    if (result.length >= CHARACTER_LIMIT) {
-      return safeTruncate(result, CHARACTER_LIMIT)
+    for (const token of getSelectorTokensFromElement(element, allowedAttributes, masking)) {
+      // Never split an attribute key and value
+      if (result.length + token.length > CHARACTER_LIMIT) {
+        return result
+      }
+      result += token
     }
   }
   return result
 }
 
 /**
- * Extracts a selector string from an element.
+ * Extracts the selector tokens of an element, followed by `;`
  */
-function getSelectorStringFromElement(element: Element, allowedAttributes: MatchOption[]): string {
-  const tagName = getTagNameSelector(element)
-  const id = getIDSelector(element)
-  const classes = getElementClassesString(element)
-  const attributes = extractSafeAttributesString(element, allowedAttributes)
-  const positionData = computePositionDataString(element)
-
-  return `${tagName}${id || ''}${attributes}${classes}${positionData};`
+function getSelectorTokensFromElement(
+  element: Element,
+  allowedAttributes: MatchOption[],
+  masking: MaskingContext | undefined
+): string[] {
+  return [getTagNameSelector(element), getIDSelector(element) || ''].concat(
+    extractAttributes(element, allowedAttributes, masking),
+    getElementClasses(element),
+    computePositionDataString(element),
+    ';'
+  )
 }
 
-function getElementClassesString(element: Element): string {
+function getElementClasses(element: Element): string[] {
   return Array.from(element.classList)
     .filter((c) => !isGeneratedValue(c))
     .sort()
     .map((c) => `.${CSS.escape(c)}`)
-    .join('')
 }
 
 /**
@@ -116,16 +150,54 @@ function computePositionDataString(element: Element): string {
 }
 
 /**
- * Extracts only the safe (allowlisted) attributes from an element.
- * The attributes are sorted alphabetically by name.
+ * Extracts the safe attributes, and the unmasked maskable attributes when enabled, sorted
  */
-function extractSafeAttributesString(element: Element, allowedAttributes: MatchOption[]): string {
+function extractAttributes(
+  element: Element,
+  allowedAttributes: MatchOption[],
+  masking: MaskingContext | undefined
+): string[] {
   const result: string[] = []
-  const attributes = Array.from(element.attributes)
-  for (const attribute of attributes) {
-    if (allowedAttributes.includes(attribute.name)) {
-      result.push(getAttributeValueSelector(attribute.name, attribute.value))
+  for (const attribute of Array.from(element.attributes)) {
+    const name = attribute.name
+    if (masking && isMaskableAttribute(element, name, allowedAttributes)) {
+      const nodePrivacyLevel = getNodePrivacyLevel(
+        element,
+        masking.configuration.defaultPrivacyLevel,
+        masking.nodePrivacyLevelCache
+      )
+      if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN || nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
+        continue
+      }
+      const value = attribute.value
+      // Drop masked values: `***` is not useful and uses the character budget
+      if (
+        shouldMaskAttribute(element.tagName, name, value, nodePrivacyLevel, masking.configuration) &&
+        !(nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED && isAllowlisted(value))
+      ) {
+        continue
+      }
+      // `data-*` names can contain separators
+      result.push(getAttributeValueSelector(CSS.escape(name), safeTruncate(value, ATTRIBUTE_VALUE_LIMIT)))
+    } else if (allowedAttributes.includes(name)) {
+      result.push(getAttributeValueSelector(name, attribute.value))
     }
   }
-  return result.sort().join('')
+  return result.sort()
+}
+
+function isMaskableAttribute(element: Element, name: string, allowedAttributes: MatchOption[]): boolean {
+  // `shouldMaskAttribute` only masks `href` on HTML `<a>` elements
+  if (name === 'href') {
+    return element.tagName === 'A'
+  }
+  if (name.startsWith('data-')) {
+    // Skip stable names (kept raw) and generated names (ex: Vue `data-v-<hash>`), except the action name attribute
+    return (
+      name !== PRIVACY_ATTR_NAME &&
+      !STABLE_ATTRIBUTES.includes(name) &&
+      (!isGeneratedValue(name) || allowedAttributes.includes(name))
+    )
+  }
+  return MASKABLE_ATTRIBUTES.includes(name)
 }
