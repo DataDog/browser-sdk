@@ -1,4 +1,5 @@
 import type { Router } from 'vue-router'
+import { noop } from '@datadog/js-core/util'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import type {
   RumInitConfiguration,
@@ -6,7 +7,6 @@ import type {
   RumPublicApi,
   StartRumResult,
 } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
 import { nuxtRumPlugin, resetNuxtPlugin } from '../src/domain/nuxtPlugin'
 import { registerCleanupTask } from '../../browser-core/test'
 

@@ -1,7 +1,8 @@
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'
 import type { Duration, ServerDuration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
@@ -13,7 +14,6 @@ import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startViewCollection } from './viewCollection'
 import type { ViewEvent } from './trackViews'
 
@@ -74,7 +74,7 @@ describe('viewCollection', () => {
     hooks = createHooks()
     const viewHistory = mockViewHistory(viewHistoryEntry)
     getReplayStatsSpy = jasmine.createSpy()
-    const domMutationObservable = new Observable<RumMutationRecord[]>()
+    const domMutationObservable = new Observable<MutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const locationChangeObservable = new Observable<LocationChange>()
     mockClock()

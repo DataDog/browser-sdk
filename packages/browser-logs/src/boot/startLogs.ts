@@ -1,4 +1,5 @@
-import type { BufferedObservable, BufferedData, SessionManager } from '@datadog/browser-core'
+import type { BufferedData, SessionManager } from '@datadog/browser-core'
+import type { BufferedObservable } from '@datadog/js-core/util'
 import {
   sendToExtension,
   canUseEventBridge,

@@ -1,4 +1,5 @@
-import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
+import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, mockClock, registerCleanupTask } from '@datadog/browser-core/test'

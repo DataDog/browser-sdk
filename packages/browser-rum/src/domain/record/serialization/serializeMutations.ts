@@ -1,5 +1,6 @@
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { NodePrivacyLevelCache, RumMutationRecord } from '@datadog/browser-rum-core'
+import type { NodePrivacyLevelCache } from '@datadog/browser-rum-core'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import {
   isNodeShadowHost,
   getParentNode,
@@ -25,7 +26,7 @@ import { serializeAttribute } from './serializeAttribute'
 
 export function serializeMutations(
   timestamp: TimeStamp,
-  mutations: RumMutationRecord[],
+  mutations: MutationRecord[],
   emitRecord: EmitRecordCallback,
   emitResource: EmitResourceCallback,
   emitStats: EmitStatsCallback,
@@ -45,7 +46,7 @@ type AttributeName = string
 type OldValue = string | null
 
 function processMutations(
-  mutations: RumMutationRecord[],
+  mutations: MutationRecord[],
   emitResource: EmitResourceCallback,
   transaction: SerializationTransaction
 ): void {

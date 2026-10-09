@@ -1,6 +1,6 @@
 import { globalObject, buildUrl, mockable } from '@datadog/js-core/util'
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { Observable } from '@datadog/browser-core'
+import type { Observable } from '@datadog/js-core/util'
 import { relativeNow } from '@datadog/js-core/time'
 import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
 import { DISCARDED } from '@datadog/js-core/assembly'

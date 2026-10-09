@@ -1,4 +1,4 @@
-import { globalObject } from '@datadog/js-core/util'
+import { globalObject, Observable } from '@datadog/js-core/util'
 import {
   registerCleanupTask,
   replaceMockable,
@@ -6,7 +6,6 @@ import {
   mockBaseConfiguration,
   collectAsyncCalls,
 } from '../../../../test'
-import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
 import type { Configuration } from '../../configuration'
 import { buildCookieOptions } from '../../configuration'

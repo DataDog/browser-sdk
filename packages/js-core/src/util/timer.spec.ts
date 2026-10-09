@@ -1,8 +1,7 @@
-import { startMonitorErrorCollection } from '@datadog/js-core/monitor'
-import { mockClock, mockZoneJs } from '../../test'
-import type { Clock, MockZoneJs } from '../../test'
+import { startMonitorErrorCollection } from '../entries/monitor'
+import { mockClock, mockZoneJs } from '../../../browser-core/test'
+import type { Clock, MockZoneJs } from '../../../browser-core/test'
 import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'
-import { noop } from './utils/functionUtils'
 ;[
   {
     name: 'setTimeout' as const,
@@ -44,7 +43,9 @@ import { noop } from './utils/functionUtils'
       const zoneJsSetTimerSpy = jasmine.createSpy()
       zoneJs.replaceProperty(window, name, zoneJsSetTimerSpy)
 
-      setTimer(noop)
+      setTimer(() => {
+        // ignore
+      })
       clock.tick(0)
 
       expect(zoneJsSetTimerSpy).not.toHaveBeenCalled()

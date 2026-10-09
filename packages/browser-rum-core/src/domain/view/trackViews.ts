@@ -8,33 +8,27 @@ import {
   isRelativeTime,
 } from '@datadog/js-core/time'
 import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
-import type { Subscription } from '@datadog/browser-core'
-import type { Context, ContextValue } from '@datadog/js-core/util'
+import type { Subscription, Context, ContextValue } from '@datadog/js-core/util'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import {
-  noop,
   PageExitReason,
   shallowClone,
   generateUUID,
   throttle,
   display,
-  setInterval,
-  clearInterval,
-  setTimeout,
-  Observable,
   createContextManager,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import { mockable } from '@datadog/js-core/util'
+import { mockable, setInterval, clearInterval, setTimeout, Observable, noop } from '@datadog/js-core/util'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../browser/performanceObservable'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../browser/performanceObservable'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import { trackRouteChangeViewMetrics } from './viewMetrics/trackRouteChangeViewMetrics'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
@@ -108,7 +102,7 @@ export interface ViewOptions {
 
 export function trackViews(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
@@ -208,7 +202,7 @@ export function trackViews(
 
 function newView(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<RumMutationRecord[]>,
+  domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   loadingType: ViewLoadingType,

@@ -1,4 +1,5 @@
-import { round, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
+import { round } from '@datadog/browser-core'
 import { ONE_SECOND, elapsed } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import type { WeakRef, WeakRefConstructor } from '@datadog/browser-core'

@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { ConsoleApiName } from '@datadog/js-core/util'
+import type { Subscription } from '@datadog/js-core/util'
 import { ignoreConsoleLogs } from '../../../test'
-import type { Subscription } from '../../tools/observable'
 import type { ErrorConsoleLog } from './consoleObservable'
 import { initConsoleObservable } from './consoleObservable'
 

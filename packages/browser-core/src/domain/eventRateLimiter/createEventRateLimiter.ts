@@ -1,5 +1,5 @@
 import { ONE_MINUTE } from '@datadog/js-core/time'
-import { setTimeout } from '../../tools/timer'
+import { setTimeout } from '@datadog/js-core/util'
 
 export type EventRateLimiter = ReturnType<typeof createEventRateLimiter>
 

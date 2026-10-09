@@ -1,5 +1,6 @@
-import { createDisplay, getDebugMode } from './util'
-import type { Display } from './util'
+import { createDisplay } from '../util/display'
+import { getDebugMode } from '../util/debug'
+import type { Display } from '../util/display'
 
 /** An isolated monitor, as returned by {@link createMonitor}. */
 export interface Monitor {

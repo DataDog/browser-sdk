@@ -1,4 +1,4 @@
-import { Observable } from '..'
+import { Observable } from '@datadog/js-core/util'
 import type { MockFlushController } from '../../test'
 import { createMockFlushController, replaceMockable } from '../../test'
 import { display } from '../tools/display'

@@ -1,5 +1,5 @@
-import type { TimeoutId } from './timer'
-import { setTimeout, clearTimeout } from './timer'
+import { setTimeout, clearTimeout } from '@datadog/js-core/util'
+import type { TimeoutId } from '@datadog/js-core/util'
 
 export function isThenable<T>(value: unknown): value is PromiseLike<T> {
   return !!value && typeof (value as { then?: unknown }).then === 'function'

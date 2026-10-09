@@ -1,6 +1,6 @@
 import type { FlushEvent, Telemetry } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'

@@ -1,5 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import { display, Observable } from '@datadog/browser-core'
+import { display } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import { createHook } from '@datadog/js-core/assembly'
 import { mockCiVisibilityValues } from '../../../test'
 import type { CookieObservable } from '../../browser/cookieObservable'

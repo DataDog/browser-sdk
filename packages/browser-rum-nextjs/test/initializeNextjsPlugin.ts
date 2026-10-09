@@ -4,7 +4,7 @@ import type {
   StartRumResult,
   RumPluginOnInitOptions,
 } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
 import { nextjsPlugin, resetNextjsPlugin } from '../src/domain/nextjsPlugin'
 import { registerCleanupTask } from '../../browser-core/test'
 

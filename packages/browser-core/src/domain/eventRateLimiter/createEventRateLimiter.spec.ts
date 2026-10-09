@@ -1,7 +1,7 @@
+import { noop } from '@datadog/js-core/util'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
-import { noop } from '../../tools/utils/functionUtils'
 import { createEventRateLimiter } from './createEventRateLimiter'
 import type { EventRateLimiter } from './createEventRateLimiter'
 

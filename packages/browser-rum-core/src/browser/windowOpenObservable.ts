@@ -1,4 +1,5 @@
-import { instrumentMethod, Observable } from '@datadog/browser-core'
+import { instrumentMethod } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 
 export function createWindowOpenObservable() {
   const observable = new Observable<void>()

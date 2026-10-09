@@ -1,5 +1,5 @@
 import type { Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import type { RecorderInitEvent } from '../boot/postStartStrategy'

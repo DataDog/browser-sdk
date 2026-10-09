@@ -1,4 +1,4 @@
-import { Observable } from '../src/tools/observable'
+import { Observable } from '@datadog/js-core/util'
 import type { SessionState } from '../src/domain/session/sessionState'
 import type { SessionStoreStrategy } from '../src/domain/session/storeStrategies/sessionStoreStrategy'
 

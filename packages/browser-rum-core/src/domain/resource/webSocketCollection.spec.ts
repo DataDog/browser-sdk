@@ -1,5 +1,6 @@
 import type { WebSocketContext } from '@datadog/browser-core'
-import { initWebSocketObservable, Observable } from '@datadog/browser-core'
+import { initWebSocketObservable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks } from '@datadog/js-core/time'

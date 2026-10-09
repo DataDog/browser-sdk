@@ -4,7 +4,7 @@ import type {
   StartRumResult,
   RumPluginOnInitOptions,
 } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
 import type { VuePluginConfiguration } from '../src/domain/vuePlugin'
 import { vuePlugin, resetVuePlugin } from '../src/domain/vuePlugin'
 import { registerCleanupTask } from '../../browser-core/test'

@@ -1,5 +1,5 @@
-import type { Observable, Encoder } from '@datadog/browser-core'
-import type { Context } from '@datadog/js-core/util'
+import type { Encoder } from '@datadog/browser-core'
+import type { Observable, Context } from '@datadog/js-core/util'
 import { createBatch, DeflateEncoderStreamId, sendToExtension } from '@datadog/browser-core'
 import { combine } from '@datadog/js-core/util'
 import { createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/js-core/transport'

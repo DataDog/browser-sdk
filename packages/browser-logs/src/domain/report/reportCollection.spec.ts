@@ -1,4 +1,5 @@
-import { ErrorHandling, ErrorSource, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
+import { ErrorHandling, ErrorSource } from '@datadog/browser-core'
 import type { MockReportingObserver } from '@datadog/browser-core/test'
 import { FAKE_REPORT, mockReportingObserver, mockSourceCodeContext } from '@datadog/browser-core/test'
 import type { RawReportLogsEvent } from '../../rawLogsEvent.types'
