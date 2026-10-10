@@ -12,7 +12,7 @@
     "@types/react-dom": "19.3.0",
     "@wxt-dev/module-react": "1.2.2",
     "typescript": "6.0.3",
-    "vite": "8.3.1"
+    "vite": "8.3.2"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
