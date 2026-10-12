@@ -499,6 +499,7 @@ describe('trackedConnection', () => {
   function closingContext(at: ClocksState): WebSocketClosingContext {
     return { state: 'closing', instance: INSTANCE, at }
   }
+
   // ---------------------------------------------------------------------------
   // Building connections
   // ---------------------------------------------------------------------------
