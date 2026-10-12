@@ -1086,11 +1086,11 @@ export type RumVitalWebsocketConnectingEvent = RumVitalWebsocketCommonProperties
   /**
    * Vital properties
    */
-  readonly vital?: {
+  readonly vital: {
     /**
-     * WebSocket properties. The identity of the connection is reported on this vital only, and is not repeated on the vitals of the later phases
+     * WebSocket properties. The identity of the connection is reported on this vital.
      */
-    readonly websocket?: {
+    readonly websocket: {
       /**
        * URL the connection was opened on, without its query string
        */
@@ -1116,7 +1116,7 @@ export type RumVitalWebsocketCommonProperties = RumVitalEventCommonProperties & 
   /**
    * Vital properties
    */
-  readonly vital?: {
+  readonly vital: {
     /**
      * Type of the vital.
      */
@@ -1146,11 +1146,11 @@ export type RumVitalWebsocketOpenEvent = RumVitalWebsocketCommonProperties & {
   /**
    * Vital properties
    */
-  readonly vital?: {
+  readonly vital: {
     /**
      * WebSocket properties
      */
-    readonly websocket?: {
+    readonly websocket: {
       /**
        * Interval between the connecting date and the open date of the connection, in nanoseconds
        */
@@ -1168,7 +1168,7 @@ export type RumVitalWebsocketOpenEvent = RumVitalWebsocketCommonProperties & {
        */
       readonly selected_extensions?: string
       /**
-       * Version of the snapshot, incremented on every vital reporting one, so that heartbeats can be ordered when they are received out of sequence
+       * Version of the snapshot within its connection, starting at 1 and incremented on every websocket_open vital and on the websocket_closed vital, so that they can be ordered when they are received out of sequence
        */
       readonly snapshot_version: number
       /**
@@ -1188,11 +1188,11 @@ export type RumVitalWebsocketClosingEvent = RumVitalWebsocketCommonProperties & 
   /**
    * Vital properties
    */
-  readonly vital?: {
+  readonly vital: {
     /**
      * WebSocket properties
      */
-    readonly websocket?: {
+    readonly websocket: {
       /**
        * Date the connection was asked to close, in ms from epoch. Computed from the connecting date and the time elapsed since, measured on a monotonic clock
        */
@@ -1214,11 +1214,15 @@ export type RumVitalWebsocketClosedEvent = RumVitalWebsocketCommonProperties & {
   /**
    * Vital properties
    */
-  readonly vital?: {
+  readonly vital: {
     /**
      * WebSocket properties
      */
-    readonly websocket?: {
+    readonly websocket: {
+      /**
+       * URL the connection was opened on, without its query string
+       */
+      url: string
       /**
        * Date tracking of the connection ended, in ms from epoch. It is the date the connection closed when the tracking end reason is close_event, and the date tracking stopped otherwise. Computed from the connecting date and the time elapsed since, measured on a monotonic clock
        */
@@ -1230,7 +1234,7 @@ export type RumVitalWebsocketClosedEvent = RumVitalWebsocketCommonProperties & {
       /**
        * Why tracking of the connection ended
        */
-      readonly tracking_end_reason: 'close_event' | 'session_end' | 'page_unloaded'
+      readonly tracking_end_reason: 'close_event' | 'session_end' | 'page_terminated'
       /**
        * Code the connection was closed with. Reported when, and only when, the tracking end reason is close_event
        */
@@ -1244,7 +1248,7 @@ export type RumVitalWebsocketClosedEvent = RumVitalWebsocketCommonProperties & {
        */
       readonly was_clean?: boolean
       /**
-       * Version of the snapshot, incremented on every vital reporting one, so that heartbeats can be ordered when they are received out of sequence
+       * Version of the snapshot within its connection, starting at 1 and incremented on every websocket_open vital and on the websocket_closed vital, so that they can be ordered when they are received out of sequence
        */
       readonly snapshot_version: number
       /**
@@ -1316,6 +1320,14 @@ export interface CommonProperties {
      * Whether this session has a replay
      */
     readonly has_replay?: boolean
+    /**
+     * Whether the SDK is initialised on the application's main or a secondary process
+     */
+    readonly is_main_process?: boolean
+    /**
+     * Whether this session has performance timeseries data
+     */
+    readonly has_timeseries?: boolean
     [k: string]: unknown
   }
   /**
@@ -1667,7 +1679,7 @@ export interface CommonProperties {
     /**
      * Execution context name
      */
-    readonly name?: string
+    name?: string
     [k: string]: unknown
   }
   [k: string]: unknown
