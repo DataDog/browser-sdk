@@ -188,10 +188,10 @@ describe('startSegmentCollection', () => {
       })
     })
 
-    describe('flush when the page is discarded', () => {
+    describe('flush when the page is terminated', () => {
       it('does not flush the segment', () => {
         addRecord(RECORD)
-        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
         worker.processAllMessages()
 
         expect(httpRequestSpy.send).not.toHaveBeenCalled()

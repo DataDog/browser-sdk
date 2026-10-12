@@ -59,12 +59,12 @@ describe('replayResourceCollection', () => {
     expect(sendOnExit).toHaveBeenCalledTimes(1)
   })
 
-  it('does not re-send pending resources when the page is discarded', () => {
+  it('does not re-send pending resources when the page is terminated', () => {
     const { httpRequest, sendOnExit } = createHttpRequestSpy()
     const { emitResource, lifeCycle } = startCollection(httpRequest)
 
     emitResource('hash1', CONTENT)
-    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
 
     expect(sendOnExit).not.toHaveBeenCalled()
   })

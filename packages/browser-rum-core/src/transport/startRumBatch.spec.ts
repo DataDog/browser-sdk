@@ -218,7 +218,7 @@ describe('computeAssembledViewDiff', () => {
 })
 
 describe('startRumBatch', () => {
-  it('sends what it holds when the page is discarded', () => {
+  it('sends what it holds when the page is terminated', () => {
     const interceptor = interceptRequests()
     const lifeCycle = new LifeCycle()
     const batch = startRumBatch(mockRumConfiguration(), lifeCycle, noop, new Observable<void>(), createIdentityEncoder)

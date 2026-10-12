@@ -65,7 +65,7 @@ export function trackClickActions(
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
   lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
-    if (reason !== PageExitReason.PAGE_DISCARDED) {
+    if (reason !== PageExitReason.PAGE_TERMINATED) {
       stopClickChain()
     }
   })
@@ -225,7 +225,7 @@ function startClickAction(
   })
 
   const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
-    if (reason !== PageExitReason.PAGE_DISCARDED) {
+    if (reason !== PageExitReason.PAGE_TERMINATED) {
       click.stop(timeStampNow())
     }
   })

@@ -236,7 +236,7 @@ describe('startRecording', () => {
     expect(canvasSendOnExitSpy).toHaveBeenCalledTimes(1)
   })
 
-  it('does not flush queued canvas content when the page is discarded', async () => {
+  it('does not flush queued canvas content when the page is terminated', async () => {
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
@@ -268,7 +268,7 @@ describe('startRecording', () => {
     canvas.getContext('2d')!.fillRect(0, 0, 2, 2)
     clock.tick(1000)
     await collectAsyncCalls(requestIdleCallbackMock.spy)
-    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_DISCARDED)
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
 
     expect(canvasSendSpy).not.toHaveBeenCalled()
     expect(canvasSendOnExitSpy).not.toHaveBeenCalled()

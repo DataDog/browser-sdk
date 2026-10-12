@@ -65,7 +65,7 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
   })
 
   const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
-    if (reason === PageExitReason.PAGE_DISCARDED) {
+    if (reason === PageExitReason.PAGE_TERMINATED) {
       // Page is going away.
       tracker.flushOpenConnections(clocksNow(), WebSocketTrackingEndReason.PAGE_UNLOADED)
     } else {

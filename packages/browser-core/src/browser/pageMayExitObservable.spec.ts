@@ -46,10 +46,10 @@ describe('createPageMayExitObservable', () => {
     expect(onExitSpy).not.toHaveBeenCalled()
   })
 
-  it('notifies page_discarded when pagehide fires without bfcache', () => {
+  it('notifies page_terminated when pagehide fires without bfcache', () => {
     window.dispatchEvent(createNewEvent('pagehide', { persisted: false }))
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.PAGE_DISCARDED })
+    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.PAGE_TERMINATED })
   })
 
   it('does not notify when pagehide fires for bfcache', () => {
