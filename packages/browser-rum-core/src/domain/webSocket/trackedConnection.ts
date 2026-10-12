@@ -90,14 +90,13 @@ export interface TrackedConnection {
    */
   recordClose: (context: WebSocketClosedContext) => void
   /**
-   * Ends tracking without a close event, so with no close outcome to report. `bufferedAmount` is the
-   * send queue depth read from the socket at that moment, handed in rather than read here so this
-   * module needs no socket.
+   * Ends tracking without a close event, so with no close outcome to report.
+   * `bufferedAmountAtClose` is the send queue depth read from the socket at that moment.
    */
   recordTrackingEnd: (
     endClocks: ClocksState,
     trackingEndReason: UnobservedTrackingEndReason,
-    bufferedAmount: number
+    bufferedAmountAtClose: number
   ) => void
 }
 
@@ -230,8 +229,8 @@ export function createTrackedConnection({
       endTracking(at, WebSocketTrackingEndReason.CLOSE_EVENT, bufferedAmountAtClose, { code, reason, wasClean })
     },
 
-    recordTrackingEnd: (endClocks, trackingEndReason, bufferedAmount) => {
-      endTracking(endClocks, trackingEndReason, bufferedAmount)
+    recordTrackingEnd: (endClocks, trackingEndReason, bufferedAmountAtClose) => {
+      endTracking(endClocks, trackingEndReason, bufferedAmountAtClose)
     },
   }
 }
