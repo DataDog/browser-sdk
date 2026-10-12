@@ -124,6 +124,18 @@ describe('api', () => {
       )
     })
 
+    it('should report the probe location in the method-probe format', () => {
+      addProbe(createProbe({ where: { typeName: 'src/utils.js', methodName: 'add' } }))
+
+      const probes = getProbes('src/utils.js;add')!
+      onReturn(onEntry(probes, thisArg)!, null, thisArg)
+
+      expect(mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.probe.location).toEqual({
+        method: 'add',
+        type: 'src/utils.js',
+      })
+    })
+
     it('should skip probe if sampling budget exceeded', () => {
       // Use a very low sampling rate to ensure budget is exceeded
       addProbe(
