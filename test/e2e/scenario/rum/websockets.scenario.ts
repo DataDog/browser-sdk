@@ -99,7 +99,7 @@ test.describe('rum websockets', () => {
         expect(closedVital.date).toBeLessThanOrEqual(viewEndTime)
       })
 
-    createTest('ends tracking with page_unloaded when the page unloads with the connection still open')
+    createTest('ends tracking with page_terminated when the page unloads with the connection still open')
       .withRum(RUM_CONFIGURATION)
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
@@ -120,7 +120,7 @@ test.describe('rum websockets', () => {
         expect(vitals.closed).toHaveLength(1)
         expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
         const closed = vitals.closed[0].vital.websocket
-        expect(closed.tracking_end_reason).toBe('page_unloaded')
+        expect(closed.tracking_end_reason).toBe('page_terminated')
         expect(closed.close_code).toBeUndefined()
         expect(closed.close_reason).toBeUndefined()
         expect(closed.was_clean).toBeUndefined()

@@ -839,7 +839,7 @@ describe('webSocketCollection', () => {
 
         expect(single(closedPayloads())).toEqual(
           jasmine.objectContaining({
-            tracking_end_reason: WebSocketTrackingEndReason.PAGE_UNLOADED,
+            tracking_end_reason: WebSocketTrackingEndReason.PAGE_TERMINATED,
             closed_date: clock.timeStamp(40),
           })
         )
@@ -854,9 +854,9 @@ describe('webSocketCollection', () => {
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
 
         expect(closedPayloads().map((payload) => payload.tracking_end_reason)).toEqual([
-          WebSocketTrackingEndReason.PAGE_UNLOADED,
-          WebSocketTrackingEndReason.PAGE_UNLOADED,
-          WebSocketTrackingEndReason.PAGE_UNLOADED,
+          WebSocketTrackingEndReason.PAGE_TERMINATED,
+          WebSocketTrackingEndReason.PAGE_TERMINATED,
+          WebSocketTrackingEndReason.PAGE_TERMINATED,
         ])
       })
 
@@ -882,7 +882,7 @@ describe('webSocketCollection', () => {
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
         dispatchClose(socket)
 
-        expect(single(closedPayloads()).tracking_end_reason).toBe(WebSocketTrackingEndReason.PAGE_UNLOADED)
+        expect(single(closedPayloads()).tracking_end_reason).toBe(WebSocketTrackingEndReason.PAGE_TERMINATED)
       })
 
       it('reports nothing more for a connection that closed before the page terminated', () => {
