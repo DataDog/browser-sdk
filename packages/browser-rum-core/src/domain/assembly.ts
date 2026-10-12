@@ -119,13 +119,17 @@ function shouldSend(
       beforeSend(event, domainContext)
     )
     if (result === false) {
-      if (event.type === RumEventType.VIEW) {
-        display.warn("Can't dismiss view events using beforeSend!")
-      } else if (event.type === RumEventType.VITAL && event.vital?.type === VitalType.WEBSOCKET) {
-        display.warn("Can't dismiss WebSocket vital events using beforeSend!")
-      } else {
+      const nonDismissibleEventLabel =
+        event.type === RumEventType.VIEW
+          ? 'view'
+          : event.type === RumEventType.VITAL && event.vital?.type === VitalType.WEBSOCKET
+            ? 'WebSocket vital'
+            : undefined
+
+      if (!nonDismissibleEventLabel) {
         return false
       }
+      display.warn(`Can't dismiss ${nonDismissibleEventLabel} events using beforeSend!`)
     }
   }
 
