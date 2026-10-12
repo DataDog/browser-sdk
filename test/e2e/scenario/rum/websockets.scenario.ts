@@ -415,6 +415,7 @@ test.describe('rum websockets', () => {
         expect(vitals.connecting[0].vital.websocket.url).toBe('ws://redacted.example/')
         expect(vitals.connecting[0].vital.websocket.requested_protocols).toEqual(['redacted'])
         expect(vitals.open[0].vital.websocket.selected_protocol).toBe('redacted')
+        expect(vitals.closed[0].vital.websocket.url).toBe('ws://redacted.example/')
         expect(vitals.closed[0].vital.websocket.close_code).toBe(4000)
         expect(vitals.closed[0].vital.websocket.close_reason).toBe('redacted')
       })
@@ -458,9 +459,12 @@ test.describe('rum websockets', () => {
 
         await flushEvents()
 
-        const url = new URL(getWebSocketVitals(intakeRegistry).connecting[0].vital.websocket.url)
-        expect(url.pathname).toBe('/ws-echo')
-        expect(url.search).toBe('')
+        const vitals = getWebSocketVitals(intakeRegistry)
+        const connectingUrl = new URL(vitals.connecting[0].vital.websocket.url)
+        const closedUrl = new URL(vitals.closed[0].vital.websocket.url)
+        expect(connectingUrl.pathname).toBe('/ws-echo')
+        expect(connectingUrl.search).toBe('')
+        expect(closedUrl.href).toBe(connectingUrl.href)
       })
   })
 })

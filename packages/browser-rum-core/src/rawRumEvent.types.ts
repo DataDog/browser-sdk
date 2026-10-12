@@ -411,9 +411,11 @@ export type VitalType = (typeof VitalType)[keyof typeof VitalType]
 
 /**
  * One WebSocket connection reports a stream of vitals over its lifetime, one per phase it goes
- * through, all sharing the connection id. The name is what tells a consumer which phase it holds —
- * the shipped schema discriminates the four payloads by their disjoint required fields rather than
- * by this name, so nothing but this type checks that the two agree.
+ * through, all sharing the connection id. The name is what tells a consumer which phase it holds.
+ * The shipped schema tells the four payloads apart by the date only each one requires
+ * (`connecting_date`, `open_date`, `closing_date`, `closed_date`), not by this name, so nothing but
+ * this type checks that the two agree. `url` is required on both the connecting and the closed
+ * payloads.
  */
 export const WebSocketVitalName = {
   CONNECTING: 'websocket_connecting',
@@ -457,7 +459,7 @@ export interface RawRumWebSocketVitalEvent {
   } & RawRumWebSocketVitalPayload
 }
 
-/** Identity, reported on the connecting vital only and never repeated by the later phases. */
+/** Identity, reported on the connecting vital. The closed vital repeats the url; no other phase repeats any of it. */
 export interface RawRumWebSocketConnectingVitalProperties {
   url: string
   requested_protocols?: string[]
@@ -480,6 +482,8 @@ export interface RawRumWebSocketClosingVitalProperties {
 }
 
 export interface RawRumWebSocketClosedVitalProperties {
+  /** The url the connecting vital reported, the same string. */
+  url: string
   closed_date: TimeStamp
   duration: ServerDuration
   tracking_end_reason: WebSocketTrackingEndReason

@@ -527,6 +527,24 @@ describe('webSocketCollection', () => {
   })
 
   describe('the closed vital', () => {
+    it('reports the url stripped of its query string when the connection closes', () => {
+      startTracking()
+      const socket = createOpenConnection({ url: 'wss://example.com/chat?token=secret' })
+
+      dispatchClose(socket)
+
+      expect(single(closedPayloads()).url).toBe('wss://example.com/chat')
+    })
+
+    it('reports the url stripped of its query string when tracking ends on a flush', () => {
+      const tracker = startTracking()
+      createOpenConnection({ url: 'wss://example.com/chat?token=secret' })
+
+      tracker.flushOpenConnections()
+
+      expect(single(closedPayloads()).url).toBe('wss://example.com/chat')
+    })
+
     it('reports the close outcome of a real close event, and the event as the reason', () => {
       startTracking()
       const socket = createOpenConnection()
