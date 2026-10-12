@@ -2596,7 +2596,7 @@ var deflate_slow = function deflate_slow(s, flush) {
       // check_match(s, s.strstart-1, s.prev_match, s.prev_length);
 
       /**
-       *_tr_tally_dist(s, s.strstart - 1 - s.prev_match,
+       * _tr_tally_dist(s, s.strstart - 1 - s.prev_match,
                        s.prev_length - MIN_MATCH, bflush);**
        */
 
