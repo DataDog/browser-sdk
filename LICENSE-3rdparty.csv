@@ -16,7 +16,6 @@ dev,@angular/compiler,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/compiler-cli,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/core,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/platform-browser,MIT,Copyright (c) 2010-2024 Google LLC
-dev,@angular/platform-server,MIT,Copyright (c) 2010-2026 Google LLC
 dev,@angular/router,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@datadog/webpack-plugin,MIT,Copyright (c) 2026 Datadog
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
@@ -53,7 +52,6 @@ dev,chrome-webstore-upload,MIT,Copyright Federico Brigante <me@fregante.com> (ht
 dev,busboy,MIT,Copyright Brian White
 dev,cors,MIT,Copyright 2013 Troy Goode
 dev,emoji-name-map,MIT,Copyright 2016-19 Ionică Bizău <bizauionica@gmail.com> (https://ionicabizau.net)
-dev,esbuild,MIT,Copyright (c) 2020 Evan Wallace
 dev,eslint,MIT,Copyright JS Foundation and other contributors
 dev,eslint-plugin-import-x,MIT,Copyright (c) 2015 Ben Mosher
 dev,eslint-import-resolver-typescript,ISC,Copyright 2021 Alex Gorbatchev <alex.gorbatchev@gmail.com>
