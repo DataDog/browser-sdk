@@ -50,7 +50,7 @@ describe('serializeWebSocketVital', () => {
 
     it('dates each vital at the moment it reports, in unix milliseconds', () => {
       expect(serializeConnecting().event.date).toBe(timeStampAt(0))
-      expect(serializeOpen(openState({ openClocks: clocksAt(120) })).event.date).toBe(timeStampAt(120))
+      expect(serializeOpen(openState({ reportClocks: clocksAt(70_000) })).event.date).toBe(timeStampAt(70_000))
       expect(serializeClosing().event.date).toBe(timeStampAt(30))
       expect(serializeClosedOnCloseEvent().event.date).toBe(timeStampAt(50))
     })
@@ -79,7 +79,8 @@ describe('serializeWebSocketVital', () => {
 
   describe('the open vital', () => {
     it('reports the connecting duration as the span from the constructor call to the open event', () => {
-      const { websocket } = serializeOpen(openState({ openClocks: clocksAt(120) }))
+      const openClocks = clocksAt(120)
+      const { websocket } = serializeOpen(openState({ openClocks, reportClocks: openClocks }))
 
       expect(websocket.connecting_duration).toBe(nanoseconds(120))
       expect(websocket.open_date).toBe(timeStampAt(120))
@@ -307,11 +308,13 @@ describe('serializeWebSocketVital', () => {
   function openState(
     state: Partial<Extract<TrackedConnectionState, { phase: 'open' }>> = {}
   ): Extract<TrackedConnectionState, { phase: 'open' }> {
+    const openClocks = state.openClocks ?? clocksAt(10)
     return {
       phase: 'open',
       id: 'connection-id',
       connectingClocks: clocksAt(0),
-      openClocks: clocksAt(10),
+      openClocks,
+      reportClocks: openClocks,
       snapshotVersion: 1,
       snapshot: snapshotOf(),
       ...state,
@@ -392,6 +395,7 @@ describe('serializeWebSocketVital', () => {
     return { event, websocket: event.vital.websocket as ConnectingProperties }
   }
 
+  /** Dated at the open event, as the first open vital is, unless a later report is given on the state. */
   function serializeOpen(state = openState()) {
     const event = serializeWebSocketVital(state)
     return { event, websocket: event.vital.websocket as OpenProperties }

@@ -1,7 +1,13 @@
-import type { Observable } from '@datadog/browser-core'
-import { ExperimentalFeature, isExperimentalFeatureEnabled, noop } from '@datadog/browser-core'
+import type { Observable, TimeoutId } from '@datadog/browser-core'
+import {
+  clearInterval,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+  noop,
+  setInterval,
+} from '@datadog/browser-core'
 import type { ClocksState } from '@datadog/js-core/time'
-import { clocksNow } from '@datadog/js-core/time'
+import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import type { WebSocketContext } from '../../browser/webSocketObservable'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
@@ -12,6 +18,19 @@ import { serializeWebSocketVital, getPhaseClocks } from './serializeWebSocketVit
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 
+/**
+ * A one flat cadence in every page state that tells how often an open connection reports where it is.
+ *
+ * It has to be a module constant rather than a configuration option, because it has to agree with
+ * the silence threshold the reducer synthesises a close after.
+ *
+ * 60s is the rate Chrome throttles a hidden tab's chained timers to,
+ * so it's the nominal value for the periodic report interval.
+ *
+ * It is meant to be cheap to change, we might tune it after collecting data.
+ */
+export const WEBSOCKET_PERIODIC_REPORT_INTERVAL = ONE_MINUTE
+
 /** A reason tracking ends for without the SDK observing any close event. */
 export type UnobservedTrackingEndReason = Exclude<
   WebSocketTrackingEndReason,
@@ -19,6 +38,8 @@ export type UnobservedTrackingEndReason = Exclude<
 >
 
 export interface WebSocketConnectionTracker {
+  /** Report every connection in phase `open`, whether the cadence or a page transition asked. */
+  reportOpenConnections: () => void
   /** Ends tracking of every tracked connection, and tells how many there were. */
   flushOpenConnections: (endClocks?: ClocksState, trackingEndReason?: UnobservedTrackingEndReason) => number
   stop: () => void
@@ -42,9 +63,16 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
     tracker.flushOpenConnections(endClocks)
   })
 
+  // A page transition may be the last chance to report before the page is frozen or goes away, so
+  // open connections are reported without waiting for the next periodic report.
+  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
+    tracker.reportOpenConnections()
+  })
+
   return {
     stop: () => {
       sessionExpiredSubscription.unsubscribe()
+      prepareUrgentFlushSubscription.unsubscribe()
       tracker.flushOpenConnections()
       tracker.stop()
     },
@@ -63,13 +91,16 @@ export function trackWebSocket(
   webSocketContextObservable: Observable<WebSocketContext>
 ): WebSocketConnectionTracker {
   const trackedConnections = new Map<WebSocket, TrackedConnection>()
+  let reportIntervalId: TimeoutId | undefined
 
   /**
    * Reports one phase of one connection. The connection already holds the phase clocks and snapshot
-   * version the vital needs.
+   * version the vital needs; open reports must be written with `recordReport` first so the vital is
+   * dated at the report.
    *
    * Emitted straight onto the life cycle rather than through vitalCollection: a WebSocket vital is
-   * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject.
+   * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject —
+   * and rejecting one would let a frozen page suppress the periodic report built to detect it.
    */
   function emitVital(instance: WebSocket, connection: TrackedConnection) {
     const state = connection.getState()
@@ -78,6 +109,46 @@ export function trackWebSocket(
       startClocks: getPhaseClocks(state),
       domainContext: { webSocket: instance },
     })
+  }
+
+  /**
+   * One report: every connection in phase `open` reports where it is, at one date and each with the
+   * next version of its own snapshot. A connection in any other phase does not emit a report — the
+   * closing phase deliberately included, so that a hung close falls silent instead of looking alive.
+   */
+  function reportOpenConnections() {
+    const reportClocks = clocksNow()
+
+    trackedConnections.forEach((connection, instance) => {
+      if (!connection.isOpen()) {
+        return
+      }
+
+      connection.recordReport(reportClocks)
+      emitVital(instance, connection)
+    })
+  }
+
+  function hasOpenConnection() {
+    for (const connection of trackedConnections.values()) {
+      if (connection.isOpen()) {
+        return true
+      }
+    }
+    return false
+  }
+
+  function startOpenConnectionsPeriodicReport() {
+    if (reportIntervalId !== undefined) {
+      return
+    }
+
+    reportIntervalId = setInterval(reportOpenConnections, WEBSOCKET_PERIODIC_REPORT_INTERVAL)
+  }
+
+  function stopOpenConnectionsPeriodicReport() {
+    clearInterval(reportIntervalId)
+    reportIntervalId = undefined
   }
 
   function handleWebSocketContext(context: WebSocketContext) {
@@ -116,8 +187,6 @@ export function trackWebSocket(
         return
       }
 
-      // reported at most once per connection, which the observable's `readyState` guard is what
-      // enforces
       case 'closing': {
         const connection = trackedConnections.get(context.instance)
         if (!connection) {
@@ -147,24 +216,38 @@ export function trackWebSocket(
     }
   }
 
-  const subscription = webSocketContextObservable.subscribe(handleWebSocketContext)
+  const subscription = webSocketContextObservable.subscribe((context) => {
+    handleWebSocketContext(context)
+
+    // After key phase transitions to keep the report only when there's an active pool
+    // of WebSockets.
+    if (context.state !== 'message-in' && context.state !== 'message-out') {
+      if (hasOpenConnection()) {
+        startOpenConnectionsPeriodicReport()
+      } else {
+        stopOpenConnectionsPeriodicReport()
+      }
+    }
+  })
 
   return {
+    reportOpenConnections,
     flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
       const endedCount = trackedConnections.size
       trackedConnections.forEach((connection, instance) => {
-        // no close event happened on this path, so the close outcome is genuinely absent rather
-        // than defaulted
+        // No close event
         connection.recordTrackingEnd(endClocks, trackingEndReason)
         emitVital(instance, connection)
       })
 
       trackedConnections.clear()
+      stopOpenConnectionsPeriodicReport()
       return endedCount
     },
     stop: () => {
       subscription.unsubscribe()
       trackedConnections.clear()
+      stopOpenConnectionsPeriodicReport()
     },
   }
 }
