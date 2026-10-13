@@ -142,10 +142,16 @@ export function createTrackedConnection({
     return snapshotVersion
   }
 
-  function readSnapshot(readAt: RelativeTime): WebSocketSnapshot {
+  function buildSnapshotAt(readAt: RelativeTime): WebSocketSnapshot {
     return {
-      inbound: readMessageDirection(snapshot.inbound, lastInboundMessageAt, readAt),
-      outbound: readMessageDirection(snapshot.outbound, lastOutboundMessageAt, readAt),
+      inbound: {
+        ...snapshot.inbound,
+        longestSilence: computeLongestSilence(lastInboundMessageAt, readAt, snapshot.inbound),
+      },
+      outbound: {
+        ...snapshot.outbound,
+        longestSilence: computeLongestSilence(lastOutboundMessageAt, readAt, snapshot.outbound),
+      },
       bufferedAmountMax: snapshot.bufferedAmountMax,
     }
   }
@@ -164,7 +170,7 @@ export function createTrackedConnection({
       trackingEndReason,
       closeEvent,
       snapshotVersion: nextSnapshotVersion(),
-      snapshot: openClocks ? readSnapshot(endClocks.relative) : undefined,
+      snapshot: openClocks ? buildSnapshotAt(endClocks.relative) : undefined,
       bufferedAmountAtClose,
       silenceBeforeClose: {
         inbound: silenceSince(lastInboundMessageAt, endClocks.relative),
@@ -191,7 +197,7 @@ export function createTrackedConnection({
         selectedProtocol: context.protocol || undefined,
         selectedExtensions: context.extensions || undefined,
         snapshotVersion: nextSnapshotVersion(),
-        snapshot: readSnapshot(openClocks.relative),
+        snapshot: buildSnapshotAt(openClocks.relative),
       }
     },
 
@@ -203,7 +209,7 @@ export function createTrackedConnection({
         ...state,
         reportClocks,
         snapshotVersion: nextSnapshotVersion(),
-        snapshot: readSnapshot(reportClocks.relative),
+        snapshot: buildSnapshotAt(reportClocks.relative),
       }
     },
 
@@ -284,24 +290,15 @@ function recordMessage(
   aggregate.messageSizeMax = Math.max(aggregate.messageSizeMax, size)
 }
 
-/**
- * Copies a direction's aggregate, closing the silence still in progress at the read date rather than
- * at the last message recorded.
- */
-function readMessageDirection(
-  aggregate: MessageDirectionAggregate,
+function computeLongestSilence(
   lastMessageAt: RelativeTime | undefined,
-  readAt: RelativeTime
-): MessageDirectionAggregate {
-  const read = { ...aggregate }
-
-  if (lastMessageAt !== undefined) {
-    // counting the gap still open is what makes the value meaningful on a repeated read: a socket
-    // quiet for five minutes reports five minutes rather than the last gap it happened to complete
-    read.longestSilence = maxDuration(read.longestSilence, elapsed(lastMessageAt, readAt))
+  at: RelativeTime,
+  aggregate: MessageDirectionAggregate
+) {
+  if (lastMessageAt === undefined) {
+    return aggregate.longestSilence
   }
-
-  return read
+  return maxDuration(aggregate.longestSilence, elapsed(lastMessageAt, at))
 }
 
 function silenceSince(lastMessageAt: RelativeTime | undefined, at: RelativeTime) {
