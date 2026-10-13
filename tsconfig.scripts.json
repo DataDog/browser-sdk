@@ -22,7 +22,7 @@
     "eslint.config.ts",
     "eslint-local-rules",
     "test/unit",
-    "test/unit-vitest/vite.config.ts"
+    "test/unit-vitest/*.config.ts"
   ],
   // `test/apps` is excluded (like in tsconfig.default.json): its generated `node_modules` contain
   // `@datadog/webpack-plugin` types that import browser source, which would otherwise be pulled into

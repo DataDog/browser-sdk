@@ -1,4 +1,6 @@
 // <reference types="jasmine" />
+// The shim drives jasmine-core internals, which are untyped.
+/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-function-type */
 
 import * as vitest from 'vitest'
 import jasmineRequire from 'jasmine-core/lib/jasmine-core/jasmine.js'
@@ -22,7 +24,7 @@ window.jasmine = {
   getEnv: () => env,
   clock: () => env.clock,
   createSpy: (name, originalFn) => env.createSpy(name, originalFn),
-  createSpyObj: (...args: any[]) => (env.createSpyObj as any)(...args),
+  createSpyObj: (...args: any[]) => env.createSpyObj(...args),
 }
 
 // Wrap test/hook functions to support Jasmine's `done` callback pattern, which Vitest v4 dropped.
@@ -79,7 +81,7 @@ window.expect = ((actual: any) =>
     },
   })) as unknown as typeof window.expect
 
-window.expectAsync = ((actual: any) =>
+window.expectAsync = (actual: any) =>
   jasmineLib.Expectation.asyncFactory({
     matchersUtil,
     actual,
@@ -88,7 +90,7 @@ window.expectAsync = ((actual: any) =>
         throw new Error(result.message)
       }
     },
-  })) as unknown as typeof window.expectAsync
+  })
 
 // After each is executed before `onTestFinished`, so it's too soon to clear the spies
 vitest.beforeEach(() => {
@@ -97,5 +99,3 @@ vitest.beforeEach(() => {
     spiesForCurrentTest.length = 0
   })
 })
-
-await import('../../packages/browser-core/test/forEach.ts')

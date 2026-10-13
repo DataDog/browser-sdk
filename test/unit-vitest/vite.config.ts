@@ -1,6 +1,5 @@
 import { resolve } from 'path'
 import { defineConfig } from 'vitest/config'
-import { webdriverio } from '@vitest/browser-webdriverio'
 import { playwright } from '@vitest/browser-playwright'
 import { getBuildEnvDefines } from '../../scripts/lib/buildEnv.ts'
 
@@ -21,7 +20,12 @@ export default defineConfig({
       testerHtmlPath: resolve(import.meta.dirname, 'vitest.tester.html'),
     },
 
-    setupFiles: [resolve(import.meta.dirname, 'vitest.setup.ts')],
+    // forEach.ts is loaded as a separate setup file (instead of a top-level await import) so it
+    // runs after the Jasmine globals are defined.
+    setupFiles: [
+      resolve(import.meta.dirname, 'vitest.setup.ts'),
+      resolve(ROOT, 'packages/browser-core/test/forEach.ts'),
+    ],
     restoreMocks: true,
   },
   optimizeDeps: {
