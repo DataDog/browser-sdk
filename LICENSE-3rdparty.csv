@@ -18,7 +18,6 @@ dev,@angular/core,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/platform-browser,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/router,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
-dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@salesforce/cli,Apache-2.0,Copyright (c) 2026 Salesforce, Inc.
@@ -41,6 +40,7 @@ dev,@vitejs/plugin-vue,MIT,Copyright (c) 2019-present, Yuxi (Evan) You and Vite 
 dev,@vitest/browser,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,@vitest/browser-playwright,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,@vitest/browser-webdriverio,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,@vitest/coverage-istanbul,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,@vitest/ui,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,@microsoft/api-extractor,MIT,Copyright (c) Microsoft Corporation. All rights reserved.
 dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
@@ -68,8 +68,6 @@ dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,json-schema-to-typescript,MIT,
 dev,karma,MIT,Copyright 2011-2019 Google Inc.
 dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google, Inc.
-dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
-dev,karma-coverage-istanbul-reporter,MIT,Copyright 2017 Matt Lewis
 dev,karma-jasmine,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-junit-reporter,MIT,Copyright (C) 2011-2013 Google, Inc.
 dev,karma-sourcemap-loader,MIT,Copyright 2013 Sergey Todyshev
