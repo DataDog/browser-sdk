@@ -12,7 +12,12 @@ import type { Configuration } from '../../configuration'
 import { buildCookieOptions } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import { CookieApi, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
-import { createCookieAccess, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
+import {
+  createCookieAccess,
+  createCookieSessionStore,
+  selectCookieStrategy,
+  initCookieStrategy,
+} from './sessionInCookie'
 
 function createMockCookieAccess() {
   let storedValues: string[] = []
@@ -70,6 +75,24 @@ function setupCookieStrategy(partialConfiguration: Partial<Configuration> = {}) 
 }
 
 describe('session in cookie strategy', () => {
+  it('uses injected cookie access without reading legacy document cookies when migration is disabled', async () => {
+    const { mockCookieAccess, mockCookie } = createMockCookieAccess()
+    const getDocumentCookie = spyOnProperty(document, 'cookie', 'get').and.returnValue('_dd_s=id=legacy-id&c=0')
+    const setDocumentCookie = spyOnProperty(document, 'cookie', 'set')
+    const strategy = createCookieSessionStore(mockCookieAccess, {}, mockBaseConfiguration(), {
+      readLegacyCookie: false,
+    })
+
+    await strategy.setSessionState((state) => {
+      expect(state).toEqual({})
+      return { id: 'new-id' }
+    }, 'initialize')
+
+    expect(mockCookie.getStoredValues()[0]).toContain('id=new-id')
+    expect(getDocumentCookie).not.toHaveBeenCalled()
+    expect(setDocumentCookie).not.toHaveBeenCalled()
+  })
+
   describe('setSessionState', () => {
     it('should read cookie, apply fn, and write back', async () => {
       const { strategy, mockCookie } = setupCookieStrategy()

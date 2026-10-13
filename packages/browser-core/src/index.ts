@@ -48,7 +48,7 @@ export {
 } from './domain/telemetry'
 export type { Subscription } from './tools/observable'
 export { Observable, BufferedObservable } from './tools/observable'
-export type { SessionManager, SessionContext } from './domain/session/sessionManager'
+export type { SessionManager, SessionContext, SessionStoreFactory } from './domain/session/sessionManager'
 export { startSessionManager, startSessionManagerStub, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
@@ -100,8 +100,18 @@ export {
 export { NonErrorPrefix } from './domain/error/error.types'
 export { buildDebugIdByUrl, getSourceCodeContext } from './domain/sourceCodeContext'
 export type { DebugIdEntry } from './domain/sourceCodeContext'
-export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
-export { isCookieStoreSupported } from './browser/cookieAccess'
+export type { CookieOptions } from './browser/cookie'
+export {
+  getCookie,
+  getInitCookie,
+  setCookie,
+  deleteCookie,
+  resetInitCookies,
+  buildCookieString,
+  buildCookieOptions,
+} from './browser/cookie'
+export type { CookieAccess } from './browser/cookieAccess'
+export { isCookieStoreSupported, areCookiesAuthorized, WATCH_COOKIE_INTERVAL_DELAY } from './browser/cookieAccess'
 export type { WeakRef, WeakRefConstructor } from './browser/browser.types'
 export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
@@ -143,6 +153,7 @@ export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export type { SessionState } from './domain/session/sessionState'
+export { createCookieSessionStore } from './domain/session/storeStrategies/sessionInCookie'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
 export type { MemorySession } from './domain/session/storeStrategies/sessionInMemory'
 export { MEMORY_SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionInMemory'
