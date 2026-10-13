@@ -22,6 +22,7 @@ window.jasmine = {
   getEnv: () => env,
   clock: () => env.clock,
   createSpy: (name, originalFn) => env.createSpy(name, originalFn),
+  createSpyObj: (...args: any[]) => (env.createSpyObj as any)(...args),
 }
 
 // Wrap test/hook functions to support Jasmine's `done` callback pattern, which Vitest v4 dropped.
@@ -77,6 +78,17 @@ window.expect = ((actual: any) =>
       }
     },
   })) as unknown as typeof window.expect
+
+window.expectAsync = ((actual: any) =>
+  jasmineLib.Expectation.asyncFactory({
+    matchersUtil,
+    actual,
+    addExpectationResult(passed: boolean, result: any) {
+      if (!passed) {
+        throw new Error(result.message)
+      }
+    },
+  })) as unknown as typeof window.expectAsync
 
 // After each is executed before `onTestFinished`, so it's too soon to clear the spies
 vitest.beforeEach(() => {
