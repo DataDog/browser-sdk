@@ -95,8 +95,8 @@ export function trackWebSocket(
 
   /**
    * Reports one phase of one connection. The connection already holds the phase clocks and snapshot
-   * version the vital needs; open reports must be written with `recordReport` first so the vital is
-   * dated at the report.
+   * version the vital needs; open reports must be written with `recordReport` first so the
+   * snapshot freezes at the vital's date.
    *
    * Emitted straight onto the life cycle rather than through vitalCollection: a WebSocket vital is
    * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject —
@@ -235,8 +235,8 @@ export function trackWebSocket(
     flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
       const endedCount = trackedConnections.size
       trackedConnections.forEach((connection, instance) => {
-        // No close event
-        connection.recordTrackingEnd(endClocks, trackingEndReason)
+        // No close event, so the send queue depth is read from the socket
+        connection.recordTrackingEnd(endClocks, trackingEndReason, instance.bufferedAmount)
         emitVital(instance, connection)
       })
 

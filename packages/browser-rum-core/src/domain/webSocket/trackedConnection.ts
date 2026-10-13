@@ -17,7 +17,9 @@ export interface MessageDirectionAggregate {
   messageCount: number
   messageSizeTotal: number
   messageSizeMax: number
-  /** Longest interval between two messages. */
+  /** Offset from the open date to the first message, kept once set. */
+  timeToFirstMessage?: Duration
+  /** Longest interval between two messages, including the one still open when the snapshot was taken. */
   longestSilence: Duration
 }
 
@@ -42,7 +44,10 @@ export type TrackedConnectionState = {
   | {
       phase: 'open'
       openClocks: ClocksState
-      /** When this particular open vital was created, on the open event or on the periodic report. */
+      /**
+       * When this particular open vital was created, on the open event or on the periodic report. Its
+       * snapshot is taken at that date.
+       */
       reportClocks: ClocksState
       selectedProtocol?: string
       selectedExtensions?: string
@@ -59,6 +64,10 @@ export type TrackedConnectionState = {
       snapshotVersion: number
       /** Omitted when the connection never opened: it exchanged nothing, so it reports nothing. */
       snapshot?: WebSocketSnapshot
+      /** Send queue depth the socket reported when tracking ended. */
+      bufferedAmountAtClose: number
+      /** Interval from the last message to the tracking end date, in each direction that observed one. */
+      silenceBeforeClose: { inbound?: Duration; outbound?: Duration }
     }
 )
 
@@ -67,8 +76,9 @@ export interface TrackedConnection {
   isOpen: () => boolean
   recordOpen: (context: WebSocketOpenContext) => void
   /**
-   * Sets the date the next open vital is reported at, and bumps the snapshot version that vital
-   * rides on. Ignored outside the open phase, which is the only one reported periodically.
+   * Sets the date the next open vital is reported at, takes its snapshot there, and bumps the
+   * snapshot version that vital rides on. Ignored outside the open phase, which is the only one
+   * reported periodically.
    */
   recordReport: (reportClocks: ClocksState) => void
   recordInboundMessage: (context: WebSocketMessageInContext) => void
@@ -79,8 +89,15 @@ export interface TrackedConnection {
    * event, so this is the one way to end tracking with one.
    */
   recordClose: (context: WebSocketClosedContext) => void
-  /** Ends tracking without a close event, so with no close outcome to report. */
-  recordTrackingEnd: (endClocks: ClocksState, trackingEndReason: UnobservedTrackingEndReason) => void
+  /**
+   * Ends tracking without a close event, so with no close outcome to report.
+   * `bufferedAmountAtClose` is the send queue depth read from the socket at that moment.
+   */
+  recordTrackingEnd: (
+    endClocks: ClocksState,
+    trackingEndReason: UnobservedTrackingEndReason,
+    bufferedAmountAtClose: number
+  ) => void
 }
 
 /**
@@ -94,7 +111,8 @@ export function createTrackedConnection({
 }: WebSocketConnectingContext): TrackedConnection {
   const id = generateUUID()
   const connectingClocks = startClocks
-  // accumulated as messages are recorded, and referenced by the states that report it
+  // accumulated as messages are recorded; the states that report it hold a snapshot of it, taken at
+  // their own date
   const snapshot: WebSocketSnapshot = {
     inbound: createMessageDirectionAggregate(),
     outbound: createMessageDirectionAggregate(),
@@ -124,9 +142,24 @@ export function createTrackedConnection({
     return snapshotVersion
   }
 
+  function buildSnapshotAt(readAt: RelativeTime): WebSocketSnapshot {
+    return {
+      inbound: {
+        ...snapshot.inbound,
+        longestSilence: computeLongestSilence(lastInboundMessageAt, readAt, snapshot.inbound),
+      },
+      outbound: {
+        ...snapshot.outbound,
+        longestSilence: computeLongestSilence(lastOutboundMessageAt, readAt, snapshot.outbound),
+      },
+      bufferedAmountMax: snapshot.bufferedAmountMax,
+    }
+  }
+
   function endTracking(
     endClocks: ClocksState,
     trackingEndReason: WebSocketTrackingEndReason,
+    bufferedAmountAtClose: number,
     closeEvent?: { code: number; reason: string; wasClean: boolean }
   ) {
     state = {
@@ -137,7 +170,12 @@ export function createTrackedConnection({
       trackingEndReason,
       closeEvent,
       snapshotVersion: nextSnapshotVersion(),
-      snapshot: openClocks ? snapshot : undefined,
+      snapshot: openClocks ? buildSnapshotAt(endClocks.relative) : undefined,
+      bufferedAmountAtClose,
+      silenceBeforeClose: {
+        inbound: silenceSince(lastInboundMessageAt, endClocks.relative),
+        outbound: silenceSince(lastOutboundMessageAt, endClocks.relative),
+      },
     }
   }
 
@@ -159,7 +197,7 @@ export function createTrackedConnection({
         selectedProtocol: context.protocol || undefined,
         selectedExtensions: context.extensions || undefined,
         snapshotVersion: nextSnapshotVersion(),
-        snapshot,
+        snapshot: buildSnapshotAt(openClocks.relative),
       }
     },
 
@@ -167,11 +205,16 @@ export function createTrackedConnection({
       if (state.phase !== 'open') {
         return
       }
-      state = { ...state, reportClocks, snapshotVersion: nextSnapshotVersion() }
+      state = {
+        ...state,
+        reportClocks,
+        snapshotVersion: nextSnapshotVersion(),
+        snapshot: buildSnapshotAt(reportClocks.relative),
+      }
     },
 
     recordInboundMessage: ({ size, at }) => {
-      recordMessage(snapshot.inbound, lastInboundMessageAt, size, at.relative)
+      recordMessage(snapshot.inbound, lastInboundMessageAt, size, at.relative, openClocks)
       lastInboundMessageAt = at.relative
     },
 
@@ -180,7 +223,7 @@ export function createTrackedConnection({
       // `send()` grows the queue by exactly the payload size, whereas reading the socket again
       // could catch a queue the browser has already partly flushed and understate the peak
       snapshot.bufferedAmountMax = Math.max(snapshot.bufferedAmountMax, bufferedAmountPreSend + size)
-      recordMessage(snapshot.outbound, lastOutboundMessageAt, size, at.relative)
+      recordMessage(snapshot.outbound, lastOutboundMessageAt, size, at.relative, openClocks)
       lastOutboundMessageAt = at.relative
     },
 
@@ -188,12 +231,12 @@ export function createTrackedConnection({
       state = { id, connectingClocks, phase: 'closing', closingClocks: at }
     },
 
-    recordClose: ({ at, code, reason, wasClean }) => {
-      endTracking(at, WebSocketTrackingEndReason.CLOSE_EVENT, { code, reason, wasClean })
+    recordClose: ({ at, code, reason, wasClean, bufferedAmountAtClose }) => {
+      endTracking(at, WebSocketTrackingEndReason.CLOSE_EVENT, bufferedAmountAtClose, { code, reason, wasClean })
     },
 
-    recordTrackingEnd: (endClocks, trackingEndReason) => {
-      endTracking(endClocks, trackingEndReason)
+    recordTrackingEnd: (endClocks, trackingEndReason, bufferedAmountAtClose) => {
+      endTracking(endClocks, trackingEndReason, bufferedAmountAtClose)
     },
   }
 }
@@ -230,16 +273,36 @@ function recordMessage(
   aggregate: MessageDirectionAggregate,
   lastMessageAt: RelativeTime | undefined,
   size: number,
-  at: RelativeTime
+  at: RelativeTime,
+  openClocks: ClocksState | undefined
 ) {
-  // the interval before the first message is not a silence
-  if (lastMessageAt !== undefined) {
+  if (lastMessageAt === undefined) {
+    // the interval before the first message is the time to first message, not a silence
+    if (openClocks) {
+      aggregate.timeToFirstMessage = elapsed(openClocks.relative, at)
+    }
+  } else {
     aggregate.longestSilence = maxDuration(aggregate.longestSilence, elapsed(lastMessageAt, at))
   }
 
   aggregate.messageCount += 1
   aggregate.messageSizeTotal += size
   aggregate.messageSizeMax = Math.max(aggregate.messageSizeMax, size)
+}
+
+function computeLongestSilence(
+  lastMessageAt: RelativeTime | undefined,
+  at: RelativeTime,
+  aggregate: MessageDirectionAggregate
+) {
+  if (lastMessageAt === undefined) {
+    return aggregate.longestSilence
+  }
+  return maxDuration(aggregate.longestSilence, elapsed(lastMessageAt, at))
+}
+
+function silenceSince(lastMessageAt: RelativeTime | undefined, at: RelativeTime) {
+  return lastMessageAt === undefined ? undefined : elapsed(lastMessageAt, at)
 }
 
 function maxDuration(first: Duration, second: Duration) {

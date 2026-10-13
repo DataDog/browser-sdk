@@ -77,7 +77,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
           close_reason: state.closeEvent?.reason,
           was_clean: state.closeEvent?.wasClean,
           snapshot_version: state.snapshotVersion,
-          snapshot: state.snapshot && serializeSnapshot(state.snapshot),
+          snapshot: state.snapshot && serializeSnapshot(state.snapshot, state),
         },
       })
   }
@@ -124,13 +124,25 @@ function toRawVital(date: TimeStamp, payload: RawRumWebSocketVitalPayload): RawR
 /**
  * The values that change from one vital of a connection to the next. The two directions measure the
  * same things, so the mapping is written once and applied to each of them.
+ *
+ * The terminal snapshot also reports the values measured when tracking ended. Only the closed state
+ * holds them, so that a periodic report cannot carry them — nothing in the schema would reject it if
+ * it did.
  */
-function serializeSnapshot({ inbound, outbound, bufferedAmountMax }: WebSocketSnapshot): RawRumWebSocketVitalSnapshot {
+function serializeSnapshot(
+  { inbound, outbound, bufferedAmountMax }: WebSocketSnapshot,
+  closedState?: Extract<TrackedConnectionState, { phase: 'closed' }>
+): RawRumWebSocketVitalSnapshot {
   return {
-    inbound: serializeMessageDirection(inbound),
+    inbound: {
+      ...serializeMessageDirection(inbound),
+      silence_before_close: toServerDuration(closedState?.silenceBeforeClose.inbound),
+    },
     outbound: {
       ...serializeMessageDirection(outbound),
       buffered_amount_max: bufferedAmountMax,
+      silence_before_close: toServerDuration(closedState?.silenceBeforeClose.outbound),
+      buffered_amount_at_close: closedState?.bufferedAmountAtClose,
     },
   }
 }
@@ -140,6 +152,7 @@ function serializeMessageDirection(direction: MessageDirectionAggregate): RawRum
     message_count: direction.messageCount,
     message_size_total: direction.messageSizeTotal,
     message_size_max: direction.messageSizeMax,
+    time_to_first_message: toServerDuration(direction.timeToFirstMessage),
     longest_silence: toServerDuration(direction.longestSilence),
   }
 }
