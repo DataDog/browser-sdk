@@ -99,6 +99,36 @@ test.describe('rum websockets', () => {
         expect(closedVital.date).toBeLessThanOrEqual(viewEndTime)
       })
 
+    createTest('ends tracking with page_terminated when the page unloads with the connection still open')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        test.skip(
+          browserName === 'firefox',
+          'Firefox closes the socket and fires its close event before pagehide, so a real close ends tracking first'
+        )
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.sendAndExpectEcho()
+
+        // flushing navigates away, which unloads the page for good
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.closing).toHaveLength(0)
+        expect(vitals.closed).toHaveLength(1)
+        expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
+        const closed = vitals.closed[0].vital.websocket
+        expect(closed.tracking_end_reason).toBe('page_terminated')
+        expect(closed.close_code).toBeUndefined()
+        expect(closed.close_reason).toBeUndefined()
+        expect(closed.was_clean).toBeUndefined()
+        expect(closed.snapshot_version).toBe(vitals.open.length + 1)
+        expect(closed.snapshot!.outbound.message_count).toBe(1)
+        expect(closed.snapshot!.inbound.message_count).toBe(1)
+      })
+
     createTest('reports session_end when the session is stopped, then renewed by user activity')
       .withRum(RUM_CONFIGURATION)
       .withBody(WebSocketPage.testBody())
@@ -385,6 +415,7 @@ test.describe('rum websockets', () => {
         expect(vitals.connecting[0].vital.websocket.url).toBe('ws://redacted.example/')
         expect(vitals.connecting[0].vital.websocket.requested_protocols).toEqual(['redacted'])
         expect(vitals.open[0].vital.websocket.selected_protocol).toBe('redacted')
+        expect(vitals.closed[0].vital.websocket.url).toBe('ws://redacted.example/')
         expect(vitals.closed[0].vital.websocket.close_code).toBe(4000)
         expect(vitals.closed[0].vital.websocket.close_reason).toBe('redacted')
       })
@@ -428,9 +459,12 @@ test.describe('rum websockets', () => {
 
         await flushEvents()
 
-        const url = new URL(getWebSocketVitals(intakeRegistry).connecting[0].vital.websocket.url)
-        expect(url.pathname).toBe('/ws-echo')
-        expect(url.search).toBe('')
+        const vitals = getWebSocketVitals(intakeRegistry)
+        const connectingUrl = new URL(vitals.connecting[0].vital.websocket.url)
+        const closedUrl = new URL(vitals.closed[0].vital.websocket.url)
+        expect(connectingUrl.pathname).toBe('/ws-echo')
+        expect(connectingUrl.search).toBe('')
+        expect(closedUrl.href).toBe(connectingUrl.href)
       })
   })
 })

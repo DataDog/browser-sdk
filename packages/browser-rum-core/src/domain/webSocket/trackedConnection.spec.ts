@@ -85,6 +85,14 @@ describe('trackedConnection', () => {
       expect(state.snapshotVersion).toBe(1)
     })
 
+    it('holds no url once the connection is open', () => {
+      const connection = createConnectingConnection()
+
+      connection.recordOpen(openContext())
+
+      expect('url' in connection.getState()).toBeFalse()
+    })
+
     it('turns closing when the application closes the socket', () => {
       const connection = createOpenConnection()
 
@@ -101,6 +109,14 @@ describe('trackedConnection', () => {
 
       const state = getStateIn(connection, 'closing')
       expect(state.closingClocks).toEqual(clocksAt(5))
+    })
+
+    it('holds no url once the connection is closing', () => {
+      const connection = createOpenConnection()
+
+      connection.recordClosing(closingContext(clocksAt(30)))
+
+      expect('url' in connection.getState()).toBeFalse()
     })
 
     it('is open from the open event until the socket closes or tracking ends', () => {
@@ -139,6 +155,14 @@ describe('trackedConnection', () => {
 
         expect(getStateIn(connection, 'closed').snapshot).toEqual(hasOpened ? jasmine.any(Object) : undefined)
       })
+
+      it(`keeps the url it was created with when tracking ends from ${from}`, () => {
+        const connection = createConnection()
+
+        connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
+
+        expect(getStateIn(connection, 'closed').url).toBe('wss://example.com/socket')
+      })
     })
 
     it('keeps the close event when tracking ends on a real close', () => {
@@ -158,6 +182,44 @@ describe('trackedConnection', () => {
       expect(state.endClocks).toEqual(clocksAt(40))
       expect(state.trackingEndReason).toBe(WebSocketTrackingEndReason.CLOSE_EVENT)
       expect(state.closeEvent).toEqual({ code: 1000, reason: 'bye', wasClean: true })
+    })
+
+    it('keeps the url when tracking ends on a real close', () => {
+      const connection = createOpenConnection()
+
+      connection.recordClose({
+        state: 'closed',
+        instance: INSTANCE,
+        code: 1000,
+        reason: 'bye',
+        wasClean: true,
+        bufferedAmountAtClose: 0,
+        at: clocksAt(40),
+      })
+
+      expect(getStateIn(connection, 'closed').url).toBe('wss://example.com/socket')
+    })
+
+    it('holds the url stripped of its query string once closed', () => {
+      const connection = createConnectingConnection({ url: 'wss://example.com/chat?token=secret' })
+      connection.recordOpen(openContext())
+
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
+
+      expect(getStateIn(connection, 'closed').url).toBe('wss://example.com/chat')
+    })
+
+    it('holds the url stripped of its query string, including an encoded question mark in the path', () => {
+      const connection = createConnectingConnection({
+        url: 'wss://example.com:8443/path/socket%3Froom?token=secret&tenant=acme',
+      })
+
+      expect(getStateIn(connection, 'connecting').url).toBe('wss://example.com:8443/path/socket%3Froom')
+
+      connection.recordOpen(openContext())
+      connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
+
+      expect(getStateIn(connection, 'closed').url).toBe('wss://example.com:8443/path/socket%3Froom')
     })
 
     it('holds no close event when tracking ends without one', () => {

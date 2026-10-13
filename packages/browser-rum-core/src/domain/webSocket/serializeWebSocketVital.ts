@@ -70,6 +70,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
         name: WebSocketVitalName.CLOSED,
         websocket: {
           id,
+          url: state.url,
           closed_date: toPhaseDate(connectingClocks, state.endClocks),
           duration: toServerDuration(elapsed(connectingClocks.relative, state.endClocks.relative)),
           tracking_end_reason: state.trackingEndReason,

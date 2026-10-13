@@ -122,6 +122,14 @@ describe('serializeWebSocketVital', () => {
   })
 
   describe('the closed vital', () => {
+    it('reports the url the connection was opened on', () => {
+      const { websocket } = serializeClosedOnCloseEvent({
+        state: closedState({ url: 'wss://example.com/socket' }),
+      })
+
+      expect(websocket.url).toBe('wss://example.com/socket')
+    })
+
     it('reports the closed date and the reason tracking ended', () => {
       const { websocket } = serializeClosedOnCloseEvent()
 
@@ -222,6 +230,7 @@ describe('serializeWebSocketVital', () => {
 
       expect(fieldsOf(websocket)).toEqual([
         'id',
+        'url',
         'closed_date',
         'duration',
         'tracking_end_reason',
@@ -316,6 +325,13 @@ describe('serializeWebSocketVital', () => {
       // @ts-expect-error a periodic report reports no silence before close
       serializeWebSocketVital({ ...openState(), silenceBeforeClose: { inbound: 5 as Duration } })
     })
+
+    it('requires the url on the closed state, and rejects it on a phase that does not report one', () => {
+      // @ts-expect-error the closed vital reports the url the connection was opened on
+      serializeWebSocketVital({ ...closedState(), url: undefined })
+      // @ts-expect-error the open vital reports no url
+      serializeWebSocketVital({ ...openState(), url: 'wss://example.com/socket' })
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -383,6 +399,7 @@ describe('serializeWebSocketVital', () => {
     return {
       phase: 'closed',
       id: 'connection-id',
+      url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
@@ -402,6 +419,7 @@ describe('serializeWebSocketVital', () => {
     return {
       phase: 'closed',
       id: 'connection-id',
+      url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 1,
@@ -467,6 +485,7 @@ describe('serializeWebSocketVital', () => {
     const event = serializeWebSocketVital({
       phase: 'closed',
       id: 'connection-id',
+      url: 'wss://example.com/socket',
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 2,

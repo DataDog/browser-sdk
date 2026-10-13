@@ -316,8 +316,8 @@ describe('rum assembly', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
-                // Match on the name: vital.type is 'websocket' for all four WebSocket vitals, and only the connecting
-                // vital carries url. Setting it on the others would add a field they never report.
+                // Match on the name: vital.type is 'websocket' for all four WebSocket vitals. The connecting
+                // and closed vitals carry url. Setting it on the others would add a field they never report.
                 if (event.vital.name === 'websocket_connecting') {
                   event.vital.websocket.url = 'wss://example.com/users/REDACTED/feed'
                 }
@@ -336,6 +336,32 @@ describe('rum assembly', () => {
           })
 
           expect((serverRumEvents[0] as RumVitalWebsocketConnectingEvent).vital.websocket.url).toBe(
+            'wss://example.com/users/REDACTED/feed'
+          )
+        })
+
+        it('should allow redacting the url of a closed websocket vital', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                if (event.vital.name === 'websocket_closed') {
+                  event.vital.websocket.url = 'wss://example.com/users/REDACTED/feed'
+                }
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+              vital: {
+                type: VitalType.WEBSOCKET,
+                name: WebSocketVitalName.CLOSED,
+                websocket: { url: 'wss://example.com/users/1234/feed' },
+              },
+            }),
+          })
+
+          expect((serverRumEvents[0] as RumVitalWebsocketClosedEvent).vital.websocket.url).toBe(
             'wss://example.com/users/REDACTED/feed'
           )
         })

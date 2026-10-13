@@ -376,7 +376,8 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * Each WebSocket connection reports a vital event (`vital.type: 'websocket'`) for each phase it goes
    * through (`websocket_connecting`, `websocket_open`, `websocket_closing`, `websocket_closed`), and
-   * open connections report a `websocket_open` vital periodically.
+   * open connections report a `websocket_open` vital periodically. The url is reported on the
+   * `websocket_connecting` and `websocket_closed` vitals.
    *
    * Warning: enabling this option introduces WebSocket vital events to the `beforeSend` hook. They
    * cannot be dismissed, and only their `vital.websocket.url`, `vital.websocket.requested_protocols`,

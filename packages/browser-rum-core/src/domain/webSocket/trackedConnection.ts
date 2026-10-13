@@ -57,6 +57,8 @@ export type TrackedConnectionState = {
   | { phase: 'closing'; closingClocks: ClocksState }
   | {
       phase: 'closed'
+      /** The same string the connecting phase holds. */
+      url: string
       endClocks: ClocksState
       trackingEndReason: WebSocketTrackingEndReason
       /** Present exactly when tracking ended on a close event, the one source of the close outcome. */
@@ -105,12 +107,15 @@ export interface TrackedConnection {
  * arithmetic to produce snapshots of the state of the connection at different phases of its lifecycle.
  */
 export function createTrackedConnection({
-  url,
+  url: rawUrl,
   protocols,
   startClocks,
 }: WebSocketConnectingContext): TrackedConnection {
   const id = generateUUID()
   const connectingClocks = startClocks
+  // stripped once and kept across phases: the connecting and closed vitals report the same string,
+  // and tracking can end from a phase that holds none
+  const url = sanitizeWebSocketUrl(rawUrl)
   // accumulated as messages are recorded; the states that report it hold a snapshot of it, taken at
   // their own date
   const snapshot: WebSocketSnapshot = {
@@ -123,7 +128,7 @@ export function createTrackedConnection({
     id,
     connectingClocks,
     phase: 'connecting',
-    url: sanitizeWebSocketUrl(url),
+    url,
     requestedProtocols: toRequestedProtocols(protocols),
   }
   // continued across phases: the closing phase carries no version, but the closed vital follows the
@@ -166,6 +171,7 @@ export function createTrackedConnection({
       id,
       connectingClocks,
       phase: 'closed',
+      url,
       endClocks,
       trackingEndReason,
       closeEvent,
