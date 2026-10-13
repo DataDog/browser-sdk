@@ -1,6 +1,7 @@
 import type {
   RumEvent,
   RumVitalWebsocketClosedEvent,
+  RumVitalWebsocketClosingEvent,
   RumVitalWebsocketConnectingEvent,
   RumVitalWebsocketOpenEvent,
 } from '@datadog/browser-rum-core/src/rumEvent.types'
@@ -16,7 +17,7 @@ const NANOSECONDS_PER_MILLISECOND = 1e6
 
 test.describe('rum websockets', () => {
   test.describe('connection tracking', () => {
-    createTest('reports the phases of a connection closed by the client under one connection id')
+    createTest('reports the four phases of a connection closed by the client under one connection id')
       .withRum(RUM_CONFIGURATION)
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -31,8 +32,9 @@ test.describe('rum websockets', () => {
         const vitals = getWebSocketVitals(intakeRegistry)
         expect(vitals.connecting).toHaveLength(1)
         expect(vitals.open).toHaveLength(1)
+        expect(vitals.closing).toHaveLength(1)
         expect(vitals.closed).toHaveLength(1)
-        expect(vitals.all).toHaveLength(3)
+        expect(vitals.all).toHaveLength(4)
         expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
 
         const closed = vitals.closed[0].vital.websocket
@@ -43,7 +45,7 @@ test.describe('rum websockets', () => {
         expect(closed.snapshot!.inbound.message_size_total).toBe(expectedWsEchoMessage().length)
       })
 
-    createTest('reports a connection closed by the server')
+    createTest('reports a connection closed by the server, without a closing vital')
       .withRum(RUM_CONFIGURATION)
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
@@ -56,6 +58,7 @@ test.describe('rum websockets', () => {
         await flushEvents()
 
         const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.closing).toHaveLength(0)
         expect(vitals.closed).toHaveLength(1)
         expect(vitals.closed[0].vital.websocket.tracking_end_reason).toBe('close_event')
       })
@@ -124,6 +127,7 @@ test.describe('rum websockets', () => {
         await flushEvents()
 
         const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.closing).toHaveLength(0)
         expect(vitals.closed).toHaveLength(1)
         const closed = vitals.closed[0].vital.websocket
         expect(closed.tracking_end_reason).toBe('session_end')
@@ -184,9 +188,56 @@ test.describe('rum websockets', () => {
         expect(url.search).toBe('')
       })
   })
+
+  test.describe('phases', () => {
+    createTest('reports the closing phase of a connection closed before it opened')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, flushBrowserLogs }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.openAndCloseWhileConnecting()
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.open).toHaveLength(0)
+        expect(vitals.closing).toHaveLength(1)
+        expect(vitals.closed).toHaveLength(1)
+        expect(vitals.closed[0].vital.websocket.snapshot).toBeUndefined()
+
+        // Firefox logs connection errors for a socket closed during its handshake. They are expected,
+        // but any other error must still fail the test.
+        withBrowserLogs((logs) => {
+          const errors = logs.filter((log) => log.level === 'error')
+          expect(errors.every((error) => error.message.includes('/ws-echo'))).toBe(true)
+        })
+        flushBrowserLogs()
+      })
+
+    createTest('reports the closing phase once however many times close() is called')
+      .withRum(RUM_CONFIGURATION)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.closeTwice()
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.closing).toHaveLength(1)
+        expect(vitals.closed).toHaveLength(1)
+      })
+  })
 })
 
-type WebSocketVital = RumVitalWebsocketConnectingEvent | RumVitalWebsocketOpenEvent | RumVitalWebsocketClosedEvent
+type WebSocketVital =
+  | RumVitalWebsocketConnectingEvent
+  | RumVitalWebsocketOpenEvent
+  | RumVitalWebsocketClosingEvent
+  | RumVitalWebsocketClosedEvent
 
 function isWebSocketVital(event: RumEvent): event is WebSocketVital {
   return event.type === 'vital' && event.vital.type === 'websocket'
@@ -200,6 +251,10 @@ function isWebSocketOpenVital(event: RumEvent): event is RumVitalWebsocketOpenEv
   return isWebSocketVital(event) && event.vital.name === 'websocket_open'
 }
 
+function isWebSocketClosingVital(event: RumEvent): event is RumVitalWebsocketClosingEvent {
+  return isWebSocketVital(event) && event.vital.name === 'websocket_closing'
+}
+
 function isWebSocketClosedVital(event: RumEvent): event is RumVitalWebsocketClosedEvent {
   return isWebSocketVital(event) && event.vital.name === 'websocket_closed'
 }
@@ -210,6 +265,7 @@ function getWebSocketVitals(intakeRegistry: IntakeRegistry) {
     all: events.filter(isWebSocketVital),
     connecting: events.filter(isWebSocketConnectingVital),
     open: events.filter(isWebSocketOpenVital),
+    closing: events.filter(isWebSocketClosingVital),
     closed: events.filter(isWebSocketClosedVital),
   }
 }

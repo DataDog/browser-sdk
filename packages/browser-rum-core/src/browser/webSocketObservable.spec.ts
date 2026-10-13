@@ -122,6 +122,16 @@ describe('webSocketObservable', () => {
         expect(ws.sentData).toEqual([payload])
         expect(getContexts('message-out').length).toBe(1)
       })
+
+      it('forwards the close code and reason to the native close unaltered', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+
+        ws.close(1000, 'bye')
+
+        expect(ws.closeCalls).toEqual([{ code: 1000, reason: 'bye' }])
+        expect(ws.readyState).toBe(MockWebSocket.CLOSING)
+      })
     })
 
     describe('open context', () => {
@@ -255,6 +265,82 @@ describe('webSocketObservable', () => {
         ws.send(blob)
 
         expect(getContexts('message-out')[0].size).toBe(blob.size)
+      })
+
+      it('emits nothing for a send the socket rejected before the handshake completed', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+
+        expect(() => ws.send('hello')).toThrowError(DOMException)
+
+        expect(ws.sentData).toEqual([])
+        expect(getContexts('message-out').length).toBe(0)
+      })
+
+      it('emits nothing for a send the socket discarded once the closing handshake started', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+        ws.close()
+
+        ws.send('hello')
+
+        expect(ws.sentData).toEqual([])
+        expect(getContexts('message-out').length).toBe(0)
+      })
+
+      it('emits nothing for a send the socket discarded once it had closed', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+        ws.simulateClose(1000, 'bye', true)
+
+        ws.send('hello')
+
+        expect(ws.sentData).toEqual([])
+        expect(getContexts('message-out').length).toBe(0)
+      })
+    })
+
+    describe('closing context', () => {
+      it('emits a "closing" context when close() is called on a connecting socket', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+
+        ws.close()
+
+        const closingContexts = getContexts('closing')
+        expect(closingContexts.length).toBe(1)
+        expect(closingContexts[0].instance).toBe(ws as unknown as WebSocket)
+        expect(closingContexts[0].at.timeStamp).toEqual(jasmine.any(Number))
+      })
+
+      it('emits a "closing" context when close() is called on an open socket', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+
+        ws.close()
+
+        expect(getContexts('closing').length).toBe(1)
+      })
+
+      // the first call is what left the socket closing, so this is both the CLOSING row of the
+      // truth table and what keeps a defensive double close() from being reported twice
+      it('emits nothing for a close() on a socket its own previous close() left closing', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateOpen()
+        ws.close()
+
+        ws.close()
+
+        expect(ws.readyState).toBe(MockWebSocket.CLOSING)
+        expect(ws.closeCalls.length).toBe(2)
+        expect(getContexts('closing').length).toBe(1)
+      })
+
+      it('emits nothing when close() is called on a socket that is already closed', () => {
+        const ws = createMockWebSocket('wss://example.com/socket')
+        ws.simulateClose(1000, 'bye', true)
+
+        ws.close()
+
+        expect(getContexts('closing').length).toBe(0)
       })
     })
 

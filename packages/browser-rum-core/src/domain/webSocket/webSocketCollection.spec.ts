@@ -20,6 +20,7 @@ import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import type { RumWebSocketVitalEventDomainContext } from '../../domainContext.types'
 import type {
   RawRumWebSocketClosedVitalProperties,
+  RawRumWebSocketClosingVitalProperties,
   RawRumWebSocketConnectingVitalProperties,
   RawRumWebSocketOpenVitalProperties,
   RawRumWebSocketVitalEvent,
@@ -104,6 +105,7 @@ describe('webSocketCollection', () => {
       completeHandshake(socket)
       sendMessage(socket, 10)
       receiveMessage(socket, 10)
+      callClose(socket)
       dispatchClose(socket)
 
       expect(emittedVitals()).toHaveSize(0)
@@ -117,11 +119,13 @@ describe('webSocketCollection', () => {
       startTracking()
       const socket = connect({ at: 5 })
       completeHandshake(socket, { at: 10 })
+      callClose(socket, { at: 20 })
       dispatchClose(socket, { at: 30 })
 
       expect(emittedVitals().map((event) => event.startClocks.timeStamp)).toEqual([
         clock.timeStamp(5),
         clock.timeStamp(10),
+        clock.timeStamp(20),
         clock.timeStamp(30),
       ])
     })
@@ -220,6 +224,59 @@ describe('webSocketCollection', () => {
     })
   })
 
+  describe('the closing vital', () => {
+    it('is emitted on the close() call, carrying the closing date and the client as the initiator', () => {
+      startTracking()
+      const socket = openConnection()
+
+      callClose(socket, { at: 30 })
+
+      const closing = single(closingPayloads())
+      expect(closing.id).toBe(single(connectingPayloads()).id)
+      expect(closing.closing_date).toBe(clock.timeStamp(30))
+      expect(closing.close_initiator).toBe('client')
+    })
+
+    it('is reported between the open and the closed vital', () => {
+      startTracking()
+      const socket = openConnection()
+
+      callClose(socket)
+      dispatchClose(socket)
+
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSING,
+        WebSocketVitalName.CLOSED,
+      ])
+    })
+
+    it('takes no snapshot version from the sequence the snapshot-carrying vitals share', () => {
+      startTracking()
+      const socket = openConnection()
+
+      callClose(socket)
+      dispatchClose(socket)
+
+      expect(single(openPayloads()).snapshot_version).toBe(1)
+      expect(single(closedPayloads()).snapshot_version).toBe(2)
+    })
+
+    it('is emitted for a close() during the handshake, whose failure then reports an unclean close', () => {
+      startTracking()
+      const socket = connect()
+
+      callClose(socket, { at: 5 })
+      // the browser fails a connection aborted mid-handshake
+      failHandshake(socket, { at: 6 })
+
+      expect(single(closingPayloads()).closing_date).toBe(clock.timeStamp(5))
+      expect(single(closedPayloads()).was_clean).toBe(false)
+      expect(openPayloads()).toHaveSize(0)
+    })
+  })
+
   describe('the closed vital', () => {
     it('reports the close outcome of a real close event, and the event as the reason', () => {
       startTracking()
@@ -296,6 +353,20 @@ describe('webSocketCollection', () => {
         buffered_amount_max: 110,
       })
     })
+
+    it('counts no outbound message the socket discarded after the closing handshake started', () => {
+      startTracking()
+      const socket = openConnection()
+      sendMessage(socket, 10)
+      callClose(socket)
+
+      sendMessage(socket, 500)
+      dispatchClose(socket)
+
+      expect(single(closedPayloads()).snapshot!.outbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 10, message_size_max: 10 })
+      )
+    })
   })
 
   // The live instance lets a consumer read the socket's own state (bufferedAmount, readyState) or
@@ -309,6 +380,9 @@ describe('webSocketCollection', () => {
       completeHandshake(socket)
       expect(webSocketOf(single(emittedVitals(WebSocketVitalName.OPEN)))).toBe(socket)
 
+      callClose(socket)
+      expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CLOSING)))).toBe(socket)
+
       dispatchClose(socket)
       expect(webSocketOf(single(emittedVitals(WebSocketVitalName.CLOSED)))).toBe(socket)
     })
@@ -321,9 +395,11 @@ describe('webSocketCollection', () => {
       startTracking()
       const socket = connect({ at: 0 })
       completeHandshake(socket, { at: 10.4 })
+      callClose(socket, { at: 20.6 })
       dispatchClose(socket, { at: 30.5 })
 
       expect(single(openPayloads()).open_date).toBe(clock.timeStamp(10))
+      expect(single(closingPayloads()).closing_date).toBe(clock.timeStamp(21))
       expect(single(closedPayloads()).closed_date).toBe(clock.timeStamp(31))
     })
   })
@@ -342,12 +418,14 @@ describe('webSocketCollection', () => {
       advanceTo(15)
       clock.jumpSystemClock(ONE_HOUR)
       receiveMessage(socket, 30, { at: 20 })
+      callClose(socket, { at: 30 })
       dispatchClose(socket, { at: 40 })
 
       const open = single(openPayloads())
       const closed = single(closedPayloads())
       expect(single(connectingPayloads()).connecting_date).toBe(clock.timeStamp(0))
       expect(open.open_date).toBe(clock.timeStamp(10))
+      expect(single(closingPayloads()).closing_date).toBe(clock.timeStamp(30))
       expect(closed.closed_date).toBe(clock.timeStamp(40))
       expect(open.connecting_duration).toBe(toServerDuration(10 as Duration))
       expect(closed.duration).toBe(toServerDuration(40 as Duration))
@@ -356,6 +434,7 @@ describe('webSocketCollection', () => {
       expect(emittedVitals().map((event) => event.rawRumEvent.date)).toEqual([
         clock.timeStamp(0),
         clock.timeStamp(10 - 10 * ONE_MINUTE),
+        clock.timeStamp(30 - 10 * ONE_MINUTE + ONE_HOUR),
         clock.timeStamp(40 - 10 * ONE_MINUTE + ONE_HOUR),
       ])
     })
@@ -545,6 +624,12 @@ describe('webSocketCollection', () => {
     socket.send('x'.repeat(size))
   }
 
+  /** The application calling `close()`, which is the only way the CLOSING phase is observed. */
+  function callClose(socket: MockWebSocket, { at }: At = {}) {
+    advanceTo(at)
+    socket.close()
+  }
+
   function dispatchClose(
     socket: MockWebSocket,
     {
@@ -595,6 +680,12 @@ describe('webSocketCollection', () => {
   function openPayloads() {
     return emittedVitals(WebSocketVitalName.OPEN).map(
       (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketOpenVitalProperties
+    )
+  }
+
+  function closingPayloads() {
+    return emittedVitals(WebSocketVitalName.CLOSING).map(
+      (event) => event.rawRumEvent.vital.websocket as { id: string } & RawRumWebSocketClosingVitalProperties
     )
   }
 

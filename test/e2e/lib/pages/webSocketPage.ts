@@ -104,6 +104,15 @@ export class WebSocketPage {
     await this.expectStatus('open')
   }
 
+  /** Calls `close()` in the same task as the constructor, so the opening handshake cannot complete first. */
+  async openAndCloseWhileConnecting() {
+    await this.page.evaluate(() => {
+      window.webSocketPage!.open()
+      window.webSocketPage!.close()
+    })
+    await this.expectStatus('closed')
+  }
+
   async sendAndExpectEcho(text = DEFAULT_WS_OUT_MESSAGE) {
     const receivedCountBefore = Number(await this.receivedCount.textContent())
     await this.page.evaluate((text) => window.webSocketPage!.send(text), text)
@@ -113,6 +122,15 @@ export class WebSocketPage {
 
   async close(code?: number, reason?: string) {
     await this.page.evaluate(({ code, reason }) => window.webSocketPage!.close(code, reason), { code, reason })
+    await this.expectClosed()
+  }
+
+  /** Calls `close()` a second time in the same task, so it always finds the socket closing. */
+  async closeTwice() {
+    await this.page.evaluate(() => {
+      window.webSocketPage!.close()
+      window.webSocketPage!.close()
+    })
     await this.expectClosed()
   }
 
