@@ -21,27 +21,7 @@ PRs are squash-merged, so **the PR title becomes the commit on `main` and the ch
 
 ## Picking the Gitmoji
 
-Source of truth: `scripts/lib/gitmoji.ts`, mirrored in `docs/DEVELOPMENT.md`.
-
-| Gitmoji | Use for                                                                              | Changelog |
-| ------- | ------------------------------------------------------------------------------------ | --------- |
-| 💥      | Breaking change: removed or renamed public API or event field (even deprecated ones) | Public    |
-| ✨      | New public API, behavior, event, property                                            | Public    |
-| 🐛      | Bug fix, regression, crash                                                           | Public    |
-| ⚡️      | Performance, bundle size                                                             | Public    |
-| 📝      | User-facing documentation                                                            | Public    |
-| ⚗️      | New public feature behind a feature flag                                             | Public    |
-| 👷      | Build, CI, dependencies, tooling                                                     | Internal  |
-| ♻️      | Refactor                                                                             | Internal  |
-| 🎨      | Code structure, formatting                                                           | Internal  |
-| ✅      | Tests                                                                                | Internal  |
-| 🔧      | Configuration, project setup                                                         | Internal  |
-| 🔥      | Removing internal code or features (removing public API is 💥)                       | Internal  |
-| 👌      | Addressing code review feedback                                                      | Internal  |
-| 🚨      | Linter rules                                                                         | Internal  |
-| 🧹      | Minor cleanup                                                                        | Internal  |
-| 🔊      | Adding or changing debug logs, telemetry                                             | Internal  |
-| 🔇      | Removing debug logs, telemetry                                                       | Internal  |
+Pick from the list in `docs/DEVELOPMENT.md`. Its "User-facing changes" are the ones that land under Public Changes. CI only checks that the title starts with one of them (`scripts/lib/gitmoji.ts`), not that you picked the right one.
 
 ## Signing
 
