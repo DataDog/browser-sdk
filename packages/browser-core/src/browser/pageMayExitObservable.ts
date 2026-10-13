@@ -6,7 +6,7 @@ import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListen
 export const PageExitReason = {
   HIDDEN: 'visibility_hidden',
   UNLOADING: 'before_unload',
-  PAGEHIDE: 'page_hide',
+  PAGE_TERMINATED: 'page_terminated',
   FROZEN: 'page_frozen',
 } as const
 
@@ -48,9 +48,21 @@ export function createPageMayExitObservable(): Observable<PageMayExitEvent> {
       observable.notify({ reason: PageExitReason.UNLOADING })
     }).stop
 
+    /**
+     * Emitted only when the page is being terminated (persisted === false), not when entering the
+     * back/forward cache. Consumers that must not treat termination like other exits (e.g. Session
+     * Replay segment creation reasons) should ignore PAGE_TERMINATED.
+     */
+    const stopPageHideListener = addEventListener(window, DOM_EVENT.PAGE_HIDE, (event) => {
+      if (!event.persisted) {
+        observable.notify({ reason: PageExitReason.PAGE_TERMINATED })
+      }
+    }).stop
+
     return () => {
       stopListeners()
       stopBeforeUnloadListener()
+      stopPageHideListener()
     }
   })
 }

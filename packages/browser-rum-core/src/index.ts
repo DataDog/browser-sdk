@@ -23,6 +23,7 @@ export type {
   RumViewEventDomainContext,
   RumEventDomainContext,
   RumVitalEventDomainContext,
+  RumWebSocketVitalEventDomainContext,
 } from './domainContext.types'
 export type { ReplayStats, RawRumActionEvent, RawRumEvent } from './rawRumEvent.types'
 export { ActionType, RumEventType, FrustrationType, RumLongTaskEntryType, VitalType } from './rawRumEvent.types'
