@@ -2,7 +2,7 @@ import { resolve } from 'path'
 import { defineConfig } from 'vitest/config'
 import { webdriverio } from '@vitest/browser-webdriverio'
 import { playwright } from '@vitest/browser-playwright'
-import { buildEnvKeys, getBuildEnvValue } from '../../scripts/lib/buildEnv.ts'
+import { getBuildEnvDefines } from '../../scripts/lib/buildEnv.ts'
 
 const ROOT = resolve(import.meta.dirname, '../..')
 
@@ -52,6 +52,7 @@ export default defineConfig({
 
   resolve: {
     alias: [
+      { find: /^@datadog\/js-core\/(.+)$/, replacement: `${ROOT}/packages/js-core/src/entries/$1` },
       { find: /^@datadog\/browser-([^\\/]+)$/, replacement: `${ROOT}/packages/browser-$1/src` },
       { find: /^@datadog\/browser-(.+\/.*)$/, replacement: `${ROOT}/packages/browser-$1` },
       { find: /^packages\/(.*)$/, replacement: `${ROOT}/packages/$1` },
@@ -75,6 +76,6 @@ export default defineConfig({
     // empty object as the "global", causing the mock clock to patch {} instead of window.
     global: 'globalThis',
 
-    ...Object.fromEntries(buildEnvKeys.map((key) => [`__BUILD_ENV__${key}__`, JSON.stringify(getBuildEnvValue(key))])),
+    ...getBuildEnvDefines({ setup: 'cdn', version: 'test', workerString: true }),
   },
 })
