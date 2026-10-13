@@ -28,6 +28,7 @@ import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interact
 import { isActionChildEvent } from './isActionChildEvent'
 import type { ElementContext } from './elementContext'
 import { getElementContext } from './elementContext'
+import { getElementStack } from './elementStack'
 
 interface ActionCounts {
   errorCount: number
@@ -54,6 +55,7 @@ export interface ClickAction {
   frustrationTypes: FrustrationType[]
   events: Event[]
   elementContext?: ElementContext
+  elementStack?: string
 }
 
 export function trackClickActions(
@@ -241,7 +243,7 @@ function startClickAction(
 
 export type ClickActionBase = Pick<
   ClickAction,
-  'type' | 'name' | 'nameSource' | 'target' | 'position' | 'elementContext'
+  'type' | 'name' | 'nameSource' | 'target' | 'position' | 'elementContext' | 'elementStack'
 >
 
 function computeClickActionBase(
@@ -265,6 +267,7 @@ function computeClickActionBase(
   return {
     type: ActionType.CLICK,
     elementContext: getElementContext(target),
+    elementStack: getElementStack(target),
     target: {
       width: Math.round(rect.width),
       height: Math.round(rect.height),

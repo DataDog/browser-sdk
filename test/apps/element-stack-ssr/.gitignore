@@ -1,0 +1,10 @@
+**/node_modules/
+**/.next/
+**/.nuxt/
+**/.output/
+**/dist/
+**/.yarn/
+**/public/prototype-*
+results/
+next/next-env.d.ts
+**/*.tsbuildinfo

@@ -1,0 +1,16 @@
+{
+  "name": "element-stack-nuxt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev --host 127.0.0.1 --port 3102",
+    "build": "nuxt build",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "nuxt": "^4.0.0"
+  },
+  "volta": {
+    "extends": "../../../../package.json"
+  }
+}

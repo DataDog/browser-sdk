@@ -145,7 +145,9 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
     },
     duration: action.duration,
     startClocks: action.startClocks,
-    domainContext: isAuto ? { events: action.events } : { handlingStack: action.handlingStack },
+    domainContext: isAuto
+      ? { events: action.events, elementStack: action.elementStack }
+      : { handlingStack: action.handlingStack },
   }
 }
 

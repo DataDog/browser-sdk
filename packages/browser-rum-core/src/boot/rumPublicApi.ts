@@ -54,6 +54,7 @@ import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { ElementContext } from '../domain/action/elementContext'
 import { setElementContext } from '../domain/action/elementContext'
+import { setElementStack } from '../domain/action/elementStack'
 import type { ActionOptions } from '../domain/action/trackManualActions'
 import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import { createPreStartStrategy } from './preStartRum'
@@ -185,6 +186,9 @@ export interface RumPublicApi extends PublicApi {
    * @param context - Attribution and custom context
    */
   setElementContext: (element: Element, context: ElementContext) => void
+
+  /** Capture the calling MFE bundle for automatic click attribution. Call in the browser. */
+  attachElementStack: (element: Element) => void
 
   /**
    * Start tracking a custom action.
@@ -811,6 +815,11 @@ export function makeRumPublicApi(
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
     setElementContext: monitor(setElementContext),
+
+    attachElementStack: (element) => {
+      const stack = createHandlingStack('element')
+      callMonitored(() => setElementStack(element, stack))
+    },
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')

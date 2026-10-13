@@ -44,6 +44,10 @@ function getSourceUrl(
     stack = domainContext.handlingStack
   }
 
+  if (rawRumEvent.type === 'action' && 'elementStack' in domainContext) {
+    stack = stack ?? domainContext.elementStack
+  }
+
   if (rawRumEvent.type === 'error' && rawRumEvent.error.stack) {
     stack = rawRumEvent.error.stack
   }

@@ -18,6 +18,7 @@ import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 import { ActionNameSource } from './actionNameConstants'
 import { setElementContext } from './elementContext'
+import { setElementStack } from './elementStack'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -100,16 +101,19 @@ describe('trackClickActions', () => {
 
   it('snapshots element attribution before application handlers change it', () => {
     startClickActionsTracking()
+    setElementStack(button, 'original stack')
     const context = { productArea: 'purchase' }
     setElementContext(button, { service: 'checkout', version: '2.4.0', context })
     emulateClick({
       activity: {},
       afterPointerDown: () => {
+        setElementStack(button, 'changed stack')
         context.productArea = 'changed'
         setElementContext(button, { service: 'changed' })
       },
     })
     clock.tick(EXPIRE_DELAY)
+    expect(events[0].elementStack).toBe('original stack')
     expect(events[0].elementContext).toEqual({
       service: 'checkout',
       version: '2.4.0',

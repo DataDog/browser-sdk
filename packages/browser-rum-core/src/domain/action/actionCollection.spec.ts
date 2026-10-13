@@ -51,6 +51,7 @@ describe('actionCollection', () => {
       frustrationTypes: [],
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      elementStack: 'MFE stack',
       elementContext: { service: 'checkout', version: '2.4.0', context: { productArea: 'purchase' } },
       name: 'foo',
       nameSource: ActionNameSource.TEXT_CONTENT,
@@ -111,6 +112,7 @@ describe('actionCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       events: [event],
+      elementStack: 'MFE stack',
     })
   })
 

@@ -1,7 +1,14 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
-import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
+import {
+  display,
+  DefaultPrivacyLevel,
+  ResourceType,
+  startTelemetry,
+  startSessionManager,
+  computeStackTrace,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -14,6 +21,7 @@ import {
 } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
+import { getElementStack } from '../domain/action/elementStack'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
@@ -55,6 +63,18 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
+  it('attaches the caller stack before initialization without SDK frames', () => {
+    const { rumPublicApi } = makeRumPublicApiWithDefaults()
+    const element = document.createElement('section')
+    function registerMfeBoundary() {
+      rumPublicApi.attachElementStack(element)
+    }
+    registerMfeBoundary()
+    const stack = computeStackTrace({ stack: getElementStack(element) })
+    expect(stack.stack[0].func).toContain('registerMfeBoundary')
+    expect(element.attributes.length).toBe(0)
+  })
+
   it('sets element context before initialization', () => {
     const { rumPublicApi } = makeRumPublicApiWithDefaults()
     const element = document.createElement('section')
