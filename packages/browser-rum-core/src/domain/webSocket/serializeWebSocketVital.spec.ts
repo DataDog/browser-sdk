@@ -245,6 +245,7 @@ describe('serializeWebSocketVital', () => {
           message_size_max: 0,
           longest_silence: nanoseconds(0),
           time_to_first_message: undefined,
+          silence_before_close: undefined,
         },
         outbound: {
           message_count: 0,
@@ -253,6 +254,8 @@ describe('serializeWebSocketVital', () => {
           longest_silence: nanoseconds(0),
           time_to_first_message: undefined,
           buffered_amount_max: 0,
+          silence_before_close: undefined,
+          buffered_amount_at_close: undefined,
         },
       })
     })
@@ -284,6 +287,7 @@ describe('serializeWebSocketVital', () => {
         message_size_max: 200,
         time_to_first_message: nanoseconds(4),
         longest_silence: nanoseconds(12),
+        silence_before_close: undefined,
       })
       expect(websocket.snapshot.outbound).toEqual({
         message_count: 1,
@@ -292,6 +296,8 @@ describe('serializeWebSocketVital', () => {
         longest_silence: nanoseconds(0),
         time_to_first_message: undefined,
         buffered_amount_max: 70_000,
+        silence_before_close: undefined,
+        buffered_amount_at_close: undefined,
       })
     })
   })

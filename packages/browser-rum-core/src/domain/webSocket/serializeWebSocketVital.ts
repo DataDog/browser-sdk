@@ -77,7 +77,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
           close_reason: state.closeEvent?.reason,
           was_clean: state.closeEvent?.wasClean,
           snapshot_version: state.snapshotVersion,
-          snapshot: state.snapshot && serializeTerminalSnapshot(state.snapshot, state),
+          snapshot: state.snapshot && serializeSnapshot(state.snapshot, state),
         },
       })
   }
@@ -124,37 +124,25 @@ function toRawVital(date: TimeStamp, payload: RawRumWebSocketVitalPayload): RawR
 /**
  * The values that change from one vital of a connection to the next. The two directions measure the
  * same things, so the mapping is written once and applied to each of them.
+ *
+ * The terminal snapshot also reports the values measured when tracking ended. Only the closed state
+ * holds them, so that a periodic report cannot carry them — nothing in the schema would reject it if
+ * it did.
  */
-function serializeSnapshot({ inbound, outbound, bufferedAmountMax }: WebSocketSnapshot): RawRumWebSocketVitalSnapshot {
+function serializeSnapshot(
+  { inbound, outbound, bufferedAmountMax }: WebSocketSnapshot,
+  closedState?: Extract<TrackedConnectionState, { phase: 'closed' }>
+): RawRumWebSocketVitalSnapshot {
   return {
-    inbound: serializeMessageDirection(inbound),
+    inbound: {
+      ...serializeMessageDirection(inbound),
+      silence_before_close: toServerDuration(closedState?.silenceBeforeClose.inbound),
+    },
     outbound: {
       ...serializeMessageDirection(outbound),
       buffered_amount_max: bufferedAmountMax,
-    },
-  }
-}
-
-/**
- * The terminal snapshot, which also reports the values measured when tracking ended. Only the closed
- * state holds them, so that a periodic report cannot carry them — nothing in the schema would reject
- * it if it did.
- */
-function serializeTerminalSnapshot(
-  snapshot: WebSocketSnapshot,
-  { silenceBeforeClose, bufferedAmountAtClose }: Extract<TrackedConnectionState, { phase: 'closed' }>
-): RawRumWebSocketVitalSnapshot {
-  const serialized = serializeSnapshot(snapshot)
-
-  return {
-    inbound: {
-      ...serialized.inbound,
-      silence_before_close: toServerDuration(silenceBeforeClose.inbound),
-    },
-    outbound: {
-      ...serialized.outbound,
-      silence_before_close: toServerDuration(silenceBeforeClose.outbound),
-      buffered_amount_at_close: bufferedAmountAtClose,
+      silence_before_close: toServerDuration(closedState?.silenceBeforeClose.outbound),
+      buffered_amount_at_close: closedState?.bufferedAmountAtClose,
     },
   }
 }
