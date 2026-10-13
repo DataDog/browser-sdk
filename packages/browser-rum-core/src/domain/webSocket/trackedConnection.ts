@@ -1,0 +1,316 @@
+import { generateUUID } from '@datadog/browser-core'
+import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
+import { elapsed } from '@datadog/js-core/time'
+import { buildUrl, deepClone } from '@datadog/js-core/util'
+import type {
+  WebSocketClosedContext,
+  WebSocketClosingContext,
+  WebSocketConnectingContext,
+  WebSocketMessageInContext,
+  WebSocketMessageOutContext,
+  WebSocketOpenContext,
+} from '../../browser/webSocketObservable'
+import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
+import type { UnobservedTrackingEndReason } from './webSocketCollection'
+
+export interface MessageDirectionAggregate {
+  messageCount: number
+  messageSizeTotal: number
+  messageSizeMax: number
+  /** Offset from the open date to the first message, kept once set. */
+  timeToFirstMessage?: Duration
+  /** Longest interval between two messages, including the one still open when the snapshot was taken. */
+  longestSilence: Duration
+}
+
+export interface WebSocketSnapshot {
+  inbound: MessageDirectionAggregate
+  outbound: MessageDirectionAggregate
+  /** Deepest send queue observed, counted after each payload was enqueued. */
+  bufferedAmountMax: number
+}
+
+/**
+ * The state of a WebSocket connection at a given moment, narrowed on its lifecycle phase (as defined
+ * by RFC 6455) so each vital can read required fields without asserting them away. Each phase holds
+ * what its own vital reports, and carries nothing over from the phases before it.
+ */
+export type TrackedConnectionState = {
+  /** The connection id, shared by every vital this connection reports. */
+  id: string
+  connectingClocks: ClocksState
+} & (
+  | { phase: 'connecting'; url: string; requestedProtocols?: string[] }
+  | {
+      phase: 'open'
+      openClocks: ClocksState
+      /**
+       * When this particular open vital was created, on the open event or on the periodic report. Its
+       * snapshot is taken at that date.
+       */
+      reportClocks: ClocksState
+      selectedProtocol?: string
+      selectedExtensions?: string
+      snapshotVersion: number
+      snapshot: WebSocketSnapshot
+    }
+  | { phase: 'closing'; closingClocks: ClocksState }
+  | {
+      phase: 'closed'
+      /** The same string the connecting phase holds. */
+      url: string
+      endClocks: ClocksState
+      trackingEndReason: WebSocketTrackingEndReason
+      /** Present exactly when tracking ended on a close event, the one source of the close outcome. */
+      closeEvent?: { code: number; reason: string; wasClean: boolean }
+      snapshotVersion: number
+      /** Omitted when the connection never opened: it exchanged nothing, so it reports nothing. */
+      snapshot?: WebSocketSnapshot
+      /** Send queue depth the socket reported when tracking ended. */
+      bufferedAmountAtClose: number
+      /** Interval from the last message to the tracking end date, in each direction that observed one. */
+      silenceBeforeClose: { inbound?: Duration; outbound?: Duration }
+    }
+)
+
+export interface TrackedConnection {
+  getState: () => TrackedConnectionState
+  isOpen: () => boolean
+  recordOpen: (context: WebSocketOpenContext) => void
+  /**
+   * Sets the date the next open vital is reported at, takes its snapshot there, and bumps the
+   * snapshot version that vital rides on. Ignored outside the open phase, which is the only one
+   * reported periodically.
+   */
+  recordReport: (reportClocks: ClocksState) => void
+  recordInboundMessage: (context: WebSocketMessageInContext) => void
+  recordOutboundMessage: (context: WebSocketMessageOutContext) => void
+  recordClosing: (context: WebSocketClosingContext) => void
+  /**
+   * Ends tracking on a close event. The close outcome is reported by, and only by, a real close
+   * event, so this is the one way to end tracking with one.
+   */
+  recordClose: (context: WebSocketClosedContext) => void
+  /**
+   * Ends tracking without a close event, so with no close outcome to report.
+   * `bufferedAmountAtClose` is the send queue depth read from the socket at that moment.
+   */
+  recordTrackingEnd: (
+    endClocks: ClocksState,
+    trackingEndReason: UnobservedTrackingEndReason,
+    bufferedAmountAtClose: number
+  ) => void
+}
+
+/**
+ * A factory to create gatherer objects that hold the data of a WebSocket connection, it performs the necessary
+ * arithmetic to produce snapshots of the state of the connection at different phases of its lifecycle.
+ */
+export function createTrackedConnection({
+  url: rawUrl,
+  protocols,
+  startClocks,
+}: WebSocketConnectingContext): TrackedConnection {
+  const id = generateUUID()
+  const connectingClocks = startClocks
+  // stripped once and kept across phases: the connecting and closed vitals report the same string,
+  // and tracking can end from a phase that holds none
+  const url = sanitizeWebSocketUrl(rawUrl)
+  // accumulated as messages are recorded; the states that report it hold a snapshot of it, taken at
+  // their own date
+  const snapshot: WebSocketSnapshot = {
+    inbound: createMessageDirectionAggregate(),
+    outbound: createMessageDirectionAggregate(),
+    bufferedAmountMax: 0,
+  }
+  // held as one value, so a phase cannot be reached without the facts that come with it
+  let state: TrackedConnectionState = {
+    id,
+    connectingClocks,
+    phase: 'connecting',
+    url,
+    requestedProtocols: toRequestedProtocols(protocols),
+  }
+  // continued across phases: the closing phase carries no version, but the closed vital follows the
+  // open ones
+  let snapshotVersion = 0
+  // the cursor the silence arithmetic runs on, one per direction: it is what the connection needs
+  // to measure a gap, not something it reports
+  let lastInboundMessageAt: RelativeTime | undefined
+  let lastOutboundMessageAt: RelativeTime | undefined
+  // what the time to first message is measured from, kept apart from the state because messages
+  // still arrive while closing, a phase that holds no open date
+  let openClocks: ClocksState | undefined
+
+  function nextSnapshotVersion() {
+    snapshotVersion += 1
+    return snapshotVersion
+  }
+
+  function buildSnapshotAt(readAt: RelativeTime): WebSocketSnapshot {
+    return {
+      inbound: {
+        ...snapshot.inbound,
+        longestSilence: computeLongestSilence(lastInboundMessageAt, readAt, snapshot.inbound),
+      },
+      outbound: {
+        ...snapshot.outbound,
+        longestSilence: computeLongestSilence(lastOutboundMessageAt, readAt, snapshot.outbound),
+      },
+      bufferedAmountMax: snapshot.bufferedAmountMax,
+    }
+  }
+
+  function endTracking(
+    endClocks: ClocksState,
+    trackingEndReason: WebSocketTrackingEndReason,
+    bufferedAmountAtClose: number,
+    closeEvent?: { code: number; reason: string; wasClean: boolean }
+  ) {
+    state = {
+      id,
+      connectingClocks,
+      phase: 'closed',
+      url,
+      endClocks,
+      trackingEndReason,
+      closeEvent,
+      snapshotVersion: nextSnapshotVersion(),
+      snapshot: openClocks ? buildSnapshotAt(endClocks.relative) : undefined,
+      bufferedAmountAtClose,
+      silenceBeforeClose: {
+        inbound: silenceSince(lastInboundMessageAt, endClocks.relative),
+        outbound: silenceSince(lastOutboundMessageAt, endClocks.relative),
+      },
+    }
+  }
+
+  return {
+    getState: () => deepClone(state),
+
+    isOpen: () => state.phase === 'open',
+
+    recordOpen: (context) => {
+      openClocks = context.openClocks
+      state = {
+        id,
+        connectingClocks,
+        phase: 'open',
+        openClocks,
+        // a copy, as `getState`'s deep clone drops an object it has already seen in the state
+        reportClocks: { ...openClocks },
+        // These are reported as empty strings when none were specified
+        selectedProtocol: context.protocol || undefined,
+        selectedExtensions: context.extensions || undefined,
+        snapshotVersion: nextSnapshotVersion(),
+        snapshot: buildSnapshotAt(openClocks.relative),
+      }
+    },
+
+    recordReport: (reportClocks) => {
+      if (state.phase !== 'open') {
+        return
+      }
+      state = {
+        ...state,
+        reportClocks,
+        snapshotVersion: nextSnapshotVersion(),
+        snapshot: buildSnapshotAt(reportClocks.relative),
+      }
+    },
+
+    recordInboundMessage: ({ size, at }) => {
+      recordMessage(snapshot.inbound, lastInboundMessageAt, size, at.relative, openClocks)
+      lastInboundMessageAt = at.relative
+    },
+
+    recordOutboundMessage: ({ size, bufferedAmountPreSend, at }) => {
+      // the peak is counted after the payload is enqueued, from the pre-send queue depth:
+      // `send()` grows the queue by exactly the payload size, whereas reading the socket again
+      // could catch a queue the browser has already partly flushed and understate the peak
+      snapshot.bufferedAmountMax = Math.max(snapshot.bufferedAmountMax, bufferedAmountPreSend + size)
+      recordMessage(snapshot.outbound, lastOutboundMessageAt, size, at.relative, openClocks)
+      lastOutboundMessageAt = at.relative
+    },
+
+    recordClosing: ({ at }) => {
+      state = { id, connectingClocks, phase: 'closing', closingClocks: at }
+    },
+
+    recordClose: ({ at, code, reason, wasClean, bufferedAmountAtClose }) => {
+      endTracking(at, WebSocketTrackingEndReason.CLOSE_EVENT, bufferedAmountAtClose, { code, reason, wasClean })
+    },
+
+    recordTrackingEnd: (endClocks, trackingEndReason, bufferedAmountAtClose) => {
+      endTracking(endClocks, trackingEndReason, bufferedAmountAtClose)
+    },
+  }
+}
+
+/**
+ * The constructor takes either a single protocol or a list of them; a connection that requested
+ * none reports nothing rather than an empty list.
+ */
+function toRequestedProtocols(protocols: string | string[] | undefined) {
+  const requestedProtocols = typeof protocols === 'string' ? [protocols] : protocols
+  return requestedProtocols && requestedProtocols.length > 0 ? requestedProtocols : undefined
+}
+
+function sanitizeWebSocketUrl(url: string) {
+  const sanitizedUrl = buildUrl(url)
+  sanitizedUrl.search = ''
+  return sanitizedUrl.href
+}
+
+function createMessageDirectionAggregate(): MessageDirectionAggregate {
+  return {
+    messageCount: 0,
+    messageSizeTotal: 0,
+    messageSizeMax: 0,
+    longestSilence: 0 as Duration,
+  }
+}
+
+/**
+ * The message arithmetic, written once and applied to whichever direction it is given — the two
+ * directions measure the same things, so there is no direction to branch on.
+ */
+function recordMessage(
+  aggregate: MessageDirectionAggregate,
+  lastMessageAt: RelativeTime | undefined,
+  size: number,
+  at: RelativeTime,
+  openClocks: ClocksState | undefined
+) {
+  if (lastMessageAt === undefined) {
+    // the interval before the first message is the time to first message, not a silence
+    if (openClocks) {
+      aggregate.timeToFirstMessage = elapsed(openClocks.relative, at)
+    }
+  } else {
+    aggregate.longestSilence = maxDuration(aggregate.longestSilence, elapsed(lastMessageAt, at))
+  }
+
+  aggregate.messageCount += 1
+  aggregate.messageSizeTotal += size
+  aggregate.messageSizeMax = Math.max(aggregate.messageSizeMax, size)
+}
+
+function computeLongestSilence(
+  lastMessageAt: RelativeTime | undefined,
+  at: RelativeTime,
+  aggregate: MessageDirectionAggregate
+) {
+  if (lastMessageAt === undefined) {
+    return aggregate.longestSilence
+  }
+  return maxDuration(aggregate.longestSilence, elapsed(lastMessageAt, at))
+}
+
+function silenceSince(lastMessageAt: RelativeTime | undefined, at: RelativeTime) {
+  return lastMessageAt === undefined ? undefined : elapsed(lastMessageAt, at)
+}
+
+function maxDuration(first: Duration, second: Duration) {
+  return Math.max(first, second) as Duration
+}
