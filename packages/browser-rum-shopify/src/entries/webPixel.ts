@@ -1,10 +1,5 @@
-import { globalObject } from '@datadog/js-core/util'
-import { defineGlobal } from '@datadog/browser-core'
-import { startWebPixelRum } from '../boot/startWebPixelRum'
+import { register } from '@shopify/web-pixels-extension'
+import { startRegisteredWebPixel } from '../boot/startRegisteredWebPixel'
 
-interface WebPixelGlobal {
-  DD_RUM_WEB_PIXEL?: { init: typeof startWebPixelRum }
-}
-
-// Loaded in the Web Pixel worker with `importScripts()`
-defineGlobal(globalObject as WebPixelGlobal, 'DD_RUM_WEB_PIXEL', { init: startWebPixelRum })
+// The extension imports this bundle at the top level; the SDK owns its only registration.
+register(startRegisteredWebPixel)

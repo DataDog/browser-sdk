@@ -1,6 +1,6 @@
 import type { Context } from '@datadog/js-core/util'
 import { createBatch, display, Observable, startSessionManager } from '@datadog/browser-core'
-import type { Batch, SessionManager, TrackingConsentState } from '@datadog/browser-core'
+import type { Batch, SessionManager, SessionStoreFactory, TrackingConsentState } from '@datadog/browser-core'
 import { mockClock, replaceMockable, waitNextMicrotask } from '@datadog/browser-core/test'
 import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
 import type { ShopifyPixelEvent } from '../domain/shopifyAnalytics'
@@ -68,7 +68,8 @@ describe('startWebPixelRum', () => {
     replaceMockable(startSessionManager, startSessionManagerSpy)
 
     const { api: webPixelApi, emit, setConsent } = createFakeWebPixelApi({ analyticsProcessingAllowed })
-    const api = startWebPixelRum(initConfiguration, webPixelApi)
+    const createSessionStore = jasmine.createSpy<SessionStoreFactory>('createSessionStore')
+    const api = startWebPixelRum(initConfiguration, webPixelApi, createSessionStore)
 
     // Events are processed once the session manager is ready
     const flush = async () => {
@@ -81,7 +82,17 @@ describe('startWebPixelRum', () => {
       await flush()
     }
 
-    return { api, batch, clock, emitAndWait, flush, sessionManager, setConsent, startSessionManagerSpy }
+    return {
+      api,
+      batch,
+      clock,
+      emitAndWait,
+      flush,
+      sessionManager,
+      setConsent,
+      startSessionManagerSpy,
+      createSessionStore,
+    }
   }
 
   function viewUpdates(batch: { upsert: jasmine.Spy }) {
@@ -92,7 +103,11 @@ describe('startWebPixelRum', () => {
     const displayErrorSpy = spyOn(display, 'error')
     const { api: webPixelApi } = createFakeWebPixelApi()
 
-    const api = startWebPixelRum({ clientToken: 'client-token' } as WebPixelRumInitConfiguration, webPixelApi)
+    const api = startWebPixelRum(
+      { clientToken: 'client-token' } as WebPixelRumInitConfiguration,
+      webPixelApi,
+      jasmine.createSpy<SessionStoreFactory>()
+    )
 
     expect(api).toBeUndefined()
     expect(webPixelApi.analytics.subscribe).not.toHaveBeenCalled()
@@ -142,6 +157,16 @@ describe('startWebPixelRum', () => {
     await emitAndWait('page_viewed', pageViewedEvent(THANK_YOU_URL))
 
     expect(startSessionManagerSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('supplies the internal store factory separately from initialization configuration', async () => {
+    const { emitAndWait, startSessionManagerSpy, createSessionStore } = setup()
+
+    await emitAndWait('page_viewed', pageViewedEvent(CHECKOUT_URL))
+
+    const [configuration, , factory] = startSessionManagerSpy.calls.mostRecent().args
+    expect(configuration.sessionPersistence).toBeUndefined()
+    expect(factory).toBe(createSessionStore)
   })
 
   it('expands the session on each Shopify event', async () => {

@@ -15,7 +15,7 @@ import {
   throttle,
   TrackingConsent,
 } from '@datadog/browser-core'
-import type { SessionManager } from '@datadog/browser-core'
+import type { SessionManager, SessionStoreFactory } from '@datadog/browser-core'
 import type { DefaultRumEventAttributes } from '@datadog/browser-rum-core'
 import { getPageUrl } from '../domain/shopifyAnalytics'
 import type { ShopifyPixelEvent } from '../domain/shopifyAnalytics'
@@ -53,15 +53,10 @@ interface Collection {
 
 export function startWebPixelRum(
   initConfiguration: WebPixelRumInitConfiguration,
-  { analytics, browser, init, customerPrivacy }: WebPixelApi
+  { analytics, init, customerPrivacy }: WebPixelApi,
+  createSessionStore: SessionStoreFactory
 ) {
-  const configuration = validateAndBuildConfiguration(
-    // A Web Pixel worker has no `document.cookie` nor Cookie Store API: persist the session in the
-    // top frame cookies through `browser.cookie`, to share the storefront session
-    { ...initConfiguration, sessionPersistence: browser.cookie },
-    WEB_PIXEL_SCHEMA,
-    display
-  )
+  const configuration = validateAndBuildConfiguration(initConfiguration, WEB_PIXEL_SCHEMA, display)
   if (!configuration) {
     return
   }
@@ -83,7 +78,7 @@ export function startWebPixelRum(
   // consents. The session manager then expires and renews the session as consent changes.
   function startCollectionOnce() {
     collection ??= new Promise<void>((resolve) => trackingConsentState.onGrantedOnce(resolve))
-      .then(() => mockable(startSessionManager)(configuration!, trackingConsentState))
+      .then(() => mockable(startSessionManager)(configuration!, trackingConsentState, createSessionStore))
       .then((sessionManager) => sessionManager && startCollection(sessionManager))
   }
 

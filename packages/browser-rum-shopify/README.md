@@ -16,14 +16,23 @@ The `datadog-rum-shopify-web-pixel.js` bundle is a lightweight SDK for a Shopify
 Shopify checkout events into RUM views, actions and errors, attached to the session shared with
 the storefront through the top frame cookies.
 
-```js
-import { register } from '@shopify/web-pixels-extension'
+Copy the locally built bundle into the extension's
+`src` directory and import it from `src/index.js`:
 
-register(({ analytics, browser, init, customerPrivacy, settings }) => {
-  importScripts('https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-shopify-web-pixel.js')
-  self.DD_RUM_WEB_PIXEL.init(JSON.parse(settings.rumConfig), { analytics, browser, init, customerPrivacy })
-})
+```js
+import './datadog-rum-shopify-web-pixel.js'
 ```
+
+The bundle calls Shopify's `register` once and initializes RUM from `settings.rumConfig` (a JSON
+string). The extension must not call `register` or `DD_RUM_WEB_PIXEL.init` itself. This registration
+flow is currently available in the local build used by the PoC.
+
+The registration callback captures `browser.cookie` in an internal session store factory. The factory
+is supplied directly to the shared session manager, outside public initialization configuration;
+no cookie API is passed through `sessionPersistence`. Cookie authorization,
+serialization and expiry reuse the shared cookie session store, with a Shopify-specific async cookie adapter. Cookie access starts only on
+checkout after consent. If cookie access fails, collection stays disabled instead of falling back
+to an unrelated in-memory session.
 
 By default, data is only collected once the visitor consents to analytics, following Shopify's
 [customer privacy][4] status. Set `bypassCustomerPrivacy: true` to collect regardless of consent;

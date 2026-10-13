@@ -4,7 +4,6 @@ import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
-import type { CustomCookieStore } from '../../browser/cookieAccess'
 
 /**
  * Default privacy level for the browser SDK.
@@ -83,13 +82,10 @@ export interface InitConfiguration {
    *
    * Note: 'memory' option is only for use with single-page applications. All page loads will start a new session, likely resulting in an increase in total number of RUM sessions
    *
-   * [Internal] A custom cookie store (`{ get, set }`) can be provided to persist the session cookie through a host API instead of `document.cookie`.
-   *
    * @category Session Persistence
    * @defaultValue "cookie"
    */
-  sessionPersistence?:
-    SessionPersistence | CustomCookieStore | Array<SessionPersistence | CustomCookieStore> | undefined
+  sessionPersistence?: SessionPersistence | SessionPersistence[] | undefined
 
   /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
@@ -315,19 +311,10 @@ export const BROWSER_CORE_SCHEMA = {
   // Passthroughs
   source: { type: 'enum', values: ['browser', 'flutter', 'unity'] as const, default: 'browser', strict: false },
   sessionPersistence: {
-    type: 'union',
+    type: 'enum',
+    values: ['cookie', 'local-storage', 'memory'] as const,
     multiple: true,
     strict: false,
-    variants: [
-      { type: 'enum', values: ['cookie', 'local-storage', 'memory'] as const },
-      {
-        type: 'schema',
-        schema: {
-          get: { type: 'function', required: true, signature: undefined as CustomCookieStore['get'] | undefined },
-          set: { type: 'function', required: true, signature: undefined as CustomCookieStore['set'] | undefined },
-        },
-      },
-    ],
   },
   replica: {
     type: 'schema',
@@ -345,11 +332,6 @@ export const BROWSER_CORE_SCHEMA = {
 
 export type Configuration = InferredConfig<typeof BROWSER_CORE_SCHEMA>
 
-// the telemetry schema has no custom cookie store value, it is reported as the cookie persistence it relies on
-function serializeSessionPersistence(sessionPersistence: SessionPersistence | CustomCookieStore | undefined) {
-  return typeof sessionPersistence === 'object' ? 'cookie' : sessionPersistence
-}
-
 export function serializeConfiguration(initConfiguration: InitConfiguration) {
   return {
     session_sample_rate: initConfiguration.sessionSampleRate,
@@ -363,11 +345,9 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
     track_anonymous_user: initConfiguration.trackAnonymousUser,
-    session_persistence: serializeSessionPersistence(
-      Array.isArray(initConfiguration.sessionPersistence)
-        ? initConfiguration.sessionPersistence[0]
-        : initConfiguration.sessionPersistence
-    ),
+    session_persistence: Array.isArray(initConfiguration.sessionPersistence)
+      ? initConfiguration.sessionPersistence[0]
+      : initConfiguration.sessionPersistence,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,

@@ -1,13 +1,11 @@
 import { isWorkerEnvironment } from '@datadog/js-core/util'
 import type { Configuration } from '../configuration'
-import type { CustomCookieStore } from '../../browser/cookieAccess'
 import { display } from '../../tools/display'
 import { SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import { selectLocalStorageStrategy, initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { selectMemorySessionStoreStrategy, initMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
-import { selectCustomCookieStrategy, initCustomCookieStrategy } from './storeStrategies/sessionInCustomCookie'
 
 /**
  * Selects the correct session store strategy type based on the configuration and storage
@@ -17,7 +15,7 @@ import { selectCustomCookieStrategy, initCustomCookieStrategy } from './storeStr
 export async function selectSessionStoreStrategyType(
   configuration: Configuration
 ): Promise<SessionStoreStrategyType | undefined> {
-  const persistenceList = normalizePersistenceList(configuration)
+  const persistenceList = normalizePersistenceList(configuration.sessionPersistence)
 
   for (const persistence of persistenceList) {
     const strategyType = await selectStrategyForPersistence(persistence, configuration)
@@ -29,9 +27,7 @@ export async function selectSessionStoreStrategyType(
   return undefined
 }
 
-function normalizePersistenceList({
-  sessionPersistence,
-}: Configuration): Array<SessionPersistence | CustomCookieStore> {
+function normalizePersistenceList(sessionPersistence: SessionPersistence[] | undefined): SessionPersistence[] {
   if (sessionPersistence !== undefined) {
     return sessionPersistence
   }
@@ -47,13 +43,9 @@ function normalizePersistenceList({
 }
 
 function selectStrategyForPersistence(
-  persistence: SessionPersistence | CustomCookieStore,
+  persistence: SessionPersistence,
   configuration: Configuration
 ): Promise<SessionStoreStrategyType | undefined> | SessionStoreStrategyType | undefined {
-  if (typeof persistence === 'object') {
-    return selectCustomCookieStrategy(persistence, configuration)
-  }
-
   switch (persistence) {
     case SessionPersistence.COOKIE:
       return selectCookieStrategy(configuration)
@@ -81,7 +73,5 @@ export function getSessionStoreStrategy(
       return initLocalStorageStrategy()
     case SessionPersistence.MEMORY:
       return initMemorySessionStoreStrategy()
-    case 'custom-cookie':
-      return initCustomCookieStrategy(sessionStoreStrategyType, configuration)
   }
 }
