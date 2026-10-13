@@ -11,7 +11,10 @@ export function mockClock() {
   const timeStampStart = Date.now()
   const relativeStart = timeStampStart - timeOrigin
 
-  spyOn(performance, 'now').and.callFake(() => Date.now() - timeOrigin)
+  // how far the system clock was moved away from the monotonic clock by `jumpSystemClock()`
+  let systemClockShift = 0
+
+  spyOn(performance, 'now').and.callFake(() => Date.now() - timeOrigin - systemClockShift)
 
   registerCleanupTask(() => jasmine.clock().uninstall())
 
@@ -28,5 +31,14 @@ export function mockClock() {
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
     tick: (ms: number) => jasmine.clock().tick(ms),
     setDate: (date: Date) => jasmine.clock().mockDate(date),
+    /**
+     * Moves the system clock (`Date.now()`) by X milliseconds, forward or back, while
+     * `performance.now()` carries on unaffected — as an NTP step or a manual clock change would.
+     * `relative()` and `timeStamp()` keep ignoring the jump.
+     */
+    jumpSystemClock: (ms: number) => {
+      systemClockShift += ms
+      jasmine.clock().mockDate(new Date(Date.now() + ms))
+    },
   }
 }
