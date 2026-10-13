@@ -21,17 +21,17 @@ Use this strategy to test the integration on Real applications.
 ## Work with unit tests
 
 1. Write a unit test.
-2. Run only your tests by temporarily replacing `describe(...)` with `fdescribe(...)` or `it(...)` with `fit(...)`.
-3. Run `yarn test` in the project root. It will launch the tests in watch mode, and also expose [a local URL](http://localhost:9876/) that you can open in any browser.
+2. Run `yarn test <path/to/your.spec.ts>` in the project root. It launches the tests in watch mode in a headless Chromium.
+3. To narrow down further, temporarily replace `describe(...)` with `fdescribe(...)` or `it(...)` with `fit(...)` (this only applies within the selected files).
 4. Look at your terminal to see your test results.
-5. For deeper investigation, open [the "debug" page](http://localhost:9876/debug.html#) to inspect test execution via the devtools.
+5. For deeper investigation, run `yarn test:unit:watch --browser.headless=false <path>` to open the browser and inspect test execution via the devtools.
 
 ## Debug flaky unit tests
 
-Top-level `describe` blocks are run in a random order. Sometimes, an issue can only be reproduced with a given order. To reproduce a test run order:
+Test files and tests are run in a random order. Sometimes, an issue can only be reproduced with a given order. To reproduce a test run order:
 
-1. Check the `Randomized with seed XXXX` message from the test output.
-2. Run `yarn test:unit --seed XXXX`.
+1. Check the `Running tests with seed XXXX` message from the test output.
+2. Run `yarn test:unit --sequence.seed=XXXX`.
 
 ## Work with E2E tests
 

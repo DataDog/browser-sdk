@@ -1,4 +1,5 @@
 // <reference types="jasmine" />
+/// <reference path="./providedContext.d.ts" />
 // The shim drives jasmine-core internals, which are untyped.
 /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-function-type */
 
@@ -91,6 +92,25 @@ window.expectAsync = (actual: any) =>
       }
     },
   })
+
+// Fail tests that call console methods without spying on them, to keep the test output clean.
+// Calls made after a test ends are reported by the next test.
+if (vitest.inject('failOnUnexpectedConsoleCalls')) {
+  const unexpectedConsoleCalls: string[] = []
+  for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
+    const originalMethod = console[method].bind(console)
+    console[method] = (...args: unknown[]) => {
+      unexpectedConsoleCalls.push(`${method}: ${args.map(String).join(' ')}`)
+      originalMethod(...args)
+    }
+  }
+  vitest.afterEach(() => {
+    if (unexpectedConsoleCalls.length) {
+      const calls = unexpectedConsoleCalls.splice(0)
+      throw new Error(`Unexpected console calls:\n${calls.join('\n')}`)
+    }
+  })
+}
 
 // After each is executed before `onTestFinished`, so it's too soon to clear the spies
 vitest.beforeEach(() => {
