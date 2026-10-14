@@ -24,13 +24,6 @@ describe('displayContext', () => {
   })
 
   describe('assemble hook', () => {
-    it('does not measure a viewport without a window', () => {
-      replaceMockable(globalObject.window, undefined)
-      displayContext = startDisplayContext(hook)
-
-      expect(requestAnimationFrameSpy).not.toHaveBeenCalled()
-    })
-
     it('should set the display context', () => {
       displayContext = startDisplayContext(hook)
 
@@ -49,6 +42,13 @@ describe('displayContext', () => {
           },
         },
       })
+    })
+
+    it('does not measure a viewport without a window', () => {
+      replaceMockable(globalObject.window, undefined)
+      displayContext = startDisplayContext(hook)
+
+      expect(requestAnimationFrameSpy).not.toHaveBeenCalled()
     })
   })
 })

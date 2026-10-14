@@ -3,11 +3,6 @@ import { mockBaseConfiguration, mockCookies, replaceMockable } from '../../test'
 import { buildCookieOptions, getCurrentSite, getInitCookie } from './cookie'
 
 describe('cookie', () => {
-  it('has no initial cookies without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    expect(getInitCookie('worker-cookie')).toBeUndefined()
-  })
-
   describe('getCurrentSite', () => {
     it('returns the eTLD+1 for example.com', () => {
       mockCookies()
@@ -50,6 +45,13 @@ describe('cookie', () => {
 
       expect(getCurrentSite('example.com')).toBe('example.com')
       expect(setter).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('getInitCookie', () => {
+    it('has no initial cookies without a document', () => {
+      replaceMockable<Document | undefined>(globalObject.document, undefined)
+      expect(getInitCookie('worker-cookie')).toBeUndefined()
     })
   })
 })

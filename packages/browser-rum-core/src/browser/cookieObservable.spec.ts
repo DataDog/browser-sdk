@@ -10,17 +10,6 @@ const COOKIE_NAME = 'cookie_name'
 const COOKIE_DURATION = ONE_MINUTE
 
 describe('cookieObservable', () => {
-  it('does not poll cookies without a document or Cookie Store', () => {
-    replaceMockable(globalObject.cookieStore, undefined)
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    const observer = jasmine.createSpy()
-    subscription = createCookieObservable(COOKIE_NAME).subscribe(observer)
-
-    clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
-
-    expect(observer).not.toHaveBeenCalled()
-  })
-
   let subscription: Subscription
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
   let clock: Clock
@@ -117,5 +106,16 @@ describe('cookieObservable', () => {
     clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
 
     expect(cookieChanges).toEqual(['foo', 'bar'])
+  })
+
+  it('does not poll cookies without a document or Cookie Store', () => {
+    replaceMockable(globalObject.cookieStore, undefined)
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    const observer = jasmine.createSpy()
+    subscription = createCookieObservable(COOKIE_NAME).subscribe(observer)
+
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+    expect(observer).not.toHaveBeenCalled()
   })
 })

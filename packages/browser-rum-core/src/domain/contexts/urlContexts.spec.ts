@@ -34,15 +34,6 @@ describe('urlContexts', () => {
     expect(urlContexts.findUrl()).toBeUndefined()
   })
 
-  it('uses an empty initial referrer without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-      startClocks: clocksNow(),
-    } as ViewCreatedEvent)
-
-    expect(urlContexts.findUrl()!.referrer).toBe('')
-  })
-
   it('should not create url context on location change before the initial view', () => {
     changeLocation('/foo')
 
@@ -57,6 +48,15 @@ describe('urlContexts', () => {
     const urlContext = urlContexts.findUrl()!
     expect(urlContext.url).toBe('http://fake-url.com/')
     expect(urlContext.referrer).toBe(document.referrer)
+  })
+
+  it('uses an empty initial referrer without a document', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: clocksNow(),
+    } as ViewCreatedEvent)
+
+    expect(urlContexts.findUrl()!.referrer).toBe('')
   })
 
   it('should use the provided url override instead of location', () => {

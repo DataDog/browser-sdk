@@ -3,19 +3,6 @@ import { buildLocation, registerCleanupTask, replaceMockable } from '@datadog/br
 import { createLocationChangeObservable } from './locationChangeObservable'
 
 describe('locationChangeObservable', () => {
-  it('does not track browser history without a window', () => {
-    replaceMockable(globalObject.window, undefined)
-    const observer = jasmine.createSpy()
-    const subscription = createLocationChangeObservable().subscribe(observer)
-    const originalUrl = location.href
-    registerCleanupTask(() => history.replaceState({}, '', originalUrl))
-
-    history.pushState({}, '', '/worker-test')
-
-    expect(observer).not.toHaveBeenCalled()
-    subscription.unsubscribe()
-  })
-
   it('should notify observers on history change', () => {
     const observer = setup()
 
@@ -61,6 +48,19 @@ describe('locationChangeObservable', () => {
     const locationChanges = observer.calls.argsFor(0)[0]
     expect(locationChanges.oldLocation.href).toMatch(/\/fake-location$/)
     expect(locationChanges.newLocation.href).toMatch(/\/fake-location\?bar=qux$/)
+  })
+
+  it('does not track browser history without a window', () => {
+    replaceMockable(globalObject.window, undefined)
+    const observer = jasmine.createSpy()
+    const subscription = createLocationChangeObservable().subscribe(observer)
+    const originalUrl = location.href
+    registerCleanupTask(() => history.replaceState({}, '', originalUrl))
+
+    history.pushState({}, '', '/worker-test')
+
+    expect(observer).not.toHaveBeenCalled()
+    subscription.unsubscribe()
   })
 
   it('allow frameworks to patch history.pushState', () => {

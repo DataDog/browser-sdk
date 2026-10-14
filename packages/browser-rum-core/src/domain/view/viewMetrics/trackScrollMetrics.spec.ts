@@ -36,6 +36,13 @@ describe('createScrollValuesObserver', () => {
     })
   })
 
+  it('should produce a value when the page is resized', () => {
+    increaseHeight()
+    subscription = scrollObservable.subscribe(({ scrollHeight }) => {
+      expect(scrollHeight).toBeGreaterThan(600)
+    })
+  })
+
   it('does not observe scrolling without a document', () => {
     replaceMockable<Document | undefined>(globalObject.document, undefined)
     const observer = jasmine.createSpy()
@@ -43,13 +50,6 @@ describe('createScrollValuesObserver', () => {
     newScroll()
 
     expect(observer).not.toHaveBeenCalled()
-  })
-
-  it('should produce a value when the page is resized', () => {
-    increaseHeight()
-    subscription = scrollObservable.subscribe(({ scrollHeight }) => {
-      expect(scrollHeight).toBeGreaterThan(600)
-    })
   })
 })
 
@@ -87,6 +87,7 @@ describe('trackScrollMetrics', () => {
       maxDepthScrollTop: 100,
     })
   })
+
   it('should update time and scroll height only if it has increased', () => {
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     updateScrollValues({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })

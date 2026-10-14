@@ -8,15 +8,6 @@ import { createDOMMutationObservable, getMutationObserverConstructor } from './d
 const DOM_MUTATION_OBSERVABLE_DURATION = 16
 
 describe('domMutationObservable', () => {
-  it('does not observe mutations without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    const observeSpy = spyOn(MutationObserver.prototype, 'observe')
-    const subscription = createDOMMutationObservable().subscribe(jasmine.createSpy())
-
-    expect(observeSpy).not.toHaveBeenCalled()
-    subscription.unsubscribe()
-  })
-
   function domMutationSpec(mutate: (root: HTMLElement) => void, { expectedMutations }: { expectedMutations: number }) {
     return (done: DoneFn) => {
       const root = document.createElement('div')
@@ -110,6 +101,15 @@ describe('domMutationObservable', () => {
       { expectedMutations: 1 }
     )
   )
+
+  it('does not observe mutations without a document', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    const observeSpy = spyOn(MutationObserver.prototype, 'observe')
+    const subscription = createDOMMutationObservable().subscribe(jasmine.createSpy())
+
+    expect(observeSpy).not.toHaveBeenCalled()
+    subscription.unsubscribe()
+  })
 
   describe('Zone.js support', () => {
     let zoneJs: MockZoneJs

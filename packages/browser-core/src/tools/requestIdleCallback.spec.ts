@@ -3,18 +3,6 @@ import { mockClock, registerCleanupTask, replaceMockable, type Clock } from '../
 import { MAX_TASK_TIME, requestIdleCallbackShim, requestIdleCallback } from './requestIdleCallback'
 
 describe('requestIdleCallback', () => {
-  it('uses a cancellable timer without a window', () => {
-    replaceMockable(globalObject.window, undefined)
-    const clock = mockClock()
-    const callback = jasmine.createSpy()
-    requestIdleCallback(callback)
-    requestIdleCallback(callback)()
-
-    expect(callback).not.toHaveBeenCalled()
-    clock.tick(0)
-    expect(callback).toHaveBeenCalledTimes(1)
-  })
-
   it('fallbacks to the shim when requestIdleCallback is not available', () => {
     const clock = mockClock()
     removeGlobalRequestIdleCallback()
@@ -26,6 +14,18 @@ describe('requestIdleCallback', () => {
 
     clock.tick(0)
     expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses a cancellable timer without a window', () => {
+    replaceMockable(globalObject.window, undefined)
+    const clock = mockClock()
+    const callback = jasmine.createSpy()
+    requestIdleCallback(callback)
+    requestIdleCallback(callback)()
+
+    expect(callback).not.toHaveBeenCalled()
+    clock.tick(0)
+    expect(callback).toHaveBeenCalledTimes(1)
   })
 })
 

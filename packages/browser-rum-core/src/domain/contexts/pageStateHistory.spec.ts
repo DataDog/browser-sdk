@@ -19,16 +19,6 @@ describe('pageStateHistory', () => {
     hook = createHook()
   })
 
-  it('treats an environment without document or window as active', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    replaceMockable(globalObject.window, undefined)
-    const pageStateHistory = startPageStateHistory(hook)
-    registerCleanupTask(pageStateHistory.stop)
-
-    expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, clock.relative(0), 0 as Duration)).toBe(true)
-    expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.HIDDEN, clock.relative(0), 0 as Duration)).toBe(false)
-  })
-
   describe('wasInPageStateDuringPeriod', () => {
     let pageStateHistory: PageStateHistory
 
@@ -226,7 +216,7 @@ describe('pageStateHistory', () => {
     })
   })
 
-  describe('initialization with visibility-state backfill', () => {
+  describe('initialization', () => {
     let pageStateHistory: PageStateHistory
 
     afterEach(() => {
@@ -271,6 +261,18 @@ describe('pageStateHistory', () => {
       expect(
         pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)
       ).toBeFalse()
+    })
+
+    it('treats an environment without document or window as active', () => {
+      replaceMockable<Document | undefined>(globalObject.document, undefined)
+      replaceMockable(globalObject.window, undefined)
+      pageStateHistory = startPageStateHistory(hook)
+      registerCleanupTask(pageStateHistory.stop)
+
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, clock.relative(0), 0 as Duration)).toBe(true)
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.HIDDEN, clock.relative(0), 0 as Duration)).toBe(
+        false
+      )
     })
   })
 })

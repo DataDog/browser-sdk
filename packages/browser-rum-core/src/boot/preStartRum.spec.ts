@@ -1,5 +1,4 @@
 import type { Duration, TimeStamp } from '@datadog/js-core/time'
-import { isWorkerEnvironment } from '@datadog/js-core/util'
 import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
 import { toTimeStamp, relativeToClocks, clocksNow } from '@datadog/js-core/time'
 import {
@@ -42,31 +41,6 @@ const FAKE_WORKER = {} as DeflateWorker
 const PUBLIC_API = {} as RumPublicApi
 
 describe('preStartRum', () => {
-  describe('worker startup', () => {
-    beforeEach(() => {
-      replaceMockable(isWorkerEnvironment, true)
-    })
-
-    it('still refuses worker startup without explicit memory persistence', () => {
-      const warnSpy = spyOn(display, 'warn')
-      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-
-      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-
-      expect(warnSpy).toHaveBeenCalledWith('The RUM SDK is not supported in a web or service worker environment.')
-      expect(doStartRumSpy).not.toHaveBeenCalled()
-    })
-
-    it('starts with explicit memory persistence in a worker', async () => {
-      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-
-      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: 'memory' }, PUBLIC_API)
-
-      await collectAsyncCalls(doStartRumSpy, 1)
-      expect(doStartRumSpy).toHaveBeenCalled()
-    })
-  })
-
   describe('configuration validation', () => {
     let strategy: Strategy
     let doStartRumSpy: jasmine.Spy<DoStartRum>

@@ -11,13 +11,6 @@ describe('trackFirstHidden', () => {
   let firstHidden: { timeStamp: RelativeTime; stop: () => void }
   let performanceBufferMock: GlobalPerformanceBufferMock
 
-  it('is never hidden without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    firstHidden = trackFirstHiddenWithDefaults()
-
-    expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
-  })
-
   function trackFirstHiddenWithDefaults({
     viewStart = clocksOrigin(),
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -101,6 +94,13 @@ describe('trackFirstHidden', () => {
     })
   })
 
+  it('is never hidden without a document', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    firstHidden = trackFirstHiddenWithDefaults()
+
+    expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
+  })
+
   describe('using visibilityState entries', () => {
     let originalSupportedEntryTypes: string[] | undefined
     beforeEach(() => {
@@ -113,6 +113,7 @@ describe('trackFirstHidden', () => {
         })
       }
     })
+
     it('should set timestamp to earliest hidden event from performance entries', () => {
       setPageVisibility('visible')
 

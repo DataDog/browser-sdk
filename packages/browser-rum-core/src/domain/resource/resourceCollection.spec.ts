@@ -117,18 +117,6 @@ describe('resourceCollection', () => {
     })
   })
 
-  it('skips document navigation but still collects resources without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    setupResourceCollection()
-    expect(taskQueuePushSpy).not.toHaveBeenCalled()
-
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
-    runTasks()
-
-    expect(rawRumEvents.length).toBe(1)
-    expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.RESOURCE)
-  })
-
   it('should create resource from completed XHR request', () => {
     setupResourceCollection()
     const xhr = new XMLHttpRequest()
@@ -1250,6 +1238,18 @@ describe('resourceCollection', () => {
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.duration).toBe(
         toServerDuration(elapsed(navigationEntry.startTime, navigationEntry.responseEnd))
       )
+    })
+
+    it('skips document navigation but still collects resources without a document', () => {
+      replaceMockable<Document | undefined>(globalObject.document, undefined)
+      setupResourceCollection()
+      expect(taskQueuePushSpy).not.toHaveBeenCalled()
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+      runTasks()
+
+      expect(rawRumEvents.length).toBe(1)
+      expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.RESOURCE)
     })
   })
 
