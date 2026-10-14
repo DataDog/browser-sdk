@@ -451,6 +451,7 @@ __metadata:
   dependencies:
     "@datadog/js-core": "workspace:*"
     pako: "npm:3.0.2"
+    vitest: "npm:4.1.8"
   languageName: unknown
   linkType: soft
 
