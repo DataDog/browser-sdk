@@ -14,8 +14,11 @@ import { resetInteractionCountPolyfill } from '../../browser-rum-core/src/domain
 import { resetTelemetry } from '../src/domain/telemetry'
 import { resetSampleDecisionCache } from '../src/domain/sampler'
 import { startLeakDetection } from './leakDetection'
+import { trackCurrentJasmineSpec } from './getCurrentJasmineSpec'
 import { registerCleanupTask } from './registerCleanupTask'
 ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
+
+trackCurrentJasmineSpec()
 
 beforeEach(() => {
   // Tests calling `history.pushState()` leave the shared page on another URL. Restore the full URL
