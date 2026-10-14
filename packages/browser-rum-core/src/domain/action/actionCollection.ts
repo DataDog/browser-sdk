@@ -3,6 +3,7 @@ import type { Observable } from '@datadog/browser-core'
 import { toServerDuration, addDuration } from '@datadog/js-core/time'
 import { noop } from '@datadog/browser-core'
 import { SKIPPED } from '@datadog/js-core/assembly'
+import { globalObject, mockable } from '@datadog/js-core/util'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -41,7 +42,7 @@ export function startActionCollection(
   const stopClickActions: () => void = noop
   let clickActions: ReturnType<typeof trackClickActions> | undefined
 
-  if (configuration.trackUserInteractions) {
+  if (configuration.trackUserInteractions && mockable(globalObject.window)) {
     clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration)
   }
 

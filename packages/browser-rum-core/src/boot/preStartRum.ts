@@ -28,6 +28,7 @@ import {
   addTelemetryDebug,
   setAllowUntrustedEvents,
   isAllowedTrackingOrigins,
+  SessionPersistence,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -183,7 +184,8 @@ export function createPreStartStrategy(
       startTrackingConsentContext(assembleTelemetryHook, trackingConsentState)
       telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, assembleTelemetryHook, sdkName)
 
-      if (isWorkerEnvironment) {
+      // shortcut: worker sessions reset on reload; add persistent worker storage before sharing storefront sessions.
+      if (mockable(isWorkerEnvironment) && configuration.sessionPersistence?.[0] !== SessionPersistence.MEMORY) {
         display.warn('The RUM SDK is not supported in a web or service worker environment.')
         return
       }

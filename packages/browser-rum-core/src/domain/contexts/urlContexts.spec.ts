@@ -1,4 +1,5 @@
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
+import { globalObject } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { clocksNow, relativeToClocks } from '@datadog/js-core/time'
@@ -31,6 +32,15 @@ describe('urlContexts', () => {
 
   it('should return undefined before the initial view', () => {
     expect(urlContexts.findUrl()).toBeUndefined()
+  })
+
+  it('uses an empty initial referrer without a document', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: clocksNow(),
+    } as ViewCreatedEvent)
+
+    expect(urlContexts.findUrl()!.referrer).toBe('')
   })
 
   it('should not create url context on location change before the initial view', () => {

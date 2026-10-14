@@ -1,5 +1,6 @@
 import type { MockZoneJs } from '@datadog/browser-core/test'
-import { registerCleanupTask, mockZoneJs } from '@datadog/browser-core/test'
+import { registerCleanupTask, mockZoneJs, replaceMockable } from '@datadog/browser-core/test'
+import { globalObject } from '@datadog/js-core/util'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
@@ -7,6 +8,15 @@ import { createDOMMutationObservable, getMutationObserverConstructor } from './d
 const DOM_MUTATION_OBSERVABLE_DURATION = 16
 
 describe('domMutationObservable', () => {
+  it('does not observe mutations without a document', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    const observeSpy = spyOn(MutationObserver.prototype, 'observe')
+    const subscription = createDOMMutationObservable().subscribe(jasmine.createSpy())
+
+    expect(observeSpy).not.toHaveBeenCalled()
+    subscription.unsubscribe()
+  })
+
   function domMutationSpec(mutate: (root: HTMLElement) => void, { expectedMutations }: { expectedMutations: number }) {
     return (done: DoneFn) => {
       const root = document.createElement('div')

@@ -1,9 +1,11 @@
+import { globalObject } from '@datadog/js-core/util'
 import type { MockCspEventListener, MockReportingObserver } from '../../../test'
 import {
   mockReportingObserver,
   mockCspEventListener,
   mockSourceCodeContext,
   FAKE_CSP_VIOLATION_EVENT,
+  replaceMockable,
 } from '../../../test'
 import type { Subscription } from '../../tools/observable'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
@@ -11,6 +13,19 @@ import type { RawReportError } from './reportObservable'
 import { initReportObservable, RawReportType } from './reportObservable'
 
 describe('report observable', () => {
+  it('does not subscribe to reports without document or ReportingObserver', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    replaceMockable<typeof ReportingObserver | undefined>(globalObject.ReportingObserver, undefined)
+    consoleSubscription = initReportObservable([RawReportType.cspViolation, RawReportType.intervention]).subscribe(
+      notifyReport
+    )
+
+    cspEventListener.dispatchEvent()
+    reportingObserver.raiseReport(RawReportType.intervention)
+
+    expect(notifyReport).not.toHaveBeenCalled()
+  })
+
   let reportingObserver: MockReportingObserver
   let cspEventListener: MockCspEventListener
   let consoleSubscription: Subscription

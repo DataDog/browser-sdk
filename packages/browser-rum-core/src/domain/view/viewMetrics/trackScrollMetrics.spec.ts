@@ -2,7 +2,8 @@ import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { Subscription } from '@datadog/browser-core'
 import { DOM_EVENT, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
+import { globalObject } from '@datadog/js-core/util'
 import type { ScrollMetrics, ScrollValues } from './trackScrollMetrics'
 import { createScrollValuesObservable, trackScrollMetrics } from './trackScrollMetrics'
 
@@ -33,6 +34,15 @@ describe('createScrollValuesObserver', () => {
     subscription = scrollObservable.subscribe(({ scrollDepth }) => {
       expect(scrollDepth).toBeGreaterThan(0)
     })
+  })
+
+  it('does not observe scrolling without a document', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    const observer = jasmine.createSpy()
+    subscription = scrollObservable.subscribe(observer)
+    newScroll()
+
+    expect(observer).not.toHaveBeenCalled()
   })
 
   it('should produce a value when the page is resized', () => {

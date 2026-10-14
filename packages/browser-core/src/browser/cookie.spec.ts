@@ -1,7 +1,13 @@
-import { mockBaseConfiguration, mockCookies } from '../../test'
-import { buildCookieOptions, getCurrentSite } from './cookie'
+import { globalObject } from '@datadog/js-core/util'
+import { mockBaseConfiguration, mockCookies, replaceMockable } from '../../test'
+import { buildCookieOptions, getCurrentSite, getInitCookie } from './cookie'
 
 describe('cookie', () => {
+  it('has no initial cookies without a document', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    expect(getInitCookie('worker-cookie')).toBeUndefined()
+  })
+
   describe('getCurrentSite', () => {
     it('returns the eTLD+1 for example.com', () => {
       mockCookies()

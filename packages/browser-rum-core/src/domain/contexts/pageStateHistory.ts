@@ -1,7 +1,8 @@
 import { elapsed, toServerDuration, relativeNow } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { SKIPPED } from '@datadog/js-core/assembly'
-import { createValueHistory, SESSION_TIME_OUT_DELAY, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
+import { globalObject, mockable } from '@datadog/js-core/util'
+import { createValueHistory, SESSION_TIME_OUT_DELAY, addEventListeners, DOM_EVENT, noop } from '@datadog/browser-core'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { PageStateServerEntry } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -44,7 +45,7 @@ export function startPageStateHistory(
 
   let currentPageState: PageState
 
-  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+  if (mockable(globalObject.document) && supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
     const visibilityEntries = performance.getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE)
 
     visibilityEntries.forEach((entry) => {
@@ -55,22 +56,25 @@ export function startPageStateHistory(
 
   addPageState(getPageState(), relativeNow())
 
-  const { stop: stopEventListeners } = addEventListeners(
-    window,
-    [
-      DOM_EVENT.PAGE_SHOW,
-      DOM_EVENT.FOCUS,
-      DOM_EVENT.BLUR,
-      DOM_EVENT.VISIBILITY_CHANGE,
-      DOM_EVENT.RESUME,
-      DOM_EVENT.FREEZE,
-      DOM_EVENT.PAGE_HIDE,
-    ],
-    (event) => {
-      addPageState(computePageState(event), event.timeStamp as RelativeTime)
-    },
-    { capture: true }
-  )
+  const window = mockable(globalObject.window)
+  const { stop: stopEventListeners } = window
+    ? addEventListeners(
+        window,
+        [
+          DOM_EVENT.PAGE_SHOW,
+          DOM_EVENT.FOCUS,
+          DOM_EVENT.BLUR,
+          DOM_EVENT.VISIBILITY_CHANGE,
+          DOM_EVENT.RESUME,
+          DOM_EVENT.FREEZE,
+          DOM_EVENT.PAGE_HIDE,
+        ],
+        (event) => {
+          addPageState(computePageState(event), event.timeStamp as RelativeTime)
+        },
+        { capture: true }
+      )
+    : { stop: noop }
 
   function addPageState(nextPageState: PageState, startTime = relativeNow()) {
     if (nextPageState === currentPageState) {
@@ -143,6 +147,10 @@ function computePageState(event: Event & { type: DOM_EVENT }) {
 }
 
 function getPageState() {
+  const document = mockable(globalObject.document)
+  if (!document) {
+    return PageState.ACTIVE
+  }
   if (document.visibilityState === 'hidden') {
     return PageState.HIDDEN
   }

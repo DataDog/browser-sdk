@@ -1,6 +1,7 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
 import type { TimeoutId } from '@datadog/browser-core'
 import { monitor } from '@datadog/js-core/monitor'
+import { globalObject } from '@datadog/js-core/util'
 import { addEventListener, Observable, setTimeout, clearTimeout } from '@datadog/browser-core'
 import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
@@ -277,7 +278,7 @@ export function resetManageResourceTimingBufferFull() {
 }
 
 function supportPerformanceObject() {
-  return window.performance !== undefined && 'getEntries' in performance
+  return globalObject.performance !== undefined && 'getEntries' in globalObject.performance
 }
 
 export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {

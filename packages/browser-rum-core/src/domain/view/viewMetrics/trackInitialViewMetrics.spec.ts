@@ -1,7 +1,8 @@
 import type { Duration } from '@datadog/js-core/time'
 import { clocksOrigin } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
+import { globalObject } from '@datadog/js-core/util'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
@@ -45,6 +46,24 @@ describe('trackInitialViewMetrics', () => {
       navigationTimings: jasmine.any(Object),
       firstContentfulPaint: 123 as Duration,
     })
+  })
+
+  it('does not collect page load metrics without a document', () => {
+    trackInitialViewMetricsResult.stop()
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    const result = trackInitialViewMetrics(
+      mockRumConfiguration(),
+      clocksOrigin(),
+      setLoadEventSpy,
+      scheduleViewUpdateSpy
+    )
+    registerCleanupTask(result.stop)
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION)])
+    clock.tick(0)
+
+    expect(result.initialViewMetrics).toEqual({})
+    expect(scheduleViewUpdateSpy).not.toHaveBeenCalled()
   })
 
   it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {

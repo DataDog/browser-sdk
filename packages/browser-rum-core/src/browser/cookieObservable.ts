@@ -1,4 +1,4 @@
-import { globalObject } from '@datadog/js-core/util'
+import { globalObject, mockable } from '@datadog/js-core/util'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import {
   setInterval,
@@ -39,6 +39,9 @@ function listenToCookieStoreChange() {
 export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 
 function watchCookieFallback(cookieName: string, callback: (event: string | undefined) => void) {
+  if (!mockable(globalObject.document)) {
+    return
+  }
   let previousCookieValue = getCookie(cookieName)
   const watchCookieIntervalId = setInterval(() => {
     const cookieValue = getCookie(cookieName)

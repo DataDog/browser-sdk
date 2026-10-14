@@ -1,5 +1,7 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
+import { globalObject } from '@datadog/js-core/util'
+import { replaceMockable } from '@datadog/browser-core/test'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
 import type { DisplayContext } from './displayContext'
 import { startDisplayContext } from './displayContext'
@@ -22,6 +24,13 @@ describe('displayContext', () => {
   })
 
   describe('assemble hook', () => {
+    it('does not measure a viewport without a window', () => {
+      replaceMockable(globalObject.window, undefined)
+      displayContext = startDisplayContext(hook)
+
+      expect(requestAnimationFrameSpy).not.toHaveBeenCalled()
+    })
+
     it('should set the display context', () => {
       displayContext = startDisplayContext(hook)
 

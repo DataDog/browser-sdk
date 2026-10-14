@@ -1,7 +1,8 @@
 import type { RelativeTime, Duration, ServerDuration } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
+import { globalObject } from '@datadog/js-core/util'
 import type { Clock } from '../../../../browser-core/test'
-import { mockClock, registerCleanupTask } from '../../../../browser-core/test'
+import { mockClock, registerCleanupTask, replaceMockable } from '../../../../browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType } from '../../rawRumEvent.types'
 import * as performanceObservable from '../../browser/performanceObservable'
@@ -16,6 +17,16 @@ describe('pageStateHistory', () => {
   beforeEach(() => {
     clock = mockClock()
     hook = createHook()
+  })
+
+  it('treats an environment without document or window as active', () => {
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    replaceMockable(globalObject.window, undefined)
+    const pageStateHistory = startPageStateHistory(hook)
+    registerCleanupTask(pageStateHistory.stop)
+
+    expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, clock.relative(0), 0 as Duration)).toBe(true)
+    expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.HIDDEN, clock.relative(0), 0 as Duration)).toBe(false)
   })
 
   describe('wasInPageStateDuringPeriod', () => {

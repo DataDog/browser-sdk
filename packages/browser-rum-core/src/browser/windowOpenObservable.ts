@@ -1,7 +1,9 @@
-import { instrumentMethod, Observable } from '@datadog/browser-core'
+import { instrumentMethod, noop, Observable } from '@datadog/browser-core'
+import { globalObject, mockable } from '@datadog/js-core/util'
 
 export function createWindowOpenObservable() {
   const observable = new Observable<void>()
-  const { stop } = instrumentMethod(window, 'open', () => observable.notify())
+  const window = mockable(globalObject.window)
+  const { stop } = window ? instrumentMethod(window, 'open', () => observable.notify()) : { stop: noop }
   return { observable, stop }
 }

@@ -1,3 +1,4 @@
+import { globalObject, mockable } from '@datadog/js-core/util'
 import { noop } from '../tools/utils/functionUtils'
 import { DOM_EVENT, addEventListener } from './addEventListener'
 
@@ -5,7 +6,8 @@ export function runOnReadyState(
   expectedReadyState: 'complete' | 'interactive',
   callback: () => void
 ): { stop: () => void } {
-  if (document.readyState === expectedReadyState || document.readyState === 'complete') {
+  const document = mockable(globalObject.document)
+  if (!document || document.readyState === expectedReadyState || document.readyState === 'complete') {
     callback()
     return { stop: noop }
   }

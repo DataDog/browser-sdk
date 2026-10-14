@@ -3,13 +3,24 @@ import type { Subscription } from '@datadog/browser-core'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import { deleteCookie, setCookie } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, replaceMockable } from '@datadog/browser-core/test'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
 
 const COOKIE_NAME = 'cookie_name'
 const COOKIE_DURATION = ONE_MINUTE
 
 describe('cookieObservable', () => {
+  it('does not poll cookies without a document or Cookie Store', () => {
+    replaceMockable(globalObject.cookieStore, undefined)
+    replaceMockable<Document | undefined>(globalObject.document, undefined)
+    const observer = jasmine.createSpy()
+    subscription = createCookieObservable(COOKIE_NAME).subscribe(observer)
+
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+    expect(observer).not.toHaveBeenCalled()
+  })
+
   let subscription: Subscription
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
   let clock: Clock

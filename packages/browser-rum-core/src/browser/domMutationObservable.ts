@@ -1,4 +1,5 @@
 import { monitor } from '@datadog/js-core/monitor'
+import { globalObject, mockable } from '@datadog/js-core/util'
 import { noop, Observable, getZoneJsOriginalValue } from '@datadog/browser-core'
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
@@ -26,6 +27,9 @@ export type RumMutationRecord =
   RumCharacterDataMutationRecord | RumAttributesMutationRecord | RumChildListMutationRecord
 
 export function createDOMMutationObservable() {
+  if (!mockable(globalObject.document)) {
+    return new Observable<RumMutationRecord[]>()
+  }
   const MutationObserver = getMutationObserverConstructor()
 
   return new Observable<RumMutationRecord[]>((observable) => {
