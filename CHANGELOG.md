@@ -20,6 +20,36 @@
 
 ---
 
+## v7.16.0
+
+**Public Changes:**
+
+- ⚗️ Collect WebSocket vitals ([#5133](https://github.com/DataDog/browser-sdk/pull/5133))
+- ✨ Add a point-in-time RUM action on the first hit of EXIT probes ([#5122](https://github.com/DataDog/browser-sdk/pull/5122))
+- ✨ Send the build debug ID on Live Debugger Delivery API polls ([#5114](https://github.com/DataDog/browser-sdk/pull/5114))
+- ✨ Expose expandOrRenew on the session manager ([#5112](https://github.com/DataDog/browser-sdk/pull/5112))
+- ✨ Start a RUM action on the first hit of each browser probe ([#5107](https://github.com/DataDog/browser-sdk/pull/5107))
+- ✨ [MFE] Attribute browser logs using source code context ([#5074](https://github.com/DataDog/browser-sdk/pull/5074))
+- ✨ Report WASM debug info type ([#5021](https://github.com/DataDog/browser-sdk/pull/5021))
+- 🐛 Hide server-only flags in the developer extension Flags tab ([#5116](https://github.com/DataDog/browser-sdk/pull/5116))
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#5126](https://github.com/DataDog/browser-sdk/pull/5126))
+- 👷 Update dependency eslint-plugin-jsdoc to v65 ([#5128](https://github.com/DataDog/browser-sdk/pull/5128))
+- 👷 Update dependency eslint-plugin-unicorn to v77 ([#5129](https://github.com/DataDog/browser-sdk/pull/5129))
+- 👷 Update all non-major dependencies ([#5067](https://github.com/DataDog/browser-sdk/pull/5067))
+- 👷 Bump chrome to 155.0.8059.39-1 ([#5118](https://github.com/DataDog/browser-sdk/pull/5118))
+- 👷 Add a manual RUM FIT trigger for Browser SDK commits ([#5076](https://github.com/DataDog/browser-sdk/pull/5076))
+- 👷 Update dependency @angular/router to v22.2.0 [SECURITY] ([#5106](https://github.com/DataDog/browser-sdk/pull/5106))
+- 👷 Update dependency next to v16.3.6 [SECURITY] ([#5105](https://github.com/DataDog/browser-sdk/pull/5105))
+- 👷 Update dependency eslint-plugin-unicorn to v76 ([#5068](https://github.com/DataDog/browser-sdk/pull/5068))
+- 👷 Bump chrome to 154.0.8037.57-1 ([#5057](https://github.com/DataDog/browser-sdk/pull/5057))
+- ♻️ move pure utilities to @datadog/js-core/util ([#4994](https://github.com/DataDog/browser-sdk/pull/4994))
+- ✅ Test the snapshot probe location format ([#5110](https://github.com/DataDog/browser-sdk/pull/5110))
+- ✅ Add canvas recording E2E coverage and expose configuration docs ([#5113](https://github.com/DataDog/browser-sdk/pull/5113))
+- 🔇 Remove Cookie Store API write failure telemetry debug ([#5124](https://github.com/DataDog/browser-sdk/pull/5124))
+
 ## v7.15.0
 
 **Public Changes:**
@@ -31,7 +61,7 @@
 - 🐛 Skip sendBeacon for non-HTTP(S) endpoints ([#5062](https://github.com/DataDog/browser-sdk/pull/5062))
 - 📝 Document browser Live Debugger CSP prerequisite ([#5065](https://github.com/DataDog/browser-sdk/pull/5065))
 - ⚗️ Make canvas masking behavior consistent with image masking ([#5070](https://github.com/DataDog/browser-sdk/pull/5070))
-- ⚗️ Track WebGL canvas updates in Session Replay ([#5047](https://github.com/DataDog/browser-sdk/pull/5047))
+- Track WebGL canvas updates in Session Replay ([#5047](https://github.com/DataDog/browser-sdk/pull/5047))
 
 ## v7.14.0
 
