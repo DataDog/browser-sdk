@@ -56,6 +56,11 @@ const config: ViteUserConfig = {
     ],
     restoreMocks: true,
 
+    // Run all test files in the same page, like Karma did. Tests are kept independent by the global
+    // cleanup in forEach.ts and `registerCleanupTask()`, and reloading the page for each file is
+    // what makes isolated runs slow.
+    isolate: false,
+
     // Run files and tests in random order (like Jasmine's `random: true`). Reproduce an order
     // with `--sequence.seed=<seed>`.
     sequence: { shuffle: { files: true, tests: true } },
