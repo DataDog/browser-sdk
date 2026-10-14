@@ -1,17 +1,16 @@
-// Spike: run Vitest Browser Mode on real BrowserStack browsers through the webdriverio provider.
-// Launch through the BrowserStack wrapper (starts BrowserStack Local and sets
-// BROWSERSTACK_LOCAL_IDENTIFIER):
+// Run Vitest Browser Mode on real BrowserStack browsers through the webdriverio provider.
+// Used by `yarn test:unit:bs`, which runs through the BrowserStack wrapper (starts BrowserStack
+// Local and sets BROWSERSTACK_LOCAL_IDENTIFIER):
 //
-//   BS_BROWSER=safari-desktop node scripts/test/bs-wrapper.ts \
-//     yarn vitest run --config test/unit-vitest/vite.bs.config.ts packages/browser-core
+//   BS_BROWSER=safari-desktop yarn test:unit:bs [<path filters>]
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { transformWithOxc, type Plugin } from 'vite'
-import { defineConfig, mergeConfig } from 'vitest/config'
+import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 import { webdriverio, type WebdriverBrowserProvider } from '@vitest/browser-webdriverio'
 import { browserConfigurations } from '../unit/browsers.conf.ts'
-import { getBuildInfos } from '../envUtils.ts'
+import { getBuildInfos, getTestReportDirectory } from '../envUtils.ts'
 import baseConfig from './vite.config.ts'
 
 const selectedBrowser = process.env.BS_BROWSER
@@ -125,6 +124,7 @@ const config = mergeConfig(
       // The default timeouts are too short for remote browsers
       testTimeout: 30_000,
       hookTimeout: 30_000,
+      coverage: { enabled: false },
       browser: {
         headless: false,
         // BrowserStack rewrites localhost to bs-local.com for Safari: serve from that host directly
@@ -167,7 +167,25 @@ function webdriverioWithKeepalive(options: Parameters<typeof webdriverio>[0]) {
   }
 }
 
-// mergeConfig concatenates arrays: replace the base playwright provider and instance instead
+// mergeConfig concatenates arrays: replace the base reporters, exclusions, provider and instance
+// instead
+
+// Print every test so the BrowserStack wrapper doesn't kill the run for lack of output
+const testReportDirectory = getTestReportDirectory()
+config.test.reporters = testReportDirectory
+  ? ['verbose', ['junit', { outputFile: `${testReportDirectory}/results-${selectedBrowser ?? 'all'}.xml` }]]
+  : ['verbose']
+
+config.test.exclude = [
+  ...configDefaults.exclude,
+  // The developer extension is only compatible with Chrome, no point testing it on other browsers
+  'developer-extension/**',
+  // Angular's signal debugging requires FinalizationRegistry, absent in Chrome/Edge 80 and Firefox 78
+  ...(configurations.some(({ id }) => id !== undefined && ['chrome-desktop', 'edge', 'firefox'].includes(id))
+    ? ['packages/browser-rum-angular/**']
+    : []),
+]
+
 config.test.browser.provider = webdriverio()
 config.test.browser.instances = configurations.map((configuration) => ({
   browser: getWebdriverBrowserName(configuration.name),
