@@ -54,6 +54,7 @@ describe('flagsRequests', () => {
       expect(url.searchParams.get('page[limit]')).toBe('20')
       expect(url.searchParams.get('page[offset]')).toBe('40') // (3 - 1) * 20
       expect(url.searchParams.get('is_archived')).toBe('false')
+      expect(url.searchParams.get('distribution_channel')).toBe('CLIENT')
       expect((requestInit.headers as Record<string, string>).Authorization).toBe('Bearer tok')
       expect(page.total).toBe(sampleTotal)
       // sampleFlag round-trips including description + createdBy (from attributes.description/created_by).
@@ -255,6 +256,8 @@ describe('flagsRequests', () => {
       // Active-only: an archived flag sharing the key would win the dedupe and describe the override
       // against the wrong type and variants.
       expect(firstUrl.searchParams.get('is_archived')).toBe('false')
+      // Overrides must resolve whatever the flag's channel, so the by-key lookup isn't channel-filtered.
+      expect(firstUrl.searchParams.has('distribution_channel')).toBeFalse()
       expect(flags.map((flag) => flag.key)).toEqual(['flag-a', 'flag-b'])
       expect(missingKeys).toEqual(['missing'])
     })

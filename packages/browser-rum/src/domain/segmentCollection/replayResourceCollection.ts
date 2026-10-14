@@ -44,7 +44,7 @@ export function startReplayResourceCollection(
   const { unsubscribe: unsubscribePageMayExit } = lifeCycle.subscribe(
     LifeCycleEventType.PREPARE_URGENT_FLUSH,
     (reason) => {
-      if (isPageExitReason(reason) && reason !== PageExitReason.HIDDEN) {
+      if (isPageExitReason(reason) && reason !== PageExitReason.HIDDEN && reason !== PageExitReason.PAGE_TERMINATED) {
         pendingResourcesByHash.forEach(({ payload }) => httpRequest.sendOnExit(payload))
       }
     }

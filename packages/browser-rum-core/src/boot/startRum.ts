@@ -10,8 +10,6 @@ import {
   startUserContext,
   startTabContext,
   ErrorSource,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createDOMMutationObservable } from '@datadog/js-core/dom'
@@ -20,7 +18,7 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
-import { startWebSocketCollection } from '../domain/resource/webSocketCollection'
+import { startWebSocketCollection } from '../domain/webSocket/webSocketCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
@@ -219,13 +217,8 @@ export function startRumEventCollection(
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
-  if (
-    configuration.trackResources &&
-    (configuration.betaTrackWebSockets || isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_WEBSOCKETS))
-  ) {
-    const webSocketCollection = startWebSocketCollection(lifeCycle, viewHistory, vitalCollection.addDurationVital)
-    cleanupTasks.push(webSocketCollection.stop)
-  }
+  const webSocketCollection = startWebSocketCollection(lifeCycle, configuration)
+  cleanupTasks.push(webSocketCollection.stop)
 
   const internalContext = startInternalContext(
     configuration.applicationId,

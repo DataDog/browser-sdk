@@ -579,4 +579,34 @@ test.describe('debugger', () => {
         outcome: 'return',
       })
     })
+
+  createTest('add a point-in-time RUM action on the first hit of an EXIT probe')
+    .withRum()
+    .withDebugger()
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      const probe = makeProbe({ evaluateAt: 'EXIT' })
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await injectInstrumentedFunction(page)
+
+      await page.evaluate(() => {
+        ;(window as any).testFunction('hello', ' world')
+        ;(window as any).testFunction('hello', ' again')
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.debuggerEvents).toHaveLength(2)
+
+      const probeActions = intakeRegistry.rumActionEvents.filter((event) => event.action.type === 'custom')
+      expect(probeActions).toHaveLength(1)
+      expect(probeActions[0].action.target!.name).toBe('probe: testFunction (TestModule)')
+      expect(probeActions[0].action.loading_time).toBeUndefined()
+      expect(probeActions[0].context!.debugger).toEqual({
+        probe: { id: 'test-probe-1', version: 1, location: { method: 'testFunction', type: 'TestModule' } },
+        snapshot: { id: (intakeRegistry.debuggerEvents[0].debugger as any).snapshot.id },
+        outcome: 'return',
+      })
+    })
 })

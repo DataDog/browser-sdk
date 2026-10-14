@@ -18,6 +18,10 @@ import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 
 export interface DebuggerBuildMetadata {
   version?: string
+  /**
+   * Sourcemap debug ID of the instrumented build
+   */
+  debugId?: string
 }
 
 /**
@@ -123,9 +127,10 @@ export interface DebuggerInitConfiguration {
   maxUnreachableDuration?: number
 
   /**
-   * Whether to start a RUM custom action on the first hit of each probe, if the RUM Browser SDK is
-   * loaded on the page. Only probes evaluated at function entry are tracked, and the action lasts
-   * until the instrumented function returns or throws.
+   * Whether to create a RUM custom action on the first hit of each probe, if the RUM Browser SDK is
+   * loaded on the page. For probes evaluated at function entry, the action lasts until the
+   * instrumented function returns or throws. For probes evaluated at function exit, the action is a
+   * point in time at the function exit.
    *
    * @category Data Collection
    * @defaultValue true
@@ -192,6 +197,12 @@ function resolveDebuggerVersion(initConfiguration: DebuggerInitConfiguration): s
   return initConfiguration.version ?? buildVersion
 }
 
+function resolveBuildDebugId(): string | undefined {
+  // The build metadata is injected in the bundle by the build plugin, so don't trust its shape
+  const debugId: unknown = (globalObject as BrowserWindow).__DD_LIVE_DEBUGGER_BUILD__?.debugId
+  return typeof debugId === 'string' && debugId ? debugId : undefined
+}
+
 /**
  * Create the public API for the Live Debugger
  */
@@ -221,6 +232,7 @@ function makeDebuggerPublicApi(): DatadogDebugger {
         proxy: resolvedConfiguration.proxy,
         env: resolvedConfiguration.env,
         version: resolvedConfiguration.version,
+        debugId: resolveBuildDebugId(),
         pollInterval: resolvedConfiguration.pollInterval,
         maxUnreachableDuration: resolvedConfiguration.maxUnreachableDuration,
       })

@@ -103,7 +103,10 @@ export function doStartSegmentCollection(
   const { unsubscribe: unsubscribePageMayExit } = lifeCycle.subscribe(
     LifeCycleEventType.PREPARE_URGENT_FLUSH,
     (reason) => {
-      flushSegment(reason as FlushReason)
+      if (reason === PageExitReason.PAGE_TERMINATED) {
+        return
+      }
+      flushSegment(reason)
     }
   )
 

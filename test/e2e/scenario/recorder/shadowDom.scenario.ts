@@ -22,8 +22,8 @@ import { createTest, html } from '../../lib/framework'
  *      <label  id="label-titi">field titi: </label>
  *      <input id="input-titi" value="toto">
  *    </div>
- *</my-input-field>
- *```
+ * </my-input-field>
+ * ```
  when called like `<my-input-field id="titi" />`
  */
 const inputShadowDom = `<script>
@@ -60,8 +60,8 @@ const inputShadowDom = `<script>
  * <my-div id="titi">
  *  #shadow-root
  *    <div>toto</div>
- *</my-div>
- *```
+ * </my-div>
+ * ```
  when called like `<my-div />`
  */
 const divShadowDom = `<script>
@@ -90,8 +90,8 @@ const divShadowDom = `<script>
  *      <div style="height:500px;"></div>
  *    </div>
  *    <button>scroll to 250</button>
- *</my-div>
- *```
+ * </my-div>
+ * ```
  when called like `<my-div />`
  */
 const scrollableDivShadowDom = `<script>
@@ -131,8 +131,8 @@ const scrollableDivShadowDom = `<script>
  * <div-with-style>
  *  #shadow-root
  *    <div>toto</div>
- *</div-with-style>
- *```
+ * </div-with-style>
+ * ```
  when called like `<div-with-style />`
  */
 const divWithStyleShadowDom = `<script>
