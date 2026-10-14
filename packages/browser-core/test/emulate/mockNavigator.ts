@@ -24,3 +24,32 @@ export function setNavigatorConnection(connection: Partial<NetworkInformation> |
     delete (navigator as any).connection
   })
 }
+
+export function setNavigatorDoNotTrack(doNotTrack: string | null | undefined) {
+  const original = navigator.doNotTrack
+  Object.defineProperty(navigator, 'doNotTrack', {
+    get() {
+      return doNotTrack
+    },
+    configurable: true,
+  })
+  registerCleanupTask(() => {
+    Object.defineProperty(navigator, 'doNotTrack', {
+      value: original,
+      writable: true,
+      configurable: true,
+    })
+  })
+}
+
+export function setNavigatorGlobalPrivacyControl(globalPrivacyControl: boolean | undefined) {
+  Object.defineProperty(navigator, 'globalPrivacyControl', {
+    get() {
+      return globalPrivacyControl
+    },
+    configurable: true,
+  })
+  registerCleanupTask(() => {
+    delete (navigator as any).globalPrivacyControl
+  })
+}
