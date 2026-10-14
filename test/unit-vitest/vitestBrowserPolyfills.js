@@ -156,4 +156,17 @@
 
     globalThis.BroadcastChannel = BroadcastChannelPolyfill
   }
+
+  // Firefox < 79. Vitest uses it to report multiple errors.
+  if (typeof AggregateError === 'undefined') {
+    class AggregateErrorPolyfill extends Error {
+      constructor(errors, message) {
+        super(message)
+        this.name = 'AggregateError'
+        this.errors = Array.from(errors)
+      }
+    }
+
+    globalThis.AggregateError = AggregateErrorPolyfill
+  }
 })()
