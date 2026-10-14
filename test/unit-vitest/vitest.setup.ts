@@ -5,9 +5,12 @@
 
 import * as vitest from 'vitest'
 import jasmineRequire from 'jasmine-core/lib/jasmine-core/jasmine.js'
+import { trackCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
 const jasmineLib = jasmineRequire.core(jasmineRequire)
-const env = jasmineLib.getEnv()
+// Vitest is the runner: don't let Jasmine install its global error handlers, which forward
+// unhandled rejections to `window.onerror` and would report them a second time.
+const env = jasmineLib.getEnv({ suppressLoadErrors: true })
 
 // Create a standalone SpyRegistry that doesn't require a jasmine execution context.
 // vitest's afterEach (registered below) will clear it between tests.
@@ -54,6 +57,8 @@ vitest.afterEach(() => {
   currentTestCtx = null
 })
 window.pending = (reason) => currentTestCtx?.skip(reason)
+
+trackCurrentJasmineSpec()
 
 window.describe = vitest.describe
 window.fdescribe = vitest.describe.only
