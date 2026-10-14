@@ -12,7 +12,7 @@ import {
 } from './oauth'
 
 describe('oauth', () => {
-  // In-memory chrome.storage.session so token read/write/remove work in the karma browser.
+  // In-memory chrome.storage.session so token read/write/remove work in the test browser.
   function mockSessionStorage() {
     const previousChrome = (globalThis as any).chrome
     const store: Record<string, unknown> = {}
