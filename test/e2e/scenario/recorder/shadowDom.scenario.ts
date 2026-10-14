@@ -1,4 +1,4 @@
-import type { MouseInteractionData, ScrollData } from '@datadog/browser-rum/src/types'
+import type { BrowserChangeRecord, MouseInteractionData, ScrollData } from '@datadog/browser-rum/src/types'
 import { ChangeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 import {
@@ -154,6 +154,27 @@ class DivWithStyle extends HTMLElement {
 </script>
 `
 
+/**
+ * Defines `<shared-style-a>` and `<shared-style-b>` elements. All instances of a given
+ * element class adopt the same constructed stylesheet, like most web component libraries
+ * do.
+ */
+const sharedStyleShadowDom = `<script>
+function defineSharedStyleElement(name, css) {
+  const styleSheet = new CSSStyleSheet();
+  styleSheet.insertRule(css);
+  window.customElements.define(name, class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" }).adoptedStyleSheets = [styleSheet];
+    }
+  });
+}
+defineSharedStyleElement("shared-style-a", "div { color: green; }");
+defineSharedStyleElement("shared-style-b", "div { color: red; }");
+</script>
+`
+
 test.describe('recorder with shadow DOM', () => {
   createTest('can record fullsnapshot with the detail inside the shadow root')
     .withRum({ defaultPrivacyLevel: 'allow' })
@@ -219,6 +240,60 @@ test.describe('recorder with shadow DOM', () => {
         [ChangeType.AddStyleSheet, [['div { width: 100%; }']]],
         [ChangeType.AttachedStyleSheets, [9, 0]],
       ])
+    })
+
+  createTest('can record fullsnapshot with adoptedStylesheets shared by several shadow roots')
+    .withRum()
+    .withBody(html`
+      ${sharedStyleShadowDom}
+      <shared-style-a></shared-style-a>
+      <shared-style-a></shared-style-a>
+      <shared-style-b></shared-style-b>
+    `)
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      await skipIfAdoptedStyleSheetsNotSupported(page)
+
+      await flushEvents()
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
+
+      const fullSnapshot = decodeChangeRecords(findChangeRecords(intakeRegistry.replaySegments[0].records)).at(0)!
+      // Each stylesheet is serialized once, and shared stylesheets are referenced by the same id.
+      expect(findChanges(fullSnapshot.data, ChangeType.AddStyleSheet)).toEqual([
+        [['div { color: green; }']],
+        [['div { color: red; }']],
+      ])
+      expect(
+        findChanges(fullSnapshot.data, ChangeType.AttachedStyleSheets).map(([_nodeId, ...sheetIds]) => sheetIds)
+      ).toEqual([[0], [0], [1]])
+    })
+
+  createTest('can record adoptedStylesheets changes after the shadow root was serialized')
+    .withRum()
+    .withBody(html`
+      ${divShadowDom}
+      <my-div id="host"></my-div>
+    `)
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      await skipIfAdoptedStyleSheetsNotSupported(page)
+
+      await page.evaluate(() => {
+        // Simulate a lazy-loaded component adopting its styles while rendering.
+        const shadowRoot = document.querySelector('#host')!.shadowRoot!
+        const styleSheet = new CSSStyleSheet()
+        styleSheet.insertRule('div { color: red; }')
+        shadowRoot.adoptedStyleSheets.push(styleSheet)
+        shadowRoot.appendChild(document.createElement('span'))
+      })
+      await flushEvents()
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
+
+      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
+      // The host has no light DOM children, so its shadow root is the next serialized node.
+      const shadowRootId = getElementIdsFromFullSnapshot(fullSnapshot).get('host')! + 1
+
+      const mutation = decodeChangeRecords(findChangeRecords(intakeRegistry.replaySegments[0].records)).at(-1)!
+      expect(findChanges(mutation.data, ChangeType.AddStyleSheet)).toEqual([[['div { color: red; }']]])
+      expect(findChanges(mutation.data, ChangeType.AttachedStyleSheets)).toEqual([[shadowRootId, 0]])
     })
 
   createTest('can apply privacy level set from outside or inside the shadow DOM')
@@ -345,3 +420,21 @@ async function skipIfAdoptedStyleSheetsNotSupported(page: Page): Promise<void> {
   const isAdoptedStyleSheetsSupported = await page.evaluate(() => document.adoptedStyleSheets !== undefined)
   test.skip(!isAdoptedStyleSheetsSupported, 'adoptedStyleSheets is not supported in this browser')
 }
+
+function findChanges<Type extends ChangeType>(
+  data: BrowserChangeRecord['data'],
+  type: Type
+): Array<ChangeDataForType<Type>> {
+  const changes: Array<ChangeDataForType<Type>> = []
+  for (const [changeType, ...changesOfType] of data) {
+    if (changeType === type) {
+      changes.push(...(changesOfType as Array<ChangeDataForType<Type>>))
+    }
+  }
+  return changes
+}
+
+type ChangeDataForType<Type extends ChangeType> =
+  Extract<BrowserChangeRecord['data'][number], [Type, ...unknown[]]> extends [Type, ...infer Changes]
+    ? Changes[number]
+    : never
