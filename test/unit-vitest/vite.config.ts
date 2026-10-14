@@ -84,7 +84,10 @@ const config: ViteUserConfig = {
     },
   },
   optimizeDeps: {
-    include: ['jasmine-core/lib/jasmine-core/jasmine.js', 'pako'],
+    // Pre-bundle dependencies the scanner can't see, so Vite doesn't discover them mid-run and reload
+    // the page, which breaks all the following test files when they share the page (`isolate: false`).
+    // `react/jsx-dev-runtime` is injected by the JSX transform.
+    include: ['jasmine-core/lib/jasmine-core/jasmine.js', 'pako', 'react/jsx-dev-runtime'],
     rolldownOptions: {
       plugins: [
         {
