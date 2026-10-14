@@ -605,6 +605,7 @@ __metadata:
     "@datadog/browser-rum": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    "@shopify/web-pixels-extension": "npm:2.18.0"
   languageName: unknown
   linkType: soft
 
@@ -3705,6 +3706,13 @@ __metadata:
   version: 10.0.2
   resolution: "@shikijs/vscode-textmate@npm:10.0.2"
   checksum: 10c0/36b682d691088ec244de292dc8f91b808f95c89466af421cf84cbab92230f03c8348649c14b3251991b10ce632b0c715e416e992dd5f28ff3221dc2693fd9462
+  languageName: node
+  linkType: hard
+
+"@shopify/web-pixels-extension@npm:2.18.0":
+  version: 2.18.0
+  resolution: "@shopify/web-pixels-extension@npm:2.18.0"
+  checksum: 10c0/38842e2305905049d22d55f40422311b324bd3f8a1aafdf68bb8c17d29d06db94accc63e51570920f1332feb043162d790e7e1546b48142409980eec27a90ddd
   languageName: node
   linkType: hard
 

@@ -11,6 +11,7 @@ import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 import type { SalesforceApp } from './buildSalesforceUrl'
 import { getSalesforceLwcSession } from './buildSalesforceUrl'
+import type { ShopifyApp } from './shopify'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration
@@ -38,7 +39,7 @@ export interface SetupOptions {
   mockClock: boolean
   allowWasmUnsafeEval: boolean
   salesforceApp: SalesforceApp | undefined
-  shopifyApp: boolean
+  shopifyApp: ShopifyApp | undefined
 }
 
 export interface CallerLocation {
@@ -428,6 +429,44 @@ export async function shopifySetup(options: SetupOptions, servers: Servers, page
     // CORS on this response even though it never leaves the machine.
     { 'access-control-allow-origin': '*' }
   )
+  return ''
+}
+
+// Matches the CDN URL used by the Web Pixel app extension, on the production CDN or a feature branch
+// deployed to the staging CDN (e.g. `https://www.datad0g-browser-agent.com/datadog-rum-shopify-web-pixel-<suffix>.js`)
+const SHOPIFY_WEB_PIXEL_ASSET_URL_PATTERN =
+  /(datadoghq|datad0g)-browser-agent\.com\/.*datadog-rum-shopify-web-pixel[\w-]*\.js/
+
+const INTAKE_URL_PATTERN = /^https:\/\/browser-intake-[^/]+\/api\/v2\//
+
+export async function shopifyWebPixelSetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
+  await shopifySetup(options, servers, page)
+  const context = page.context()
+  const shopifyBundleDir = resolve(__dirname, '../../../../packages/browser-rum-shopify/bundle')
+
+  // The Web Pixel worker loads its bundle with `importScripts()`: route at the context level, which
+  // also intercepts worker requests
+  await context.route(SHOPIFY_WEB_PIXEL_ASSET_URL_PATTERN, async (route) => {
+    await route.fulfill({
+      body: await readFile(resolve(shopifyBundleDir, 'datadog-rum-shopify-web-pixel.js')),
+      contentType: 'application/javascript',
+      headers: { 'access-control-allow-origin': '*' },
+    })
+  })
+
+  // The app reads the RUM configuration from its settings, so the SDKs send events to the configured
+  // intake instead of the test proxy: forward them to the test intake
+  await context.route(INTAKE_URL_PATTERN, async (route) => {
+    const request = route.request()
+    const { pathname, search } = new URL(request.url())
+    await fetch(`${servers.datadogHttpApi.origin}/?ddforward=${encodeURIComponent(pathname + search)}`, {
+      method: 'POST',
+      headers: { 'content-type': request.headers()['content-type'] ?? 'text/plain' },
+      body: new Uint8Array(request.postDataBuffer() ?? []),
+    })
+    await route.fulfill({ status: 202, headers: { 'access-control-allow-origin': '*' } })
+  })
+
   return ''
 }
 

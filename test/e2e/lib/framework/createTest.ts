@@ -23,7 +23,8 @@ import {
 } from '../helpers/playwright'
 import { buildSalesforceUrl } from './buildSalesforceUrl'
 import type { SalesforceApp } from './buildSalesforceUrl'
-import { SHOPIFY_STORE_URL, unlockShopifyStorePassword } from './shopify'
+import { SHOPIFY_STORES, unlockShopifyStorePassword } from './shopify'
+import type { ShopifyApp } from './shopify'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -37,6 +38,7 @@ import {
   formatConfiguration,
   salesforceSetup,
   shopifySetup,
+  shopifyWebPixelSetup,
 } from './pageSetups'
 import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
 import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
@@ -126,7 +128,7 @@ class TestBuilder {
   } = {}
   private worker: Worker | undefined
   private salesforceApp: SalesforceApp | undefined = undefined
-  private shopifyApp = false
+  private shopifyApp: ShopifyApp | undefined
 
   constructor(
     private title: string,
@@ -299,11 +301,11 @@ class TestBuilder {
     return this
   }
 
-  withShopifyApp() {
-    this.shopifyApp = true
-    this.setups = [{ factory: shopifySetup }]
+  withShopifyApp(app: ShopifyApp = 'custom-pixel') {
+    this.shopifyApp = app
+    this.setups = [{ factory: app === 'web-pixel' ? shopifyWebPixelSetup : shopifySetup }]
     this.baseUrlHooks.push((baseUrl) => {
-      baseUrl.href = SHOPIFY_STORE_URL
+      baseUrl.href = SHOPIFY_STORES[app].url
     })
     return this
   }
@@ -593,7 +595,7 @@ async function setUpTest(
   await page.goto(baseUrl)
 
   if (shopifyApp) {
-    await unlockShopifyStorePassword(page)
+    await unlockShopifyStorePassword(page, shopifyApp)
   }
 
   await waitForServersIdle()
