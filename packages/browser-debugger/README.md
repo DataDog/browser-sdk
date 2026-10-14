@@ -6,13 +6,11 @@ See the [dedicated Datadog documentation][1] for more details.
 
 ## Prerequisites
 
-Browser Live Debugger is available in limited preview. Contact Datadog to enable it for your organization and agree on the application and expected traffic for the preview.
-
 ### Application instrumentation
 
 Instrument your browser application's functions with the [Live Debugger build plugin][5], then initialize the SDK as shown below. The RUM Browser SDK is optional.
 
-During the limited preview, probes can only be added to named functions. Adding probes to anonymous functions is not supported. Named functions include arrow functions assigned to a variable, such as `const handleClick = () => {}`. The build plugin's `liveDebugger.namedOnly: true` option skips anonymous functions during instrumentation.
+Probes can only be added to named functions. Adding probes to anonymous functions is not yet supported. Named functions include arrow functions assigned to a variable, such as `const handleClick = () => {}`. The build plugin's `liveDebugger.namedOnly: true` option skips anonymous functions during instrumentation and should be used.
 
 ### Source maps
 
