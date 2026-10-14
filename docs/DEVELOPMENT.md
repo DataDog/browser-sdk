@@ -21,7 +21,7 @@ label our Commit messages and Pull Request titles:
 - 🎨 **Code structure** - Improve code structure, formatting
 - ✅ **Tests** - Add/fix/improve tests
 - 🔧 **Configuration** - Config files, project setup
-- 🔥 **Removal** - Remove code, features, deprecated items
+- 🔥 **Removal** - Remove internal code or features. Removing a public API, even deprecated, is 💥. Making an experimental feature always on is ✨
 - 👌 **Code review** - Address code review feedback
 - 🚨 **Linting** - Add/fix linter rules
 - 🧹 **Cleanup** - Minor cleanup, housekeeping
