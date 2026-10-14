@@ -25,7 +25,7 @@ Pick from the list in `docs/DEVELOPMENT.md`. Its "User-facing changes" are the o
 
 ## Signing
 
-Every commit must be signed. `main` has a `required_signatures` ruleset, so a single unsigned commit blocks the merge. Check with `git log --show-signature -1`. If `git config commit.gpgsign` isn't `true`, commit with `git commit -S`.
+Every commit must be signed. `main` has a `required_signatures` ruleset, so a single unsigned commit blocks the merge. Check every commit on the branch with `git log --format='%h %G? %s' origin/main..HEAD`, only `N` means unsigned. If `git config commit.gpgsign` isn't `true`, commit with `git commit -S`.
 
 ## Opening the PR
 
