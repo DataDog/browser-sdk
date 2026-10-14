@@ -27,7 +27,6 @@
 - ⚗️ Collect WebSocket vitals ([#5133](https://github.com/DataDog/browser-sdk/pull/5133))
 - ✨ Add a point-in-time RUM action on the first hit of EXIT probes ([#5122](https://github.com/DataDog/browser-sdk/pull/5122))
 - ✨ Send the build debug ID on Live Debugger Delivery API polls ([#5114](https://github.com/DataDog/browser-sdk/pull/5114))
-- ✨ Expose expandOrRenew on the session manager ([#5112](https://github.com/DataDog/browser-sdk/pull/5112))
 - ✨ Start a RUM action on the first hit of each browser probe ([#5107](https://github.com/DataDog/browser-sdk/pull/5107))
 - ✨ [MFE] Attribute browser logs using source code context ([#5074](https://github.com/DataDog/browser-sdk/pull/5074))
 - ✨ Report WASM debug info type ([#5021](https://github.com/DataDog/browser-sdk/pull/5021))
@@ -35,6 +34,7 @@
 
 **Internal Changes:**
 
+- ✨ Expose expandOrRenew on the session manager ([#5112](https://github.com/DataDog/browser-sdk/pull/5112))
 - 👷 Update all non-major dependencies ([#5126](https://github.com/DataDog/browser-sdk/pull/5126))
 - 👷 Update dependency eslint-plugin-jsdoc to v65 ([#5128](https://github.com/DataDog/browser-sdk/pull/5128))
 - 👷 Update dependency eslint-plugin-unicorn to v77 ([#5129](https://github.com/DataDog/browser-sdk/pull/5129))
@@ -61,7 +61,7 @@
 - 🐛 Skip sendBeacon for non-HTTP(S) endpoints ([#5062](https://github.com/DataDog/browser-sdk/pull/5062))
 - 📝 Document browser Live Debugger CSP prerequisite ([#5065](https://github.com/DataDog/browser-sdk/pull/5065))
 - ⚗️ Make canvas masking behavior consistent with image masking ([#5070](https://github.com/DataDog/browser-sdk/pull/5070))
-- Track WebGL canvas updates in Session Replay ([#5047](https://github.com/DataDog/browser-sdk/pull/5047))
+- ⚗️ Track WebGL canvas updates in Session Replay ([#5047](https://github.com/DataDog/browser-sdk/pull/5047))
 
 ## v7.14.0
 
