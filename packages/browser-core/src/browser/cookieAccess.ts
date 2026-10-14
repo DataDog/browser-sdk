@@ -1,8 +1,7 @@
 import { ONE_MINUTE, ONE_SECOND, dateNow } from '@datadog/js-core/time'
-import { globalObject, mockable, setInterval, clearInterval, Observable } from '@datadog/js-core/util'
+import { globalObject, mockable, setInterval, clearInterval, Observable, generateUUID } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT, isEventSupported } from '@datadog/js-core/dom'
 import { display } from '../tools/display'
-import { generateUUID } from '../tools/utils/stringUtils'
 import { deleteCookie, getCookies, setCookie } from './cookie'
 import type { CookieOptions } from './cookie'
 

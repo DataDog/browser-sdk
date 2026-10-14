@@ -1,6 +1,6 @@
-import { globalObject } from '@datadog/js-core/util'
+import { globalObject, generateUUID } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
-import { generateUUID, isError } from '@datadog/browser-core'
+import { isError } from '@datadog/browser-core'
 import type { InitializedProbe } from './probes'
 import { safeReadErrorProperty } from './error'
 

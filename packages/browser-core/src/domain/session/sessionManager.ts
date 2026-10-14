@@ -18,12 +18,12 @@ import {
   setTimeout,
   Observable,
   noop,
+  throttle,
+  generateUUID,
 } from '@datadog/js-core/util'
 import { addEventListener, addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { monitorError } from '@datadog/js-core/monitor'
 import { createValueHistory } from '../../tools/valueHistory'
-import { throttle } from '../../tools/utils/functionUtils'
-import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { display } from '../../tools/display'

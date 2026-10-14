@@ -1,5 +1,5 @@
 import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
-import { deepClone, mockable } from '@datadog/js-core/util'
+import { deepClone, mockable, generateUUID } from '@datadog/js-core/util'
 import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
   DeflateWorker,
@@ -29,7 +29,6 @@ import {
   CustomerContextKey,
   defineContextMethod,
   startBufferingData,
-  generateUUID,
   display,
 } from '@datadog/browser-core'
 import { monitor, callMonitored } from '@datadog/js-core/monitor'
