@@ -157,6 +157,10 @@ function webdriverioWithKeepalive(options: Parameters<typeof webdriverio>[0]) {
         }, KEEPALIVE_INTERVAL)
         return browser
       }
+      // Vitest resizes the browser window before each test file. The viewport is irrelevant for
+      // our specs, so don't fail the run when a remote browser refuses to be resized.
+      const setViewport = provider.setViewport.bind(provider)
+      provider.setViewport = (options) => setViewport(options).catch(() => undefined)
       const close = provider.close.bind(provider)
       provider.close = () => {
         clearInterval(intervalId)
@@ -211,6 +215,9 @@ config.test.browser.instances = configurations.map((configuration) => ({
         sessionName: `${configuration.sessionName} (vitest webdriverio spike)`,
         consoleLogs: 'info',
         idleTimeout: 300,
+        // BrowserStack defaults to Selenium 2.53 (legacy JSON Wire protocol) for old desktop
+        // browsers; webdriverio needs a W3C endpoint (e.g. `POST /window/rect`)
+        ...(configuration.device ? {} : { seleniumVersion: '4.0.0' }),
       },
     },
   }),
