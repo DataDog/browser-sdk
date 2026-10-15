@@ -1,13 +1,5 @@
-import {
-  createTaskQueue,
-  display,
-  generateUUID,
-  matchList,
-  RequestType,
-  runOnReadyState,
-  safeTruncate,
-} from '@datadog/browser-core'
-import { mockable, combine, setTimeout } from '@datadog/js-core/util'
+import { createTaskQueue, display, matchList, RequestType, runOnReadyState, safeTruncate } from '@datadog/browser-core'
+import { mockable, combine, setTimeout, generateUUID } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
 import type { Duration } from '@datadog/js-core/time'
 import { relativeToClocks, toServerDuration } from '@datadog/js-core/time'

@@ -1,5 +1,5 @@
-import type { Clock } from '../../../test'
-import { mockClock } from '../../../test'
+import type { Clock } from '../../../browser-core/test'
+import { mockClock } from '../../../browser-core/test'
 import { throttle } from './functionUtils'
 
 describe('functionUtils', () => {

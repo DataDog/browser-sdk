@@ -2,8 +2,8 @@ import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog
 import type { Context } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { relativeNow } from '@datadog/js-core/time'
-import { ErrorHandling, ErrorSource, generateUUID, ResourceType } from '@datadog/browser-core'
-import { combine } from '@datadog/js-core/util'
+import { ErrorHandling, ErrorSource, ResourceType } from '@datadog/browser-core'
+import { combine, generateUUID } from '@datadog/js-core/util'
 import {
   type RumPerformanceEntry,
   type RumLayoutShiftAttribution,
