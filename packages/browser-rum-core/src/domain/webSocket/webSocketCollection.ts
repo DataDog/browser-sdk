@@ -12,6 +12,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { serializeWebSocketVital, getPhaseClocks } from './serializeWebSocketVital'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
+import { hasOpenConnection, trackedConnections } from './trackedConnections'
 
 /**
  * A one flat cadence in every page state that tells how often an open connection reports where it is.
@@ -38,17 +39,6 @@ export interface WebSocketConnectionTracker {
   /** Ends tracking of every tracked connection, and tells how many there were. */
   flushOpenConnections: (endClocks?: ClocksState, trackingEndReason?: UnobservedTrackingEndReason) => number
   stop: () => void
-}
-
-export const trackedConnectionsMap = new Map<WebSocket, TrackedConnection>()
-
-function hasOpenConnection() {
-  for (const connection of trackedConnectionsMap.values()) {
-    if (connection.isOpen()) {
-      return true
-    }
-  }
-  return false
 }
 
 /**
@@ -127,7 +117,7 @@ export function trackWebSocket(
   function reportOpenConnections() {
     const reportClocks = clocksNow()
 
-    trackedConnectionsMap.forEach((connection, instance) => {
+    trackedConnections.forEach((connection, instance) => {
       if (!connection.isOpen()) {
         return
       }
@@ -167,20 +157,20 @@ export function trackWebSocket(
   return {
     reportOpenConnections,
     flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
-      const endedCount = trackedConnectionsMap.size
-      trackedConnectionsMap.forEach((connection, instance) => {
+      const endedCount = trackedConnections.size
+      trackedConnections.forEach((connection, instance) => {
         // No close event, so the send queue depth is read from the socket
         connection.recordTrackingEnd(endClocks, trackingEndReason, instance.bufferedAmount)
         emitVital(instance, connection)
       })
 
-      trackedConnectionsMap.clear()
+      trackedConnections.clear()
       stopOpenConnectionsPeriodicReport()
       return endedCount
     },
     stop: () => {
       subscription.unsubscribe()
-      trackedConnectionsMap.clear()
+      trackedConnections.clear()
       stopOpenConnectionsPeriodicReport()
     },
   }
@@ -193,7 +183,7 @@ function handleWebSocketContext(
   switch (context.state) {
     case 'connecting': {
       const connection = createTrackedConnection(context)
-      trackedConnectionsMap.set(context.instance, connection)
+      trackedConnections.set(context.instance, connection)
 
       callback(context.instance, connection)
 
@@ -201,7 +191,7 @@ function handleWebSocketContext(
     }
 
     case 'open': {
-      const connection = trackedConnectionsMap.get(context.instance)
+      const connection = trackedConnections.get(context.instance)
       if (!connection) {
         return
       }
@@ -214,19 +204,19 @@ function handleWebSocketContext(
     }
 
     case 'message-in': {
-      trackedConnectionsMap.get(context.instance)?.recordInboundMessage(context)
+      trackedConnections.get(context.instance)?.recordInboundMessage(context)
 
       return
     }
 
     case 'message-out': {
-      trackedConnectionsMap.get(context.instance)?.recordOutboundMessage(context)
+      trackedConnections.get(context.instance)?.recordOutboundMessage(context)
 
       return
     }
 
     case 'closing': {
-      const connection = trackedConnectionsMap.get(context.instance)
+      const connection = trackedConnections.get(context.instance)
       if (!connection) {
         return
       }
@@ -239,12 +229,12 @@ function handleWebSocketContext(
     }
 
     case 'closed': {
-      const connection = trackedConnectionsMap.get(context.instance)
+      const connection = trackedConnections.get(context.instance)
       if (!connection) {
         return
       }
 
-      trackedConnectionsMap.delete(context.instance)
+      trackedConnections.delete(context.instance)
 
       connection.recordClose(context)
       callback(context.instance, connection)
