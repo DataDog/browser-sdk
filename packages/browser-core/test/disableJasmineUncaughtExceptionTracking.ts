@@ -1,4 +1,4 @@
-import { noop } from '../src/tools/utils/functionUtils'
+import { noop } from '@datadog/js-core/util'
 import { registerCleanupTask } from './registerCleanupTask'
 
 /**
