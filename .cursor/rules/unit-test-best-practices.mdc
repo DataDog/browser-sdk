@@ -21,7 +21,7 @@ yarn test:unit
 #### Run Single File
 ```bash
 # Full path
-yarn test:unit --spec packages/browser-core/src/browser/addEventListener.spec.ts
+yarn test:unit --spec packages/js-core/src/dom/addEventListener.spec.ts
 
 # Pattern matching (if filename is unique)
 yarn test:unit --spec "packages/**/addEventListener.spec.ts"

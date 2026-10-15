@@ -1,5 +1,5 @@
 import type { EndpointBuilder } from '@datadog/js-core/transport'
-import { noop } from '../src'
+import { noop } from '@datadog/js-core/util'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
 import { readFormData } from './readFormData'
 import { registerCleanupTask } from './registerCleanupTask'

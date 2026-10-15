@@ -1,8 +1,10 @@
 import { timeStampNow, addDuration, clocksNow, relativeNow } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
-import { DefaultPrivacyLevel, Observable, PageExitReason } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, PageExitReason } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
@@ -10,7 +12,6 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
 import type { BrowserWindow } from '../privacy'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { SHADOW_DOM_MARKER } from '../getSelectorFromElement'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
@@ -40,7 +41,7 @@ function eventsCollector<T>() {
 
 describe('trackClickActions', () => {
   let lifeCycle: LifeCycle
-  let domMutationObservable: Observable<RumMutationRecord[]>
+  let domMutationObservable: Observable<MutationRecord[]>
   let windowOpenObservable: Observable<void>
   let clock: Clock
 
@@ -71,7 +72,7 @@ describe('trackClickActions', () => {
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
-    domMutationObservable = new Observable<RumMutationRecord[]>()
+    domMutationObservable = new Observable<MutationRecord[]>()
     windowOpenObservable = new Observable<void>()
 
     button = document.createElement('button')

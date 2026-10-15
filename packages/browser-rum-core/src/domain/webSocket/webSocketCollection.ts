@@ -1,12 +1,6 @@
-import type { Observable, TimeoutId } from '@datadog/browser-core'
-import {
-  clearInterval,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-  noop,
-  PageExitReason,
-  setInterval,
-} from '@datadog/browser-core'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, PageExitReason } from '@datadog/browser-core'
+import type { Observable, TimeoutId } from '@datadog/js-core/util'
+import { clearInterval, noop, setInterval } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import type { WebSocketContext } from '../../browser/webSocketObservable'

@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Strategy } from './postStartStrategy'
 

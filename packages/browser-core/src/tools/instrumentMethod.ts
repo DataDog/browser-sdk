@@ -1,6 +1,5 @@
 import { callMonitored } from '@datadog/js-core/monitor'
-import { setTimeout } from './timer'
-import { noop } from './utils/functionUtils'
+import { setTimeout, noop } from '@datadog/js-core/util'
 import { createHandlingStack } from './stackTrace/handlingStack'
 
 /**

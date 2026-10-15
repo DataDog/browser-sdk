@@ -1,10 +1,9 @@
-import { Observable } from '@datadog/browser-core'
-import { deepClone } from '@datadog/js-core/util'
+import { Observable, deepClone } from '@datadog/js-core/util'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { mockRumConfiguration, setupLocationObserver } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ViewCreatedEvent, ViewEvent, ViewOptions, ViewEndedEvent } from './trackViews'
 import { trackViews } from './trackViews'
 
@@ -20,7 +19,7 @@ export function setupViewTest(
   { lifeCycle, initialLocation, partialConfig }: ViewTrackingContext,
   initialViewOptions?: ViewOptions
 ) {
-  const domMutationObservable = new Observable<RumMutationRecord[]>()
+  const domMutationObservable = new Observable<MutationRecord[]>()
   const windowOpenObservable = new Observable<void>()
   const configuration = mockRumConfiguration(partialConfig)
   const { locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)

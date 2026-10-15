@@ -1,4 +1,5 @@
-import { DefaultPrivacyLevel, noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '@datadog/browser-rum-core'

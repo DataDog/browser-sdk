@@ -1,5 +1,14 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { getDebugMode, combine, globalObject, isWorkerEnvironment, jsonStringify } from '@datadog/js-core/util'
+import {
+  getDebugMode,
+  combine,
+  globalObject,
+  isWorkerEnvironment,
+  jsonStringify,
+  BufferedObservable,
+  Observable,
+  noop,
+} from '@datadog/js-core/util'
 import type { Hook } from '@datadog/js-core/assembly'
 import type { RecursivePartial, Context } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'
@@ -17,7 +26,6 @@ import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
-import { BufferedObservable, Observable } from '../../tools/observable'
 import { display } from '../../tools/display'
 import { sendToExtension } from '../../tools/sendToExtension'
 import { NonErrorPrefix } from '../error/error.types'
@@ -25,7 +33,6 @@ import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
-import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,

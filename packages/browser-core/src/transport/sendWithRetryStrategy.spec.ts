@@ -1,7 +1,6 @@
-import { ONE_MEBI_BYTE } from '@datadog/js-core/util'
+import { ONE_MEBI_BYTE, Observable } from '@datadog/js-core/util'
 import { mockClock, setNavigatorOnLine } from '../../test'
 import type { Clock } from '../../test'
-import { Observable } from '../tools/observable'
 import type { RetryState } from './sendWithRetryStrategy'
 import {
   newRetryState,

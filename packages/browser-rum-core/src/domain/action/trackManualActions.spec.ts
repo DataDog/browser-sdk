@@ -1,13 +1,13 @@
 import type { Duration, ServerDuration } from '@datadog/js-core/time'
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { createHooks } from '../hooks'
-import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startActionCollection } from './actionCollection'
 import type { ActionContexts } from './actionCollection'
 
@@ -22,7 +22,7 @@ describe('trackManualActions', () => {
   beforeEach(() => {
     clock = mockClock()
 
-    const domMutationObservable = new Observable<RumMutationRecord[]>()
+    const domMutationObservable = new Observable<MutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const hooks = createHooks()
 
