@@ -1,6 +1,6 @@
-import { createRawRumEvent } from '../../../test'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
+import { createRawRumEvent } from '../../../test'
 import { mockSourceCodeContext } from '../../../../browser-core/test'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
 import type { RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'

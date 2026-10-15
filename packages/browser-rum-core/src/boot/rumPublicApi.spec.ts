@@ -1,7 +1,14 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
-import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager, computeStackTrace } from '@datadog/browser-core'
+import {
+  display,
+  DefaultPrivacyLevel,
+  ResourceType,
+  startTelemetry,
+  startSessionManager,
+  computeStackTrace,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -107,7 +114,7 @@ describe('rum public api', () => {
       await collectAsyncCalls(startRumSpy, 1)
       const registry = startRumSpy.calls.argsFor(0)[9]
       const firstStack = registry.get(element)
-      const errorSpy = spyOn(window, 'Error').and.returnValue({ name: 'Error', message: '' } as Error)
+      const errorSpy = spyOn(window, 'Error').and.returnValue({ name: 'Error', message: '' })
       rumPublicApi.attachElementStack(element)
       errorSpy.and.callThrough()
       expect(registry.get(element)).toBe(firstStack)

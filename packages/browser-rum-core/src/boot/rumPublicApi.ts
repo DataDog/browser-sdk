@@ -177,6 +177,13 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Context - Action
    * @param element - Element to associate with the caller's stack
+   * @example
+   * ```ts
+   * const container = document.getElementById('checkout')
+   * if (container) {
+   *   datadogRum.attachElementStack(container)
+   * }
+   * ```
    */
   attachElementStack: (element: Element) => void
 
