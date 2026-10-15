@@ -1,5 +1,6 @@
-import { noop, throttle, requestIdleCallback } from '@datadog/browser-core'
-import type { RumMutationRecord } from '@datadog/browser-rum-core'
+import { noop } from '@datadog/js-core/util'
+import { throttle, requestIdleCallback } from '@datadog/browser-core'
+import type { MutationRecord } from '@datadog/js-core/dom'
 
 /**
  * Maximum duration to wait before processing mutations. If the browser is idle, mutations will be
@@ -15,9 +16,9 @@ const MUTATION_PROCESS_MAX_DELAY = 100
  */
 export const MUTATION_PROCESS_MIN_DELAY = 16
 
-export function createMutationBatch(processMutationBatch: (mutations: RumMutationRecord[]) => void) {
+export function createMutationBatch(processMutationBatch: (mutations: MutationRecord[]) => void) {
   let cancelScheduledFlush = noop
-  let pendingMutations: RumMutationRecord[] = []
+  let pendingMutations: MutationRecord[] = []
   let flushScheduled = false
 
   function scheduleFlush() {
@@ -39,7 +40,7 @@ export function createMutationBatch(processMutationBatch: (mutations: RumMutatio
   })
 
   return {
-    addMutations: (mutations: RumMutationRecord[]) => {
+    addMutations: (mutations: MutationRecord[]) => {
       scheduleFlush()
       for (const mutation of mutations) {
         pendingMutations.push(mutation)

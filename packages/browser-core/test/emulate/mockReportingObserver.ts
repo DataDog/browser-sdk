@@ -1,5 +1,5 @@
+import { noop } from '@datadog/js-core/util'
 import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
-import { noop } from '../../src/tools/utils/functionUtils'
 import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'
 

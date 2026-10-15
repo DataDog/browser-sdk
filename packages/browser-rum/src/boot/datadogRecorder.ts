@@ -1,9 +1,9 @@
 import type { HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
 import {
   createHttpRequest,
   addTelemetryDebug,
   canUseEventBridge,
-  noop,
   ErrorSource,
   PageExitReason,
 } from '@datadog/browser-core'

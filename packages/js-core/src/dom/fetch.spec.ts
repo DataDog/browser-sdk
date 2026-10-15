@@ -1,4 +1,4 @@
-import { type MockZoneJs, mockZoneJs } from '../../test'
+import { type MockZoneJs, mockZoneJs } from '../../../browser-core/test'
 import { fetch } from './fetch'
 
 describe('fetch', () => {

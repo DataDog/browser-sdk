@@ -1,4 +1,5 @@
-import { createIdentityEncoder, noop, Observable } from '@datadog/browser-core'
+import { createIdentityEncoder } from '@datadog/browser-core'
+import { Observable, noop } from '@datadog/js-core/util'
 import type { FlushEvent } from '@datadog/browser-core/src/transport/flushController'
 import { createNewEvent, interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 

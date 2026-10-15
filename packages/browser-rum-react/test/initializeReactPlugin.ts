@@ -4,7 +4,7 @@ import type {
   RumPublicApi,
   StartRumResult,
 } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
 import type { ReactPluginConfiguration } from '../src/domain/reactPlugin'
 import { reactPlugin, resetReactPlugin } from '../src/domain/reactPlugin'
 import { registerCleanupTask } from '../../browser-core/test'

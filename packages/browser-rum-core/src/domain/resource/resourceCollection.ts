@@ -6,9 +6,8 @@ import {
   RequestType,
   runOnReadyState,
   safeTruncate,
-  setTimeout,
 } from '@datadog/browser-core'
-import { mockable, combine } from '@datadog/js-core/util'
+import { mockable, combine, setTimeout } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
 import type { Duration } from '@datadog/js-core/time'
 import { relativeToClocks, toServerDuration } from '@datadog/js-core/time'

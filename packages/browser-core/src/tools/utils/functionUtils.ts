@@ -1,5 +1,5 @@
-import type { TimeoutId } from '../timer'
-import { setTimeout, clearTimeout } from '../timer'
+import { setTimeout, clearTimeout } from '@datadog/js-core/util'
+import type { TimeoutId } from '@datadog/js-core/util'
 
 // use lodash API
 export function throttle<T extends (...args: any[]) => void>(
@@ -40,6 +40,3 @@ export function throttle<T extends (...args: any[]) => void>(
     },
   }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export function noop() {}

@@ -1,5 +1,5 @@
+import { noop } from '@datadog/js-core/util'
 import { createIdentityEncoder } from './encoder'
-import { noop } from './utils/functionUtils'
 
 describe('createIdentityEncoder', () => {
   it('creates an encoder with initial values', () => {

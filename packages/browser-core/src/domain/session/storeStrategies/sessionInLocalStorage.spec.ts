@@ -1,5 +1,5 @@
+import type { TrustableEvent } from '@datadog/js-core/dom'
 import { registerCleanupTask } from '../../../../test'
-import type { TrustableEvent } from '../../../browser/addEventListener'
 import type { SessionState } from '../sessionState'
 import { toSessionString } from '../sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './sessionInLocalStorage'

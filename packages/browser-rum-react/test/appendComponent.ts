@@ -1,6 +1,6 @@
+import { noop } from '@datadog/js-core/util'
 import { createRoot } from 'react-dom/client'
 import { act } from 'react'
-import { noop } from '@datadog/browser-core'
 import { appendElement } from '../../browser-rum-core/test'
 import { registerCleanupTask } from '../../browser-core/test'
 

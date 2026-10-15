@@ -1,4 +1,4 @@
-import { Observable } from '../../src/tools/observable'
+import { Observable } from '@datadog/js-core/util'
 import type { FlushEvent, FlushController, FlushReason, UrgentFlushReason } from '../../src/transport'
 
 export type MockFlushController = ReturnType<typeof createMockFlushController>

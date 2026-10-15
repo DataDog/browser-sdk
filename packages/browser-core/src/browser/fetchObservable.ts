@@ -1,11 +1,10 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
-import { normalizeUrl, globalObject } from '@datadog/js-core/util'
+import { normalizeUrl, globalObject, Observable } from '@datadog/js-core/util'
 import type { GlobalObject } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { Observable } from '../tools/observable'
 import { readBytesFromStream } from '../tools/readBytesFromStream'
 import { tryToClone } from '../tools/utils/responseUtils'
 

@@ -1,4 +1,4 @@
-import type { Subscription } from '@datadog/browser-core'
+import type { Subscription } from '@datadog/js-core/util'
 import type { Duration } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
