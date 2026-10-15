@@ -3,6 +3,7 @@
  * global contexts throughout the SDK.
  */
 export interface Context {
+  /** Any string key maps to a {@link ContextValue}. */
   [x: string]: ContextValue
 }
 
