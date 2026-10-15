@@ -26,7 +26,8 @@
     "@datadog/js-core": "workspace:*"
   },
   "devDependencies": {
-    "pako": "3.0.2"
+    "pako": "3.0.2",
+    "vitest": "4.1.8"
   },
   "volta": {
     "extends": "../../package.json"
