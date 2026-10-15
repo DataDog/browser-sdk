@@ -17,6 +17,7 @@ export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType]
 export const RequestType = {
   FETCH: ResourceType.FETCH,
   XHR: ResourceType.XHR,
+  OTHER: ResourceType.OTHER,
 } as const
 
 export type RequestType = (typeof RequestType)[keyof typeof RequestType]

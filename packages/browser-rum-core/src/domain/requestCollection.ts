@@ -67,6 +67,10 @@ export interface RequestCompleteEvent {
 
 let nextRequestIndex = 1
 
+export function getNextRequestIndex(): number {
+  return nextRequestIndex++
+}
+
 export function startRequestCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
