@@ -47,7 +47,8 @@ function startRumStub(
     undefined,
     new Observable(),
     undefined,
-    reportError
+    reportError,
+    new WeakMap()
   )
 
   return {
