@@ -10,8 +10,6 @@ See the [dedicated Datadog documentation][1] for more details.
 
 Instrument your browser application's functions with the [Live Debugger build plugin][5], then initialize the SDK as shown below. The RUM Browser SDK is optional.
 
-Probes can be added only to named functions. Adding probes to anonymous functions is not yet supported. Named functions include arrow functions assigned to a variable, such as `const handleClick = () => {}`. The build plugin's `liveDebugger.namedOnly: true` option skips anonymous functions during instrumentation and should be used.
-
 ### Source maps
 
 Upload source maps for the deployed frontend build with matching debug IDs and Git repository/commit metadata. See the [build plugin's source-map setup][6].
@@ -21,6 +19,13 @@ Source maps must be available in the Datadog site and organization that receive 
 ### Content Security Policy
 
 Probe conditions, dynamic log-message expressions, and capture expressions use `new Function()` to evaluate JavaScript at runtime. If your page has a Content Security Policy (CSP) that restricts script execution, it must permit `'unsafe-eval'` in `script-src` to use these features.
+
+## Limitations during Preview
+
+Browser Live Debugger is in Preview, with the following limitations:
+
+- Probes can be added only to named functions, and all instrumented code on a page must come from a single build. See the [build plugin's Preview limitations][7] for details and additional build requirements.
+- This SDK and the Live Debugger build plugin may get breaking changes during the Preview. You may need to upgrade, rebuild, and redeploy to keep debugging working, but your application itself should keep working normally.
 
 ## Usage
 
@@ -58,3 +63,4 @@ Need help? Contact [Datadog Support][3].
 [4]: https://www.npmjs.com/package/@datadog/browser-rum
 [5]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger
 [6]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#source-maps
+[7]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#limitations-during-preview
