@@ -1,6 +1,5 @@
 import { monitor } from '@datadog/js-core/monitor'
-import { globalObject, mockable } from '@datadog/js-core/util'
-import { noop } from '@datadog/browser-core'
+import { globalObject, mockable, noop } from '@datadog/js-core/util'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'

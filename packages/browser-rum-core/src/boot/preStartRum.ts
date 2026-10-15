@@ -1,16 +1,15 @@
-import { isWorkerEnvironment, mockable } from '@datadog/js-core/util'
+import { isWorkerEnvironment, mockable, BufferedObservable, noop } from '@datadog/js-core/util'
+import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
-  BufferedObservable,
   display,
   canUseEventBridge,
   displayAlreadyInitializedError,
   willSyntheticsInjectRum,
-  noop,
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,
@@ -26,7 +25,6 @@ import {
   TelemetryService,
   startTelemetrySessionContext,
   addTelemetryDebug,
-  setAllowUntrustedEvents,
   isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'

@@ -1,6 +1,7 @@
-import type { Subscription } from '@datadog/browser-core'
+import type { Subscription } from '@datadog/js-core/util'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { ONE_SECOND } from '@datadog/js-core/time'
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, replaceMockable } from '@datadog/browser-core/test'
 import {
@@ -12,7 +13,6 @@ import {
 } from '../../test'
 import type { RumPerformanceEntry } from '../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
-import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivityEnd'
@@ -56,7 +56,7 @@ describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
   const lifeCycle = new LifeCycle()
-  const domMutationObservable = new Observable<RumMutationRecord[]>()
+  const domMutationObservable = new Observable<MutationRecord[]>()
   const windowOpenObservable = new Observable<void>()
   let pageActivitySubscription: Subscription
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void

@@ -1,6 +1,6 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { clocksOrigin } from '@datadog/js-core/time'
-import { DOM_EVENT } from '@datadog/browser-core'
+import { DOM_EVENT } from '@datadog/js-core/dom'
 import { globalObject } from '@datadog/js-core/util'
 import { createNewEvent, restorePageVisibility, setPageVisibility, replaceMockable } from '@datadog/browser-core/test'
 import { mockGlobalPerformanceBuffer } from '../../../../test'

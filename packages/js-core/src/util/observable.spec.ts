@@ -1,4 +1,4 @@
-import { waitNextMicrotask } from '../../test'
+import { waitNextMicrotask } from '../../../browser-core/test'
 import { BufferedObservable, mergeObservables, Observable } from './observable'
 
 describe('observable', () => {

@@ -1,9 +1,9 @@
 import type { Duration, TimeStamp } from '@datadog/js-core/time'
 import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
+import { noop } from '@datadog/js-core/util'
 import { toTimeStamp, relativeToClocks, clocksNow } from '@datadog/js-core/time'
 import {
   display,
-  noop,
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,

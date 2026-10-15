@@ -1,6 +1,6 @@
-import type { MockZoneJs } from '@datadog/browser-core/test'
-import { registerCleanupTask, mockZoneJs, replaceMockable } from '@datadog/browser-core/test'
-import { globalObject } from '@datadog/js-core/util'
+import type { MockZoneJs } from '../../../browser-core/test'
+import { registerCleanupTask, mockZoneJs, replaceMockable } from '../../../browser-core/test'
+import { globalObject } from '../util/globalObject'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.

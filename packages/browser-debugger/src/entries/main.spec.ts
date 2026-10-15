@@ -1,4 +1,4 @@
-import { Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/js-core/util'
 import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { initDebuggerTransport } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'

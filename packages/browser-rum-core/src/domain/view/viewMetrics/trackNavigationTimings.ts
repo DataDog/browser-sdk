@@ -1,7 +1,7 @@
-import type { TimeoutId } from '@datadog/browser-core'
+import type { TimeoutId } from '@datadog/js-core/util'
 import type { Duration } from '@datadog/js-core/time'
-import { setTimeout, runOnReadyState, clearTimeout } from '@datadog/browser-core'
-import { mockable } from '@datadog/js-core/util'
+import { runOnReadyState } from '@datadog/browser-core'
+import { mockable, setTimeout, clearTimeout } from '@datadog/js-core/util'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import { getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'
 

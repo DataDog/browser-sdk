@@ -1,11 +1,11 @@
 import type { Clock, RequestIdleCallbackMock } from '@datadog/browser-core/test'
 import { mockClock, mockRequestIdleCallback } from '@datadog/browser-core/test'
-import type { RumMutationRecord } from '@datadog/browser-rum-core'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { MUTATION_PROCESS_MIN_DELAY, createMutationBatch } from './mutationBatch'
 
 describe('createMutationBatch', () => {
   let mutationBatch: ReturnType<typeof createMutationBatch>
-  let processMutationBatchSpy: jasmine.Spy<(mutations: RumMutationRecord[]) => void>
+  let processMutationBatchSpy: jasmine.Spy<(mutations: MutationRecord[]) => void>
   let clock: Clock
   let requestIdleCallbackMock: RequestIdleCallbackMock
 
@@ -21,7 +21,7 @@ describe('createMutationBatch', () => {
   })
 
   it('calls the callback asynchronously after MUTATION_PROCESS_MIN_DELAY', () => {
-    const mutation = { type: 'childList' } as RumMutationRecord
+    const mutation = { type: 'childList' } as MutationRecord
     mutationBatch.addMutations([mutation])
 
     expect(requestIdleCallbackMock.spy).toHaveBeenCalled()
@@ -32,7 +32,7 @@ describe('createMutationBatch', () => {
   })
 
   it('calls the callback synchronously on flush', () => {
-    const mutation = { type: 'childList' } as RumMutationRecord
+    const mutation = { type: 'childList' } as MutationRecord
     mutationBatch.addMutations([mutation])
     mutationBatch.flush()
 
@@ -40,9 +40,9 @@ describe('createMutationBatch', () => {
   })
 
   it('appends mutations to the batch when adding more mutations', () => {
-    const mutation1 = { type: 'childList' } as RumMutationRecord
-    const mutation2 = { type: 'characterData' } as RumMutationRecord
-    const mutation3 = { type: 'attributes' } as RumMutationRecord
+    const mutation1 = { type: 'childList' } as MutationRecord
+    const mutation2 = { type: 'characterData' } as MutationRecord
+    const mutation3 = { type: 'attributes' } as MutationRecord
     mutationBatch.addMutations([mutation1])
     mutationBatch.addMutations([mutation2, mutation3])
     mutationBatch.flush()

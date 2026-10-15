@@ -1,4 +1,4 @@
-import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
+import { getMutationObserverConstructor } from '@datadog/js-core/dom'
 import type { CanvasSnapshot } from './canvasSnapshot'
 
 export const enum CanvasStatus {

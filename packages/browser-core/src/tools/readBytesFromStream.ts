@@ -1,6 +1,5 @@
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
-import { concatBuffers } from '@datadog/js-core/util'
-import { noop } from './utils/functionUtils'
+import { concatBuffers, noop } from '@datadog/js-core/util'
 
 /**
  * Read bytes from a ReadableStream until the end of the stream.

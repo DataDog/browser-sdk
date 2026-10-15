@@ -1,5 +1,5 @@
-import { noop } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
+import { noop } from '@datadog/js-core/util'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 
 export function makeRecorderApiStub() {

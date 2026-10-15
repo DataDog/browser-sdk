@@ -1,3 +1,4 @@
+import { noop } from '@datadog/js-core/util'
 import { startMonitorErrorCollection } from '@datadog/js-core/monitor'
 import {
   addTelemetryError,
@@ -7,7 +8,6 @@ import {
   type Telemetry,
 } from '../../src/domain/telemetry'
 import { registerCleanupTask } from '../registerCleanupTask'
-import { noop } from '../../src/tools/utils/functionUtils'
 
 export interface MockTelemetry {
   getEvents: () => Promise<RawTelemetryEvent[]>

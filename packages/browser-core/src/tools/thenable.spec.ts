@@ -1,5 +1,5 @@
+import { noop } from '@datadog/js-core/util'
 import { isThenable, waitForThenable, TIMEOUT_ERROR_MESSAGE } from './thenable'
-import { noop } from './utils/functionUtils'
 
 describe('isThenable', () => {
   it('returns true for a Promise', () => {
