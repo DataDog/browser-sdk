@@ -19,7 +19,8 @@
     "prepack": "yarn build"
   },
   "devDependencies": {
-    "acorn": "8.19.0"
+    "acorn": "8.19.0",
+    "vitest": "4.1.8"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",

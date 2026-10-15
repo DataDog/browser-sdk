@@ -61,7 +61,8 @@
     "react-dom": "19.3.0",
     "react-router": "8.4.0",
     "react-router-dom": "7.18.4",
-    "react-router-dom-6": "npm:react-router-dom@6.30.6"
+    "react-router-dom-6": "npm:react-router-dom@6.30.6",
+    "vitest": "4.1.8"
   },
   "repository": {
     "type": "git",
