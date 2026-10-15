@@ -60,6 +60,7 @@ export function startRum(
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
   hooks: Hooks,
+  elementStacks: WeakMap<Element, string>,
   sdkName?: SdkName
 ) {
   const cleanupTasks: Array<() => void> = []
