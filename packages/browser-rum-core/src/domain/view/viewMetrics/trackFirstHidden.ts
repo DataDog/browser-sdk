@@ -1,5 +1,5 @@
 import type { ClocksState, RelativeTime } from '@datadog/js-core/time'
-import { globalObject, mockable, noop } from '@datadog/js-core/util'
+import { globalObject, noop } from '@datadog/js-core/util'
 import { addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 
@@ -10,7 +10,7 @@ export interface Options {
 }
 
 export function trackFirstHidden(viewStart: ClocksState, eventTarget = globalObject.window) {
-  if (!mockable(globalObject.document) || !eventTarget) {
+  if (!globalObject.document || !eventTarget) {
     return { timeStamp: Infinity as RelativeTime, stop: noop }
   }
   if (document.visibilityState === 'hidden') {

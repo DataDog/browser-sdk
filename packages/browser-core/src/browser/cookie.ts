@@ -1,5 +1,5 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
-import { buildUrl, globalObject, mockable } from '@datadog/js-core/util'
+import { buildUrl, globalObject } from '@datadog/js-core/util'
 import {
   findAllCommaSeparatedValues,
   findCommaSeparatedValue,
@@ -57,7 +57,7 @@ let initCookieParsed: Map<string, string> | undefined
  */
 export function getInitCookie(name: string) {
   if (!initCookieParsed) {
-    initCookieParsed = findCommaSeparatedValues(mockable(globalObject.document)?.cookie ?? '')
+    initCookieParsed = findCommaSeparatedValues(globalObject.document?.cookie ?? '')
   }
   return initCookieParsed.get(name)
 }

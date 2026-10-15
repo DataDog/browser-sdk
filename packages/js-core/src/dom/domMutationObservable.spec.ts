@@ -1,6 +1,5 @@
 import type { MockZoneJs } from '../../../browser-core/test'
-import { registerCleanupTask, mockZoneJs, replaceMockable } from '../../../browser-core/test'
-import { globalObject } from '../util/globalObject'
+import { registerCleanupTask, mockZoneJs } from '../../../browser-core/test'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
@@ -101,15 +100,6 @@ describe('domMutationObservable', () => {
       { expectedMutations: 1 }
     )
   )
-
-  it('does not observe mutations without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    const observeSpy = spyOn(MutationObserver.prototype, 'observe')
-    const subscription = createDOMMutationObservable().subscribe(jasmine.createSpy())
-
-    expect(observeSpy).not.toHaveBeenCalled()
-    subscription.unsubscribe()
-  })
 
   describe('Zone.js support', () => {
     let zoneJs: MockZoneJs

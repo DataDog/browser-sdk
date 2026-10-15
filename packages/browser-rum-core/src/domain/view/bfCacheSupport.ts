@@ -1,8 +1,8 @@
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
-import { globalObject, mockable, noop } from '@datadog/js-core/util'
+import { globalObject, noop } from '@datadog/js-core/util'
 
 export function onBFCacheRestore(callback: (event: PageTransitionEvent) => void): () => void {
-  const window = mockable(globalObject.window)
+  const window = globalObject.window
   if (!window) {
     return noop
   }

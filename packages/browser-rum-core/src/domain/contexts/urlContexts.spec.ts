@@ -1,5 +1,4 @@
-import { mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
-import { globalObject } from '@datadog/js-core/util'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { clocksNow, relativeToClocks } from '@datadog/js-core/time'
@@ -48,15 +47,6 @@ describe('urlContexts', () => {
     const urlContext = urlContexts.findUrl()!
     expect(urlContext.url).toBe('http://fake-url.com/')
     expect(urlContext.referrer).toBe(document.referrer)
-  })
-
-  it('uses an empty initial referrer without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-      startClocks: clocksNow(),
-    } as ViewCreatedEvent)
-
-    expect(urlContexts.findUrl()!.referrer).toBe('')
   })
 
   it('should use the provided url override instead of location', () => {

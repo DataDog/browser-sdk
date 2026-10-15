@@ -1,7 +1,7 @@
 import { elapsed, toServerDuration, relativeNow } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { SKIPPED } from '@datadog/js-core/assembly'
-import { globalObject, mockable, noop } from '@datadog/js-core/util'
+import { globalObject, noop } from '@datadog/js-core/util'
 import { createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -46,7 +46,7 @@ export function startPageStateHistory(
 
   let currentPageState: PageState
 
-  if (mockable(globalObject.document) && supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+  if (globalObject.document && supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
     const visibilityEntries = performance.getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE)
 
     visibilityEntries.forEach((entry) => {
@@ -57,7 +57,7 @@ export function startPageStateHistory(
 
   addPageState(getPageState(), relativeNow())
 
-  const window = mockable(globalObject.window)
+  const window = globalObject.window
   const { stop: stopEventListeners } = window
     ? addEventListeners(
         window,
@@ -148,7 +148,7 @@ function computePageState(event: Event & { type: DOM_EVENT }) {
 }
 
 function getPageState() {
-  const document = mockable(globalObject.document)
+  const document = globalObject.document
   if (!document) {
     return PageState.ACTIVE
   }

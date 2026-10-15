@@ -1,8 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { clocksOrigin } from '@datadog/js-core/time'
 import { DOM_EVENT } from '@datadog/js-core/dom'
-import { globalObject } from '@datadog/js-core/util'
-import { createNewEvent, restorePageVisibility, setPageVisibility, replaceMockable } from '@datadog/browser-core/test'
+import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { mockGlobalPerformanceBuffer } from '../../../../test'
 import type { GlobalPerformanceBufferMock } from '../../../../test'
 import { trackFirstHidden } from './trackFirstHidden'
@@ -94,13 +93,6 @@ describe('trackFirstHidden', () => {
     })
   })
 
-  it('is never hidden without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    firstHidden = trackFirstHiddenWithDefaults()
-
-    expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
-  })
-
   describe('using visibilityState entries', () => {
     let originalSupportedEntryTypes: string[] | undefined
     beforeEach(() => {
@@ -113,7 +105,6 @@ describe('trackFirstHidden', () => {
         })
       }
     })
-
     it('should set timestamp to earliest hidden event from performance entries', () => {
       setPageVisibility('visible')
 

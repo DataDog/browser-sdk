@@ -1,6 +1,5 @@
-import { globalObject } from '@datadog/js-core/util'
-import { mockBaseConfiguration, mockCookies, replaceMockable } from '../../test'
-import { buildCookieOptions, getCurrentSite, getInitCookie } from './cookie'
+import { mockBaseConfiguration, mockCookies } from '../../test'
+import { buildCookieOptions, getCurrentSite } from './cookie'
 
 describe('cookie', () => {
   describe('getCurrentSite', () => {
@@ -45,13 +44,6 @@ describe('cookie', () => {
 
       expect(getCurrentSite('example.com')).toBe('example.com')
       expect(setter).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  describe('getInitCookie', () => {
-    it('has no initial cookies without a document', () => {
-      replaceMockable<Document | undefined>(globalObject.document, undefined)
-      expect(getInitCookie('worker-cookie')).toBeUndefined()
     })
   })
 })

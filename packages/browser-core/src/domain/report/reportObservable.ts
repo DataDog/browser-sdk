@@ -1,6 +1,6 @@
 import { clocksNow } from '@datadog/js-core/time'
 import { monitor } from '@datadog/js-core/monitor'
-import { globalObject, mockable, mergeObservables, Observable } from '@datadog/js-core/util'
+import { globalObject, mergeObservables, Observable } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT, isEventSupported } from '@datadog/js-core/dom'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { safeTruncate } from '../../tools/utils/stringUtils'
@@ -38,7 +38,7 @@ export function initReportObservable(apis: RawReportType[]) {
 
 function createReportObservable(reportTypes: ReportType[]) {
   return new Observable<RawReportError>((observable) => {
-    const ReportingObserver = mockable(globalObject.ReportingObserver)
+    const ReportingObserver = globalObject.ReportingObserver
     if (!ReportingObserver) {
       return
     }
@@ -61,7 +61,7 @@ function createReportObservable(reportTypes: ReportType[]) {
 
 function createCspViolationReportObservable() {
   return new Observable<RawReportError>((observable) => {
-    const document = mockable(globalObject.document)
+    const document = globalObject.document
     // Salesforce does not allow to add a securitypolicyviolation event listener. https://developer.salesforce.com/tools/lws-distortion-viewer
     if (!document || !isEventSupported(document, DOM_EVENT.SECURITY_POLICY_VIOLATION)) {
       return

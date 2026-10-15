@@ -1,5 +1,4 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
-import { globalObject } from '@datadog/js-core/util'
 import type { MatchOption, TaskQueue } from '@datadog/browser-core'
 import { elapsed, toServerDuration } from '@datadog/js-core/time'
 import { createTaskQueue, display, RequestType, ResourceType } from '@datadog/browser-core'
@@ -1238,18 +1237,6 @@ describe('resourceCollection', () => {
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.duration).toBe(
         toServerDuration(elapsed(navigationEntry.startTime, navigationEntry.responseEnd))
       )
-    })
-
-    it('skips document navigation but still collects resources without a document', () => {
-      replaceMockable<Document | undefined>(globalObject.document, undefined)
-      setupResourceCollection()
-      expect(taskQueuePushSpy).not.toHaveBeenCalled()
-
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
-      runTasks()
-
-      expect(rawRumEvents.length).toBe(1)
-      expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.RESOURCE)
     })
   })
 

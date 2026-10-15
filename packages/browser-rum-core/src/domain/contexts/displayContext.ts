@@ -1,5 +1,5 @@
 import { monitor } from '@datadog/js-core/monitor'
-import { globalObject, mockable, noop } from '@datadog/js-core/util'
+import { globalObject, noop } from '@datadog/js-core/util'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
@@ -7,7 +7,7 @@ import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 export type DisplayContext = ReturnType<typeof startDisplayContext>
 
 export function startDisplayContext(assembleHook: AssembleHook) {
-  if (!mockable(globalObject.window)) {
+  if (!globalObject.window) {
     return { stop: noop }
   }
   let viewport: ViewportDimension | undefined

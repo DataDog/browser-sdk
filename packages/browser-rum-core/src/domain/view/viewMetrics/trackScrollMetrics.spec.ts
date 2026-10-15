@@ -1,9 +1,9 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { Subscription } from '@datadog/js-core/util'
-import { Observable, globalObject } from '@datadog/js-core/util'
+import { Observable } from '@datadog/js-core/util'
 import { DOM_EVENT } from '@datadog/js-core/dom'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ScrollMetrics, ScrollValues } from './trackScrollMetrics'
 import { createScrollValuesObservable, trackScrollMetrics } from './trackScrollMetrics'
 
@@ -42,15 +42,6 @@ describe('createScrollValuesObserver', () => {
       expect(scrollHeight).toBeGreaterThan(600)
     })
   })
-
-  it('does not observe scrolling without a document', () => {
-    replaceMockable<Document | undefined>(globalObject.document, undefined)
-    const observer = jasmine.createSpy()
-    subscription = scrollObservable.subscribe(observer)
-    newScroll()
-
-    expect(observer).not.toHaveBeenCalled()
-  })
 })
 
 describe('trackScrollMetrics', () => {
@@ -87,7 +78,6 @@ describe('trackScrollMetrics', () => {
       maxDepthScrollTop: 100,
     })
   })
-
   it('should update time and scroll height only if it has increased', () => {
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     updateScrollValues({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })

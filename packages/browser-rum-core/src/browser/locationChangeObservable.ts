@@ -8,7 +8,7 @@ export interface LocationChange {
 }
 
 export function createLocationChangeObservable() {
-  if (!mockable(globalObject.window)) {
+  if (!globalObject.window) {
     return new Observable<LocationChange>()
   }
   let currentLocation = shallowClone(getLocation())

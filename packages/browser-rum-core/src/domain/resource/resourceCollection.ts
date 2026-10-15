@@ -80,7 +80,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   })
 
   const { stop: stopRunOnReadyState } = runOnReadyState('interactive', () => {
-    if (mockable(globalObject.document)) {
+    if (globalObject.document) {
       handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
     }
   })

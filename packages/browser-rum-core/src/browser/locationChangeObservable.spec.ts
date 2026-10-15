@@ -50,19 +50,6 @@ describe('locationChangeObservable', () => {
     expect(locationChanges.newLocation.href).toMatch(/\/fake-location\?bar=qux$/)
   })
 
-  it('does not track browser history without a window', () => {
-    replaceMockable(globalObject.window, undefined)
-    const observer = jasmine.createSpy()
-    const subscription = createLocationChangeObservable().subscribe(observer)
-    const originalUrl = location.href
-    registerCleanupTask(() => history.replaceState({}, '', originalUrl))
-
-    history.pushState({}, '', '/worker-test')
-
-    expect(observer).not.toHaveBeenCalled()
-    subscription.unsubscribe()
-  })
-
   it('allow frameworks to patch history.pushState', () => {
     const wrapperSpy = setupHistoryInstancePushStateWrapper()
     const observer = setup()

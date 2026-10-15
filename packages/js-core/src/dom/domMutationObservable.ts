@@ -1,6 +1,5 @@
 import { monitor } from '../entries/monitor'
 import { globalObject } from '../util/globalObject'
-import { mockable } from '../util/mockable'
 import { noop } from '../util/noop'
 import { Observable } from '../util/observable'
 import { getZoneJsOriginalValue } from '../util/getZoneJsOriginalValue'
@@ -29,7 +28,7 @@ export interface ChildListMutationRecord {
 export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRecord | ChildListMutationRecord
 
 export function createDOMMutationObservable() {
-  if (!mockable(globalObject.document)) {
+  if (!globalObject.document) {
     return new Observable<MutationRecord[]>()
   }
   const MutationObserver = getMutationObserverConstructor()

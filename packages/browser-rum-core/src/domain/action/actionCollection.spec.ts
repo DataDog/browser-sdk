@@ -1,7 +1,7 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import { addDuration } from '@datadog/js-core/time'
-import { globalObject, Observable } from '@datadog/js-core/util'
-import { createNewEvent, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
+import { Observable } from '@datadog/js-core/util'
+import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
@@ -137,34 +137,6 @@ describe('actionCollection', () => {
 
     expect(rawRumEvents[0].domainContext).toEqual({ handlingStack: undefined })
   })
-
-  it('supports manual actions without installing click listeners in a worker', () => {
-    replaceMockable(globalObject.window, undefined)
-    const workerLifeCycle = new LifeCycle()
-    const events = collectAndValidateRawRumEvents(workerLifeCycle)
-    const collection = startActionCollection(
-      workerLifeCycle,
-      createHooks(),
-      new Observable(),
-      new Observable(),
-      mockRumConfiguration({ trackUserInteractions: true })
-    )
-    registerCleanupTask(collection.stop)
-
-    collection.addAction({
-      name: 'worker action',
-      type: ActionType.CUSTOM,
-      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-    })
-
-    expect(events[0].rawRumEvent).toEqual(
-      jasmine.objectContaining({
-        type: RumEventType.ACTION,
-        action: jasmine.objectContaining({ target: { name: 'worker action' } }),
-      })
-    )
-  })
-
   it('should not set the loading time field of the action', () => {
     const event = createNewEvent('pointerup', { target: document.createElement('button') })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
