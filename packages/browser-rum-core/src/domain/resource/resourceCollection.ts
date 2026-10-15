@@ -7,7 +7,7 @@ import {
   runOnReadyState,
   safeTruncate,
 } from '@datadog/browser-core'
-import { mockable, combine, setTimeout } from '@datadog/js-core/util'
+import { globalObject, mockable, combine, setTimeout } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
 import type { Duration } from '@datadog/js-core/time'
 import { relativeToClocks, toServerDuration } from '@datadog/js-core/time'
@@ -80,7 +80,9 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   })
 
   const { stop: stopRunOnReadyState } = runOnReadyState('interactive', () => {
-    handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
+    if (globalObject.document) {
+      handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
+    }
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {

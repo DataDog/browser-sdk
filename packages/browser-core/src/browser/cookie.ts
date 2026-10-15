@@ -57,7 +57,7 @@ let initCookieParsed: Map<string, string> | undefined
  */
 export function getInitCookie(name: string) {
   if (!initCookieParsed) {
-    initCookieParsed = findCommaSeparatedValues(document.cookie)
+    initCookieParsed = findCommaSeparatedValues(globalObject.document?.cookie ?? '')
   }
   return initCookieParsed.get(name)
 }

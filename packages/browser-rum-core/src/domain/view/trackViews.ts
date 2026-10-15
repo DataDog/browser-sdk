@@ -20,7 +20,7 @@ import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import { mockable, setInterval, clearInterval, setTimeout, Observable, noop } from '@datadog/js-core/util'
+import { globalObject, mockable, setInterval, clearInterval, setTimeout, Observable, noop } from '@datadog/js-core/util'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -215,7 +215,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  const location = shallowClone(mockable(window.location))
+  const location = shallowClone(mockable(globalObject.location))
   const contextManager = createContextManager()
 
   let sessionIsActive = true

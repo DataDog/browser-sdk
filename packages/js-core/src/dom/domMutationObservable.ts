@@ -1,4 +1,5 @@
 import { monitor } from '../entries/monitor'
+import { globalObject } from '../util/globalObject'
 import { noop } from '../util/noop'
 import { Observable } from '../util/observable'
 import { getZoneJsOriginalValue } from '../util/getZoneJsOriginalValue'
@@ -72,6 +73,9 @@ export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRec
  * @returns An observable of mutation record batches, as reported by `MutationObserver`.
  */
 export function createDOMMutationObservable() {
+  if (!globalObject.document) {
+    return new Observable<MutationRecord[]>()
+  }
   const MutationObserver = getMutationObserverConstructor()
 
   return new Observable<MutationRecord[]>((observable) => {

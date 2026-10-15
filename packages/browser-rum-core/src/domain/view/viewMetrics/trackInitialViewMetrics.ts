@@ -1,4 +1,5 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
+import { globalObject, noop } from '@datadog/js-core/util'
 import type { RumConfiguration } from '../../configuration'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import type { NavigationTimings } from './trackNavigationTimings'
@@ -20,6 +21,9 @@ export function trackInitialViewMetrics(
   scheduleViewUpdate: () => void
 ) {
   const initialViewMetrics: InitialViewMetrics = {}
+  if (!globalObject.document) {
+    return { stop: noop, initialViewMetrics }
+  }
 
   const { stop: stopNavigationTracking } = trackNavigationTimings((navigationTimings) => {
     setLoadEvent(navigationTimings.loadEvent)
