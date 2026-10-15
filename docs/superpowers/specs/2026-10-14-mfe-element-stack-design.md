@@ -1,6 +1,6 @@
 # MFE click attribution through element stacks
 
-Status: approved in chat, including direct WeakMap registration; product implementation has not started.
+Status: implemented and independently reviewed, including direct WeakMap registration.
 
 ## Intent and scope
 
