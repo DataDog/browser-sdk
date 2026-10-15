@@ -127,6 +127,8 @@ const config = mergeConfig(
       coverage: { enabled: false },
       browser: {
         headless: false,
+        // BrowserStack queues sessions when all parallel sessions are busy, which can take minutes
+        connectTimeout: 5 * 60_000,
         // BrowserStack rewrites localhost to bs-local.com for Safari: serve from that host directly
         // (it resolves to 127.0.0.1) so the page is reachable and cookies match the page host. Other
         // browsers keep `localhost`, which is a secure context (needed e.g. for `secure` cookies).
