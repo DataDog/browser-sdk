@@ -3,7 +3,7 @@ description: Standards for Test-Driven Development in the Browser SDK project
 globs:
 tags:
   - jasmine
-  - karma
+  - vitest
 alwaysApply: true
 ---
 
@@ -29,7 +29,7 @@ touch packages/some-package/src/path/to/feature.spec.ts
 
 **Spec file must exist BEFORE implementation file**
 
-## 3. Spec Structure (Jasmine/Karma)
+## 3. Spec Structure (Jasmine API on Vitest)
 
 ```typescript
 describe('FeatureName', () => {

@@ -1,14 +1,17 @@
-const ignoreList: Array<{ level: string; match: string }> = []
+import { registerCleanupTask } from './registerCleanupTask'
 
-afterEach(() => {
-  ignoreList.length = 0
-})
+const ignoreList: Array<{ level: string; match: string }> = []
 
 /**
  * Ignore console logs that match the given level and message for the duration of the test. This
  * function can be called multiple times to ignore multiple logs.
  */
 export function ignoreConsoleLogs(level: 'error' | 'warn' | 'log', match: string) {
+  if (ignoreList.length === 0) {
+    registerCleanupTask(() => {
+      ignoreList.length = 0
+    })
+  }
   ignoreList.push({ level, match })
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
