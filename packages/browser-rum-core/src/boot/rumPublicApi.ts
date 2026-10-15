@@ -50,8 +50,6 @@ import type {
 import { callPluginsOnRumStart } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
-import type { ElementContext } from '../domain/action/elementContext'
-import { setElementContext } from '../domain/action/elementContext'
 import type { ActionOptions } from '../domain/action/trackManualActions'
 import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import { createPreStartStrategy } from './preStartRum'
@@ -171,18 +169,16 @@ export interface RumPublicApi extends PublicApi {
   addAction: (name: string, context?: object) => void
 
   /**
-   * Set service, version, and custom context for clicks on an element and its descendants.
-   * Replaces the element's programmatic metadata. Can be called before init().
-   * Metadata is captured on pointerdown, including ancestors across shadow roots.
-   * Context is merged recursively; closer elements take precedence. On the same element,
-   * programmatic properties take precedence over the data-dd-context JSON attribute.
-   * Service and version are inherited independently from the closest element defining each.
+   * Capture the caller's stack to attribute clicks on this element and its descendants.
+   * Call from the microfrontend's browser bundle after its container mounts or hydrates.
+   * Can be called before init(). Repeated calls replace the element's registration.
+   * Clicks use the closest registered ancestor, including across shadow roots,
+   * and retain the stack captured at pointerdown through action completion.
    *
    * @category Context - Action
-   * @param element - Element to annotate
-   * @param context - Attribution and custom context
+   * @param element - Element to associate with the caller's stack
    */
-  setElementContext: (element: Element, context: ElementContext) => void
+  attachElementStack: (element: Element) => void
 
   /**
    * Start tracking a custom action.
@@ -682,6 +678,7 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
+  const elementStacks = new WeakMap<Element, string>()
   const trackingConsentState = createTrackingConsentState()
   const bufferedData = startBufferingData()
 
@@ -704,6 +701,7 @@ export function makeRumPublicApi(
         bufferedData.observable,
         telemetry,
         hooks,
+        elementStacks,
         options.sdkName
       )
 
@@ -808,7 +806,14 @@ export function makeRumPublicApi(
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
-    setElementContext: monitor(setElementContext),
+    attachElementStack: (element) => {
+      const stack = createHandlingStack('element')
+      callMonitored(() => {
+        if (stack?.includes('\n')) {
+          elementStacks.set(element, stack)
+        }
+      })
+    },
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')
