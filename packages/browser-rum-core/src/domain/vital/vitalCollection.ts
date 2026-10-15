@@ -1,6 +1,7 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
 import { toServerDuration, clocksNow } from '@datadog/js-core/time'
-import { generateUUID, sanitize } from '@datadog/browser-core'
+import { sanitize } from '@datadog/browser-core'
+import { generateUUID } from '@datadog/js-core/util'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
