@@ -19,7 +19,8 @@
     "prepack": "yarn build"
   },
   "devDependencies": {
-    "@datadog/browser-rum-core": "workspace:*"
+    "@datadog/browser-rum-core": "workspace:*",
+    "vitest": "5.1.1"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
