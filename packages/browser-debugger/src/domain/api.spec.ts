@@ -125,15 +125,34 @@ describe('api', () => {
     })
 
     it('should report the probe location in the method-probe format', () => {
-      addProbe(createProbe({ where: { typeName: 'src/utils.js', methodName: 'add' } }))
+      addProbe(
+        createProbe({
+          where: { functionId: 'src/utils.js;add', typeName: 'packages/app/src/utils.js', methodName: 'add' },
+        })
+      )
 
       const probes = getProbes('src/utils.js;add')!
       onReturn(onEntry(probes, thisArg)!, null, thisArg)
 
       expect(mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.probe.location).toEqual({
         method: 'add',
-        type: 'src/utils.js',
+        type: 'packages/app/src/utils.js',
       })
+    })
+
+    it('should capture a snapshot for a probe on an anonymous function', () => {
+      addProbe(createProbe({ where: { functionId: 'src/utils.js;<anonymous>@1:11:0', typeName: 'src/utils.js' } }))
+
+      const probes = getProbes('src/utils.js;<anonymous>@1:11:0')!
+      onReturn(onEntry(probes, thisArg)!, null, thisArg)
+
+      expect(mockBatchAdd).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({
+          debugger: jasmine.objectContaining({
+            snapshot: jasmine.objectContaining({ probe: jasmine.objectContaining({ id: 'test-probe' }) }),
+          }),
+        })
+      )
     })
 
     it('should skip probe if sampling budget exceeded', () => {
@@ -856,7 +875,7 @@ describe('api', () => {
       for (let i = 0; i < 30; i++) {
         const probe = createProbe({
           id: `probe-${i}`,
-          where: { typeName: 'test.js', methodName: `method${i}` },
+          where: { functionId: `test.js;method${i}` },
           sampling: { snapshotsPerSecond: 5000 },
         })
         addProbe(probe)
@@ -882,7 +901,7 @@ describe('api', () => {
       for (let i = 0; i < 3; i++) {
         const probe = createProbe({
           id: `configured-global-probe-${i}`,
-          where: { typeName: 'test.js', methodName: `configuredGlobal${i}` },
+          where: { functionId: `test.js;configuredGlobal${i}` },
           sampling: { snapshotsPerSecond: 5000 },
         })
         addProbe(probe)
@@ -903,7 +922,7 @@ describe('api', () => {
       for (let i = 0; i < 30; i++) {
         addProbe(
           createProbe({
-            where: { typeName: 'test.js', methodName: `captureExpressionGlobal${i}` },
+            where: { functionId: `test.js;captureExpressionGlobal${i}` },
             captureSnapshot: false,
             captureExpressions: [{ name: 'x', expr: { dsl: 'x', json: { ref: 'x' } } }],
             sampling: { snapshotsPerSecond: 5000 },

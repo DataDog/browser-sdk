@@ -49,6 +49,16 @@ describe('probes', () => {
       expect(retrieved![0].evaluateTemplate).toBeUndefined()
     })
 
+    it('should register a probe under where.functionId, including anonymous functions', () => {
+      addProbe(
+        createProbe({
+          where: { functionId: 'src/utils.js;<anonymous>@1:11:0', typeName: 'packages/app/src/utils.js' },
+        })
+      )
+
+      expect(getProbes('src/utils.js;<anonymous>@1:11:0')).toEqual([jasmine.objectContaining({ id: 'test-probe' })])
+    })
+
     it('should return undefined for non-existent probe', () => {
       const retrieved = getProbes('non-existent')
       expect(retrieved).toBeUndefined()
@@ -313,8 +323,8 @@ describe('probes', () => {
 
   describe('clearProbes', () => {
     it('should clear all probes', () => {
-      addProbe(createProbe({ where: { typeName: 'test.js', methodName: 'clear1' } }))
-      addProbe(createProbe({ where: { typeName: 'test.js', methodName: 'clear2' } }))
+      addProbe(createProbe({ where: { functionId: 'test.js;clear1' } }))
+      addProbe(createProbe({ where: { functionId: 'test.js;clear2' } }))
 
       clearProbes()
 
