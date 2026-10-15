@@ -1,5 +1,5 @@
+import type { Subscription } from '@datadog/js-core/util'
 import { disableJasmineUncaughtExceptionTracking, wait } from '../../../test'
-import type { Subscription } from '../../tools/observable'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
