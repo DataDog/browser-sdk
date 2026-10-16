@@ -168,7 +168,7 @@ describe('datadogDebugger', () => {
       datadogDebugger.init(INIT_CONFIGURATION_WITHOUT_SERVICE)
 
       expect(errorSpy).toHaveBeenCalledOnceWith(
-        '"service" is required. Set it in init() or with the `liveDebugger.service` option of the Datadog build plugin.'
+        '"service" is required. Set it in init() or with the `metadata.service` option of the Datadog build plugin.'
       )
       expect(startDebuggerBatchSpy).not.toHaveBeenCalled()
       expect(initTransportSpy).not.toHaveBeenCalled()

@@ -46,7 +46,7 @@ export interface DebuggerInitConfiguration {
 
   /**
    * The service name for your application. Defaults to the service injected into the bundle by the
-   * Datadog build plugin (its `liveDebugger.service` option). Required if the build plugin doesn't
+   * Datadog build plugin (its `metadata.service` option). Required if the build plugin doesn't
    * provide one.
    *
    * @category Data Collection
@@ -211,7 +211,7 @@ function makeDebuggerPublicApi(): DatadogDebugger {
       const service = resolveWithBuildMetadata('service', initConfiguration.service)
       if (!service) {
         display.error(
-          '"service" is required. Set it in init() or with the `liveDebugger.service` option of the Datadog build plugin.'
+          '"service" is required. Set it in init() or with the `metadata.service` option of the Datadog build plugin.'
         )
         return
       }
