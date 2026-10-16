@@ -26,7 +26,14 @@ import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { getPhaseClocks, serializeWebSocketVital } from './serializeWebSocketVital'
 import type { TrackedConnection } from './trackedConnection'
-import { startWebSocketCollection, trackWebSocket, WEBSOCKET_PERIODIC_REPORT_INTERVAL } from './webSocketCollection'
+import { initEarlyConnectionsBuffer, resetEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
+import { trackedConnections } from './trackedConnections'
+import {
+  startEarlyWebSocketCollection,
+  startWebSocketCollection,
+  trackWebSocket,
+  WEBSOCKET_PERIODIC_REPORT_INTERVAL,
+} from './webSocketCollection'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
@@ -947,6 +954,187 @@ describe('webSocketCollection', () => {
         })
       )
     })
+  })
+
+  describe('early collection', () => {
+    function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
+      const collection = startWebSocketCollection(lifeCycle, configuration)
+      registerCleanupTask(() => collection.stop())
+      return collection
+    }
+
+    it('emits nothing before the collection started', () => {
+      startEarlyCollection()
+
+      dispatchClose(createOpenConnection())
+
+      expect(emittedVitals()).toHaveSize(0)
+    })
+
+    it('reports the whole lifecycle of a connection that ended before the collection started, once it starts', () => {
+      startEarlyCollection()
+      const socket = createOpenConnection()
+      callClose(socket)
+      dispatchClose(socket)
+
+      startCollection()
+
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSING,
+        WebSocketVitalName.CLOSED,
+      ])
+      expect(webSocketOf(emittedVitals()[0])).toBe(socket)
+    })
+
+    it('keeps tracking a connection created before the collection started under the same connection id', () => {
+      startEarlyCollection()
+      const socket = createConnectingConnection()
+
+      startCollection()
+      completeHandshake(socket, { at: 10 })
+      dispatchClose(socket, { at: 20 })
+
+      const connectionId = single(connectingPayloads()).id
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSED,
+      ])
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.websocket.id)).toEqual([
+        connectionId,
+        connectionId,
+        connectionId,
+      ])
+    })
+
+    it('counts the messages exchanged in the terminal snapshot before the collection started', () => {
+      startEarlyCollection()
+      const socket = createOpenConnection()
+      receiveMessage(socket, 30)
+      sendMessage(socket, 10)
+
+      startCollection()
+      dispatchClose(socket)
+
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSED,
+      ])
+      const { snapshot } = single(closedPayloads())
+      expect(snapshot!.inbound).toEqual(jasmine.objectContaining({ message_count: 1, message_size_total: 30 }))
+      expect(snapshot!.outbound).toEqual(jasmine.objectContaining({ message_count: 1, message_size_total: 10 }))
+    })
+
+    it('reports a connection opened before the collection started as soon as it starts', () => {
+      startEarlyCollection()
+      const socket = createOpenConnection()
+      receiveMessage(socket, 30)
+
+      startCollection()
+
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2])
+      expect(openPayloads()[1].snapshot.inbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 30 })
+      )
+    })
+
+    it('reports a connection opened before the collection started periodically once it starts', () => {
+      startEarlyCollection()
+      createOpenConnection()
+
+      startCollection()
+      tickPeriodicReport()
+
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3])
+    })
+
+    it('reports nothing of a connection created before the collection started when tracking is not enabled', () => {
+      startEarlyCollection()
+      const socket = createOpenConnection()
+
+      startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
+      dispatchClose(socket)
+
+      expect(emittedVitals()).toHaveSize(0)
+    })
+
+    it('forgets the connections created before the collection started when tracking is not enabled', () => {
+      startEarlyCollection()
+      createOpenConnection()
+
+      startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
+
+      expect(trackedConnections.size).toBe(0)
+    })
+
+    it('empties the buffer when tracking is not enabled', () => {
+      startEarlyCollection()
+      createOpenConnection()
+
+      startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
+      initEarlyConnectionsBuffer().drain(lifeCycle)
+
+      expect(emittedVitals()).toHaveSize(0)
+    })
+
+    it('restores the native constructor when tracking is not enabled', () => {
+      const nativeWebSocket = window.WebSocket
+      startEarlyCollection()
+
+      startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
+
+      expect(window.WebSocket).toBe(nativeWebSocket)
+    })
+
+    it('stops buffering once the collection started', () => {
+      startEarlyCollection()
+      startCollection()
+
+      const socket = createOpenConnection()
+      receiveMessage(socket, 30)
+      tickPeriodicReport()
+      dispatchClose(socket)
+
+      // a still subscribed early collection records every message a second time, and ends the
+      // connection before the collection gets to report its close
+      expect(openPayloads()[1].snapshot.inbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 30 })
+      )
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSED,
+      ])
+    })
+
+    it('keeps tracking the connections created through a constructor kept from before the collection started', () => {
+      startEarlyCollection()
+      // like a library that reads the global when its module is evaluated
+      const KeptWebSocket = window.WebSocket
+
+      startCollection()
+      const socket = new KeptWebSocket('wss://example.com/socket')
+
+      expect(webSocketOf(single(emittedVitals()))).toBe(socket)
+    })
+
+    function startEarlyCollection() {
+      // the buffer and the tracked connections are module-wide, so whatever a spec leaves in them
+      // would leak into the next one
+      resetEarlyConnectionsBuffer()
+      const earlyCollection = startEarlyWebSocketCollection()
+      registerCleanupTask(() => {
+        earlyCollection.stop()
+        resetEarlyConnectionsBuffer()
+        trackedConnections.clear()
+      })
+      return earlyCollection
+    }
   })
 
   // ---------------------------------------------------------------------------

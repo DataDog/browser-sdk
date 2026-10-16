@@ -11,7 +11,7 @@ export interface EarlyConnectionsBuffer {
   clear: () => void
 }
 
-const BUFFER_CAPACITY = 8
+export const BUFFER_CAPACITY = 8
 
 let earlyConnectionsBuffer: EarlyConnectionsBuffer | undefined
 
@@ -94,6 +94,9 @@ export function initEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
   return earlyConnectionsBuffer
 }
 
+// Used for tests only
 export function resetEarlyConnectionsBuffer() {
+  // Reset any eventual saved reference
+  earlyConnectionsBuffer?.clear()
   earlyConnectionsBuffer = undefined
 }
