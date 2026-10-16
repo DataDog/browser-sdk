@@ -15,6 +15,7 @@ import {
   mockClock,
   mockEventBridge,
   createFakeTelemetryObject,
+  startMockTelemetry,
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
@@ -63,6 +64,29 @@ const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
   describe('attachElementStack', () => {
+    it('reports static usage before init', async () => {
+      const telemetry = startMockTelemetry()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.attachElementStack(document.createElement('section'))
+
+      expect(await telemetry.getEvents()).toEqual([{ type: 'usage', usage: { feature: 'attach-element-stack' } }])
+    })
+
+    it('reports static usage after init even when stack capture is unavailable', async () => {
+      const telemetry = startMockTelemetry()
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      telemetry.reset()
+      const errorSpy = spyOn(window, 'Error').and.returnValue({ name: 'Error', message: '' })
+
+      rumPublicApi.attachElementStack(document.createElement('section'))
+      errorSpy.and.callThrough()
+
+      expect(await telemetry.getEvents()).toEqual([{ type: 'usage', usage: { feature: 'attach-element-stack' } }])
+    })
+
     it('registers before init without warning and preserves the caller stack at startup', async () => {
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
       const element = document.createElement('section')

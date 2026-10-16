@@ -600,6 +600,7 @@ export type TelemetryCommonFeaturesUsage =
  * Schema of browser specific features usage
  */
 export type TelemetryBrowserFeaturesUsage =
+  | AttachElementStack
   | StartSessionReplayRecording
   | StartDurationVital
   | StopDurationVital
@@ -973,6 +974,13 @@ export interface AddViewLoadingTime {
    * Whether this call overwrote a previously set loading time
    */
   overwritten?: boolean
+  [k: string]: unknown
+}
+export interface AttachElementStack {
+  /**
+   * attachElementStack API
+   */
+  feature: 'attach-element-stack'
   [k: string]: unknown
 }
 export interface StartSessionReplayRecording {
