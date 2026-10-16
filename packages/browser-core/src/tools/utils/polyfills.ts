@@ -11,13 +11,9 @@ export function findLast<T, S extends T>(
   return undefined
 }
 
-// Keep the following wrapper functions as it can be mangled and will result in smaller bundle size that using
-// the native Object.values and Object.entries directly
+// Keep the following wrapper function as it can be mangled and will result in smaller bundle size that using
+// the native Object.values directly
 
 export function objectValues<T = unknown>(object: { [key: string]: T }) {
   return Object.values(object)
-}
-
-export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
-  return Object.entries(object)
 }
