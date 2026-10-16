@@ -23,6 +23,10 @@ function createButton(container: HTMLElement, eventType: string, clickHandler: (
 export function createApp(id: string, title: string, borderColor: string) {
   const container = createContainer(id, title, borderColor)
 
+  if (document.documentElement.hasAttribute('data-attach-element-stack')) {
+    window.DD_RUM.attachElementStack(container)
+  }
+
   createButton(container, 'fetch', () => {
     void fetch('/ok')
   })
