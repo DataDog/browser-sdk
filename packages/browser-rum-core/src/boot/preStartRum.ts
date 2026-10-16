@@ -55,7 +55,7 @@ export type DoStartRum = (
 ) => StartRumResult
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, sdkName }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, allowWorker = false, startDeflateWorker, sdkName }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   doStartRum: DoStartRum
 ): Strategy {
@@ -181,7 +181,7 @@ export function createPreStartStrategy(
       startTrackingConsentContext(assembleTelemetryHook, trackingConsentState)
       telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, assembleTelemetryHook, sdkName)
 
-      if (isWorkerEnvironment) {
+      if (isWorkerEnvironment && !allowWorker) {
         display.warn('The RUM SDK is not supported in a web or service worker environment.')
         return
       }

@@ -101,6 +101,19 @@ function createStaticSandboxApp(): express.Application {
     )
   }
 
+  app.use(
+    middleware(
+      webpack(
+        webpackBase({
+          mode: 'development',
+          entry: './packages/browser-rum-shopify/src/entries/webPixel.ts',
+          filename: 'datadog-rum-shopify-web-pixel.js',
+        })
+      ),
+      { stats: 'minimal' }
+    )
+  )
+
   // Redirect suffixed files
   app.use((req, res, next) => {
     const matches = /(.*)-(canary|staging|v\d*)\.js/.exec(req.url)
