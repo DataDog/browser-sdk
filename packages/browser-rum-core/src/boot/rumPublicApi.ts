@@ -12,7 +12,6 @@ import type {
   Account,
   RumInternalContext,
   Telemetry,
-  Encoder,
   ResourceType,
   SessionManager,
 } from '@datadog/browser-core'
@@ -23,7 +22,6 @@ import {
   makePublicApi,
   createHandlingStack,
   sanitize,
-  createIdentityEncoder,
   displayAlreadyInitializedError,
   createTrackingConsentState,
   CustomerContextKey,
@@ -33,6 +31,8 @@ import {
 } from '@datadog/browser-core'
 import { monitor, callMonitored } from '@datadog/js-core/monitor'
 
+import { createIdentityEncoder } from '@datadog/js-core/transport'
+import type { Encoder } from '@datadog/js-core/transport'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { ReplayStats } from '../rawRumEvent.types'

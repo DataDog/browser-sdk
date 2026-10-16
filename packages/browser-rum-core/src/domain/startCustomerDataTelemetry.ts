@@ -1,8 +1,9 @@
-import type { FlushEvent, Telemetry } from '@datadog/browser-core'
+import type { Telemetry } from '@datadog/browser-core'
 import { setInterval } from '@datadog/js-core/util'
 import type { Context, Observable } from '@datadog/js-core/util'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import { addTelemetryMetrics, TelemetryMetrics } from '@datadog/browser-core'
+import type { FlushEvent } from '@datadog/js-core/transport'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
