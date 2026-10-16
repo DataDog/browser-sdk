@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/runtime.js",
+  "module": "../esm/entries/runtime.mjs",
+  "types": "../cjs/entries/runtime.d.ts"
+}
