@@ -966,6 +966,7 @@ describe('webSocketCollection', () => {
       startClocks: getPhaseClocks(state),
       domainContext: { webSocket: instance },
     })
+    return true
   }
 
   function expireSession(endClocks = clocksNow()) {

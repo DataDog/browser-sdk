@@ -84,6 +84,7 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
       startClocks: getPhaseClocks(state),
       domainContext: { webSocket: instance },
     })
+    return true
   }
 
   return {
@@ -105,7 +106,7 @@ function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
 
 export function trackWebSocket(
   webSocketContextObservable: Observable<WebSocketContext>,
-  emitVital: (instance: WebSocket, connection: TrackedConnection) => void
+  emitVital: (instance: WebSocket, connection: TrackedConnection) => boolean
 ): WebSocketConnectionTracker {
   let reportIntervalId: TimeoutId | undefined
 
@@ -176,62 +177,68 @@ export function trackWebSocket(
   }
 }
 
+/**
+ * On the connecting phase, the callback tells whether the connection should be tracked: when it
+ * returns false, the connection is forgotten and its later events are ignored.
+ */
 function handleWebSocketContext(
   context: WebSocketContext,
-  callback: (instance: WebSocket, connection: TrackedConnection) => void
+  callback: (instance: WebSocket, connection: TrackedConnection) => boolean
 ) {
+  let keepTracking = true
+
   switch (context.state) {
     case 'connecting': {
       const connection = createTrackedConnection(context)
       trackedConnections.set(context.instance, connection)
 
-      callback(context.instance, connection)
+      keepTracking = callback(context.instance, connection)
 
-      return
+      break
     }
 
     case 'open': {
       const connection = trackedConnections.get(context.instance)
       if (!connection) {
-        return
+        break
       }
 
       connection.recordOpen(context)
 
       callback(context.instance, connection)
 
-      return
+      break
     }
 
     case 'message-in': {
       trackedConnections.get(context.instance)?.recordInboundMessage(context)
 
-      return
+      break
     }
 
     case 'message-out': {
       trackedConnections.get(context.instance)?.recordOutboundMessage(context)
 
-      return
+      break
     }
 
     case 'closing': {
       const connection = trackedConnections.get(context.instance)
       if (!connection) {
-        return
+        break
       }
 
       connection.recordClosing(context)
 
       callback(context.instance, connection)
 
-      return
+      break
     }
 
     case 'closed': {
       const connection = trackedConnections.get(context.instance)
       if (!connection) {
-        return
+        break
       }
 
       trackedConnections.delete(context.instance)
@@ -239,7 +246,11 @@ function handleWebSocketContext(
       connection.recordClose(context)
       callback(context.instance, connection)
 
-      return
+      break
     }
+  }
+
+  if (!keepTracking) {
+    trackedConnections.delete(context.instance)
   }
 }
