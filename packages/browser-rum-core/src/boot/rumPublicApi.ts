@@ -863,6 +863,7 @@ export function makeRumPublicApi(
     attachElementStack: (element) => {
       const stack = createHandlingStack('element')
       callMonitored(() => {
+        addTelemetryUsage({ feature: 'attach-element-stack' })
         if (stack?.includes('\n')) {
           elementStacks.set(element, stack)
         }
