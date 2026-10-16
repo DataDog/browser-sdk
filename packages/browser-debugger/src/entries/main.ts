@@ -18,6 +18,7 @@ import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 
 export interface DebuggerBuildMetadata {
   version?: string
+  service?: string
   /**
    * Sourcemap debug ID of the instrumented build
    */
@@ -44,11 +45,13 @@ export interface DebuggerInitConfiguration {
   site?: Site
 
   /**
-   * The service name for your application
+   * The service name for your application. Defaults to the service injected into the bundle by the
+   * Datadog build plugin (its `liveDebugger.service` option). Required if the build plugin doesn't
+   * provide one.
    *
    * @category Data Collection
    */
-  service: string
+  service?: string
 
   /**
    * The application's environment (e.g., prod, staging)
@@ -181,26 +184,22 @@ export interface BrowserWindow {
   $dd_probes?: typeof getProbes
 }
 
-function resolveDebuggerVersion(initConfiguration: DebuggerInitConfiguration): string | undefined {
-  const buildVersion = (globalObject as BrowserWindow).__DD_LIVE_DEBUGGER_BUILD__?.version
+function getBuildMetadataString(key: keyof DebuggerBuildMetadata): string | undefined {
+  // The build metadata is injected in the bundle by the build plugin, so don't trust its shape
+  const value: unknown = (globalObject as BrowserWindow).__DD_LIVE_DEBUGGER_BUILD__?.[key]
+  return typeof value === 'string' && value ? value : undefined
+}
 
-  if (
-    initConfiguration.version !== undefined &&
-    buildVersion !== undefined &&
-    initConfiguration.version !== buildVersion
-  ) {
+function resolveWithBuildMetadata(key: 'service' | 'version', initValue: string | undefined): string | undefined {
+  const buildValue = getBuildMetadataString(key)
+
+  if (initValue !== undefined && buildValue !== undefined && initValue !== buildValue) {
     display.warn(
-      `init version "${initConfiguration.version}" does not match the build-plugin version "${buildVersion}". Using the init version.`
+      `init ${key} "${initValue}" does not match the build-plugin ${key} "${buildValue}". Using the init ${key}.`
     )
   }
 
-  return initConfiguration.version ?? buildVersion
-}
-
-function resolveBuildDebugId(): string | undefined {
-  // The build metadata is injected in the bundle by the build plugin, so don't trust its shape
-  const debugId: unknown = (globalObject as BrowserWindow).__DD_LIVE_DEBUGGER_BUILD__?.debugId
-  return typeof debugId === 'string' && debugId ? debugId : undefined
+  return initValue ?? buildValue
 }
 
 /**
@@ -209,9 +208,18 @@ function resolveBuildDebugId(): string | undefined {
 function makeDebuggerPublicApi(): DatadogDebugger {
   return makePublicApi<DatadogDebugger>({
     init: (initConfiguration: DebuggerInitConfiguration) => {
+      const service = resolveWithBuildMetadata('service', initConfiguration.service)
+      if (!service) {
+        display.error(
+          '"service" is required. Set it in init() or with the `liveDebugger.service` option of the Datadog build plugin.'
+        )
+        return
+      }
+
       const resolvedConfiguration = {
         ...initConfiguration,
-        version: resolveDebuggerVersion(initConfiguration),
+        service,
+        version: resolveWithBuildMetadata('version', initConfiguration.version),
       }
 
       // Initialize debugger's own transport
@@ -232,7 +240,7 @@ function makeDebuggerPublicApi(): DatadogDebugger {
         proxy: resolvedConfiguration.proxy,
         env: resolvedConfiguration.env,
         version: resolvedConfiguration.version,
-        debugId: resolveBuildDebugId(),
+        debugId: getBuildMetadataString('debugId'),
         pollInterval: resolvedConfiguration.pollInterval,
         maxUnreachableDuration: resolvedConfiguration.maxUnreachableDuration,
       })

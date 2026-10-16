@@ -7,10 +7,13 @@ import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 import type { BrowserWindow, DebuggerBuildMetadata, DebuggerInitConfiguration } from './main'
 import { datadogDebugger } from './main'
 
-const INIT_CONFIGURATION: DebuggerInitConfiguration = {
+const INIT_CONFIGURATION_WITHOUT_SERVICE: DebuggerInitConfiguration = {
   clientToken: 'client-token',
-  service: 'service-name',
   env: 'staging',
+}
+const INIT_CONFIGURATION: DebuggerInitConfiguration = {
+  ...INIT_CONFIGURATION_WITHOUT_SERVICE,
+  service: 'service-name',
 }
 const DEBUG_ID = '01234567-89ab-cdef-0123-456789abcdef'
 
@@ -96,6 +99,84 @@ describe('datadogDebugger', () => {
     expect(warnSpy).not.toHaveBeenCalled()
   })
 
+  it('should ignore a build-plugin version that is not a string', () => {
+    const metadata: unknown = { version: 123 }
+    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = metadata as DebuggerBuildMetadata
+    const { startDeliveryApiPollingSpy } = mockInitDependencies()
+
+    datadogDebugger.init(INIT_CONFIGURATION)
+
+    expect(startDeliveryApiPollingSpy.calls.mostRecent().args[0].version).toBeUndefined()
+  })
+
+  it('should default the init service from build-plugin metadata', () => {
+    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { service: 'build-service' }
+    const { startDebuggerBatchSpy, initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
+    const warnSpy = spyOn(display, 'warn')
+
+    datadogDebugger.init(INIT_CONFIGURATION_WITHOUT_SERVICE)
+
+    expect(startDebuggerBatchSpy).toHaveBeenCalledWith(jasmine.objectContaining({ service: 'build-service' }))
+    expect(initTransportSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ service: 'build-service' }),
+      jasmine.anything()
+    )
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ service: 'build-service' }))
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  it('should use the explicit init service and warn when it mismatches build-plugin metadata', () => {
+    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { service: 'build-service' }
+    const { initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
+    const warnSpy = spyOn(display, 'warn')
+
+    datadogDebugger.init({ ...INIT_CONFIGURATION, service: 'runtime-service' })
+
+    expect(warnSpy).toHaveBeenCalledOnceWith(
+      'init service "runtime-service" does not match the build-plugin service "build-service". Using the init service.'
+    )
+    expect(initTransportSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ service: 'runtime-service' }),
+      jasmine.anything()
+    )
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ service: 'runtime-service' }))
+  })
+
+  const invalidBuildServiceCases: Array<{ description: string; metadata: unknown }> = [
+    { description: 'there is no build-plugin metadata', metadata: undefined },
+    { description: 'the build-plugin metadata has no service', metadata: { version: 'build-version' } },
+    { description: 'the build-plugin service is an empty string', metadata: { service: '' } },
+    { description: 'the build-plugin service is not a string', metadata: { service: 123 } },
+  ]
+  invalidBuildServiceCases.forEach(({ description, metadata }) => {
+    it(`should use the init service without warning when ${description}`, () => {
+      browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = metadata as DebuggerBuildMetadata | undefined
+      const { startDeliveryApiPollingSpy } = mockInitDependencies()
+      const warnSpy = spyOn(display, 'warn')
+
+      datadogDebugger.init(INIT_CONFIGURATION)
+
+      expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ service: 'service-name' }))
+      expect(warnSpy).not.toHaveBeenCalled()
+    })
+
+    it(`should report a missing service and not start when init has no service and ${description}`, () => {
+      browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = metadata as DebuggerBuildMetadata | undefined
+      const { startDebuggerBatchSpy, initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
+      const errorSpy = spyOn(display, 'error')
+
+      datadogDebugger.init(INIT_CONFIGURATION_WITHOUT_SERVICE)
+
+      expect(errorSpy).toHaveBeenCalledOnceWith(
+        '"service" is required. Set it in init() or with the `liveDebugger.service` option of the Datadog build plugin.'
+      )
+      expect(startDebuggerBatchSpy).not.toHaveBeenCalled()
+      expect(initTransportSpy).not.toHaveBeenCalled()
+      expect(startDeliveryApiPollingSpy).not.toHaveBeenCalled()
+      expect(browserWindow.$dd_entry).toBeUndefined()
+    })
+  })
+
   it('should pass the build-plugin debug ID to the Delivery API polling', () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version', debugId: DEBUG_ID }
     const { startDeliveryApiPollingSpy } = mockInitDependencies()
@@ -125,7 +206,7 @@ describe('datadogDebugger', () => {
 })
 
 function mockInitDependencies() {
-  replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
+  const startDebuggerBatchSpy = replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
     flushObservable: new Observable(),
     prepareUrgentFlushObservable: new Observable(),
     isEmpty: false,
@@ -137,7 +218,7 @@ function mockInitDependencies() {
   }))
   const initTransportSpy = replaceMockableWithSpy(initDebuggerTransport)
   const startDeliveryApiPollingSpy = replaceMockableWithSpy(startDeliveryApiPolling)
-  return { initTransportSpy, startDeliveryApiPollingSpy }
+  return { startDebuggerBatchSpy, initTransportSpy, startDeliveryApiPollingSpy }
 }
 
 async function flushPromises() {
