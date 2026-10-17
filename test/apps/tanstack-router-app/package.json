@@ -5,7 +5,7 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-router": "1.170.42",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
