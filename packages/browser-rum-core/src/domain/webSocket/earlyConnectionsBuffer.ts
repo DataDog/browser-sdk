@@ -1,7 +1,6 @@
 import { addTelemetryDebug } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
-import { getPhaseClocks, serializeWebSocketVital } from './serializeWebSocketVital'
+import { emitWebSocketVital } from './emitWebSocketVital'
 import type { TrackedConnection, TrackedConnectionState } from './trackedConnection'
 
 export interface EarlyConnectionsBuffer {
@@ -68,13 +67,7 @@ export function initEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
 
   const drain = (lifeCycle: LifeCycle): void => {
     earlyConnections.forEach((states, instance) => {
-      states.forEach((state) => {
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-          rawRumEvent: serializeWebSocketVital(state),
-          startClocks: getPhaseClocks(state),
-          domainContext: { webSocket: instance },
-        })
-      })
+      states.forEach((state) => emitWebSocketVital(lifeCycle, instance, state))
     })
 
     if (droppedConnectionCount > 0) {

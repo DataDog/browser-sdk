@@ -9,7 +9,7 @@ import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { serializeWebSocketVital, getPhaseClocks } from './serializeWebSocketVital'
+import { emitWebSocketVital } from './emitWebSocketVital'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 import type { EarlyConnectionsBuffer } from './earlyConnectionsBuffer'
@@ -88,7 +88,10 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
 
   earlyConnectionsBuffer?.drain(lifeCycle)
 
-  const tracker = trackWebSocket(initWebSocketObservable(), emitVital)
+  const tracker = trackWebSocket(initWebSocketObservable(), (instance, connection) => {
+    emitWebSocketVital(lifeCycle, instance, connection.getState())
+    return true
+  })
   // Unsubscribed only once the tracker is subscribed: the observable keeps an observer, so the
   // instrumentation installed at SDK load stays in place for code that kept the constructor.
   stopEarlyWebSocketCollection()
@@ -107,25 +110,6 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
       tracker.reportOpenConnections()
     }
   })
-
-  /**
-   * Reports one phase of one connection. The connection already holds the phase clocks and snapshot
-   * version the vital needs; open reports must be written with `recordReport` first so the
-   * snapshot freezes at the vital's date.
-   *
-   * Emitted straight onto the life cycle rather than through vitalCollection: a WebSocket vital is
-   * an instant, zero-duration event, so the duration-vital frozen-page guard has nothing to reject —
-   * and rejecting one would let a frozen page suppress the periodic report built to detect it.
-   */
-  function emitVital(instance: WebSocket, connection: TrackedConnection) {
-    const state = connection.getState()
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      rawRumEvent: serializeWebSocketVital(state),
-      startClocks: getPhaseClocks(state),
-      domainContext: { webSocket: instance },
-    })
-    return true
-  }
 
   return {
     stop: () => {
@@ -146,7 +130,7 @@ function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
 
 export function trackWebSocket(
   webSocketContextObservable: Observable<WebSocketContext>,
-  emitVital: (instance: WebSocket, connection: TrackedConnection) => boolean
+  onConnectionUpdate: (instance: WebSocket, connection: TrackedConnection) => boolean
 ): WebSocketConnectionTracker {
   let reportIntervalId: TimeoutId | undefined
 
@@ -164,7 +148,7 @@ export function trackWebSocket(
       }
 
       connection.recordReport(reportClocks)
-      emitVital(instance, connection)
+      onConnectionUpdate(instance, connection)
     })
   }
 
@@ -182,7 +166,7 @@ export function trackWebSocket(
   }
 
   const subscription = webSocketContextObservable.subscribe((context) => {
-    handleWebSocketContext(context, emitVital)
+    handleWebSocketContext(context, onConnectionUpdate)
 
     // After key phase transitions to keep the report only when there's an active pool
     // of WebSockets.
@@ -208,7 +192,7 @@ export function trackWebSocket(
       trackedConnections.forEach((connection, instance) => {
         // No close event, so the send queue depth is read from the socket
         connection.recordTrackingEnd(endClocks, trackingEndReason, instance.bufferedAmount)
-        emitVital(instance, connection)
+        onConnectionUpdate(instance, connection)
       })
 
       trackedConnections.clear()
@@ -224,12 +208,20 @@ export function trackWebSocket(
 }
 
 /**
- * On the connecting phase, the callback tells whether the connection should be tracked: when it
- * returns false, the connection is forgotten and its later events are ignored.
+ * Records a WebSocket context on its tracked connection, then hands the connection to
+ * `onConnectionUpdate` each time it enters a new phase (connecting, open, closing, closed), so the
+ * caller can report that phase: emit it as a vital, or buffer it until the collection starts.
+ *
+ * Messages are not phases: they only add to the connection's snapshot, which reaches the caller
+ * with the next open report or the closed vital. Calling `onConnectionUpdate` on each message
+ * would report one vital per message.
+ *
+ * On the connecting phase, `onConnectionUpdate` also tells whether the connection should be
+ * tracked: when it returns false, the connection is forgotten and its later events are ignored.
  */
 function handleWebSocketContext(
   context: WebSocketContext,
-  callback: (instance: WebSocket, connection: TrackedConnection) => boolean
+  onConnectionUpdate: (instance: WebSocket, connection: TrackedConnection) => boolean
 ) {
   let keepTracking = true
 
@@ -238,7 +230,7 @@ function handleWebSocketContext(
       const connection = createTrackedConnection(context)
       trackedConnections.set(context.instance, connection)
 
-      keepTracking = callback(context.instance, connection)
+      keepTracking = onConnectionUpdate(context.instance, connection)
 
       break
     }
@@ -251,7 +243,7 @@ function handleWebSocketContext(
 
       connection.recordOpen(context)
 
-      callback(context.instance, connection)
+      onConnectionUpdate(context.instance, connection)
 
       break
     }
@@ -276,7 +268,7 @@ function handleWebSocketContext(
 
       connection.recordClosing(context)
 
-      callback(context.instance, connection)
+      onConnectionUpdate(context.instance, connection)
 
       break
     }
@@ -290,7 +282,7 @@ function handleWebSocketContext(
       trackedConnections.delete(context.instance)
 
       connection.recordClose(context)
-      callback(context.instance, connection)
+      onConnectionUpdate(context.instance, connection)
 
       break
     }

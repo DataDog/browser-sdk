@@ -24,8 +24,7 @@ import type {
 import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { getPhaseClocks, serializeWebSocketVital } from './serializeWebSocketVital'
-import type { TrackedConnection } from './trackedConnection'
+import { emitWebSocketVital } from './emitWebSocketVital'
 import { initEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 import {
   startEarlyWebSocketCollection,
@@ -1139,19 +1138,12 @@ describe('webSocketCollection', () => {
   // ---------------------------------------------------------------------------
 
   function startTracking() {
-    const tracker = trackWebSocket(initWebSocketObservable(), emitVital)
+    const tracker = trackWebSocket(initWebSocketObservable(), (instance, connection) => {
+      emitWebSocketVital(lifeCycle, instance, connection.getState())
+      return true
+    })
     registerCleanupTask(tracker.stop)
     return tracker
-  }
-
-  function emitVital(instance: WebSocket, connection: TrackedConnection) {
-    const state = connection.getState()
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      rawRumEvent: serializeWebSocketVital(state),
-      startClocks: getPhaseClocks(state),
-      domainContext: { webSocket: instance },
-    })
-    return true
   }
 
   function expireSession(endClocks = clocksNow()) {
