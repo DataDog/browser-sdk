@@ -244,6 +244,16 @@ describe('view lifecycle', () => {
       expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.SESSION_RENEWAL)
     })
 
+    it('should keep the url of a view started with one', () => {
+      const { getViewCreate, getViewCreateCount, startView } = viewTest
+      startView({ url: 'https://example.com/checkout' })
+
+      expireSession(lifeCycle)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(getViewCreate(getViewCreateCount() - 1).url).toBe('https://example.com/checkout')
+    })
+
     it('should use the current view name, service and version for the new view', () => {
       const { getViewCreateCount, getViewCreate, startView } = viewTest
       expireSession(lifeCycle)

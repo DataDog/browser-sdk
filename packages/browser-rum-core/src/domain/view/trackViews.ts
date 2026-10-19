@@ -20,7 +20,16 @@ import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import { mockable, setInterval, clearInterval, setTimeout, Observable, noop } from '@datadog/js-core/util'
+import {
+  mockable,
+  setInterval,
+  clearInterval,
+  setTimeout,
+  Observable,
+  noop,
+  globalObject,
+  isWorkerEnvironment,
+} from '@datadog/js-core/util'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -150,6 +159,7 @@ export function trackViews(
         service: currentView.service,
         version: currentView.version,
         context: currentView.contextManager.getContext(),
+        url: currentView.url,
       })
     })
 
@@ -215,7 +225,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  const location = shallowClone(mockable(window.location))
+  const location = shallowClone(mockable(globalObject.location))
   const contextManager = createContextManager()
 
   let sessionIsActive = true
@@ -253,18 +263,28 @@ function newView(
     stopINPTracking,
     getCommonViewMetrics,
     setLoadingTime,
-  } = trackCommonViewMetrics(
-    lifeCycle,
-    domMutationObservable,
-    windowOpenObservable,
-    configuration,
-    scheduleViewUpdate,
-    loadingType,
-    startClocks
-  )
+  }: ReturnType<typeof trackCommonViewMetrics> = isWorkerEnvironment
+    ? // Workers (e.g. Shopify Web Pixels) can't measure the page: no DOM, paint or layout entries
+      {
+        setLoadEvent: noop,
+        setViewEnd: noop,
+        stop: noop,
+        stopINPTracking: noop,
+        getCommonViewMetrics: (): CommonViewMetrics => ({}),
+        setLoadingTime: noop,
+      }
+    : trackCommonViewMetrics(
+        lifeCycle,
+        domMutationObservable,
+        windowOpenObservable,
+        configuration,
+        scheduleViewUpdate,
+        loadingType,
+        startClocks
+      )
 
   let viewMetricsTracking =
-    loadingType === ViewLoadingType.INITIAL_LOAD
+    loadingType === ViewLoadingType.INITIAL_LOAD && !isWorkerEnvironment
       ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
 
@@ -354,6 +374,7 @@ function newView(
     version,
     contextManager,
     stopObservable,
+    url: viewOptions?.url,
     end(options: { endClocks?: ClocksState; sessionIsActive?: boolean } = {}) {
       if (endClocks) {
         // view already ended

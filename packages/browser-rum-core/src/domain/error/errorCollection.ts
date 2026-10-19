@@ -1,5 +1,5 @@
 import type { ClocksState } from '@datadog/js-core/time'
-import { ConsoleApiName, combine, Observable } from '@datadog/js-core/util'
+import { ConsoleApiName, combine, Observable, isWorkerEnvironment } from '@datadog/js-core/util'
 import type { RawError, BufferedData } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
@@ -36,7 +36,9 @@ export function startErrorCollection(lifeCycle: LifeCycle, bufferedDataObservabl
     }
   })
 
-  trackReportError(errorObservable)
+  if (!isWorkerEnvironment) {
+    trackReportError(errorObservable)
+  }
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 

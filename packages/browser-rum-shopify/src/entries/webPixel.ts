@@ -24,7 +24,7 @@ register((api) => {
     sdkName: 'rum-shopify',
     allowWorker: true,
   })
-  // @ts-expect-error - _setDebug is not typed
-  datadogRum._setDebug(true)
+  // // @ts-expect-error - _setDebug is not typed
+  // datadogRum._setDebug(true)
   datadogRum.init({ ...initConfiguration, plugins: [shopifyAppPixelPlugin(api)] })
 })

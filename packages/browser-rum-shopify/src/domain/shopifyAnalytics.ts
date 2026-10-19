@@ -13,6 +13,10 @@ export interface ShopifyPixelEvent<TData = Record<string, unknown>> {
       location?: { href?: string }
       title?: string
     }
+    window?: {
+      innerWidth?: number
+      innerHeight?: number
+    }
   }
   data?: TData
 }
