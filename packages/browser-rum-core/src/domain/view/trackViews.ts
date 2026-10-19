@@ -18,10 +18,18 @@ import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import { mockable, setInterval, clearInterval, setTimeout, Observable, noop, globalObject,
+import {
+  mockable,
+  setInterval,
+  clearInterval,
+  setTimeout,
+  Observable,
+  noop,
+  globalObject,
   isWorkerEnvironment,
   generateUUID,
-  throttle, } from '@datadog/js-core/util'
+  throttle,
+} from '@datadog/js-core/util'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
