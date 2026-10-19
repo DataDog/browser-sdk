@@ -6,7 +6,10 @@ import type {
   RumVitalWebsocketOpenEvent,
 } from '@datadog/browser-rum-core/src/rumEvent.types'
 import { WEBSOCKET_PERIODIC_REPORT_INTERVAL } from '@datadog/browser-rum-core/src/domain/webSocket/webSocketCollection'
+import { BUFFER_CAPACITY as EARLY_CONNECTIONS_BUFFER_CAPACITY } from '@datadog/browser-rum-core/src/domain/webSocket/earlyConnectionsBuffer'
+import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest } from '../../lib/framework'
 import { expireSession, renewSession } from '../../lib/helpers/session'
@@ -15,6 +18,7 @@ import { DEFAULT_WS_OUT_MESSAGE, expectedWsEchoMessage, WebSocketPage } from '..
 declare global {
   interface Window {
     dismissedVitalNames?: string[]
+    deferredRumInit?: () => void
   }
 }
 
@@ -467,6 +471,130 @@ test.describe('rum websockets', () => {
         expect(closedUrl.href).toBe(connectingUrl.href)
       })
   })
+
+  test.describe('before init', () => {
+    createTest('reports a connection opened and closed before init once RUM starts')
+      .withRum(RUM_CONFIGURATION)
+      .withRumInit(deferRumInit)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.sendAndExpectEcho()
+        await ws.close()
+        await initRum(page)
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.connecting).toHaveLength(1)
+        expect(vitals.open).toHaveLength(1)
+        expect(vitals.closing).toHaveLength(1)
+        expect(vitals.closed).toHaveLength(1)
+        expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
+
+        const closed = vitals.closed[0].vital.websocket
+        expect(closed.tracking_end_reason).toBe('close_event')
+        expect(closed.snapshot!.outbound.message_count).toBe(1)
+        expect(closed.snapshot!.inbound.message_count).toBe(1)
+      })
+
+    createTest('keeps tracking a connection opened before init once RUM starts')
+      .withRum(RUM_CONFIGURATION)
+      .withRumInit(deferRumInit)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.sendAndExpectEcho()
+        await initRum(page)
+        await ws.sendAndExpectEcho()
+        await ws.close()
+
+        await flushEvents()
+
+        // the connecting and open vitals collected before init, the open report RUM makes as it
+        // starts, then the closing and closed vitals reported live
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.connecting).toHaveLength(1)
+        expect(vitals.open).toHaveLength(2)
+        expect(vitals.closing).toHaveLength(1)
+        expect(vitals.closed).toHaveLength(1)
+        expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
+
+        // what was exchanged on either side of init adds up on the one connection
+        const closed = vitals.closed[0].vital.websocket
+        expect(closed.snapshot!.outbound.message_count).toBe(2)
+        expect(closed.snapshot!.inbound.message_count).toBe(2)
+      })
+
+    createTest('attributes the vitals collected before init to the initial view and its URL')
+      .withRum(RUM_CONFIGURATION)
+      .withRumInit(deferRumInit)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await ws.close()
+        await initRum(page)
+
+        await flushEvents()
+
+        // the vitals collected before init are emitted as soon as startWebSocketCollection runs: were
+        // it moved above startViewCollection in startRumEventCollection, assembly would find neither
+        // the initial view nor its URL in the histories, and would discard them
+        const initialView = intakeRegistry.rumViewEvents[0].view
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(vitals.all).toHaveLength(4)
+        for (const { view } of vitals.all) {
+          expect(view).toEqual(expect.objectContaining({ id: initialView.id, url: initialView.url }))
+        }
+      })
+
+    createTest('never reports the connections opened before init that the early buffer had no room for')
+      .withRum(RUM_CONFIGURATION)
+      .withRumInit(deferRumInit)
+      .withBody(WebSocketPage.testBody())
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        for (let i = 0; i <= EARLY_CONNECTIONS_BUFFER_CAPACITY; i++) {
+          await ws.open()
+        }
+        await initRum(page)
+        // the page drives the connection opened last, the one the buffer had no room for
+        await ws.sendAndExpectEcho()
+        await ws.close()
+
+        await flushEvents()
+
+        const vitals = getWebSocketVitals(intakeRegistry)
+        expect(getConnectionIds(vitals.all)).toHaveLength(EARLY_CONNECTIONS_BUFFER_CAPACITY)
+        expect(vitals.closing).toHaveLength(0)
+      })
+
+    createTest('reports a connection opened before init as soon as RUM starts, then periodically')
+      .withRum(RUM_CONFIGURATION)
+      .withRumInit(deferRumInit)
+      .withBody(WebSocketPage.testBody())
+      .withMockClock()
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const ws = new WebSocketPage(page)
+
+        await ws.open()
+        await initRum(page)
+        await page.clock.runFor(WEBSOCKET_PERIODIC_REPORT_INTERVAL)
+        await ws.close()
+
+        await flushEvents()
+
+        const openVitals = sortByDate(getWebSocketVitals(intakeRegistry).open)
+        expect(openVitals.map((vital) => vital.vital.websocket.snapshot_version)).toEqual([1, 2, 3])
+      })
+  })
 })
 
 type WebSocketVital =
@@ -512,4 +640,22 @@ function getConnectionIds(vitals: WebSocketVital[]) {
 
 function sortByDate<T extends WebSocketVital>(vitals: T[]) {
   return [...vitals].sort((a, b) => a.date - b.date)
+}
+
+/**
+ * Replaces the init call `withRumInit` makes, so that the test can open connections between the SDK
+ * load and init, and then call init itself with `initRum`.
+ */
+function deferRumInit(configuration: RumInitConfiguration) {
+  window.deferredRumInit = () => window.DD_RUM!.init(configuration)
+}
+
+/**
+ * Calls the deferred init and waits for RUM to start. It starts once the session is resolved, after
+ * init returns, which is when the connections collected before init are reported and the collection
+ * takes over their tracking.
+ */
+async function initRum(page: Page) {
+  await page.evaluate(() => window.deferredRumInit!())
+  await expect.poll(() => page.evaluate(() => window.DD_RUM!.getInternalContext())).toBeDefined()
 }
