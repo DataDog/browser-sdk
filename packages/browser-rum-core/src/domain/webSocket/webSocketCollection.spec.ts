@@ -28,6 +28,7 @@ import { emitWebSocketVital } from './emitWebSocketVital'
 import { BUFFER_CAPACITY } from './earlyConnectionsBuffer'
 import type { EarlyWebSocketCollection } from './webSocketCollection'
 import {
+  resetTrackedConnections,
   startEarlyWebSocketCollection,
   startWebSocketCollection,
   trackWebSocket,
@@ -1106,6 +1107,44 @@ describe('webSocketCollection', () => {
       expect(window.WebSocket).toBe(nativeWebSocket)
     })
 
+    describe('stop()', () => {
+      it('unsubscribes from the WebSocket observable only once when called twice', () => {
+        const unsubscribeSpy = spyOnWebSocketObservableUnsubscribe()
+        const earlyCollection = startEarlyCollection()
+
+        earlyCollection.stop()
+        earlyCollection.stop()
+
+        expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('restores the native constructor and does not throw when called twice', () => {
+        const nativeWebSocket = window.WebSocket
+        const earlyCollection = startEarlyCollection()
+
+        earlyCollection.stop()
+
+        expect(() => earlyCollection.stop()).not.toThrow()
+        expect(window.WebSocket).toBe(nativeWebSocket)
+      })
+
+      function spyOnWebSocketObservableUnsubscribe() {
+        const observable = initWebSocketObservable()
+        const subscribe = observable.subscribe.bind(observable)
+        const unsubscribeSpy = jasmine.createSpy('unsubscribe')
+        spyOn(observable, 'subscribe').and.callFake((observer) => {
+          const subscription = subscribe(observer)
+          return {
+            unsubscribe: () => {
+              unsubscribeSpy()
+              subscription.unsubscribe()
+            },
+          }
+        })
+        return unsubscribeSpy
+      }
+    })
+
     it('stops buffering once the collection started', () => {
       const earlyCollection = startEarlyCollection()
       startCollection(earlyCollection)
@@ -1167,9 +1206,8 @@ describe('webSocketCollection', () => {
     function startEarlyCollection() {
       const earlyCollection = startEarlyWebSocketCollection()
       registerCleanupTask(() => {
-        // the tracked connections are module-wide, so whatever a spec leaves in them would leak into
-        // the next one: an opted-out start stops the early collection and forgets them
-        startWebSocketCollection(lifeCycle, mockRumConfiguration({ betaTrackWebSockets: false }), earlyCollection)
+        earlyCollection.stop()
+        resetTrackedConnections()
       })
       return earlyCollection
     }

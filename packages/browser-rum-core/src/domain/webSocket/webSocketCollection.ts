@@ -44,6 +44,15 @@ export interface WebSocketConnectionTracker {
 
 const trackedConnections = new Map<WebSocket, TrackedConnection>()
 
+/**
+ * Reset the tracked connections global state. Test-only.
+ *
+ * @internal
+ */
+export function resetTrackedConnections() {
+  trackedConnections.clear()
+}
+
 function hasOpenConnection() {
   for (const connection of trackedConnections.values()) {
     if (connection.isOpen()) {
@@ -56,7 +65,7 @@ function hasOpenConnection() {
 export interface EarlyWebSocketCollection {
   /** The phases of the connections opened before the collection started, drained once it starts. */
   buffer: EarlyConnectionsBuffer
-  /** Stops observing WebSockets and empties the buffer. */
+  /** Stops observing WebSockets and empties the buffer. Calls after the first one do nothing. */
   stop: () => void
 }
 
@@ -67,9 +76,15 @@ export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
     handleWebSocketContext(context, buffer.register)
   })
 
+  let stopped = false
+
   return {
     buffer,
     stop: () => {
+      if (stopped) {
+        return
+      }
+      stopped = true
       subscription.unsubscribe()
       buffer.clear()
     },
