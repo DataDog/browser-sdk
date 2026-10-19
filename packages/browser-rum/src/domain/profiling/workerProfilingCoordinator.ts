@@ -1,13 +1,8 @@
-import {
-  generateUUID,
-  addTelemetryDebug,
-  display,
-  monitorError,
-  DeflateEncoderStreamId,
-  addEventListener,
-  DOM_EVENT,
-} from '@datadog/browser-core'
+import { addTelemetryDebug, display, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { Encoder, SessionManager } from '@datadog/browser-core'
+import { generateUUID } from '@datadog/js-core/util'
+import { monitorError } from '@datadog/js-core/monitor'
+import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import type { RumConfiguration, TransportPayload, LifeCycle } from '@datadog/browser-rum-core'
 import { createFormDataTransport } from '@datadog/browser-rum-core'
 import type { WorkerProfilingCommand, WorkerProfilingResponse } from './workerProfiling.types'

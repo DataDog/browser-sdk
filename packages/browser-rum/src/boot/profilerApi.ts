@@ -12,6 +12,7 @@ import { monitorError } from '@datadog/js-core/monitor'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
+import type { WorkerProfilingCoordinator } from '../domain/profiling/workerProfilingCoordinator'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {

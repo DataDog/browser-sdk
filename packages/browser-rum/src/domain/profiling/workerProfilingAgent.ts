@@ -11,7 +11,7 @@
  */
 /* eslint-disable local-rules/disallow-zone-js-patched-values */
 /* eslint-disable no-restricted-syntax */
-import type { ProfilerTrace } from '@datadog/browser-core'
+import type { ProfilerTrace } from '@datadog/js-core/util'
 import type { WorkerProfilingCommand, WorkerProfilingResponse } from './workerProfiling.types'
 
 /**

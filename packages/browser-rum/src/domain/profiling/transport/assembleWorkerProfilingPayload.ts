@@ -1,7 +1,7 @@
 import { clockDrift } from '@datadog/js-core/time'
 import { buildTags } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { ProfilerTrace } from '@datadog/browser-core'
+import type { ProfilerTrace } from '@datadog/js-core/util'
 import type { BrowserProfileEvent } from '../../../types'
 
 export interface WorkerProfileEventPayload {
