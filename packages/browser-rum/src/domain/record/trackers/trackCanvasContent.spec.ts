@@ -2,6 +2,7 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
+import { isCanvasWorkerSupported } from '../canvas/canvasWorker'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
 import { trackCanvasContent } from './trackCanvasContent'
@@ -16,6 +17,10 @@ describe('trackCanvasContent', () => {
   let tracker: Tracker | undefined
 
   beforeEach(() => {
+    // Canvas content is only tracked when canvas recording is supported, see trackCanvasCapture
+    if (!isCanvasWorkerSupported()) {
+      pending('canvas recording not supported')
+    }
     canvas = document.createElement('canvas')
     context = canvas.getContext('2d')!
     markCanvasDirtySpy = jasmine.createSpy()
@@ -229,8 +234,10 @@ describe('trackCanvasContent', () => {
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
     await Promise.resolve()
 
-    const snapshot = canvasManager.startCaptureAttempt(webGLCanvas).snapshot!
-    expect(Array.from(snapshot.source.getContext('2d')!.getImageData(0, 0, 1, 1).data)).toEqual([255, 0, 0, 255])
+    const bitmap = await canvasManager.startCaptureAttempt(webGLCanvas).snapshot!.bitmap
+    const pixelContext = new OffscreenCanvas(1, 1).getContext('2d')!
+    pixelContext.drawImage(bitmap, 0, 0)
+    expect(Array.from(pixelContext.getImageData(0, 0, 1, 1).data)).toEqual([255, 0, 0, 255])
   })
 
   it('does not freeze WebGL content before an inserted canvas is serialized', async () => {

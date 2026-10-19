@@ -4,6 +4,7 @@ export {
   startDeflateWorker,
   DeflateWorkerStatus,
   getDeflateWorkerStatus,
+  getDeflateWorker,
   resetDeflateWorkerState,
   createDeflateWorker,
 } from './deflateWorker'

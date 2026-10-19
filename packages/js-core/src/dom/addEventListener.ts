@@ -130,7 +130,9 @@ type EventMapFor<T> = T extends Window
                   ? CookieStoreEventMap
                   : T extends WebSocket
                     ? WebSocketEventMap
-                    : Record<never, never>
+                    : T extends MessagePort
+                      ? MessagePortEventMap
+                      : Record<never, never>
 
 /**
  * Adds an event listener to an event target (Window, Element, mock object...). Compared to calling

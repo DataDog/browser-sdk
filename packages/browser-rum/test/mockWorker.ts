@@ -10,7 +10,7 @@ export class MockWorker extends MockEventTarget implements DeflateWorker {
 
   private streams = new Map<number, Uint8Array[]>()
 
-  postMessage(message: DeflateWorkerAction): void {
+  postMessage(message: DeflateWorkerAction, _transfer?: Transferable[]): void {
     this.pendingMessages.push(message)
   }
 
