@@ -1115,7 +1115,7 @@ describe('webSocketCollection', () => {
     it('keeps tracking the connections created through a constructor kept from before the collection started', () => {
       startEarlyCollection()
       // like a library that reads the global when its module is evaluated
-      const KeptWebSocket = window.WebSocket
+      const KeptWebSocket = window.WebSocket as unknown as typeof MockWebSocket
 
       startCollection()
       const socket = new KeptWebSocket('wss://example.com/socket')
@@ -1126,11 +1126,9 @@ describe('webSocketCollection', () => {
     function startEarlyCollection() {
       // the buffer and the tracked connections are module-wide, so whatever a spec leaves in them
       // would leak into the next one
-      resetEarlyConnectionsBuffer()
       const earlyCollection = startEarlyWebSocketCollection()
       registerCleanupTask(() => {
         earlyCollection.stop()
-        resetEarlyConnectionsBuffer()
         trackedConnections.clear()
       })
       return earlyCollection

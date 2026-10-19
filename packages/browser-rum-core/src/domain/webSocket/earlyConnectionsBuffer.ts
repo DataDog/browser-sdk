@@ -61,6 +61,11 @@ export function initEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
     return true
   }
 
+  const clear = (): void => {
+    earlyConnections.clear()
+    droppedConnectionCount = 0
+  }
+
   const drain = (lifeCycle: LifeCycle): void => {
     earlyConnections.forEach((states, instance) => {
       states.forEach((state) => {
@@ -80,13 +85,7 @@ export function initEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
       })
     }
 
-    earlyConnections.clear()
-    droppedConnectionCount = 0
-  }
-
-  const clear = (): void => {
-    earlyConnections.clear()
-    droppedConnectionCount = 0
+    clear()
   }
 
   earlyConnectionsBuffer = { register, drain, clear }
@@ -94,9 +93,7 @@ export function initEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
   return earlyConnectionsBuffer
 }
 
-// Used for tests only
 export function resetEarlyConnectionsBuffer() {
-  // Reset any eventual saved reference
   earlyConnectionsBuffer?.clear()
   earlyConnectionsBuffer = undefined
 }

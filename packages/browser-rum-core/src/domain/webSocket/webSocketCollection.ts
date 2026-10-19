@@ -14,7 +14,7 @@ import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 import { hasOpenConnection, trackedConnections } from './trackedConnections'
 import type { EarlyConnectionsBuffer } from './earlyConnectionsBuffer'
-import { initEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
+import { initEarlyConnectionsBuffer, resetEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 
 /**
  * A one flat cadence in every page state that tells how often an open connection reports where it is.
@@ -54,21 +54,24 @@ export function startEarlyWebSocketCollection() {
   })
 
   return {
-    stop: () => {
-      earlyWebSocketObservableSubscription!.unsubscribe()
-    },
+    stop: stopEarlyWebSocketCollection,
   }
+}
+
+function stopEarlyWebSocketCollection() {
+  earlyWebSocketObservableSubscription?.unsubscribe()
+  resetEarlyConnectionsBuffer()
 }
 
 /**
  * The opt-in is enforced here rather than by withholding instrumentation, which happens from SDK
- * load (see `startBufferingData`). When it is closed, nothing is subscribed nor allocated and the
- * returned stop handle is a no-op.
- */
+ * load (see `startEarlyWebSocketCollection`). When the collection is opted-out, instrumentation and
+ * early buffer are cleaned up, the returned handle is a noop.
+ * */
 export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   if (!isWebSocketCollectionEnabled(configuration)) {
-    earlyWebSocketObservableSubscription?.unsubscribe()
-    earlyConnectionsBuffer?.clear()
+    stopEarlyWebSocketCollection()
+
     trackedConnections.clear()
     return { stop: noop }
   }
@@ -78,7 +81,7 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
   const tracker = trackWebSocket(initWebSocketObservable(), emitVital)
   // Unsubscribed only once the tracker is subscribed: the observable keeps an observer, so the
   // instrumentation installed at SDK load stays in place for code that kept the constructor.
-  earlyWebSocketObservableSubscription?.unsubscribe()
+  stopEarlyWebSocketCollection()
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once; later events on the same WebSocket instance are ignored.

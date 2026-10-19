@@ -6,7 +6,7 @@ import { WebSocketVitalName } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { EarlyConnectionsBuffer } from './earlyConnectionsBuffer'
-import { initEarlyConnectionsBuffer, resetEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
+import { BUFFER_CAPACITY, initEarlyConnectionsBuffer, resetEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 import { closedContext, closingContext, connectingContext, openContext } from './webSocketContexts.specHelper'
@@ -191,7 +191,7 @@ describe('earlyConnectionsBuffer', () => {
   })
 
   function fillBuffer() {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < BUFFER_CAPACITY; i++) {
       registerConnecting({} as WebSocket, 0)
     }
   }
