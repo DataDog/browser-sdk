@@ -396,6 +396,22 @@ describe('webSocketObservable', () => {
 
         expect(contexts.length).toBe(0)
       })
+
+      it('does not emit events from sockets constructed before all subscribers unsubscribed', () => {
+        // Instrumented at creation
+        const ws = createMockWebSocket('wss://example.com/socket')
+        // Should clean up existing instrumentation
+        subscription?.unsubscribe()
+
+        startTracking()
+        contexts = []
+
+        ws.simulateOpen()
+        ws.simulateIncomingMessage('hello')
+        ws.simulateClose(1000, 'done', true)
+
+        expect(contexts.length).toBe(0)
+      })
     })
   })
 })
