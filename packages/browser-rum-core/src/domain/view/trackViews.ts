@@ -13,23 +13,15 @@ import type { MutationRecord } from '@datadog/js-core/dom'
 import {
   PageExitReason,
   shallowClone,
-  generateUUID,
-  throttle,
   display,
   createContextManager,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
-import {
-  mockable,
-  setInterval,
-  clearInterval,
-  setTimeout,
-  Observable,
-  noop,
-  globalObject,
+import { mockable, setInterval, clearInterval, setTimeout, Observable, noop, globalObject,
   isWorkerEnvironment,
-} from '@datadog/js-core/util'
+  generateUUID,
+  throttle, } from '@datadog/js-core/util'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

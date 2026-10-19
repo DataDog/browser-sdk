@@ -154,6 +154,9 @@ export interface Display {
 export const DOCS_ORIGIN = "https://docs.datadoghq.com";
 
 // @public
+export function generateUUID(): string;
+
+// @public
 export function getDebugMode(): boolean;
 
 // @public
@@ -345,6 +348,15 @@ export { setTimeout_2 as setTimeout }
 export interface Subscription {
     unsubscribe: () => void;
 }
+
+// @public
+export function throttle<T extends (...args: any[]) => void>(fn: T, wait: number, options?: {
+    leading?: boolean;
+    trailing?: boolean;
+}): {
+    throttled: (...parameters: Parameters<T>) => void;
+    cancel: () => void;
+};
 
 // @public
 export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
