@@ -16,6 +16,9 @@ module.exports = {
     worker: './src/profilingWorker.ts',
     'short-lived-worker': './src/shortLivedWorker.ts',
     'short-lived-worker-main-close': './src/shortLivedWorkerMainThreadClose.ts',
+    // Bundled normally, but served as a static asset and fetched-as-text by main.ts at
+    // runtime to construct a blob: URL worker (use-case 3) — see src/blobWorker.ts.
+    'blob-worker': './src/blobWorker.ts',
   },
 
   target: ['web', 'es2020'],

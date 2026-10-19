@@ -129,6 +129,92 @@ spawnShortLivedWorker()
 setInterval(spawnShortLivedWorker, SHORT_LIVED_INTERVAL_MS)
 
 // ---------------------------------------------------------------------------
+// blob: URL worker (use-case 3)
+//
+// Demonstrates that attachProfiler() works inside a worker constructed from a
+// blob: URL — i.e. a worker with NO HTTP response of its own, so it cannot carry its
+// own `Document-Policy: js-profiling` header. Chromium instead inherits the
+// Document-Policy of the creator (this) document for blob:/data: URL dedicated
+// workers — but only from M154+ (CL 7857031). Below that, construction succeeds but
+// attachProfiler() reports `missing-document-policy-header`.
+//
+// The worker source is bundled normally by webpack (src/blobWorker.ts →
+// /blob-worker.js) and fetched as text here, then wrapped in a Blob and loaded via
+// a blob: object URL — the same pattern used to inline bundled workers without a
+// separate static file in production (e.g. CDN-delivered single-file widgets).
+// ---------------------------------------------------------------------------
+interface BlobWorkerStats {
+  iterations: number
+  primesFound: number
+  elapsedSeconds: number
+}
+
+function setBlobWorkerStatus(text: string, color: string): void {
+  const el = document.getElementById('blob-worker-status')
+  if (!el) {
+    return
+  }
+  el.textContent = text
+  el.style.color = color
+}
+
+async function spawnBlobUrlWorker(): Promise<void> {
+  setBlobWorkerStatus('⏳ Fetching bundle…', '#888')
+
+  const response = await fetch('/blob-worker.js')
+  const source = await response.text()
+  const blob = new Blob([source], { type: 'application/javascript' })
+  const blobUrl = URL.createObjectURL(blob)
+
+  const worker = new Worker(blobUrl, { name: 'blob-url-worker' })
+  const detach = datadogRum.attachProfilingWorker(worker, { name: 'blob-url-worker' })
+
+  worker.addEventListener('message', (event: MessageEvent) => {
+    if (
+      typeof event.data === 'object' &&
+      typeof event.data.type === 'string' &&
+      (event.data.type as string).startsWith('dd-')
+    ) {
+      return
+    }
+    if (event.data?.kind === 'stats') {
+      const stats = event.data as BlobWorkerStats & { kind: string }
+      const iterationsEl = document.getElementById('stat-blob-iterations')
+      const primesEl = document.getElementById('stat-blob-primes')
+      const elapsedEl = document.getElementById('stat-blob-elapsed')
+      if (iterationsEl) {
+        iterationsEl.textContent = stats.iterations.toLocaleString()
+      }
+      if (primesEl) {
+        primesEl.textContent = stats.primesFound.toLocaleString()
+      }
+      if (elapsedEl) {
+        elapsedEl.textContent = `${stats.elapsedSeconds.toFixed(1)}s`
+      }
+      setBlobWorkerStatus('🟢 blob: worker running', '#2da44e')
+    }
+  })
+
+  worker.addEventListener('error', (event: ErrorEvent) => {
+    console.error('[main] blob: worker error:', event.message)
+    setBlobWorkerStatus(`❌ Worker error: ${event.message}`, '#e55353')
+  })
+
+  // The blob URL is only needed to construct the worker; release it once loaded.
+  URL.revokeObjectURL(blobUrl)
+
+  window.addEventListener('beforeunload', () => {
+    detach()
+    worker.terminate()
+  })
+}
+
+spawnBlobUrlWorker().catch((error: unknown) => {
+  console.error('[main] failed to spawn blob: URL worker:', error)
+  setBlobWorkerStatus('❌ Failed to spawn — see console', '#e55353')
+})
+
+// ---------------------------------------------------------------------------
 // Controls — Stop/Restart the persistent worker
 // ---------------------------------------------------------------------------
 function setWorkerStatus(text: string, color: string): void {

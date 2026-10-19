@@ -555,6 +555,27 @@
         </div>
 
         <div class="card">
+          <div class="status-row">
+            <span id="blob-worker-status">⏳ Starting…</span>
+          </div>
+          <div class="card-title">blob: URL worker stats (use-case 3)</div>
+          <div class="stats-grid">
+            <div class="stat">
+              <div class="stat-label">Iterations</div>
+              <div class="stat-value" id="stat-blob-iterations">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Primes found</div>
+              <div class="stat-value" id="stat-blob-primes">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Elapsed</div>
+              <div class="stat-value" id="stat-blob-elapsed">0.0s</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
           <div class="card-title">Active workers</div>
           <div class="worker-row">
             <div class="worker-dot green"></div>
@@ -570,6 +591,11 @@
             <div class="worker-dot blue"></div>
             <span class="worker-label">burst-main-close-N</span>
             <span class="worker-desc">flushAndTerminate()</span>
+          </div>
+          <div class="worker-row">
+            <div class="worker-dot green"></div>
+            <span class="worker-label">blob-url-worker</span>
+            <span class="worker-desc">blob: URL, Document-Policy inherited</span>
           </div>
         </div>
 
@@ -682,6 +708,42 @@ async function run() {
 }
 
 run()</code></pre>
+        </div>
+        <hr class="divider" />
+
+        <!-- ── Use-case 3: blob: URL worker ──────────────────── -->
+        <div class="snippet-section">
+          <div class="snippet-title">
+            <span class="step">Use-case 3</span>
+            blob: URL worker (no HTTP response of its own)
+          </div>
+          <p class="snippet-desc">
+            Works exactly like use-case 1/2 — <code>attachProfiler()</code> does not care how the worker was
+            constructed. The only difference is where <code>Document-Policy: js-profiling</code> comes from: a
+            <code>blob:</code>/<code>data:</code> worker has no HTTP response of its own, so Chromium inherits the
+            policy from the creator (main) document instead. Inheritance for local-scheme workers landed upstream in
+            <strong>Chromium M154</strong> (CL 7857031). Below M154, <code>attachProfiler()</code> reports
+            <code>missing-document-policy-header</code> even though the worker itself runs fine.
+          </p>
+
+          <div class="file-label">main.ts</div>
+          <pre><code class="language-typescript">// Fetch the already-bundled worker script and wrap it in a blob: URL —
+// no separate static file / HTTP response for the worker itself.
+const source = await fetch('/blob-worker.js').then((r) => r.text())
+const blobUrl = URL.createObjectURL(new Blob([source], { type: 'application/javascript' }))
+
+const worker = new Worker(blobUrl, { name: 'blob-url-worker' })
+datadogRum.attachProfilingWorker(worker, { name: 'blob-url-worker' })
+
+URL.revokeObjectURL(blobUrl) // safe once the Worker has been constructed</code></pre>
+
+          <div class="file-label">blob-worker.ts (bundled, then loaded as a blob: URL)</div>
+          <pre><code class="language-typescript">import { attachProfiler } from '@datadog/browser-rum/worker'
+
+// Identical to use-case 1/2 — the worker code itself is unaware of how it was loaded
+attachProfiler()
+
+// ... your worker logic ...</code></pre>
         </div>
         <hr class="divider" />
 

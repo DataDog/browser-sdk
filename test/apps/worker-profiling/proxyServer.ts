@@ -198,7 +198,17 @@ const deflateWorkerCompiler = webpack({
     // Reuse the monorepo tsconfig path aliases
     alias: {
       '@datadog/browser-core': path.resolve(__dirname, '../../../packages/browser-core/src'),
+      '@datadog/js-core/assembly': path.resolve(__dirname, '../../../packages/js-core/src/entries/assembly.ts'),
+      '@datadog/js-core/configuration': path.resolve(
+        __dirname,
+        '../../../packages/js-core/src/entries/configuration.ts'
+      ),
+      '@datadog/js-core/dom': path.resolve(__dirname, '../../../packages/js-core/src/entries/dom.ts'),
+      '@datadog/js-core/monitor': path.resolve(__dirname, '../../../packages/js-core/src/entries/monitor.ts'),
+      '@datadog/js-core/sample': path.resolve(__dirname, '../../../packages/js-core/src/entries/sample.ts'),
       '@datadog/js-core/time': path.resolve(__dirname, '../../../packages/js-core/src/entries/time.ts'),
+      '@datadog/js-core/transport': path.resolve(__dirname, '../../../packages/js-core/src/entries/transport.ts'),
+      '@datadog/js-core/util': path.resolve(__dirname, '../../../packages/js-core/src/entries/util.ts'),
       '@datadog/browser-rum-core': path.resolve(__dirname, '../../../packages/browser-rum-core/src'),
     },
   },
