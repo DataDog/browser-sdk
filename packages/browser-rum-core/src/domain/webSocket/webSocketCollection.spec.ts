@@ -25,6 +25,7 @@ import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { emitWebSocketVital } from './emitWebSocketVital'
+import { BUFFER_CAPACITY } from './earlyConnectionsBuffer'
 import type { EarlyWebSocketCollection } from './webSocketCollection'
 import {
   startEarlyWebSocketCollection,
@@ -1051,6 +1052,20 @@ describe('webSocketCollection', () => {
       tickPeriodicReport()
 
       expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3])
+    })
+
+    it('reports nothing of a connection the full buffer refused, even once the collection started', () => {
+      const earlyCollection = startEarlyCollection()
+      for (let i = 0; i < BUFFER_CAPACITY; i++) {
+        createConnectingConnection()
+      }
+      const refusedSocket = createOpenConnection()
+
+      startCollection(earlyCollection)
+      dispatchClose(refusedSocket)
+
+      const refusedSocketVitals = emittedVitals().filter((event) => webSocketOf(event) === refusedSocket)
+      expect(refusedSocketVitals.map((event) => event.rawRumEvent.vital.name)).toEqual([])
     })
 
     it('reports nothing of a connection created before the collection started when tracking is not enabled', () => {
