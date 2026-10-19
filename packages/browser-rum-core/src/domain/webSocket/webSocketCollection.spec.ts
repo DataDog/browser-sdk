@@ -26,8 +26,7 @@ import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { getPhaseClocks, serializeWebSocketVital } from './serializeWebSocketVital'
 import type { TrackedConnection } from './trackedConnection'
-import { initEarlyConnectionsBuffer, resetEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
-import { trackedConnections } from './trackedConnections'
+import { initEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 import {
   startEarlyWebSocketCollection,
   startWebSocketCollection,
@@ -1068,7 +1067,7 @@ describe('webSocketCollection', () => {
 
       startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
 
-      expect(trackedConnections.size).toBe(0)
+      expect(startTracking().flushOpenConnections()).toBe(0)
     })
 
     it('empties the buffer when tracking is not enabled', () => {
@@ -1125,11 +1124,11 @@ describe('webSocketCollection', () => {
 
     function startEarlyCollection() {
       // the buffer and the tracked connections are module-wide, so whatever a spec leaves in them
-      // would leak into the next one
+      // would leak into the next one: an opted-out start empties both
       const earlyCollection = startEarlyWebSocketCollection()
       registerCleanupTask(() => {
-        earlyCollection.stop()
-        trackedConnections.clear()
+        // when collection is opted out, a whole lean up is performed
+        startWebSocketCollection(lifeCycle, mockRumConfiguration({ betaTrackWebSockets: false }))
       })
       return earlyCollection
     }

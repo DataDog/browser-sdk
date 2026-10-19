@@ -12,7 +12,6 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { serializeWebSocketVital, getPhaseClocks } from './serializeWebSocketVital'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
-import { hasOpenConnection, trackedConnections } from './trackedConnections'
 import type { EarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 import { initEarlyConnectionsBuffer, resetEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 
@@ -41,6 +40,17 @@ export interface WebSocketConnectionTracker {
   /** Ends tracking of every tracked connection, and tells how many there were. */
   flushOpenConnections: (endClocks?: ClocksState, trackingEndReason?: UnobservedTrackingEndReason) => number
   stop: () => void
+}
+
+const trackedConnections = new Map<WebSocket, TrackedConnection>()
+
+function hasOpenConnection() {
+  for (const connection of trackedConnections.values()) {
+    if (connection.isOpen()) {
+      return true
+    }
+  }
+  return false
 }
 
 let earlyConnectionsBuffer: EarlyConnectionsBuffer | undefined
