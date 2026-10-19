@@ -1139,6 +1139,31 @@ describe('webSocketCollection', () => {
       expect(webSocketOf(single(emittedVitals()))).toBe(socket)
     })
 
+    it('reports closing buffered before start and closed after start under the same connection id', () => {
+      const earlyCollection = startEarlyCollection()
+      const socket = createOpenConnection()
+      callClose(socket, { at: 10 })
+
+      startCollection(earlyCollection)
+      dispatchClose(socket, { at: 20 })
+
+      const connectionId = single(connectingPayloads()).id
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSING,
+        WebSocketVitalName.CLOSED,
+      ])
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.websocket.id)).toEqual([
+        connectionId,
+        connectionId,
+        connectionId,
+        connectionId,
+      ])
+      expect(single(closingPayloads()).closing_date).toBe(clock.timeStamp(10))
+      expect(single(closedPayloads()).closed_date).toBe(clock.timeStamp(20))
+    })
+
     function startEarlyCollection() {
       const earlyCollection = startEarlyWebSocketCollection()
       registerCleanupTask(() => {
