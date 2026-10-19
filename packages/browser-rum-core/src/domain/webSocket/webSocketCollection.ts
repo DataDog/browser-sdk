@@ -1,5 +1,5 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled, PageExitReason } from '@datadog/browser-core'
-import type { Observable, Subscription, TimeoutId } from '@datadog/js-core/util'
+import type { Observable, TimeoutId } from '@datadog/js-core/util'
 import { clearInterval, noop, setInterval } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
@@ -13,7 +13,7 @@ import { emitWebSocketVital } from './emitWebSocketVital'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 import type { EarlyConnectionsBuffer } from './earlyConnectionsBuffer'
-import { initEarlyConnectionsBuffer, resetEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
+import { createEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 
 /**
  * A one flat cadence in every page state that tells how often an open connection reports where it is.
@@ -53,48 +53,55 @@ function hasOpenConnection() {
   return false
 }
 
-let earlyConnectionsBuffer: EarlyConnectionsBuffer | undefined
-let earlyWebSocketObservableSubscription: Subscription | undefined
+export interface EarlyWebSocketCollection {
+  /** The phases of the connections opened before the collection started, drained once it starts. */
+  buffer: EarlyConnectionsBuffer
+  /** Stops observing WebSockets and empties the buffer. */
+  stop: () => void
+}
 
-export function startEarlyWebSocketCollection() {
-  earlyConnectionsBuffer = initEarlyConnectionsBuffer()
+export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
+  const buffer = createEarlyConnectionsBuffer()
 
-  earlyWebSocketObservableSubscription = initWebSocketObservable().subscribe((context) => {
-    handleWebSocketContext(context, earlyConnectionsBuffer!.register)
+  const subscription = initWebSocketObservable().subscribe((context) => {
+    handleWebSocketContext(context, buffer.register)
   })
 
   return {
-    stop: stopEarlyWebSocketCollection,
+    buffer,
+    stop: () => {
+      subscription.unsubscribe()
+      buffer.clear()
+    },
   }
-}
-
-function stopEarlyWebSocketCollection() {
-  earlyWebSocketObservableSubscription?.unsubscribe()
-  resetEarlyConnectionsBuffer()
 }
 
 /**
  * The opt-in is enforced here rather than by withholding instrumentation, which happens from SDK
- * load (see `startEarlyWebSocketCollection`). When the collection is opted-out, instrumentation and
- * early buffer are cleaned up, the returned handle is a noop.
- * */
-export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
+ * load (see `startEarlyWebSocketCollection`). When the collection is opted-out, the early
+ * collection is stopped and the connections it tracked are forgotten, the returned handle is a noop.
+ */
+export function startWebSocketCollection(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  earlyWebSocketCollection: EarlyWebSocketCollection
+) {
   if (!isWebSocketCollectionEnabled(configuration)) {
-    stopEarlyWebSocketCollection()
+    earlyWebSocketCollection.stop()
 
     trackedConnections.clear()
     return { stop: noop }
   }
 
-  earlyConnectionsBuffer?.drain(lifeCycle)
+  earlyWebSocketCollection.buffer.drain(lifeCycle)
 
   const tracker = trackWebSocket(initWebSocketObservable(), (instance, connection) => {
     emitWebSocketVital(lifeCycle, instance, connection.getState())
     return true
   })
-  // Unsubscribed only once the tracker is subscribed: the observable keeps an observer, so the
+  // Stopped only once the tracker is subscribed: the observable keeps an observer, so the
   // instrumentation installed at SDK load stays in place for code that kept the constructor.
-  stopEarlyWebSocketCollection()
+  earlyWebSocketCollection.stop()
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once; later events on the same WebSocket instance are ignored.

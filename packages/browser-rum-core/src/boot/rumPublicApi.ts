@@ -669,7 +669,7 @@ export function makeRumPublicApi(
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedData = startBufferingData()
-  startEarlyWebSocketCollection()
+  const earlyWebSocketCollection = startEarlyWebSocketCollection()
 
   let strategy = createPreStartStrategy(
     options,
@@ -688,6 +688,7 @@ export function makeRumPublicApi(
         initialViewOptions,
         createEncoder,
         bufferedData.observable,
+        earlyWebSocketCollection,
         telemetry,
         hooks,
         options.sdkName

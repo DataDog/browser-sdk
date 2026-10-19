@@ -1,12 +1,12 @@
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
+import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
 import { relativeToClocks } from '@datadog/js-core/time'
 import type { RawRumWebSocketVitalEvent } from '../../rawRumEvent.types'
 import { WebSocketVitalName } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { EarlyConnectionsBuffer } from './earlyConnectionsBuffer'
-import { BUFFER_CAPACITY, initEarlyConnectionsBuffer, resetEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
+import { BUFFER_CAPACITY, createEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
 import { closedContext, closingContext, connectingContext, openContext } from './webSocketContexts.specHelper'
@@ -19,15 +19,12 @@ describe('earlyConnectionsBuffer', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    buffer = initEarlyConnectionsBuffer()
+    buffer = createEarlyConnectionsBuffer()
     lifeCycle = new LifeCycle()
     collectedEvents = []
     lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
       collectedEvents.push(data as RawRumEventCollectedData<RawRumWebSocketVitalEvent>)
     })
-
-    // the buffer is module-wide, so whatever a spec leaves in it would leak into the next one
-    registerCleanupTask(resetEarlyConnectionsBuffer)
   })
 
   describe('drain', () => {

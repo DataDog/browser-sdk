@@ -11,7 +11,7 @@ import {
 import type { Duration } from '@datadog/js-core/time'
 import { clocksNow, ONE_HOUR, ONE_MINUTE, toServerDuration } from '@datadog/js-core/time'
 import { globalObject, noop } from '@datadog/js-core/util'
-import { mockRumConfiguration } from '../../../test'
+import { mockRumConfiguration, noopEarlyWebSocketCollection } from '../../../test'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import type { RumWebSocketVitalEventDomainContext } from '../../domainContext.types'
 import type {
@@ -25,7 +25,7 @@ import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { emitWebSocketVital } from './emitWebSocketVital'
-import { initEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
+import type { EarlyWebSocketCollection } from './webSocketCollection'
 import {
   startEarlyWebSocketCollection,
   startWebSocketCollection,
@@ -764,7 +764,7 @@ describe('webSocketCollection', () => {
 
   describe('startWebSocketCollection', () => {
     function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
-      const collection = startWebSocketCollection(lifeCycle, configuration)
+      const collection = startWebSocketCollection(lifeCycle, configuration, noopEarlyWebSocketCollection)
       registerCleanupTask(() => collection.stop())
       return collection
     }
@@ -955,8 +955,11 @@ describe('webSocketCollection', () => {
   })
 
   describe('early collection', () => {
-    function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
-      const collection = startWebSocketCollection(lifeCycle, configuration)
+    function startCollection(
+      earlyCollection: EarlyWebSocketCollection,
+      configuration = mockRumConfiguration({ betaTrackWebSockets: true })
+    ) {
+      const collection = startWebSocketCollection(lifeCycle, configuration, earlyCollection)
       registerCleanupTask(() => collection.stop())
       return collection
     }
@@ -970,12 +973,12 @@ describe('webSocketCollection', () => {
     })
 
     it('reports the whole lifecycle of a connection that ended before the collection started, once it starts', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       const socket = createOpenConnection()
       callClose(socket)
       dispatchClose(socket)
 
-      startCollection()
+      startCollection(earlyCollection)
 
       expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
         WebSocketVitalName.CONNECTING,
@@ -987,10 +990,10 @@ describe('webSocketCollection', () => {
     })
 
     it('keeps tracking a connection created before the collection started under the same connection id', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       const socket = createConnectingConnection()
 
-      startCollection()
+      startCollection(earlyCollection)
       completeHandshake(socket, { at: 10 })
       dispatchClose(socket, { at: 20 })
 
@@ -1008,12 +1011,12 @@ describe('webSocketCollection', () => {
     })
 
     it('counts the messages exchanged in the terminal snapshot before the collection started', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       const socket = createOpenConnection()
       receiveMessage(socket, 30)
       sendMessage(socket, 10)
 
-      startCollection()
+      startCollection(earlyCollection)
       dispatchClose(socket)
 
       expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
@@ -1028,11 +1031,11 @@ describe('webSocketCollection', () => {
     })
 
     it('reports a connection opened before the collection started as soon as it starts', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       const socket = createOpenConnection()
       receiveMessage(socket, 30)
 
-      startCollection()
+      startCollection(earlyCollection)
 
       expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2])
       expect(openPayloads()[1].snapshot.inbound).toEqual(
@@ -1041,56 +1044,56 @@ describe('webSocketCollection', () => {
     })
 
     it('reports a connection opened before the collection started periodically once it starts', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       createOpenConnection()
 
-      startCollection()
+      startCollection(earlyCollection)
       tickPeriodicReport()
 
       expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3])
     })
 
     it('reports nothing of a connection created before the collection started when tracking is not enabled', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       const socket = createOpenConnection()
 
-      startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
+      startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
       dispatchClose(socket)
 
       expect(emittedVitals()).toHaveSize(0)
     })
 
     it('forgets the connections created before the collection started when tracking is not enabled', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       createOpenConnection()
 
-      startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
+      startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
 
       expect(startTracking().flushOpenConnections()).toBe(0)
     })
 
     it('empties the buffer when tracking is not enabled', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       createOpenConnection()
 
-      startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
-      initEarlyConnectionsBuffer().drain(lifeCycle)
+      startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
+      earlyCollection.buffer.drain(lifeCycle)
 
       expect(emittedVitals()).toHaveSize(0)
     })
 
     it('restores the native constructor when tracking is not enabled', () => {
       const nativeWebSocket = window.WebSocket
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
 
-      startCollection(mockRumConfiguration({ betaTrackWebSockets: false }))
+      startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
 
       expect(window.WebSocket).toBe(nativeWebSocket)
     })
 
     it('stops buffering once the collection started', () => {
-      startEarlyCollection()
-      startCollection()
+      const earlyCollection = startEarlyCollection()
+      startCollection(earlyCollection)
 
       const socket = createOpenConnection()
       receiveMessage(socket, 30)
@@ -1111,23 +1114,22 @@ describe('webSocketCollection', () => {
     })
 
     it('keeps tracking the connections created through a constructor kept from before the collection started', () => {
-      startEarlyCollection()
+      const earlyCollection = startEarlyCollection()
       // like a library that reads the global when its module is evaluated
       const KeptWebSocket = window.WebSocket as unknown as typeof MockWebSocket
 
-      startCollection()
+      startCollection(earlyCollection)
       const socket = new KeptWebSocket('wss://example.com/socket')
 
       expect(webSocketOf(single(emittedVitals()))).toBe(socket)
     })
 
     function startEarlyCollection() {
-      // the buffer and the tracked connections are module-wide, so whatever a spec leaves in them
-      // would leak into the next one: an opted-out start empties both
       const earlyCollection = startEarlyWebSocketCollection()
       registerCleanupTask(() => {
-        // when collection is opted out, a whole lean up is performed
-        startWebSocketCollection(lifeCycle, mockRumConfiguration({ betaTrackWebSockets: false }))
+        // the tracked connections are module-wide, so whatever a spec leaves in them would leak into
+        // the next one: an opted-out start stops the early collection and forgets them
+        startWebSocketCollection(lifeCycle, mockRumConfiguration({ betaTrackWebSockets: false }), earlyCollection)
       })
       return earlyCollection
     }

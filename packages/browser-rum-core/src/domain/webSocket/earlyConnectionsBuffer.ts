@@ -12,13 +12,7 @@ export interface EarlyConnectionsBuffer {
 
 export const BUFFER_CAPACITY = 8
 
-let earlyConnectionsBuffer: EarlyConnectionsBuffer | undefined
-
-export function initEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
-  if (earlyConnectionsBuffer) {
-    return earlyConnectionsBuffer
-  }
-
+export function createEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
   const earlyConnections = new Map<WebSocket, TrackedConnectionState[]>()
   let droppedConnectionCount = 0
 
@@ -81,12 +75,5 @@ export function initEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
     clear()
   }
 
-  earlyConnectionsBuffer = { register, drain, clear }
-
-  return earlyConnectionsBuffer
-}
-
-export function resetEarlyConnectionsBuffer() {
-  earlyConnectionsBuffer?.clear()
-  earlyConnectionsBuffer = undefined
+  return { register, drain, clear }
 }
