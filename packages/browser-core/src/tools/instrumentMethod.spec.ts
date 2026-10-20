@@ -226,6 +226,17 @@ describe('instrumentMethod', () => {
       expect(instrumentationSpy).not.toHaveBeenCalled()
     })
 
+    it('calls the original method with the same parameters when the instrumentation is still referenced', () => {
+      const object = { method: (a: number, b: number) => a + b }
+      const { stop } = instrumentMethod(object, 'method', noop)
+      // A third party may keep a reference to the instrumentation, e.g. by wrapping it
+      const instrumentedMethod = object.method
+
+      stop()
+
+      expect(instrumentedMethod(2, 3)).toBe(5)
+    })
+
     describe('when the method has been instrumented by a third party', () => {
       it('should not break the third party instrumentation', () => {
         const object = { method: () => 1 }
@@ -370,6 +381,17 @@ describe('instrumentConstructor', () => {
     }).toThrow()
 
     expect(instrumentationSpy).not.toHaveBeenCalled()
+  })
+
+  it('passes the parameters to the original when the constructor is invoked without new', () => {
+    // Some constructors, like `Date` or `String`, can also be called without `new`
+    function callableConstructor(value: number) {
+      return value * 2
+    }
+    const container = { callableConstructor }
+    instrumentConstructor(container, 'callableConstructor', noop)
+
+    expect(container.callableConstructor(21)).toBe(42)
   })
 
   it('preserves instanceof on the constructed instance', () => {
