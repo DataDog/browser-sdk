@@ -19,7 +19,8 @@ import {
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import {
-  globalObject, mockable,
+  globalObject,
+  mockable,
   setInterval,
   clearInterval,
   setTimeout,
