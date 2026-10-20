@@ -1,7 +1,8 @@
 import type { Subscription } from '@datadog/js-core/util'
+import { noop } from '@datadog/js-core/util'
 import type { MockFetch, MockFetchManager } from '../../test'
 import { registerCleanupTask, mockFetch } from '../../test'
-import type { FetchResolveContext, FetchContext } from './fetchObservable'
+import type { FetchResolveContext, FetchContext, FetchStartContext } from './fetchObservable'
 import { initFetchObservable, resetFetchObservable, ResponseBodyAction } from './fetchObservable'
 
 describe('fetch proxy', () => {
@@ -353,5 +354,53 @@ describe('fetch proxy with ResponseBodyAction', () => {
       expect(requests[0].responseBody).toBe('response body content')
       done()
     })
+  })
+})
+
+describe('fetch proxy arguments', () => {
+  const FAKE_URL = 'http://fake-url/'
+  const REPLACED_URL = 'http://replaced-url/'
+  let originalFetchSpy: jasmine.Spy
+
+  function setupFetchTracking(onStart: (context: FetchStartContext) => void = noop) {
+    originalFetchSpy = spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response()))
+    const subscription = initFetchObservable().subscribe((context) => {
+      if (context.state === 'start') {
+        onStart(context)
+      }
+    })
+    registerCleanupTask(() => {
+      subscription.unsubscribe()
+      resetFetchObservable()
+    })
+  }
+
+  it('should not add arguments to the original fetch call', () => {
+    setupFetchTracking()
+
+    void window.fetch(FAKE_URL)
+
+    expect(originalFetchSpy).toHaveBeenCalledOnceWith(FAKE_URL)
+  })
+
+  it('should pass the input replaced by a subscriber to the original fetch', () => {
+    setupFetchTracking((context) => {
+      context.input = REPLACED_URL
+    })
+
+    void window.fetch(FAKE_URL)
+
+    expect(originalFetchSpy).toHaveBeenCalledOnceWith(REPLACED_URL)
+  })
+
+  it('should pass the init replaced by a subscriber to the original fetch', () => {
+    const replacedInit = { method: 'POST' }
+    setupFetchTracking((context) => {
+      context.init = replacedInit
+    })
+
+    void window.fetch(FAKE_URL)
+
+    expect(originalFetchSpy).toHaveBeenCalledOnceWith(FAKE_URL, replacedInit)
   })
 })
