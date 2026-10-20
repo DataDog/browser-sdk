@@ -621,7 +621,6 @@ export interface ProfilerApi {
 
 export interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
-  allowWorker?: boolean
   startDeflateWorker?: (
     configuration: RumConfiguration,
     source: string,

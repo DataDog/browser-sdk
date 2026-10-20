@@ -1,10 +1,12 @@
 import type { ExtensionApi } from '@shopify/web-pixels-extension'
 import { SKIPPED } from '@datadog/js-core/assembly'
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { RumPlugin, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPlugin, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
 import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from './shopifyAnalytics'
 import { waitForPageViewedEvent } from './shopifyAnalytics'
 import { initShopifyBindings, isCheckoutPage } from './shopifyBindings'
+import { display } from '@datadog/browser-core/src/tools/display'
+import { replaceMockable } from '@datadog/browser-core/test'
 
 // Checkout funnel events, collected as custom actions named after the event.
 // https://shopify.dev/docs/api/web-pixels-api/standard-events
@@ -53,7 +55,60 @@ interface FormElementData {
   action?: string | null
 }
 
+export function nextjsPlugin(): NextjsPlugin {
+  replaceMockable(sessionStorage)
+  replaceMockable(sessionAccess)
+  return {
+    name: 'nextjs',
+    onInit({ publicApi, initConfiguration }) {
+      register((api) => {
+        let initConfiguration: RumInitConfiguration
+        try {
+          if (typeof api.settings.rumConfig !== 'string') {
+            throw new Error('Missing rumConfig')
+          }
+          initConfiguration = JSON.parse(api.settings.rumConfig)
+        }
+        for (const subscriber of onRumInitSubscribers) {
+          subscriber(publicApi)
+        }
+      })
+    },
+    onRumStart({ addError }) {
+      globalAddError = addError
+      if (addError) {
+        for (const subscriber of onRumStartSubscribers) {
+          subscriber(addError)
+        }
+      }
+    },
+    getConfigurationTelemetry() {
+      const nextjsVersion = (globalObject as NextjsGlobalObject).next?.version
+      return {
+        router: true,
+        integrations: toIntegrations(nextjsVersion && toMajorVersionIntegration('nextjs', nextjsVersion), routerType),
+      }
+    },
+  } satisfies RumPlugin
+}
+
+
 export function shopifyAppPixelPlugin({ analytics, init, settings }: ExtensionApi): RumPlugin {
+  register((api) => {
+    let initConfiguration: RumInitConfiguration
+    try {
+      if (typeof api.settings.rumConfig !== 'string') {
+        throw new Error('Missing rumConfig')
+      }
+      initConfiguration = JSON.parse(api.settings.rumConfig)
+      if (!initConfiguration || typeof initConfiguration !== 'object' || Array.isArray(initConfiguration)) {
+        throw new Error('Invalid rumConfig')
+      }
+    } catch {
+      display.error('Shopify settings.rumConfig must contain a JSON object')
+      return
+    }
+
   return {
     name: 'shopify-app-pixel',
     async onInit({ initConfiguration, publicApi, registerAssembleEventHook }) {
