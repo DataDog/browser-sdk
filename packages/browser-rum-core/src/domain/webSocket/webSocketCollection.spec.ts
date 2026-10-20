@@ -24,6 +24,8 @@ import type {
 import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { getPhaseClocks, serializeWebSocketVital } from './serializeWebSocketVital'
+import type { TrackedConnection } from './trackedConnection'
 import { startWebSocketCollection, trackWebSocket, WEBSOCKET_PERIODIC_REPORT_INTERVAL } from './webSocketCollection'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
@@ -952,9 +954,18 @@ describe('webSocketCollection', () => {
   // ---------------------------------------------------------------------------
 
   function startTracking() {
-    const tracker = trackWebSocket(lifeCycle, initWebSocketObservable())
+    const tracker = trackWebSocket(initWebSocketObservable(), emitVital)
     registerCleanupTask(tracker.stop)
     return tracker
+  }
+
+  function emitVital(instance: WebSocket, connection: TrackedConnection) {
+    const state = connection.getState()
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+      rawRumEvent: serializeWebSocketVital(state),
+      startClocks: getPhaseClocks(state),
+      domainContext: { webSocket: instance },
+    })
   }
 
   function expireSession(endClocks = clocksNow()) {
