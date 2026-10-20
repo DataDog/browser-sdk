@@ -1,4 +1,4 @@
-import { mockableReplacements } from '@datadog/js-core/util'
+import { mockableReplacements, replaceMockable as setMockableReplacement } from '@datadog/js-core/util'
 import { registerCleanupTask } from './registerCleanupTask'
 
 /**
@@ -20,7 +20,7 @@ export function replaceMockable<T>(value: T, replacement: T): void {
   if (mockableReplacements.has(value)) {
     throw new Error('Mock has already been set')
   }
-  mockableReplacements.set(value, replacement)
+  setMockableReplacement(value, replacement)
   registerCleanupTask(() => {
     mockableReplacements.delete(value)
   })
