@@ -18,7 +18,6 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
-import type { EarlyWebSocketCollection } from '../domain/webSocket/webSocketCollection'
 import { startWebSocketCollection } from '../domain/webSocket/webSocketCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
@@ -59,7 +58,6 @@ export function startRum(
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   bufferedDataObservable: BufferedObservable<BufferedData>,
-  earlyWebSocketCollection: EarlyWebSocketCollection,
   telemetry: Telemetry,
   hooks: Hooks,
   sdkName?: SdkName
@@ -107,7 +105,6 @@ export function startRum(
     recorderApi,
     initialViewOptions,
     bufferedDataObservable,
-    earlyWebSocketCollection,
     sdkName,
     reportError
   )
@@ -138,7 +135,6 @@ export function startRumEventCollection(
   recorderApi: RecorderApi,
   initialViewOptions: ViewOptions | undefined,
   bufferedDataObservable: Observable<BufferedData>,
-  earlyWebSocketCollection: EarlyWebSocketCollection,
   sdkName: SdkName | undefined,
   reportError: (message: string) => void
 ) {
@@ -221,7 +217,7 @@ export function startRumEventCollection(
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
-  const webSocketCollection = startWebSocketCollection(lifeCycle, configuration, earlyWebSocketCollection)
+  const webSocketCollection = startWebSocketCollection(lifeCycle, configuration)
   cleanupTasks.push(webSocketCollection.stop)
 
   const internalContext = startInternalContext(

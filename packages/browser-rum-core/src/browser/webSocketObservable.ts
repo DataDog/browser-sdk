@@ -88,8 +88,6 @@ function createWebSocketObservable() {
       return undefined
     }
 
-    const instanceListenersStops = new Set<() => void>()
-
     const { stop: stopInstrumentingConstructor } = instrumentConstructor(
       globalObject,
       'WebSocket',
@@ -106,7 +104,7 @@ function createWebSocketObservable() {
             startClocks,
           })
 
-          attachInstanceListeners(instance, observable, instanceListenersStops)
+          attachInstanceListeners(instance, observable)
         })
       }
     )
@@ -159,16 +157,11 @@ function createWebSocketObservable() {
       stopInstrumentingConstructor()
       stopInstrumentingSend()
       stopInstrumentingClose()
-      instanceListenersStops.forEach((stop) => stop())
     }
   })
 }
 
-function attachInstanceListeners(
-  instance: WebSocket,
-  observable: Observable<WebSocketContext>,
-  instanceListenersStops: Set<() => void>
-) {
+function attachInstanceListeners(instance: WebSocket, observable: Observable<WebSocketContext>) {
   const { stop: stopOpen } = addEventListener(instance, 'open', () => {
     observable.notify({
       state: 'open',
@@ -201,17 +194,9 @@ function attachInstanceListeners(
       at: clocksNow(),
     })
 
-    stop()
-  })
-
-  function stop() {
-    stopOpen()
     stopMessage()
     stopClose()
-    instanceListenersStops.delete(stop)
-  }
-
-  instanceListenersStops.add(stop)
+  })
 }
 
 function computePayloadSize(data: unknown): number {
