@@ -8,9 +8,12 @@ import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
 import { emitWebSocketVital } from './emitWebSocketVital'
 import type { TrackedConnection } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
+import type { EarlyConnectionsBuffer } from './earlyConnectionsBuffer'
+import { createEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 
 /**
  * A one flat cadence in every page state that tells how often an open connection reports where it is.
@@ -39,10 +42,19 @@ export interface WebSocketConnectionTracker {
   stop: () => void
 }
 
-export const trackedConnectionsMap = new Map<WebSocket, TrackedConnection>()
+const trackedConnections = new Map<WebSocket, TrackedConnection>()
+
+/**
+ * Reset the tracked connections global state. Test-only.
+ *
+ * @internal
+ */
+export function resetTrackedConnections() {
+  trackedConnections.clear()
+}
 
 function hasOpenConnection() {
-  for (const connection of trackedConnectionsMap.values()) {
+  for (const connection of trackedConnections.values()) {
     if (connection.isOpen()) {
       return true
     }
@@ -50,17 +62,61 @@ function hasOpenConnection() {
   return false
 }
 
+export interface EarlyWebSocketCollection {
+  /** The phases of the connections opened before the collection started, drained once it starts. */
+  buffer: EarlyConnectionsBuffer
+  /** Stops observing WebSockets and empties the buffer. Calls after the first one do nothing. */
+  stop: () => void
+}
+
+export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
+  const buffer = createEarlyConnectionsBuffer()
+
+  const subscription = initWebSocketObservable().subscribe((context) => {
+    handleWebSocketContext(context, buffer.register)
+  })
+
+  let stopped = false
+
+  return {
+    buffer,
+    stop: () => {
+      if (stopped) {
+        return
+      }
+      stopped = true
+      subscription.unsubscribe()
+      buffer.clear()
+    },
+  }
+}
+
 /**
  * The opt-in is enforced here rather than by withholding instrumentation, which happens from SDK
- * load (see `startBufferingData`). When it is closed, nothing is subscribed nor allocated and the
- * returned stop handle is a no-op.
+ * load (see `startEarlyWebSocketCollection`). When the collection is opted-out, the early
+ * collection is stopped and the connections it tracked are forgotten, the returned handle is a noop.
  */
-export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
+export function startWebSocketCollection(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  earlyWebSocketCollection: EarlyWebSocketCollection
+) {
   if (!isWebSocketCollectionEnabled(configuration)) {
+    earlyWebSocketCollection.stop()
+
+    trackedConnections.clear()
     return { stop: noop }
   }
 
-  const tracker = trackWebSocket(initWebSocketObservable(), emitVital)
+  earlyWebSocketCollection.buffer.drain(lifeCycle)
+
+  const tracker = trackWebSocket(initWebSocketObservable(), (instance, connection) => {
+    emitWebSocketVital(lifeCycle, instance, connection.getState())
+    return true
+  })
+  // Stopped only once the tracker is subscribed: the observable keeps an observer, so the
+  // instrumentation installed at SDK load stays in place for code that kept the constructor.
+  earlyWebSocketCollection.stop()
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once; later events on the same WebSocket instance are ignored.
@@ -76,10 +132,6 @@ export function startWebSocketCollection(lifeCycle: LifeCycle, configuration: Ru
       tracker.reportOpenConnections()
     }
   })
-
-  function emitVital(instance: WebSocket, connection: TrackedConnection) {
-    emitWebSocketVital(lifeCycle, instance, connection.getState())
-  }
 
   return {
     stop: () => {
@@ -100,7 +152,7 @@ function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
 
 export function trackWebSocket(
   webSocketContextObservable: Observable<WebSocketContext>,
-  emitVital: (instance: WebSocket, connection: TrackedConnection) => void
+  onConnectionUpdate: (instance: WebSocket, connection: TrackedConnection) => boolean
 ): WebSocketConnectionTracker {
   let reportIntervalId: TimeoutId | undefined
 
@@ -112,13 +164,13 @@ export function trackWebSocket(
   function reportOpenConnections() {
     const reportClocks = clocksNow()
 
-    trackedConnectionsMap.forEach((connection, instance) => {
+    trackedConnections.forEach((connection, instance) => {
       if (!connection.isOpen()) {
         return
       }
 
       connection.recordReport(reportClocks)
-      emitVital(instance, connection)
+      onConnectionUpdate(instance, connection)
     })
   }
 
@@ -136,7 +188,7 @@ export function trackWebSocket(
   }
 
   const subscription = webSocketContextObservable.subscribe((context) => {
-    handleWebSocketContext(context, emitVital)
+    handleWebSocketContext(context, onConnectionUpdate)
 
     // After key phase transitions to keep the report only when there's an active pool
     // of WebSockets.
@@ -149,92 +201,116 @@ export function trackWebSocket(
     }
   })
 
+  // Connections opened before init are already open when tracking starts
+  if (hasOpenConnection()) {
+    reportOpenConnections()
+    startOpenConnectionsPeriodicReport()
+  }
+
   return {
     reportOpenConnections,
     flushOpenConnections: (endClocks = clocksNow(), trackingEndReason = WebSocketTrackingEndReason.SESSION_END) => {
-      const endedCount = trackedConnectionsMap.size
-      trackedConnectionsMap.forEach((connection, instance) => {
+      const endedCount = trackedConnections.size
+      trackedConnections.forEach((connection, instance) => {
         // No close event, so the send queue depth is read from the socket
         connection.recordTrackingEnd(endClocks, trackingEndReason, instance.bufferedAmount)
-        emitVital(instance, connection)
+        onConnectionUpdate(instance, connection)
       })
 
-      trackedConnectionsMap.clear()
+      trackedConnections.clear()
       stopOpenConnectionsPeriodicReport()
       return endedCount
     },
     stop: () => {
       subscription.unsubscribe()
-      trackedConnectionsMap.clear()
+      trackedConnections.clear()
       stopOpenConnectionsPeriodicReport()
     },
   }
 }
 
+/**
+ * Records a WebSocket context on its tracked connection, then hands the connection to
+ * `onConnectionUpdate` each time it enters a new phase (connecting, open, closing, closed), so the
+ * caller can report that phase: emit it as a vital, or buffer it until the collection starts.
+ *
+ * Messages are not phases: they only add to the connection's snapshot, which reaches the caller
+ * with the next open report or the closed vital. Calling `onConnectionUpdate` on each message
+ * would report one vital per message.
+ *
+ * On the connecting phase, `onConnectionUpdate` also tells whether the connection should be
+ * tracked: when it returns false, the connection is forgotten and its later events are ignored.
+ */
 function handleWebSocketContext(
   context: WebSocketContext,
-  callback: (instance: WebSocket, connection: TrackedConnection) => void
+  onConnectionUpdate: (instance: WebSocket, connection: TrackedConnection) => boolean
 ) {
+  let keepTracking = true
+
   switch (context.state) {
     case 'connecting': {
       const connection = createTrackedConnection(context)
-      trackedConnectionsMap.set(context.instance, connection)
+      trackedConnections.set(context.instance, connection)
 
-      callback(context.instance, connection)
+      keepTracking = onConnectionUpdate(context.instance, connection)
 
-      return
+      break
     }
 
     case 'open': {
-      const connection = trackedConnectionsMap.get(context.instance)
+      const connection = trackedConnections.get(context.instance)
       if (!connection) {
-        return
+        break
       }
 
       connection.recordOpen(context)
 
-      callback(context.instance, connection)
+      onConnectionUpdate(context.instance, connection)
 
-      return
+      break
     }
 
     case 'message-in': {
-      trackedConnectionsMap.get(context.instance)?.recordInboundMessage(context)
+      trackedConnections.get(context.instance)?.recordInboundMessage(context)
 
-      return
+      break
     }
 
     case 'message-out': {
-      trackedConnectionsMap.get(context.instance)?.recordOutboundMessage(context)
+      trackedConnections.get(context.instance)?.recordOutboundMessage(context)
 
-      return
+      break
     }
 
     case 'closing': {
-      const connection = trackedConnectionsMap.get(context.instance)
+      const connection = trackedConnections.get(context.instance)
       if (!connection) {
-        return
+        break
       }
 
       connection.recordClosing(context)
 
-      callback(context.instance, connection)
+      onConnectionUpdate(context.instance, connection)
 
-      return
+      break
     }
 
     case 'closed': {
-      const connection = trackedConnectionsMap.get(context.instance)
+      const connection = trackedConnections.get(context.instance)
       if (!connection) {
-        return
+        break
       }
 
-      trackedConnectionsMap.delete(context.instance)
+      trackedConnections.delete(context.instance)
 
       connection.recordClose(context)
-      callback(context.instance, connection)
+      onConnectionUpdate(context.instance, connection)
 
-      return
+      break
     }
+  }
+
+  if (!keepTracking) {
+    trackedConnections.delete(context.instance)
   }
 }

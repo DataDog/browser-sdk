@@ -3,6 +3,7 @@ import { setDebugMode } from '@datadog/js-core/util'
 import { resetAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { resetManageResourceTimingBufferFull } from '../../browser-rum-core/src/browser/performanceObservable'
 import { resetWebSocketObservable } from '../../browser-rum-core/src/browser/webSocketObservable'
+import { resetTrackedConnections } from '../../browser-rum-core/src/domain/webSocket/webSocketCollection'
 import { resetExperimentalFeatures } from '../src/tools/experimentalFeatures'
 import { resetValueHistoryGlobals } from '../src/tools/valueHistory'
 import { resetFetchObservable } from '../src/browser/fetchObservable'
@@ -35,6 +36,7 @@ afterEach(() => {
   resetConsoleObservable()
   resetXhrObservable()
   resetWebSocketObservable()
+  resetTrackedConnections()
   resetGetCurrentSite()
   resetReplayStats()
   stopMonitorErrorCollection()

@@ -11,7 +11,7 @@ import {
 import type { Duration } from '@datadog/js-core/time'
 import { clocksNow, ONE_HOUR, ONE_MINUTE, toServerDuration } from '@datadog/js-core/time'
 import { globalObject, noop } from '@datadog/js-core/util'
-import { mockRumConfiguration } from '../../../test'
+import { mockRumConfiguration, noopEarlyWebSocketCollection } from '../../../test'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import type { RumWebSocketVitalEventDomainContext } from '../../domainContext.types'
 import type {
@@ -24,9 +24,16 @@ import type {
 import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { getPhaseClocks, serializeWebSocketVital } from './serializeWebSocketVital'
-import type { TrackedConnection } from './trackedConnection'
-import { startWebSocketCollection, trackWebSocket, WEBSOCKET_PERIODIC_REPORT_INTERVAL } from './webSocketCollection'
+import { emitWebSocketVital } from './emitWebSocketVital'
+import { BUFFER_CAPACITY } from './earlyConnectionsBuffer'
+import type { EarlyWebSocketCollection } from './webSocketCollection'
+import {
+  resetTrackedConnections,
+  startEarlyWebSocketCollection,
+  startWebSocketCollection,
+  trackWebSocket,
+  WEBSOCKET_PERIODIC_REPORT_INTERVAL,
+} from './webSocketCollection'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
@@ -759,7 +766,7 @@ describe('webSocketCollection', () => {
 
   describe('startWebSocketCollection', () => {
     function startCollection(configuration = mockRumConfiguration({ betaTrackWebSockets: true })) {
-      const collection = startWebSocketCollection(lifeCycle, configuration)
+      const collection = startWebSocketCollection(lifeCycle, configuration, noopEarlyWebSocketCollection)
       registerCleanupTask(() => collection.stop())
       return collection
     }
@@ -949,23 +956,237 @@ describe('webSocketCollection', () => {
     })
   })
 
+  describe('early collection', () => {
+    function startCollection(
+      earlyCollection: EarlyWebSocketCollection,
+      configuration = mockRumConfiguration({ betaTrackWebSockets: true })
+    ) {
+      const collection = startWebSocketCollection(lifeCycle, configuration, earlyCollection)
+      registerCleanupTask(() => collection.stop())
+      return collection
+    }
+
+    it('emits nothing before the collection started', () => {
+      startEarlyCollection()
+
+      dispatchClose(createOpenConnection())
+
+      expect(emittedVitals()).toHaveSize(0)
+    })
+
+    it('reports the whole lifecycle of a connection that ended before the collection started, once it starts', () => {
+      const earlyCollection = startEarlyCollection()
+      const socket = createOpenConnection()
+      callClose(socket)
+      dispatchClose(socket)
+
+      startCollection(earlyCollection)
+
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSING,
+        WebSocketVitalName.CLOSED,
+      ])
+      expect(webSocketOf(emittedVitals()[0])).toBe(socket)
+    })
+
+    it('keeps tracking a connection created before the collection started under the same connection id', () => {
+      const earlyCollection = startEarlyCollection()
+      const socket = createConnectingConnection()
+
+      startCollection(earlyCollection)
+      completeHandshake(socket, { at: 10 })
+      dispatchClose(socket, { at: 20 })
+
+      const connectionId = single(connectingPayloads()).id
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSED,
+      ])
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.websocket.id)).toEqual([
+        connectionId,
+        connectionId,
+        connectionId,
+      ])
+    })
+
+    it('counts the messages exchanged in the terminal snapshot before the collection started', () => {
+      const earlyCollection = startEarlyCollection()
+      const socket = createOpenConnection()
+      receiveMessage(socket, 30)
+      sendMessage(socket, 10)
+
+      startCollection(earlyCollection)
+      dispatchClose(socket)
+
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSED,
+      ])
+      const { snapshot } = single(closedPayloads())
+      expect(snapshot!.inbound).toEqual(jasmine.objectContaining({ message_count: 1, message_size_total: 30 }))
+      expect(snapshot!.outbound).toEqual(jasmine.objectContaining({ message_count: 1, message_size_total: 10 }))
+    })
+
+    it('reports a connection opened before the collection started as soon as it starts', () => {
+      const earlyCollection = startEarlyCollection()
+      const socket = createOpenConnection()
+      receiveMessage(socket, 30)
+
+      startCollection(earlyCollection)
+
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2])
+      expect(openPayloads()[1].snapshot.inbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 30 })
+      )
+    })
+
+    it('reports a connection opened before the collection started periodically once it starts', () => {
+      const earlyCollection = startEarlyCollection()
+      createOpenConnection()
+
+      startCollection(earlyCollection)
+      tickPeriodicReport()
+
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3])
+    })
+
+
+    it('reports nothing of a connection created before the collection started when tracking is not enabled', () => {
+      const earlyCollection = startEarlyCollection()
+      const socket = createOpenConnection()
+
+      startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
+      dispatchClose(socket)
+
+      expect(emittedVitals()).toHaveSize(0)
+    })
+
+    it('forgets the connections created before the collection started when tracking is not enabled', () => {
+      const earlyCollection = startEarlyCollection()
+      createOpenConnection()
+
+      startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
+
+      expect(startTracking().flushOpenConnections()).toBe(0)
+    })
+
+    it('empties the buffer when tracking is not enabled', () => {
+      const earlyCollection = startEarlyCollection()
+      createOpenConnection()
+
+      startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
+      earlyCollection.buffer.drain(lifeCycle)
+
+      expect(emittedVitals()).toHaveSize(0)
+    })
+
+    it('restores the native constructor when tracking is not enabled', () => {
+      const nativeWebSocket = window.WebSocket
+      const earlyCollection = startEarlyCollection()
+
+      startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
+
+      expect(window.WebSocket).toBe(nativeWebSocket)
+    })
+
+    describe('stop()', () => {
+      it('unsubscribes from the WebSocket observable only once when called twice', () => {
+        const unsubscribeSpy = spyOnWebSocketObservableUnsubscribe()
+        const earlyCollection = startEarlyCollection()
+
+        earlyCollection.stop()
+        earlyCollection.stop()
+
+        expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('restores the native constructor and does not throw when called twice', () => {
+        const nativeWebSocket = window.WebSocket
+        const earlyCollection = startEarlyCollection()
+
+        earlyCollection.stop()
+
+        expect(() => earlyCollection.stop()).not.toThrow()
+        expect(window.WebSocket).toBe(nativeWebSocket)
+      })
+
+      function spyOnWebSocketObservableUnsubscribe() {
+        const observable = initWebSocketObservable()
+        const subscribe = observable.subscribe.bind(observable)
+        const unsubscribeSpy = jasmine.createSpy('unsubscribe')
+        spyOn(observable, 'subscribe').and.callFake((observer) => {
+          const subscription = subscribe(observer)
+          return {
+            unsubscribe: () => {
+              unsubscribeSpy()
+              subscription.unsubscribe()
+            },
+          }
+        })
+        return unsubscribeSpy
+      }
+    })
+
+    it('stops buffering once the collection started', () => {
+      const earlyCollection = startEarlyCollection()
+      startCollection(earlyCollection)
+
+      const socket = createOpenConnection()
+      receiveMessage(socket, 30)
+      tickPeriodicReport()
+      dispatchClose(socket)
+
+      // a still subscribed early collection records every message a second time, and ends the
+      // connection before the collection gets to report its close
+      expect(openPayloads()[1].snapshot.inbound).toEqual(
+        jasmine.objectContaining({ message_count: 1, message_size_total: 30 })
+      )
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSED,
+      ])
+    })
+
+    it('keeps tracking the connections created through a constructor kept from before the collection started', () => {
+      const earlyCollection = startEarlyCollection()
+      // like a library that reads the global when its module is evaluated
+      const KeptWebSocket = window.WebSocket as unknown as typeof MockWebSocket
+
+      startCollection(earlyCollection)
+      const socket = new KeptWebSocket('wss://example.com/socket')
+
+      expect(webSocketOf(single(emittedVitals()))).toBe(socket)
+    })
+
+
+    function startEarlyCollection() {
+      const earlyCollection = startEarlyWebSocketCollection()
+      registerCleanupTask(() => {
+        earlyCollection.stop()
+        resetTrackedConnections()
+      })
+      return earlyCollection
+    }
+  })
+
   // ---------------------------------------------------------------------------
   // Setup
   // ---------------------------------------------------------------------------
 
   function startTracking() {
-    const tracker = trackWebSocket(initWebSocketObservable(), emitVital)
+    const tracker = trackWebSocket(initWebSocketObservable(), (instance, connection) => {
+      emitWebSocketVital(lifeCycle, instance, connection.getState())
+      return true
+    })
     registerCleanupTask(tracker.stop)
     return tracker
-  }
-
-  function emitVital(instance: WebSocket, connection: TrackedConnection) {
-    const state = connection.getState()
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      rawRumEvent: serializeWebSocketVital(state),
-      startClocks: getPhaseClocks(state),
-      domainContext: { webSocket: instance },
-    })
   }
 
   function expireSession(endClocks = clocksNow()) {
