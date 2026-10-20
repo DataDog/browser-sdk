@@ -73,14 +73,14 @@ describe('captureCanvasBitmap', () => {
       new DOMException('tainted', 'SecurityError')
     )
 
-    expect(await capture('red')).toEqual({ type: 'failed', id: 0, isSecurityError: true })
+    expect(await capture('red')).toEqual({ type: 'failed', id: 0, errorName: 'SecurityError' })
   })
 
   it('reports a failure when no 2d context is available', async () => {
     const bitmap = await createBitmap('red')
     spyOn(OffscreenCanvas.prototype, 'getContext').and.returnValue(null)
 
-    expect(await captureCanvasBitmap(createRequest(bitmap))).toEqual({ type: 'failed', id: 0, isSecurityError: false })
+    expect(await captureCanvasBitmap(createRequest(bitmap))).toEqual({ type: 'failed', id: 0, errorName: 'Error' })
   })
 
   it('hashes the image when SubtleCrypto is unavailable', async () => {

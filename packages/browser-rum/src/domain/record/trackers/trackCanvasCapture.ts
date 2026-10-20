@@ -118,7 +118,17 @@ export const trackCanvasCapture = (
           canvasManager.discardCaptureAttempt(canvas, captureAttempt)
           return
         case 'failed':
-          canvasManager.markCanvas(canvas, result.isSecurityError ? CanvasStatus.Tainted : CanvasStatus.Dirty)
+          // The canvas worker never closes a bitmap before drawing it, so it received an unusable one.
+          // WebKit < 18 detaches every ImageBitmap transferred to a nested worker.
+          if (result.errorName === 'InvalidStateError') {
+            canvasWorker.stop()
+            disableCanvasRecording('unsupported', result.errorName)
+            return
+          }
+          canvasManager.markCanvas(
+            canvas,
+            result.errorName === 'SecurityError' ? CanvasStatus.Tainted : CanvasStatus.Dirty
+          )
           canvasManager.discardCaptureAttempt(canvas, captureAttempt)
           return
         case 'captured':
@@ -128,7 +138,7 @@ export const trackCanvasCapture = (
       }
     } catch (error) {
       if (!cancelled()) {
-        canvasManager.markCanvas(canvas, isSecurityError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)
+        canvasManager.markCanvas(canvas, getSnapshotFailureStatus(error))
         canvasManager.discardCaptureAttempt(canvas, captureAttempt)
       }
     }
@@ -144,6 +154,14 @@ export const trackCanvasCapture = (
   }
 }
 
-function isSecurityError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'SecurityError'
+function getSnapshotFailureStatus(error: unknown): CanvasStatus {
+  switch (error instanceof DOMException && error.name) {
+    case 'SecurityError':
+      return CanvasStatus.Tainted
+    // createImageBitmap rejects a zero-sized canvas. Resizing it marks it dirty again.
+    case 'InvalidStateError':
+      return CanvasStatus.Clean
+    default:
+      return CanvasStatus.Dirty
+  }
 }

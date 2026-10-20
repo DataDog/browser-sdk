@@ -24,6 +24,7 @@ test.describe('recorder canvas resource upload', () => {
           !!process.env.CI && browserName === 'firefox' && contextType !== '2d',
           'Headless Firefox cannot create WebGL/WebGL2 contexts in our Linux CI image'
         )
+        test.skip(test.info().project.name === 'webkit-pinned', 'Canvas recording requires WebKit 18+')
 
         await page.evaluate(drawCanvas, { contextType, preserveDrawingBuffer })
 
@@ -58,6 +59,39 @@ test.describe('recorder canvas resource upload', () => {
         expect(imageContentChanges[0][1]).toBe(hash)
       })
   }
+
+  createTest('disables canvas recording without affecting the recording on WebKit < 18')
+    .withRum({
+      enableExperimentalFeatures: ['session_replay_record_canvas'],
+      sessionReplayCanvasRecording: { enable: true, quality: 'low' },
+    })
+    .withBody(html`<canvas id="canvas" width="10" height="10"></canvas>`)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      test.skip(
+        test.info().project.name !== 'webkit-pinned',
+        'Only WebKit < 18 detaches ImageBitmaps transferred to nested workers'
+      )
+
+      await page.evaluate(drawCanvas, { contextType: '2d' as const })
+
+      await expect
+        .poll(async () => {
+          // WebKit may omit beforeunload during navigation, so trigger the SDK's flush listener to send telemetry.
+          await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+          return intakeRegistry.telemetryEvents.map((event) => event.telemetry)
+        })
+        .toContainEqual(
+          expect.objectContaining({
+            message: 'Canvas recording disabled',
+            reason: 'unsupported',
+            error: 'InvalidStateError',
+          })
+        )
+      await flushEvents()
+
+      expect(intakeRegistry.replayResourceRequests).toHaveLength(0)
+      expect(intakeRegistry.replaySegments.length).toBeGreaterThan(0)
+    })
 })
 
 function drawCanvas({

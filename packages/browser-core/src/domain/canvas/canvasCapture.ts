@@ -20,7 +20,7 @@ export type CanvasCaptureResponse =
   | { type: 'captured'; id: number; hash: string; image: Blob }
   // The hash matches `lastChangeHash`, so the image is not encoded
   | { type: 'unchanged'; id: number }
-  | { type: 'failed'; id: number; isSecurityError: boolean }
+  | { type: 'failed'; id: number; errorName: string | undefined }
 
 export type CanvasWorkerResponse = { type: 'ready' } | CanvasCaptureResponse
 
@@ -52,7 +52,7 @@ export async function captureCanvasBitmap(request: CanvasCaptureRequest): Promis
     const blob = await image.canvas.convertToBlob({ type: 'image/webp', quality: request.encodeQuality })
     return { type: 'captured', id, hash, image: blob }
   } catch (error) {
-    return { type: 'failed', id, isSecurityError: error instanceof DOMException && error.name === 'SecurityError' }
+    return { type: 'failed', id, errorName: error instanceof Error ? error.name : undefined }
   } finally {
     bitmap.close()
   }

@@ -455,6 +455,51 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
+  it('stops trying to capture a zero-sized canvas until it is resized', async () => {
+    const createImageBitmapSpy = spyOn(window, 'createImageBitmap').and.callThrough()
+    canvas.width = 0
+    startTracking()
+
+    markCanvasDirtyAndWaitForCapture()
+    await collectAsyncCalls(createImageBitmapSpy, 1)
+    await waitForCanvasCapture()
+
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
+
+    canvas.width = 2
+    await waitForCanvasCapture()
+
+    expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
+  })
+
+  it('disables canvas recording when the canvas worker receives an unusable bitmap', async () => {
+    const telemetry = startMockTelemetry()
+    const drawImageSpy = spyOn(OffscreenCanvasRenderingContext2D.prototype, 'drawImage').and.throwError(
+      new DOMException('detached', 'InvalidStateError')
+    )
+    const onCanvasCapture = startTracking()
+
+    markCanvasDirtyAndWaitForCapture()
+    await collectAsyncCalls(drawImageSpy, 1)
+    await waitForCanvasCapture()
+
+    expect(onCanvasCapture).not.toHaveBeenCalled()
+    expect(canvasWorkerMock.stopSpy).toHaveBeenCalled()
+    expect(stopCanvasContentTrackingSpy).toHaveBeenCalled()
+    expect(await telemetry.getEvents()).toEqual([
+      jasmine.objectContaining({
+        message: 'Canvas recording disabled',
+        reason: 'unsupported',
+        error: 'InvalidStateError',
+      }),
+    ])
+
+    markCanvasDirtyAndWaitForCapture()
+    await waitForCanvasCapture()
+
+    expect(drawImageSpy).toHaveBeenCalledTimes(1)
+  })
+
   for (const [privacyLevel, masked] of privacyLevels) {
     it(`${masked ? 'does not capture' : 'captures'} a canvas when the privacy level is ${privacyLevel}`, async () => {
       canvas.setAttribute(PRIVACY_ATTR_NAME, privacyLevel)

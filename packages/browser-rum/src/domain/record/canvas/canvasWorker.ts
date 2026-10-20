@@ -17,7 +17,8 @@ import type { CanvasSnapshot } from './canvasSnapshot'
  * - OffscreenCanvas 2D and convertToBlob in workers: Chrome/Edge 69, Firefox 105, Safari 16.4
  * - workers spawned from a dedicated worker: Chrome 69, Firefox 34, Safari 16.4
  * - createImageBitmap resize options: Chrome 54, Firefox 98, Safari 15
- * => Chrome/Edge 69+, Firefox 105+, Safari 16.4+. Elsewhere, canvas recording is disabled.
+ * - ImageBitmaps transferred to a nested worker: Safari 18 (detected when a capture fails)
+ * => Chrome/Edge 69+, Firefox 105+, Safari 18+. Elsewhere, canvas recording is disabled.
  *
  * Keep in sync with the `sessionReplayCanvasRecording` documentation.
  */
