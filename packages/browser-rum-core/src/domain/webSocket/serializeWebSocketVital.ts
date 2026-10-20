@@ -1,6 +1,6 @@
 import type { ClocksState, TimeStamp } from '@datadog/js-core/time'
 import { addDuration, elapsed, toServerDuration } from '@datadog/js-core/time'
-import { generateUUID } from '@datadog/browser-core'
+import { generateUUID } from '@datadog/js-core/util'
 import type {
   RawRumWebSocketVitalEvent,
   RawRumWebSocketVitalMessageDirection,

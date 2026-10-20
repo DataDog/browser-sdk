@@ -1,7 +1,7 @@
 import type { Duration } from '@datadog/js-core/time'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/js-core/time'
-import { generateUUID } from '@datadog/browser-core'
+import { generateUUID } from '@datadog/js-core/util'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'

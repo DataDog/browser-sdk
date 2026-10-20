@@ -109,8 +109,13 @@ export type CookieChangeEvent = Event & {
   deleted: CookieChangeItem[]
 }
 
-/** @internal */
+/**
+ * Maps {@link CookieStore} event names to their event types.
+ *
+ * @internal
+ */
 export interface CookieStoreEventMap {
+  /** Fired when cookies are added, modified, or removed. */
   change: CookieChangeEvent
 }
 
@@ -139,7 +144,7 @@ export interface CookieStore extends EventTarget {
     listener: (ev: CookieStoreEventMap[K]) => any,
     options?: boolean | AddEventListenerOptions
   ): void
-  /** @inheritdoc EventTarget.addEventListener */
+  /** Adds a listener for any event type (untyped fallback overload). */
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
@@ -151,7 +156,7 @@ export interface CookieStore extends EventTarget {
     listener: (ev: CookieStoreEventMap[K]) => any,
     options?: boolean | EventListenerOptions
   ): void
-  /** @inheritdoc EventTarget.removeEventListener */
+  /** Removes a listener for any event type (untyped fallback overload). */
   removeEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
@@ -238,7 +243,7 @@ export interface Profiler extends EventTarget {
     listener: (ev: ProfilerEventMap[K]) => any,
     options?: boolean | AddEventListenerOptions
   ): void
-  /** @inheritdoc EventTarget.addEventListener */
+  /** Adds a listener for any event type (untyped fallback overload). */
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
@@ -250,7 +255,7 @@ export interface Profiler extends EventTarget {
     listener: (ev: ProfilerEventMap[K]) => any,
     options?: boolean | EventListenerOptions
   ): void
-  /** @inheritdoc EventTarget.removeEventListener */
+  /** Removes a listener for any event type (untyped fallback overload). */
   removeEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,

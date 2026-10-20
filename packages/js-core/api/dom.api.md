@@ -19,114 +19,68 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
     stop: () => void;
 };
 
-// @public (undocumented)
+// @public
 export interface AttributesMutationRecord {
-    // (undocumented)
     attributeName: string;
-    // (undocumented)
     oldValue: string | null;
-    // (undocumented)
     target: Element;
-    // (undocumented)
     type: 'attributes';
 }
 
-// @public (undocumented)
+// @public
 export interface CharacterDataMutationRecord {
-    // (undocumented)
     oldValue: string | null;
-    // (undocumented)
     target: Node;
-    // (undocumented)
     type: 'characterData';
 }
 
-// @public (undocumented)
+// @public
 export interface ChildListMutationRecord {
-    // (undocumented)
     addedNodes: NodeList;
-    // (undocumented)
     removedNodes: NodeList;
-    // (undocumented)
     target: Node;
-    // (undocumented)
     type: 'childList';
 }
 
-// @public (undocumented)
+// @public
 export function createDOMMutationObservable(): Observable<MutationRecord_2[]>;
 
-// @public (undocumented)
+// @public
 export const enum DOM_EVENT {
-    // (undocumented)
     BEFORE_UNLOAD = "beforeunload",
-    // (undocumented)
     BLUR = "blur",
-    // (undocumented)
     CHANGE = "change",
-    // (undocumented)
     CLICK = "click",
-    // (undocumented)
     CONTEXT_MENU = "contextmenu",
-    // (undocumented)
     DBL_CLICK = "dblclick",
-    // (undocumented)
     DOM_CONTENT_LOADED = "DOMContentLoaded",
-    // (undocumented)
     FOCUS = "focus",
-    // (undocumented)
     FREEZE = "freeze",
-    // (undocumented)
     HASH_CHANGE = "hashchange",
-    // (undocumented)
     INPUT = "input",
-    // (undocumented)
     KEY_DOWN = "keydown",
-    // (undocumented)
     LOAD = "load",
-    // (undocumented)
     MOUSE_DOWN = "mousedown",
-    // (undocumented)
     MOUSE_MOVE = "mousemove",
-    // (undocumented)
     MOUSE_UP = "mouseup",
-    // (undocumented)
     PAGE_HIDE = "pagehide",
-    // (undocumented)
     PAGE_SHOW = "pageshow",
-    // (undocumented)
     PAUSE = "pause",
-    // (undocumented)
     PLAY = "play",
-    // (undocumented)
     POINTER_CANCEL = "pointercancel",
-    // (undocumented)
     POINTER_DOWN = "pointerdown",
-    // (undocumented)
     POINTER_UP = "pointerup",
-    // (undocumented)
     POP_STATE = "popstate",
-    // (undocumented)
     RESIZE = "resize",
-    // (undocumented)
     RESUME = "resume",
-    // (undocumented)
     SCROLL = "scroll",
-    // (undocumented)
     SECURITY_POLICY_VIOLATION = "securitypolicyviolation",
-    // (undocumented)
     SELECTION_CHANGE = "selectionchange",
-    // (undocumented)
     STORAGE = "storage",
-    // (undocumented)
     TOUCH_END = "touchend",
-    // (undocumented)
     TOUCH_MOVE = "touchmove",
-    // (undocumented)
     TOUCH_START = "touchstart",
-    // (undocumented)
     UNHANDLED_REJECTION = "unhandledrejection",
-    // (undocumented)
     VISIBILITY_CHANGE = "visibilitychange"
 }
 
@@ -134,23 +88,23 @@ export const enum DOM_EVENT {
 function fetch_2(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
 export { fetch_2 as fetch }
 
-// @public (undocumented)
+// @public
 export function getMutationObserverConstructor(): MutationObserverConstructor;
 
-// @public (undocumented)
+// @public
 export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target | undefined, eventName: EventName): boolean;
 
-// @public (undocumented)
+// @public
 type MutationRecord_2 = CharacterDataMutationRecord | AttributesMutationRecord | ChildListMutationRecord;
 export { MutationRecord_2 as MutationRecord }
 
-// @public (undocumented)
+// @internal
 export function resetAllowUntrustedEvents(): void;
 
-// @public (undocumented)
+// @public
 export function setAllowUntrustedEvents(value: boolean | undefined): void;
 
-// @public (undocumented)
+// @public
 export type TrustableEvent<E extends Event = Event> = E & {
     __ddIsTrusted?: boolean;
 };

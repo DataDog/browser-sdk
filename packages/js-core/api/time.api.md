@@ -7,10 +7,10 @@
 // @public
 export function addDuration(a: TimeStamp, b: Duration): TimeStamp;
 
-// @public (undocumented)
+// @public
 export function addDuration(a: RelativeTime, b: Duration): RelativeTime;
 
-// @public (undocumented)
+// @public
 export function addDuration(a: Duration, b: Duration): Duration;
 
 // @public
@@ -24,9 +24,7 @@ export function clocksOrigin(): ClocksState;
 
 // @public
 export interface ClocksState {
-    // (undocumented)
     relative: RelativeTime;
-    // (undocumented)
     timeStamp: TimeStamp;
 }
 
@@ -41,7 +39,7 @@ export type Duration = number & {
 // @public
 export function elapsed(start: TimeStamp, end: TimeStamp): Duration;
 
-// @public (undocumented)
+// @public
 export function elapsed(start: RelativeTime, end: RelativeTime): Duration;
 
 // @public
@@ -100,7 +98,7 @@ export function toRelativeTime(timestamp: TimeStamp): RelativeTime;
 // @public
 export function toServerDuration(duration: Duration): ServerDuration;
 
-// @public (undocumented)
+// @public
 export function toServerDuration(duration: Duration | undefined): ServerDuration | undefined;
 
 // @public

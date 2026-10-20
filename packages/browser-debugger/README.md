@@ -6,9 +6,26 @@ See the [dedicated Datadog documentation][1] for more details.
 
 ## Prerequisites
 
+### Application instrumentation
+
+Instrument your browser application's functions with the [Live Debugger build plugin][5], then initialize the SDK as shown below. The RUM Browser SDK is optional.
+
+### Source maps
+
+Upload source maps for the deployed frontend build with matching debug IDs and Git repository/commit metadata. See the [build plugin's source-map setup][6].
+
+Source maps must be available in the Datadog site and organization that receive the Browser Live Debugger data. You can use your existing source-map upload setup, or configure a new one during onboarding. The Browser Live Debugger uses its own configuration and does not inherit the RUM SDK's `site`. Set the debugger's `site` to the site you upload source maps to, and use a `clientToken` issued by the same organization as your source-map upload API key.
+
 ### Content Security Policy
 
 Probe conditions, dynamic log-message expressions, and capture expressions use `new Function()` to evaluate JavaScript at runtime. If your page has a Content Security Policy (CSP) that restricts script execution, it must permit `'unsafe-eval'` in `script-src` to use these features.
+
+## Limitations during Preview
+
+Browser Live Debugger is in Preview, with the following limitations:
+
+- Probes can be added only to named functions, and all instrumented code on a page must come from a single build. See the [build plugin's Preview limitations][7] for details and additional build requirements.
+- This SDK and the Live Debugger build plugin may get breaking changes during the Preview. You may need to upgrade, rebuild, and redeploy to keep debugging working, but your application itself should keep working normally.
 
 ## Usage
 
@@ -26,9 +43,9 @@ datadogDebugger.init({
 })
 ```
 
-When you also use the Datadog Live Debugger build plugin, `init().version` defaults to the build-time `liveDebugger.version` metadata injected into the bundle. If you pass both values explicitly and they differ, the SDK keeps the `init()` value and logs a warning.
+The SDK's `init().version` defaults to the build plugin's `metadata.version` value injected into the bundle. If you pass both values explicitly and they differ, the SDK keeps the `init()` value and logs a warning.
 
-If provided, `version` should be set to the immutable deployed browser build identifier used for source map upload and browser build resolution. If omitted, debugger delivery and snapshots still work, but browser build lookup and source-aware resolution may be unavailable.
+If you set `version` for version-specific probe targeting, use an immutable deployed build identifier.
 
 ## RUM actions
 
@@ -44,3 +61,6 @@ Need help? Contact [Datadog Support][3].
 [2]: https://www.npmjs.com/package/@datadog/browser-debugger
 [3]: https://docs.datadoghq.com/help/
 [4]: https://www.npmjs.com/package/@datadog/browser-rum
+[5]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger
+[6]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#source-maps
+[7]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#limitations-during-preview
