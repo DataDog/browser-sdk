@@ -10,6 +10,16 @@ export interface EarlyConnectionsBuffer {
   clear: () => void
 }
 
+/**
+ * Caps connections opened before init.
+ *
+ * It bounds the memory held until drain, and the work drain does on the main thread: drain emits
+ * every buffered phase synchronously.
+ *
+ * Opening many sockets at once is not a typical case. 8 is arbitrary: small enough to stay cheap,
+ * large enough for the cases we expect. Dropped connections are reported with debug telemetry, so
+ * the limit can be raised, or an eviction added, if that count says so.
+ */
 export const BUFFER_CAPACITY = 8
 
 export function createEarlyConnectionsBuffer(): EarlyConnectionsBuffer {
