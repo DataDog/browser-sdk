@@ -85,8 +85,6 @@ export function createPreStartStrategy(
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
 
-  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
-
   const emptyContext: Context = {}
 
   let started = false
@@ -95,8 +93,6 @@ export function createPreStartStrategy(
     if (started || !cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
       return
     }
-
-    trackingConsentStateSubscription.unsubscribe()
 
     let initialViewOptions: ViewOptions | undefined
 
