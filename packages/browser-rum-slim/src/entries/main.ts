@@ -35,6 +35,7 @@ export type {
   FeatureOperationOptions,
   FailureReason,
   ActionOptions,
+  ElementContext,
   ResourceOptions,
   ResourceStopOptions,
   TracingOption,

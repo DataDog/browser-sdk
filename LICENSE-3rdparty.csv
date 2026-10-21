@@ -17,6 +17,7 @@ dev,@angular/compiler-cli,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/core,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/platform-browser,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/router,MIT,Copyright (c) 2010-2024 Google LLC
+dev,@datadog/webpack-plugin,MIT,Copyright (c) 2026 Datadog
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
@@ -43,6 +44,7 @@ dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zac
 dev,@vue/compiler-dom,MIT,Copyright (c) 2018-present, Yuxi (Evan) You
 dev,@vue/test-utils,MIT,Copyright (c) 2021-present vuejs
 dev,acorn,MIT,Copyright (C) 2012-2022 by various contributors (see AUTHORS)
+dev,@vue/compiler-sfc,MIT,"Copyright (c) 2018-present, Yuxi (Evan) You"
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,babel-loader,MIT,Copyright (c) 2014-2019 Luís Couto <hello@luiscouto.pt>
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
@@ -94,6 +96,7 @@ dev,undici,MIT,Copyright (c) Matteo Collina and Undici contributors
 dev,vite,MIT,Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
 dev,vue,MIT,Copyright (c) 2018-present, Yuxi (Evan) You
 dev,nuxt,MIT,Copyright (c) 2016-present Nuxt Team
+dev,vue-loader,MIT,"Copyright (c) 2019-present, Yuxi (Evan) You"
 dev,vue-router,MIT,Copyright (c) 2019-present Eduardo San Martin Morote
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
