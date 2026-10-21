@@ -136,6 +136,20 @@ describe('api', () => {
       })
     })
 
+    it('should report the logger with standard log attribute names', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onReturn(onEntry(probes, thisArg)!, null, thisArg)
+
+      expect(mockBatchAdd.calls.mostRecent().args[0].logger).toEqual({
+        name: 'test.js',
+        method_name: 'testMethod',
+        version: '0.0.1',
+        thread_name: 'main',
+      })
+    })
+
     it('should skip probe if sampling budget exceeded', () => {
       // Use a very low sampling rate to ensure budget is exceeded
       addProbe(

@@ -401,12 +401,10 @@ function queueDebuggerSnapshot(result: ActiveEntry): void {
     service: debuggerConfig.service,
     ddtags: getDebuggerDDtags(version),
     _dd: (debugIds ? { debug_ids: debugIds } : undefined) as ContextValue,
-    // TODO: Fill out logger with the right information
     logger: {
       name: probe.where.typeName,
-      method: probe.where.methodName,
+      method_name: probe.where.methodName,
       version,
-      // thread_id: 1,
       thread_name: threadName,
     },
     debugger: {
