@@ -13,6 +13,7 @@ import { isElementNode } from '../../../browser/htmlDomUtils'
 import { getInteractionSelector } from '../../action/interactionSelectorCache'
 import type { RumConfiguration } from '../../configuration'
 import { getInteractionCount, initInteractionCountPolyfill } from './interactionCountPolyfill'
+import { createSoftNavigationEntryFilter } from './softNavigationEntryFilter'
 
 // Arbitrary value to prevent unnecessary memory usage on views with lots of interactions.
 const MAX_INTERACTION_ENTRIES = 10
@@ -49,12 +50,14 @@ interface EntriesGroup {
 export function trackInteractionToNextPaint(
   configuration: RumConfiguration,
   viewStart: RelativeTime,
-  viewLoadingType: ViewLoadingType
+  viewLoadingType: ViewLoadingType,
+  isSoftNavigationTracked: boolean
 ) {
   if (!isInteractionToNextPaintSupported()) {
     return {
       getInteractionToNextPaint: () => undefined,
       setViewEnd: noop,
+      setNavigationId: noop,
       stop: noop,
     }
   }
@@ -70,8 +73,11 @@ export function trackInteractionToNextPaint(
     | undefined
 
   const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
-  const longestInteractions = trackLongestInteractions(getViewInteractionCount)
-  const subPartsTracker = createSubPartsTracker(longestInteractions)
+  let longestInteractions = trackLongestInteractions(getViewInteractionCount)
+  let subPartsTracker = createSubPartsTracker(longestInteractions)
+  const softNavigationEntryFilter = createSoftNavigationEntryFilter<RumPerformanceEventTiming | RumFirstInputTiming>(
+    isSoftNavigationTracked
+  )
   const firstInputSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.FIRST_INPUT,
     buffered: true,
@@ -90,7 +96,8 @@ export function trackInteractionToNextPaint(
         entry.interactionId &&
         // Check the entry start time is inside the view bounds because some view interactions can be reported after the view end (if long duration).
         entry.startTime >= viewStart &&
-        entry.startTime <= viewEnd
+        entry.startTime <= viewEnd &&
+        softNavigationEntryFilter.accept(entry)
       ) {
         longestInteractions.process(entry)
         subPartsTracker.process(entry)
@@ -143,6 +150,14 @@ export function trackInteractionToNextPaint(
     setViewEnd: (viewEndTime: RelativeTime) => {
       viewEnd = viewEndTime
       stopViewInteractionCount()
+    },
+    setNavigationId: (navigationId: number) => {
+      softNavigationEntryFilter.setNavigationId(navigationId, (entries) => {
+        longestInteractions = trackLongestInteractions(getViewInteractionCount)
+        subPartsTracker = createSubPartsTracker(longestInteractions)
+        currentInp = undefined
+        handleEntries(entries)
+      })
     },
     stop: () => {
       eventSubscription.unsubscribe()
