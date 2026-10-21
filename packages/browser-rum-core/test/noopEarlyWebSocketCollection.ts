@@ -5,4 +5,5 @@ export const noopEarlyWebSocketCollection: EarlyWebSocketCollection = {
   // keeps nothing, so nothing is ever drained
   buffer: { register: () => false, drain: noop, clear: noop },
   stop: noop,
+  handOff: noop,
 }

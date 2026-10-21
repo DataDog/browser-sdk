@@ -674,6 +674,7 @@ export function makeRumPublicApi(
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
+    earlyWebSocketCollection,
     (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder

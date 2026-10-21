@@ -1128,22 +1128,72 @@ describe('webSocketCollection', () => {
         expect(window.WebSocket).toBe(nativeWebSocket)
       })
 
-      function spyOnWebSocketObservableUnsubscribe() {
-        const observable = initWebSocketObservable()
-        const subscribe = observable.subscribe.bind(observable)
-        const unsubscribeSpy = jasmine.createSpy('unsubscribe')
-        spyOn(observable, 'subscribe').and.callFake((observer) => {
-          const subscription = subscribe(observer)
-          return {
-            unsubscribe: () => {
-              unsubscribeSpy()
-              subscription.unsubscribe()
-            },
-          }
-        })
-        return unsubscribeSpy
-      }
+      it('forgets the connections observed so far', () => {
+        const earlyCollection = startEarlyCollection()
+        createOpenConnection()
+
+        earlyCollection.stop()
+
+        expect(startTracking().flushOpenConnections()).toBe(0)
+      })
+
+      it('empties the buffer', () => {
+        const earlyCollection = startEarlyCollection()
+        createOpenConnection()
+
+        earlyCollection.stop()
+        earlyCollection.buffer.drain(lifeCycle)
+
+        expect(emittedVitals()).toHaveSize(0)
+      })
     })
+
+    describe('handOff()', () => {
+      it('keeps the connections observed so far', () => {
+        const earlyCollection = startEarlyCollection()
+        createOpenConnection()
+
+        earlyCollection.handOff()
+
+        expect(startTracking().flushOpenConnections()).toBe(1)
+      })
+
+      it('empties the buffer', () => {
+        const earlyCollection = startEarlyCollection()
+        createOpenConnection()
+
+        earlyCollection.handOff()
+        earlyCollection.buffer.drain(lifeCycle)
+
+        expect(emittedVitals()).toHaveSize(0)
+      })
+
+      it('unsubscribes from the WebSocket observable only once when called twice', () => {
+        const unsubscribeSpy = spyOnWebSocketObservableUnsubscribe()
+        const earlyCollection = startEarlyCollection()
+
+        earlyCollection.handOff()
+        earlyCollection.handOff()
+
+        expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    function spyOnWebSocketObservableUnsubscribe() {
+      const observable = initWebSocketObservable()
+      const subscribe = observable.subscribe.bind(observable)
+      const unsubscribeSpy = jasmine.createSpy('unsubscribe')
+      spyOn(observable, 'subscribe').and.callFake((observer) => {
+        const subscription = subscribe(observer)
+        return {
+          unsubscribe: () => {
+            unsubscribeSpy()
+            subscription.unsubscribe()
+          },
+        }
+      })
+      return unsubscribeSpy
+    }
 
     it('stops buffering once the collection started', () => {
       const earlyCollection = startEarlyCollection()

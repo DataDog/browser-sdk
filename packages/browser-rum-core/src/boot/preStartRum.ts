@@ -42,6 +42,8 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
 import { callPluginsOnInit } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
+import type { EarlyWebSocketCollection } from '../domain/webSocket/webSocketCollection'
+import { isWebSocketCollectionEnabled } from '../domain/webSocket/webSocketCollection'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
@@ -57,6 +59,7 @@ export type DoStartRum = (
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, sdkName }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
+  earlyWebSocketCollection: EarlyWebSocketCollection,
   doStartRum: DoStartRum
 ): Strategy {
   const BUFFER_LIMIT = 500
@@ -166,6 +169,10 @@ export function createPreStartStrategy(
         // `startDeflateWorker` should have logged an error message explaining the issue
         return
       }
+    }
+
+    if (!isWebSocketCollectionEnabled(configuration)) {
+      earlyWebSocketCollection.stop()
     }
 
     cachedConfiguration = configuration

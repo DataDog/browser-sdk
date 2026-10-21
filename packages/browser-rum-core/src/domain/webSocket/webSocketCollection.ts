@@ -65,8 +65,16 @@ function hasOpenConnection() {
 export interface EarlyWebSocketCollection {
   /** The phases of the connections opened before the collection started, drained once it starts. */
   buffer: EarlyConnectionsBuffer
-  /** Stops observing WebSockets and empties the buffer. Calls after the first one do nothing. */
+  /**
+   * Stops observing WebSockets, empties the buffer and forgets the connections observed so far.
+   * Does nothing once `stop` or `handOff` was called.
+   */
   stop: () => void
+  /**
+   * Stops observing WebSockets and empties the buffer, keeping the connections observed so far for
+   * the collection taking over. Does nothing once `stop` or `handOff` was called.
+   */
+  handOff: () => void
 }
 
 export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
@@ -78,16 +86,22 @@ export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
 
   let stopped = false
 
+  function stopObserving(forgetConnections: boolean) {
+    if (stopped) {
+      return
+    }
+    stopped = true
+    subscription.unsubscribe()
+    buffer.clear()
+    if (forgetConnections) {
+      trackedConnections.clear()
+    }
+  }
+
   return {
     buffer,
-    stop: () => {
-      if (stopped) {
-        return
-      }
-      stopped = true
-      subscription.unsubscribe()
-      buffer.clear()
-    },
+    stop: () => stopObserving(true),
+    handOff: () => stopObserving(false),
   }
 }
 
@@ -103,8 +117,6 @@ export function startWebSocketCollection(
 ) {
   if (!isWebSocketCollectionEnabled(configuration)) {
     earlyWebSocketCollection.stop()
-
-    trackedConnections.clear()
     return { stop: noop }
   }
 
@@ -114,9 +126,9 @@ export function startWebSocketCollection(
     emitWebSocketVital(lifeCycle, instance, connection.getState())
     return true
   })
-  // Stopped only once the tracker is subscribed: the observable keeps an observer, so the
+  // Handed off only once the tracker is subscribed: the observable keeps an observer, so the
   // instrumentation installed at SDK load stays in place for code that kept the constructor.
-  earlyWebSocketCollection.stop()
+  earlyWebSocketCollection.handOff()
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once; later events on the same WebSocket instance are ignored.
@@ -143,7 +155,7 @@ export function startWebSocketCollection(
   }
 }
 
-function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
+export function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
   return (
     configuration.trackResources &&
     (configuration.betaTrackWebSockets || isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_WEBSOCKETS))
