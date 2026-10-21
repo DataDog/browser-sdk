@@ -64,7 +64,7 @@ export function createPreStartStrategy(
 ): Strategy {
   const BUFFER_LIMIT = 500
   const bufferApiCalls = new BufferedObservable<(startRumResult: StartRumResult) => void>(BUFFER_LIMIT, (count) => {
-    // monitor-until: 2026-10-14
+    // monitor-until: 2027-02-14
     addTelemetryDebug('preStartRum buffer data lost', { count })
   })
 

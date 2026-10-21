@@ -27,7 +27,7 @@ export type BufferedData =
 
 export function startBufferingData() {
   const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT, (count) => {
-    // monitor-until: 2026-10-14
+    // monitor-until: 2027-02-14
     addTelemetryDebug('Early data collection dropped data on unbuffer', {
       count,
     })
