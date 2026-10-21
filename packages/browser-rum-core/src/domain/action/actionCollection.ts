@@ -1,7 +1,7 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
-import { globalObject, noop } from '@datadog/js-core/util'
+import { noop } from '@datadog/js-core/util'
 import { toServerDuration, addDuration } from '@datadog/js-core/time'
 import { SKIPPED } from '@datadog/js-core/assembly'
 import { discardNegativeDuration } from '../discardNegativeDuration'
@@ -41,7 +41,7 @@ export function startActionCollection(
   const stopClickActions: () => void = noop
   let clickActions: ReturnType<typeof trackClickActions> | undefined
 
-  if (configuration.trackUserInteractions && globalObject.window) {
+  if (configuration.trackUserInteractions) {
     clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration)
   }
 
