@@ -1,6 +1,6 @@
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { ActionEventsHooks } from './listenActionEvents'
-import { listenActionEvents } from './listenActionEvents'
+import { ACTION_SCROLL_DISTANCE_THRESHOLD, listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
   let actionEventsHooks: {
@@ -236,6 +236,98 @@ describe('listenActionEvents', () => {
     }
     function hasScrollUserActivity() {
       return actionEventsHooks.onPointerUp.calls.mostRecent().args[2]().scroll
+    }
+  })
+
+  // The movement guard (see listenActionEvents) only discards a pointerdown -> pointerup pair as a
+  // scroll/drag for touch/pen pointers that travel farther than ACTION_SCROLL_DISTANCE_THRESHOLD.
+  // The threshold sits at/above the browser's own synthetic-`click` suppression slop (~8px in
+  // Chromium), so the guard never discards a gesture the browser itself would have turned into a
+  // click — protecting against regressions on touch screens (small tap jitter) while still dropping
+  // scroll gestures that a WebView delivers as pointerdown -> pointerup.
+  describe('scroll gesture guard', () => {
+    it('does not trigger onPointerUp when a touch pointer moves beyond the scroll threshold', () => {
+      emulateGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('triggers onPointerUp for a touch pointer that stays within the scroll threshold', () => {
+      emulateGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 103, y: 104 } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('triggers onPointerUp for a touch tap with jitter the browser still treats as a click (< slop)', () => {
+      // Chromium fires its synthetic `click` for touch movement up to ~8px; the guard must keep it.
+      emulateGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 106, y: 104 } }) // ~7.2px
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('triggers onPointerUp for a touch pointer at exactly the threshold', () => {
+      emulateGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 100, y: 100 + ACTION_SCROLL_DISTANCE_THRESHOLD } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not trigger onPointerUp just past the threshold', () => {
+      emulateGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 100, y: 101 + ACTION_SCROLL_DISTANCE_THRESHOLD } })
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('uses euclidean distance for diagonal movement', () => {
+      // dx=8, dy=8 -> ~11.3px, beyond the 10px threshold even though neither axis alone is.
+      emulateGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 108, y: 108 } })
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('applies the guard to pen pointers (a pen drag is not a click)', () => {
+      emulateGesture({ pointerType: 'pen', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('records a pen tap within the tolerance', () => {
+      emulateGesture({ pointerType: 'pen', from: { x: 100, y: 100 }, to: { x: 101, y: 101 } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('never discards a mouse pointer, no matter how far it moved (desktop click semantics unchanged)', () => {
+      emulateGesture({ pointerType: 'mouse', from: { x: 100, y: 100 }, to: { x: 400, y: 400 } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not trigger onPointerUp when the pointer is cancelled (pointerup never fires)', () => {
+      // A scroll on a normal page fires pointercancel instead of pointerup, so onPointerUp must not
+      // be called at all. The guard is irrelevant here — there is simply no pointerup.
+      window.dispatchEvent(createNewEvent('pointerdown', { target: document.body, isPrimary: true, clientX: 100, clientY: 100 }))
+      window.dispatchEvent(createNewEvent('pointercancel', { target: document.body, isPrimary: true, clientX: 100, clientY: 260 }))
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    function emulateGesture({
+      pointerType,
+      from,
+      to,
+    }: {
+      pointerType: string
+      from: { x: number; y: number }
+      to: { x: number; y: number }
+    }) {
+      window.dispatchEvent(
+        createNewEvent('pointerdown', {
+          target: document.body,
+          isPrimary: true,
+          pointerType,
+          clientX: from.x,
+          clientY: from.y,
+        })
+      )
+      window.dispatchEvent(
+        createNewEvent('pointerup', {
+          target: document.body,
+          isPrimary: true,
+          pointerType,
+          clientX: to.x,
+          clientY: to.y,
+        })
+      )
     }
   })
 
