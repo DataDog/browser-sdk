@@ -252,6 +252,7 @@ export function createPreStartStrategy(
       // But, we should not ignore the init() call from the Synthetics-injected RUM instance, so the
       // internal `ignoreInitIfSyntheticsWillInjectRum` option is here to bypass this condition.
       if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
+        earlyWebSocketCollection.stop()
         return
       }
 
