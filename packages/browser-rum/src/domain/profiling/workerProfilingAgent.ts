@@ -12,7 +12,11 @@
 /* eslint-disable local-rules/disallow-zone-js-patched-values */
 /* eslint-disable no-restricted-syntax */
 import type { ProfilerTrace } from '@datadog/js-core/util'
-import type { WorkerProfilingCommand, WorkerProfilingResponse } from './workerProfiling.types'
+import type {
+  EnrichedWorkerProfilerTrace,
+  WorkerProfilingCommand,
+  WorkerProfilingResponse,
+} from './workerProfiling.types'
 
 /**
  * Minimal interface that both WorkerGlobalScope and a test double can satisfy.
@@ -24,6 +28,8 @@ export interface WorkerScopeForProfiling {
 }
 
 interface WorkerProfiler {
+  /** The actual sample interval in ms (may differ from the requested value). */
+  readonly sampleInterval: number
   stop(): Promise<ProfilerTrace>
   addEventListener(type: string, listener: () => void): void
   removeEventListener(type: string, listener: () => void): void
@@ -32,6 +38,8 @@ interface WorkerProfiler {
 interface ActiveSession {
   profiler: WorkerProfiler
   startTimeStamp: number
+  /** performance.now() when the session started (worker's time origin). */
+  startRelativeTime: number
   correlationId: string
   sampleIntervalMs: number
   maxBufferSize: number
@@ -130,6 +138,7 @@ export function attachProfiler(
     session = {
       profiler,
       startTimeStamp: Date.now(),
+      startRelativeTime: performance.now(),
       correlationId,
       sampleIntervalMs,
       maxBufferSize,
@@ -176,8 +185,23 @@ export function attachProfiler(
     const correlationId = activeSession.correlationId
 
     try {
-      const trace = await activeSession.profiler.stop()
+      const rawTrace = await activeSession.profiler.stop()
       const endTimeStamp = Date.now()
+      const endRelativeTime = performance.now()
+      // Enrich the raw trace with the fields required by the profiling backend
+      // (ChromeJsonParser — all `required = true`): sampleInterval, startClocks,
+      // endClocks, clocksOrigin, longTasks, views. Sample timestamps are
+      // relative to the WORKER's time origin, so clocksOrigin carries the
+      // worker's performance.timeOrigin for absolute-time computation.
+      const trace: EnrichedWorkerProfilerTrace = {
+        ...rawTrace,
+        sampleInterval: activeSession.profiler.sampleInterval,
+        startClocks: { relative: activeSession.startRelativeTime, timeStamp: startTimeStamp },
+        endClocks: { relative: endRelativeTime, timeStamp: endTimeStamp },
+        clocksOrigin: { relative: 0, timeStamp: performance.timeOrigin },
+        longTasks: [],
+        views: [],
+      }
       workerScope.postMessage({
         type: 'dd-worker-trace',
         trace,
