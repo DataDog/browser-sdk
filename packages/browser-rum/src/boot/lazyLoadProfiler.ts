@@ -24,7 +24,7 @@ export async function lazyLoadProfiler(): Promise<LazyProfilerModule | undefined
 export async function importProfiler(): Promise<LazyProfilerModule> {
   const [profilerModule, coordinatorModule] = await Promise.all([
     import(/* webpackChunkName: "datadogProfiler" */ '../domain/profiling/datadogProfiler'),
-    import(/* webpackChunkName: "datadogProfiler" */ '../domain/profiling/workerProfilingCoordinator'),
+    import(/* webpackChunkName: "datadogProfilerWorker" */ '../domain/profiling/workerProfilingCoordinator'),
   ])
   return {
     createRumProfiler: profilerModule.createRumProfiler,

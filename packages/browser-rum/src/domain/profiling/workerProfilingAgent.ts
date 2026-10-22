@@ -12,11 +12,7 @@
 /* eslint-disable local-rules/disallow-zone-js-patched-values */
 /* eslint-disable no-restricted-syntax */
 import type { ProfilerTrace } from '@datadog/js-core/util'
-import type {
-  EnrichedWorkerProfilerTrace,
-  WorkerProfilingCommand,
-  WorkerProfilingResponse,
-} from './workerProfiling.types'
+import type { WorkerProfilingCommand, WorkerProfilingResponse } from './workerProfiling.types'
 
 /**
  * Minimal interface that both WorkerGlobalScope and a test double can satisfy.
@@ -217,7 +213,7 @@ export function attachProfiler(
       // endClocks, clocksOrigin, longTasks, views. Sample timestamps are
       // relative to the WORKER's time origin, so clocksOrigin carries the
       // worker's performance.timeOrigin for absolute-time computation.
-      const trace: EnrichedWorkerProfilerTrace = {
+      const trace: BrowserProfilerTrace = {
         ...rawTrace,
         sampleInterval: activeSession.profiler.sampleInterval,
         startClocks: { relative: activeSession.startRelativeTime, timeStamp: startTimeStamp },

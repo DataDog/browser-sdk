@@ -19,44 +19,18 @@ export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
   let workerCoordinator: WorkerProfilingCoordinator | undefined
 
-  // Buffer attachWorker calls that arrive before the coordinator is ready
-  // (i.e. before lazyLoadProfiler resolves). Replayed once the coordinator is assigned.
-  interface PendingCall {
-    worker: Worker
-    options?: { name?: string }
-    resolve: (detach: () => Promise<void>) => void
-  }
-  const pendingWorkerCalls: PendingCall[] = []
+  // Minimal buffer for attachProfilingWorker calls that arrive before the
+  // lazy chunk loads. Drained by the coordinator when it's created — all
+  // the complex attach/detach/teardown logic lives in the lazy chunk.
+  const bufferedWorkerCalls: Array<{ worker: Worker; options?: { name?: string } }> = []
 
-  function attachWorker(worker: Worker, options?: { name?: string }): () => Promise<void> {
+  function attachProfilingWorker(worker: Worker, options?: { name?: string }): () => Promise<void> {
     if (workerCoordinator) {
       return workerCoordinator.attachWorker(worker, options)
     }
-
-    // Coordinator not ready yet — buffer the call and return a detach function
-    // that either cancels the buffered call or delegates to the coordinator once ready.
-    let detachFromCoordinator: (() => Promise<void>) | undefined
-    const pending: PendingCall = {
-      worker,
-      options,
-      resolve: (detach) => {
-        detachFromCoordinator = detach
-      },
-    }
-    pendingWorkerCalls.push(pending)
-
-    return () => {
-      if (detachFromCoordinator) {
-        // Coordinator has since resolved — delegate to its detach
-        return detachFromCoordinator()
-      }
-      // Still buffered — cancel it
-      const idx = pendingWorkerCalls.indexOf(pending)
-      if (idx !== -1) {
-        pendingWorkerCalls.splice(idx, 1)
-      }
-      return Promise.resolve()
-    }
+    // Coordinator not ready yet — buffer for the lazy chunk to drain
+    bufferedWorkerCalls.push({ worker, options })
+    return () => Promise.resolve()
   }
 
   function onRumStart(
@@ -126,12 +100,10 @@ export function makeProfilerApi(): ProfilerApi {
           DEFAULT_RUM_PROFILER_CONFIGURATION.collectIntervalMs
         )
 
-        // Replay any attachWorker calls that arrived before the coordinator was ready
-        if (pendingWorkerCalls.length > 0) {
-          for (const call of pendingWorkerCalls.splice(0)) {
-            const detach = workerCoordinator.attachWorker(call.worker, call.options)
-            call.resolve(detach)
-          }
+        // Drain buffered attachProfilingWorker calls that arrived before the
+        // lazy chunk loaded
+        for (const call of bufferedWorkerCalls.splice(0)) {
+          workerCoordinator.attachWorker(call.worker, call.options)
         }
       })
       .catch(monitorError)
@@ -143,7 +115,7 @@ export function makeProfilerApi(): ProfilerApi {
       profiler?.stop()
       workerCoordinator?.stop()
     },
-    getAttachWorkerApi: () => ({ attachWorker }),
+    attachProfilingWorker,
   }
 }
 

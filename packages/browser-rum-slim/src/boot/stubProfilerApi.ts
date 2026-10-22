@@ -5,6 +5,6 @@ export function makeProfilerApiStub(): ProfilerApi {
   return {
     onRumStart: noop,
     stop: noop,
-    getAttachWorkerApi: () => undefined,
+    attachProfilingWorker: () => () => Promise.resolve(),
   }
 }

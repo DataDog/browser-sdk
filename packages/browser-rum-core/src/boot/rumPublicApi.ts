@@ -20,6 +20,8 @@ import type { Context } from '@datadog/js-core/util'
 import {
   ContextManagerMethod,
   addTelemetryUsage,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
   makePublicApi,
   createHandlingStack,
   sanitize,
@@ -628,7 +630,7 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
-  getAttachWorkerApi: () => { attachWorker: (worker: Worker, options?: { name?: string }) => () => void } | undefined
+  attachProfilingWorker: (worker: Worker, options?: { name?: string }) => () => Promise<void>
   onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -1058,14 +1060,11 @@ export function makeRumPublicApi(
     DEFAULT_TRACKED_RESOURCE_HEADERS,
 
     attachProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
-      addTelemetryUsage('rum', 'attach_profiling_worker', { has_name: options?.name !== undefined })
-      const coordinator = profilerApi.getAttachWorkerApi()
-      if (coordinator) {
-        return coordinator.attachWorker(worker, options)
+      if (!isExperimentalFeatureEnabled(ExperimentalFeature.WORKER_PROFILING)) {
+        return () => Promise.resolve()
       }
-      // Profiling not active for this session — return a no-op detach
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      return () => {}
+      addTelemetryUsage('rum', 'attach_profiling_worker', { has_name: options?.name !== undefined })
+      return profilerApi.attachProfilingWorker(worker, options)
     }),
   })
 
