@@ -39,7 +39,11 @@ export function createWorkerProfilingCoordinator(
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ): WorkerProfilingCoordinator {
   const registrations = new Map<Worker, WorkerRegistration>()
-  const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
+  // Use a dedicated deflate stream: sharing PROFILING with the main-thread
+  // profiler interleaves concurrent encodings in the deflate worker and
+  // cross-delivers compressed chunks between the two transports (duplicate or
+  // crossed wall-time.json attachments).
+  const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.WORKER_PROFILING)
 
   let activeOptions: { sampleIntervalMs: number; maxBufferSize: number; collectIntervalMs: number } | undefined
   let isPaused = false
