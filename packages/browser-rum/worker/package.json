@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/worker.js",
+  "module": "../esm/entries/worker.mjs",
+  "types": "../cjs/entries/worker.d.ts"
+}

@@ -189,7 +189,7 @@ export interface ProfilerStack {
 
 /** A single time-stamped sample captured by the profiler. */
 export interface ProfilerSample {
-  /** Time in ms relative to the profiling session's time origin. */
+  /** Time in ms relative to the time origin of the global scope in which the Profiler was created (page or worker). */
   readonly timestamp: number
   /** Index into `ProfilerTrace.stacks`, if a stack was captured. */
   readonly stackId?: number
