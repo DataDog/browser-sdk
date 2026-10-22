@@ -607,7 +607,7 @@ export interface RumPublicApi extends PublicApi {
    * @param options.name - Optional label surfaced in Datadog as the `worker.name` tag. Defaults to the worker's script URL.
    * @returns A `detach` function that flushes and disconnects the worker from profiling
    */
-  attachProfilingWorker: (worker: Worker, options?: { name?: string }) => () => void
+  attachProfilingWorker: (worker: Worker, options?: { name?: string }) => () => Promise<void>
 }
 
 export interface RecorderApi {
@@ -628,7 +628,7 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
-  getWorkerCoordinator: () => { attachWorker: (worker: Worker, options?: { name?: string }) => () => void } | undefined
+  getAttachWorkerApi: () => { attachWorker: (worker: Worker, options?: { name?: string }) => () => void } | undefined
   onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -1058,7 +1058,8 @@ export function makeRumPublicApi(
     DEFAULT_TRACKED_RESOURCE_HEADERS,
 
     attachProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
-      const coordinator = profilerApi.getWorkerCoordinator()
+      addTelemetryUsage('rum', 'attach_profiling_worker', { has_name: options?.name !== undefined })
+      const coordinator = profilerApi.getAttachWorkerApi()
       if (coordinator) {
         return coordinator.attachWorker(worker, options)
       }

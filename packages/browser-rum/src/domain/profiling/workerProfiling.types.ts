@@ -72,6 +72,8 @@ export type WorkerProfilingResponse =
   | {
       type: 'dd-worker-error'
       error: WorkerProfilingErrorReason
+      /** Raw exception message when available (for diagnostics). */
+      errorMessage?: string
     }
 
 export type WorkerProfilingErrorReason =

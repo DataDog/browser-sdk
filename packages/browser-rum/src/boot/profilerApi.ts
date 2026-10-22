@@ -24,18 +24,18 @@ export function makeProfilerApi(): ProfilerApi {
   interface PendingCall {
     worker: Worker
     options?: { name?: string }
-    resolve: (detach: () => void) => void
+    resolve: (detach: () => Promise<void>) => void
   }
   const pendingWorkerCalls: PendingCall[] = []
 
-  function attachWorker(worker: Worker, options?: { name?: string }): () => void {
+  function attachWorker(worker: Worker, options?: { name?: string }): () => Promise<void> {
     if (workerCoordinator) {
       return workerCoordinator.attachWorker(worker, options)
     }
 
     // Coordinator not ready yet — buffer the call and return a detach function
     // that either cancels the buffered call or delegates to the coordinator once ready.
-    let detachFromCoordinator: (() => void) | undefined
+    let detachFromCoordinator: (() => Promise<void>) | undefined
     const pending: PendingCall = {
       worker,
       options,
@@ -48,14 +48,14 @@ export function makeProfilerApi(): ProfilerApi {
     return () => {
       if (detachFromCoordinator) {
         // Coordinator has since resolved — delegate to its detach
-        detachFromCoordinator()
-      } else {
-        // Still buffered — cancel it
-        const idx = pendingWorkerCalls.indexOf(pending)
-        if (idx !== -1) {
-          pendingWorkerCalls.splice(idx, 1)
-        }
+        return detachFromCoordinator()
       }
+      // Still buffered — cancel it
+      const idx = pendingWorkerCalls.indexOf(pending)
+      if (idx !== -1) {
+        pendingWorkerCalls.splice(idx, 1)
+      }
+      return Promise.resolve()
     }
   }
 
@@ -143,7 +143,7 @@ export function makeProfilerApi(): ProfilerApi {
       profiler?.stop()
       workerCoordinator?.stop()
     },
-    getWorkerCoordinator: () => ({ attachWorker }),
+    getAttachWorkerApi: () => ({ attachWorker }),
   }
 }
 

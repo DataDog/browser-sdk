@@ -1,6 +1,6 @@
-import { addTelemetryDebug, display, DeflateEncoderStreamId } from '@datadog/browser-core'
+import { DeflateEncoderStreamId, addTelemetryDebug, correctedChildSampleRate, display, isSampled } from '@datadog/browser-core'
 import type { Encoder, SessionManager } from '@datadog/browser-core'
-import { generateUUID } from '@datadog/js-core/util'
+import { generateUUID, setTimeout } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import type { RumConfiguration, TransportPayload, LifeCycle } from '@datadog/browser-rum-core'
@@ -10,7 +10,7 @@ import { assembleWorkerProfilingPayload } from './transport/assembleWorkerProfil
 
 interface WorkerRegistration {
   worker: Worker
-  /** Developer-provided label. Falls back to the worker's script URL if not provided. */
+  /** Developer-provided label, used as the `worker.name` tag. Omitted from the profile tags if not provided. */
   name: string | undefined
   /**
    * Stable UUID generated once when the worker is registered.
@@ -19,6 +19,8 @@ interface WorkerRegistration {
   correlationId: string
   messageListener: (event: MessageEvent) => void
   errorListener: (event: ErrorEvent) => void
+  isPaused: boolean
+  pendingFlushResolve?: () => void
 }
 
 interface WorkerOptions {
@@ -26,7 +28,7 @@ interface WorkerOptions {
 }
 
 export interface WorkerProfilingCoordinator {
-  attachWorker(worker: Worker, options?: WorkerOptions): () => void
+  attachWorker(worker: Worker, options?: WorkerOptions): () => Promise<void>
   start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void
   stop(): void
   getCorrelationIds(): string[]
@@ -36,21 +38,22 @@ export function createWorkerProfilingCoordinator(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   session: SessionManager,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  createTransport: typeof createFormDataTransport = createFormDataTransport
 ): WorkerProfilingCoordinator {
   const registrations = new Map<Worker, WorkerRegistration>()
   // Use a dedicated deflate stream: sharing PROFILING with the main-thread
   // profiler interleaves concurrent encodings in the deflate worker and
   // cross-delivers compressed chunks between the two transports (duplicate or
   // crossed wall-time.json attachments).
-  const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.WORKER_PROFILING)
+  const transport = createTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.WORKER_PROFILING)
 
   let activeOptions: { sampleIntervalMs: number; maxBufferSize: number; collectIntervalMs: number } | undefined
   let isPaused = false
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   let stopPageEventListeners: () => void = () => {}
 
-  function attachWorker(worker: Worker, options?: WorkerOptions): () => void {
+  function attachWorker(worker: Worker, options?: WorkerOptions): () => Promise<void> {
     if (registrations.has(worker)) {
       // Already attached — return a detach function
       return () => detachWorker(worker)
@@ -73,6 +76,7 @@ export function createWorkerProfilingCoordinator(
     const errorListener = (event: ErrorEvent) => {
       // monitor-until: forever
       addTelemetryDebug('Worker profiling: worker crashed', { error: event.message })
+      sendCommand(registration, { type: 'dd-detach-profiler' })
       teardownWorker(worker)
     }
 
@@ -82,6 +86,7 @@ export function createWorkerProfilingCoordinator(
       correlationId,
       messageListener,
       errorListener,
+      isPaused: false,
     }
 
     // Safe: Worker.addEventListener is not patched by Zone.js
@@ -92,7 +97,7 @@ export function createWorkerProfilingCoordinator(
     registrations.set(worker, registration)
 
     // If profiling is already active, deliver config to this worker immediately
-    if (activeOptions) {
+    if (activeOptions && !isPaused) {
       sendCommand(registration, {
         type: 'dd-profiling-config',
         ...activeOptions,
@@ -103,16 +108,23 @@ export function createWorkerProfilingCoordinator(
     return () => detachWorker(worker)
   }
 
-  function detachWorker(worker: Worker): void {
+  function detachWorker(worker: Worker): Promise<void> {
     const registration = registrations.get(worker)
     if (!registration) {
-      return
+      return Promise.resolve()
     }
-    // Only flush if not already paused (paused workers already received dd-detach-profiler)
-    if (!isPaused) {
+
+    if (!registration.isPaused) {
       sendCommand(registration, { type: 'dd-detach-profiler' })
     }
-    teardownWorker(worker)
+
+    return new Promise<void>((resolve) => {
+      registration.pendingFlushResolve = resolve
+      setTimeout(() => {
+        resolve()
+        teardownWorker(worker)
+      }, 1000)
+    })
   }
 
   function start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void {
@@ -125,7 +137,39 @@ export function createWorkerProfilingCoordinator(
     stopPageEventListeners = () => {
       stopVisibility()
       stopBeforeUnload()
+      stopSessionExpired?.()
+      stopSessionRenewed?.()
     }
+
+    // Mirror datadogProfiler's session lifecycle: stop workers on session
+    // expiry, restart on renewal only if the new session is still
+    // profiling-sampled. Without this, workers keep POSTing profiles across
+    // session boundaries, into unsampled sessions.
+    const stopSessionExpired = lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+      stop()
+    }).unsubscribe
+
+    const stopSessionRenewed = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+      const newSession = session.findTrackedSession()
+      if (
+        newSession &&
+        isSampled(
+          newSession.id,
+          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+        )
+      ) {
+        // Re-deliver config to all still-registered workers
+        registrations.forEach((registration) => {
+          registration.isPaused = false
+          sendCommand(registration, {
+            type: 'dd-profiling-config',
+            ...activeOptions!,
+            correlationId: registration.correlationId,
+          })
+        })
+        isPaused = false
+      }
+    }).unsubscribe
 
     registrations.forEach((registration) => {
       sendCommand(registration, {
@@ -148,6 +192,7 @@ export function createWorkerProfilingCoordinator(
     }
     isPaused = true
     registrations.forEach((registration) => {
+      registration.isPaused = true
       sendCommand(registration, { type: 'dd-detach-profiler' })
     })
   }
@@ -162,6 +207,7 @@ export function createWorkerProfilingCoordinator(
     }
     isPaused = false
     registrations.forEach((registration) => {
+      registration.isPaused = false
       sendCommand(registration, {
         type: 'dd-profiling-config',
         ...activeOptions!,
@@ -243,7 +289,17 @@ export function createWorkerProfilingCoordinator(
     registration: WorkerRegistration,
     response: Extract<WorkerProfilingResponse, { type: 'dd-worker-trace' }>
   ): void {
+    registration.pendingFlushResolve?.()
+    registration.pendingFlushResolve = undefined
     try {
+      // Drop traces below the minimum duration threshold — mirrors
+      // datadogProfiler's minProfileDurationMs check. Reduces noise and cost
+      // (e.g. every tab toggle would otherwise ship a near-empty trace).
+      const durationMs = response.endTimeStamp - response.startTimeStamp
+      if (durationMs < 5000) {
+        return
+      }
+
       const sessionId = session.findTrackedSession()?.id
       const payload = assembleWorkerProfilingPayload(
         response.trace,
@@ -254,22 +310,18 @@ export function createWorkerProfilingCoordinator(
         configuration,
         sessionId
       )
-      void transport.send(payload as unknown as TransportPayload)
+      transport.send(payload as unknown as TransportPayload).catch(monitorError)
     } catch (e) {
       monitorError(e)
     }
   }
 
-  function handleWorkerError(
-    registration: WorkerRegistration,
-    error: WorkerProfilingResponse extends { type: 'dd-worker-error' } ? never : string
-  ): void
-  function handleWorkerError(registration: WorkerRegistration, error: string): void {
+  function handleWorkerError(registration: WorkerRegistration, error: WorkerProfilingErrorReason): void {
     if (error === 'missing-document-policy-header') {
       display.warn(
         `[DD_RUM] Worker profiling failed for worker "${registration.name ?? 'unknown'}". ` +
           'Ensure the worker script is served with the `Document-Policy: js-profiling` HTTP response header. ' +
-          'Note: blob: and data: URL workers are not yet supported.'
+          'For blob: and data: URL workers, the policy is inherited from the creating document (Chromium M154+).'
       )
     } else {
       // monitor-until: forever

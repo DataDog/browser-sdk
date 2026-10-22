@@ -86,6 +86,10 @@ export function attachProfiler(
   workerScope: WorkerScopeForProfiling = self as unknown as WorkerScopeForProfiling
 ): DatadogWorkerHandle {
   let session: ActiveSession | undefined
+  // Set to true when dd-detach-profiler is received. Prevents startSession from
+  // creating a new Profiler after the worker has been detached (e.g. during the
+  // async window of a rolling collect).
+  let stopped = false
 
   workerScope.addEventListener('message', (event: MessageEvent) => {
     const command = event.data as WorkerProfilingCommand
@@ -96,6 +100,7 @@ export function attachProfiler(
     if (command.type === 'dd-profiling-config') {
       startSession(command.sampleIntervalMs, command.maxBufferSize, command.collectIntervalMs, command.correlationId)
     } else if (command.type === 'dd-detach-profiler') {
+      stopped = true
       void flushSession()
     }
   })
@@ -106,6 +111,10 @@ export function attachProfiler(
     collectIntervalMs: number,
     correlationId: string
   ): void {
+    if (stopped) {
+      return
+    }
+
     // Flush any existing session before starting a new one
     if (session) {
       void collectAndSend(session)
@@ -131,11 +140,7 @@ export function attachProfiler(
       return
     }
 
-    const timerId = setTimeout(() => {
-      void collectAndRestart()
-    }, collectIntervalMs)
-
-    session = {
+    const newSession: ActiveSession = {
       profiler,
       startTimeStamp: Date.now(),
       startRelativeTime: performance.now(),
@@ -143,29 +148,48 @@ export function attachProfiler(
       sampleIntervalMs,
       maxBufferSize,
       collectIntervalMs,
-      timerId,
+      timerId: 0,
     }
+
+    // Only collect if this session is still the live one when the timer fires —
+    // a dd-profiling-config re-delivery (visibility change, buffer-full restart)
+    // may have replaced it while the timer was pending.
+    newSession.timerId = setTimeout(() => {
+      if (session === newSession && !stopped) {
+        void collectAndRestart()
+      }
+    }, collectIntervalMs)
+
+    session = newSession
 
     profiler.addEventListener('samplebufferfull', handleBufferFull)
   }
 
   function handleBufferFull(): void {
-    void collectAndRestart()
+    if (!stopped) {
+      void collectAndRestart()
+    }
   }
 
   async function collectAndRestart(): Promise<void> {
-    if (!session) {
+    if (!session || stopped) {
       return
     }
     const currentSession = session
     session = undefined
     await collectAndSend(currentSession)
-    startSession(
-      currentSession.sampleIntervalMs,
-      currentSession.maxBufferSize,
-      currentSession.collectIntervalMs,
-      currentSession.correlationId
-    )
+    // Only restart if the agent wasn't detached during the async flush —
+    // a dd-detach-profiler arriving mid-collect sets stopped=true and
+    // makes this a no-op, preventing an orphaned Profiler from running
+    // in a detached worker forever.
+    if (!stopped) {
+      startSession(
+        currentSession.sampleIntervalMs,
+        currentSession.maxBufferSize,
+        currentSession.collectIntervalMs,
+        currentSession.correlationId
+      )
+    }
   }
 
   async function flushSession(): Promise<void> {
@@ -209,8 +233,12 @@ export function attachProfiler(
         endTimeStamp,
         correlationId,
       })
-    } catch {
-      workerScope.postMessage({ type: 'dd-worker-error', error: 'unexpected-exception' })
+    } catch (e) {
+      workerScope.postMessage({
+        type: 'dd-worker-error',
+        error: 'unexpected-exception',
+        errorMessage: e instanceof Error ? e.message : String(e),
+      })
     }
   }
 
