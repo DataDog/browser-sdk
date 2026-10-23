@@ -1,17 +1,16 @@
-declare const __BUILD_ENV__SDK_VERSION__: string
-
 /**
- * Registry of mock replacements used by {@link mockable} in test builds.
+ * Registry of replacements used by {@link mockable}.
  *
- * Exposed so test helpers (e.g. `replaceMockable`) can register and clean up mocks.
+ * Exposed so test helpers (e.g. `replaceMockable` from `@datadog/browser-core/test`) can clean up mocks.
  */
 export const mockableReplacements = new Map<unknown, unknown>()
 
 /**
- * Wraps a value to make it mockable in tests. In production builds, this is a no-op
- * that returns the value as-is. In test builds, it checks if a mock replacement has
- * been registered and returns that instead.
+ * Wraps a value to make it replaceable at runtime. Returns the replacement registered with
+ * {@link replaceMockable} if any, otherwise the value as-is.
  *
+ * @param value - The value to wrap
+ * @returns The registered replacement, or `value` if none
  * @example
  * // In source file:
  * import { mockable } from '@datadog/js-core/util'
@@ -28,10 +27,17 @@ export const mockableReplacements = new Map<unknown, unknown>()
  * })
  */
 export function mockable<T>(value: T): T {
-  // In test builds, return a wrapper that checks for mocks at call time
-  if (__BUILD_ENV__SDK_VERSION__ === 'test' && mockableReplacements.has(value)) {
-    return mockableReplacements.get(value)! as T
-  }
-  // In production, return the value as-is
-  return value
+  return mockableReplacements.has(value) ? (mockableReplacements.get(value) as T) : value
+}
+
+/**
+ * Replaces a value wrapped with {@link mockable}. Used by tests, and by integrations (e.g. the
+ * Shopify app pixel plugin) to inject host-specific implementations. `value` must be the same
+ * reference passed to `mockable()`.
+ *
+ * @param value - The original value, as passed to `mockable()`
+ * @param replacement - The value `mockable(value)` returns from now on
+ */
+export function replaceMockable<T>(value: T, replacement: T): void {
+  mockableReplacements.set(value, replacement)
 }
