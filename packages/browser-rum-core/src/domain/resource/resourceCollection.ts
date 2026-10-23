@@ -72,7 +72,10 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   })
 
   const { stop: stopRunOnReadyState } = runOnReadyState('interactive', () => {
-    handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
+    // Feature guard: without a document (e.g. a Web Worker) there is no navigation to report
+    if (globalObject.document) {
+      handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
+    }
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
@@ -219,7 +222,7 @@ function computeResourceEntryTracingInfo(entry: ResourceLikeEntry, configuration
   if (entry.initiatorType !== 'navigation') {
     return undefined
   }
-  const traceId = mockable(getDocumentTraceId)(globalObject.document)
+  const traceId = mockable(getDocumentTraceId)(document)
   if (!traceId) {
     return undefined
   }

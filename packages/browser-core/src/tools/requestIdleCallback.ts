@@ -14,11 +14,10 @@ export interface IdleDeadline {
  * 'requestIdleCallback' with a shim.
  */
 export function requestIdleCallback(callback: (deadline: IdleDeadline) => void, opts?: { timeout?: number }) {
-  const window = globalObject.window
   // Note: check both 'requestIdleCallback' and 'cancelIdleCallback' existence because some polyfills only implement 'requestIdleCallback'.
-  if (window?.requestIdleCallback && window.cancelIdleCallback) {
-    const id = window.requestIdleCallback(monitor(callback), opts)
-    return () => window.cancelIdleCallback(id)
+  if (globalObject.requestIdleCallback && globalObject.cancelIdleCallback) {
+    const id = globalObject.requestIdleCallback(monitor(callback), opts)
+    return () => globalObject.cancelIdleCallback(id)
   }
   return requestIdleCallbackShim(callback)
 }

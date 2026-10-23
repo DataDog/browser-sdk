@@ -46,7 +46,7 @@ export function startPageStateHistory(
 
   let currentPageState: PageState
 
-  if (globalObject.document && supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
     const visibilityEntries = performance.getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE)
 
     visibilityEntries.forEach((entry) => {

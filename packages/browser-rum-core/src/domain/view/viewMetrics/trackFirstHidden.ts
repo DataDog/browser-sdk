@@ -10,10 +10,7 @@ export interface Options {
 }
 
 export function trackFirstHidden(viewStart: ClocksState, eventTarget = globalObject.window) {
-  if (!globalObject.document || !eventTarget) {
-    return { timeStamp: Infinity as RelativeTime, stop: noop }
-  }
-  if (document.visibilityState === 'hidden') {
+  if (globalObject.document?.visibilityState === 'hidden') {
     return { timeStamp: 0 as RelativeTime, stop: noop }
   }
 

@@ -7,6 +7,7 @@ import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 export type DisplayContext = ReturnType<typeof startDisplayContext>
 
 export function startDisplayContext(assembleHook: AssembleHook) {
+  // Feature guard: without a window (e.g. a Web Worker) there is no viewport to measure
   if (!globalObject.window) {
     return { stop: noop }
   }

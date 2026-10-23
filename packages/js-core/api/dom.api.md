@@ -8,7 +8,7 @@
 function addEventListener_2<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target | undefined, eventName: EventName, listener: (event: EventMapFor<Target>[EventName] & {
     type: EventName;
 }) => void, options?: AddEventListenerOptions_2): {
-    stop: typeof noop;
+    stop: () => void;
 };
 export { addEventListener_2 as addEventListener }
 
@@ -16,7 +16,7 @@ export { addEventListener_2 as addEventListener }
 export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(eventTarget: Target | undefined, eventNames: EventName[], listener: (event: EventMapFor<Target>[EventName] & {
     type: EventName;
 }) => void, input?: AddEventListenerOptions_2): {
-    stop: typeof noop;
+    stop: () => void;
 };
 
 // @public

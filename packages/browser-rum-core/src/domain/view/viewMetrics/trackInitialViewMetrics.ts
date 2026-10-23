@@ -21,6 +21,7 @@ export function trackInitialViewMetrics(
   scheduleViewUpdate: () => void
 ) {
   const initialViewMetrics: InitialViewMetrics = {}
+  // Feature guard: without a document (e.g. a Web Worker) there is no page load to measure
   if (!globalObject.document) {
     return { stop: noop, initialViewMetrics }
   }

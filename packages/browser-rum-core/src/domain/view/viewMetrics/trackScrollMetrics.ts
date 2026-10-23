@@ -79,6 +79,7 @@ export function computeScrollValues() {
 
 export function createScrollValuesObservable(throttleDuration = THROTTLE_SCROLL_DURATION): Observable<ScrollValues> {
   return new Observable<ScrollValues>((observable) => {
+    // Feature guard: without a document (e.g. a Web Worker) there is nothing to scroll
     if (!globalObject.document) {
       return
     }
