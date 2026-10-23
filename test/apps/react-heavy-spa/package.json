@@ -22,6 +22,6 @@
     "@vitejs/plugin-react": "6.1.2",
     "globals": "17.13.0",
     "typescript": "6.0.3",
-    "vite": "8.3.2"
+    "vite": "8.3.3"
   }
 }
