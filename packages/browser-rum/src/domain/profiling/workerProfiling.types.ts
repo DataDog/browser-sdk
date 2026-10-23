@@ -51,12 +51,25 @@ export type WorkerProfilingResponse =
     }
   | {
       type: 'dd-worker-error'
-      error: WorkerProfilingErrorReason
+      error: 'not-supported-by-browser' | 'failed-to-lazy-load' | 'missing-document-policy-header' | 'unexpected-exception'
       /** Raw exception message when available (for diagnostics). */
       errorMessage?: string
     }
 
-export type WorkerProfilingErrorReason =
-  | 'not-supported-by-browser' // Profiler not in WorkerGlobalScope
-  | 'missing-document-policy-header' // NotAllowedError on new Profiler()
-  | 'unexpected-exception' // Any other error
+
+interface WorkerOptions {
+  name?: string
+}
+
+export interface WorkerProfilingCoordinator {
+  attachWorker(worker: Worker, options?: WorkerOptions): () => Promise<void>
+  start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void
+  stop(): void
+  getCorrelationIds(): string[]
+  /** Pause all workers — called by datadogProfiler on visibilitychange → hidden. */
+  pauseWorkers(): void
+  /** Resume all workers — called by datadogProfiler on visibilitychange → visible. */
+  resumeWorkers(): void
+  /** Flush and restart all workers — called by datadogProfiler on beforeunload. */
+  flushAndRestartWorkers(): void
+}

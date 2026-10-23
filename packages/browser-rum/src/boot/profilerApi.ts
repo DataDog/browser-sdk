@@ -12,7 +12,7 @@ import { monitorError } from '@datadog/js-core/monitor'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
-import type { WorkerProfilingCoordinator } from '../domain/profiling/workerProfilingCoordinator'
+import type { WorkerProfilingCoordinator } from '../domain/profiling/workerProfiling.types'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
@@ -79,6 +79,36 @@ export function makeProfilerApi(): ProfilerApi {
 
         workerCoordinator = createWorkerProfilingCoordinator(configuration, lifeCycle, sessionManager, createEncoder)
 
+        // Worker lifecycle hooks: the main profiler drives worker profiling
+        // through these callbacks, so both share a single decision point.
+        const workerHooks = {
+          onWorkersSessionExpired: () => {
+            if (workerCoordinator) {
+              workerCoordinator.stop()
+            }
+          },
+          onWorkersSessionRenewed: (isProfilingSampled: boolean) => {
+            if (workerCoordinator && isProfilingSampled) {
+              workerCoordinator.resumeWorkers()
+            }
+          },
+          onWorkersPaused: () => {
+            if (workerCoordinator) {
+              workerCoordinator.pauseWorkers()
+            }
+          },
+          onWorkersResumed: () => {
+            if (workerCoordinator) {
+              workerCoordinator.resumeWorkers()
+            }
+          },
+          onWorkersFlushAndRestart: () => {
+            if (workerCoordinator) {
+              workerCoordinator.flushAndRestartWorkers()
+            }
+          },
+        }
+
         profiler = createRumProfiler(
           configuration,
           lifeCycle,
@@ -87,7 +117,8 @@ export function makeProfilerApi(): ProfilerApi {
           createEncoder,
           viewHistory,
           undefined,
-          () => workerCoordinator?.getCorrelationIds() ?? []
+          () => workerCoordinator?.getCorrelationIds() ?? [],
+          workerHooks
         )
         profiler.start()
 

@@ -1,38 +1,15 @@
-import { DeflateEncoderStreamId, addTelemetryDebug, correctedChildSampleRate, display, isSampled } from '@datadog/browser-core'
+import { addTelemetryDebug, display, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { Encoder, SessionManager } from '@datadog/browser-core'
-import { generateUUID, setTimeout } from '@datadog/js-core/util'
+import { generateUUID, noop, setTimeout } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
-import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import type { RumConfiguration, TransportPayload, LifeCycle } from '@datadog/browser-rum-core'
 import { createFormDataTransport } from '@datadog/browser-rum-core'
-import type { WorkerProfilingCommand, WorkerProfilingResponse } from './workerProfiling.types'
+import type { WorkerProfilingCommand, WorkerProfilingResponse, WorkerOptions, WorkerProfilingCoordinator } from './workerProfiling.types'
+import { addWorkerEventListeners } from './workerEventListeners'
+// WorkerRegistration is imported as a type — the interface has mutable
+// stopMessageListener/stopErrorListener fields (late-assigned after creation)
+import type { WorkerRegistration } from './workerEventListeners'
 import { assembleWorkerProfilingPayload } from './transport/assembleWorkerProfilingPayload'
-
-interface WorkerRegistration {
-  worker: Worker
-  /** Developer-provided label, used as the `worker.name` tag. Omitted from the profile tags if not provided. */
-  name: string | undefined
-  /**
-   * Stable UUID generated once when the worker is registered.
-   * Reused across all collection intervals for this worker instance.
-   */
-  correlationId: string
-  messageListener: (event: MessageEvent) => void
-  errorListener: (event: ErrorEvent) => void
-  isPaused: boolean
-  pendingFlushResolve?: () => void
-}
-
-interface WorkerOptions {
-  name?: string
-}
-
-export interface WorkerProfilingCoordinator {
-  attachWorker(worker: Worker, options?: WorkerOptions): () => Promise<void>
-  start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void
-  stop(): void
-  getCorrelationIds(): string[]
-}
 
 export function createWorkerProfilingCoordinator(
   configuration: RumConfiguration,
@@ -50,8 +27,6 @@ export function createWorkerProfilingCoordinator(
 
   let activeOptions: { sampleIntervalMs: number; maxBufferSize: number; collectIntervalMs: number } | undefined
   let isPaused = false
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  let stopPageEventListeners: () => void = () => {}
 
   function attachWorker(worker: Worker, options?: WorkerOptions): () => Promise<void> {
     if (registrations.has(worker)) {
@@ -61,42 +36,40 @@ export function createWorkerProfilingCoordinator(
 
     const correlationId = generateUUID()
 
-    const messageListener = (event: MessageEvent) => {
-      const response = event.data as WorkerProfilingResponse
-      if (!response || typeof response.type !== 'string') {
-        return
-      }
-      if (response.type === 'dd-worker-trace') {
-        handleWorkerTrace(registration, response)
-      } else if (response.type === 'dd-worker-error') {
-        handleWorkerError(registration, response.error)
-      }
-    }
-
-    const errorListener = (event: ErrorEvent) => {
-      // monitor-until: forever
-      addTelemetryDebug('Worker profiling: worker crashed', { error: event.message })
-      sendCommand(registration, { type: 'dd-detach-profiler' })
-      teardownWorker(worker)
-    }
-
+    // `registration` is declared with `let` and referenced in the listener
+    // callbacks below — safe because the listeners only fire after events,
+    // by which time `registration` is assigned and stored in the Map.
+    // Create the registration first so the listener callbacks can look it up
+    // from the Map by the time events fire (events only fire after the
+    // registration is stored below).
     const registration: WorkerRegistration = {
       worker,
       name: options?.name,
       correlationId,
-      messageListener,
-      errorListener,
+      stopMessageListener: noop,
+      stopErrorListener: noop,
       isPaused: false,
     }
 
-    // Safe: Worker.addEventListener is not patched by Zone.js
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
-    worker.addEventListener('message', messageListener)
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
-    worker.addEventListener('error', errorListener)
+    const listeners = addWorkerEventListeners(worker, {
+      onTrace: (response) => handleWorkerTrace(registration, response),
+      onError: (error) => handleWorkerError(registration, error),
+      onWorkerCrash: (message) => {
+        // monitor-until: forever
+        addTelemetryDebug('Worker profiling: worker crashed', { error: message })
+        sendCommand(registration, { type: 'dd-detach-profiler' })
+        teardownWorker(worker)
+      },
+    })
+
+    registration.stopMessageListener = listeners.stopMessageListener
+    registration.stopErrorListener = listeners.stopErrorListener
+
     registrations.set(worker, registration)
 
-    // If profiling is already active, deliver config to this worker immediately
+    // If profiling is already active (and not paused), deliver config to this
+    // worker immediately. When paused, resumeWorkers will deliver it when the
+    // tab becomes visible again.
     if (activeOptions && !isPaused) {
       sendCommand(registration, {
         type: 'dd-profiling-config',
@@ -130,47 +103,6 @@ export function createWorkerProfilingCoordinator(
   function start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void {
     activeOptions = { sampleIntervalMs, maxBufferSize, collectIntervalMs }
 
-    // Hook page-level events so workers are flushed on visibility change / unload,
-    // mirroring what datadogProfiler does for the main-thread profiler.
-    const { stop: stopVisibility } = addEventListener(window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange)
-    const { stop: stopBeforeUnload } = addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload)
-    stopPageEventListeners = () => {
-      stopVisibility()
-      stopBeforeUnload()
-      stopSessionExpired?.()
-      stopSessionRenewed?.()
-    }
-
-    // Mirror datadogProfiler's session lifecycle: stop workers on session
-    // expiry, restart on renewal only if the new session is still
-    // profiling-sampled. Without this, workers keep POSTing profiles across
-    // session boundaries, into unsampled sessions.
-    const stopSessionExpired = lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-      stop()
-    }).unsubscribe
-
-    const stopSessionRenewed = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      const newSession = session.findTrackedSession()
-      if (
-        newSession &&
-        isSampled(
-          newSession.id,
-          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-        )
-      ) {
-        // Re-deliver config to all still-registered workers
-        registrations.forEach((registration) => {
-          registration.isPaused = false
-          sendCommand(registration, {
-            type: 'dd-profiling-config',
-            ...activeOptions!,
-            correlationId: registration.correlationId,
-          })
-        })
-        isPaused = false
-      }
-    }).unsubscribe
-
     registrations.forEach((registration) => {
       sendCommand(registration, {
         type: 'dd-profiling-config',
@@ -180,88 +112,6 @@ export function createWorkerProfilingCoordinator(
         correlationId: registration.correlationId,
       })
     })
-  }
-
-  /**
-   * Flush all workers: send dd-detach-profiler so each worker stops its current
-   * Profiler instance and posts the trace back.
-   */
-  function pauseAllWorkers(): void {
-    if (!activeOptions || isPaused) {
-      return
-    }
-    isPaused = true
-    registrations.forEach((registration) => {
-      registration.isPaused = true
-      sendCommand(registration, { type: 'dd-detach-profiler' })
-    })
-  }
-
-  /**
-   * Re-deliver dd-profiling-config to all workers so they start a fresh
-   * Profiler instance. Called when the tab becomes visible again.
-   */
-  function resumeAllWorkers(): void {
-    if (!activeOptions || !isPaused) {
-      return
-    }
-    isPaused = false
-    registrations.forEach((registration) => {
-      registration.isPaused = false
-      sendCommand(registration, {
-        type: 'dd-profiling-config',
-        ...activeOptions!,
-        correlationId: registration.correlationId,
-      })
-    })
-  }
-
-  /**
-   * Flush all workers and immediately restart them. Used on beforeunload, which
-   * can fire even when the page stays alive (e.g. mailto: links) — mirrors
-   * datadogProfiler's handleBeforeUnload behaviour.
-   */
-  function flushAndRestartAllWorkers(): void {
-    if (!activeOptions) {
-      return
-    }
-    registrations.forEach((registration) => {
-      sendCommand(registration, { type: 'dd-detach-profiler' })
-      sendCommand(registration, {
-        type: 'dd-profiling-config',
-        ...activeOptions!,
-        correlationId: registration.correlationId,
-      })
-    })
-  }
-
-  function handleVisibilityChange(): void {
-    if (document.visibilityState === 'hidden') {
-      pauseAllWorkers()
-    } else if (document.visibilityState === 'visible') {
-      resumeAllWorkers()
-    }
-  }
-
-  function handleBeforeUnload(): void {
-    flushAndRestartAllWorkers()
-  }
-
-  function stop(): void {
-    stopPageEventListeners()
-    activeOptions = undefined
-    registrations.forEach((registration) => {
-      // Only flush if not already paused (paused workers already received dd-detach-profiler)
-      if (!isPaused) {
-        sendCommand(registration, { type: 'dd-detach-profiler' })
-      }
-      teardownWorker(registration.worker)
-    })
-    isPaused = false
-  }
-
-  function getCorrelationIds(): string[] {
-    return Array.from(registrations.values()).map((r) => r.correlationId)
   }
 
   function sendCommand(registration: WorkerRegistration, command: WorkerProfilingCommand): void {
@@ -277,11 +127,8 @@ export function createWorkerProfilingCoordinator(
     if (!registration) {
       return
     }
-    // Safe: Worker.removeEventListener is not patched by Zone.js
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
-    worker.removeEventListener('message', registration.messageListener)
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
-    worker.removeEventListener('error', registration.errorListener)
+    registration.stopMessageListener()
+    registration.stopErrorListener()
     registrations.delete(worker)
   }
 
@@ -316,7 +163,7 @@ export function createWorkerProfilingCoordinator(
     }
   }
 
-  function handleWorkerError(registration: WorkerRegistration, error: WorkerProfilingErrorReason): void {
+  function handleWorkerError(registration: WorkerRegistration, error: string): void {
     if (error === 'missing-document-policy-header') {
       display.warn(
         `[DD_RUM] Worker profiling failed for worker "${registration.name ?? 'unknown'}". ` +
@@ -329,5 +176,65 @@ export function createWorkerProfilingCoordinator(
     }
   }
 
-  return { attachWorker, start, stop, getCorrelationIds }
+  return {
+    attachWorker,
+    start,
+    stop,
+    getCorrelationIds,
+    // Hook-driven lifecycle: called by datadogProfiler's event handlers
+    // (visibilitychange, beforeunload, session expiry/renewal) so that worker
+    // and main-thread profiling always share a single decision point.
+    pauseWorkers: () => {
+      if (!activeOptions || isPaused) {
+        return
+      }
+      isPaused = true
+      registrations.forEach((registration) => {
+        registration.isPaused = true
+        sendCommand(registration, { type: 'dd-detach-profiler' })
+      })
+    },
+    resumeWorkers: () => {
+      if (!activeOptions || !isPaused) {
+        return
+      }
+      isPaused = false
+      registrations.forEach((registration) => {
+        registration.isPaused = false
+        sendCommand(registration, {
+          type: 'dd-profiling-config',
+          ...activeOptions!,
+          correlationId: registration.correlationId,
+        })
+      })
+    },
+    flushAndRestartWorkers: () => {
+      if (!activeOptions) {
+        return
+      }
+      registrations.forEach((registration) => {
+        sendCommand(registration, { type: 'dd-detach-profiler' })
+        sendCommand(registration, {
+          type: 'dd-profiling-config',
+          ...activeOptions!,
+          correlationId: registration.correlationId,
+        })
+      })
+    },
+  }
+
+  function stop(): void {
+    activeOptions = undefined
+    registrations.forEach((registration) => {
+      if (!registration.isPaused) {
+        sendCommand(registration, { type: 'dd-detach-profiler' })
+      }
+      teardownWorker(registration.worker)
+    })
+    isPaused = false
+  }
+
+  function getCorrelationIds(): string[] {
+    return Array.from(registrations.values()).map((r) => r.correlationId)
+  }
 }

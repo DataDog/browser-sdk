@@ -43,7 +43,14 @@ export function createRumProfiler(
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION,
-  getWorkerCorrelationIds: () => string[] = () => []
+  getWorkerCorrelationIds: () => string[] = () => [],
+  workerHooks: {
+    onWorkersSessionExpired?: () => void
+    onWorkersSessionRenewed?: (isProfilingSampled: boolean) => void
+    onWorkersPaused?: () => void
+    onWorkersResumed?: () => void
+    onWorkersFlushAndRestart?: () => void
+  } = {}
 ): RUMProfiler {
   const emitPayload = canUseEventBridge()
     ? mockable(createBridgeEmitter)()
@@ -63,6 +70,7 @@ export function createRumProfiler(
   // Stops the profiler when session expires
   lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
     stopProfiling('session-expired')
+    workerHooks.onWorkersSessionExpired?.()
   })
 
   // Start the profiler again when session is renewed
@@ -72,13 +80,15 @@ export function createRumProfiler(
       (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
     ) {
       const newSession = session.findTrackedSession()
-      if (
-        !newSession ||
-        !isSampled(
-          newSession.id,
-          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-        )
-      ) {
+      const isProfilingSampled = Boolean(
+        newSession &&
+          isSampled(
+            newSession.id,
+            correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+          )
+      )
+      workerHooks.onWorkersSessionRenewed?.(isProfilingSampled)
+      if (!isProfilingSampled) {
         return
       }
       start()
@@ -384,6 +394,7 @@ export function createRumProfiler(
 
   function handleVisibilityChange(): void {
     if (document.visibilityState === 'hidden' && instance.state === 'running') {
+      workerHooks.onWorkersPaused?.()
       // Pause when tab is hidden. We use paused state to distinguish between
       // paused by visibility change and stopped by user.
       // If profiler is paused by the visibility change, we should resume when
@@ -392,6 +403,7 @@ export function createRumProfiler(
     } else if (document.visibilityState === 'visible' && instance.state === 'paused') {
       // Resume when tab becomes visible again
       startNextProfilerInstance()
+      workerHooks.onWorkersResumed?.()
     }
   }
 
@@ -400,6 +412,7 @@ export function createRumProfiler(
     // We can immediately flush (by starting a new profiler instance) to make sure we receive the data, and at the same time keep the profiler active.
     // In case of the regular unload, the profiler will be shut down anyway.
     startNextProfilerInstance()
+    workerHooks.onWorkersFlushAndRestart?.()
   }
 
   function isStopped() {
