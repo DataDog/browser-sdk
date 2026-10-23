@@ -10,20 +10,25 @@ const SIZE_INCREASE_THRESHOLD = 0.05
 
 export async function computeAndReportBundleSizes(pr?: Pr) {
   const localBundleSizes = extractUncompressedBundleSizes(calculateBundleSizes())
-  await reportToDatadog({
-    message: 'Browser SDK bundles sizes',
-    bundle_sizes: Object.fromEntries(localBundleSizes.map(({ name, value }) => [name, value])),
-  })
+  // One log per bundle, so a single log-based metric grouped by `bundle_name` covers every bundle
+  await reportToDatadog(
+    localBundleSizes.map(({ name, value }) => ({
+      message: 'Browser SDK bundle size',
+      bundle_name: name,
+      bundle_size: value,
+    }))
+  )
   if (!pr) {
     return
   }
   let baseBundleSizes: PerformanceMetric[]
   try {
-    baseBundleSizes = await fetchPerformanceMetrics(
-      'bundle',
-      localBundleSizes.map((bundleSize) => bundleSize.name),
-      pr.lastCommonCommit
-    )
+    const bundleNames = localBundleSizes.map((bundleSize) => bundleSize.name)
+    baseBundleSizes = await fetchPerformanceMetrics('bundle', bundleNames, pr.lastCommonCommit)
+    const missingBundleNames = bundleNames.filter((name) => !baseBundleSizes.some((size) => size.name === name))
+    if (missingBundleNames.length > 0) {
+      baseBundleSizes.push(...(await fetchPerformanceMetrics('legacyBundle', missingBundleNames, pr.lastCommonCommit)))
+    }
   } catch (e) {
     await pr.setBundleSizes('Error fetching base bundle sizes')
     throw e

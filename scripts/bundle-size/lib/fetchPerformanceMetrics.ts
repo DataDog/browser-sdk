@@ -31,6 +31,10 @@ async function fetchMetric(type: string, name: string, commitId: string): Promis
 
   switch (type) {
     case 'bundle':
+      query = `avg:bundle_sizes.uncompressed{bundle_name:${name},commit:${commitId}}&from=${date}&to=${now}`
+      break
+    // TODO: remove once commits reported with one metric per bundle are older than the 30 days window
+    case 'legacyBundle':
       query = `avg:bundle_sizes.${name}{commit:${commitId}}&from=${date}&to=${now}`
       break
     case 'cpu':
