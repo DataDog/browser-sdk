@@ -11,7 +11,7 @@ interface DocumentTraceData {
 export const INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD = 2 * ONE_MINUTE
 
 export function getDocumentTraceId(document: Document): string | undefined {
-  const data = getDocumentTraceDataFromMeta(document) || getDocumentTraceDataFromComment(document)
+  const data = document && (getDocumentTraceDataFromMeta(document) || getDocumentTraceDataFromComment(document))
 
   if (!data || data.traceTime <= getTimeOrigin() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD) {
     return undefined

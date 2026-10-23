@@ -151,7 +151,7 @@ type EventMapFor<T> = T extends Window
  * @returns An object whose `stop` function removes the listener.
  */
 export function addEventListener<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  eventTarget: Target,
+  eventTarget: Target | undefined,
   eventName: EventName,
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   options?: AddEventListenerOptions
@@ -174,11 +174,15 @@ export function addEventListener<Target extends EventTarget, EventName extends k
  * @returns An object whose `stop` function removes the listeners for all `eventNames`.
  */
 export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  eventTarget: Target,
+  eventTarget: Target | undefined,
   eventNames: EventName[],
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
+  if (!eventTarget) {
+    return { stop: noop }
+  }
+
   const listenerWithMonitor = monitor((event: TrustableEvent) => {
     if (!event.isTrusted && !event.__ddIsTrusted && allowUntrustedEventsFromConfiguration === false) {
       return
