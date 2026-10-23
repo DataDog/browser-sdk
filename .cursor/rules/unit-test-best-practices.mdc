@@ -8,7 +8,7 @@ alwaysApply: false
 ### Basic Commands
 
 - **Run all unit tests**: `yarn test:unit`
-- **Run a specific spec file**: `yarn test:unit --spec <file-path>`
+- **Run a specific spec file**: `yarn test:unit <file-path>`
 - **Focus on specific tests**: Prepend `f` to `describe` and `it` (e.g., `fdescribe`, `fit`)
 
 ### Examples
@@ -21,13 +21,13 @@ yarn test:unit
 #### Run Single File
 ```bash
 # Full path
-yarn test:unit --spec packages/js-core/src/dom/addEventListener.spec.ts
+yarn test:unit packages/js-core/src/dom/addEventListener.spec.ts
 
 # Pattern matching (if filename is unique)
-yarn test:unit --spec "packages/**/addEventListener.spec.ts"
+yarn test:unit addEventListener.spec.ts
 
 # Multiple files with wildcards
-yarn test:unit --spec "packages/browser-core/**/browser/*.spec.ts"
+yarn test:unit packages/js-core/src/dom/
 ```
 
 #### Focus on Specific Tests
@@ -64,24 +64,10 @@ describe('addEventListener', () => {
 ```bash
 # 1. Check test output for randomization seed
 yarn test:unit
-# Look for: "Randomized with seed 65781"
+# Look for: 'Running tests with seed "65781"'
 
-# 2. Set seed in karma configuration
-# Edit test/unit/karma.base.conf.js:
-module.exports = {
-  // ... other config
-  client: {
-    jasmine: {
-      // ... other jasmine config
-      seed: 65781  // Use the seed from step 1
-    }
-  }
-}
-
-# 3. Run tests with the same order
-yarn test:unit
-
-# 4. Remove seed after debugging
+# 2. Run tests with the same order
+yarn test:unit --sequence.seed=65781
 ```
 
 ### File Organization
