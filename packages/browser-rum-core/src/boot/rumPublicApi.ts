@@ -169,6 +169,25 @@ export interface RumPublicApi extends PublicApi {
   addAction: (name: string, context?: object) => void
 
   /**
+   * Capture the caller's stack to attribute clicks on this element and its descendants.
+   * Call from the microfrontend's browser bundle after its container mounts or hydrates.
+   * Can be called before init(). Repeated calls replace the element's registration.
+   * Clicks use the closest registered ancestor, including across shadow roots,
+   * and retain the stack captured at pointerdown through action completion.
+   *
+   * @category Context - Action
+   * @param element - Element to associate with the caller's stack
+   * @example
+   * ```ts
+   * const container = document.getElementById('checkout')
+   * if (container) {
+   *   datadogRum.attachElementStack(container)
+   * }
+   * ```
+   */
+  attachElementStack: (element: Element) => void
+
+  /**
    * Start tracking a custom action.
    *
    * Call {@link stopAction} with the same name (and optional `actionKey`) to send a RUM action event
@@ -666,6 +685,7 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
+  const elementStacks = new WeakMap<Element, string>()
   const trackingConsentState = createTrackingConsentState()
   const bufferedData = startBufferingData()
 
@@ -688,6 +708,7 @@ export function makeRumPublicApi(
         bufferedData.observable,
         telemetry,
         hooks,
+        elementStacks,
         options.sdkName
       )
 
@@ -791,6 +812,16 @@ export function makeRumPublicApi(
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
+
+    attachElementStack: (element) => {
+      const stack = createHandlingStack('element')
+      callMonitored(() => {
+        addTelemetryUsage({ feature: 'attach-element-stack' })
+        if (stack?.includes('\n')) {
+          elementStacks.set(element, stack)
+        }
+      })
+    },
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')
