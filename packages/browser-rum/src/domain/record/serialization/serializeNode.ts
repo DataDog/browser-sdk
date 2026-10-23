@@ -162,8 +162,7 @@ function serializeElementNode(
 
   const linkOrStyle = element as HTMLLinkElement | HTMLStyleElement
   if (cssText !== undefined && linkOrStyle.sheet) {
-    const sheetId = transaction.scope.styleSheetIds.getOrInsert(linkOrStyle.sheet)
-    transaction.addStyleSheet(createString(StringRole.Css, cssText))
+    const sheetId = serializeStyleSheetContent(linkOrStyle.sheet, cssText, transaction)
     transaction.attachStyleSheets(nodeId, [sheetId])
   }
 
@@ -241,6 +240,11 @@ function serializeStyleSheets(
 }
 
 function serializeStyleSheet(sheet: CSSStyleSheet, transaction: SerializationTransaction): StyleSheetId {
+  const existingSheetId = transaction.scope.styleSheetIds.get(sheet)
+  if (existingSheetId !== undefined) {
+    return existingSheetId
+  }
+
   const rules = Array.from(sheet.cssRules || sheet.rules, (rule) => createString(StringRole.Css, rule.cssText))
   const mediaList =
     sheet.media.length > 0 ? Array.from(sheet.media).map((medium) => createString(StringRole.Css, medium)) : undefined
@@ -249,6 +253,20 @@ function serializeStyleSheet(sheet: CSSStyleSheet, transaction: SerializationTra
     rules.reduce((totalLength, rule) => totalLength + rule.string.length, 0)
   )
   transaction.addStyleSheet(rules, mediaList, sheet.disabled)
+  return transaction.scope.styleSheetIds.getOrInsert(sheet)
+}
+
+function serializeStyleSheetContent(
+  sheet: CSSStyleSheet,
+  cssText: string,
+  transaction: SerializationTransaction
+): StyleSheetId {
+  const existingSheetId = transaction.scope.styleSheetIds.get(sheet)
+  if (existingSheetId !== undefined) {
+    return existingSheetId
+  }
+
+  transaction.addStyleSheet(createString(StringRole.Css, cssText))
   return transaction.scope.styleSheetIds.getOrInsert(sheet)
 }
 
