@@ -43,7 +43,22 @@ describe('profilerApi', () => {
         .createSpy('createRumProfiler')
         .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
       replaceMockable(isProfilingSupported, () => true)
-      replaceMockable(lazyLoadProfiler, () => Promise.resolve(createRumProfilerSpy))
+      replaceMockable(lazyLoadProfiler, () =>
+        Promise.resolve({
+          createRumProfiler: createRumProfilerSpy,
+          createWorkerProfilingCoordinator: jasmine.createSpy('createWorkerProfilingCoordinator').and.returnValue({
+            start: jasmine.createSpy(),
+            stop: jasmine.createSpy(),
+            attachWorker: jasmine.createSpy().and.returnValue(jasmine.createSpy()),
+            getCorrelationIds: jasmine.createSpy().and.returnValue([]),
+          }),
+          DEFAULT_RUM_PROFILER_CONFIGURATION: {
+            sampleIntervalMs: 10,
+            collectIntervalMs: 60000,
+            minProfileDurationMs: 5000,
+          },
+        })
+      )
     })
 
     async function startApi() {

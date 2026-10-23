@@ -26,6 +26,7 @@
       "@datadog/browser-rum": ["./packages/browser-rum/src/entries/main"],
       "@datadog/browser-rum/internal": ["./packages/browser-rum/src/entries/internal"],
       "@datadog/browser-rum/internal-synthetics": ["./packages/browser-rum/src/entries/internalSynthetics"],
+      "@datadog/browser-rum/worker": ["./packages/browser-rum/src/entries/worker"],
 
       "@datadog/browser-rum-slim": ["./packages/browser-rum-slim/src/entries/main"],
 

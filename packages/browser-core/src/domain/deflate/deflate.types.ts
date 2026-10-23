@@ -54,4 +54,9 @@ export const enum DeflateEncoderStreamId {
   RUM = 2,
   TELEMETRY = 4,
   PROFILING = 6,
+  // Worker profiles must use a dedicated stream: the main-thread profiler and
+  // the worker-profiling coordinator encode concurrently, and deflate streams
+  // (and the encoder response routing) are keyed by stream id — sharing one
+  // id interleaves their outputs and cross-delivers compressed chunks.
+  WORKER_PROFILING = 7,
 }

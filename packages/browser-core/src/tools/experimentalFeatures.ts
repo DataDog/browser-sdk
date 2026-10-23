@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   TRACK_WEBSOCKETS = 'track_websockets',
   SOFT_NAVIGATION = 'soft_navigation',
+  WORKER_PROFILING = 'worker_profiling',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
