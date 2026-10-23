@@ -52,6 +52,7 @@ import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { ActionOptions } from '../domain/action/trackManualActions'
 import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
+import { startEarlyWebSocketCollection } from '../domain/webSocket/webSocketCollection'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRumResult } from './startRum'
 import { startRum } from './startRum'
@@ -668,10 +669,12 @@ export function makeRumPublicApi(
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedData = startBufferingData()
+  const earlyWebSocketCollection = startEarlyWebSocketCollection()
 
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
+    earlyWebSocketCollection,
     (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
@@ -686,6 +689,7 @@ export function makeRumPublicApi(
         initialViewOptions,
         createEncoder,
         bufferedData.observable,
+        earlyWebSocketCollection,
         telemetry,
         hooks,
         options.sdkName
