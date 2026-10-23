@@ -2,7 +2,7 @@ import { formatPercentage, formatSize } from '../../lib/executionUtils.ts'
 import { calculateBundleSizes } from '../../lib/computeBundleSize.ts'
 import { reportToDatadog } from '../../lib/reportToDatadog.ts'
 import type { PerformanceMetric } from './fetchPerformanceMetrics.ts'
-import { fetchPerformanceMetrics } from './fetchPerformanceMetrics.ts'
+import { fetchBundleSizes, fetchPerformanceMetrics } from './fetchPerformanceMetrics.ts'
 import { markdownArray, type Pr } from './reportAsAPrComment.ts'
 
 // The value is set to 5% as it's around 10 times the average value for small PRs.
@@ -24,7 +24,7 @@ export async function computeAndReportBundleSizes(pr?: Pr) {
   let baseBundleSizes: PerformanceMetric[]
   try {
     const bundleNames = localBundleSizes.map((bundleSize) => bundleSize.name)
-    baseBundleSizes = await fetchPerformanceMetrics('bundle', bundleNames, pr.lastCommonCommit)
+    baseBundleSizes = await fetchBundleSizes(pr.lastCommonCommit)
     const missingBundleNames = bundleNames.filter((name) => !baseBundleSizes.some((size) => size.name === name))
     if (missingBundleNames.length > 0) {
       baseBundleSizes.push(...(await fetchPerformanceMetrics('legacyBundle', missingBundleNames, pr.lastCommonCommit)))
