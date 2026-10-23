@@ -1,6 +1,7 @@
+import { PageExitReason } from '@datadog/js-core/transport'
+import type { PageMayExitEvent } from '@datadog/js-core/transport'
 import { createNewEvent, restorePageVisibility, setPageVisibility, registerCleanupTask } from '../../test'
-import type { PageMayExitEvent } from './pageMayExitObservable'
-import { PageExitReason, createPageMayExitObservable } from './pageMayExitObservable'
+import { createPageMayExitObservable } from './pageMayExitObservable'
 
 describe('createPageMayExitObservable', () => {
   let onExitSpy: jasmine.Spy<(event: PageMayExitEvent) => void>

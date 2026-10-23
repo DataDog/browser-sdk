@@ -1,4 +1,4 @@
-import type { Payload } from '@datadog/browser-core'
+import type { Payload } from '@datadog/js-core/transport'
 
 export type ResourcePayload = Payload & {
   hash: string

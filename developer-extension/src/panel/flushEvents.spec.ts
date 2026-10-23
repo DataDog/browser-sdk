@@ -1,5 +1,5 @@
+import type { PageMayExitEvent } from '@datadog/js-core/transport'
 import { registerCleanupTask } from '../../../packages/browser-core/test'
-import type { PageMayExitEvent } from '../../../packages/browser-core/src/browser/pageMayExitObservable'
 import { createPageMayExitObservable } from '../../../packages/browser-core/src/browser/pageMayExitObservable'
 import { flushScript } from './flushEvents'
 

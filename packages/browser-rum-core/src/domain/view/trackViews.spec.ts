@@ -1,9 +1,10 @@
 import type { RelativeTime, Duration, ClocksState } from '@datadog/js-core/time'
 import { timeStampNow, relativeToClocks, relativeNow } from '@datadog/js-core/time'
-import { PageExitReason, display, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
+import { display, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
+import { PageExitReason } from '@datadog/js-core/transport'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'

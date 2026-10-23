@@ -1,5 +1,4 @@
-import { noop } from '@datadog/js-core/util'
-import { isServerError } from '../../src'
+import { noop, isServerError } from '@datadog/js-core/util'
 import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'
 import { MockEventTarget } from './mockEventTarget'
