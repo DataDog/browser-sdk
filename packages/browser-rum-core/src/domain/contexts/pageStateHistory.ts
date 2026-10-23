@@ -1,6 +1,7 @@
 import { elapsed, toServerDuration, relativeNow } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { SKIPPED } from '@datadog/js-core/assembly'
+import { globalObject } from '@datadog/js-core/util'
 import { createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -57,7 +58,7 @@ export function startPageStateHistory(
   addPageState(getPageState(), relativeNow())
 
   const { stop: stopEventListeners } = addEventListeners(
-    window,
+    globalObject.window,
     [
       DOM_EVENT.PAGE_SHOW,
       DOM_EVENT.FOCUS,
@@ -144,6 +145,10 @@ function computePageState(event: Event & { type: DOM_EVENT }) {
 }
 
 function getPageState() {
+  const document = globalObject.document
+  if (!document) {
+    return PageState.ACTIVE
+  }
   if (document.visibilityState === 'hidden') {
     return PageState.HIDDEN
   }

@@ -1,8 +1,9 @@
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
+import { globalObject } from '@datadog/js-core/util'
 
 export function onBFCacheRestore(callback: (event: PageTransitionEvent) => void): () => void {
   const { stop } = addEventListener(
-    window,
+    globalObject.window,
     DOM_EVENT.PAGE_SHOW,
     (event: PageTransitionEvent) => {
       if (event.persisted) {

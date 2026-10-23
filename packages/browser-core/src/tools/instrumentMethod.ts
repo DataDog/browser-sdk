@@ -98,11 +98,15 @@ export interface InstrumentedConstructorCall<CONSTRUCTOR> {
  *  })
  */
 export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
-  targetPrototype: TARGET,
+  targetPrototype: TARGET | undefined,
   method: METHOD,
   onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
   { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
 ) {
+  if (!targetPrototype) {
+    return { stop: noop }
+  }
+
   let original = targetPrototype[method]
 
   if (typeof original !== 'function') {

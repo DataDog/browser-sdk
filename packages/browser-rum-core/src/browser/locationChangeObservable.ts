@@ -52,7 +52,7 @@ function trackHistory(onHistoryChange: () => void) {
       onPostCall(onHistoryChange)
     }
   )
-  const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const { stop: removeListener } = addEventListener(globalObject.window, DOM_EVENT.POP_STATE, onHistoryChange)
 
   return {
     stop: () => {
@@ -64,10 +64,14 @@ function trackHistory(onHistoryChange: () => void) {
 }
 
 function trackHash(onHashChange: () => void) {
-  return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
+  return addEventListener(globalObject.window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 
 function getHistoryInstrumentationTarget(methodName: 'pushState' | 'replaceState') {
+  const history = globalObject.history
+  if (!history) {
+    return undefined
+  }
   // Ideally we should always instument the method on the prototype, however some frameworks (e.g [Next.js](https://github.com/vercel/next.js/blob/d3f5532065f3e3bb84fb54bd2dfd1a16d0f03a21/packages/next/src/client/components/app-router.tsx#L429))
   // are wrapping the instance method. In that case we should also wrap the instance method.
   return Object.prototype.hasOwnProperty.call(history, methodName) ? history : History.prototype

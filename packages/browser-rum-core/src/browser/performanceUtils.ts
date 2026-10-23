@@ -1,6 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { toRelativeTime, relativeNow } from '@datadog/js-core/time'
 import { findLast, isNumber } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
 import type { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackNavigationTimings'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
@@ -25,7 +26,7 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
   const entry: RumPerformanceNavigationTiming = {
     entryType: RumPerformanceEntryType.NAVIGATION as const,
     initiatorType: 'navigation' as const,
-    name: window.location.href,
+    name: globalObject.location.href,
     startTime: 0 as RelativeTime,
     duration: timings.loadEventEnd,
     decodedBodySize: 0,
