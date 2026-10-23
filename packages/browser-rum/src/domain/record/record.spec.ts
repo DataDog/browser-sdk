@@ -2,8 +2,15 @@ import { noop } from '@datadog/js-core/util'
 import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { createNewEvent, collectAsyncCalls, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import { recordsPerFullSnapshot } from '../../../test'
+import {
+  createNewEvent,
+  collectAsyncCalls,
+  mockClock,
+  registerCleanupTask,
+  replaceMockable,
+} from '@datadog/browser-core/test'
+import { MockWorker, recordsPerFullSnapshot } from '../../../test'
+import { getDeflateWorker } from '../deflate'
 import type {
   AddNodeChange,
   BrowserChangeRecord,
@@ -19,6 +26,7 @@ import type { RecordAPI } from './record'
 import { record } from './record'
 import type { EmitRecordCallback } from './record.types'
 import { createChangeDecoder } from './encoding'
+import { isCanvasWorkerSupported } from './canvas/canvasWorker'
 
 describe('record', () => {
   let recordApi: RecordAPI
@@ -74,20 +82,38 @@ describe('record', () => {
   })
 
   describe('canvas mutation tracking', () => {
+    const CANVAS_RECORDING_CONFIGURATION = {
+      enable: true,
+      maxFramesPerSecond: 1,
+      hashingMaxDimension: 100,
+      maxImageDimension: 1000,
+      encodeQuality: 0.5,
+    } as const
+
+    beforeEach(() => {
+      replaceMockable(getDeflateWorker, () => new MockWorker())
+    })
+
     it('instruments canvas drawing when canvas recording is enabled', () => {
+      if (!isCanvasWorkerSupported()) {
+        pending('canvas recording not supported')
+      }
       const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
 
-      startRecording({
-        sessionReplayCanvasRecording: {
-          enable: true,
-          maxFramesPerSecond: 1,
-          hashingMaxDimension: 100,
-          maxImageDimension: 1000,
-          encodeQuality: 0.5,
-        },
-      })
+      startRecording({ sessionReplayCanvasRecording: CANVAS_RECORDING_CONFIGURATION })
 
       expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).not.toBe(
+        originalFillRect
+      )
+    })
+
+    it('does not instrument canvas drawing when canvas recording is not supported', () => {
+      replaceMockable(isCanvasWorkerSupported, () => false)
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording({ sessionReplayCanvasRecording: CANVAS_RECORDING_CONFIGURATION })
+
+      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
         originalFillRect
       )
     })

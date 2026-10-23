@@ -78,6 +78,7 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const mutationTracker = trackMutation(document, processRecord, processResource, emitStats, scope)
+  const canvasContentTracker = trackCanvasContent(scope)
   const trackers: Tracker[] = [
     mutationTracker,
     trackMove(processRecord, scope),
@@ -90,8 +91,8 @@ export function record(options: RecordOptions): RecordAPI {
     trackFocus(processRecord),
     trackVisualViewportResize(processRecord),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
-    trackCanvasContent(scope),
-    trackCanvasCapture(scope, mutationTracker.notifyContentMutated),
+    canvasContentTracker,
+    trackCanvasCapture(scope, mutationTracker.notifyContentMutated, canvasContentTracker.stop),
   ]
 
   return {

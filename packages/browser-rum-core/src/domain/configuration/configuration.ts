@@ -229,6 +229,9 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Configures recording canvas elements in Session Replay. Canvas recording is disabled when this option is omitted.
    *
+   * Canvas recording requires Chrome/Edge 69+, Firefox 105+ or Safari 18+. It is silently disabled on other
+   * browsers, without affecting the rest of the Session Replay recording.
+   *
    * @category Session Replay
    */
   sessionReplayCanvasRecording?:

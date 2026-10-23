@@ -18,12 +18,13 @@ import {
 import type { ViewEndedEvent } from '../../../browser-rum-core/src/domain/view/trackViews'
 import { appendElement, mockRumConfiguration } from '../../../browser-rum-core/test'
 
-import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
+import { mockCanvasWorker, recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import type { ReplayPayload, ResourcePayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
+import { isCanvasWorkerSupported } from '../domain/record'
 import { startRecording } from './datadogRecorder'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp
@@ -199,13 +200,15 @@ describe('startRecording', () => {
   })
 
   it('flushes queued canvas content before an urgent exit', async () => {
+    if (!isCanvasWorkerSupported()) {
+      pending('canvas recording not supported')
+    }
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     // the canvas must exist before recording starts so the initial full snapshot assigns it a node id
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
-    spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
-      callback(new Blob([], { type: 'image/png' }))
-    )
+    spyOn(OffscreenCanvas.prototype, 'convertToBlob').and.resolveTo(new Blob([], { type: 'image/webp' }))
+    mockCanvasWorker()
 
     const canvasSendSpy = jasmine.createSpy()
     const canvasSendOnExitSpy = jasmine.createSpy()
@@ -238,12 +241,14 @@ describe('startRecording', () => {
   })
 
   it('does not flush queued canvas content when the page is terminated', async () => {
+    if (!isCanvasWorkerSupported()) {
+      pending('canvas recording not supported')
+    }
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
-    spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
-      callback(new Blob([], { type: 'image/png' }))
-    )
+    spyOn(OffscreenCanvas.prototype, 'convertToBlob').and.resolveTo(new Blob([], { type: 'image/webp' }))
+    mockCanvasWorker()
 
     const canvasSendSpy = jasmine.createSpy()
     const canvasSendOnExitSpy = jasmine.createSpy()
@@ -277,12 +282,14 @@ describe('startRecording', () => {
 
   describe('when calling stop()', () => {
     it('flushes queued canvas content before stopping collectors', async () => {
+      if (!isCanvasWorkerSupported()) {
+        pending('canvas recording not supported')
+      }
       const clock = mockClock()
       const requestIdleCallbackMock = mockRequestIdleCallback()
       const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
-      spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
-        callback(new Blob([], { type: 'image/png' }))
-      )
+      spyOn(OffscreenCanvas.prototype, 'convertToBlob').and.resolveTo(new Blob([], { type: 'image/webp' }))
+      mockCanvasWorker()
 
       const canvasSendSpy = jasmine.createSpy()
       const resourceHttpRequest = {

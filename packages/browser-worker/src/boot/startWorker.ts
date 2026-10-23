@@ -1,4 +1,10 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import type {
+  CanvasWorkerRequest,
+  CanvasWorkerResponse,
+  DeflateWorkerAction,
+  DeflateWorkerResponse,
+} from '@datadog/browser-core'
+import { captureCanvasBitmap } from '@datadog/browser-core'
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import { concatBuffers } from '@datadog/js-core/util'
 import { Deflate, constants } from '../domain/deflate'
@@ -8,6 +14,7 @@ declare const __BUILD_ENV__SDK_VERSION__: string
 export interface WorkerScope {
   addEventListener(eventName: 'message', listener: (event: MessageEvent<DeflateWorkerAction>) => void): void
   postMessage(response: DeflateWorkerResponse): void
+  close(): void
 }
 
 export function startWorker(workerScope: WorkerScope = self) {
@@ -15,7 +22,7 @@ export function startWorker(workerScope: WorkerScope = self) {
     const streams = new Map<number, Deflate>()
     workerScope.addEventListener('message', (event: MessageEvent<DeflateWorkerAction>) => {
       try {
-        const response = handleAction(streams, event.data)
+        const response = handleAction(workerScope, streams, event.data, event.ports)
         if (response) {
           workerScope.postMessage(response)
         }
@@ -45,7 +52,12 @@ function sendError(workerScope: WorkerScope, error: unknown, streamId?: number) 
   }
 }
 
-function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerAction): DeflateWorkerResponse | undefined {
+function handleAction(
+  workerScope: WorkerScope,
+  streams: Map<number, Deflate>,
+  message: DeflateWorkerAction,
+  ports: readonly MessagePort[]
+): DeflateWorkerResponse | undefined {
   switch (message.action) {
     case 'init':
       return {
@@ -77,7 +89,49 @@ function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerActio
     case 'reset':
       streams.delete(message.streamId)
       break
+
+    case 'startCanvasWorker':
+      spawnCanvasWorker(workerScope, ports[0])
+      break
+
+    case 'canvasInit':
+      startCanvasWorker(workerScope, ports[0])
+      break
   }
+}
+
+/**
+ * Spawns the canvas worker from this worker's own URL, so it is allowed by the same CSP and `workerUrl`
+ * setup as this worker. The main thread then talks to it directly, through the given port.
+ */
+function spawnCanvasWorker(workerScope: WorkerScope, port: MessagePort) {
+  const reportError = (error: unknown) => workerScope.postMessage({ type: 'canvasWorkerErrored', error: String(error) })
+  try {
+    const canvasWorker = new Worker(location.href)
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- Zone.js does not run in workers
+    canvasWorker.addEventListener('error', (event) => {
+      // Otherwise, the error propagates to this worker and is reported as a deflate worker error
+      event.preventDefault()
+      reportError(event.message || 'canvas worker error')
+    })
+    canvasWorker.postMessage({ action: 'canvasInit' } satisfies DeflateWorkerAction, [port])
+  } catch (error) {
+    reportError(error)
+  }
+}
+
+function startCanvasWorker(workerScope: WorkerScope, port: MessagePort) {
+  // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- Zone.js does not run in workers
+  port.addEventListener('message', ({ data }: MessageEvent<CanvasWorkerRequest>) => {
+    if (data.action === 'stop') {
+      port.close()
+      workerScope.close()
+      return
+    }
+    void captureCanvasBitmap(data).then((response) => port.postMessage(response))
+  })
+  port.start()
+  port.postMessage({ type: 'ready' } satisfies CanvasWorkerResponse)
 }
 
 /**
