@@ -28,6 +28,7 @@
       "@datadog/browser-rum/internal-synthetics": ["./packages/browser-rum/src/entries/internalSynthetics"],
 
       "@datadog/browser-rum-slim": ["./packages/browser-rum-slim/src/entries/main"],
+      "@datadog/browser-rum-slim/internal": ["./packages/browser-rum-slim/src/entries/internal"],
 
       "@datadog/browser-rum-shopify": ["./packages/browser-rum-shopify/src/entries/main"],
 

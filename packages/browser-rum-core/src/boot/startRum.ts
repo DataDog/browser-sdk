@@ -1,5 +1,6 @@
 import type { DeflateEncoderStreamId, Encoder, BufferedData, Telemetry, SessionManager } from '@datadog/browser-core'
-import type { Observable, BufferedObservable } from '@datadog/js-core/util'
+import type { BufferedObservable } from '@datadog/js-core/util'
+import { isWorkerEnvironment, noop, Observable } from '@datadog/js-core/util'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -13,6 +14,7 @@ import {
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createDOMMutationObservable } from '@datadog/js-core/dom'
+import type { MutationRecord } from '@datadog/js-core/dom'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
@@ -27,10 +29,12 @@ import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
+import type { LocationChange } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
+import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
@@ -140,14 +144,20 @@ export function startRumEventCollection(
 ) {
   const cleanupTasks: Array<() => void> = []
 
-  const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable()
-  const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
+  // Workers (e.g. Shopify Web Pixels) have no DOM, history or `window.open` to observe
+  const domMutationObservable = isWorkerEnvironment ? new Observable<MutationRecord[]>() : createDOMMutationObservable()
+  const locationChangeObservable = isWorkerEnvironment
+    ? new Observable<LocationChange>()
+    : createLocationChangeObservable()
+  const { observable: windowOpenObservable, stop: stopWindowOpen }: ReturnType<typeof createWindowOpenObservable> =
+    isWorkerEnvironment ? { observable: new Observable<void>(), stop: noop } : createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
   const { assembleEventDefaults: assembleHook } = hooks
   startDefaultContext(assembleHook, configuration, sdkName)
-  const pageStateHistory = startPageStateHistory(assembleHook)
+  const pageStateHistory: PageStateHistory = isWorkerEnvironment
+    ? { wasInPageStateDuringPeriod: () => false, addPageState: noop, stop: noop }
+    : startPageStateHistory(assembleHook)
   cleanupTasks.push(() => pageStateHistory.stop())
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
@@ -172,11 +182,18 @@ export function startRumEventCollection(
 
   const eventCollection = startEventCollection(lifeCycle)
 
-  const displayContext = startDisplayContext(assembleHook)
+  // Workers have no viewport (Shopify Web Pixels provide it through a plugin)
+  const displayContext: ReturnType<typeof startDisplayContext> = isWorkerEnvironment
+    ? { stop: noop }
+    : startDisplayContext(assembleHook)
   cleanupTasks.push(displayContext.stop)
-  const ciVisibilityContext = startCiVisibilityContext(assembleHook)
+  const ciVisibilityContext: ReturnType<typeof startCiVisibilityContext> = isWorkerEnvironment
+    ? { stop: noop }
+    : startCiVisibilityContext(assembleHook)
   cleanupTasks.push(ciVisibilityContext.stop)
-  startSyntheticsContext(assembleHook)
+  if (!isWorkerEnvironment) {
+    startSyntheticsContext(assembleHook)
+  }
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
 
@@ -205,10 +222,14 @@ export function startRumEventCollection(
 
   cleanupTasks.push(stopViewCollection)
 
-  const resourceCollection = startResourceCollection(lifeCycle, configuration)
+  const resourceCollection: ReturnType<typeof startResourceCollection> = isWorkerEnvironment
+    ? { startResource: noop, stopResource: noop, stop: noop }
+    : startResourceCollection(lifeCycle, configuration)
   cleanupTasks.push(resourceCollection.stop)
 
-  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
+  const { stop: stopLongTaskCollection }: ReturnType<typeof startLongTaskCollection> = isWorkerEnvironment
+    ? { stop: noop }
+    : startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
 
   const { addError } = startErrorCollection(lifeCycle, bufferedDataObservable)

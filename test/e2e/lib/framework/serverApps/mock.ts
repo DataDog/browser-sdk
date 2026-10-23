@@ -219,6 +219,15 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.end()
   })
 
+  // Built by the browser-rum-shopify package, not by a package of its own
+  app.get('/datadog-rum-shopify-web-pixel.js', (req, res) => {
+    if (process.env.CI) {
+      res.sendFile(getSdkBundlePath('browser-rum-shopify', req.originalUrl))
+    } else {
+      forwardToDevServer(req.originalUrl, res)
+    }
+  })
+
   app.get(/datadog-(?<packageName>[a-z-]*)\.js/, (req, res) => {
     const { originalUrl, params } = req
 

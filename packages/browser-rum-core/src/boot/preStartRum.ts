@@ -55,7 +55,7 @@ export type DoStartRum = (
 ) => StartRumResult
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, sdkName }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, allowWorker = false, startDeflateWorker, sdkName }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   doStartRum: DoStartRum
 ): Strategy {
@@ -181,7 +181,8 @@ export function createPreStartStrategy(
       startTrackingConsentContext(assembleTelemetryHook, trackingConsentState)
       telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, assembleTelemetryHook, sdkName)
 
-      if (isWorkerEnvironment) {
+      // Shopify Web Pixels are allowed to run in a worker environment.
+      if (isWorkerEnvironment && initConfiguration?.plugins?.some((plugin) => plugin.name === 'shopify-app-pixel')) {
         display.warn('The RUM SDK is not supported in a web or service worker environment.')
         return
       }
