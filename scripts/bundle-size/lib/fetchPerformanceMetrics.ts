@@ -16,7 +16,7 @@ export interface PerformanceMetric {
 }
 
 export async function fetchBundleSizes(commitId: string): Promise<PerformanceMetric[]> {
-  const series = await queryMetrics(`avg:bundle_sizes.uncompressed{commit:${commitId}} by {bundle_name}`)
+  const series = await queryMetrics(`avg:browser_sdk.bundle_size.uncompressed{commit:${commitId}} by {bundle_name}`)
   const bundleSizes: PerformanceMetric[] = []
   for (const { tag_set: tagSet, pointlist } of series) {
     const name = tagSet?.find((tag) => tag.startsWith('bundle_name:'))?.slice('bundle_name:'.length)
