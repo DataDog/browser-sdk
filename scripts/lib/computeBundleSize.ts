@@ -13,17 +13,18 @@ interface BundleSizes {
   [key: string]: BundleSize
 }
 
-function getPackageName(file: string): string | undefined {
+export function getPackageName(file: string): string | undefined {
+  let name: string
   if (file.includes('chunk')) {
     const { chunkName, packageName } =
       file.match(/chunks\/(?<chunkName>[a-zA-Z0-9]*)-[a-z0-9]*-datadog-(?<packageName>[a-z-]*)\.js/)?.groups ?? {}
-    return `${packageName}_${chunkName.replace(/^datadog/, '').toLowerCase()}`
+    name = `${packageName}_${chunkName.replace(/^datadog/, '').toLowerCase()}`
+  } else {
+    name = file.replace('datadog-', '').replace('.js', '')
   }
 
-  return file
-    .replace('datadog-', '')
-    .replace('-', '_') // rename rum-slim to rum_slim
-    .replace('.js', '')
+  // Keys are used as metric names (`bundle_sizes.<key>`), which don't support dashes
+  return name.replaceAll('-', '_')
 }
 
 function getGzippedBundleSize(filePath: string): number {
