@@ -14,7 +14,10 @@ import { resetInteractionCountPolyfill } from '../../browser-rum-core/src/domain
 import { resetTelemetry } from '../src/domain/telemetry'
 import { resetSampleDecisionCache } from '../src/domain/sampler'
 import { startLeakDetection } from './leakDetection'
+import { trackCurrentJasmineSpec } from './getCurrentJasmineSpec'
 ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
+
+trackCurrentJasmineSpec()
 
 beforeEach(() => {
   // prevent 'Some of your tests did a full page reload!' issue

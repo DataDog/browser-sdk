@@ -118,19 +118,6 @@ const config: ViteUserConfig = {
       // Test helpers, e.g. `@datadog/browser-core/test`
       { find: /^@datadog\/browser-(.+\/.*)$/, replacement: `${ROOT}/packages/browser-$1` },
       { find: /^packages\/(.*)$/, replacement: `${ROOT}/packages/$1` },
-      { find: /.*\/allJsonSchemas$/, replacement: resolve(import.meta.dirname, 'allJsonSchemas.ts') },
-      {
-        find: /.*\/getCurrentJasmineSpec$/,
-        replacement: resolve(import.meta.dirname, 'getCurrentJasmineSpec.ts'),
-      },
-      {
-        find: /.*\/registerCleanupTask$/,
-        replacement: resolve(import.meta.dirname, 'registerCleanupTask.ts'),
-      },
-      {
-        find: /.*\/disableJasmineUncaughtExceptionTracking/,
-        replacement: resolve(import.meta.dirname, 'disableJasmineUncaughtExceptionTracking.ts'),
-      },
     ],
   },
   define: {

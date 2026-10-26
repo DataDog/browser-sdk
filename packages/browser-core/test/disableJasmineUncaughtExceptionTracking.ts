@@ -2,16 +2,22 @@ import { noop } from '@datadog/js-core/util'
 import { registerCleanupTask } from './registerCleanupTask'
 
 /**
- * Disable Jasmine's uncaught error handling. This is useful for test cases throwing exceptions or
- * unhandled rejections that are expected to be caught somehow, but Jasmine also catch them and
- * fails the test.
- *
- * Replace the handler instead of spying on it, so tests can still spy on `window.onerror`.
+ * Vitest will ignore uncaught errors if we add our own listener, see
+ * https://vitest.dev/guide/features.html#unhandled-errors
  */
 export function disableJasmineUncaughtExceptionTracking() {
-  const originalOnError = window.onerror
-  window.onerror = noop
+  window.addEventListener('error', noop)
+  window.addEventListener('unhandledrejection', noop)
+  const originalConsoleError = console.error
+  console.error = (...args) => {
+    if (new Error().stack!.includes('error-catcher.js')) {
+      return
+    }
+    originalConsoleError(...args)
+  }
   registerCleanupTask(() => {
-    window.onerror = originalOnError
+    console.error = originalConsoleError
+    window.removeEventListener('error', noop)
+    window.removeEventListener('unhandledrejection', noop)
   })
 }

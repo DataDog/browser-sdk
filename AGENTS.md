@@ -78,7 +78,7 @@ test/
 ├── apps/            # Test apps for E2E and performance testing
 ├── e2e/             # Playwright E2E test scenarios
 ├── performance/     # Performance benchmarking tests
-├── unit/            # Karma configuration for BrowserStack unit tests
+├── unit/            # BrowserStack browser matrix for unit tests
 └── unit-vitest/     # Vitest unit test configuration (Jasmine compatibility shim)
 
 scripts/             # Build, deploy, release automation
@@ -100,7 +100,7 @@ For deeper context, see:
 
 ### Unit Tests
 
-- Test framework: Jasmine API on Vitest Browser Mode (via a shim in `test/unit-vitest/`), Karma for BrowserStack. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
+- Test framework: Jasmine API on Vitest Browser Mode (via a shim in `test/unit-vitest/`). Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
 - Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Prefer `collectAsyncCalls(spy, n)` over `waitFor(() => spy.calls.count() > 0)` for waiting on spy calls
