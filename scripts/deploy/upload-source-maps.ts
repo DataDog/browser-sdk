@@ -2,8 +2,7 @@ import path from 'node:path'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvSdkVersion } from '../lib/buildEnv.ts'
-import { getTelemetryOrgApiKey, getOrg2ApiKey } from '../lib/secrets.ts'
-import { getAllDatacentersMetadata, getDatacenterMetadata } from '../lib/datacenter.ts'
+import { getOrg2ApiKey } from '../lib/secrets.ts'
 import { forEachFile } from '../lib/filesUtils.ts'
 import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } from './lib/deploymentUtils.ts'
 
@@ -12,16 +11,6 @@ import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, pack
  * Usage:
  * BUILD_MODE=canary|release node upload-source-maps.ts staging|canary|vXXX root,us1,eu1,...
  */
-
-async function getSitesByVersion(version: string): Promise<string[]> {
-  if (version === 'staging') {
-    return ['datad0g.com', 'datadoghq.com']
-  }
-  if (version.endsWith('canary')) {
-    return ['datadoghq.com']
-  }
-  return (await getAllDatacentersMetadata()).map((dc) => dc.site)
-}
 
 if (!process.env.NODE_TEST_CONTEXT) {
   const version = process.argv[2]
@@ -48,24 +37,14 @@ async function uploadSourceMaps(
   const bundleFolder = buildBundleFolder(packageName)
 
   for (const uploadPathType of uploadPathTypes) {
-    let sites: string[]
     let uploadPath: string
     if (uploadPathType === 'root') {
-      sites = await getSitesByVersion(version)
       uploadPath = buildRootUploadPath(packageName, version)
       await renameFilesWithVersionSuffix(bundleFolder, version)
     } else {
-      const datacenterMetadata = await getDatacenterMetadata(uploadPathType)
-
-      if (!datacenterMetadata) {
-        throw new Error(`No datacenter metadata found for ${uploadPathType}`)
-      }
-
-      sites = [datacenterMetadata.site]
       uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
     }
     const prefix = path.dirname(`/${uploadPath}`)
-    uploadToDatadog(packageName, service, prefix, bundleFolder, sites)
     uploadToOrg2(packageName, service, prefix, bundleFolder)
   }
 }
@@ -107,37 +86,4 @@ function uploadToOrg2(packageName: string, service: string, prefix: string, bund
       DATADOG_SITE: 'datadoghq.com',
     })
     .run()
-}
-
-function uploadToDatadog(
-  packageName: string,
-  service: string,
-  prefix: string,
-  bundleFolder: string,
-  sites: string[]
-): void {
-  for (const site of sites) {
-    const apiKey = getTelemetryOrgApiKey(site)
-
-    if (!apiKey) {
-      printLog(`No API key configured for ${site}, skipping...`)
-      continue
-    }
-
-    printLog(`Uploading ${packageName} source maps with prefix ${prefix} for ${site}...`)
-
-    command`
-      datadog-ci sourcemaps upload ${bundleFolder}
-        --service ${service}
-        --release-version ${getBuildEnvSdkVersion()}
-        --minified-path-prefix ${prefix}
-        --project-path @datadog/${packageName}/
-        --repository-url https://www.github.com/datadog/browser-sdk
-    `
-      .withEnvironment({
-        DATADOG_API_KEY: apiKey,
-        DATADOG_SITE: site,
-      })
-      .run()
-  }
 }
