@@ -1,6 +1,8 @@
 import { setDebugMode } from '@datadog/js-core/util'
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { display } from '../tools/display'
+import type { User } from '../domain/contexts/userContext'
+import type { Account } from '../domain/contexts/accountContext'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -17,6 +19,29 @@ export interface PublicApi {
    * See [CDN async setup](https://docs.datadoghq.com/real_user_monitoring/browser/#cdn-async) for further information.
    */
   onReady: (callback: () => void) => void
+}
+
+/**
+ * Data to set when initializing the SDK. Each property is equivalent to calling the corresponding
+ * setter right after `init()`: it overrides any value set before `init()`, and it can be updated
+ * later.
+ */
+export interface InitData {
+  /**
+   * User information to set to all events, stored in `@usr`. Equivalent to calling `setUser()` right
+   * after `init()`.
+   *
+   * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
+   */
+  user?: (User & { id: string }) | undefined
+
+  /**
+   * Account information to set to all events, stored in `@account`. Equivalent to calling
+   * `setAccount()` right after `init()`.
+   *
+   * See [Account](https://docs.datadoghq.com/real_user_monitoring/application_monitoring/browser/advanced_configuration/#account) for further information.
+   */
+  account?: Account | undefined
 }
 
 export function makePublicApi<T extends PublicApi>(stub: Omit<T, keyof PublicApi>): T {

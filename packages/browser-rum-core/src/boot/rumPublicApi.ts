@@ -6,6 +6,7 @@ import type {
   DeflateEncoderStreamId,
   DeflateEncoder,
   PublicApi,
+  InitData,
   ContextManager,
   TrackingConsent,
   User,
@@ -75,17 +76,23 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
+   * @param initData - Data to set at initialization, such as user and account information
    * @example
    * ```ts
-   * datadogRum.init({
-   *   applicationId: '<DATADOG_APPLICATION_ID>',
-   *   clientToken: '<DATADOG_CLIENT_TOKEN>',
-   *   site: '<DATADOG_SITE>',
-   *   // ...
-   * })
+   * datadogRum.init(
+   *   {
+   *     applicationId: '<DATADOG_APPLICATION_ID>',
+   *     clientToken: '<DATADOG_CLIENT_TOKEN>',
+   *     site: '<DATADOG_SITE>',
+   *     // ...
+   *   },
+   *   {
+   *     user: { id: '<USER_ID>', name: '<USER_NAME>' },
+   *   }
+   * )
    * ```
    */
-  init: (initConfiguration: RumInitConfiguration) => void
+  init: (initConfiguration: RumInitConfiguration, initData?: InitData) => void
 
   /**
    * Set the tracking consent of the current user.
@@ -631,7 +638,12 @@ export interface RumPublicApiOptions {
 }
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi, errorStack?: string) => void
+  init: (
+    initConfiguration: RumInitConfiguration,
+    publicApi: RumPublicApi,
+    errorStack?: string,
+    initData?: InitData
+  ) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
@@ -758,9 +770,9 @@ export function makeRumPublicApi(
   })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: (initConfiguration) => {
+    init: (initConfiguration, initData) => {
       const errorStack = new Error().stack
-      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack))
+      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack, initData))
     },
 
     setTrackingConsent: monitor((trackingConsent) => {

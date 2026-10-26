@@ -97,6 +97,17 @@ describe('rum public api', () => {
         expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
       })
     })
+
+    it('sets the user and account provided as init data', () => {
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+      const user = { id: 'user-id', name: 'John Doe' }
+      const account = { id: 'account-id', name: 'Acme' }
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION, { user, account })
+
+      expect(rumPublicApi.getUser()).toEqual(user)
+      expect(rumPublicApi.getAccount()).toEqual(account)
+    })
   })
 
   describe('getInternalContext', () => {

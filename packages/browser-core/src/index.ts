@@ -18,7 +18,7 @@ export {
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export type { StackTrace } from './tools/stackTrace/computeStackTrace'
 export { computeStackTrace } from './tools/stackTrace/computeStackTrace'
-export type { PublicApi } from './boot/init'
+export type { PublicApi, InitData } from './boot/init'
 export { defineGlobal, makePublicApi } from './boot/init'
 export { displayAlreadyInitializedError } from './boot/displayAlreadyInitializedError'
 export { initReportObservable, RawReportType } from './domain/report/reportObservable'

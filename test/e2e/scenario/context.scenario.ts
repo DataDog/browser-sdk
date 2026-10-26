@@ -50,4 +50,44 @@ test.describe('user, account and global context', () => {
         expect(event.foo).toEqual('bar')
       })
     })
+
+  createTest('should include user and account init data in all rum events')
+    .withRum()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration, {
+        user: { id: '123', name: 'user' },
+        account: { id: '123', name: 'account' },
+      })
+      window.DD_RUM!.addAction('foo')
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      const events = intakeRegistry.rumEvents
+      expect(events.length).toBeGreaterThan(0)
+
+      events.forEach((event) => {
+        expect(event.usr).toEqual({ id: '123', name: 'user', anonymous_id: expect.any(String) })
+        expect(event.account).toEqual({ id: '123', name: 'account' })
+      })
+    })
+
+  createTest('should include user and account init data in all logs')
+    .withLogs()
+    .withLogsInit((configuration) => {
+      window.DD_LOGS!.init(configuration, {
+        user: { id: '123', name: 'user' },
+        account: { id: '123', name: 'account' },
+      })
+      window.DD_LOGS!.logger.log('hello')
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      const logs = intakeRegistry.logsEvents
+      expect(logs.length).toBeGreaterThan(0)
+
+      logs.forEach((event) => {
+        expect(event.usr).toEqual({ id: '123', name: 'user', anonymous_id: expect.any(String) })
+        expect(event.account).toEqual({ id: '123', name: 'account' })
+      })
+    })
 })

@@ -3,7 +3,7 @@ import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager, InitData } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
   display,
@@ -136,6 +136,7 @@ export function createPreStartStrategy(
 
   function doInit(
     initConfiguration: RumInitConfiguration,
+    initData: InitData | undefined,
     errorStack?: string,
     remoteConfigurationMetadata?: RemoteConfigurationMetadata
   ) {
@@ -173,6 +174,13 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+
+    if (initData?.user) {
+      userContext.setContext(initData.user)
+    }
+    if (initData?.account) {
+      accountContext.setContext(initData.account)
+    }
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
 
@@ -232,7 +240,7 @@ export function createPreStartStrategy(
   }
 
   const strategy: Strategy = {
-    init(initConfiguration, publicApi, errorStack) {
+    init(initConfiguration, publicApi, errorStack, initData) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -284,7 +292,7 @@ export function createPreStartStrategy(
             fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
               .then((resolvedInitConfiguration) => {
                 if (resolvedInitConfiguration) {
-                  doInit(resolvedInitConfiguration, errorStack)
+                  doInit(resolvedInitConfiguration, initData, errorStack)
                 }
               })
               .catch(monitorError)
@@ -292,11 +300,16 @@ export function createPreStartStrategy(
             const resolvedRemoteConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
             if (resolvedRemoteConfiguration) {
-              doInit(resolvedRemoteConfiguration.initConfiguration, errorStack, resolvedRemoteConfiguration.metadata)
+              doInit(
+                resolvedRemoteConfiguration.initConfiguration,
+                initData,
+                errorStack,
+                resolvedRemoteConfiguration.metadata
+              )
             }
           }
         } else {
-          doInit(initConfiguration, errorStack)
+          doInit(initConfiguration, initData, errorStack)
         }
       }
     },

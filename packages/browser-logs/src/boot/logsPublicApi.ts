@@ -1,4 +1,4 @@
-import type { TrackingConsent, PublicApi, ContextManager, Account, User } from '@datadog/browser-core'
+import type { TrackingConsent, PublicApi, InitData, ContextManager, Account, User } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
   ContextManagerMethod,
@@ -52,8 +52,9 @@ export interface LogsPublicApi extends PublicApi {
    *
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
+   * @param initData - Data to set at initialization, such as user and account information
    */
-  init: (initConfiguration: LogsInitConfiguration) => void
+  init: (initConfiguration: LogsInitConfiguration, initData?: InitData) => void
 
   /**
    * Set the tracking consent of the current user.
@@ -258,7 +259,12 @@ export interface LogsPublicApi extends PublicApi {
 }
 
 export interface Strategy {
-  init: (initConfiguration: LogsInitConfiguration, publicApi: LogsPublicApi, errorStack?: string) => void
+  init: (
+    initConfiguration: LogsInitConfiguration,
+    publicApi: LogsPublicApi,
+    errorStack?: string,
+    initData?: InitData
+  ) => void
   initConfiguration: LogsInitConfiguration | undefined
   globalContext: ContextManager
   accountContext: ContextManager
@@ -305,9 +311,9 @@ export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPubli
   const logsPublicApi: LogsPublicApi = makePublicApi<LogsPublicApi>({
     logger: mainLogger,
 
-    init: (initConfiguration) => {
+    init: (initConfiguration, initData) => {
       const errorStack = new Error().stack
-      callMonitored(() => strategy.init(initConfiguration, logsPublicApi, errorStack))
+      callMonitored(() => strategy.init(initConfiguration, logsPublicApi, errorStack, initData))
     },
 
     setTrackingConsent: monitor((trackingConsent) => {

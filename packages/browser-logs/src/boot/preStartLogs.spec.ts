@@ -208,6 +208,72 @@ describe('preStartLogs', () => {
     })
   })
 
+  describe('init data', () => {
+    const USER = { id: 'user-id', name: 'John Doe' }
+    const ACCOUNT = { id: 'account-id', name: 'Acme' }
+    const INIT_DATA = { user: USER, account: ACCOUNT }
+
+    it('sets the user and account provided at init', () => {
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+
+    it('applies the user and account to the started logs', async () => {
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+      const setUserContextSpy = jasmine.createSpy()
+      const setAccountContextSpy = jasmine.createSpy()
+      doStartLogsSpy.and.returnValue({
+        userContext: { setContext: setUserContextSpy },
+        accountContext: { setContext: setAccountContextSpy },
+      } as unknown as StartLogsResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+      await collectAsyncCalls(setUserContextSpy, 1)
+
+      expect(setUserContextSpy).toHaveBeenCalledOnceWith(USER)
+      expect(setAccountContextSpy).toHaveBeenCalledOnceWith(ACCOUNT)
+    })
+
+    it('overrides the user and account set before init', () => {
+      const { strategy } = createPreStartStrategyWithDefaults()
+      strategy.userContext.setContext({ id: 'previous-user-id', email: 'previous@example.com' })
+      strategy.accountContext.setContext({ id: 'previous-account-id', plan: 'free' })
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+
+    it('does not set the user and account when the configuration is invalid', () => {
+      spyOn(display, 'error')
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(INVALID_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+
+      expect(strategy.userContext.getContext()).toEqual({})
+      expect(strategy.accountContext.getContext()).toEqual({})
+    })
+
+    it('does not override the user and account on subsequent init calls', () => {
+      spyOn(display, 'error')
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, {
+        user: { id: 'other-user-id' },
+        account: { id: 'other-account-id' },
+      })
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+  })
+
   describe('internal context', () => {
     it('should return undefined if not initialized', () => {
       const { strategy } = createPreStartStrategyWithDefaults()
