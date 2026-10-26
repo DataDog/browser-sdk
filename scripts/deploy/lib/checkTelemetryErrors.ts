@@ -3,10 +3,13 @@
  */
 import { Agent, fetch, type Response } from 'undici'
 import { printLog, timeout, createFetchError } from '../../lib/executionUtils.ts'
-import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
-import { getDatacenterMetadata } from '../../lib/datacenter.ts'
+import { getOrg2ApiKey, getOrg2AppKey } from '../../lib/secrets.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
+const TELEMETRY_INDEX = 'rum-sdk-telemetry-logs'
+// Max values returned per group by level (the API defaults to 10). Must be above the number of datacenters checked
+// at once, so that no datacenter is left out.
+const GROUP_BY_LIMIT = 50
 // Rate limit: 2 requests per 10 seconds. Wait 6 seconds between requests to be safe.
 const RATE_LIMIT_DELAY_MS = 6000
 const MAX_RETRIES = 3
@@ -24,25 +27,28 @@ function createTelemetryAgent(): Agent {
   })
 }
 
-function getQueries(version: string): Query[] {
-  const query = `source:browser status:error version:${version}`
+function getQueries(datacenters: string[], version: string): Query[] {
+  // Errors tagged as known issues by the telemetry pipeline are not considered.
+  const query = `@ddsource:browser status:error @version:${version} @datacenter:(${datacenters.join(' OR ')}) -@known_issue_status:*`
 
+  // Thresholds apply per datacenter, so every query is grouped by datacenter first.
   return [
     {
       name: 'Telemetry errors',
       query,
+      groupBy: ['@datacenter'],
       threshold: 300,
     },
     {
       name: 'Telemetry errors on specific org',
       query,
-      groupBy: '@org_id',
+      groupBy: ['@datacenter', '@org_id'],
       threshold: 100,
     },
     {
       name: 'Telemetry error on specific message',
       query,
-      groupBy: 'issue.id',
+      groupBy: ['@datacenter', 'issue.id'],
       threshold: 100,
     },
   ]
@@ -55,90 +61,49 @@ function getQueries(version: string): Query[] {
  * @param version - Browser SDK version to check errors for
  */
 export async function checkTelemetryErrors(datacenters: string[], version: string): Promise<void> {
-  const queries = getQueries(version)
+  const queries = getQueries(datacenters, version)
 
   printLog(
     `Checking telemetry errors for version ${version} across ${datacenters.length} datacenter(s): ${datacenters.join(', ')}`
   )
 
+  const apiKey = getOrg2ApiKey()
+  const applicationKey = getOrg2AppKey()
+
   // Create a fresh HTTP agent for this batch of telemetry checks
   const agent = createTelemetryAgent()
 
   try {
-    // Check all datacenters in parallel since rate limits are per datacenter
-    await Promise.all(datacenters.map((datacenter) => checkDatacenterTelemetryErrors(datacenter, queries, agent)))
+    for (let i = 0; i < queries.length; i++) {
+      const query = queries[i]
+      const buckets = await queryLogsApi(apiKey, applicationKey, query, agent)
+
+      for (const datacenter of datacenters) {
+        const count = Math.max(
+          0,
+          ...buckets.filter((bucket) => bucket.by['@datacenter'] === datacenter).map((bucket) => bucket.computes.c0)
+        )
+
+        if (count > query.threshold) {
+          throw new Error(`[${datacenter}] ${query.name}: found ${count} events (threshold: ${query.threshold}) in the last ${TIME_WINDOW_IN_MINUTES} minutes,
+see ${computeLogsLink(query)}`)
+        }
+
+        printLog(`[${datacenter}] ${query.name}: found ${count} event(s) (threshold: ${query.threshold})`)
+      }
+
+      // Skip rate limit delay after last query
+      if (i < queries.length - 1) {
+        await timeout(RATE_LIMIT_DELAY_MS)
+      }
+    }
   } finally {
     // Always close the agent to release resources
     await agent.close()
   }
 }
 
-async function getDatacenterTelemetryCredentials(
-  datacenter: string
-): Promise<{ site: string; apiKey: string; applicationKey: string } | undefined> {
-  const datacenterMetadata = await getDatacenterMetadata(datacenter)
-
-  if (!datacenterMetadata?.site) {
-    printLog(`No site is configured for datacenter ${datacenter}. skipping...`)
-    return
-  }
-
-  const site = datacenterMetadata.site
-
-  const apiKey = getTelemetryOrgApiKey(site)
-  const applicationKey = getTelemetryOrgApplicationKey(site)
-
-  if (!apiKey || !applicationKey) {
-    printLog(`[${site}] No API key or application key found for ${site}, skipping...`)
-    return
-  }
-
-  return { site, apiKey, applicationKey }
-}
-
-/**
- * Returns true if at least one of the given datacenters has telemetry credentials configured.
- * Use this to skip telemetry checks entirely when no datacenter can be queried.
- */
-export async function hasTelemetryCredentials(datacenters: string[]): Promise<boolean> {
-  for (const datacenter of datacenters) {
-    if ((await getDatacenterTelemetryCredentials(datacenter)) !== undefined) {
-      return true
-    }
-  }
-  return false
-}
-
-async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query[], agent: Agent): Promise<void> {
-  const credentials = await getDatacenterTelemetryCredentials(datacenter)
-  if (!credentials) {
-    return
-  }
-
-  const { site, apiKey, applicationKey } = credentials
-
-  for (let i = 0; i < queries.length; i++) {
-    const query = queries[i]
-    const buckets = await queryLogsApi(site, apiKey, applicationKey, query, agent)
-    const count = buckets[0]?.computes?.c0 ?? 0
-
-    // buckets are sorted by count, so we only need to check the first one
-    if (count > query.threshold) {
-      throw new Error(`[${site}] ${query.name}: found ${count} events (threshold: ${query.threshold}) in the last ${TIME_WINDOW_IN_MINUTES} minutes,
-see ${computeLogsLink(site, query)}`)
-    }
-
-    printLog(`[${site}] ${query.name}: found ${count} event(s) (threshold: ${query.threshold})`)
-
-    // Skip rate limit delay after last query
-    if (i < queries.length - 1) {
-      await timeout(RATE_LIMIT_DELAY_MS)
-    }
-  }
-}
-
 async function queryLogsApi(
-  site: string,
   apiKey: string,
   applicationKey: string,
   query: Query,
@@ -147,7 +112,7 @@ async function queryLogsApi(
 ): Promise<QueryResultBucket[]> {
   let response: Response
   try {
-    response = await fetch(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
+    response = await fetch('https://api.datadoghq.com/api/v2/logs/analytics/aggregate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -160,20 +125,16 @@ async function queryLogsApi(
             aggregation: 'count',
           },
         ],
-        ...(query.groupBy
-          ? {
-              group_by: [
-                {
-                  facet: query.groupBy,
-                  sort: {
-                    type: 'measure',
-                    aggregation: 'count',
-                  },
-                },
-              ],
-            }
-          : {}),
+        group_by: query.groupBy.map((facet) => ({
+          facet,
+          limit: GROUP_BY_LIMIT,
+          sort: {
+            type: 'measure',
+            aggregation: 'count',
+          },
+        })),
         filter: {
+          indexes: [TELEMETRY_INDEX],
           from: `now-${TIME_WINDOW_IN_MINUTES}m`,
           to: 'now',
           query: query.query,
@@ -183,21 +144,21 @@ async function queryLogsApi(
       dispatcher: agent,
     })
   } catch (error) {
-    throw new Error(`[${site}] Network error on attempt ${attempt}/${MAX_RETRIES} for "${query.name}"`, {
+    throw new Error(`Network error on attempt ${attempt}/${MAX_RETRIES} for "${query.name}"`, {
       cause: error,
     })
   }
 
   if (shouldRetry(response, attempt)) {
     printLog(
-      `[${site}] 503 Service Unavailable for "${query.name}", retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
+      `503 Service Unavailable for "${query.name}", retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
     )
     await timeout(RATE_LIMIT_DELAY_MS)
-    return queryLogsApi(site, apiKey, applicationKey, query, agent, attempt + 1)
+    return queryLogsApi(apiKey, applicationKey, query, agent, attempt + 1)
   }
 
   if (!response.ok) {
-    throw new Error(`[${site}] HTTP error on attempt ${attempt}/${MAX_RETRIES} for "${query.name}"`, {
+    throw new Error(`HTTP error on attempt ${attempt}/${MAX_RETRIES} for "${query.name}"`, {
       cause: await createFetchError(response),
     })
   }
@@ -223,40 +184,26 @@ function isValidData(data: QueryResult): boolean {
   )
 }
 
-function computeLogsLink(site: string, query: Query): string {
+function computeLogsLink(query: Query): string {
   const now = Date.now()
   const timeWindowAgo = now - TIME_WINDOW_IN_MINUTES * 60 * 1000
 
   const queryParams = new URLSearchParams({
-    query: query.query,
-    ...(query.groupBy
-      ? {
-          agg_q: query.groupBy,
-          agg_t: 'count',
-          viz: 'toplist',
-        }
-      : {}),
+    query: `index:${TELEMETRY_INDEX} ${query.query}`,
+    agg_q: query.groupBy.join(','),
+    agg_t: 'count',
+    viz: 'toplist',
     from_ts: `${timeWindowAgo}`,
     to_ts: `${now}`,
   })
 
-  return `https://${computeTelemetryOrgDomain(site)}/logs?${queryParams.toString()}`
-}
-
-function computeTelemetryOrgDomain(site: string): string {
-  switch (site) {
-    case 'datadoghq.com':
-    case 'datadoghq.eu':
-      return `dd-rum-telemetry.${site}`
-    default:
-      return site
-  }
+  return `https://app.datadoghq.com/logs?${queryParams.toString()}`
 }
 
 interface Query {
   name: string
   query: string
-  groupBy?: string
+  groupBy: string[]
   threshold: number
 }
 
