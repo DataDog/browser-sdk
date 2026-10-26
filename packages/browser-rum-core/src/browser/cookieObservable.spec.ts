@@ -3,7 +3,7 @@ import type { Subscription } from '@datadog/js-core/util'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import { deleteCookie, setCookie } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, mockUnreadableCookies } from '@datadog/browser-core/test'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
 
 const COOKIE_NAME = 'cookie_name'
@@ -61,6 +61,19 @@ describe('cookieObservable', () => {
     clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
 
     expect(cookieChange).toEqual('foo')
+  })
+
+  it('should not throw when document.cookie is not accessible and cookieStore is not supported', () => {
+    Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
+    mockUnreadableCookies()
+    const observable = createCookieObservable(COOKIE_NAME)
+
+    const callback = jasmine.createSpy()
+    expect(() => {
+      subscription = observable.subscribe(callback)
+      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+    }).not.toThrow()
+    expect(callback).not.toHaveBeenCalled()
   })
 
   it('should not notify observers on cookie change when the cookie value as not changed when cookieStore is not supported', () => {
