@@ -69,21 +69,26 @@ const ORG2_CLOUDFRONT_BASE_URL = 'https://d20xtzwzcl0ceb.cloudfront.net'
 
 function uploadToOrg2(packageName: string, service: string, prefix: string, bundleFolder: string): void {
   const apiKey = getOrg2ApiKey()
-  const org2Prefix = `${ORG2_CLOUDFRONT_BASE_URL}${prefix === '/' ? '' : prefix}`
 
-  printLog(`Uploading ${packageName} source maps with prefix ${org2Prefix} for org2...`)
+  // A root-relative prefix matches the files on any domain (CDN, CloudFront). The CloudFront URL prefix is kept for
+  // profiling (PROF-13923), whose source map matching may rely on the full URL.
+  const org2Prefixes = [prefix, `${ORG2_CLOUDFRONT_BASE_URL}${prefix === '/' ? '' : prefix}`]
 
-  command`
-    datadog-ci sourcemaps upload ${bundleFolder}
-      --service ${service}
-      --release-version ${getBuildEnvSdkVersion()}
-      --minified-path-prefix ${org2Prefix}
-      --project-path @datadog/${packageName}/
-      --repository-url https://www.github.com/datadog/browser-sdk
-  `
-    .withEnvironment({
-      DATADOG_API_KEY: apiKey,
-      DATADOG_SITE: 'datadoghq.com',
-    })
-    .run()
+  for (const org2Prefix of org2Prefixes) {
+    printLog(`Uploading ${packageName} source maps with prefix ${org2Prefix} for org2...`)
+
+    command`
+      datadog-ci sourcemaps upload ${bundleFolder}
+        --service ${service}
+        --release-version ${getBuildEnvSdkVersion()}
+        --minified-path-prefix ${org2Prefix}
+        --project-path @datadog/${packageName}/
+        --repository-url https://www.github.com/datadog/browser-sdk
+    `
+      .withEnvironment({
+        DATADOG_API_KEY: apiKey,
+        DATADOG_SITE: 'datadoghq.com',
+      })
+      .run()
+  }
 }
