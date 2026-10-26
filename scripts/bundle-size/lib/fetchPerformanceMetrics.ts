@@ -5,13 +5,27 @@ const ONE_DAY_IN_SECOND = 24 * 60 * 60
 
 interface DatadogResponse {
   series?: Array<{
-    pointlist?: Array<[number, number]>
+    pointlist?: Array<[number, number | null]>
+    tag_set?: string[]
   }>
 }
 
 export interface PerformanceMetric {
   name: string
   value: number
+}
+
+export async function fetchBundleSizes(commitId: string): Promise<PerformanceMetric[]> {
+  const series = await queryMetrics(`avg:browser_sdk.bundle_size.uncompressed{commit:${commitId}} by {bundle_name}`)
+  const bundleSizes: PerformanceMetric[] = []
+  for (const { tag_set: tagSet, pointlist } of series) {
+    const name = tagSet?.find((tag) => tag.startsWith('bundle_name:'))?.slice('bundle_name:'.length)
+    const value = getFirstValue(pointlist)
+    if (name && value !== undefined) {
+      bundleSizes.push({ name, value })
+    }
+  }
+  return bundleSizes
 }
 
 export async function fetchPerformanceMetrics(
@@ -25,35 +39,48 @@ export async function fetchPerformanceMetrics(
 }
 
 async function fetchMetric(type: string, name: string, commitId: string): Promise<PerformanceMetric | undefined> {
-  const now = Math.floor(Date.now() / 1000)
-  const date = now - 30 * ONE_DAY_IN_SECOND
   let query = ''
 
   switch (type) {
-    case 'bundle':
-      query = `avg:bundle_sizes.${name}{commit:${commitId}}&from=${date}&to=${now}`
+    // TODO: remove once commits reported with one metric per bundle are older than the 30 days window
+    case 'legacyBundle':
+      query = `avg:bundle_sizes.${name}{commit:${commitId}}`
       break
     case 'cpu':
-      query = `avg:cpu.sdk.${name}.performance.average{commitid:${commitId}}&from=${date}&to=${now}`
+      query = `avg:cpu.sdk.${name}.performance.average{commitid:${commitId}}`
       break
     case 'memory':
-      query = `avg:memory.sdk.${name}.performance.bytes{commit:${commitId}}&from=${date}&to=${now}`
+      query = `avg:memory.sdk.${name}.performance.bytes{commit:${commitId}}`
       break
   }
 
-  const response = await fetchHandlingError(`https://api.datadoghq.com/api/v1/query?query=${query}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'DD-API-KEY': getOrg2ApiKey(),
-      'DD-APPLICATION-KEY': getOrg2AppKey(),
-    },
-  })
-  const data = (await response.json()) as DatadogResponse
-  if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
-    return {
-      name,
-      value: data.series[0].pointlist[0][1],
-    }
+  const series = await queryMetrics(query)
+  const value = getFirstValue(series[0]?.pointlist)
+  if (value !== undefined) {
+    return { name, value }
   }
+}
+
+// Grouped series are aligned on the same time buckets, so they can contain null points
+function getFirstValue(pointlist: Array<[number, number | null]> | undefined): number | undefined {
+  return pointlist?.find((point): point is [number, number] => point[1] !== null)?.[1]
+}
+
+async function queryMetrics(query: string): Promise<NonNullable<DatadogResponse['series']>> {
+  const now = Math.floor(Date.now() / 1000)
+  const date = now - 30 * ONE_DAY_IN_SECOND
+
+  const response = await fetchHandlingError(
+    `https://api.datadoghq.com/api/v1/query?query=${encodeURIComponent(query)}&from=${date}&to=${now}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'DD-API-KEY': getOrg2ApiKey(),
+        'DD-APPLICATION-KEY': getOrg2AppKey(),
+      },
+    }
+  )
+  const data = (await response.json()) as DatadogResponse
+  return data.series ?? []
 }
