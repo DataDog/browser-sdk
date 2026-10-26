@@ -1,4 +1,4 @@
-import { Observable, throttle } from '@datadog/js-core/util'
+import { globalObject, Observable, throttle } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 
 export interface ViewportDimension {
@@ -22,22 +22,22 @@ export function createViewportObservable() {
       observable.notify(getViewportDimension())
     }, 200)
 
-    return addEventListener(window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true }).stop
+    return addEventListener(globalObject.window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true })
+      .stop
   })
 }
 
 // excludes the width and height of any rendered classic scrollbar that is fixed to the visual viewport
 export function getViewportDimension(): ViewportDimension {
-  const visual = window.visualViewport
+  const visual = globalObject.visualViewport
   if (visual) {
     return {
       width: Number(visual.width * visual.scale),
       height: Number(visual.height * visual.scale),
     }
   }
-
   return {
-    width: Number(window.innerWidth || 0),
-    height: Number(window.innerHeight || 0),
+    width: Number(globalObject.innerWidth || 0),
+    height: Number(globalObject.innerHeight || 0),
   }
 }

@@ -1,5 +1,5 @@
 import { createTaskQueue, display, matchList, RequestType, runOnReadyState, safeTruncate } from '@datadog/browser-core'
-import { mockable, combine, setTimeout, generateUUID, globalObject } from '@datadog/js-core/util'
+import { mockable, combine, setTimeout, generateUUID } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
 import type { Duration } from '@datadog/js-core/time'
 import { relativeToClocks, toServerDuration } from '@datadog/js-core/time'
@@ -72,10 +72,10 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   })
 
   const { stop: stopRunOnReadyState } = runOnReadyState('interactive', () => {
-    // Feature guard: without a document (e.g. a Web Worker) there is no navigation to report
-    if (globalObject.document) {
-      handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
-    }
+    handleResource(() => {
+      const navigationEntry = getNavigationEntry()
+      return navigationEntry && assembleResource(navigationEntry, undefined, configuration)
+    })
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {

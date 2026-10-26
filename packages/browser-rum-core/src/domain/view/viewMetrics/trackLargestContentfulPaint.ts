@@ -33,7 +33,7 @@ export interface LargestContentfulPaint {
 export function trackLargestContentfulPaint(
   configuration: RumConfiguration,
   firstHidden: FirstHidden,
-  eventTarget: Window,
+  eventTarget: Window | undefined,
   callback: (largestContentfulPaint: LargestContentfulPaint) => void
 ) {
   // Ignore entries that come after the first user interaction. According to the documentation, the
@@ -74,7 +74,8 @@ export function trackLargestContentfulPaint(
       const resourceUrl = computeLcpEntryUrl(lcpEntry)
       const lcpValue = lcpEntry.startTime
 
-      const subParts = computeLcpSubParts(resourceUrl, lcpValue, sanitizeFirstByte(getNavigationEntry()))
+      const navigationEntry = getNavigationEntry()
+      const subParts = computeLcpSubParts(resourceUrl, lcpValue, navigationEntry && sanitizeFirstByte(navigationEntry))
 
       callback({
         value: lcpValue,

@@ -1233,7 +1233,7 @@ describe('resourceCollection', () => {
       triggerOnDomLoaded()
       runTasks()
 
-      const navigationEntry = getNavigationEntry()
+      const navigationEntry = getNavigationEntry()!
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.duration).toBe(
         toServerDuration(elapsed(navigationEntry.startTime, navigationEntry.responseEnd))
       )

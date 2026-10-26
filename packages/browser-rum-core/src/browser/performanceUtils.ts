@@ -12,7 +12,12 @@ function isValidNavigationEntry(entry: Pick<RumPerformanceNavigationTiming, 'loa
   return !(entry.loadEventEnd > 0 && entry.domComplete <= 0)
 }
 
-export function getNavigationEntry(): RumPerformanceNavigationTiming {
+export function getNavigationEntry(): RumPerformanceNavigationTiming | undefined {
+  // Without a document (e.g. in a Web Worker), there is no page navigation to report.
+  if (!globalObject.document) {
+    return
+  }
+
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
     const navigationEntry = performance.getEntriesByType(
       RumPerformanceEntryType.NAVIGATION
