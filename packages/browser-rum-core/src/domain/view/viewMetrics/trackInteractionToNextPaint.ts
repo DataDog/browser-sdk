@@ -72,7 +72,8 @@ export function trackInteractionToNextPaint(
       }
     | undefined
 
-  const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
+  const { getViewInteractionCount, stopViewInteractionCount, resetViewInteractionCount } =
+    trackViewInteractionCount(viewLoadingType)
   let longestInteractions = trackLongestInteractions(getViewInteractionCount)
   let subPartsTracker = createSubPartsTracker(longestInteractions)
   const softNavigationEntryFilter = createSoftNavigationEntryFilter<RumPerformanceEventTiming | RumFirstInputTiming>(
@@ -152,6 +153,8 @@ export function trackInteractionToNextPaint(
       stopViewInteractionCount()
     },
     setNavigationId: (navigationId: number) => {
+      // Not in the recompute below: interactions under 40ms are counted without any performance entry
+      resetViewInteractionCount()
       softNavigationEntryFilter.setNavigationId(navigationId, (entries) => {
         longestInteractions = trackLongestInteractions(getViewInteractionCount)
         subPartsTracker = createSubPartsTracker(longestInteractions)
@@ -225,7 +228,7 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
  */
 export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   initInteractionCountPolyfill()
-  const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
+  let previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
   let state: { stopped: false } | { stopped: true; interactionCount: number } = { stopped: false }
 
   function computeViewInteractionCount() {
@@ -242,6 +245,9 @@ export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
     },
     stopViewInteractionCount: () => {
       state = { stopped: true, interactionCount: computeViewInteractionCount() }
+    },
+    resetViewInteractionCount: () => {
+      previousInteractionCount = getInteractionCount()
     },
   }
 }

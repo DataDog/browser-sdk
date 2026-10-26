@@ -136,7 +136,7 @@ describe('trackInteractionToNextPaint', () => {
     )
   })
 
-  it('should report 0 when every interaction is from before the soft navigation', () => {
+  it('should return undefined when every interaction is from before the soft navigation', () => {
     startINPTracking(0 as RelativeTime, true)
     newInteraction({
       interactionId: 1,
@@ -147,6 +147,17 @@ describe('trackInteractionToNextPaint', () => {
 
     setNavigationId(2)
 
+    expect(getInteractionToNextPaint()).toBeUndefined()
+  })
+
+  it('should only count the interactions from the soft navigation onward', () => {
+    startINPTracking(0 as RelativeTime, true)
+    interactionCountMock.incrementInteractionCount() // interaction below 40ms, so no performance entry
+
+    setNavigationId(2)
+    expect(getInteractionToNextPaint()).toBeUndefined()
+
+    interactionCountMock.incrementInteractionCount()
     expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
   })
 
