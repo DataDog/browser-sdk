@@ -20,6 +20,8 @@ import type { Context } from '@datadog/js-core/util'
 import {
   ContextManagerMethod,
   addTelemetryUsage,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
   makePublicApi,
   createHandlingStack,
   sanitize,
@@ -589,6 +591,25 @@ export interface RumPublicApi extends PublicApi {
    * @deprecated You can now omit `name` from a MatchHeader entry to include default headers.
    */
   DEFAULT_TRACKED_RESOURCE_HEADERS: typeof DEFAULT_TRACKED_RESOURCE_HEADERS
+
+  /**
+   * Register a Dedicated Worker for CPU profiling.
+   *
+   * The worker script must be served with the `Document-Policy: js-profiling` HTTP response header.
+   * Profiling starts automatically when the session is sampled for profiling (via `profilingSampleRate`).
+   * Workers registered before `init()` is called are buffered and started when the session begins.
+   *
+   * Returns a `detach` function. Call it when you want to disconnect the worker from the
+   * profiling pipeline — the SDK will flush the current profiling session before detaching.
+   * You are still responsible for calling `worker.terminate()` yourself.
+   *
+   * @experimental Requires Chromium Canary with `DocumentPolicyInDedicatedWorker` and `ProfilerAPIForDedicatedWorker` flags.
+   * @param worker - The Worker instance to profile
+   * @param options - Optional configuration
+   * @param options.name - Optional label surfaced in Datadog as the `worker.name` tag. Defaults to the worker's script URL.
+   * @returns A `detach` function that flushes and disconnects the worker from profiling
+   */
+  attachProfilingWorker: (worker: Worker, options?: { name?: string }) => () => Promise<void>
 }
 
 export interface RecorderApi {
@@ -609,6 +630,7 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
+  attachProfilingWorker: (worker: Worker, options?: { name?: string }) => () => Promise<void>
   onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -1036,6 +1058,14 @@ export function makeRumPublicApi(
     failFeatureOperation: failOperation,
 
     DEFAULT_TRACKED_RESOURCE_HEADERS,
+
+    attachProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
+      if (!isExperimentalFeatureEnabled(ExperimentalFeature.WORKER_PROFILING)) {
+        return () => Promise.resolve()
+      }
+      addTelemetryUsage('rum', 'attach_profiling_worker', { has_name: options?.name !== undefined })
+      return profilerApi.attachProfilingWorker(worker, options)
+    }),
   })
 
   return rumPublicApi

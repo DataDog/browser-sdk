@@ -32,3 +32,42 @@ datadogRum.init({
 
 [1]: https://docs.datadoghq.com/real_user_monitoring/browser
 [2]: https://www.npmjs.com/package/@datadog/browser-rum
+
+
+## Worker Profiling (experimental)
+
+CPU profiling of Dedicated Workers. Requires Chromium with the
+`DocumentPolicyInDedicatedWorker` and `ProfilerAPIForDedicatedWorker` flags enabled,
+and the `Document-Policy: js-profiling` HTTP response header on worker script responses
+(inherited from the creating document for `blob:`/`data:` URL workers on Chromium M154+).
+
+### Main thread
+
+```ts
+import { datadogRum } from '@datadog/browser-rum'
+
+const detach = datadogRum.attachProfilingWorker(worker, { name: 'my-worker' })
+
+// When done: flush the current profiling session and disconnect.
+// The returned Promise resolves once the worker's final profile is collected.
+await detach()
+worker.terminate() // worker lifecycle is always the caller's responsibility
+```
+
+### Inside the worker
+
+```ts
+import { attachProfiler } from '@datadog/browser-rum/worker'
+
+attachProfiler()
+
+// ... worker logic ...
+```
+
+Worker profiles carry `thread:worker`, `worker.name:<name>`, and
+`thread.correlation_id:<uuid>` tags, and are joined with main-thread profiles
+collected while that worker was attached (both share the correlation id).
+
+**Note**: the worker sub-entry is an npm-only import — it must be bundled into
+the worker script by the customer's bundler. The CDN bundle cannot inject code
+into worker scopes.

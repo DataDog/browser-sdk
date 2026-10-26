@@ -1,7 +1,6 @@
-import { clockDrift } from '@datadog/js-core/time'
-import { buildTags } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace, RumProfilerVitalEntry, RumViewEntry } from '../../../types'
+import { buildProfileEventEnvelope } from './buildProfileEventEnvelope'
 
 export interface ProfileEventAttributes {
   application: {
@@ -33,25 +32,27 @@ export interface ProfileEventAttributes {
 export function buildProfileEvent(
   profilerTrace: BrowserProfilerTrace,
   configuration: RumConfiguration,
-  sessionId: string | undefined
+  sessionId: string | undefined,
+  workerCorrelationIds: string[] = []
 ): BrowserProfileEvent {
-  const tags = buildTags(configuration) // TODO: get that from the tagContext hook
   const profileAttributes = buildProfileEventAttributes(profilerTrace, configuration.applicationId, sessionId)
-  const profileEventTags = buildProfileEventTags(tags)
+
+  const correlationTags = workerCorrelationIds.map((id) => `thread.correlation_id:${id}`)
+  const envelope = buildProfileEventEnvelope(
+    configuration,
+    sessionId,
+    new Date(profilerTrace.startClocks.timeStamp).toISOString(),
+    new Date(profilerTrace.endClocks.timeStamp).toISOString(),
+    correlationTags
+  )
 
   return {
     ...profileAttributes,
-    attachments: ['wall-time.json'],
-    start: new Date(profilerTrace.startClocks.timeStamp).toISOString(),
-    end: new Date(profilerTrace.endClocks.timeStamp).toISOString(),
-    family: 'chrome',
-    runtime: 'chrome',
-    format: 'json',
-    version: 4, // Ingestion event version (not the version application tag)
-    tags_profiler: profileEventTags.join(','),
-    _dd: {
-      clock_drift: clockDrift(),
-    },
+    ...envelope,
+    view: profileAttributes.view,
+    long_task: profileAttributes.long_task,
+    action: profileAttributes.action,
+    vital: profileAttributes.vital,
   }
 }
 
@@ -136,8 +137,4 @@ function extractVitalIdsAndLabels(vitals?: RumProfilerVitalEntry[]): {
   return result
 }
 
-function buildProfileEventTags(tags: string[]): string[] {
-  // Tags already contains the common tags for all events. (service, env, version, etc.)
-  // Here we are adding some specific-to-profiling tags.
-  return tags.concat(['language:javascript', 'runtime:chrome', 'family:chrome', 'host:browser'])
-}
+
