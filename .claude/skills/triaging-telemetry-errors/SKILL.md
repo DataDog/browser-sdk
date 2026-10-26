@@ -59,8 +59,10 @@ Present the triage report and the drafts first. Apply each write only once the u
     - **Root cause**: our bug / customer code / browser / environment, with `path:line`. Mark assumptions.
     - **Proposed fix**: the concrete safe change and its trade-offs.
     - **Telemetry query**: the exact query, as used in the pipeline category.
+    - **Log Explorer** (needs investigation): links to the Log Explorer on `@known_issue:<KEY>` (the indexed sample) and to Live Tail (every occurrence).
     - **Pipeline**: the category (ticket key) and processor (needs investigation / won't do / done).
     - **History**: related tickets, PRs, decisions.
+  - The Atlassian MCP create call only takes the summary and a plain-text description: set the other fields right after with an update, and write the description in Atlassian Document Format so headings, lists and links render (add the Log Explorer links once the key exists).
   - After creation, use the new key as the pipeline category name.
   - Closing or reopening a ticket follows the same rule: show the transition and the comment (reason, 24h count or fixed version) and apply it only after approval.
 - **Pipeline category**: draft the query, then check it in the Log Explorer:
