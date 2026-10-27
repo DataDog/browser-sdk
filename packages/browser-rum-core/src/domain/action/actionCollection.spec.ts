@@ -51,6 +51,8 @@ describe('actionCollection', () => {
       frustrationTypes: [],
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      elementStack: 'MFE stack',
+      elementContext: { service: 'checkout', version: '2.4.0', context: { productArea: 'purchase' } },
       name: 'foo',
       nameSource: ActionNameSource.TEXT_CONTENT,
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
@@ -87,6 +89,9 @@ describe('actionCollection', () => {
         },
         type: ActionType.CLICK,
       },
+      service: 'checkout',
+      version: '2.4.0',
+      context: { productArea: 'purchase' },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
       _dd: {
@@ -107,6 +112,7 @@ describe('actionCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       events: [event],
+      elementStack: 'MFE stack',
     })
   })
 

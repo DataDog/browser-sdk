@@ -68,6 +68,19 @@ describe('sourceCodeContext', () => {
     })
   })
 
+  it('resolves automatic click attribution from elementStack', () => {
+    mockSourceCodeContext({ [TEST_STACK]: { service: 'checkout', version: '2.4.0' } })
+    startSourceCodeMfeContext(hook)
+    expect(
+      hook.trigger({
+        eventType: 'action',
+        startTime: 0 as RelativeTime,
+        rawRumEvent: { type: 'action' },
+        domainContext: { elementStack: MATCHING_TEST_STACK },
+      } as AssembleHookParams)
+    ).toEqual({ type: 'action', service: 'checkout', version: '2.4.0' })
+  })
+
   it('should add source code context matching the LoAF first script source URL', () => {
     mockSourceCodeContext({ [TEST_STACK]: { service: 'my-service', version: '1.0.0' } })
     startSourceCodeMfeContext(hook)
