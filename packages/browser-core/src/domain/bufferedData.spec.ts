@@ -166,8 +166,10 @@ describe('startBufferingData', () => {
     /* eslint-disable no-console */
     consoleSpies.forEach(({ api, spy }) => {
       if (api === ConsoleApiName.error) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- Compare method identity without invoking it.
         expect(console[api]).not.toBe(spy)
       } else {
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- Compare method identity without invoking it.
         expect(console[api]).toBe(spy)
       }
     })

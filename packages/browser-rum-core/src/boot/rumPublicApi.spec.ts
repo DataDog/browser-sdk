@@ -74,6 +74,7 @@ describe('rum public api', () => {
 
         /* eslint-disable no-console */
         console[api](largeObject)
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- Compare method identity without invoking it.
         expect(console[api]).toBe(consoleSpy)
         expect(warningSpy).not.toHaveBeenCalled()
 
@@ -81,6 +82,7 @@ describe('rum public api', () => {
         await collectAsyncCalls(startRumSpy, 1)
 
         console[api](largeObject)
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- Compare method identity without invoking it.
         expect(console[api]).toBe(consoleSpy)
         expect(consoleSpy).toHaveBeenCalledTimes(2)
         expect(warningSpy).not.toHaveBeenCalled()
