@@ -127,10 +127,12 @@ describe('getSelectorFromComposedPath', () => {
         expect(getComposedPathSelector([element], configuration)).toBe('A;')
       })
 
-      it('does not collect the form action when the experimental flag is disabled', () => {
+      it('collects the form action when the experimental flag is disabled', () => {
         const element = appendElementInIsolation('<form action="/users/42/edit" method="post"></form>')
 
-        expect(getComposedPathSelector([element], configuration)).toBe('FORM[method="post"];')
+        expect(getComposedPathSelector([element], configuration)).toBe(
+          'FORM[action="\\/users\\/42\\/edit"][method="post"];'
+        )
       })
 
       describe('with the experimental flag enabled', () => {
@@ -392,24 +394,41 @@ describe('getSelectorFromComposedPath', () => {
         expect(result.length).toBeLessThanOrEqual(CHARACTER_LIMIT)
       })
 
-      it('does not split an attribute when truncating', () => {
+      it('splits an attribute when truncating with the experimental flag disabled', () => {
         const value = 'a'.repeat(100)
         const composedPath = Array.from({ length: 30 }, () =>
           appendElementInIsolation(`<div data-testid="${value}"></div>`)
         )
         const result = getComposedPathSelector(composedPath, configuration)
 
-        // 17 elements use 2040 characters: only the 18th tag name fits
-        expect(result).toBe(`${`DIV[data-testid="${value}"];`.repeat(17)}DIV`)
+        // 17 elements use 2040 characters: the 18th element is cut at the limit
+        expect(result).toBe(`${`DIV[data-testid="${value}"];`.repeat(17)}DIV[data`)
       })
 
-      it('stops before a token that does not fit', () => {
-        const element = appendElementInIsolation(
-          `<div data-testid="${'a'.repeat(CHARACTER_LIMIT - 20)}" data-qa="${'b'.repeat(30)}"></div>`
-        )
+      describe('with the experimental flag enabled', () => {
+        beforeEach(() => {
+          addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
+        })
 
-        // attributes are sorted: data-qa fits, data-testid does not
-        expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-qa="${'b'.repeat(30)}"]`)
+        it('does not split an attribute when truncating', () => {
+          const value = 'a'.repeat(100)
+          const composedPath = Array.from({ length: 30 }, () =>
+            appendElementInIsolation(`<div data-testid="${value}"></div>`)
+          )
+          const result = getComposedPathSelector(composedPath, configuration)
+
+          // 17 elements use 2040 characters: only the 18th tag name fits
+          expect(result).toBe(`${`DIV[data-testid="${value}"];`.repeat(17)}DIV`)
+        })
+
+        it('stops before a token that does not fit', () => {
+          const element = appendElementInIsolation(
+            `<div data-testid="${'a'.repeat(CHARACTER_LIMIT - 20)}" data-qa="${'b'.repeat(30)}"></div>`
+          )
+
+          // attributes are sorted: data-qa fits, data-testid does not
+          expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-qa="${'b'.repeat(30)}"]`)
+        })
       })
     })
 

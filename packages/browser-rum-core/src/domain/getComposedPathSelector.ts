@@ -36,6 +36,7 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
   'rel',
   'download',
   'method',
+  'action',
   'enctype',
   'autocomplete',
 ])
@@ -61,7 +62,7 @@ interface MaskingContext {
  * This function:
  * 1. Filters out non-Element items (Document, Window, ShadowRoot)
  * 2. Extracts the selector tokens of each element
- * 3. Truncates the selector string between tokens if it exceeds the character limit
+ * 3. Truncates the selector string (between tokens when enabled) if it exceeds the character limit
  * 4. Returns the selector string
  *
  * @param composedPath - The composedPath from a MouseEvent
@@ -78,11 +79,12 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
     return ''
   }
 
+  const isAttributesEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES)
   const { actionNameAttribute } = configuration
-  const allowedAttributes = actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
-  const masking: MaskingContext | undefined = isExperimentalFeatureEnabled(
-    ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES
-  )
+  // The form `action` can contain PII (ex: `/users/42/edit`)
+  const safeAttributes = isAttributesEnabled ? SAFE_ATTRIBUTES.filter((name) => name !== 'action') : SAFE_ATTRIBUTES
+  const allowedAttributes = actionNameAttribute ? [actionNameAttribute].concat(safeAttributes) : safeAttributes
+  const masking: MaskingContext | undefined = isAttributesEnabled
     ? {
         // Do not exempt the action name attribute from privacy
         configuration: { ...configuration, actionNameAttribute: undefined },
@@ -93,7 +95,15 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
 
   let result = ''
   for (const element of elements) {
-    for (const token of getSelectorTokensFromElement(element, allowedAttributes, masking)) {
+    const tokens = getSelectorTokensFromElement(element, allowedAttributes, masking)
+    if (!masking) {
+      result += tokens.join('')
+      if (result.length >= CHARACTER_LIMIT) {
+        return safeTruncate(result, CHARACTER_LIMIT)
+      }
+      continue
+    }
+    for (const token of tokens) {
       // Never split an attribute key and value
       if (result.length + token.length > CHARACTER_LIMIT) {
         return result
