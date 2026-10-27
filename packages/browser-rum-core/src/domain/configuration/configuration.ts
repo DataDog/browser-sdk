@@ -230,6 +230,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Configures recording canvas elements in Session Replay. Canvas recording is disabled when this option is omitted.
    *
    * @category Session Replay
+   * @hidden
    */
   sessionReplayCanvasRecording?:
     | {
