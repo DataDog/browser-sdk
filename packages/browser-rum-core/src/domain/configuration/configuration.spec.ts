@@ -1186,7 +1186,7 @@ describe('serializeRumConfiguration', () => {
             // The `remoteConfiguration` init option is covered by the legacy `remote_configuration_id`
             // field. The `remote_configuration` telemetry field is unrelated: it carries the sync
             // metadata of the applied version, which does not come from the init configuration.
-            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'sessionReplayCanvasRecording'
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
@@ -1196,6 +1196,7 @@ describe('serializeRumConfiguration', () => {
       | 'selected_tracing_propagators'
       | 'use_track_graph_ql_payload'
       | 'use_track_graph_ql_response_errors'
+      | 'session_replay_canvas_recording_quality'
       | 'remote_configuration'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
@@ -1230,6 +1231,8 @@ describe('serializeRumConfiguration', () => {
       track_resource_headers: 'default_headers',
       beta_enable_view_updates: true,
       beta_track_web_sockets: false,
+      session_replay_canvas_recording: true,
+      session_replay_canvas_recording_quality: 'high',
     })
   })
 })

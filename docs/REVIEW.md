@@ -35,6 +35,13 @@ The minifier mangles local/top-level names but **not property names or object ke
 - Dead abstractions: a one-call helper/wrapper/option adding bytes for no clear value.
 - In general, any pattern that achieves the same result with less code is welcome.
 
+### New bundles and entry points
+
+Bundle sizes are tracked only for packages listed in `packages` in `scripts/lib/computeBundleSize.ts`.
+When a PR adds a new package that produces a `bundle/` output (e.g. a new `browser-rum-*` CDN
+bundle), flag it if the package is missing from that list. Otherwise its size won't be tracked.
+New entry points or chunks inside an already listed package are picked up automatically.
+
 ### Backward compatibility
 
 Backward compatibility is a requirement — watch for unintentional breaking changes: public API

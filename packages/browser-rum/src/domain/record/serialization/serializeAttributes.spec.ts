@@ -108,6 +108,9 @@ describe('serializeDOMAttributes', () => {
       { html: '<input name="value">', expectedBehavior: 'maskable' },
       { html: '<div name="value">', expectedBehavior: 'maskable' },
 
+      // The name attribute of slots is structural shadow DOM metadata and should always be unmasked.
+      { html: '<slot name="value">', expectedBehavior: 'always-unmasked' },
+
       // Element/attribute combinations which may contain user-identifying ids and tokens
       // should be maskable. The same attributes should always be unmasked in other
       // contexts.

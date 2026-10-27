@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-worker",
-  "version": "7.16.0",
+  "version": "7.16.2",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
   "files": [
@@ -30,6 +30,6 @@
     "access": "public"
   },
   "devDependencies": {
-    "webpack": "5.111.1"
+    "webpack": "5.112.0"
   }
 }
