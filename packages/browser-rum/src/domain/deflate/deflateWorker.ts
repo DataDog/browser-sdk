@@ -150,13 +150,7 @@ function onInitialized(name: WorkerName, version: string) {
   }
 }
 
-function onError(
-  configuration: RumConfiguration,
-  source: string,
-  name: WorkerName,
-  error: unknown,
-  streamId?: number
-) {
+function onError(configuration: RumConfiguration, source: string, name: WorkerName, error: unknown, streamId?: number) {
   const state = getState(name)
   if (state.status === DeflateWorkerStatus.Loading || state.status === DeflateWorkerStatus.Nil) {
     reportScriptLoadingError({
