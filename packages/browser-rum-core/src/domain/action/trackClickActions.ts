@@ -267,7 +267,8 @@ function computeClickActionBase(
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
+  const composedPath = event.composedPath()
+  const composedPathSelector = getComposedPathSelector(composedPath, configuration.actionNameAttribute)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
@@ -277,7 +278,7 @@ function computeClickActionBase(
 
   return {
     type: ActionType.CLICK,
-    elementStack: getElementStack(target, elementStacks),
+    elementStack: getElementStack(composedPath, elementStacks),
     target: {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
