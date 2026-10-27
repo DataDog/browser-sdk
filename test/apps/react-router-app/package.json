@@ -5,9 +5,9 @@
     "build": "webpack"
   },
   "dependencies": {
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "react-router": "8.4.0"
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router": "8.5.0"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "*",
@@ -33,7 +33,7 @@
   "devDependencies": {
     "ts-loader": "9.6.2",
     "typescript": "6.0.3",
-    "webpack": "5.111.1"
+    "webpack": "5.112.0"
   },
   "volta": {
     "extends": "../../../package.json"
