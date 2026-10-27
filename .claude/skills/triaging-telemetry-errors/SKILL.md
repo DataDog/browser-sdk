@@ -32,6 +32,8 @@ Get totals over the last 24 hours (`from: now-24h`) with `search_datadog_logs` (
 - **Org**: one or two orgs (customer-specific) or many?
 - **Browser** (parsed user agent) and **service** (RUM vs Logs SDK).
 
+Also look at the last 7 days (`from: now-7d`) for the trend: weekend traffic is lower (a Monday-morning 24h window is mostly Sunday), and rare errors may not show up in 24h at all.
+
 If the index is rate-limited (daily quota reached, see Confluence), counts are 0 for everything: say so instead of concluding the error disappeared.
 
 ### 4. Find the root cause
@@ -74,7 +76,7 @@ Present the triage report and the drafts first. Apply each write only once the u
 
 ### 7. Verify
 
-Pipeline changes take ~3 minutes to apply. Then check that new matching logs carry the expected attributes and that the error query without the tag returns nothing new. Won't-do and done logs are excluded from the index, so the error no longer being indexed only proves the category matches if, at the pre-change rate, new occurrences were expected during the wait. Otherwise report it as not verified yet and ask the user to check Live Tail.
+Pipeline changes take a few minutes to apply (about 3 in practice). Then check that new matching logs carry the expected attributes and that the error query without the tag returns nothing new. Won't-do and done logs are excluded from the index, so the error no longer being indexed only proves the category matches if, at the pre-change rate, new occurrences were expected during the wait. Otherwise report it as not verified yet and ask the user to check Live Tail.
 
 ### 8. Report
 
