@@ -1,7 +1,7 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
 import type { Context } from '@datadog/js-core/util'
 import { clocksNow } from '@datadog/js-core/time'
-import { generateUUID } from '@datadog/browser-core'
+import { generateUUID } from '@datadog/js-core/util'
 import type { ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } from '../../rawRumEvent.types'
 import type { EventCounts } from '../trackEventCounts'

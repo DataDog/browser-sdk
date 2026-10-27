@@ -1,7 +1,7 @@
 import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { timeStampNow, timeStampToClocks, relativeToClocks } from '@datadog/js-core/time'
-import { generateUUID, PageExitReason } from '@datadog/browser-core'
-import { Observable } from '@datadog/js-core/util'
+import { PageExitReason } from '@datadog/browser-core'
+import { Observable, generateUUID } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
@@ -255,7 +255,7 @@ function computeClickActionBase(
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
+  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)

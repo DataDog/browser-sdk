@@ -64,5 +64,7 @@ export const DISCARDED = 'DISCARDED'
 /** Sentinel returned by a hook callback to opt out of contributing a result (other callbacks still run). */
 export const SKIPPED = 'SKIPPED'
 
+/** Type of the `DISCARDED` sentinel. */
 export type DISCARDED = typeof DISCARDED
+/** Type of the `SKIPPED` sentinel. */
 export type SKIPPED = typeof SKIPPED

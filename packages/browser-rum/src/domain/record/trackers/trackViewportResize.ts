@@ -1,5 +1,4 @@
-import { noop } from '@datadog/js-core/util'
-import { throttle } from '@datadog/browser-core'
+import { noop, throttle } from '@datadog/js-core/util'
 import { DOM_EVENT, addEventListeners } from '@datadog/js-core/dom'
 import { timeStampNow } from '@datadog/js-core/time'
 import type { ViewportDimension } from '@datadog/browser-rum-core'

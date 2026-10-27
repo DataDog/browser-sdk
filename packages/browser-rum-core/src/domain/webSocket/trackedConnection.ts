@@ -1,7 +1,6 @@
-import { generateUUID } from '@datadog/browser-core'
 import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed } from '@datadog/js-core/time'
-import { buildUrl, deepClone } from '@datadog/js-core/util'
+import { buildUrl, deepClone, generateUUID } from '@datadog/js-core/util'
 import type {
   WebSocketClosedContext,
   WebSocketClosingContext,

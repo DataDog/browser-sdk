@@ -1,5 +1,5 @@
 import { timeStampNow } from '../entries/time'
-import { normalizeUrl } from '../entries/util'
+import { generateUUID, normalizeUrl } from '../entries/util'
 import type { Site } from './intakeSites'
 import { INTAKE_SITE_US1 } from './intakeSites'
 
@@ -196,15 +196,4 @@ function buildEndpointParameters(
   }
 
   return parameters.join('&')
-}
-
-/**
- * UUID v4
- * from https://gist.github.com/jed/982883
- */
-function generateUUID(placeholder?: string): string {
-  return placeholder
-    ? // eslint-disable-next-line  no-bitwise
-      (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
-    : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
