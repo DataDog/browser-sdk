@@ -66,7 +66,7 @@ Present the triage report and the drafts first. Apply each write only once the u
     - **History**: related tickets, PRs, decisions.
   - The Atlassian MCP create call only takes the summary and a plain-text description: set the other fields right after with an update, and write the description in Atlassian Document Format so headings, lists and links render (add the Log Explorer links once the key exists).
   - After creation, use the new key as the pipeline category name.
-  - Closing or reopening a ticket follows the same rule: show the transition and the comment (reason, 24h count or fixed version) and apply it only after approval.
+  - Closing or reopening a ticket also moves its pipeline category to the matching status: won't do, done (pinned to the versions before the fix) or, when reopening, needs investigation. Show the transition, the comment (reason, 24h count or fixed version) and the category move, and apply each only after approval.
 - **Pipeline category**: draft the query, then check it in the Log Explorer:
   - it matches the error (count close to step 3),
   - a pattern sample of its matches shows no unrelated messages,
