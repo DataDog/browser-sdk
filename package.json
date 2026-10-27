@@ -1,6 +1,6 @@
 {
   "name": "browser-sdk",
-  "version": "7.16.1",
+  "version": "7.16.2",
   "description": "browser SDK",
   "private": true,
   "workspaces": [

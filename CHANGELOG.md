@@ -20,6 +20,20 @@
 
 ---
 
+## v7.16.2
+
+**Public Changes:**
+
+- 🐛 Deduplicate Next.js views across discarded mount renders ([#5111](https://github.com/DataDog/browser-sdk/pull/5111))
+- 📝 Hide sessionReplayCanvasRecording from generated docs ([#5187](https://github.com/DataDog/browser-sdk/pull/5187))
+
+**Internal Changes:**
+
+- 👷 Report bundle sizes as a single metric tagged by bundle name ([#5171](https://github.com/DataDog/browser-sdk/pull/5171))
+- 👷 Update dependency vite to v8.3.3 [SECURITY] ([#5164](https://github.com/DataDog/browser-sdk/pull/5164))
+- 👷 Update dependency eslint-plugin-unicorn to v78 ([#5172](https://github.com/DataDog/browser-sdk/pull/5172))
+- 🔊 Report canvas recording in configuration telemetry ([#5168](https://github.com/DataDog/browser-sdk/pull/5168))
+
 ## v7.16.1
 
 **Public Changes:**
