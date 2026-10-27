@@ -1,10 +1,4 @@
-import type {
-  CanvasWorkerRequest,
-  CanvasWorkerResponse,
-  DeflateWorkerAction,
-  DeflateWorkerResponse,
-} from '@datadog/browser-core'
-import { collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
+import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import type { WorkerScope } from './startWorker'
 import { startWorker } from './startWorker'
 
@@ -40,23 +34,21 @@ describe('startWorker', () => {
   let workerScope: {
     addEventListener: jasmine.Spy<WorkerScope['addEventListener']>
     postMessage: jasmine.Spy<WorkerScope['postMessage']>
-    close: jasmine.Spy<WorkerScope['close']>
   }
 
   beforeEach(() => {
     workerScope = {
       addEventListener: jasmine.createSpy(),
       postMessage: jasmine.createSpy(),
-      close: jasmine.createSpy(),
     }
     startWorker(workerScope)
   })
 
-  function emulateAction(message: DeflateWorkerAction, ports: MessagePort[] = []): DeflateWorkerResponse {
+  function emulateAction(message: DeflateWorkerAction): DeflateWorkerResponse {
     workerScope.postMessage.calls.reset()
     workerScope.addEventListener.calls.allArgs().forEach(([eventName, listener]) => {
       if (eventName === 'message') {
-        listener({ data: message, ports } as unknown as MessageEvent)
+        listener({ data: message } as MessageEvent)
       }
     })
     return workerScope.postMessage.calls.mostRecent()?.args[0]
@@ -207,56 +199,6 @@ describe('startWorker', () => {
       type: 'errored',
       error: jasmine.stringContaining('TypeError'),
       streamId: undefined,
-    })
-  })
-
-  describe('canvas worker', () => {
-    let port: MessagePort
-    let canvasWorkerPort: MessagePort
-
-    beforeEach(() => {
-      ;({ port1: port, port2: canvasWorkerPort } = new MessageChannel())
-      registerCleanupTask(() => port.close())
-    })
-
-    it('reports an error when the canvas worker fails to spawn', () => {
-      spyOn(window, 'Worker').and.throwError(new Error('blocked'))
-
-      expect(emulateAction({ action: 'startCanvasWorker' }, [canvasWorkerPort])).toEqual({
-        type: 'canvasWorkerErrored',
-        error: 'Error: blocked',
-      })
-    })
-
-    it('reports canvas worker errors without propagating them to the worker', () => {
-      const canvasWorker = Object.assign(new EventTarget(), { postMessage: jasmine.createSpy() })
-      spyOn(window, 'Worker').and.returnValue(canvasWorker as unknown as Worker)
-      emulateAction({ action: 'startCanvasWorker' }, [canvasWorkerPort])
-      expect(canvasWorker.postMessage).toHaveBeenCalledOnceWith({ action: 'canvasInit' }, [canvasWorkerPort])
-
-      const errorEvent = new ErrorEvent('error', { message: 'crashed', cancelable: true })
-      canvasWorker.dispatchEvent(errorEvent)
-
-      expect(errorEvent.defaultPrevented).toBeTrue()
-      expect(workerScope.postMessage).toHaveBeenCalledOnceWith({ type: 'canvasWorkerErrored', error: 'crashed' })
-    })
-
-    it('answers ready on the port once initialized', async () => {
-      const response = new Promise<CanvasWorkerResponse>((resolve) => {
-        port.onmessage = ({ data }: MessageEvent<CanvasWorkerResponse>) => resolve(data)
-      })
-
-      emulateAction({ action: 'canvasInit' }, [canvasWorkerPort])
-
-      expect(await response).toEqual({ type: 'ready' })
-    })
-
-    it('closes itself when asked to stop', async () => {
-      emulateAction({ action: 'canvasInit' }, [canvasWorkerPort])
-
-      port.postMessage({ action: 'stop' } satisfies CanvasWorkerRequest)
-
-      await collectAsyncCalls(workerScope.close, 1)
     })
   })
 })
