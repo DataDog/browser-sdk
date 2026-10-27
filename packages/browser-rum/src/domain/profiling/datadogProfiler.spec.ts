@@ -1,4 +1,3 @@
-import type { ProfilerTrace } from '@datadog/js-core/util'
 import {
   elapsed,
   timeStampNow,
@@ -8,10 +7,19 @@ import {
   ONE_DAY,
   relativeNow,
 } from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
-import { deepClone } from '@datadog/js-core/util'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
+import { deepClone, globalObject, noop, Observable, type Profiler, type ProfilerTrace } from '@datadog/js-core/util'
 
-import { BridgeCapability, createIdentityEncoder, createValueHistory } from '@datadog/browser-core'
+import {
+  BridgeCapability,
+  createIdentityEncoder,
+  createValueHistory,
+  EARLY_COLLECTION_GLOBAL_NAME,
+  takeEarlyCollectionProfiler,
+  takeOverEarlyCollection,
+  trackRuntimeError,
+  type RawError,
+} from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import {
   LifeCycle,
@@ -33,6 +41,7 @@ import {
   HIGH_HASH_UUID,
   LOW_HASH_UUID,
   mockSourceCodeContext,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
@@ -78,7 +87,8 @@ describe('profiler', () => {
   function setupProfiler(
     currentView?: ViewHistoryEntry,
     profilerConfigOverrides?: Partial<RUMProfilerConfiguration>,
-    traceOverrides?: Partial<ProfilerTrace>
+    traceOverrides?: Partial<ProfilerTrace>,
+    earlyCollection?: { startClocks?: ClocksState }
   ) {
     const sessionManager = createSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
@@ -116,7 +126,34 @@ describe('profiler', () => {
     )
 
     // Replace Browser's Profiler with a mock for testing purpose.
-    mockProfiler(mockProfilerTrace)
+    const { instances } = mockProfiler(mockProfilerTrace)
+
+    registerCleanupTask(() => {
+      delete (globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]
+      takeEarlyCollectionProfiler() // clear any takeover left by a test
+    })
+
+    // Emulate the early collection package: a Profiler instance started before
+    // the profiler chunk is loaded, claimed by the SDK at init (see
+    // `takeOverEarlyCollection`).
+    if (earlyCollection) {
+      const startClocks = earlyCollection.startClocks ?? clocksNow()
+      const ProfilerConstructor = globalObject.Profiler as new (options: {
+        sampleInterval: number
+        maxBufferSize: number
+      }) => Profiler
+      const profiler = new ProfilerConstructor({ sampleInterval: 10, maxBufferSize: 9000 })
+      ;(globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME] = {
+        version: 1,
+        startClocks,
+        buffer: [],
+        profiler,
+        stop: noop,
+      }
+      // Neutralize the error instrumentation install done by the takeover.
+      replaceMockable(trackRuntimeError, () => new Observable<RawError>())
+      takeOverEarlyCollection(new Observable<RawError>())
+    }
 
     const longTaskHistory = createValueHistory<LongTaskContext>({
       expireDelay: ONE_DAY,
@@ -157,6 +194,7 @@ describe('profiler', () => {
       profilingContextManager,
       sessionManager,
       mockedRumProfilerTrace,
+      instances,
       addLongTask: (longTask: LongTaskContext) => {
         longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
       },
@@ -1090,6 +1128,62 @@ describe('profiler', () => {
     await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
 
     expect(emitPayloadSpy.calls.argsFor(0)[0].profile.session).toEqual({ id: 'session-id-1' })
+  })
+
+  describe('early collection takeover', () => {
+    it('adopts the early Profiler instance so the first profile covers the early collection period', async () => {
+      const clock = mockClock()
+      const earlyStartClocks = clocksNow()
+      const { profiler, instances, profilingContextManager } = setupProfiler(undefined, undefined, undefined, {
+        startClocks: earlyStartClocks,
+      })
+
+      profiler.start()
+
+      expect(profiler.isRunning()).toBe(true)
+      expect(profilingContextManager.get()?.status).toBe('running')
+      expect(profilingContextManager.get()?.collection_type).toBe('early')
+      // The Profiler instance started before the profiler chunk was loaded is
+      // used as-is: no new instance was created.
+      expect(instances.size).toBe(1)
+
+      // First periodic collection happens `collectIntervalMs` after takeover,
+      // and covers the early collection period too.
+      clock.tick(60000)
+      // Data collection uses Promises (microtasks), not setTimeout. Flush
+      // microtasks: one for profiler.stop() Promise, one for the payload handling.
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(emitPayloadSpy.calls.count()).toBe(1)
+      const payload = emitPayloadSpy.calls.argsFor(0)[0]
+      expect(payload.trace.startClocks).toBe(earlyStartClocks)
+      // A new instance was started to continue collection periodically.
+      expect(instances.size).toBe(2)
+
+      profiler.stop()
+    })
+
+    it('starts a new Profiler instance when no early collection was started', async () => {
+      const clock = mockClock()
+      const { profiler, instances, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+
+      expect(profiler.isRunning()).toBe(true)
+      expect(profilingContextManager.get()?.collection_type).toBe('standard')
+      // No early Profiler to take over: the chunk started its own.
+      expect(instances.size).toBe(1)
+
+      clock.tick(60000)
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(emitPayloadSpy.calls.count()).toBe(1)
+      expect(instances.size).toBe(2)
+
+      profiler.stop()
+    })
   })
 
   describe('discard logic', () => {

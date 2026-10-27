@@ -1,13 +1,27 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
-import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
-import { FAKE_CSP_VIOLATION_EVENT, mockSourceCodeContext } from '@datadog/browser-core/test'
+import { relativeToClocks } from '@datadog/js-core/time'
+import { globalObject, Observable } from '@datadog/js-core/util'
+import type { BufferedData, ErrorWithCause, RawError } from '@datadog/browser-core'
+import {
+  EARLY_COLLECTION_GLOBAL_NAME,
+  ErrorHandling,
+  ErrorSource,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+  trackRuntimeError,
+} from '@datadog/browser-core'
+import {
+  FAKE_CSP_VIOLATION_EVENT,
+  mockSourceCodeContext,
+  registerCleanupTask,
+  replaceMockable,
+  replaceMockableWithSpy,
+} from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { doStartErrorCollection } from './errorCollection'
+import { doStartErrorCollection, startErrorCollection } from './errorCollection'
 
 describe('error collection', () => {
   let lifeCycle: LifeCycle
@@ -324,6 +338,99 @@ describe('error collection', () => {
         param: 123,
         user: 'john',
       })
+    })
+  })
+
+  describe('early collection handoff', () => {
+    function setupErrorCollectionWithEarlyCollection(
+      overrides: Partial<{ buffer: Array<[number, RelativeTime, unknown]>; version: number }> = {}
+    ) {
+      lifeCycle = new LifeCycle()
+      rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+
+      const earlyCollection = {
+        version: 1,
+        startClocks: { relative: 1, timeStamp: 2 },
+        buffer: [] as Array<[number, RelativeTime, unknown]>,
+        profiler: undefined,
+        stop: jasmine.createSpy('stop'),
+        ...overrides,
+      }
+      ;(globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME] = earlyCollection
+      registerCleanupTask(() => {
+        delete (globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]
+      })
+
+      const runtimeErrorObservable = new Observable<RawError>()
+      replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
+
+      const { addError } = startErrorCollection(lifeCycle, new Observable<BufferedData>())
+
+      return { earlyCollection, runtimeErrorObservable, addError }
+    }
+
+    it('processes raw errors buffered by the early collection package and replays them as RUM error events', () => {
+      const earlyError = new Error('early error')
+      earlyError.stack = 'Error: early error\n    at foo (http://path/to/file.js:52:15)'
+      const { earlyCollection } = setupErrorCollectionWithEarlyCollection({
+        buffer: [
+          [0, 1234 as RelativeTime, earlyError],
+          [0, 42 as RelativeTime, 'early rejection reason'],
+        ],
+      })
+
+      expect(rawRumEvents.length).toBe(2)
+
+      // The `relative` time is the buffered entry timestamp, converted as-is. The
+      // `timeStamp` is derived from it (see `relativeToClocks`) and can drift by
+      // a millisecond between two computations, so it is not compared exactly.
+      expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
+      const firstEvent = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
+      expect(firstEvent.error).toEqual(
+        jasmine.objectContaining({
+          message: 'early error',
+          source: ErrorSource.SOURCE,
+          handling: ErrorHandling.UNHANDLED,
+          stack: 'Error: early error\n  at foo @ http://path/to/file.js:52:15',
+        })
+      )
+
+      const secondEvent = rawRumEvents[1].rawRumEvent as RawRumErrorEvent
+      expect(secondEvent.error).toEqual(
+        jasmine.objectContaining({
+          message: 'Uncaught "early rejection reason"',
+          source: ErrorSource.SOURCE,
+          handling: ErrorHandling.UNHANDLED,
+          stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+        })
+      )
+
+      expect(earlyCollection.stop).toHaveBeenCalledTimes(1)
+      expect((globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]).toBeUndefined()
+    })
+
+    it('installs the SDK error instrumentation at init, so errors after the handoff are collected', () => {
+      const { runtimeErrorObservable } = setupErrorCollectionWithEarlyCollection()
+
+      runtimeErrorObservable.notify({
+        message: 'post-handoff error',
+        source: ErrorSource.SOURCE,
+        startClocks: relativeToClocks(4567 as RelativeTime),
+      })
+
+      expect(rawRumEvents.length).toBe(1)
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).error.message).toBe('post-handoff error')
+    })
+
+    it('does not install the error instrumentation when the early collection package is not present', () => {
+      lifeCycle = new LifeCycle()
+      rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+      const trackRuntimeErrorSpy = replaceMockableWithSpy(trackRuntimeError)
+      trackRuntimeErrorSpy.and.returnValue(new Observable<RawError>())
+
+      startErrorCollection(lifeCycle, new Observable<BufferedData>())
+
+      expect(trackRuntimeErrorSpy).not.toHaveBeenCalled()
     })
   })
 })

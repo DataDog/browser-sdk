@@ -9,6 +9,7 @@ import type { RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 import type { ConsoleLog } from './console/consoleObservable'
 import { initConsoleObservable } from './console/consoleObservable'
+import { readEarlyCollection } from './earlyCollection/earlyCollection'
 
 const BUFFER_LIMIT = 500
 
@@ -45,7 +46,14 @@ export function startBufferingData() {
     )
   }
 
-  subscribe(BufferedDataType.RUNTIME_ERROR, mockable(trackRuntimeError)())
+  // When the early collection package (a standalone snippet evaluated before
+  // the SDK bundle) is present, its error listeners keep buffering raw errors
+  // until init: skip the runtime error instrumentation to avoid
+  // double-counting, the SDK takes over at init (see
+  // `takeOverEarlyCollection`).
+  if (!readEarlyCollection()) {
+    subscribe(BufferedDataType.RUNTIME_ERROR, mockable(trackRuntimeError)())
+  }
   subscribe(BufferedDataType.FETCH, initFetchObservable())
   subscribe(BufferedDataType.XHR, initXhrObservable())
   subscribe(BufferedDataType.CONSOLE, initConsoleObservable(Object.values(ConsoleApiName)))

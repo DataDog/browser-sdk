@@ -2,7 +2,14 @@ import type { ClocksState } from '@datadog/js-core/time'
 import { ConsoleApiName, combine, Observable, generateUUID } from '@datadog/js-core/util'
 import type { RawError, BufferedData } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
-import { BufferedDataType, ErrorSource, computeRawError, ErrorHandling, NonErrorPrefix } from '@datadog/browser-core'
+import {
+  BufferedDataType,
+  ErrorSource,
+  computeRawError,
+  ErrorHandling,
+  NonErrorPrefix,
+  takeOverEarlyCollection,
+} from '@datadog/browser-core'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -33,7 +40,17 @@ export function startErrorCollection(lifeCycle: LifeCycle, bufferedDataObservabl
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
-  return doStartErrorCollection(lifeCycle)
+  const errorCollection = doStartErrorCollection(lifeCycle)
+
+  // Take over from the early collection package when it collected errors
+  // before the SDK bundle was evaluated: install the SDK error
+  // instrumentation, then process and replay its raw errors as RUM error
+  // events, then seal it. It must run after the error pipeline is wired so
+  // replayed errors are emitted as RUM events, attributed to the initial
+  // view. No-op when the package is not present.
+  takeOverEarlyCollection(errorObservable)
+
+  return errorCollection
 }
 
 export function doStartErrorCollection(lifeCycle: LifeCycle) {
