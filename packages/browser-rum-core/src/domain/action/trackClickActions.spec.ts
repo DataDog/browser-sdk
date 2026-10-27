@@ -40,6 +40,7 @@ function eventsCollector<T>() {
 }
 
 describe('trackClickActions', () => {
+  let elementStacks: WeakMap<Element, string>
   let lifeCycle: LifeCycle
   let domMutationObservable: Observable<MutationRecord[]>
   let windowOpenObservable: Observable<void>
@@ -59,7 +60,8 @@ describe('trackClickActions', () => {
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(partialConfig)
+      mockRumConfiguration(partialConfig),
+      elementStacks
     )
 
     findActionId = trackClickActionsResult.findActionId
@@ -70,6 +72,7 @@ describe('trackClickActions', () => {
   }
 
   beforeEach(() => {
+    elementStacks = new WeakMap()
     lifeCycle = new LifeCycle()
     clock = mockClock()
     domMutationObservable = new Observable<MutationRecord[]>()
@@ -96,6 +99,61 @@ describe('trackClickActions', () => {
     button.parentNode!.removeChild(button)
     emptyElement.parentNode!.removeChild(emptyElement)
     input.parentNode!.removeChild(input)
+  })
+
+  describe('element stack attribution', () => {
+    it('captures the nearest registered boundary at pointerdown', () => {
+      startClickActionsTracking()
+      elementStacks.set(document.body, 'shell-stack')
+      elementStacks.set(button, 'first-stack')
+      emulateClick({ activity: {}, afterPointerDown: () => elementStacks.set(button, 'second-stack') })
+      clock.tick(EXPIRE_DELAY)
+      expect(events[0].elementStack).toBe('first-stack')
+      emulateClick({ activity: {} })
+      clock.tick(EXPIRE_DELAY)
+      expect(events[1].elementStack).toBe('second-stack')
+    })
+
+    it('preserves the boundary when the target moves after pointerdown', () => {
+      startClickActionsTracking()
+      elementStacks.set(document.body, 'shell-stack')
+      elementStacks.set(emptyElement, 'other-stack')
+      emulateClick({ activity: {}, afterPointerDown: () => emptyElement.appendChild(button) })
+      document.body.appendChild(button)
+      clock.tick(EXPIRE_DELAY)
+      expect(events[0].elementStack).toBe('shell-stack')
+    })
+
+    it('preserves the stack when the target is removed after the click', () => {
+      startClickActionsTracking()
+      elementStacks.set(button, 'first-stack')
+      emulateClick({ activity: {} })
+      button.remove()
+      elementStacks.set(button, 'second-stack')
+      clock.tick(EXPIRE_DELAY)
+      document.body.appendChild(button)
+      expect(events[0].elementStack).toBe('first-stack')
+    })
+
+    it('keeps the first stack for a rage click group', () => {
+      startClickActionsTracking()
+      elementStacks.set(button, 'first-stack')
+      emulateClick({ activity: { delay: 5 } })
+      elementStacks.set(button, 'second-stack')
+      emulateClick({ activity: { delay: 5 } })
+      emulateClick({ activity: { delay: 5 } })
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
+      expect(events[0].elementStack).toBe('first-stack')
+    })
+
+    it('leaves an unregistered click without an element stack', () => {
+      startClickActionsTracking()
+      emulateClick({ activity: {} })
+      clock.tick(EXPIRE_DELAY)
+      expect(events[0].elementStack).toBeUndefined()
+    })
   })
 
   it('starts a click action when clicking on an element', () => {

@@ -1,13 +1,21 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
-import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
+import {
+  display,
+  DefaultPrivacyLevel,
+  ResourceType,
+  startTelemetry,
+  startSessionManager,
+  computeStackTrace,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
   mockClock,
   mockEventBridge,
   createFakeTelemetryObject,
+  startMockTelemetry,
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
@@ -55,6 +63,101 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
+  describe('attachElementStack', () => {
+    it('reports static usage before init', async () => {
+      const telemetry = startMockTelemetry()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.attachElementStack(document.createElement('section'))
+
+      expect(await telemetry.getEvents()).toEqual([{ type: 'usage', usage: { feature: 'attach-element-stack' } }])
+    })
+
+    it('reports static usage after init even when stack capture is unavailable', async () => {
+      const telemetry = startMockTelemetry()
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      telemetry.reset()
+      const errorSpy = spyOn(window, 'Error').and.returnValue({ name: 'Error', message: '' })
+
+      rumPublicApi.attachElementStack(document.createElement('section'))
+      errorSpy.and.callThrough()
+
+      expect(await telemetry.getEvents()).toEqual([{ type: 'usage', usage: { feature: 'attach-element-stack' } }])
+    })
+
+    it('registers before init without warning and preserves the caller stack at startup', async () => {
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+      const element = document.createElement('section')
+      const warnSpy = spyOn(display, 'warn')
+      function registerFromMfe() {
+        rumPublicApi.attachElementStack(element)
+      }
+      registerFromMfe()
+      expect(warnSpy).not.toHaveBeenCalled()
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      const stack = startRumSpy.calls.argsFor(0)[9].get(element)
+      expect(stack).toBeDefined()
+      expect(computeStackTrace({ stack }).stack[0].func).toBe('registerFromMfe')
+    })
+
+    it('replaces registration after init in the same registry', async () => {
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+      const element = document.createElement('section')
+      rumPublicApi.attachElementStack(element)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      const registry = startRumSpy.calls.argsFor(0)[9]
+      const firstStack = registry.get(element)
+      function registerAgain() {
+        rumPublicApi.attachElementStack(element)
+      }
+      registerAgain()
+      expect(registry.get(element)).not.toBe(firstStack)
+      expect(computeStackTrace({ stack: registry.get(element) }).stack[0].func).toBe('registerAgain')
+    })
+
+    it('registers while startup waits for a manual view', async () => {
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+      const element = document.createElement('section')
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: true })
+      rumPublicApi.attachElementStack(element)
+      expect(startRumSpy).not.toHaveBeenCalled()
+      rumPublicApi.startView('first view')
+      await collectAsyncCalls(startRumSpy, 1)
+      expect(startRumSpy.calls.argsFor(0)[9].get(element)).toBeDefined()
+    })
+
+    it('preserves a valid registration when stack capture is unavailable', async () => {
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+      const element = document.createElement('section')
+      rumPublicApi.attachElementStack(element)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      const registry = startRumSpy.calls.argsFor(0)[9]
+      const firstStack = registry.get(element)
+      const errorSpy = spyOn(window, 'Error').and.returnValue({ name: 'Error', message: '' })
+      rumPublicApi.attachElementStack(element)
+      errorSpy.and.callThrough()
+      expect(registry.get(element)).toBe(firstStack)
+    })
+
+    it('isolates registrations between public API instances', async () => {
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+      const otherApi = makeRumPublicApi(noopRecorderApi, noopProfilerApi)
+      const element = document.createElement('section')
+      rumPublicApi.attachElementStack(element)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      otherApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 2)
+      expect(startRumSpy.calls.argsFor(0)[9].get(element)).toBeDefined()
+      expect(startRumSpy.calls.argsFor(1)[9].get(element)).toBeUndefined()
+    })
+  })
+
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
@@ -1286,7 +1389,7 @@ describe('rum public api', () => {
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(startRumSpy, 1)
-      const sdkName = calls.argsFor(0)[9]
+      const sdkName = calls.argsFor(0)[10]
       expect(sdkName).toBe('rum-slim')
     })
   })

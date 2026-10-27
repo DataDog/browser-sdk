@@ -47,7 +47,8 @@ function startRumStub(
     undefined,
     new Observable(),
     undefined,
-    reportError
+    reportError,
+    new WeakMap()
   )
 
   return {
@@ -71,7 +72,8 @@ describe('session expiration lifecycle', () => {
       createIdentityEncoder,
       new BufferedObservable<BufferedData>(100),
       createFakeTelemetryObject(),
-      createHooks()
+      createHooks(),
+      new WeakMap()
     )
     registerCleanupTask(stop)
 
@@ -185,6 +187,7 @@ describe('view events', () => {
       new BufferedObservable<BufferedData>(100),
       createFakeTelemetryObject(),
       createHooks(),
+      new WeakMap(),
       'rum'
     )
 
