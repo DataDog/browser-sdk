@@ -1,12 +1,12 @@
 import { clocksNow } from '@datadog/js-core/time'
 import { ConsoleApiName, globalConsole, jsonStringify, Observable, mergeObservables } from '@datadog/js-core/util'
-import { callMonitored } from '@datadog/js-core/monitor'
 import { isError, computeRawError } from '../error/error'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from '../error/error.types'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { createHandlingStack, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
+import { formatErrorMessage } from '../../tools/stackTrace/handlingStack'
+import { instrumentMethod } from '../../tools/instrumentMethod'
 
 export type ConsoleLog = NonErrorConsoleLog | ErrorConsoleLog
 
@@ -49,21 +49,18 @@ export function resetConsoleObservable() {
 
 function createConsoleObservable(api: ConsoleApiName) {
   return new Observable<ConsoleLog>((observable) => {
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const originalConsoleApi = globalConsole[api]
+    // Use instrumentMethod so that stopping the observable does not remove an instrumentation
+    // added afterward by a third party (or by another SDK bundle).
+    const { stop } = instrumentMethod(
+      globalConsole,
+      api,
+      ({ parameters, handlingStack, onPostCall }) => {
+        onPostCall(() => observable.notify(buildConsoleLog(parameters, api, handlingStack!)))
+      },
+      { computeHandlingStack: true, handlingStackType: 'console error' }
+    )
 
-    globalConsole[api] = (...params: unknown[]) => {
-      originalConsoleApi.apply(console, params)
-      const handlingStack = createHandlingStack('console error')
-
-      callMonitored(() => {
-        observable.notify(buildConsoleLog(params, api, handlingStack))
-      })
-    }
-
-    return () => {
-      globalConsole[api] = originalConsoleApi
-    }
+    return stop
   })
 }
 

@@ -214,6 +214,25 @@ describe('instrumentMethod', () => {
     )
   })
 
+  it('computes the handling stack with a custom type', () => {
+    const object = { method: () => 1 }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentMethod(object, 'method', instrumentationSpy, {
+      computeHandlingStack: true,
+      handlingStackType: 'console error',
+    })
+
+    function foo() {
+      object.method()
+    }
+
+    foo()
+
+    expect(instrumentationSpy.calls.mostRecent().args[0].handlingStack).toEqual(
+      jasmine.stringMatching(/^HandlingStack: console error\n {2}at foo @/)
+    )
+  })
+
   describe('stop()', () => {
     it('does not call the instrumentation anymore', () => {
       const object = { method: () => 1 }

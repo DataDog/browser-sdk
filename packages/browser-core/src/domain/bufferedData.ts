@@ -25,33 +25,61 @@ export type BufferedData =
   | { type: BufferedDataType.XHR; data: XhrContext }
   | { type: BufferedDataType.CONSOLE; data: ConsoleLog }
 
-export function startBufferingData() {
+/**
+ * Starts collecting early data (runtime errors, fetch, XHR and console calls) and buffers it until
+ * the product subscribes to the returned observable and unbuffers it.
+ *
+ * @param consoleApis - Console APIs to instrument. Only instrument APIs the product may collect, as
+ * each instrumented call serializes its parameters.
+ */
+export function startBufferingData(consoleApis: ConsoleApiName[] = Object.values(ConsoleApiName)) {
   const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT, (count) => {
     // monitor-until: 2026-10-14
     addTelemetryDebug('Early data collection dropped data on unbuffer', {
       count,
     })
   })
-  const subscriptions: Subscription[] = []
 
   function subscribe<T extends BufferedDataType>(
     type: T,
     source: Observable<Extract<BufferedData, { type: T }>['data']>
   ) {
-    subscriptions.push(
-      source.subscribe((data) => {
-        observable.notify({ type, data } as BufferedData)
-      })
-    )
+    return source.subscribe((data) => {
+      observable.notify({ type, data } as BufferedData)
+    })
   }
 
-  subscribe(BufferedDataType.RUNTIME_ERROR, mockable(trackRuntimeError)())
-  subscribe(BufferedDataType.FETCH, initFetchObservable())
-  subscribe(BufferedDataType.XHR, initXhrObservable())
-  subscribe(BufferedDataType.CONSOLE, initConsoleObservable(Object.values(ConsoleApiName)))
+  const subscriptions: Subscription[] = [
+    subscribe(BufferedDataType.RUNTIME_ERROR, mockable(trackRuntimeError)()),
+    subscribe(BufferedDataType.FETCH, initFetchObservable()),
+    subscribe(BufferedDataType.XHR, initXhrObservable()),
+  ]
+
+  const consoleSubscriptions = new Map<ConsoleApiName, Subscription>()
+  consoleApis.forEach((api) => {
+    consoleSubscriptions.set(api, subscribe(BufferedDataType.CONSOLE, initConsoleObservable([api])))
+  })
 
   return {
     observable,
-    stop: () => subscriptions.forEach((subscription) => subscription.unsubscribe()),
+
+    /**
+     * Stops instrumenting the console APIs that are not part of `apis`, once the product knows which
+     * ones it collects.
+     */
+    restrictConsoleApis: (apis: ConsoleApiName[]) => {
+      consoleSubscriptions.forEach((subscription, api) => {
+        if (!apis.includes(api)) {
+          subscription.unsubscribe()
+          consoleSubscriptions.delete(api)
+        }
+      })
+    },
+
+    stop: () => {
+      subscriptions.forEach((subscription) => subscription.unsubscribe())
+      consoleSubscriptions.forEach((subscription) => subscription.unsubscribe())
+      consoleSubscriptions.clear()
+    },
   }
 }
