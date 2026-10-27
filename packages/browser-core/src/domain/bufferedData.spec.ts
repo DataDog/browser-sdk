@@ -134,14 +134,44 @@ describe('startBufferingData', () => {
     ])
   })
 
-  it('collects console logs', (done) => {
-    spyOn(console, 'error').and.callFake(noop)
-    const { observable, stop } = startBufferingData()
+  Object.values(ConsoleApiName).forEach((api) => {
+    it(`collects console.${api} by default`, (done) => {
+      spyOn(console, api)
+      const { observable, stop } = startBufferingData()
+
+      registerCleanupTask(stop)
+
+      observable.subscribe((data) => {
+        if (data.type === BufferedDataType.CONSOLE && data.data.api === api) {
+          expect(data.data.message).toContain('buffered data test log')
+          done()
+        }
+      })
+
+      /* eslint-disable no-console */
+      console[api]('buffered data test log')
+      /* eslint-enable no-console */
+    })
+  })
+
+  it('only instruments the requested console APIs', (done) => {
+    const consoleSpies = Object.values(ConsoleApiName).map((api) => ({ api, spy: spyOn(console, api) }))
+    const { observable, stop } = startBufferingData([ConsoleApiName.error])
 
     registerCleanupTask(() => {
       stop()
       resetConsoleObservable()
     })
+
+    /* eslint-disable no-console */
+    consoleSpies.forEach(({ api, spy }) => {
+      if (api === ConsoleApiName.error) {
+        expect(console[api]).not.toBe(spy)
+      } else {
+        expect(console[api]).toBe(spy)
+      }
+    })
+    /* eslint-enable no-console */
 
     observable.subscribe((data) => {
       if (data.type === BufferedDataType.CONSOLE && data.data.api === ConsoleApiName.error) {
