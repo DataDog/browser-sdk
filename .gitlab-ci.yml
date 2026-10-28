@@ -243,16 +243,14 @@ e2e:
     - .test-allowed-branches
     - .resource-allocation-4-cpus
   interruptible: true
-  # EXPERIMENT (do not merge): 20 independent webkit-pinned jobs running only the Nuxt router
-  # tests, to correlate the Nuxt Vue Router v5 flake with the Nuxt app build output hash.
+  # EXPERIMENT (do not merge): independent webkit-pinned jobs running only the Nuxt "concrete URLs
+  # of the same dynamic route" test with diagnostics (DIAG lines in the job log).
   parallel:
     matrix:
       - BROWSER: [webkit-pinned]
-        RUN: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        RUN: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   artifacts:
     when: always
-    paths:
-      - nuxt-build/
     reports:
       junit: test-report/e2e/*.xml
   before_script:
@@ -265,32 +263,9 @@ e2e:
     - yarn
     - yarn build
     - yarn build:apps
-    - ./scripts/test/hash-nuxt-build.sh nuxt-build
-    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER -g "Nuxt Vue Router" --repeat-each=3
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER -g "Nuxt Vue Router.*concrete URLs" --repeat-each=5
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
-
-# EXPERIMENT (do not merge): is the Nuxt app build deterministic on Linux amd64?
-nuxt-build-determinism:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-    - .resource-allocation-4-cpus
-  interruptible: true
-  artifacts:
-    when: always
-    paths:
-      - nuxt-build/
-  script:
-    - yarn
-    - yarn build
-    - yarn build:apps
-    - |
-      for i in $(seq 1 30); do
-        (cd test/apps/nuxt-app && yarn build > /dev/null 2>&1) || echo "build $i failed"
-        ./scripts/test/hash-nuxt-build.sh "nuxt-build/build-$i"
-      done
-    - echo "Distinct build hashes:" && cat nuxt-build/build-*/hash.txt | sort | uniq -c
 
 rum-fit-tests:
   stage: test

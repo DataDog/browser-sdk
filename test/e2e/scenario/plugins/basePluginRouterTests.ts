@@ -137,16 +137,42 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
         loadApp(
           createTest('should track navigations between different concrete URLs of the same dynamic route').withRum()
         ).run(async ({ page, flushEvents, intakeRegistry }) => {
+          // EXPERIMENT (do not merge): diagnostics for the Nuxt Vue Router v5 webkit-pinned flake
+          const diag: Record<string, unknown> = { name }
+          const markerAlive = () =>
+            page.evaluate(() => (window as unknown as { __diagMarker?: boolean }).__diagMarker === true)
+          await page.evaluate(() => {
+            ;(window as unknown as { __diagMarker?: boolean }).__diagMarker = true
+          })
+          diag.rumStartedAtLoad = await page.evaluate(() => !!window.DD_RUM?.getInternalContext())
+
           await page.click('text=Go to User 42')
           await page.waitForURL('**/user/42?admin=true')
+          diag.markerAfterUser42 = await markerAlive()
 
           await page.click('text=Go to User 999')
           await page.waitForURL('**/user/999?admin=true')
+          diag.markerAfterUser999 = await markerAlive()
 
           await page.click('text=Back to Home')
           await page.waitForURL(homeUrlPattern)
+          diag.markerAfterHome = await markerAlive()
 
           await flushEvents()
+
+          const viewsById = new Map<string, Record<string, unknown>>()
+          for (const e of intakeRegistry.rumViewEvents) {
+            viewsById.set(e.view.id, {
+              name: e.view.name,
+              url: e.view.url?.replace(/\?rum-config=[^&#]*/, '?rum-config=…'),
+              loadingType: e.view.loading_type,
+              referrer: e.view.referrer?.replace(/\?rum-config=[^&#]*/, '?rum-config=…'),
+              date: e.date,
+              documentVersion: e._dd.document_version,
+            })
+          }
+          diag.views = [...viewsById.values()]
+          console.log(`DIAG ${JSON.stringify(diag)}`)
 
           const user42View = intakeRegistry.rumViewEvents.find(
             (e) => e.view.name === `${viewPrefix}${userRouteName}` && e.view.url?.includes('/user/42')
