@@ -68,6 +68,7 @@ export type CanvasCaptureResponse =
 
 export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
+  postMessage(message: DeflateWorkerAction, transfer: Transferable[]): void
 }
 
 export type DeflateEncoder = Encoder<Uint8ArrayBuffer> & { stop: () => void }

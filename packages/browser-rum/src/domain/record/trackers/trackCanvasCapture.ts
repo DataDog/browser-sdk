@@ -1,26 +1,50 @@
-import { clearTimeout, setTimeout, noop } from '@datadog/js-core/util'
+import { clearTimeout, setTimeout, noop, mockable } from '@datadog/js-core/util'
 import type { TimeoutId } from '@datadog/js-core/util'
+import { addTelemetryDebug } from '@datadog/browser-core'
 import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'
-import type { CanvasCaptureAttempt } from '../canvas/canvasManager'
 import { CanvasStatus } from '../canvas/canvasManager'
-import { captureCanvasImage, createCanvasSnapshot } from '../canvas/canvasSnapshot'
-import { computeImageHash } from '../canvas/canvasHash'
+import { copyCanvasSnapshot, createCanvasSnapshot } from '../canvas/canvasSnapshot'
+import type { CanvasWorkerFailureReason } from '../canvas/canvasWorker'
+import { isCanvasWorkerSupported, startCanvasWorker } from '../canvas/canvasWorker'
 import type { Tracker } from './tracker.types'
 
-export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: () => void): Tracker => {
+export const trackCanvasCapture = (
+  scope: RecordingScope,
+  notifyContentMutated: () => void,
+  stopCanvasContentTracking: () => void
+): Tracker => {
   const canvasManager = scope.canvasManager
   const configuration = scope.configuration.sessionReplayCanvasRecording
-  const maxFramesPerSecond = configuration?.maxFramesPerSecond ?? 0
 
-  if (!configuration?.enable || maxFramesPerSecond === 0) {
+  if (!configuration?.enable || configuration.maxFramesPerSecond === 0) {
     return { stop: noop }
   }
 
   let stopped = false
   let captureTimeoutId: TimeoutId | undefined
-  const captureInterval = ONE_SECOND / maxFramesPerSecond
+  const captureInterval = ONE_SECOND / configuration.maxFramesPerSecond
+  const maxImageDimension = configuration.maxImageDimension
+
+  function stopCapturing() {
+    stopped = true
+    clearTimeout(captureTimeoutId)
+  }
+
+  // Canvas recording stops safely, without affecting the rest of the recording
+  function disableCanvasRecording(reason: 'unsupported' | CanvasWorkerFailureReason) {
+    stopCapturing()
+    stopCanvasContentTracking()
+    // monitor-until: 2027-04-28
+    addTelemetryDebug('Canvas recording disabled', { reason })
+  }
+
+  if (!mockable(isCanvasWorkerSupported)()) {
+    disableCanvasRecording('unsupported')
+    return { stop: noop }
+  }
+  const canvasWorker = mockable(startCanvasWorker)(scope.configuration, disableCanvasRecording)
 
   function scheduleNextCapture(delay: number) {
     if (!stopped) {
@@ -44,11 +68,11 @@ export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: 
   }
 
   async function captureDirtyCanvases() {
-    const capturableCanvases = canvasManager.takeCapturableCanvases()
-
-    if (stopped) {
+    // Canvases stay dirty until the canvas worker is ready
+    if (stopped || !canvasWorker.isReady()) {
       return
     }
+    const capturableCanvases = canvasManager.takeCapturableCanvases()
 
     for (const canvas of capturableCanvases) {
       const nodeId = scope.nodeIds.get(canvas)
@@ -65,12 +89,6 @@ export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: 
     }
   }
 
-  function markDirtyIfCurrent(captureAttempt: CanvasCaptureAttempt, canvas: HTMLCanvasElement) {
-    if (captureAttempt.isCurrent()) {
-      canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
-    }
-  }
-
   async function captureCanvas(canvas: HTMLCanvasElement) {
     const captureAttempt = canvasManager.startCaptureAttempt(canvas)
     const cancelled = () => stopped || !captureAttempt.isCurrent()
@@ -80,44 +98,34 @@ export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: 
     }
 
     try {
-      const snapshot = captureAttempt.snapshot ?? createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
-      if (!snapshot) {
-        markDirtyIfCurrent(captureAttempt, canvas)
-        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
-        return // snapshot failed; leave it dirty
-      }
+      const snapshot = captureAttempt.snapshot
+        ? copyCanvasSnapshot(captureAttempt.snapshot)
+        : createCanvasSnapshot(canvas, maxImageDimension)
+      const result = await canvasWorker.capture(snapshot, captureAttempt.lastChangeHash)
 
-      const hash = await computeImageHash(snapshot, configuration?.hashingMaxDimension ?? 100)
-
-      if (cancelled()) {
+      if (cancelled() || !result) {
         return
       }
-      if (hash === undefined) {
-        markDirtyIfCurrent(captureAttempt, canvas)
-        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
-        return // hashing failed; leave it dirty
-      }
 
-      if (hash === captureAttempt.lastChangeHash) {
-        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
-        return // unchanged: no capture/output
+      switch (result.type) {
+        case 'canvasUnchanged':
+          canvasManager.discardCaptureAttempt(canvas, captureAttempt)
+          return
+        case 'canvasCaptureFailed':
+          canvasManager.markCanvas(
+            canvas,
+            result.errorName === 'SecurityError' ? CanvasStatus.Tainted : CanvasStatus.Dirty
+          )
+          canvasManager.discardCaptureAttempt(canvas, captureAttempt)
+          return
+        case 'canvasCaptured':
+          canvasManager.addCanvasContentMutation({ canvas, captureAttempt, hash: result.hash, image: result.image })
+          notifyContentMutated()
+          return
       }
-
-      const image = await captureCanvasImage(snapshot, configuration?.encodeQuality ?? 0.5)
-      if (cancelled()) {
-        return
-      }
-      if (!image) {
-        markDirtyIfCurrent(captureAttempt, canvas)
-        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
-        return // encoding failed; leave it dirty
-      }
-
-      canvasManager.addCanvasContentMutation({ canvas, captureAttempt, hash, image })
-      notifyContentMutated()
     } catch (error) {
       if (!cancelled()) {
-        canvasManager.markCanvas(canvas, isSecurityError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)
+        canvasManager.markCanvas(canvas, getSnapshotFailureStatus(error))
         canvasManager.discardCaptureAttempt(canvas, captureAttempt)
       }
     }
@@ -127,12 +135,20 @@ export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: 
 
   return {
     stop: () => {
-      stopped = true
-      clearTimeout(captureTimeoutId)
+      stopCapturing()
+      canvasWorker.stop()
     },
   }
 }
 
-function isSecurityError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'SecurityError'
+function getSnapshotFailureStatus(error: unknown): CanvasStatus {
+  switch (error instanceof DOMException && error.name) {
+    case 'SecurityError':
+      return CanvasStatus.Tainted
+    // createImageBitmap rejects a zero-sized canvas. Resizing it marks it dirty again.
+    case 'InvalidStateError':
+      return CanvasStatus.Clean
+    default:
+      return CanvasStatus.Dirty
+  }
 }

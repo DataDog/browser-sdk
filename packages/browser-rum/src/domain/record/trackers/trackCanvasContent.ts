@@ -96,11 +96,11 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
       }
 
       try {
-        const snapshot = createCanvasSnapshot(htmlCanvas, configuration.maxImageDimension)
-        if (snapshot) {
-          scope.canvasManager.setCanvasSnapshot(htmlCanvas, snapshot)
-          markCanvasDirty(htmlCanvas)
-        }
+        scope.canvasManager.setCanvasSnapshot(
+          htmlCanvas,
+          createCanvasSnapshot(htmlCanvas, configuration.maxImageDimension)
+        )
+        markCanvasDirty(htmlCanvas)
       } catch (error) {
         scope.canvasManager.markCanvas(
           htmlCanvas,

@@ -6,4 +6,5 @@ export {
   getDeflateWorkerStatus,
   resetDeflateWorkerState,
   createDeflateWorker,
+  INITIALIZATION_TIME_OUT_DELAY,
 } from './deflateWorker'

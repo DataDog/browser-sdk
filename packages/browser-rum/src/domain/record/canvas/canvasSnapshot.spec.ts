@@ -1,88 +1,75 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { CanvasSnapshot } from './canvasSnapshot'
-import { captureCanvasImage, createCanvasSnapshot } from './canvasSnapshot'
-import { expectPixelApprox, supportsWebPEncoding } from './canvasImage.specHelper'
+import { copyCanvasSnapshot, createCanvasSnapshot } from './canvasSnapshot'
+import { isCanvasWorkerSupported } from './canvasWorker'
 
 describe('createCanvasSnapshot', () => {
-  it('downscales the snapshot to the configured maximum dimension', () => {
-    const snapshot = createSnapshot(createCanvas(4, 2), 2)
-
-    expect([snapshot.source.width, snapshot.source.height]).toEqual([2, 1])
+  beforeEach(() => {
+    if (!isCanvasWorkerSupported()) {
+      pending('canvas recording not supported')
+    }
   })
 
-  it('does not upscale a canvas smaller than the maximum dimension', () => {
-    const snapshot = createSnapshot(createCanvas(2, 2), 1000)
+  it('downscales the snapshot to the configured maximum dimension', async () => {
+    const bitmap = await createCanvasSnapshot(createCanvas(4, 2), 2).bitmap
 
-    expect([snapshot.source.width, snapshot.source.height]).toEqual([2, 2])
+    expect([bitmap.width, bitmap.height]).toEqual([2, 1])
+  })
+
+  it('does not upscale a canvas smaller than the maximum dimension', async () => {
+    const bitmap = await createCanvasSnapshot(createCanvas(2, 2), 1000).bitmap
+
+    expect([bitmap.width, bitmap.height]).toEqual([2, 2])
   })
 
   it('keeps the dimensions of the canvas it was taken from', () => {
-    const snapshot = createSnapshot(createCanvas(4, 2), 1)
+    const snapshot = createCanvasSnapshot(createCanvas(4, 2), 1)
 
     expect([snapshot.canvasWidth, snapshot.canvasHeight]).toEqual([4, 2])
   })
 
-  it('does not take a snapshot when no 2d context is available', () => {
-    const canvas = createCanvas(2, 2)
-    spyOn(HTMLCanvasElement.prototype, 'getContext').and.returnValue(null)
-
-    expect(createCanvasSnapshot(canvas, 1000)).toBeUndefined()
-  })
-
   it('is not affected by later draws on the canvas', async () => {
-    const canvas = createCanvas(1, 1, ['red'])
-    const snapshot = createSnapshot(canvas, 1000)
+    const canvas = createCanvas(1, 1)
+    const snapshot = createCanvasSnapshot(canvas, 1000)
 
     fill(canvas, 'blue')
 
-    expectPixelApprox(await imagePixels((await captureCanvasImage(snapshot, 1))!), [255, 0, 0, 255])
+    expect(firstPixelOf(await snapshot.bitmap)).toEqual([255, 0, 0, 255])
+  })
+
+  it('does not report an unhandled rejection when the snapshot fails and is never captured', async () => {
+    const onUnhandledRejection = jasmine.createSpy()
+    window.addEventListener('unhandledrejection', onUnhandledRejection)
+    registerCleanupTask(() => window.removeEventListener('unhandledrejection', onUnhandledRejection))
+
+    const snapshot = createCanvasSnapshot(createCanvas(0, 0), 1000)
+
+    await expectAsync(snapshot.bitmap).toBeRejected()
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(onUnhandledRejection).not.toHaveBeenCalled()
   })
 })
 
-describe('captureCanvasImage', () => {
-  it('encodes the snapshot as WebP, or PNG when the browser does not support WebP encoding', async () => {
-    const snapshot = createSnapshot(createCanvas(2, 2), 1000)
-
-    const image = await captureCanvasImage(snapshot, 0.5)
-
-    expect(image?.type).toBe(supportsWebPEncoding() ? 'image/webp' : 'image/png')
+describe('copyCanvasSnapshot', () => {
+  beforeEach(() => {
+    if (!isCanvasWorkerSupported()) {
+      pending('canvas recording not supported')
+    }
   })
 
-  it('encodes an image with the dimensions of the snapshot', async () => {
-    const snapshot = createSnapshot(createCanvas(4, 2), 2)
+  it('keeps the original snapshot usable once the copy is consumed', async () => {
+    const snapshot = createCanvasSnapshot(createCanvas(1, 1), 1000)
 
-    const image = await captureCanvasImage(snapshot, 1)
+    ;(await copyCanvasSnapshot(snapshot).bitmap).close()
 
-    expect(await imageSize(image!)).toEqual([2, 1])
-  })
-
-  it('downscales the whole canvas instead of cropping it', async () => {
-    // WebP chroma subsampling blends adjacent colors, so exact RGB values are not stable.
-    // A cropped image would be red-dominant throughout.
-    const snapshot = createSnapshot(createCanvas(4, 2, ['red', 'blue']), 2)
-
-    const image = await captureCanvasImage(snapshot, 1)
-    const pixels = await imagePixels(image!)
-
-    // First pixel: [R, G, B, A] = indices 0, 1, 2, 3
-    // Second pixel: [R, G, B, A] = indices 4, 5, 6, 7
-    // First pixel: red dominates over blue.
-    expect(pixels[0]).toBeGreaterThan(pixels[2])
-    // Second pixel: blue dominates over red.
-    expect(pixels[6]).toBeGreaterThan(pixels[4])
+    expect(firstPixelOf(await snapshot.bitmap)).toEqual([255, 0, 0, 255])
   })
 })
 
-function createCanvas(width: number, height: number, colors: string[] = ['red']): HTMLCanvasElement {
+function createCanvas(width: number, height: number): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
-  const context = canvas.getContext('2d')!
-  const stripeWidth = width / colors.length
-  colors.forEach((color, index) => {
-    context.fillStyle = color
-    context.fillRect(index * stripeWidth, 0, stripeWidth, height)
-  })
+  fill(canvas, 'red')
   document.body.appendChild(canvas)
   registerCleanupTask(() => canvas.remove())
   return canvas
@@ -94,37 +81,8 @@ function fill(canvas: HTMLCanvasElement, color: string) {
   context.fillRect(0, 0, canvas.width, canvas.height)
 }
 
-function createSnapshot(canvas: HTMLCanvasElement, maxImageDimension: number): CanvasSnapshot {
-  return createCanvasSnapshot(canvas, maxImageDimension)!
-}
-
-function decodeImage(image: Blob): Promise<{ pixels: number[]; size: [number, number] }> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(image)
-    const element = new Image()
-    element.onload = () => {
-      const width = element.naturalWidth
-      const height = element.naturalHeight
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const context = canvas.getContext('2d')!
-      context.drawImage(element, 0, 0)
-      URL.revokeObjectURL(url)
-      resolve({ pixels: Array.from(context.getImageData(0, 0, width, height).data), size: [width, height] })
-    }
-    element.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('failed to decode the image'))
-    }
-    element.src = url
-  })
-}
-
-async function imageSize(image: Blob): Promise<[number, number]> {
-  return (await decodeImage(image)).size
-}
-
-async function imagePixels(image: Blob): Promise<number[]> {
-  return (await decodeImage(image)).pixels
+function firstPixelOf(bitmap: ImageBitmap): number[] {
+  const context = new OffscreenCanvas(1, 1).getContext('2d')!
+  context.drawImage(bitmap, 0, 0)
+  return Array.from(context.getImageData(0, 0, 1, 1).data)
 }
