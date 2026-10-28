@@ -20,6 +20,22 @@ export type DeflateWorkerAction =
       action: 'reset'
       streamId: number
     }
+  // Action sent to the 'canvas' worker to capture a canvas. The worker hashes a thumbnail of the
+  // bitmap and responds with 'canvasUnchanged' if the hash matches `lastChangeHash`, or encodes the
+  // bitmap and responds with 'canvasCaptured'. It responds with 'canvasCaptureFailed' otherwise.
+  | CanvasCaptureAction
+
+export interface CanvasCaptureAction {
+  action: 'captureCanvas'
+  id: number
+  /** Already downscaled to the recorded image dimensions. Transferred, and closed once captured. */
+  bitmap: ImageBitmap
+  canvasWidth: number
+  canvasHeight: number
+  lastChangeHash: string | undefined
+  hashingMaxDimension: number
+  encodeQuality: number
+}
 
 export type DeflateWorkerResponse =
   // Response to 'init' action
@@ -42,6 +58,13 @@ export type DeflateWorkerResponse =
       streamId?: number
       error: Error | string
     }
+  // Responses to 'captureCanvas' action
+  | CanvasCaptureResponse
+
+export type CanvasCaptureResponse =
+  | { type: 'canvasCaptured'; id: number; hash: string; image: Blob }
+  | { type: 'canvasUnchanged'; id: number }
+  | { type: 'canvasCaptureFailed'; id: number; errorName: string | undefined }
 
 export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void

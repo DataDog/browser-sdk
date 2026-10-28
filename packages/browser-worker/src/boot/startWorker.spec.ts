@@ -1,4 +1,5 @@
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import { collectAsyncCalls } from '@datadog/browser-core/test'
 import type { WorkerScope } from './startWorker'
 import { startWorker } from './startWorker'
 
@@ -199,6 +200,34 @@ describe('startWorker', () => {
       type: 'errored',
       error: jasmine.stringContaining('TypeError'),
       streamId: undefined,
+    })
+  })
+
+  it('responds asynchronously to canvas capture requests', async () => {
+    if (typeof OffscreenCanvas === 'undefined') {
+      pending('OffscreenCanvas not supported')
+    }
+    const canvas = new OffscreenCanvas(1, 1)
+    canvas.getContext('2d')!.fillRect(0, 0, 1, 1)
+    const bitmap = await createImageBitmap(canvas)
+
+    emulateAction({
+      action: 'captureCanvas',
+      id: 1,
+      bitmap,
+      canvasWidth: 1,
+      canvasHeight: 1,
+      lastChangeHash: undefined,
+      hashingMaxDimension: 100,
+      encodeQuality: 0.5,
+    })
+    const calls = await collectAsyncCalls(workerScope.postMessage, 1)
+
+    expect(calls.argsFor(0)[0]).toEqual({
+      type: 'canvasCaptured',
+      id: 1,
+      hash: jasmine.any(String),
+      image: jasmine.any(Blob),
     })
   })
 })
