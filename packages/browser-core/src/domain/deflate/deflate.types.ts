@@ -20,6 +20,23 @@ export type DeflateWorkerAction =
       action: 'reset'
       streamId: number
     }
+  // Action to send to hash a canvas snapshot and, if it changed since the last capture, encode it.
+  // The worker will respond with a CanvasCaptureResponse with the same id.
+  | CanvasCaptureAction
+
+export interface CanvasCaptureAction {
+  action: 'captureCanvas'
+  id: number
+  // Downscaled snapshot of the canvas, transferred to the worker
+  bitmap: ImageBitmap
+  // Dimensions of the canvas itself, which can differ from the bitmap ones
+  canvasWidth: number
+  canvasHeight: number
+  // Hash returned by the last successful capture of this canvas, if any
+  lastChangeHash: string | undefined
+  hashingMaxDimension: number
+  encodeQuality: number
+}
 
 export type DeflateWorkerResponse =
   // Response to 'init' action
@@ -36,11 +53,33 @@ export type DeflateWorkerResponse =
       trailer: Uint8ArrayBuffer
       additionalBytesCount: number
     }
+  // Response to 'captureCanvas' action
+  | CanvasCaptureResponse
   // Could happen at any time when something goes wrong in the worker
   | {
       type: 'errored'
       streamId?: number
       error: Error | string
+    }
+
+export type CanvasCaptureResponse =
+  // The canvas changed since the last capture
+  | {
+      type: 'canvasCaptured'
+      id: number
+      hash: string
+      image: Blob
+    }
+  // The hash matches `lastChangeHash`, so the image was not encoded
+  | {
+      type: 'canvasUnchanged'
+      id: number
+    }
+  // The snapshot could not be hashed or encoded
+  | {
+      type: 'canvasCaptureFailed'
+      id: number
+      errorName: string | undefined
     }
 
 export interface DeflateWorker extends Worker {

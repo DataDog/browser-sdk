@@ -2,6 +2,7 @@ import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browse
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import { concatBuffers } from '@datadog/js-core/util'
 import { Deflate, constants } from '../domain/deflate'
+import { captureCanvas } from '../domain/canvas'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
 
@@ -15,7 +16,7 @@ export function startWorker(workerScope: WorkerScope = self) {
     const streams = new Map<number, Deflate>()
     workerScope.addEventListener('message', (event: MessageEvent<DeflateWorkerAction>) => {
       try {
-        const response = handleAction(streams, event.data)
+        const response = handleAction(workerScope, streams, event.data)
         if (response) {
           workerScope.postMessage(response)
         }
@@ -45,7 +46,11 @@ function sendError(workerScope: WorkerScope, error: unknown, streamId?: number) 
   }
 }
 
-function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerAction): DeflateWorkerResponse | undefined {
+function handleAction(
+  workerScope: WorkerScope,
+  streams: Map<number, Deflate>,
+  message: DeflateWorkerAction
+): DeflateWorkerResponse | undefined {
   switch (message.action) {
     case 'init':
       return {
@@ -76,6 +81,10 @@ function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerActio
 
     case 'reset':
       streams.delete(message.streamId)
+      break
+
+    case 'captureCanvas':
+      void captureCanvas(message).then((response) => workerScope.postMessage(response))
       break
   }
 }
