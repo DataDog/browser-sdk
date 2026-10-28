@@ -84,6 +84,8 @@ export type CanvasCaptureResponse =
 
 export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
+  // Transferring ownership avoids copying large payloads, like canvas bitmaps
+  postMessage(message: DeflateWorkerAction, transfer: Transferable[]): void
 }
 
 export type DeflateEncoder = Encoder<Uint8ArrayBuffer> & { stop: () => void }
