@@ -16,7 +16,7 @@ import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
-import type { StartRum } from './startRum'
+import type { StartRum, StartRumResult } from './startRum'
 import { startRum } from './startRum'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
@@ -95,6 +95,49 @@ describe('rum public api', () => {
         })
         await collectAsyncCalls(recorderApiOnRumStartSpy, 1)
         expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
+      })
+    })
+
+    describe('early collection', () => {
+      let rumPublicApi: RumPublicApi
+      let startRumSpy: jasmine.Spy<StartRum>
+      let takeOverEarlyCollectionSpy: jasmine.Spy
+      let recorderApiOnRumStartSpy: jasmine.Spy
+      // The takeover only needs the lifeCycle `notify` entry point: a sentinel
+      // object is enough to assert it receives the startRum lifeCycle.
+      const fakeLifeCycle = {} as unknown as StartRumResult['lifeCycle']
+
+      beforeEach(() => {
+        takeOverEarlyCollectionSpy = jasmine.createSpy('takeOverEarlyCollection')
+        recorderApiOnRumStartSpy = jasmine.createSpy()
+        ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+          recorderApi: {
+            onRumStart: recorderApiOnRumStartSpy,
+          },
+          startRumResult: {
+            lifeCycle: fakeLifeCycle,
+          },
+          rumPublicApiOptions: {
+            takeOverEarlyCollection: takeOverEarlyCollectionSpy,
+          },
+        }))
+      })
+
+      it('calls the takeover provided through options with the startRum lifeCycle', async () => {
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        await collectAsyncCalls(takeOverEarlyCollectionSpy, 1)
+
+        expect(takeOverEarlyCollectionSpy).toHaveBeenCalledWith(fakeLifeCycle)
+      })
+
+      it('calls the takeover after startRum and before the recorder start', async () => {
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        await collectAsyncCalls(takeOverEarlyCollectionSpy, 1)
+
+        expect(startRumSpy).toHaveBeenCalledBefore(takeOverEarlyCollectionSpy)
+        expect(takeOverEarlyCollectionSpy).toHaveBeenCalledBefore(recorderApiOnRumStartSpy)
       })
     })
   })

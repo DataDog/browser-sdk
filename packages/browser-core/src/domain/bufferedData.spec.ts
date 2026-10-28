@@ -180,20 +180,23 @@ describe('startBufferingData', () => {
       })
     }
 
-    it('does not instrument runtime errors when the early collection package is present', () => {
+    it('does not instrument runtime errors when the early collection takeover is supported and the early collection package is present', () => {
       const trackRuntimeErrorSpy = replaceMockableWithSpy(trackRuntimeError)
       setEarlyCollectionGlobal()
 
-      const { stop } = startBufferingData()
+      const { stop } = startBufferingData(true)
       registerCleanupTask(stop)
 
       expect(trackRuntimeErrorSpy).not.toHaveBeenCalled()
     })
 
-    it('still instruments runtime errors when the early collection contract version is not recognized', () => {
+    it('still instruments runtime errors when the early collection takeover is not supported, even when the early collection package is present', () => {
+      // SDKs that do not support the early collection takeover (e.g. Logs,
+      // rum-slim) keep collecting errors from bundle evaluation: the early
+      // collection package data is simply not adopted by them.
       const trackRuntimeErrorSpy = replaceMockableWithSpy(trackRuntimeError)
       trackRuntimeErrorSpy.and.returnValue(new Observable<RawError>())
-      setEarlyCollectionGlobal({ version: 2 })
+      setEarlyCollectionGlobal()
 
       const { stop } = startBufferingData()
       registerCleanupTask(stop)
@@ -201,11 +204,32 @@ describe('startBufferingData', () => {
       expect(trackRuntimeErrorSpy).toHaveBeenCalled()
     })
 
-    it('still collects fetch requests when the early collection package is present', async () => {
+    it('still instruments runtime errors when the early collection contract version is not recognized', () => {
+      const trackRuntimeErrorSpy = replaceMockableWithSpy(trackRuntimeError)
+      trackRuntimeErrorSpy.and.returnValue(new Observable<RawError>())
+      setEarlyCollectionGlobal({ version: 2 })
+
+      const { stop } = startBufferingData(true)
+      registerCleanupTask(stop)
+
+      expect(trackRuntimeErrorSpy).toHaveBeenCalled()
+    })
+
+    it('still instruments runtime errors when the early collection takeover is supported but the early collection package is not present', () => {
+      const trackRuntimeErrorSpy = replaceMockableWithSpy(trackRuntimeError)
+      trackRuntimeErrorSpy.and.returnValue(new Observable<RawError>())
+
+      const { stop } = startBufferingData(true)
+      registerCleanupTask(stop)
+
+      expect(trackRuntimeErrorSpy).toHaveBeenCalled()
+    })
+
+    it('still collects fetch requests when the early collection takeover is supported', async () => {
       mockFetch()
       setEarlyCollectionGlobal()
 
-      const { observable, stop } = startBufferingData()
+      const { observable, stop } = startBufferingData(true)
       // eslint-disable-next-line @typescript-eslint/unbound-method
       const fetch = window.fetch as MockFetch
       const collected: BufferedData[] = []

@@ -77,6 +77,10 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
  * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
 export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
+  // rum-slim does not support the early collection package by design: it does
+  // not provide `takeOverEarlyCollection`, so it keeps collecting errors from
+  // bundle evaluation as usual, whether or not the early collection package
+  // is present on the page.
   sdkName: 'rum-slim',
 })
 

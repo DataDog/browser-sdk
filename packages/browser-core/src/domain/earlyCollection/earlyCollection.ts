@@ -8,7 +8,7 @@ import type { Profiler } from '@datadog/js-core/util'
  * first script of the page, which collects uncaught errors and starts the JS
  * Self-Profiling API Profiler before the SDK bundle is evaluated. The SDK
  * checks for it at bundle evaluation (see `startBufferingData`) and takes it
- * over at init (see `takeOverEarlyCollection`).
+ * over at init.
  */
 export const EARLY_COLLECTION_GLOBAL_NAME = '_DD_EARLY_COLLECTION'
 
@@ -70,16 +70,4 @@ export function readEarlyCollection(): EarlyCollectionGlobal | undefined {
     return undefined
   }
   return rawGlobal as EarlyCollectionGlobal
-}
-
-/**
- * A Profiler instance started by the early collection package, along with the
- * time it started, so the profiler chunk can adopt it as its first instance
- * and keep the samples collected while it was downloading.
- */
-export interface EarlyCollectionProfilerTakeover {
-  /** The running Profiler instance to adopt. */
-  readonly profiler: Profiler
-  /** High resolution time when the Profiler instance started. */
-  readonly startClocks: ClocksState
 }

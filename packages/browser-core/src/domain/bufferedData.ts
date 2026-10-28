@@ -26,7 +26,20 @@ export type BufferedData =
   | { type: BufferedDataType.XHR; data: XhrContext }
   | { type: BufferedDataType.CONSOLE; data: ConsoleLog }
 
-export function startBufferingData() {
+/**
+ * Starts buffering data (runtime errors, fetch, XHR, console) from bundle
+ * evaluation until the SDK is initialized.
+ *
+ * @param supportsEarlyCollectionTakeover - Whether the SDK takes over the
+ * early collection package data at init (see `takeOverEarlyCollection` in
+ * `@datadog/browser-rum-core`). When true (and the early collection package
+ * is present), its error listeners keep buffering raw errors until init and
+ * the runtime error instrumentation is skipped to avoid double-counting: the
+ * takeover installs it at init. SDKs that do not support the early collection
+ * takeover keep collecting errors from bundle evaluation, whether or not the
+ * early collection package is present.
+ */
+export function startBufferingData(supportsEarlyCollectionTakeover = false) {
   const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT, (count) => {
     // monitor-until: 2026-10-14
     addTelemetryDebug('Early data collection dropped data on unbuffer', {
@@ -46,12 +59,7 @@ export function startBufferingData() {
     )
   }
 
-  // When the early collection package (a standalone snippet evaluated before
-  // the SDK bundle) is present, its error listeners keep buffering raw errors
-  // until init: skip the runtime error instrumentation to avoid
-  // double-counting, the SDK takes over at init (see
-  // `takeOverEarlyCollection`).
-  if (!readEarlyCollection()) {
+  if (!supportsEarlyCollectionTakeover || !readEarlyCollection()) {
     subscribe(BufferedDataType.RUNTIME_ERROR, mockable(trackRuntimeError)())
   }
   subscribe(BufferedDataType.FETCH, initFetchObservable())

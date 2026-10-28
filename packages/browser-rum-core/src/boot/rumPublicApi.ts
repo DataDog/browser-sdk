@@ -627,6 +627,16 @@ export interface RumPublicApiOptions {
     onInitializationFailure: () => void
   ) => DeflateWorker | undefined
   createDeflateEncoder?: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
+  /**
+   * Takes over the data collected by the early collection package (see
+   * `takeOverEarlyCollection`), when it is present. When provided, the SDK
+   * expects the early collection package to buffer runtime errors before
+   * the SDK bundle is evaluated and skips its own eval-time runtime error
+   * instrumentation (the takeover installs it at init). Entries that do not
+   * support the early collection package must not provide it, and keep
+   * collecting errors from bundle evaluation as usual.
+   */
+  takeOverEarlyCollection?: (lifeCycle: LifeCycle) => void
   sdkName?: SdkName
 }
 
@@ -667,7 +677,7 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedData = startBufferingData()
+  const bufferedData = startBufferingData(options.takeOverEarlyCollection !== undefined)
 
   let strategy = createPreStartStrategy(
     options,
@@ -690,6 +700,11 @@ export function makeRumPublicApi(
         hooks,
         options.sdkName
       )
+
+      // Take over the early collection data before the recorder and profiler
+      // start (so the claimed Profiler is available to the profiler API stop
+      // paths), in the same synchronous init block: no collection boundary.
+      options.takeOverEarlyCollection?.(startRumResult.lifeCycle)
 
       recorderApi.onRumStart(
         startRumResult.lifeCycle,

@@ -15,8 +15,6 @@ import {
   createIdentityEncoder,
   createValueHistory,
   EARLY_COLLECTION_GLOBAL_NAME,
-  takeEarlyCollectionProfiler,
-  takeOverEarlyCollection,
   trackRuntimeError,
   type RawError,
 } from '@datadog/browser-core'
@@ -27,6 +25,8 @@ import {
   RumPerformanceEntryType,
   VitalType,
   createHooks,
+  takeEarlyCollectionProfiler,
+  takeOverEarlyCollection,
 } from '@datadog/browser-rum-core'
 import {
   setPageVisibility,
@@ -152,7 +152,7 @@ describe('profiler', () => {
       }
       // Neutralize the error instrumentation install done by the takeover.
       replaceMockable(trackRuntimeError, () => new Observable<RawError>())
-      takeOverEarlyCollection(new Observable<RawError>())
+      takeOverEarlyCollection(new LifeCycle())
     }
 
     const longTaskHistory = createValueHistory<LongTaskContext>({

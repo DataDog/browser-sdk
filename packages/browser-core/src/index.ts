@@ -140,13 +140,12 @@ export type { SyntheticsContext } from './domain/synthetics/syntheticsWorkerValu
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './domain/bufferedData'
-export type { EarlyCollectionProfilerTakeover } from './domain/earlyCollection/earlyCollection'
-export { EARLY_COLLECTION_GLOBAL_NAME } from './domain/earlyCollection/earlyCollection'
 export {
-  stopEarlyCollectionProfiler,
-  takeEarlyCollectionProfiler,
-  takeOverEarlyCollection,
-} from './domain/earlyCollection/earlyCollectionTakeover'
+  EARLY_COLLECTION_GLOBAL_NAME,
+  EarlyCollectionEntryType,
+  readEarlyCollection,
+} from './domain/earlyCollection/earlyCollection'
+export type { EarlyCollectionGlobal } from './domain/earlyCollection/earlyCollection'
 export * from './tools/utils/polyfills'
 export * from './tools/utils/timezone'
 export * from './tools/utils/numberUtils'

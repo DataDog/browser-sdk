@@ -5,7 +5,7 @@
  * WARNING: this module is not intended for public usages, and won't follow semver for breaking
  * changes.
  */
-import { makeRumPublicApi } from '@datadog/browser-rum-core'
+import { makeRumPublicApi, takeOverEarlyCollection } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { makeProfilerApi } from '../boot/profilerApi'
 
@@ -18,6 +18,7 @@ const recorderApi = makeRecorderApi()
 const profilerApi = makeProfilerApi()
 export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
   ignoreInitIfSyntheticsWillInjectRum: false,
+  takeOverEarlyCollection,
   sdkName: 'rum-synthetics',
 })
 /* eslint-enable local-rules/disallow-side-effects */

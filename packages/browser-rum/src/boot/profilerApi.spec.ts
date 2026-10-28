@@ -2,8 +2,6 @@ import {
   BridgeCapability,
   createIdentityEncoder,
   EARLY_COLLECTION_GLOBAL_NAME,
-  takeEarlyCollectionProfiler,
-  takeOverEarlyCollection,
   trackRuntimeError,
   type RawError,
 } from '@datadog/browser-core'
@@ -18,7 +16,7 @@ import {
   registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
-import { createHooks, LifeCycle } from '@datadog/browser-rum-core'
+import { createHooks, LifeCycle, takeEarlyCollectionProfiler, takeOverEarlyCollection } from '@datadog/browser-rum-core'
 import { mockProfiler } from '../../test'
 import { mockedTrace } from '../domain/profiling/test-utils/mockedTrace'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
@@ -135,7 +133,7 @@ describe('profilerApi', () => {
       }
       // Neutralize the error instrumentation install done by the takeover.
       replaceMockable(trackRuntimeError, () => new Observable<RawError>())
-      takeOverEarlyCollection(new Observable<RawError>())
+      takeOverEarlyCollection(new LifeCycle())
       return profiler
     }
 

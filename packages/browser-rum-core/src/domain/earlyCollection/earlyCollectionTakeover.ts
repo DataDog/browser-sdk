@@ -2,13 +2,31 @@ import { relativeToClocks } from '@datadog/js-core/time'
 import type { ClocksState } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import { globalObject, mockable } from '@datadog/js-core/util'
-import type { Observable, Profiler } from '@datadog/js-core/util'
-import { computeRawError } from '../error/error'
-import { ErrorHandling, ErrorSource, NonErrorPrefix } from '../error/error.types'
-import type { RawError } from '../error/error.types'
-import { trackRuntimeError } from '../error/trackRuntimeError'
-import type { EarlyCollectionProfilerTakeover } from './earlyCollection'
-import { EARLY_COLLECTION_GLOBAL_NAME, EarlyCollectionEntryType, readEarlyCollection } from './earlyCollection'
+import type { Profiler } from '@datadog/js-core/util'
+import {
+  computeRawError,
+  EARLY_COLLECTION_GLOBAL_NAME,
+  EarlyCollectionEntryType,
+  ErrorHandling,
+  ErrorSource,
+  NonErrorPrefix,
+  readEarlyCollection,
+  trackRuntimeError,
+} from '@datadog/browser-core'
+import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
+
+/**
+ * A Profiler instance started by the early collection package, along with the
+ * time it started, so the profiler chunk can adopt it as its first instance
+ * and keep the samples collected while it was downloading.
+ */
+export interface EarlyCollectionProfilerTakeover {
+  /** The running Profiler instance to adopt. */
+  readonly profiler: Profiler
+  /** High resolution time when the Profiler instance started. */
+  readonly startClocks: ClocksState
+}
 
 /**
  * Profiler takeover claimed at init, waiting for the profiler chunk to adopt
@@ -24,30 +42,33 @@ let earlyProfilerTakeover: EarlyCollectionProfilerTakeover | undefined
 
 /**
  * Takes over the data collected by the early collection package, when it is
- * present. Called by the error collection at init, in the same synchronous
- * block, so there is no collection boundary for errors. It first installs
- * the SDK error instrumentation (the early listeners keep recording raw
- * errors until then, see `startBufferingData`), then processes the raw errors
- * buffered by the early collection package and replays them through the
- * error pipeline, so they become events attributed to the initial view like
- * the errors the SDK buffers itself between bundle evaluation and init. This
- * is the deliberate cost move: the early package only buffered raw Error
- * objects, all processing (stack parsing via `computeStackTrace`) happens
- * here, at init time. Finally, it claims the Profiler instance for the
- * profiler chunk (see `takeEarlyCollectionProfiler`), seals the early
+ * present. Called by the RUM public API at init (the entry provides this
+ * function through its options), in the same synchronous block as the rest
+ * of the SDK start, so there is no collection boundary for errors. It first
+ * installs the SDK error instrumentation (the early listeners keep recording
+ * raw errors until then, see `startBufferingData`), then processes the raw
+ * errors buffered by the early collection package and replays them through
+ * the error pipeline, so they become events attributed to the initial view
+ * like the errors the SDK buffers itself between bundle evaluation and
+ * init. This is the deliberate cost move: the early package only buffered
+ * raw Error objects, all processing (stack parsing via `computeStackTrace`)
+ * happens here, at init time. Finally, it claims the Profiler instance for
+ * the profiler chunk (see `takeEarlyCollectionProfiler`), seals the early
  * collection and deletes its global so no other SDK instance adopts the same
  * data twice.
  *
  * No-op when the early collection package is not present, or when its
  * contract is not recognized.
  */
-export function takeOverEarlyCollection(errorObservable: Observable<RawError>): void {
+export function takeOverEarlyCollection(lifeCycle: LifeCycle): void {
   const earlyCollection = readEarlyCollection()
   if (!earlyCollection) {
     return
   }
 
-  mockable(trackRuntimeError)().subscribe((rawError) => errorObservable.notify(rawError))
+  mockable(trackRuntimeError)().subscribe((rawError) =>
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error: rawError })
+  )
 
   for (const entry of earlyCollection.buffer) {
     // The early collection is a separate artifact: stay resilient to malformed
@@ -59,18 +80,21 @@ export function takeOverEarlyCollection(errorObservable: Observable<RawError>): 
     if (entryType !== EarlyCollectionEntryType.RUNTIME_ERROR) {
       continue
     }
-    errorObservable.notify(
-      computeRawError({
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+      error: computeRawError({
         originalError: data,
         startClocks: relativeToClocks(relativeStart),
         nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
         source: ErrorSource.SOURCE,
         handling: ErrorHandling.UNHANDLED,
-      })
-    )
+      }),
+    })
   }
 
-  if (isProfiler(earlyCollection.profiler) && isClocksState(earlyCollection.startClocks)) {
+  // Claim the Profiler instance for the profiler chunk. Its shape is only
+  // validated here, at claim time: the takeover is the single point where the
+  // early collection data enters the SDK.
+  if (isProfiler(earlyCollection.profiler)) {
     earlyProfilerTakeover = {
       profiler: earlyCollection.profiler,
       startClocks: earlyCollection.startClocks,
@@ -86,9 +110,8 @@ export function takeOverEarlyCollection(errorObservable: Observable<RawError>): 
  * any, and clears it: the instance can be adopted only once (e.g. if RUM is
  * re-initialized).
  *
- * Returns `undefined` when the early collection package did not run, failed to
- * start a Profiler, or its Profiler instance is not usable anymore (e.g. it
- * was stopped).
+ * Returns `undefined` when the early collection package did not run or failed
+ * to start a usable Profiler.
  */
 export function takeEarlyCollectionProfiler(): EarlyCollectionProfilerTakeover | undefined {
   const takeover = earlyProfilerTakeover
@@ -110,7 +133,7 @@ export function takeEarlyCollectionProfiler(): EarlyCollectionProfilerTakeover |
  */
 export function stopEarlyCollectionProfiler(): void {
   const takeover = takeEarlyCollectionProfiler()
-  if (takeover && takeover.profiler.stopped !== true) {
+  if (takeover) {
     void takeover.profiler.stop().catch(monitorError)
   }
 }
@@ -123,12 +146,4 @@ function isProfiler(value: unknown): value is Profiler {
   return (
     candidate.stopped !== true && typeof candidate.stop === 'function' && typeof candidate.sampleInterval === 'number'
   )
-}
-
-function isClocksState(value: unknown): value is ClocksState {
-  if (typeof value !== 'object' || value === null) {
-    return false
-  }
-  const candidate = value as { relative?: unknown; timeStamp?: unknown }
-  return typeof candidate.relative === 'number' && typeof candidate.timeStamp === 'number'
 }

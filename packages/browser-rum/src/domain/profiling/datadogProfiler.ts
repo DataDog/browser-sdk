@@ -3,23 +3,17 @@ import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import type { Profiler } from '@datadog/js-core/util'
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
 import type { ClocksState } from '@datadog/js-core/time'
-import type {
-  SessionManager,
-  DeflateEncoderStreamId,
-  Encoder,
-  EarlyCollectionProfilerTakeover,
-} from '@datadog/browser-core'
-import {
-  canUseEventBridge,
-  display,
-  isSampled,
-  correctedChildSampleRate,
-  takeEarlyCollectionProfiler,
-} from '@datadog/browser-core'
+import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
+import { canUseEventBridge, display, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
 
-import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import type {
+  EarlyCollectionProfilerTakeover,
+  LifeCycle,
+  RumConfiguration,
+  ViewHistory,
+} from '@datadog/browser-rum-core'
+import { LifeCycleEventType, takeEarlyCollectionProfiler } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,

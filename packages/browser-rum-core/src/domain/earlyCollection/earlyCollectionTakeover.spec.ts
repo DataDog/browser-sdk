@@ -1,10 +1,19 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
 import { globalObject, noop, Observable } from '@datadog/js-core/util'
-import type { RawError } from '../error/error.types'
-import { trackRuntimeError } from '../error/trackRuntimeError'
-import { registerCleanupTask, replaceMockable, replaceMockableWithSpy } from '../../../test'
-import { EARLY_COLLECTION_GLOBAL_NAME, EarlyCollectionEntryType } from './earlyCollection'
+import {
+  EARLY_COLLECTION_GLOBAL_NAME,
+  EarlyCollectionEntryType,
+  ErrorHandling,
+  ErrorSource,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+  trackRuntimeError,
+} from '@datadog/browser-core'
+import type { RawError } from '@datadog/browser-core'
+import { registerCleanupTask, replaceMockable, replaceMockableWithSpy } from '@datadog/browser-core/test'
+import type { RawRumErrorEvent, RawRumEvent, RawRumEventCollectedData } from '../../rawRumEvent.types'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { doStartErrorCollection } from '../error/errorCollection'
 import {
   stopEarlyCollectionProfiler,
   takeEarlyCollectionProfiler,
@@ -12,13 +21,13 @@ import {
 } from './earlyCollectionTakeover'
 
 describe('takeOverEarlyCollection', () => {
-  let errorObservable: Observable<RawError>
+  let lifeCycle: LifeCycle
   let collectedErrors: RawError[]
 
-  function setupErrorObservable() {
-    errorObservable = new Observable<RawError>()
+  function setupLifeCycle() {
+    lifeCycle = new LifeCycle()
     collectedErrors = []
-    errorObservable.subscribe((error) => collectedErrors.push(error))
+    lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error }) => collectedErrors.push(error))
   }
 
   interface MockProfilerInstance {
@@ -82,13 +91,13 @@ describe('takeOverEarlyCollection', () => {
   }
 
   beforeEach(() => {
-    setupErrorObservable()
+    setupLifeCycle()
   })
 
   it('is a no-op when the early collection is not present', () => {
     const trackRuntimeErrorSpy = replaceMockableWithSpy(trackRuntimeError)
 
-    takeOverEarlyCollection(errorObservable)
+    takeOverEarlyCollection(lifeCycle)
 
     expect(trackRuntimeErrorSpy).not.toHaveBeenCalled()
     expect(collectedErrors).toEqual([])
@@ -98,7 +107,7 @@ describe('takeOverEarlyCollection', () => {
     const runtimeErrorObservable = new Observable<RawError>()
     setEarlyCollection({}, () => runtimeErrorObservable)
 
-    takeOverEarlyCollection(errorObservable)
+    takeOverEarlyCollection(lifeCycle)
 
     runtimeErrorObservable.notify({
       message: 'post-takeover error',
@@ -120,7 +129,7 @@ describe('takeOverEarlyCollection', () => {
       ],
     })
 
-    takeOverEarlyCollection(errorObservable)
+    takeOverEarlyCollection(lifeCycle)
 
     expect(collectedErrors.length).toBe(2)
 
@@ -144,7 +153,7 @@ describe('takeOverEarlyCollection', () => {
       ],
     })
 
-    takeOverEarlyCollection(errorObservable)
+    takeOverEarlyCollection(lifeCycle)
 
     expect(collectedErrors.length).toBe(1)
     expect(collectedErrors[0].message).toBe('early error')
@@ -153,8 +162,8 @@ describe('takeOverEarlyCollection', () => {
   it('seals the early collection and deletes its global so it cannot be adopted twice', () => {
     const earlyCollection = setEarlyCollection()
 
-    takeOverEarlyCollection(errorObservable)
-    takeOverEarlyCollection(errorObservable)
+    takeOverEarlyCollection(lifeCycle)
+    takeOverEarlyCollection(lifeCycle)
 
     expect(earlyCollection.stop).toHaveBeenCalledTimes(1)
     expect((globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]).toBeUndefined()
@@ -164,7 +173,7 @@ describe('takeOverEarlyCollection', () => {
   it('claims the early Profiler instance for the profiler chunk to adopt', () => {
     const profiler = setEarlyCollectionWithMockProfiler()
 
-    takeOverEarlyCollection(errorObservable)
+    takeOverEarlyCollection(lifeCycle)
 
     expect(takeEarlyCollectionProfiler()).toEqual({
       profiler,
@@ -179,46 +188,79 @@ describe('takeOverEarlyCollection', () => {
     profiler.stopped = true
     setEarlyCollection({ profiler })
 
-    takeOverEarlyCollection(errorObservable)
+    takeOverEarlyCollection(lifeCycle)
 
     expect(takeEarlyCollectionProfiler()).toBeUndefined()
   })
 
-  it('does not claim a Profiler when the early clocks are invalid', () => {
-    const earlyCollection = setEarlyCollection({ profiler: createMockProfiler() })
-    ;(earlyCollection as unknown as { startClocks: unknown }).startClocks = { relative: 'not a number' }
+  describe('integration with the error pipeline', () => {
+    let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
 
-    takeOverEarlyCollection(errorObservable)
+    beforeEach(() => {
+      lifeCycle = new LifeCycle()
+      rawRumEvents = []
+      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (event) => rawRumEvents.push(event))
+      // Wire the error pipeline like the RUM start does.
+      doStartErrorCollection(lifeCycle)
+    })
 
-    expect(takeEarlyCollectionProfiler()).toBeUndefined()
+    it('replays buffered raw errors as RUM error events', () => {
+      const earlyError = new Error('early error')
+      earlyError.stack = 'Error: early error\n    at foo (http://path/to/file.js:52:15)'
+      const earlyCollection = setEarlyCollection({
+        buffer: [
+          [EarlyCollectionEntryType.RUNTIME_ERROR, 1234 as RelativeTime, earlyError],
+          [EarlyCollectionEntryType.RUNTIME_ERROR, 42 as RelativeTime, 'early rejection reason'],
+        ],
+      })
+
+      takeOverEarlyCollection(lifeCycle)
+
+      expect(rawRumEvents.length).toBe(2)
+
+      // The `relative` time is the buffered entry timestamp, converted as-is. The
+      // `timeStamp` is derived from it (see `relativeToClocks`) and can drift by
+      // a millisecond between two computations, so it is not compared exactly.
+      expect(rawRumEvents[0].startClocks.relative).toBe(1234)
+      const firstEvent = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
+      expect(firstEvent.error).toEqual(
+        jasmine.objectContaining({
+          message: 'early error',
+          source: ErrorSource.SOURCE,
+          handling: ErrorHandling.UNHANDLED,
+          stack: 'Error: early error\n  at foo @ http://path/to/file.js:52:15',
+        })
+      )
+
+      const secondEvent = rawRumEvents[1].rawRumEvent as RawRumErrorEvent
+      expect(secondEvent.error).toEqual(
+        jasmine.objectContaining({
+          message: 'Uncaught "early rejection reason"',
+          source: ErrorSource.SOURCE,
+          handling: ErrorHandling.UNHANDLED,
+          stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+        })
+      )
+
+      expect(earlyCollection.stop).toHaveBeenCalledTimes(1)
+      expect((globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]).toBeUndefined()
+    })
   })
 
   describe('stopEarlyCollectionProfiler', () => {
     it('stops and discards the claimed Profiler', () => {
       const profiler = setEarlyCollectionWithMockProfiler()
-      takeOverEarlyCollection(errorObservable)
+      takeOverEarlyCollection(lifeCycle)
 
       stopEarlyCollectionProfiler()
 
+      expect(profiler.stopCalls).toBe(1)
       expect(profiler.stopped).toBe(true)
       expect(takeEarlyCollectionProfiler()).toBeUndefined()
     })
 
     it('is a no-op when nothing was claimed', () => {
       expect(() => stopEarlyCollectionProfiler()).not.toThrow()
-    })
-
-    it('does not call stop again on an already stopped Profiler', async () => {
-      const profiler = setEarlyCollectionWithMockProfiler()
-      takeOverEarlyCollection(errorObservable)
-      await profiler.stop()
-
-      stopEarlyCollectionProfiler()
-
-      expect(profiler.stopCalls).toBe(1)
-      // The takeover was still consumed, so the profiler chunk will start its
-      // own instance.
-      expect(takeEarlyCollectionProfiler()).toBeUndefined()
     })
   })
 })
