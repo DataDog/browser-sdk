@@ -29,6 +29,7 @@ If an MCP server is disconnected or needs authentication, ask the user to connec
 gh pr list --label dependencies --state open \
   --json number,title,author,headRefName,mergeable,statusCheckRollup \
   --jq '.[] | {number, title, author: .author.login, branch: .headRefName, mergeable,
+    checks: (.statusCheckRollup | length),
     failing: [.statusCheckRollup[] | select((.conclusion // .state) | IN("FAILURE","ERROR","TIMED_OUT","CANCELLED","ACTION_REQUIRED","STARTUP_FAILURE")) | (.context // .name)],
     pending: [.statusCheckRollup[] | select((.conclusion // .state) | IN("","PENDING","EXPECTED")) | (.context // .name)]}'
 ```
@@ -44,7 +45,10 @@ gh api user --jq .login
 
 **Skip** a PR with commits from anyone other than `renovate[bot]`, `dd-octo-sts[bot]` or the current user: someone else owns it. Your own commits from an earlier run are expected.
 
-Nothing failing or pending → green, nothing to do. Only pending → check it again later.
+A PR is **green** only when it has checks (`checks` > 0), none failing or pending, and `mergeable` is `MERGEABLE`:
+
+- No checks yet, only pending, or `mergeable: UNKNOWN` (GitHub is still computing it) → check it again later.
+- `CONFLICTING` → update it from main first (step 3e), whatever its CI says.
 
 ## 2. Classify and plan
 
@@ -83,13 +87,19 @@ git show origin/main:.gitlab-ci.yml | grep -m1 'CURRENT_CI_IMAGE:'
 git show origin/<branch>:.gitlab-ci.yml | grep -m1 'CURRENT_CI_IMAGE:'
 ```
 
-**One rebuild PR:**
+**One rebuild PR:** first make sure the branch has main's image inputs. If main changed one since the branch point, for example because another rebuild merged, update the branch from main first (step 3e). Otherwise the new image would miss main's Node, Chrome or Playwright change:
+
+```bash
+git diff --quiet origin/<branch>...origin/main -- Dockerfile .gitlab-ci.yml || echo "main changed Dockerfile or .gitlab-ci.yml"
+git show origin/main:package.json | jq -r '.devDependencies["@playwright/test"]'   # compare with the merge base's
+```
+
+Then:
 
 - Value is main + 1 → bumped, go to b.
 - Value equals main → in a worktree (step 5), set main + 1, commit `👷 Bump CI image to <value>`, push.
-- The PR bumps it but main moved past it (an unrelated rebuild merged) → update it first (step 3e).
 
-**Several:** order them bottom to top: a PR already at main + 1 (Chrome), then PRs with fix commits, then the oldest. Build the stack bottom-up in one worktree. Each local branch must start at its remote tip, using `git branch -f <branch> origin/<branch>` if it isn't checked out elsewhere.
+**Several:** order them bottom to top: a PR already at main + 1 (Chrome), then PRs with fix commits, then the oldest. Build the stack bottom-up in one worktree. The rebases rewrite the bots' signed commits, so check signing first (step 5). Each local branch must start at its remote tip, using `git branch -f <branch> origin/<branch>` if it isn't checked out elsewhere.
 
 ```bash
 git worktree add "$TMPDIR/ih-stack" <bottom>
@@ -102,11 +112,22 @@ git -C "$TMPDIR/ih-stack" rebase --onto <bottom> origin/main   # replays only <n
 
 `package.json`/`yarn.lock` conflicts during the rebase only come from neighbouring version bumps. Run `git checkout --ours package.json yarn.lock` (the layer below), re-apply this PR's own version changes, run `yarn install`, `git add`, `git rebase --continue`. Check that the lockfile diff only touches this PR's packages.
 
-`gh stack submit` force-pushes (with lease) and points each PR at the layer below. Renovate stops updating the branches it no longer owns, which is expected. See the `gh-stack` skill for the rest of the `gh stack` commands.
+`gh stack submit` force-pushes (with lease) and points each PR at the layer below. Renovate stops updating the branches it no longer owns, which is expected. `gh stack` is a GitHub CLI extension; install it once with `gh extension install github/gh-stack`. Always pass explicit branch names and `--auto`, because bare `gh stack` commands open interactive prompts. `gh stack <command> --help` documents each command.
 
 ### b. Already built?
 
-Look for a `ci-image` run that started after the bump commit landed (`git log -1 --format=%cI -G'CURRENT_CI_IMAGE: ' origin/<branch> -- .gitlab-ci.yml`): a `ci-image` task in `getCIStatus`, or a `@ci.job.name:ci-image` job on the branch (`ci_level: job`). `SUCCESS` → the image exists, go to d. `PENDING`/running → someone already played it, wait (step c).
+Find the latest `ci-image` run on the branch and the commit it ran on. That is either a `ci-image` task in `getCIStatus` (the commit is the request's `head_commit`), or a `@ci.job.name:ci-image` job on the branch (`ci_level: job`, `@git.commit.sha`). A run only counts if that commit has the same image inputs as the branch head. Run time isn't enough: an input can change after the bump, and an older pipeline's job can be played later. Run `git fetch origin <sha>` if the commit was rewritten since.
+
+```bash
+image_inputs() {
+  git show "$1:Dockerfile"
+  git show "$1:.gitlab-ci.yml" | grep -E '^  (CURRENT_CI_IMAGE|CHROME_PACKAGE_VERSION):'
+  git show "$1:package.json" | jq -r '.devDependencies["@playwright/test"]'
+}
+[ "$(image_inputs <run sha>)" = "$(image_inputs origin/<branch>)" ] && echo "same image inputs"
+```
+
+Matching `SUCCESS` → the image exists, go to d. Matching `PENDING`/running → someone already played it, wait (step c). No matching run → step c.
 
 ### c. Ask the user to play `ci-image`
 
@@ -176,6 +197,14 @@ git worktree remove --force "$TMPDIR/ih-<n>"
 ```
 
 The push has no `--force`: if a bot pushed meanwhile it is rejected, so fetch again and redo the change on top.
+
+**Signing.** `main` requires signed commits. Commits, merges and rebases, including the stack rebases that rewrite the bots' commits, all need local signing. Check that `git config commit.gpgsign` is `true` before starting; otherwise pass `-S`. Before pushing, check every commit you created or rewrote. `git log %G?` prints `N` for signed commits when `gpg.ssh.allowedSignersFile` isn't configured, so look for the signature itself:
+
+```bash
+for c in $(git -C "$TMPDIR/ih-<n>" rev-list origin/main..HEAD); do
+  git -C "$TMPDIR/ih-<n>" cat-file -p "$c" | grep -qE 'BEGIN (SSH|PGP) SIGNATURE' || echo "unsigned: $c"
+done
+```
 
 Code PRs are independent. If your agent supports subagents, give each one a single Code PR and this recipe, and have it commit without pushing and report the diff and its reasoning. Show the user each fix and push after approval. Keep rebuild PRs and the stack in the main thread, since they need the user.
 
