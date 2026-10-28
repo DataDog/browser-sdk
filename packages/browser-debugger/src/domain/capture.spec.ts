@@ -793,3 +793,88 @@ describe('capture timeout', () => {
     expect(result.field2).toEqual({ type: 'Object', notCapturedReason: 'timeout' })
   })
 })
+
+describe('capture redaction', () => {
+  const defaultOpts = {}
+
+  function redactingContext(): CaptureContext {
+    return { deadline: Infinity, timedOut: false, redact: true }
+  }
+
+  it('should redact the values of fields named after sensitive identifiers', () => {
+    const result = captureFields(
+      { password: 'hunter2', apiKey: 'abc', 'X-Csrf-Token': 'def', session: { id: 1 }, username: 'alice' },
+      defaultOpts,
+      redactingContext()
+    )
+
+    expect(result).toEqual({
+      password: { type: 'string', notCapturedReason: 'redactedIdent' },
+      apiKey: { type: 'string', notCapturedReason: 'redactedIdent' },
+      'X-Csrf-Token': { type: 'string', notCapturedReason: 'redactedIdent' },
+      session: { type: 'Object', notCapturedReason: 'redactedIdent' },
+      username: { type: 'string', value: 'alice' },
+    })
+  })
+
+  it('should redact nested fields', () => {
+    const result = capture({ user: { name: 'alice', token: 'abc' } }, defaultOpts, redactingContext())
+
+    expect(result.fields!.user.fields).toEqual({
+      name: { type: 'string', value: 'alice' },
+      token: { type: 'string', notCapturedReason: 'redactedIdent' },
+    })
+  })
+
+  it('should redact the values of map entries with sensitive string keys', () => {
+    const result = capture(
+      new Map<unknown, unknown>([
+        ['Authorization', 'Bearer abc'],
+        [1, 'one'],
+      ]),
+      defaultOpts,
+      redactingContext()
+    )
+
+    expect(result.entries).toEqual([
+      [
+        { type: 'string', value: 'Authorization' },
+        { type: 'string', notCapturedReason: 'redactedIdent' },
+      ],
+      [
+        { type: 'number', value: '1' },
+        { type: 'string', value: 'one' },
+      ],
+    ])
+  })
+
+  it('should not read a redacted field twice', () => {
+    const getter = jasmine.createSpy('getter').and.returnValue('hunter2')
+    const obj = {}
+    Object.defineProperty(obj, 'password', { get: getter, enumerable: true })
+
+    captureFields(obj, defaultOpts, redactingContext())
+
+    expect(getter).toHaveBeenCalledTimes(1)
+  })
+
+  it('should report a redacted field whose getter throws', () => {
+    const obj = {}
+    Object.defineProperty(obj, 'password', {
+      get: () => {
+        throw new Error('boom')
+      },
+      enumerable: true,
+    })
+
+    expect(captureFields(obj, defaultOpts, redactingContext())).toEqual({
+      password: { notCapturedReason: 'redactedIdent' },
+    })
+  })
+
+  it('should not redact unless the context asks for it', () => {
+    const result = captureFields({ password: 'hunter2' }, defaultOpts, { deadline: Infinity, timedOut: false })
+
+    expect(result).toEqual({ password: { type: 'string', value: 'hunter2' } })
+  })
+})
