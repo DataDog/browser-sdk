@@ -76,7 +76,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
-   * @param initContext - Data to set at initialization, such as user and account information
+   * @param initContext - Context to set at initialization, such as user and account information
    * @example
    * ```ts
    * datadogRum.init(
