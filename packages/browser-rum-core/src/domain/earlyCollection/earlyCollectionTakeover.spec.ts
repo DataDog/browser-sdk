@@ -11,7 +11,8 @@ import {
 } from '@datadog/browser-core'
 import type { RawError } from '@datadog/browser-core'
 import { registerCleanupTask, replaceMockable, replaceMockableWithSpy } from '@datadog/browser-core/test'
-import type { RawRumErrorEvent, RawRumEvent, RawRumEventCollectedData } from '../../rawRumEvent.types'
+import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
+import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { doStartErrorCollection } from '../error/errorCollection'
 import {
@@ -221,7 +222,7 @@ describe('takeOverEarlyCollection', () => {
       // The `relative` time is the buffered entry timestamp, converted as-is. The
       // `timeStamp` is derived from it (see `relativeToClocks`) and can drift by
       // a millisecond between two computations, so it is not compared exactly.
-      expect(rawRumEvents[0].startClocks.relative).toBe(1234)
+      expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       const firstEvent = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
       expect(firstEvent.error).toEqual(
         jasmine.objectContaining({
