@@ -1063,7 +1063,7 @@ export function makeRumPublicApi(
       if (!isExperimentalFeatureEnabled(ExperimentalFeature.WORKER_PROFILING)) {
         return () => Promise.resolve()
       }
-      addTelemetryUsage('rum', 'attach_profiling_worker', { has_name: options?.name !== undefined })
+      addTelemetryUsage({ feature: 'attach_profiling_worker', has_name: options?.name !== undefined })
       return profilerApi.attachProfilingWorker(worker, options)
     }),
   })

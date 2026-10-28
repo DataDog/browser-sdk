@@ -1,4 +1,4 @@
-import type { BrowserProfilerTrace } from '../../../types/profiling'
+import type { BrowserProfilerTrace } from '../../types/profiling'
 
 /**
  * Clock object expected by the profiling backend (same shape as js-core's
@@ -57,7 +57,7 @@ export type WorkerProfilingResponse =
     }
 
 
-interface WorkerOptions {
+export interface WorkerOptions {
   name?: string
 }
 

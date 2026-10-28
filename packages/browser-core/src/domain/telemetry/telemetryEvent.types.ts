@@ -599,7 +599,7 @@ export type TelemetryCommonFeaturesUsage =
 /**
  * Schema of browser specific features usage
  */
-export type TelemetryBrowserFeaturesUsage =
+export type TelemetryBrowserFeaturesUsage = | AttachProfilingWorkerUsage
   | StartSessionReplayRecording
   | StartDurationVital
   | StopDurationVital
@@ -1060,10 +1060,22 @@ export interface AndroidNetworkInstrumentation {
   /**
    * Android network instrumentation
    */
-  feature: 'androidNetworkInstrumentation'
+  feature: 'androidNetworkInstrumentation' | 'attach_profiling_worker'
   /**
    * The network instrumentation API used
    */
   type: 'CRONET' | 'OKHTTP' | 'LEGACY_OKHTTP'
+  [k: string]: unknown
+}
+
+export interface AttachProfilingWorkerUsage {
+  /**
+   * Worker profiling API usage — experimental (PROF-15093)
+   */
+  feature: 'attach_profiling_worker'
+  /**
+   * Whether the caller provided a worker name option
+   */
+  has_name?: boolean
   [k: string]: unknown
 }

@@ -13,6 +13,7 @@
 /* eslint-disable no-restricted-syntax */
 import type { ProfilerTrace } from '@datadog/js-core/util'
 import type { WorkerProfilingCommand, WorkerProfilingResponse } from './workerProfiling.types'
+import type { BrowserProfilerTrace } from '../../types/profiling'
 
 /**
  * Minimal interface that both WorkerGlobalScope and a test double can satisfy.
@@ -94,6 +95,11 @@ export function attachProfiler(
     }
 
     if (command.type === 'dd-profiling-config') {
+      // A new config delivery means the coordinator wants this worker to
+      // profile — clear the stopped flag from any previous dd-detach-profiler
+      // so the agent can resume (the orphaned-Profiler fix is still enforced
+      // by the `if (!stopped)` check in collectAndRestart's restart path).
+      stopped = false
       startSession(command.sampleIntervalMs, command.maxBufferSize, command.collectIntervalMs, command.correlationId)
     } else if (command.type === 'dd-detach-profiler') {
       stopped = true
