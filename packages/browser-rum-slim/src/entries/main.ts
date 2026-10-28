@@ -9,6 +9,7 @@ import { makeProfilerApiStub } from '../boot/stubProfilerApi'
 export type {
   User,
   Account,
+  InitContext,
   TraceContextInjection,
   SessionPersistence,
   TrackingConsent,

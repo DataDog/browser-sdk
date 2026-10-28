@@ -1,7 +1,7 @@
 import type { Duration, TimeStamp } from '@datadog/js-core/time'
 import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
 import { noop } from '@datadog/js-core/util'
-import { toTimeStamp, relativeToClocks, clocksNow } from '@datadog/js-core/time'
+import { toTimeStamp, relativeToClocks, clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import {
   display,
   TrackingConsent,
@@ -9,6 +9,8 @@ import {
   DefaultPrivacyLevel,
   startTelemetry,
   startSessionManager,
+  setCookie,
+  deleteCookie,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -1013,6 +1015,97 @@ describe('preStartRum', () => {
           timeStamp: jasmine.any(Number),
         })
       )
+    })
+  })
+
+  describe('init context', () => {
+    const USER = { id: 'user-id', name: 'John Doe' }
+    const ACCOUNT = { id: 'account-id', name: 'Acme' }
+    const INIT_CONTEXT = { user: USER, account: ACCOUNT }
+
+    let strategy: Strategy
+    let doStartRumSpy: jasmine.Spy<DoStartRum>
+
+    beforeEach(() => {
+      ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults())
+    })
+
+    it('sets the user and account provided at init', () => {
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+
+    it('applies the user and account to the started RUM', async () => {
+      const setUserContextSpy = jasmine.createSpy()
+      const setAccountContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        userContext: { setContext: setUserContextSpy },
+        accountContext: { setContext: setAccountContextSpy },
+      } as unknown as StartRumResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
+      await collectAsyncCalls(setUserContextSpy, 1)
+
+      expect(setUserContextSpy).toHaveBeenCalledOnceWith(USER)
+      expect(setAccountContextSpy).toHaveBeenCalledOnceWith(ACCOUNT)
+    })
+
+    it('overrides the user and account set before init', () => {
+      strategy.userContext.setContext({ id: 'previous-user-id', email: 'previous@example.com' })
+      strategy.accountContext.setContext({ id: 'previous-account-id', plan: 'free' })
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+
+    it('does not set the user and account when the configuration is invalid', () => {
+      spyOn(display, 'error')
+
+      strategy.init(INVALID_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
+
+      expect(strategy.userContext.getContext()).toEqual({})
+      expect(strategy.accountContext.getContext()).toEqual({})
+    })
+
+    it('does not override the user and account on subsequent init calls', () => {
+      spyOn(display, 'error')
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, {
+        user: { id: 'other-user-id' },
+        account: { id: 'other-account-id' },
+      })
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+
+    it('overrides the user provided by the remote configuration', async () => {
+      const COOKIE_NAME = 'remote_user_id'
+      setCookie(COOKIE_NAME, 'remote-user-id', ONE_MINUTE)
+      registerCleanupTask(() => deleteCookie(COOKIE_NAME))
+      interceptRequests().withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              rum: {
+                user: [{ key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } }],
+              },
+            }),
+        })
+      )
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, remoteConfigurationId: '123' }, PUBLIC_API, undefined, {
+        user: USER,
+      })
+      await collectAsyncCalls(doStartRumSpy, 1)
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
     })
   })
 
