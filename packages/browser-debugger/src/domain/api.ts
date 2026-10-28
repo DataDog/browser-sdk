@@ -6,7 +6,7 @@ import { monitorError } from '@datadog/js-core/monitor'
 import { buildDebugIdByUrl, buildTag, mergeArrays } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
-import type { CaptureContext } from './capture'
+import type { CaptureContext, CaptureOptions } from './capture'
 import type { InitializedProbe } from './probes'
 import {
   checkConditionErrorBudget,
@@ -23,6 +23,7 @@ import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 import { display } from './display'
 import { formatThrowable } from './error'
+import type { Throwable } from './error'
 import { evaluateCaptureExpressions } from './captureExpressions'
 import { addExitProbeRumAction, startProbeRumAction, stopProbeRumAction } from './rumAction'
 
@@ -434,11 +435,79 @@ function queueDebuggerSnapshot(result: ActiveEntry): void {
   recordProbeEventSent(probe)
 }
 
+/**
+ * A snapshot that no probe produced: Exception Replay captures one for each instrumented frame an
+ * exception leaves (see `exceptionReplay.ts`).
+ */
+export interface ExceptionSnapshot {
+  id: string
+  exceptionId: string
+  timestamp: number
+  message: string
+  location: { type: string; method: string }
+  stack: StackFrame[]
+  arguments: Record<string, any>
+  throwable: Throwable
+}
+
+/**
+ * Queue an Exception Replay snapshot for delivery via the debugger's own transport.
+ *
+ * @returns Whether the snapshot was queued, which requires `DD_DEBUGGER.init()` to have been called
+ */
+export function queueExceptionSnapshot(snapshot: ExceptionSnapshot): boolean {
+  if (!debuggerBatch || !debuggerConfig) {
+    return false
+  }
+
+  const version = globalObj.DD_DEBUGGER!.version
+  const debugIds = buildDebugIdByUrl(collectStackFrameUrls(snapshot.throwable.stacktrace, snapshot.stack))
+
+  debuggerBatch.add({
+    message: snapshot.message,
+    service: debuggerConfig.service,
+    ddtags: getDebuggerDDtags(version),
+    _dd: (debugIds ? { debug_ids: debugIds } : undefined) as ContextValue,
+    logger: {
+      name: snapshot.location.type,
+      method: snapshot.location.method,
+      version,
+      thread_name: threadName,
+    },
+    debugger: {
+      snapshot: {
+        id: snapshot.id,
+        // Marks the snapshot as an Exception Replay snapshot in the Datadog UI
+        exceptionId: snapshot.exceptionId,
+        timestamp: snapshot.timestamp,
+        probe: {
+          // No probe produced the snapshot, so like the tracers' Exception Replay, give it a probe
+          // ID of its own
+          id: generateUUID(),
+          version: 0,
+          location: snapshot.location,
+        },
+        stack: snapshot.stack,
+        language: 'javascript',
+        captures: {
+          return: { arguments: snapshot.arguments, throwable: snapshot.throwable },
+        } as ContextValue,
+      },
+    },
+  })
+  return true
+}
+
 function buildSnapshotDebugIds(result: ActiveEntry) {
+  return buildDebugIdByUrl(collectStackFrameUrls(result.return?.throwable?.stacktrace, result.stack))
+}
+
+function collectStackFrameUrls(...stacks: Array<StackFrame[] | undefined>): string[] {
   const urls: string[] = []
-  appendStackFrameUrls(urls, result.return?.throwable?.stacktrace)
-  appendStackFrameUrls(urls, result.stack)
-  return buildDebugIdByUrl(urls)
+  for (const stack of stacks) {
+    appendStackFrameUrls(urls, stack)
+  }
+  return urls
 }
 
 function appendStackFrameUrls(urls: string[], stack: StackFrame[] | undefined): void {
@@ -451,10 +520,13 @@ function appendStackFrameUrls(urls: string[], stack: StackFrame[] | undefined): 
   }
 }
 
-function captureArguments(
+/**
+ * Capture a function's arguments, along with its receiver as `this` unless it's the global object.
+ */
+export function captureArguments(
   args: Record<string, any>,
   self: any,
-  captureOptions: InitializedProbe['capture'],
+  captureOptions: CaptureOptions,
   captureCtx: CaptureContext
 ): Record<string, any> {
   const fields = captureFields(args, captureOptions, captureCtx)

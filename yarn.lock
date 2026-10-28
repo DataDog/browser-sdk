@@ -476,6 +476,7 @@ __metadata:
   resolution: "@datadog/browser-debugger@workspace:packages/browser-debugger"
   dependencies:
     "@datadog/browser-core": "workspace:*"
+    "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
     acorn: "npm:8.19.0"
   languageName: unknown

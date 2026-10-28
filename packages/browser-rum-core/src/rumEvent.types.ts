@@ -495,6 +495,10 @@ export type RumErrorEvent = CommonProperties &
        * Time since application start when error happened (in milliseconds)
        */
       readonly time_since_app_start?: number
+      /**
+       * Whether Exception Replay captured snapshots for this error. A string rather than a boolean, to match the `error.debug_info_captured` span tag that Error Tracking reads for backend errors
+       */
+      readonly debug_info_captured?: 'true'
       [k: string]: unknown
     }
     /**
@@ -545,6 +549,30 @@ export type RumErrorEvent = CommonProperties &
         id: string
         [k: string]: unknown
       }[]
+      /**
+       * Exception Replay snapshots captured for the stack frames of the error
+       */
+      exception_replay?: {
+        /**
+         * UUID of the captured exception, also set as `exceptionId` on each of its snapshots
+         */
+        exception_id: string
+        /**
+         * Stack frames of the error that have a snapshot, from the innermost frame outwards
+         */
+        frames: {
+          /**
+           * Index of the frame in `error.stack`, starting at 0 for the innermost frame
+           */
+          index: number
+          /**
+           * UUID of the Live Debugger snapshot captured for the frame
+           */
+          snapshot_id: string
+          [k: string]: unknown
+        }[]
+        [k: string]: unknown
+      }
       [k: string]: unknown
     }
     [k: string]: unknown
