@@ -26,7 +26,7 @@ export interface PublicApi {
  * setter right after `init()`: it overrides any value set before `init()`, and it can be updated
  * later.
  */
-export interface InitData {
+export interface InitContext {
   /**
    * User information to set to all events, stored in `@usr`. Equivalent to calling `setUser()` right
    * after `init()`.

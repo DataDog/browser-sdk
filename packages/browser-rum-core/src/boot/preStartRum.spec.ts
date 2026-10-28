@@ -1018,10 +1018,10 @@ describe('preStartRum', () => {
     })
   })
 
-  describe('init data', () => {
+  describe('init context', () => {
     const USER = { id: 'user-id', name: 'John Doe' }
     const ACCOUNT = { id: 'account-id', name: 'Acme' }
-    const INIT_DATA = { user: USER, account: ACCOUNT }
+    const INIT_CONTEXT = { user: USER, account: ACCOUNT }
 
     let strategy: Strategy
     let doStartRumSpy: jasmine.Spy<DoStartRum>
@@ -1031,7 +1031,7 @@ describe('preStartRum', () => {
     })
 
     it('sets the user and account provided at init', () => {
-      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
 
       expect(strategy.userContext.getContext()).toEqual(USER)
       expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
@@ -1045,7 +1045,7 @@ describe('preStartRum', () => {
         accountContext: { setContext: setAccountContextSpy },
       } as unknown as StartRumResult)
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
       await collectAsyncCalls(setUserContextSpy, 1)
 
       expect(setUserContextSpy).toHaveBeenCalledOnceWith(USER)
@@ -1056,7 +1056,7 @@ describe('preStartRum', () => {
       strategy.userContext.setContext({ id: 'previous-user-id', email: 'previous@example.com' })
       strategy.accountContext.setContext({ id: 'previous-account-id', plan: 'free' })
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
 
       expect(strategy.userContext.getContext()).toEqual(USER)
       expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
@@ -1065,7 +1065,7 @@ describe('preStartRum', () => {
     it('does not set the user and account when the configuration is invalid', () => {
       spyOn(display, 'error')
 
-      strategy.init(INVALID_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_DATA)
+      strategy.init(INVALID_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
 
       expect(strategy.userContext.getContext()).toEqual({})
       expect(strategy.accountContext.getContext()).toEqual({})
@@ -1074,7 +1074,7 @@ describe('preStartRum', () => {
     it('does not override the user and account on subsequent init calls', () => {
       spyOn(display, 'error')
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, INIT_CONTEXT)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API, undefined, {
         user: { id: 'other-user-id' },
         account: { id: 'other-account-id' },

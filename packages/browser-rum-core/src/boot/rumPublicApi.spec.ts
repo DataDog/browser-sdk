@@ -98,7 +98,7 @@ describe('rum public api', () => {
       })
     })
 
-    it('sets the user and account provided as init data', () => {
+    it('sets the user and account provided as init context', () => {
       const { rumPublicApi } = makeRumPublicApiWithDefaults()
       const user = { id: 'user-id', name: 'John Doe' }
       const account = { id: 'account-id', name: 'Acme' }

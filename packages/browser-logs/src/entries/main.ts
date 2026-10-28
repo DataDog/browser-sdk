@@ -38,7 +38,7 @@ export type {
   PublicApi,
   User,
   Account,
-  InitData,
+  InitContext,
   TraceContextInjection,
   SessionPersistence,
   TrackingConsent,

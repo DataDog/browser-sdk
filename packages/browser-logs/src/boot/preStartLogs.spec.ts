@@ -208,15 +208,15 @@ describe('preStartLogs', () => {
     })
   })
 
-  describe('init data', () => {
+  describe('init context', () => {
     const USER = { id: 'user-id', name: 'John Doe' }
     const ACCOUNT = { id: 'account-id', name: 'Acme' }
-    const INIT_DATA = { user: USER, account: ACCOUNT }
+    const INIT_CONTEXT = { user: USER, account: ACCOUNT }
 
     it('sets the user and account provided at init', () => {
       const { strategy } = createPreStartStrategyWithDefaults()
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
 
       expect(strategy.userContext.getContext()).toEqual(USER)
       expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
@@ -231,7 +231,7 @@ describe('preStartLogs', () => {
         accountContext: { setContext: setAccountContextSpy },
       } as unknown as StartLogsResult)
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
       await collectAsyncCalls(setUserContextSpy, 1)
 
       expect(setUserContextSpy).toHaveBeenCalledOnceWith(USER)
@@ -243,7 +243,7 @@ describe('preStartLogs', () => {
       strategy.userContext.setContext({ id: 'previous-user-id', email: 'previous@example.com' })
       strategy.accountContext.setContext({ id: 'previous-account-id', plan: 'free' })
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
 
       expect(strategy.userContext.getContext()).toEqual(USER)
       expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
@@ -253,7 +253,7 @@ describe('preStartLogs', () => {
       spyOn(display, 'error')
       const { strategy } = createPreStartStrategyWithDefaults()
 
-      strategy.init(INVALID_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+      strategy.init(INVALID_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
 
       expect(strategy.userContext.getContext()).toEqual({})
       expect(strategy.accountContext.getContext()).toEqual({})
@@ -263,7 +263,7 @@ describe('preStartLogs', () => {
       spyOn(display, 'error')
       const { strategy } = createPreStartStrategyWithDefaults()
 
-      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_DATA)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
       strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, {
         user: { id: 'other-user-id' },
         account: { id: 'other-account-id' },

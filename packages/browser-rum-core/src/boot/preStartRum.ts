@@ -3,7 +3,7 @@ import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager, InitData } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager, InitContext } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
   display,
@@ -136,7 +136,7 @@ export function createPreStartStrategy(
 
   function doInit(
     initConfiguration: RumInitConfiguration,
-    initData: InitData | undefined,
+    initContext: InitContext | undefined,
     errorStack?: string,
     remoteConfigurationMetadata?: RemoteConfigurationMetadata
   ) {
@@ -175,11 +175,11 @@ export function createPreStartStrategy(
 
     cachedConfiguration = configuration
 
-    if (initData?.user) {
-      userContext.setContext(initData.user)
+    if (initContext?.user) {
+      userContext.setContext(initContext.user)
     }
-    if (initData?.account) {
-      accountContext.setContext(initData.account)
+    if (initContext?.account) {
+      accountContext.setContext(initContext.account)
     }
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
@@ -240,7 +240,7 @@ export function createPreStartStrategy(
   }
 
   const strategy: Strategy = {
-    init(initConfiguration, publicApi, errorStack, initData) {
+    init(initConfiguration, publicApi, errorStack, initContext) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -292,7 +292,7 @@ export function createPreStartStrategy(
             fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
               .then((resolvedInitConfiguration) => {
                 if (resolvedInitConfiguration) {
-                  doInit(resolvedInitConfiguration, initData, errorStack)
+                  doInit(resolvedInitConfiguration, initContext, errorStack)
                 }
               })
               .catch(monitorError)
@@ -302,14 +302,14 @@ export function createPreStartStrategy(
             if (resolvedRemoteConfiguration) {
               doInit(
                 resolvedRemoteConfiguration.initConfiguration,
-                initData,
+                initContext,
                 errorStack,
                 resolvedRemoteConfiguration.metadata
               )
             }
           }
         } else {
-          doInit(initConfiguration, initData, errorStack)
+          doInit(initConfiguration, initContext, errorStack)
         }
       }
     },

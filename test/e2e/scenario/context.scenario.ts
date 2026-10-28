@@ -51,7 +51,7 @@ test.describe('user, account and global context', () => {
       })
     })
 
-  createTest('should include user and account init data in all rum events')
+  createTest('should include user and account init context in all rum events')
     .withRum()
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration, {
@@ -71,7 +71,7 @@ test.describe('user, account and global context', () => {
       })
     })
 
-  createTest('should include user and account init data in all logs')
+  createTest('should include user and account init context in all logs')
     .withLogs()
     .withLogsInit((configuration) => {
       window.DD_LOGS!.init(configuration, {

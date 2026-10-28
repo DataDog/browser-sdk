@@ -6,7 +6,7 @@ import type {
   DeflateEncoderStreamId,
   DeflateEncoder,
   PublicApi,
-  InitData,
+  InitContext,
   ContextManager,
   TrackingConsent,
   User,
@@ -76,7 +76,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
-   * @param initData - Data to set at initialization, such as user and account information
+   * @param initContext - Data to set at initialization, such as user and account information
    * @example
    * ```ts
    * datadogRum.init(
@@ -92,7 +92,7 @@ export interface RumPublicApi extends PublicApi {
    * )
    * ```
    */
-  init: (initConfiguration: RumInitConfiguration, initData?: InitData) => void
+  init: (initConfiguration: RumInitConfiguration, initContext?: InitContext) => void
 
   /**
    * Set the tracking consent of the current user.
@@ -642,7 +642,7 @@ export interface Strategy {
     initConfiguration: RumInitConfiguration,
     publicApi: RumPublicApi,
     errorStack?: string,
-    initData?: InitData
+    initContext?: InitContext
   ) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
@@ -770,9 +770,9 @@ export function makeRumPublicApi(
   })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: (initConfiguration, initData) => {
+    init: (initConfiguration, initContext) => {
       const errorStack = new Error().stack
-      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack, initData))
+      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack, initContext))
     },
 
     setTrackingConsent: monitor((trackingConsent) => {

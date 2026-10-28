@@ -53,7 +53,7 @@ describe('logs entry', () => {
     expect(startTelemetrySpy.calls.argsFor(0)[3]).toBe('logs')
   })
 
-  it('should set the user and account provided as init data', () => {
+  it('should set the user and account provided as init context', () => {
     const { logsPublicApi } = makeLogsPublicApiWithDefaults()
     const user = { id: 'user-id', name: 'John Doe' }
     const account = { id: 'account-id', name: 'Acme' }

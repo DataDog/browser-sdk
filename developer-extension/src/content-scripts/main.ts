@@ -1,5 +1,5 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { InitData, RumInitConfiguration } from '@datadog/browser-rum'
+import type { InitContext, RumInitConfiguration } from '@datadog/browser-rum'
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
@@ -110,14 +110,14 @@ function overrideInitConfiguration(
     // Ensure the sdkInstance has an 'init' method, excluding async stubs.
     if ('init' in sdkInstance) {
       const originalInit = sdkInstance.init
-      sdkInstance.init = (config: RumInitConfiguration | LogsInitConfiguration, initData?: InitData) => {
+      sdkInstance.init = (config: RumInitConfiguration | LogsInitConfiguration, initContext?: InitContext) => {
         originalInit(
           {
             ...config,
             ...restoreFunctions(config, configurationOverride),
             allowedTrackingOrigins: [location.origin],
           },
-          initData
+          initContext
         )
       }
     }
