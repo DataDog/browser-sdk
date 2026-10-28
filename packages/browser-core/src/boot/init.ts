@@ -22,7 +22,7 @@ export interface PublicApi {
 }
 
 /**
- * Data to set when initializing the SDK. Each property is equivalent to calling the corresponding
+ * Context to set when initializing the SDK. Each property is equivalent to calling the corresponding
  * setter right after `init()`: it overrides any value set before `init()`, and it can be updated
  * later.
  */
