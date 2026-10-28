@@ -10,13 +10,11 @@ export function startDisplayContext(assembleHook: AssembleHook) {
   // Without a window (e.g. in a Web Worker), `viewport` stays undefined and events have no display.
   let viewport: ViewportDimension | undefined
   // Use requestAnimationFrame to delay the calculation of viewport dimensions until after SDK initialization, preventing long tasks.
-  const animationFrameId =
-    globalObject.window &&
-    requestAnimationFrame(
-      monitor(() => {
-        viewport = getViewportDimension()
-      })
-    )
+  const animationFrameId = globalObject.window?.requestAnimationFrame?.(
+    monitor(() => {
+      viewport = getViewportDimension()
+    })
+  )
 
   const unsubscribeViewport = initViewportObservable().subscribe((viewportDimension) => {
     viewport = viewportDimension
@@ -31,7 +29,7 @@ export function startDisplayContext(assembleHook: AssembleHook) {
     stop: () => {
       unsubscribeViewport()
       if (animationFrameId) {
-        globalObject.cancelAnimationFrame(animationFrameId)
+        globalObject.window?.cancelAnimationFrame(animationFrameId)
       }
     },
   }
