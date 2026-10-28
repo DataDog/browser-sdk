@@ -157,10 +157,9 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
  *
  * The wrapper preserves the original prototype (so `instanceof` keeps working), the original
  * `new.target` (so constructors that inspect it behave as if not instrumented), the original
- * static members (e.g. `WebSocket.OPEN`), and `instance.constructor ===` so checks like
- * `new WebSocket(url).constructor === WebSocket` stay true.
+ * static members including ones it inherits (e.g. `WebSocket.OPEN`), and `instance.constructor ===`
+ * so checks like `new WebSocket(url).constructor === WebSocket` stay true.
  *
- * @see {@link preserveConstructorShape} for limitations on static members preservation.
  * @example
  *
  *  instrumentConstructor(window, 'WebSocket', ({ parameters, onPostCall }) => {
@@ -312,14 +311,6 @@ interface InstrumentationCallbacks<RESULT> {
  * before restoring the global property in `stop()`.
  */
 function preserveConstructorShape(instrumentation: AnyConstructor, original: AnyConstructor): () => void {
-  /**
-   * Limitation: Only the original's *own* static members are copied. Statics inherited through the
-   * constructor's prototype chain (e.g. `class Child extends Parent` where `Parent` defines statics)
-   * are not preserved, since the instrumentation still inherits from `Function.prototype`. This is
-   * acceptable for the globals we instrument (e.g. `WebSocket`, whose own statics are the only ones
-   * that matter), but we would need to delegate the static prototype chain to support subclassed
-   * constructors with meaningful inherited statics.
-   */
   for (const key of ([] as PropertyKey[]).concat(
     Object.getOwnPropertyNames(original),
     Object.getOwnPropertySymbols(original)
@@ -327,6 +318,10 @@ function preserveConstructorShape(instrumentation: AnyConstructor, original: Any
     const descriptor = Object.getOwnPropertyDescriptor(original, key) as PropertyDescriptor
     Object.defineProperty(instrumentation, key, descriptor)
   }
+
+  // The original can inherit its statics, as with Playwright's routeWebSocket mock
+  // (`class WebSocket extends WebSocketMock`).
+  Object.setPrototypeOf(instrumentation, Object.getPrototypeOf(original))
 
   /*
    * Limitation: Repointing `constructor` on this shared prototype affects every instance whose
