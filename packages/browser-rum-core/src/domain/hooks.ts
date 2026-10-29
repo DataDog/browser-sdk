@@ -29,10 +29,12 @@ export interface AssembleHookParams {
 export type AssembleHook = Hook<AssembleHookParams, DefaultRumEventAttributes>
 export type AssembleTelemetryHook = Hook<{ startTime: RelativeTime }, DefaultTelemetryEventAttributes>
 
+// Unlike AssembleHookParams, the domain context isn't DeepReadonly: checking that it fits recurses
+// through the DOM types it holds, which the declaration build rejects as excessively deep.
 export interface EventCollectedHookParams {
   readonly eventType: RumEvent['type']
-  event: Readonly<AssembledRumEvent>
-  domainContext: DeepReadonly<RumEventDomainContext<RawRumEvent['type']>>
+  readonly event: Readonly<AssembledRumEvent>
+  readonly domainContext: RumEventDomainContext<RawRumEvent['type']>
 }
 
 export type EventCollectedHook = Hook<EventCollectedHookParams, void>
