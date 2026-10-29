@@ -1,4 +1,4 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import type { SdkWorkerAction, SdkWorkerResponse } from '@datadog/browser-core'
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import { concatBuffers } from '@datadog/js-core/util'
 import { Deflate, constants } from '../domain/deflate'
@@ -7,14 +7,14 @@ import { captureCanvas } from '../domain/canvas'
 declare const __BUILD_ENV__SDK_VERSION__: string
 
 export interface WorkerScope {
-  addEventListener(eventName: 'message', listener: (event: MessageEvent<DeflateWorkerAction>) => void): void
-  postMessage(response: DeflateWorkerResponse): void
+  addEventListener(eventName: 'message', listener: (event: MessageEvent<SdkWorkerAction>) => void): void
+  postMessage(response: SdkWorkerResponse): void
 }
 
 export function startWorker(workerScope: WorkerScope = self) {
   try {
     const streams = new Map<number, Deflate>()
-    workerScope.addEventListener('message', (event: MessageEvent<DeflateWorkerAction>) => {
+    workerScope.addEventListener('message', (event: MessageEvent<SdkWorkerAction>) => {
       try {
         const response = handleAction(workerScope, streams, event.data)
         if (response) {
@@ -49,8 +49,8 @@ function sendError(workerScope: WorkerScope, error: unknown, streamId?: number) 
 function handleAction(
   workerScope: WorkerScope,
   streams: Map<number, Deflate>,
-  message: DeflateWorkerAction
-): DeflateWorkerResponse | undefined {
+  message: SdkWorkerAction
+): SdkWorkerResponse | undefined {
   switch (message.action) {
     case 'init':
       return {

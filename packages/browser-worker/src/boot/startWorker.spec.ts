@@ -1,4 +1,4 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import type { SdkWorkerAction, SdkWorkerResponse } from '@datadog/browser-core'
 import { collectAsyncCalls } from '@datadog/browser-core/test'
 import { createAction } from '../domain/canvas.specHelper'
 import type { WorkerScope } from './startWorker'
@@ -46,7 +46,7 @@ describe('startWorker', () => {
     startWorker(workerScope)
   })
 
-  function emulateAction(message: DeflateWorkerAction): DeflateWorkerResponse {
+  function emulateAction(message: SdkWorkerAction): SdkWorkerResponse {
     workerScope.postMessage.calls.reset()
     workerScope.addEventListener.calls.allArgs().forEach(([eventName, listener]) => {
       if (eventName === 'message') {

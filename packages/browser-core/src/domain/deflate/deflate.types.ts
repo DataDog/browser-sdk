@@ -20,10 +20,9 @@ export type DeflateWorkerAction =
       action: 'reset'
       streamId: number
     }
-  // Action to send to hash a canvas snapshot and, if it changed since the last capture, encode it.
-  // The worker will respond with a CanvasCaptureResponse with the same id.
-  | CanvasCaptureAction
 
+// Action to send to hash a canvas snapshot and, if it changed since the last capture, encode it.
+// The worker will respond with a CanvasCaptureResponse with the same id.
 export interface CanvasCaptureAction {
   action: 'captureCanvas'
   id: number
@@ -53,8 +52,6 @@ export type DeflateWorkerResponse =
       trailer: Uint8ArrayBuffer
       additionalBytesCount: number
     }
-  // Response to 'captureCanvas' action
-  | CanvasCaptureResponse
   // Could happen at any time when something goes wrong in the worker
   | {
       type: 'errored'
@@ -82,10 +79,14 @@ export type CanvasCaptureResponse =
       errorName: string | undefined
     }
 
+// Every action the SDK worker handles, and every response it sends
+export type SdkWorkerAction = DeflateWorkerAction | CanvasCaptureAction
+export type SdkWorkerResponse = DeflateWorkerResponse | CanvasCaptureResponse
+
 export interface DeflateWorker extends Worker {
-  postMessage(message: DeflateWorkerAction): void
+  postMessage(message: SdkWorkerAction): void
   // Transferring ownership avoids copying large payloads, like canvas bitmaps
-  postMessage(message: DeflateWorkerAction, transfer: Transferable[]): void
+  postMessage(message: SdkWorkerAction, transfer: Transferable[]): void
 }
 
 export type DeflateEncoder = Encoder<Uint8ArrayBuffer> & { stop: () => void }
