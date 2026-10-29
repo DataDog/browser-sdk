@@ -78,30 +78,32 @@ export interface EarlyWebSocketCollection {
 }
 
 export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
+  let status: 'observing' | 'stopped' | 'handedOff' = 'observing'
+
   const buffer = createEarlyConnectionsBuffer()
 
   const subscription = initWebSocketObservable().subscribe((context) => {
     handleWebSocketContext(context, buffer.register)
   })
 
-  let stopped = false
-
-  function stopObserving(forgetConnections: boolean) {
-    if (stopped) {
+  function stopObserving(nextStatus: 'stopped' | 'handedOff') {
+    if (status !== 'observing') {
       return
     }
-    stopped = true
+    status = nextStatus
+
     subscription.unsubscribe()
     buffer.clear()
-    if (forgetConnections) {
+
+    if (nextStatus === 'stopped') {
       trackedConnections.clear()
     }
   }
 
   return {
     buffer,
-    stop: () => stopObserving(true),
-    handOff: () => stopObserving(false),
+    stop: () => stopObserving('stopped'),
+    handOff: () => stopObserving('handedOff'),
   }
 }
 
