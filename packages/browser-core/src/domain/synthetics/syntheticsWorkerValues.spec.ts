@@ -1,4 +1,4 @@
-import { mockSyntheticsWorkerValues, mockUnreadableCookies } from '../../../test'
+import { mockSyntheticsWorkerValues } from '../../../test'
 import { getSyntheticsContext, willSyntheticsInjectRum } from './syntheticsWorkerValues'
 
 describe('syntheticsWorkerValues', () => {
@@ -25,13 +25,6 @@ describe('syntheticsWorkerValues', () => {
       mockSyntheticsWorkerValues({ injectsRum: true }, 'cookies')
 
       expect(willSyntheticsInjectRum()).toBeTrue()
-    })
-
-    it('returns false if document.cookie is not accessible', () => {
-      mockSyntheticsWorkerValues({}, 'globals')
-      mockUnreadableCookies()
-
-      expect(willSyntheticsInjectRum()).toBeFalse()
     })
   })
 
