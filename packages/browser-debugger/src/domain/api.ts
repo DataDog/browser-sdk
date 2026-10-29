@@ -451,13 +451,19 @@ export interface ExceptionSnapshot {
 }
 
 /**
- * Queue an Exception Replay snapshot for delivery via the debugger's own transport.
- *
- * @returns Whether the snapshot was queued, which requires `DD_DEBUGGER.init()` to have been called
+ * Whether snapshots can be sent, which requires `DD_DEBUGGER.init()` to have been called.
  */
-export function queueExceptionSnapshot(snapshot: ExceptionSnapshot): boolean {
+export function isDebuggerTransportInitialized(): boolean {
+  return debuggerBatch !== undefined && debuggerConfig !== undefined
+}
+
+/**
+ * Queue an Exception Replay snapshot for delivery via the debugger's own transport. Does nothing
+ * until `DD_DEBUGGER.init()` has been called.
+ */
+export function queueExceptionSnapshot(snapshot: ExceptionSnapshot): void {
   if (!debuggerBatch || !debuggerConfig) {
-    return false
+    return
   }
 
   const version = globalObj.DD_DEBUGGER!.version
@@ -495,7 +501,6 @@ export function queueExceptionSnapshot(snapshot: ExceptionSnapshot): boolean {
       },
     },
   })
-  return true
 }
 
 function buildSnapshotDebugIds(result: ActiveEntry) {

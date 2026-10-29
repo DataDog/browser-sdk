@@ -626,6 +626,8 @@ describe('preStartRum', () => {
           jasmine.objectContaining({
             initConfiguration,
             publicApi: PUBLIC_API,
+            registerAssembleEventHook: jasmine.any(Function),
+            registerEventCollectedHook: jasmine.any(Function),
           })
         )
       })

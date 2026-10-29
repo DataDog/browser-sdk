@@ -1,10 +1,11 @@
 import { SKIPPED } from '@datadog/js-core/assembly'
-import { collectExceptionReplay, registerExceptionReplayPlugin } from './exceptionReplay'
+import { display } from './display'
+import { collectExceptionReplay, registerExceptionReplayPlugin, sendExceptionReplay } from './exceptionReplay'
 
 // The plugin is typed structurally, rather than with the RUM Browser SDK's `RumPlugin` type, so that
 // the Live Debugger SDK doesn't depend on the RUM Browser SDK.
 
-interface AssembleEventHookParams {
+interface EventHookParams {
   eventType: string
   domainContext: object
 }
@@ -21,14 +22,22 @@ type ExceptionReplayEventAttributes = {
   }
 }
 
-type AssembleEventHook = (params: AssembleEventHookParams) => ExceptionReplayEventAttributes | SKIPPED
+type AssembleEventHook = (params: EventHookParams) => ExceptionReplayEventAttributes | SKIPPED
+type EventCollectedHook = (params: EventHookParams) => void
+
+interface ExceptionReplayPluginOnInitOptions {
+  publicApi: { getInternalContext: () => object | undefined }
+  registerAssembleEventHook: (callback: AssembleEventHook) => unknown
+  // Missing from RUM Browser SDK versions older than this plugin
+  registerEventCollectedHook?: (callback: EventCollectedHook) => unknown
+}
 
 /**
  * Exception Replay plugin for the RUM Browser SDK. Compatible with the RUM Browser SDK's `RumPlugin`.
  */
 export interface ExceptionReplayPlugin {
   name: string
-  onInit(options: { registerAssembleEventHook: (callback: AssembleEventHook) => unknown }): void
+  onInit(options: ExceptionReplayPluginOnInitOptions): void
 }
 
 /**
@@ -36,16 +45,23 @@ export interface ExceptionReplayPlugin {
  *
  * When an application built with the Live Debugger build plugin's `exceptionReplay` option throws,
  * the Live Debugger SDK captures the arguments of the instrumented functions the exception passes
- * through. When RUM reports the error, this plugin sends those captures as snapshots and links them
- * to the RUM error event, so Error Tracking can show them on the error's stack frames.
+ * through. When RUM reports the error, this plugin links those captures to the RUM error event, and
+ * sends them as snapshots once the event passes `beforeSend` and the event rate limits, so Error
+ * Tracking can show them on the error's stack frames.
  *
- * Exception Replay only starts once the plugin is registered and `DD_DEBUGGER.init()` is called.
+ * Exception Replay only starts once the plugin is registered and `DD_DEBUGGER.init()` is called. It
+ * doesn't capture anything in sessions that RUM doesn't track.
  */
 export function exceptionReplayPlugin(): ExceptionReplayPlugin {
   return {
     name: 'exception-replay',
-    onInit({ registerAssembleEventHook }) {
-      registerExceptionReplayPlugin()
+    onInit({ publicApi, registerAssembleEventHook, registerEventCollectedHook }) {
+      if (!registerEventCollectedHook) {
+        display.warn('Exception Replay requires a version of the RUM Browser SDK that matches the Live Debugger SDK.')
+        return
+      }
+
+      registerExceptionReplayPlugin(() => publicApi.getInternalContext() !== undefined)
 
       registerAssembleEventHook(({ eventType, domainContext }) => {
         if (eventType !== 'error') {
@@ -69,6 +85,12 @@ export function exceptionReplayPlugin(): ExceptionReplayPlugin {
               frames: attributes.frames.map(({ index, snapshotId }) => ({ index, snapshot_id: snapshotId })),
             },
           },
+        }
+      })
+
+      registerEventCollectedHook(({ eventType, domainContext }) => {
+        if (eventType === 'error' && 'error' in domainContext) {
+          sendExceptionReplay(domainContext.error)
         }
       })
     },

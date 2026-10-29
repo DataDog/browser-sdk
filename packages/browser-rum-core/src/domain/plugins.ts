@@ -2,7 +2,7 @@ import { isThenable } from '@datadog/browser-core'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
-import type { AssembleHook } from './hooks'
+import type { AssembleHook, EventCollectedHook } from './hooks'
 
 /**
  * onInit plugin API options.
@@ -18,6 +18,12 @@ export interface RumPluginOnInitOptions {
    * assembled, including events buffered during the pre-start phase.
    */
   registerAssembleEventHook: AssembleHook['register']
+  /**
+   * Register a callback invoked when a RUM event is collected, once `beforeSend` and the event rate
+   * limits have let it through, right before it is sent. Plugins can use it to send data related to
+   * an event only if the event itself is sent.
+   */
+  registerEventCollectedHook: EventCollectedHook['register']
 }
 
 /**

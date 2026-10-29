@@ -791,6 +791,46 @@ describe('rum assembly', () => {
     })
   })
 
+  describe('eventCollected hook', () => {
+    it('is triggered with the collected event and its domain context', () => {
+      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
+      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      hooks.eventCollected.register(eventCollectedSpy)
+      const domainContext = { error: new Error('boom') } as RumEventDomainContext
+
+      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR), domainContext })
+
+      expect(eventCollectedSpy).toHaveBeenCalledOnceWith({
+        eventType: RumEventType.ERROR,
+        event: serverRumEvents[0],
+        domainContext,
+      })
+    })
+
+    it('is not triggered for events dismissed by beforeSend', () => {
+      const { lifeCycle, hooks } = setupAssemblyTestWithDefaults({
+        partialConfiguration: { beforeSend: () => false },
+      })
+      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      hooks.eventCollected.register(eventCollectedSpy)
+
+      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
+
+      expect(eventCollectedSpy).not.toHaveBeenCalled()
+    })
+
+    it('is not triggered for events over the rate limit', () => {
+      const { lifeCycle, hooks } = setupAssemblyTestWithDefaults({ eventRateLimit: 1 })
+      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      hooks.eventCollected.register(eventCollectedSpy)
+
+      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
+      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
+
+      expect(eventCollectedSpy).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('event generation condition', () => {
     it('when tracked, it should generate event', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()

@@ -103,6 +103,7 @@ export function startRumAssembly(
           delete serverRumEvent.context
         }
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+        hooks.eventCollected.trigger({ eventType: serverRumEvent.type, event: serverRumEvent, domainContext })
       }
     }
   )
