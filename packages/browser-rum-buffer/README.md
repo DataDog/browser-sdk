@@ -1,6 +1,6 @@
 # Early RUM error buffer
 
-An optional synchronous script that captures uncaught exceptions and unhandled promise rejections before the RUM SDK loads. It uses the same runtime-error collector as the SDK and preserves the existing `RawError` processing.
+An optional synchronous script that captures uncaught exceptions and unhandled promise rejections before the RUM SDK loads. It uses the same runtime-error collector as the SDK and defers `RawError` processing to the SDK.
 
 ## Loading
 
@@ -25,9 +25,11 @@ This version supports a single RUM instance. It does not capture early `console.
 
 The internal global lets separate bundles share a live collector. The SDK directly reuses an existing handle without runtime compatibility checks; use matching buffer and SDK releases. No utilities are moved from `browser-core`, and `browser-core` does not depend on this package.
 
-Diagnostic callbacks are connected during adoption so the early bundle's internal errors and buffered source-context usage telemetry reach the SDK's existing sinks. Same-module capture reuses those sinks directly.
+During adoption, the SDK supplies an internal-error monitor callback. Same-module capture reuses the SDK monitor directly. The early bundle has no telemetry observable, forwarding subscription, or overflow reporting. It silently retains the latest 500 entries.
 
-The source emits the existing discriminated `BufferedData` union and declares its collected `types`. Core starts collectors only for types not supplied by the source. This allows future early collectors to reuse the same integration; this release declares only `RUNTIME_ERROR` and still constructs `RawError` once.
+The source emits the existing discriminated `BufferedData` union and declares its collected `types`. Core starts collectors only for types not supplied by the source. This allows future early collectors to reuse the same integration; this release declares only `RUNTIME_ERROR`. Its payload retains the original error, capture clocks, and browser-provided error location. RUM and Logs call the shared `computeRuntimeError` in their error collectors, constructing `RawError` once through the existing parsing, sanitization, causes, context, and debug-ID helpers. These processing helpers stay in `browser-core` and are excluded from the early bundle.
+
+Error objects are retained by reference: changes to their properties before SDK consumption are reflected in the reported error. Browser location arguments and capture timestamps are retained immediately. A throwing error getter is monitored in the consuming SDK without interrupting replay of subsequent errors.
 
 Logs calls `createDataBuffer()` to create an independent source. Both SDKs pass a source to `startBufferingData`, which no longer installs a fallback runtime-error collector.
 

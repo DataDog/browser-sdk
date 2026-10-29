@@ -5,8 +5,7 @@ import type { FetchContext } from '../browser/fetchObservable'
 import { initFetchObservable } from '../browser/fetchObservable'
 import type { XhrContext } from '../browser/xhrObservable'
 import { initXhrObservable } from '../browser/xhrObservable'
-import { getTelemetryObservable } from './telemetry'
-import type { RawError } from './error/error.types'
+import type { RuntimeError } from './error/trackRuntimeError'
 import type { ConsoleLog } from './console/consoleObservable'
 import { initConsoleObservable } from './console/consoleObservable'
 
@@ -18,7 +17,7 @@ export const enum BufferedDataType {
 }
 
 export type BufferedData =
-  | { type: BufferedDataType.RUNTIME_ERROR; data: RawError }
+  | { type: BufferedDataType.RUNTIME_ERROR; data: RuntimeError }
   | { type: BufferedDataType.FETCH; data: FetchContext }
   | { type: BufferedDataType.XHR; data: XhrContext }
   | { type: BufferedDataType.CONSOLE; data: ConsoleLog }
@@ -33,15 +32,12 @@ export interface BufferedDataSource {
     type: T,
     createSource: () => Observable<Extract<BufferedData, { type: T }>['data']>
   ): void
-  connect?: (
-    telemetry: Pick<ReturnType<typeof getTelemetryObservable>, 'notify'>,
-    onMonitorError: (error: unknown) => void
-  ) => void
+  connect?: (onMonitorError: (error: unknown) => void) => void
   stop: () => void
 }
 
 export function startBufferingData(bufferedDataSource: BufferedDataSource) {
-  bufferedDataSource.connect?.(getTelemetryObservable(), monitorError)
+  bufferedDataSource.connect?.(monitorError)
   bufferedDataSource.subscribe(BufferedDataType.FETCH, initFetchObservable)
   bufferedDataSource.subscribe(BufferedDataType.XHR, initXhrObservable)
   bufferedDataSource.subscribe(BufferedDataType.CONSOLE, () => initConsoleObservable(Object.values(ConsoleApiName)))

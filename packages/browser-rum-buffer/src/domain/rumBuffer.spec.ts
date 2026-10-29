@@ -1,48 +1,40 @@
-import { monitorError } from '@datadog/js-core/monitor'
-import { trackRuntimeError, ErrorSource, BufferedDataType } from '@datadog/browser-core'
-import type { RawError, BufferedData } from '@datadog/browser-core'
+import { monitorError, startMonitorErrorCollection, stopMonitorErrorCollection } from '@datadog/js-core/monitor'
+import { trackRuntimeError, BufferedDataType } from '@datadog/browser-core'
+import type { RuntimeError, BufferedData } from '@datadog/browser-core'
 import { Observable, globalObject } from '@datadog/js-core/util'
 import { clocksNow } from '@datadog/js-core/time'
-import { getTelemetryObservable } from '../../../browser-core/src/domain/telemetry'
 import { registerCleanupTask, replaceMockableWithSpy, waitNextMicrotask } from '../../../browser-core/test'
 import { getOrCreateRumBuffer, startRumBuffer, createDataBuffer } from './rumBuffer'
 
 const bufferGlobal = globalObject as typeof globalObject & { __DD_RUM_BUFFER__?: unknown }
 
 describe('RUM buffer', () => {
-  it('connects diagnostics to a separate SDK and releases the early telemetry history', async () => {
+  it('connects internal errors to a separate SDK and disconnects when stopped', () => {
     const buffer = getOrCreateRumBuffer()
-    const telemetry = getTelemetryObservable()
-    const event = { rawEvent: { type: 'usage' as const, usage: { feature: 'source-code-context' as const } } }
-    telemetry.notify(event)
-    const notify = jasmine.createSpy()
     const internalError = jasmine.createSpy()
-    buffer.connect({ notify }, internalError)
-    await waitNextMicrotask()
-    expect(notify).toHaveBeenCalledOnceWith(event)
+    buffer.connect(internalError)
     const error = new Error('collector failure')
     monitorError(error)
     expect(internalError).toHaveBeenCalledOnceWith(error)
-    telemetry.notify(event)
-    expect(notify).toHaveBeenCalledTimes(2)
     buffer.stop()
-    telemetry.notify(event)
     monitorError(error)
-    expect(notify).toHaveBeenCalledTimes(2)
     expect(internalError).toHaveBeenCalledTimes(1)
   })
 
-  it('does not connect diagnostics back to the same module instance', async () => {
+  it('does not connect the monitor back to itself or replace the existing SDK sink', () => {
+    const internalError = jasmine.createSpy()
+    startMonitorErrorCollection(internalError)
+    registerCleanupTask(stopMonitorErrorCollection)
     const buffer = getOrCreateRumBuffer()
-    buffer.connect(getTelemetryObservable(), monitorError)
-    const notify = jasmine.createSpy()
-    getTelemetryObservable().subscribe(notify)
-    getTelemetryObservable().notify({ rawEvent: { type: 'usage', usage: { feature: 'source-code-context' } } })
-    await waitNextMicrotask()
-    expect(notify).toHaveBeenCalledTimes(1)
+    buffer.connect(monitorError)
+    const error = new Error('collector failure')
+    monitorError(error)
+    buffer.stop()
+    monitorError(error)
+    expect(internalError).toHaveBeenCalledTimes(2)
   })
 
-  let errors: Observable<RawError>
+  let errors: Observable<RuntimeError>
   let collector: jasmine.Spy<typeof trackRuntimeError>
 
   beforeEach(() => {
@@ -56,7 +48,7 @@ describe('RUM buffer', () => {
   })
 
   function emit(message: string) {
-    const error: RawError = { message, source: ErrorSource.SOURCE, startClocks: clocksNow() }
+    const error: RuntimeError = { originalError: message, startClocks: clocksNow() }
     errors.notify(error)
     return error
   }
@@ -115,7 +107,7 @@ describe('RUM buffer', () => {
     const early = emit('early')
     startRumBuffer()
     const buffer = getOrCreateRumBuffer()
-    const received: RawError[] = []
+    const received: RuntimeError[] = []
     buffer.observable.subscribe((event) => {
       if (event.type === BufferedDataType.RUNTIME_ERROR) {
         received.push(event.data)
@@ -125,7 +117,7 @@ describe('RUM buffer', () => {
     buffer.observable.unbuffer()
     await waitNextMicrotask()
     emit('live')
-    expect(received.map((error) => error.message)).toEqual(['early', 'during adoption', 'live'])
+    expect(received.map((error) => error.originalError)).toEqual(['early', 'during adoption', 'live'])
     expect(received[0]).toBe(early)
     expect(collector).toHaveBeenCalledTimes(1)
     startRumBuffer()
@@ -136,55 +128,36 @@ describe('RUM buffer', () => {
   it('starts capture at SDK evaluation when no early script ran', async () => {
     const buffer = getOrCreateRumBuffer()
     emit('SDK only')
-    const received: RawError[] = []
+    const received: RuntimeError[] = []
     buffer.observable.subscribe((event) => {
       if (event.type === BufferedDataType.RUNTIME_ERROR) {
         received.push(event.data)
       }
     })
     await waitNextMicrotask()
-    expect(received.map((error) => error.message)).toEqual(['SDK only'])
+    expect(received.map((error) => error.originalError)).toEqual(['SDK only'])
   })
 
-  it('keeps the latest 500 errors and reports drops when initialization releases the history', async () => {
+  it('keeps the latest 500 errors until initialization releases the history', async () => {
     const buffer = getOrCreateRumBuffer()
     for (let i = 0; i < 505; i++) {
       emit(String(i))
     }
-    const received: RawError[] = []
-    const dropped = jasmine.createSpy()
+    const received: RuntimeError[] = []
     buffer.observable.subscribe((event) => {
       if (event.type === BufferedDataType.RUNTIME_ERROR) {
         received.push(event.data)
       }
     })
-    getTelemetryObservable().subscribe(dropped)
     buffer.observable.unbuffer()
     await waitNextMicrotask()
     expect(received.length).toBe(500)
-    expect(received[0].message).toBe('5')
-    expect(received[499].message).toBe('504')
-    expect(dropped).toHaveBeenCalledOnceWith(
-      jasmine.objectContaining({
-        rawEvent: jasmine.objectContaining({ message: 'Early data collection dropped data on unbuffer', count: 5 }),
-      })
-    )
+    expect(received[0].originalError).toBe('5')
+    expect(received[499].originalError).toBe('504')
     const late = jasmine.createSpy()
     buffer.observable.subscribe(late)
     await waitNextMicrotask()
     expect(late).not.toHaveBeenCalled()
-  })
-
-  it('does not report discarded history after stopping', async () => {
-    const buffer = createDataBuffer()
-    const telemetry = jasmine.createSpy()
-    getTelemetryObservable().subscribe(telemetry)
-    for (let i = 0; i < 501; i++) {
-      emit(String(i))
-    }
-    buffer.stop()
-    await waitNextMicrotask()
-    expect(telemetry).not.toHaveBeenCalled()
   })
 
   it('stops capture and does not restart when the early script runs again', async () => {

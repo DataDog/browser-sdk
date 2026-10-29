@@ -1,13 +1,15 @@
+import { BufferedObservable } from '@datadog/js-core/util'
+import { clocksNow } from '@datadog/js-core/time'
+import { BufferedDataType, ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
+import type { BufferedData, ErrorWithCause } from '@datadog/browser-core'
+import { waitNextMicrotask, FAKE_CSP_VIOLATION_EVENT, mockSourceCodeContext } from '@datadog/browser-core/test'
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
-import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
-import { FAKE_CSP_VIOLATION_EVENT, mockSourceCodeContext } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { doStartErrorCollection } from './errorCollection'
+import { startErrorCollection, doStartErrorCollection } from './errorCollection'
 
 describe('error collection', () => {
   let lifeCycle: LifeCycle
@@ -20,6 +22,51 @@ describe('error collection', () => {
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }
+
+  it('processes buffered errors at consumption time while preserving their capture time', async () => {
+    const bufferedData = new BufferedObservable<BufferedData>(10)
+    const startClocks = clocksNow()
+    const error = Object.assign(new Error('early'), { dd_context: { stage: 'capture' } })
+    bufferedData.notify({ type: BufferedDataType.RUNTIME_ERROR, data: { originalError: error, startClocks } })
+    error.dd_context = { stage: 'consumption' }
+    lifeCycle = new LifeCycle()
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+    startErrorCollection(lifeCycle, bufferedData)
+    bufferedData.unbuffer()
+    await waitNextMicrotask()
+
+    expect(rawRumEvents.length).toBe(1)
+    expect(rawRumEvents[0].startClocks).toBe(startClocks)
+    expect(rawRumEvents[0].rawRumEvent.date).toBe(startClocks.timeStamp)
+    expect(rawRumEvents[0].rawRumEvent).toEqual(jasmine.objectContaining({ context: { stage: 'consumption' } }))
+  })
+
+  it('continues replay and live collection after an error with a throwing getter', async () => {
+    const bufferedData = new BufferedObservable<BufferedData>(10)
+    const error = new Error('bad cause')
+    Object.defineProperty(error, 'cause', {
+      get: () => {
+        throw new Error('getter failed')
+      },
+    })
+    const startClocks = clocksNow()
+    bufferedData.notify({ type: BufferedDataType.RUNTIME_ERROR, data: { originalError: error, startClocks } })
+    bufferedData.notify({
+      type: BufferedDataType.RUNTIME_ERROR,
+      data: { originalError: new Error('next'), startClocks },
+    })
+    lifeCycle = new LifeCycle()
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+    startErrorCollection(lifeCycle, bufferedData)
+    bufferedData.unbuffer()
+    await waitNextMicrotask()
+    bufferedData.notify({
+      type: BufferedDataType.RUNTIME_ERROR,
+      data: { originalError: new Error('live'), startClocks },
+    })
+
+    expect(rawRumEvents.length).toBe(2)
+  })
 
   // when calling toString on SubErrorViaPrototype, the results will be '[object Object]'
   // but the value of 'error instanceof Error' will still be true.

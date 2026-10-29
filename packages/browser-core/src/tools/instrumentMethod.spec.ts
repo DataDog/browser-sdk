@@ -1,6 +1,7 @@
 import { noop } from '@datadog/js-core/util'
 import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
+import { createHandlingStack } from './stackTrace/handlingStack'
 import type { InstrumentedMethodCall } from './instrumentMethod'
 import { instrumentConstructor, instrumentMethod, instrumentSetter } from './instrumentMethod'
 
@@ -201,7 +202,7 @@ describe('instrumentMethod', () => {
   it('computes the handling stack', () => {
     const object = { method: () => 1 }
     const instrumentationSpy = jasmine.createSpy()
-    instrumentMethod(object, 'method', instrumentationSpy, { computeHandlingStack: true })
+    instrumentMethod(object, 'method', instrumentationSpy, { computeHandlingStack: createHandlingStack })
 
     function foo() {
       object.method()
@@ -357,7 +358,7 @@ describe('instrumentConstructor', () => {
   it('computes the handling stack', () => {
     const container = { MyClass }
     const instrumentationSpy = jasmine.createSpy()
-    instrumentConstructor(container, 'MyClass', instrumentationSpy, { computeHandlingStack: true })
+    instrumentConstructor(container, 'MyClass', instrumentationSpy, { computeHandlingStack: createHandlingStack })
 
     function foo() {
       new container.MyClass(1)

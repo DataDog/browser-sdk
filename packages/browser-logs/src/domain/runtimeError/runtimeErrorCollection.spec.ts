@@ -1,8 +1,8 @@
-import type { BufferedData, RawError } from '@datadog/browser-core'
+import type { BufferedData, RuntimeError } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { ErrorSource, ErrorHandling, BufferedDataType } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
-import { registerCleanupTask } from '../../../../browser-core/test'
+import { mockSourceCodeContext, registerCleanupTask } from '../../../../browser-core/test'
 import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import { StatusType } from '../logger/isAuthorized'
@@ -29,16 +29,7 @@ function startRuntimeErrorCollectionWithDefaults({
   return { rawLogsEvents, bufferedDataObservable }
 }
 
-const RAW_ERROR: RawError = {
-  startClocks: clocksNow(),
-  source: ErrorSource.SOURCE,
-  type: 'Error',
-  stack: 'Error: error!',
-  handling: ErrorHandling.UNHANDLED,
-  causes: undefined,
-  fingerprint: undefined,
-  message: 'error!',
-}
+const RUNTIME_ERROR: RuntimeError = { startClocks: clocksNow(), originalError: new Error('error!') }
 
 describe('runtime error collection', () => {
   let onErrorSpy: jasmine.Spy
@@ -59,7 +50,7 @@ describe('runtime error collection', () => {
 
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
-      data: RAW_ERROR,
+      data: RUNTIME_ERROR,
     })
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
@@ -85,22 +76,10 @@ describe('runtime error collection', () => {
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
       data: {
-        ...RAW_ERROR,
-        message: 'High level error',
-        causes: [
-          {
-            message: 'Mid level error',
-            type: 'Error',
-            stack: 'Error: Mid level error',
-            source: ErrorSource.SOURCE,
-          },
-          {
-            message: 'Low level error',
-            type: 'TypeError',
-            stack: 'TypeError: Low level error',
-            source: ErrorSource.SOURCE,
-          },
-        ],
+        ...RUNTIME_ERROR,
+        originalError: Object.assign(new Error('High level error'), {
+          cause: Object.assign(new Error('Mid level error'), { cause: new TypeError('Low level error') }),
+        }),
       },
     })
 
@@ -141,7 +120,7 @@ describe('runtime error collection', () => {
 
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
-      data: RAW_ERROR,
+      data: RUNTIME_ERROR,
     })
 
     expect(rawLogsEvents.length).toEqual(0)
@@ -150,11 +129,13 @@ describe('runtime error collection', () => {
   it('should attach debug_ids from runtime errors', () => {
     const { rawLogsEvents, bufferedDataObservable } = startRuntimeErrorCollectionWithDefaults()
 
+    const stack = 'Error: error!\n    at fn (http://path/to/debug-id.js:1:2)'
+    mockSourceCodeContext({ [stack]: { ddDebugId: '01234567-89ab-cdef-0123-456789abcdef' } })
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
       data: {
-        ...RAW_ERROR,
-        debugIds: [{ url: 'http://path/to/debug-id.js', id: '01234567-89ab-cdef-0123-456789abcdef' }],
+        ...RUNTIME_ERROR,
+        originalError: Object.assign(new Error('error!'), { stack }),
       },
     })
 
@@ -169,8 +150,8 @@ describe('runtime error collection', () => {
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
       data: {
-        ...RAW_ERROR,
-        context: { foo: 'bar' },
+        ...RUNTIME_ERROR,
+        originalError: Object.assign(new Error('error!'), { dd_context: { foo: 'bar' } }),
       },
     })
 

@@ -4,7 +4,7 @@
 
 Offer a small synchronous script that captures errors before an asynchronously loaded or npm-bundled RUM SDK evaluates. Use the same error capture implementation when the SDK evaluates without that script. The initial version supports RUM only and captures uncaught exceptions and unhandled promise rejections, not console.error.
 
-Keep stack parsing, sanitization, trackRuntimeError, and computeRawError in browser-core. Produce the existing RawError at capture time and feed the existing errorCollection and assembly pipeline without introducing another error construction stage. Logs uses the same source factory through the new package, with an independent buffer starting at Logs evaluation. Logs does not consume the early RUM history.
+Keep stack parsing, sanitization, trackRuntimeError, and computeRawError in browser-core. Retain the original error, clocks, and browser location at capture time; produce the existing RawError in the consuming SDK error collector and feed the existing errorCollection and assembly pipeline without introducing another error construction stage. Logs uses the same source factory through the new package, with an independent buffer starting at Logs evaluation. Logs does not consume the early RUM history.
 
 The size spike, using the existing collector and a 500-entry BufferedObservable, measured 10,740 bytes minified and 4,412 bytes gzip with production Webpack settings. This is an accepted baseline, not a hard budget or a guarantee for the finished package.
 
@@ -27,11 +27,11 @@ These are assistant recommendations for approval, not additional requirements su
 
 ## Buffer and lifecycle
 
-Use the existing 500-entry bound and drop-oldest policy. The standalone script buffers until RUM evaluates, even if RUM never initializes. If RUM never arrives, retain at most 500 errors for the page lifetime.
+Use the existing 500-entry bound and drop-oldest policy without overflow reporting. The standalone script buffers until RUM evaluates, even if RUM never initializes. If RUM never arrives, retain at most 500 errors for the page lifetime.
 
 At SDK evaluation, adopt the source's existing BufferedObservable and attach the remaining collectors directly. Do not create another data buffer, forward between data buffers, or unbuffer during adoption. Retain the unified, bounded 500-entry history until startRum or startLogs subscribes its consumers and calls observable.unbuffer() at initialization.
 
-Continue using the adopted live collector after replay; do not install a second RUM runtime-error collector or stop/reinstall handlers during adoption. Cleanup must unsubscribe the bridge and stop its owned collector when the buffering lifecycle is stopped. Do not emit an error twice or lose events between replay and live delivery. Retain the original capture clocks, stack, causes, and RawError fields.
+Continue using the adopted live collector after replay; do not install a second RUM runtime-error collector or stop/reinstall handlers during adoption. Cleanup must unsubscribe the bridge and stop its owned collector when the buffering lifecycle is stopped. Do not emit an error twice or lose events between replay and live delivery. Retain the original capture clocks and browser location. Stack, causes, context, fingerprint, and debug IDs are computed at consumption time; mutation of the retained error before consumption is accepted.
 
 Repeated early-script evaluation must reuse the existing handle. An early script evaluated after RUM has adopted the handle must not restart buffering or instrumentation. Retain a lightweight global handle/state marker to make this idempotent.
 
@@ -43,7 +43,7 @@ Directly reuse the typed internal global handle when present, without runtime sh
 
 Preserve current consent, sampling, and initialization behavior: this is the same in-memory pre-init capture started earlier, and emission remains controlled by the existing RUM pipeline. It does not capture events that happened before the synchronous script executed.
 
-RawError processing must remain on the existing implementation, including debug-ID lookup. Review any module-local telemetry/monitor state pulled into the separate bundle: explicitly pass needed SDK callbacks during adoption if required, without making core depend on the package. Do not pull in transport or full SDK initialization just to forward diagnostic callbacks.
+RawError processing must remain on the existing implementation, including debug-ID lookup, invoked by the shared computeRuntimeError helper from RUM and Logs error collectors. Instrumentation callers that need a handling stack pass its computation function so the early bundle does not include stack parsing. SDK error consumers are monitored so a throwing error getter cannot interrupt replay. Connect the early bundle monitor to the SDK during adoption without making core depend on the package. No early telemetry observable, forwarding subscription, or overflow callback is needed. Do not pull in transport or full SDK initialization just to forward diagnostic callbacks.
 
 ## Verification and delivery
 

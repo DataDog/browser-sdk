@@ -1,6 +1,6 @@
 import { monitorError, startMonitorErrorCollection, stopMonitorErrorCollection } from '@datadog/js-core/monitor'
 import type { Subscription } from '@datadog/js-core/util'
-import { trackRuntimeError, getTelemetryObservable, BufferedDataType, addTelemetryDebug } from '@datadog/browser-core'
+import { trackRuntimeError, BufferedDataType } from '@datadog/browser-core'
 import type { BufferedData, BufferedDataSource } from '@datadog/browser-core'
 import { BufferedObservable, globalObject, mockable } from '@datadog/js-core/util'
 
@@ -23,12 +23,7 @@ export function getOrCreateRumBuffer(): RumBuffer {
 /** Starts an independent buffer without reading or replacing the early RUM handle. */
 export function createDataBuffer(): RumBuffer {
   let stopped = false
-  const observable = new BufferedObservable<BufferedData>(500, (count) => {
-    if (!stopped) {
-      // monitor-until: 2026-12-01
-      addTelemetryDebug('Early data collection dropped data on unbuffer', { count })
-    }
-  })
+  const observable = new BufferedObservable<BufferedData>(500)
   const types: BufferedDataType[] = []
   const subscriptions: Subscription[] = []
 
@@ -48,17 +43,12 @@ export function createDataBuffer(): RumBuffer {
     types,
     subscribe,
     observable,
-    connect: (telemetry, onMonitorError) => {
+    connect: (onMonitorError) => {
       if (connected || stopped) {
         return
       }
       connected = true
-      const earlyTelemetry = getTelemetryObservable()
-      // Module-based capture already shares the SDK's sinks. Connecting it to itself would loop.
-      if (earlyTelemetry !== telemetry) {
-        subscriptions.push(earlyTelemetry.subscribe((event) => telemetry.notify(event)))
-        earlyTelemetry.unbuffer()
-      }
+      // Module-based capture already shares the SDK's monitor. Connecting it to itself would loop.
       if (onMonitorError !== monitorError) {
         ownsMonitor = startMonitorErrorCollection(onMonitorError)
       }

@@ -17,17 +17,17 @@ import { resetXhrObservable } from '../browser/xhrObservable'
 import { resetConsoleObservable } from './console/consoleObservable'
 import type { BufferedData } from './bufferedData'
 import { BufferedDataType, startBufferingData } from './bufferedData'
-import { ErrorHandling, ErrorSource, type RawError } from './error/error.types'
+import type { RuntimeError } from './error/trackRuntimeError'
 import { trackRuntimeError } from './error/trackRuntimeError'
 
 describe('startBufferingData', () => {
   it('adopts multiple buffered data types without installing their collectors', async () => {
-    const defaultCollector = replaceMockableWithSpy(trackRuntimeError).and.returnValue(new Observable<RawError>())
+    const defaultCollector = replaceMockableWithSpy(trackRuntimeError).and.returnValue(new Observable<RuntimeError>())
     const source = createDataBuffer()
     source.subscribe(BufferedDataType.CONSOLE, () => new Observable())
     const unbuffer = spyOn(source.observable, 'unbuffer').and.callThrough()
     const stopSource = spyOn(source, 'stop').and.callThrough()
-    const earlyError: RawError = { startClocks: clocksNow(), source: ErrorSource.SOURCE, message: 'early' }
+    const earlyError: RuntimeError = { startClocks: clocksNow(), originalError: 'early' }
     const earlyData: BufferedData = { type: BufferedDataType.RUNTIME_ERROR, data: earlyError }
     const earlyLog: BufferedData = {
       type: BufferedDataType.CONSOLE,
@@ -58,21 +58,12 @@ describe('startBufferingData', () => {
   })
 
   it('collects runtime errors', (done) => {
-    const runtimeErrorObservable = new Observable<RawError>()
+    const runtimeErrorObservable = new Observable<RuntimeError>()
     replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
     const { observable, stop } = startBufferingData(createDataBuffer())
     registerCleanupTask(stop)
 
-    const rawError = {
-      startClocks: clocksNow(),
-      source: ErrorSource.SOURCE,
-      type: 'Error',
-      stack: 'Error: error!',
-      handling: ErrorHandling.UNHANDLED,
-      causes: undefined,
-      fingerprint: undefined,
-      message: 'error!',
-    }
+    const rawError = { startClocks: clocksNow(), originalError: new Error('error!') }
 
     runtimeErrorObservable.notify(rawError)
 
