@@ -140,6 +140,15 @@ export class BufferedObservable<T> extends Observable<T> {
   }
 
   /**
+   * The currently buffered values, from oldest to newest.
+   *
+   * @returns A live, read-only view of the buffer: empty once {@link BufferedObservable.unbuffer} has run.
+   */
+  get items(): readonly T[] {
+    return this.buffer
+  }
+
+  /**
    * Buffers `data` (dropping the oldest value if the buffer is full), then notifies current
    * observers synchronously.
    *
