@@ -61,6 +61,14 @@ for (const app of salesforceApps) {
       await page.getByTestId('fetch-resource').click()
       await page.getByTestId('xhr-resource').click()
       await page.getByTestId('image-resource').click()
+      // The image loads from a slow Salesforce endpoint: wait for its resource timing entry before flushing
+      await expect
+        .poll(() =>
+          page.evaluate(() =>
+            performance.getEntriesByType('resource').some((entry) => entry.name.includes('dd-image-test'))
+          )
+        )
+        .toBe(true)
 
       await flushEvents()
 
