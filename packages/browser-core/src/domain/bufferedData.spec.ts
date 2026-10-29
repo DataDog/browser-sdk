@@ -1,7 +1,17 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { ConsoleApiName, Observable, noop } from '@datadog/js-core/util'
+import { ConsoleApiName, Observable, noop, globalConsole } from '@datadog/js-core/util'
+import { createDataBuffer } from '../../../browser-rum-buffer/src/entries/main'
 import type { MockFetch } from '../../test'
-import { collectAsyncCalls, mockFetch, mockXhr, registerCleanupTask, replaceMockable, withXhr } from '../../test'
+import {
+  collectAsyncCalls,
+  mockFetch,
+  mockXhr,
+  registerCleanupTask,
+  replaceMockable,
+  replaceMockableWithSpy,
+  waitNextMicrotask,
+  withXhr,
+} from '../../test'
 import { resetFetchObservable } from '../browser/fetchObservable'
 import { resetXhrObservable } from '../browser/xhrObservable'
 import { resetConsoleObservable } from './console/consoleObservable'
@@ -11,10 +21,46 @@ import { ErrorHandling, ErrorSource, type RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 
 describe('startBufferingData', () => {
+  it('adopts multiple buffered data types without installing their collectors', async () => {
+    const defaultCollector = replaceMockableWithSpy(trackRuntimeError).and.returnValue(new Observable<RawError>())
+    const source = createDataBuffer()
+    source.subscribe(BufferedDataType.CONSOLE, () => new Observable())
+    const unbuffer = spyOn(source.observable, 'unbuffer').and.callThrough()
+    const stopSource = spyOn(source, 'stop').and.callThrough()
+    const earlyError: RawError = { startClocks: clocksNow(), source: ErrorSource.SOURCE, message: 'early' }
+    const earlyData: BufferedData = { type: BufferedDataType.RUNTIME_ERROR, data: earlyError }
+    const earlyLog: BufferedData = {
+      type: BufferedDataType.CONSOLE,
+      data: { api: ConsoleApiName.log, message: 'early log', handlingStack: '', error: undefined },
+    }
+    source.observable.notify(earlyData)
+    source.observable.notify(earlyLog)
+
+    const originalConsoleLog = globalConsole.log
+    const buffer = startBufferingData(source)
+    registerCleanupTask(buffer.stop)
+    expect(buffer).toBe(source)
+    expect(buffer.observable).toBe(source.observable)
+    await waitNextMicrotask()
+    expect(unbuffer).not.toHaveBeenCalled()
+    const received: BufferedData[] = []
+    buffer.observable.subscribe((value) => received.push(value))
+    buffer.observable.unbuffer()
+    await waitNextMicrotask()
+    expect(defaultCollector).toHaveBeenCalledTimes(1)
+    expect(received).toEqual([earlyData, earlyLog])
+    expect(globalConsole.log).toBe(originalConsoleLog)
+    expect(received[0].data).toBe(earlyError)
+    source.observable.notify(earlyData)
+    expect(received.length).toBe(3)
+    buffer.stop()
+    expect(stopSource).toHaveBeenCalled()
+  })
+
   it('collects runtime errors', (done) => {
     const runtimeErrorObservable = new Observable<RawError>()
     replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
-    const { observable, stop } = startBufferingData()
+    const { observable, stop } = startBufferingData(createDataBuffer())
     registerCleanupTask(stop)
 
     const rawError = {
@@ -41,7 +87,7 @@ describe('startBufferingData', () => {
 
   it('collects fetch requests', async () => {
     mockFetch()
-    const { observable, stop } = startBufferingData()
+    const { observable, stop } = startBufferingData(createDataBuffer())
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const fetch = window.fetch as MockFetch
     const collected: BufferedData[] = []
@@ -86,7 +132,7 @@ describe('startBufferingData', () => {
 
   it('collects xhr requests', async () => {
     mockXhr()
-    const { observable, stop } = startBufferingData()
+    const { observable, stop } = startBufferingData(createDataBuffer())
     const collected: BufferedData[] = []
     const bufferedDataCollectedSpy = jasmine.createSpy()
 
@@ -136,7 +182,7 @@ describe('startBufferingData', () => {
 
   it('collects console logs', (done) => {
     spyOn(console, 'error').and.callFake(noop)
-    const { observable, stop } = startBufferingData()
+    const { observable, stop } = startBufferingData(createDataBuffer())
 
     registerCleanupTask(() => {
       stop()

@@ -1,3 +1,4 @@
+import { createDataBuffer } from '@datadog/browser-rum-buffer'
 import type { TrackingConsent, PublicApi, InitContext, ContextManager, Account, User } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
@@ -279,7 +280,7 @@ export interface LogsPublicApiOptions {
 
 export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedDataObservable = startBufferingData().observable
+  const bufferedDataObservable = startBufferingData(createDataBuffer()).observable
 
   let strategy = createPreStartStrategy(
     buildCommonContext,

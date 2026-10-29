@@ -45,6 +45,7 @@ export {
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
+  getTelemetryObservable,
 } from './domain/telemetry'
 export type { SessionManager, SessionContext } from './domain/session/sessionManager'
 export { startSessionManager, startSessionManagerStub, stopSessionManager } from './domain/session/sessionManager'
