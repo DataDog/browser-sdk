@@ -165,6 +165,30 @@ async function injectThrowingFunction(page: Page) {
   await waitForProbe(page, 'TestModule;throwingFunction')
 }
 
+// Instrumented code is loaded from a script, so its stack frames have a URL. Code evaluated by
+// Playwright has none, so Exception Replay can't locate its frames.
+const EXCEPTION_REPLAY_BODY = html`
+  <script>
+    // Hand-written equivalent of what the build plugin generates with \`exceptionReplay: true\`
+    function throwingFunction(token, count) {
+      try {
+        throw new Error('boom ' + count)
+      } catch (e) {
+        window.$dd_catch('src/throwing.ts;throwingFunction', e, undefined, { token, count })
+        throw e
+      }
+    }
+    function callingFunction(count) {
+      try {
+        return throwingFunction('secret-token', count + 1)
+      } catch (e) {
+        window.$dd_catch('src/calling.ts;callingFunction', e, undefined, { count })
+        throw e
+      }
+    }
+  </script>
+`
+
 test.describe('debugger', () => {
   createTest('send debugger snapshot when instrumented function is called')
     .withDebugger()
@@ -624,29 +648,7 @@ test.describe('debugger', () => {
       }
     })
     .withDebugger()
-    // Instrumented code is loaded from a script, so its stack frames have a URL. Code evaluated by
-    // Playwright has none, so Exception Replay can't locate its frames.
-    .withBody(html`
-      <script>
-        // Hand-written equivalent of what the build plugin generates with \`exceptionReplay: true\`
-        function throwingFunction(token, count) {
-          try {
-            throw new Error('boom ' + count)
-          } catch (e) {
-            window.$dd_catch('src/throwing.ts;throwingFunction', e, undefined, { token, count })
-            throw e
-          }
-        }
-        function callingFunction(count) {
-          try {
-            return throwingFunction('secret-token', count + 1)
-          } catch (e) {
-            window.$dd_catch('src/calling.ts;callingFunction', e, undefined, { count })
-            throw e
-          }
-        }
-      </script>
-    `)
+    .withBody(EXCEPTION_REPLAY_BODY)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         try {
@@ -690,5 +692,39 @@ test.describe('debugger', () => {
         notCapturedReason: 'redactedIdent',
       })
       expect(snapshots[1].captures.return.arguments.count).toEqual({ type: 'number', value: '1' })
+    })
+
+  createTest('do not send Exception Replay snapshots for errors dismissed by beforeSend')
+    .withRum()
+    .withRumInit((configuration) => {
+      // The debugger is loaded after RUM, so wait for it to create the plugin
+      const initRum = () => {
+        window.DD_RUM!.init({
+          ...configuration,
+          plugins: [(window as any).DD_DEBUGGER.exceptionReplayPlugin()],
+          beforeSend: (event) => event.type !== 'error',
+        })
+      }
+      if ((window as any).DD_DEBUGGER) {
+        ;(window as any).DD_DEBUGGER.onReady(initRum)
+      } else {
+        document.addEventListener('DOMContentLoaded', initRum)
+      }
+    })
+    .withDebugger()
+    .withBody(EXCEPTION_REPLAY_BODY)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        try {
+          ;(window as any).callingFunction(1)
+        } catch (error) {
+          window.DD_RUM!.addError(error)
+        }
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(0)
+      expect(intakeRegistry.debuggerEvents).toHaveLength(0)
     })
 })

@@ -7,6 +7,7 @@ import {
   onCatch,
   registerExceptionReplayPlugin,
   resetExceptionReplay,
+  sendExceptionReplay,
   startExceptionReplay,
 } from './exceptionReplay'
 import { clearProbes } from './probes'
@@ -81,6 +82,13 @@ describe('exceptionReplay', () => {
     return error
   }
 
+  // Like RUM: assemble the error event, then collect it
+  function reportError(error: unknown) {
+    const attributes = collectExceptionReplay(error)
+    sendExceptionReplay(error)
+    return attributes
+  }
+
   function stackIndexOf(error: unknown, functionName: string): number {
     return computeStackTrace(error).stack.findIndex((frame) => frame.func?.includes(functionName))
   }
@@ -96,7 +104,7 @@ describe('exceptionReplay', () => {
     mockBatchAdd = jasmine.createSpy('batchAdd')
     initTransport()
     ;(window as any).DD_DEBUGGER = { version: '0.0.1' }
-    registerExceptionReplayPlugin()
+    registerExceptionReplayPlugin(() => true)
     startExceptionReplay()
 
     registerCleanupTask(() => {
@@ -113,7 +121,7 @@ describe('exceptionReplay', () => {
     })
 
     it('should install the catch hook once the plugin is registered and the debugger is started', () => {
-      registerExceptionReplayPlugin()
+      registerExceptionReplayPlugin(() => true)
       expect(browserWindow.$dd_catch).toBeUndefined()
 
       startExceptionReplay()
@@ -124,7 +132,7 @@ describe('exceptionReplay', () => {
       startExceptionReplay()
       expect(browserWindow.$dd_catch).toBeUndefined()
 
-      registerExceptionReplayPlugin()
+      registerExceptionReplayPlugin(() => true)
       expect(browserWindow.$dd_catch).toBe(onCatch)
     })
   })
@@ -132,7 +140,7 @@ describe('exceptionReplay', () => {
   it('should send a snapshot for each captured frame, and link them to the reported error', () => {
     const error = catchError(() => callingFunction(1, 2))
 
-    const attributes = collectExceptionReplay(error)!
+    const attributes = reportError(error)!
 
     expect(attributes.frames.map(({ index }) => index)).toEqual([
       stackIndexOf(error, 'throwingFunction'),
@@ -146,7 +154,7 @@ describe('exceptionReplay', () => {
   it('should capture the arguments of each frame', () => {
     const error = catchError(() => callingFunction(1, 2))
 
-    collectExceptionReplay(error)
+    reportError(error)
 
     const [throwingSnapshot, callingSnapshot] = sentSnapshots()
     expect(throwingSnapshot.probe.location).toEqual({ type: 'src/throwing.ts', method: 'throwingFunction' })
@@ -161,7 +169,7 @@ describe('exceptionReplay', () => {
   it('should send snapshots in the same envelope as probe snapshots', () => {
     const error = catchError(() => throwingFunction(1))
 
-    collectExceptionReplay(error)
+    reportError(error)
 
     const payload = mockBatchAdd.calls.mostRecent().args[0]
     expect(payload).toEqual(
@@ -186,7 +194,7 @@ describe('exceptionReplay', () => {
   it('should redact sensitive arguments', () => {
     const error = catchError(() => throwingFunction(1, 'hunter2'))
 
-    collectExceptionReplay(error)
+    reportError(error)
 
     expect(sentSnapshots()[0].captures.return.arguments.secret).toEqual({
       type: 'string',
@@ -197,7 +205,7 @@ describe('exceptionReplay', () => {
   it('should only capture the three innermost frames', () => {
     const error = catchError(outermostFunction)
 
-    const attributes = collectExceptionReplay(error)!
+    const attributes = reportError(error)!
 
     expect(attributes.frames.map(({ index }) => index)).toEqual([
       stackIndexOf(error, 'throwingFunction'),
@@ -222,9 +230,11 @@ describe('exceptionReplay', () => {
       (e: unknown) => e
     )
 
-    const attributes = collectExceptionReplay(error)!
+    const attributes = reportError(error)!
 
-    expect(attributes.frames[0].index).toBe(stackIndexOf(error, 'asyncThrowingFunction'))
+    // The error is created in `asyncThrowingFunction`, so its frame is the innermost one. Some
+    // browsers, like Safari 14, leave the function's name out of the stack after an `await`.
+    expect(attributes.frames[0].index).toBe(0)
   })
 
   it('should not send snapshots for exceptions that are not reported', () => {
@@ -233,13 +243,48 @@ describe('exceptionReplay', () => {
     expect(mockBatchAdd).not.toHaveBeenCalled()
   })
 
+  it('should only send snapshots once RUM collects the error event', () => {
+    const error = catchError(() => callingFunction(1, 2))
+
+    const attributes = collectExceptionReplay(error)!
+    expect(mockBatchAdd).not.toHaveBeenCalled()
+
+    sendExceptionReplay(error)
+    expect(sentSnapshots().map(({ id }) => id)).toEqual(attributes.frames.map(({ snapshotId }) => snapshotId))
+  })
+
+  it('should not send snapshots for an error event that RUM drops', () => {
+    const dropped = catchError(() => throwingFunction(1))
+    expect(collectExceptionReplay(dropped)).toBeDefined()
+
+    expect(mockBatchAdd).not.toHaveBeenCalled()
+    // The fingerprint wasn't reported, so it isn't cooling down
+    expect(reportError(catchError(() => throwingFunction(2)))).toBeDefined()
+  })
+
+  it('should send the snapshots of an error once RUM collects it, after dropping it once', () => {
+    const error = catchError(() => throwingFunction(1))
+    const attributes = collectExceptionReplay(error)!
+
+    expect(reportError(error)).toBe(attributes)
+    expect(sentSnapshots().map(({ id }) => id)).toEqual(attributes.frames.map(({ snapshotId }) => snapshotId))
+  })
+
+  it('should not capture exceptions in sessions that RUM does not track', () => {
+    resetExceptionReplay()
+    registerExceptionReplayPlugin(() => false)
+    startExceptionReplay()
+
+    expect(reportError(catchError(() => throwingFunction(1)))).toBeUndefined()
+  })
+
   it('should reuse the same snapshots when an error is reported twice', () => {
     const error = catchError(() => callingFunction(1, 2))
 
-    const attributes = collectExceptionReplay(error)
+    const attributes = reportError(error)
     const callCount = mockBatchAdd.calls.count()
 
-    expect(collectExceptionReplay(error)).toBe(attributes)
+    expect(reportError(error)).toBe(attributes)
     expect(mockBatchAdd.calls.count()).toBe(callCount)
   })
 
@@ -250,26 +295,26 @@ describe('exceptionReplay', () => {
         throwingFunction(1)
       } catch (e) {
         error = e
-        collectExceptionReplay(e)
+        reportError(e)
         onCatch('src/reporting.ts;reportingFunction', e, undefined, {})
       }
     }
 
     reportingFunction()
 
-    expect(collectExceptionReplay(error)!.frames.length).toBe(1)
+    expect(reportError(error)!.frames.length).toBe(1)
     expect(mockBatchAdd).toHaveBeenCalledTimes(1)
   })
 
   it('should return undefined for errors without captured frames', () => {
-    expect(collectExceptionReplay(new Error('not thrown through instrumented code'))).toBeUndefined()
-    expect(collectExceptionReplay(undefined)).toBeUndefined()
+    expect(reportError(new Error('not thrown through instrumented code'))).toBeUndefined()
+    expect(reportError(undefined)).toBeUndefined()
   })
 
   it('should ignore thrown values that are not objects', () => {
     expect(() => onCatch('src/throwing.ts;throwingFunction', 'boom', undefined, {})).not.toThrow()
 
-    expect(collectExceptionReplay('boom')).toBeUndefined()
+    expect(reportError('boom')).toBeUndefined()
   })
 
   it('should skip frames that are not in the error stack', () => {
@@ -285,7 +330,7 @@ describe('exceptionReplay', () => {
 
     const error = catchError(rethrowingFunction)
 
-    expect(collectExceptionReplay(error)).toBeUndefined()
+    expect(reportError(error)).toBeUndefined()
     expect(mockBatchAdd).not.toHaveBeenCalled()
   })
 
@@ -293,14 +338,14 @@ describe('exceptionReplay', () => {
     const error = catchError(() => throwingFunction(1))
     resetDebuggerTransport()
 
-    expect(collectExceptionReplay(error)).toBeUndefined()
+    expect(reportError(error)).toBeUndefined()
   })
 
   it('should respect the global snapshot budget', () => {
     initTransport({ maxSnapshotsPerSecondGlobally: 1 })
     const error = catchError(() => callingFunction(1, 2))
 
-    const attributes = collectExceptionReplay(error)!
+    const attributes = reportError(error)!
 
     expect(attributes.frames.length).toBe(1)
     expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -309,26 +354,26 @@ describe('exceptionReplay', () => {
   it('should not capture an exception with the same fingerprint for an hour after reporting it', () => {
     const clock = mockClock()
 
-    collectExceptionReplay(catchError(() => throwingFunction(1)))
-    expect(collectExceptionReplay(catchError(() => throwingFunction(2)))).toBeUndefined()
+    reportError(catchError(() => throwingFunction(1)))
+    expect(reportError(catchError(() => throwingFunction(2)))).toBeUndefined()
 
     clock.tick(60 * 60 * 1000 + 1)
-    expect(collectExceptionReplay(catchError(() => throwingFunction(3)))).toBeDefined()
+    expect(reportError(catchError(() => throwingFunction(3)))).toBeDefined()
   })
 
   it('should only report one of the exceptions with the same fingerprint captured before either is reported', () => {
     const first = catchError(() => throwingFunction(1))
     const second = catchError(() => throwingFunction(2))
 
-    expect(collectExceptionReplay(first)).toBeDefined()
-    expect(collectExceptionReplay(second)).toBeUndefined()
+    expect(reportError(first)).toBeDefined()
+    expect(reportError(second)).toBeUndefined()
     expect(mockBatchAdd).toHaveBeenCalledTimes(1)
   })
 
   it('should keep capturing an exception that was never reported', () => {
     catchError(() => throwingFunction(1))
 
-    expect(collectExceptionReplay(catchError(() => throwingFunction(2)))).toBeDefined()
+    expect(reportError(catchError(() => throwingFunction(2)))).toBeDefined()
   })
 
   it('should limit the number of exceptions captured per second', () => {
@@ -343,11 +388,11 @@ describe('exceptionReplay', () => {
     }
     const errors = Array.from({ length: 11 }, (_, i) => catchError(() => throwingFunction(i)))
 
-    expect(collectExceptionReplay(errors[10])).toBeUndefined()
-    expect(collectExceptionReplay(errors[9])).toBeDefined()
-    expect(collectExceptionReplay(catchError(typeErrorFunction))).toBeUndefined()
+    expect(reportError(errors[10])).toBeUndefined()
+    expect(reportError(errors[9])).toBeDefined()
+    expect(reportError(catchError(typeErrorFunction))).toBeUndefined()
 
     clock.tick(1001)
-    expect(collectExceptionReplay(catchError(typeErrorFunction))).toBeDefined()
+    expect(reportError(catchError(typeErrorFunction))).toBeDefined()
   })
 })

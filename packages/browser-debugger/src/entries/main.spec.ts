@@ -55,7 +55,7 @@ describe('datadogDebugger', () => {
 
   it('should install the Exception Replay catch hook on init once the plugin is registered', () => {
     mockInitDependencies()
-    registerExceptionReplayPlugin()
+    registerExceptionReplayPlugin(() => true)
 
     datadogDebugger.init(INIT_CONFIGURATION)
 

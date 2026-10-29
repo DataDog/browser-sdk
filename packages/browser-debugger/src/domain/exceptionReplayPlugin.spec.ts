@@ -3,23 +3,37 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPlugin, RumPluginOnInitOptions } from '@datadog/browser-rum-core'
 import type { BrowserWindow } from '../entries/main'
 import { initDebuggerTransport, resetDebuggerTransport } from './api'
+import { display } from './display'
 import { onCatch, resetExceptionReplay, startExceptionReplay } from './exceptionReplay'
 import { exceptionReplayPlugin } from './exceptionReplayPlugin'
 import { clearProbes } from './probes'
 
 type AssembleHook = Parameters<RumPluginOnInitOptions['registerAssembleEventHook']>[0]
+type EventCollectedHook = Parameters<RumPluginOnInitOptions['registerEventCollectedHook']>[0]
 
 describe('exceptionReplayPlugin', () => {
   let assembleHook: AssembleHook
+  let eventCollectedHook: EventCollectedHook
+  let batchAdd: jasmine.Spy
 
-  function initPlugin() {
+  function initPlugin({ isSessionTracked = true } = {}) {
     const registerAssembleEventHook = jasmine.createSpy('registerAssembleEventHook')
-    exceptionReplayPlugin().onInit({ registerAssembleEventHook })
+    const registerEventCollectedHook = jasmine.createSpy('registerEventCollectedHook')
+    exceptionReplayPlugin().onInit({
+      publicApi: { getInternalContext: () => (isSessionTracked ? {} : undefined) },
+      registerAssembleEventHook,
+      registerEventCollectedHook,
+    })
     assembleHook = registerAssembleEventHook.calls.mostRecent().args[0]
+    eventCollectedHook = registerEventCollectedHook.calls.mostRecent().args[0]
   }
 
   function assemble(eventType: string, error: unknown) {
     return assembleHook({ eventType, domainContext: { error } } as unknown as Parameters<AssembleHook>[0])
+  }
+
+  function collect(eventType: string, error: unknown) {
+    eventCollectedHook({ eventType, domainContext: { error } } as unknown as Parameters<EventCollectedHook>[0])
   }
 
   function throwingFunction() {
@@ -43,7 +57,8 @@ describe('exceptionReplayPlugin', () => {
 
   beforeEach(() => {
     clearProbes()
-    initDebuggerTransport({ service: 'test-service' } as any, { add: jasmine.createSpy('batchAdd') } as any)
+    batchAdd = jasmine.createSpy('batchAdd')
+    initDebuggerTransport({ service: 'test-service' } as any, { add: batchAdd } as any)
     ;(window as any).DD_DEBUGGER = { version: '0.0.1' }
     startExceptionReplay()
 
@@ -83,6 +98,36 @@ describe('exceptionReplayPlugin', () => {
         },
       },
     })
+  })
+
+  it('should send the snapshots once RUM collects the error event', () => {
+    initPlugin()
+    const error = catchError(throwingFunction)
+    assemble('error', error)
+    expect(batchAdd).not.toHaveBeenCalled()
+
+    collect('error', error)
+
+    expect(batchAdd).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not capture errors in sessions that RUM does not track', () => {
+    initPlugin({ isSessionTracked: false })
+    const error = catchError(throwingFunction)
+
+    expect(assemble('error', error)).toBe(SKIPPED)
+  })
+
+  it('should not start with a RUM Browser SDK that lacks the event collected hook', () => {
+    const displaySpy = spyOn(display, 'warn')
+
+    exceptionReplayPlugin().onInit({
+      publicApi: { getInternalContext: () => ({}) },
+      registerAssembleEventHook: jasmine.createSpy('registerAssembleEventHook'),
+    })
+
+    expect(displaySpy).toHaveBeenCalled()
+    expect((window as BrowserWindow).$dd_catch).toBeUndefined()
   })
 
   it('should skip errors without snapshots', () => {

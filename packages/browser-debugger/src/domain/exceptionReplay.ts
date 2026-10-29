@@ -4,7 +4,8 @@ import { monitorError } from '@datadog/js-core/monitor'
 import { computeStackTrace, isError } from '@datadog/browser-core'
 import type { StackTrace } from '@datadog/browser-core'
 import type { BrowserWindow } from '../entries/main'
-import { captureArguments, queueExceptionSnapshot } from './api'
+import { captureArguments, isDebuggerTransportInitialized, queueExceptionSnapshot } from './api'
+import type { ExceptionSnapshot } from './api'
 import type { CaptureContext } from './capture'
 import { formatThrowable, formatUnknownError, safeReadErrorProperty } from './error'
 import { checkGlobalSnapshotBudget } from './probes'
@@ -48,6 +49,8 @@ interface CapturedException {
   frames: CapturedFrame[]
   // Set when the exception is first reported, so reporting it again reuses the same snapshots
   attributes?: ExceptionReplayAttributes | null
+  // Snapshots of a reported exception, until RUM collects its error event
+  pendingSnapshots?: ExceptionSnapshot[]
 }
 
 let capturedExceptions = new WeakMap<object, CapturedException | false>()
@@ -56,12 +59,16 @@ let captureWindowStart = -Infinity
 let capturesInWindow = 0
 let pluginRegistered = false
 let debuggerStarted = false
+let isSessionTracked: () => boolean = () => true
 
 /**
  * Called when the Exception Replay plugin is registered on the RUM Browser SDK.
+ *
+ * @param isTracked - Whether RUM tracks the current session
  */
-export function registerExceptionReplayPlugin(): void {
+export function registerExceptionReplayPlugin(isTracked: () => boolean): void {
   pluginRegistered = true
+  isSessionTracked = isTracked
   installCatchHook()
 }
 
@@ -80,6 +87,7 @@ export function resetExceptionReplay(): void {
   capturesInWindow = 0
   pluginRegistered = false
   debuggerStarted = false
+  isSessionTracked = () => true
   delete (globalObject as BrowserWindow).$dd_catch
 }
 
@@ -152,6 +160,11 @@ function startCapture(functionId: string, error: object): CapturedException | fa
     return false
   }
 
+  // RUM doesn't report the errors of the sessions it doesn't track
+  if (!isSessionTracked()) {
+    return false
+  }
+
   if (now - captureWindowStart > 1000) {
     captureWindowStart = now
     capturesInWindow = 0
@@ -165,8 +178,9 @@ function startCapture(functionId: string, error: object): CapturedException | fa
 }
 
 /**
- * Called when RUM reports an error. Sends the snapshots captured for the exception, and returns the
- * attributes linking them to the RUM error event, or undefined if it has none.
+ * Called when RUM assembles an error event. Prepares the snapshots captured for the exception, and
+ * returns the attributes linking them to the event, or undefined if it has none. The snapshots are
+ * only sent once RUM collects the event (see {@link sendExceptionReplay}).
  */
 export function collectExceptionReplay(error: unknown): ExceptionReplayAttributes | undefined {
   try {
@@ -180,7 +194,7 @@ export function collectExceptionReplay(error: unknown): ExceptionReplayAttribute
     }
 
     if (exception.attributes === undefined) {
-      exception.attributes = sendSnapshots(error, exception)
+      exception.attributes = prepareSnapshots(error, exception)
     }
     return exception.attributes ?? undefined
   } catch (e) {
@@ -188,13 +202,39 @@ export function collectExceptionReplay(error: unknown): ExceptionReplayAttribute
   }
 }
 
-function sendSnapshots(error: object, exception: CapturedException): ExceptionReplayAttributes | null {
+/**
+ * Called when RUM collects an error event, once `beforeSend` and the event rate limits have let it
+ * through. Sends the snapshots prepared for the exception, so errors that RUM drops send none.
+ */
+export function sendExceptionReplay(error: unknown): void {
+  try {
+    if (!isObject(error)) {
+      return
+    }
+
+    const exception = capturedExceptions.get(error)
+    if (!exception || !exception.pendingSnapshots) {
+      return
+    }
+
+    const snapshots = exception.pendingSnapshots
+    exception.pendingSnapshots = undefined
+    for (const snapshot of snapshots) {
+      queueExceptionSnapshot(snapshot)
+    }
+    recordReport(exception.fingerprint)
+  } catch (e) {
+    monitorError(e)
+  }
+}
+
+function prepareSnapshots(error: object, exception: CapturedException): ExceptionReplayAttributes | null {
   const capturedFrames = exception.frames
   // Release the captures: the exception can't capture more frames once it's reported
   exception.frames = []
 
   // Another exception with the same fingerprint may have been reported since this one was captured
-  if (isCoolingDown(exception.fingerprint, performance.now())) {
+  if (isCoolingDown(exception.fingerprint, performance.now()) || !isDebuggerTransportInitialized()) {
     return null
   }
 
@@ -203,6 +243,7 @@ function sendSnapshots(error: object, exception: CapturedException): ExceptionRe
   const message = formatUnknownError(error)
   const throwable = formatThrowable(error)
   const frames: ExceptionReplayAttributes['frames'] = []
+  const snapshots: ExceptionSnapshot[] = []
 
   let fromIndex = 0
   for (const frame of capturedFrames) {
@@ -218,7 +259,7 @@ function sendSnapshots(error: object, exception: CapturedException): ExceptionRe
 
     const snapshotId = generateUUID()
     const separatorIndex = frame.functionId.lastIndexOf(';')
-    const queued = queueExceptionSnapshot({
+    snapshots.push({
       id: snapshotId,
       exceptionId,
       timestamp: frame.timestamp,
@@ -231,10 +272,6 @@ function sendSnapshots(error: object, exception: CapturedException): ExceptionRe
       arguments: frame.arguments,
       throwable,
     })
-    if (!queued) {
-      break
-    }
-
     frames.push({ index, snapshotId })
     fromIndex = index + 1
   }
@@ -243,7 +280,7 @@ function sendSnapshots(error: object, exception: CapturedException): ExceptionRe
     return null
   }
 
-  recordReport(exception.fingerprint)
+  exception.pendingSnapshots = snapshots
   return { exceptionId, frames }
 }
 

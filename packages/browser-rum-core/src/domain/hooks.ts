@@ -4,7 +4,7 @@ import { createHook } from '@datadog/js-core/assembly'
 import type { Hook } from '@datadog/js-core/assembly'
 import type { RecursivePartial } from '@datadog/js-core/util'
 import type { RumEvent } from '../rumEvent.types'
-import type { RawRumEvent } from '../rawRumEvent.types'
+import type { AssembledRumEvent, RawRumEvent } from '../rawRumEvent.types'
 import type { RumEventDomainContext } from '../domainContext.types'
 
 // Define a partial RUM event type.
@@ -29,10 +29,19 @@ export interface AssembleHookParams {
 export type AssembleHook = Hook<AssembleHookParams, DefaultRumEventAttributes>
 export type AssembleTelemetryHook = Hook<{ startTime: RelativeTime }, DefaultTelemetryEventAttributes>
 
+export interface EventCollectedHookParams {
+  readonly eventType: RumEvent['type']
+  event: Readonly<AssembledRumEvent>
+  domainContext: DeepReadonly<RumEventDomainContext<RawRumEvent['type']>>
+}
+
+export type EventCollectedHook = Hook<EventCollectedHookParams, void>
+
 export interface Hooks {
   assembleEventDefaults: AssembleHook
   assembleTelemetry: AssembleTelemetryHook
   assembleEvent: AssembleHook
+  eventCollected: EventCollectedHook
 }
 
 export function createHooks(): Hooks {
@@ -40,5 +49,6 @@ export function createHooks(): Hooks {
     assembleEventDefaults: createHook(),
     assembleTelemetry: createHook(),
     assembleEvent: createHook(),
+    eventCollected: createHook(),
   }
 }
