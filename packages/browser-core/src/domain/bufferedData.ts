@@ -25,7 +25,7 @@ export type BufferedData =
   | { type: BufferedDataType.XHR; data: XhrContext }
   | { type: BufferedDataType.CONSOLE; data: ConsoleLog }
 
-export function startBufferingData() {
+export function startBufferingData(consoleApis: ConsoleApiName[] = Object.values(ConsoleApiName)) {
   const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT, (count) => {
     // monitor-until: 2026-10-14
     addTelemetryDebug('Early data collection dropped data on unbuffer', {
@@ -48,7 +48,7 @@ export function startBufferingData() {
   subscribe(BufferedDataType.RUNTIME_ERROR, mockable(trackRuntimeError)())
   subscribe(BufferedDataType.FETCH, initFetchObservable())
   subscribe(BufferedDataType.XHR, initXhrObservable())
-  subscribe(BufferedDataType.CONSOLE, initConsoleObservable(Object.values(ConsoleApiName)))
+  subscribe(BufferedDataType.CONSOLE, initConsoleObservable(consoleApis))
 
   return {
     observable,

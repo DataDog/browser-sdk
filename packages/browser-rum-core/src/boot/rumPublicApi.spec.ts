@@ -1,7 +1,15 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
+import { ConsoleApiName } from '@datadog/js-core/util'
 import type { DeflateWorker } from '@datadog/browser-core'
-import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
+import {
+  display,
+  DefaultPrivacyLevel,
+  ResourceType,
+  startTelemetry,
+  startSessionManager,
+  BufferedDataType,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -11,6 +19,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
@@ -55,6 +64,67 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
+  describe('console instrumentation', () => {
+    ;[ConsoleApiName.log, ConsoleApiName.debug, ConsoleApiName.info, ConsoleApiName.warn].forEach((api) => {
+      it(`leaves console.${api} untouched before and after init`, async () => {
+        const consoleSpy = spyOn(console, api)
+        const warningSpy = spyOn(display, 'warn')
+        const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+        const largeObject = { message: 'x'.repeat(256 * 1024) }
+
+        /* eslint-disable no-console */
+        console[api](largeObject)
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- Compare method identity without invoking it.
+        expect(console[api]).toBe(consoleSpy)
+        expect(warningSpy).not.toHaveBeenCalled()
+
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        await collectAsyncCalls(startRumSpy, 1)
+
+        console[api](largeObject)
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- Compare method identity without invoking it.
+        expect(console[api]).toBe(consoleSpy)
+        expect(consoleSpy).toHaveBeenCalledTimes(2)
+        expect(warningSpy).not.toHaveBeenCalled()
+        /* eslint-enable no-console */
+      })
+    })
+
+    it('buffers console errors before and after init', async () => {
+      spyOn(console, 'error')
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+      /* eslint-disable no-console */
+      console.error('before init')
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+
+      const bufferedDataObservable = startRumSpy.calls.mostRecent().args[6]
+      const notify = jasmine.createSpy()
+      const subscription = bufferedDataObservable.subscribe(notify)
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      console.error('after init')
+      /* eslint-enable no-console */
+      await collectAsyncCalls(notify, 2)
+
+      expect(notify.calls.allArgs()).toEqual([
+        [
+          jasmine.objectContaining({
+            type: BufferedDataType.CONSOLE,
+            data: jasmine.objectContaining({ message: 'before init' }),
+          }),
+        ],
+        [
+          jasmine.objectContaining({
+            type: BufferedDataType.CONSOLE,
+            data: jasmine.objectContaining({ message: 'after init' }),
+          }),
+        ],
+      ])
+    })
+  })
+
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
