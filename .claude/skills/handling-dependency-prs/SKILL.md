@@ -1,9 +1,9 @@
 ---
-name: interrupt-handler
+name: handling-dependency-prs
 description: Use when triaging or fixing the open dependency PRs (label `dependencies`) in browser-sdk, i.e. Renovate updates and the scheduled Chrome bump. Use when a dependency PR fails CI, needs a CI image rebuild (Node, Playwright or Chrome change), or its `*-pinned` e2e jobs break after a Playwright bump.
 ---
 
-# Interrupt Handler: Dependency PRs
+# Handling Dependency PRs
 
 Goal: every open `dependencies` PR is green and ready for review, or has a clear reason it is blocked. Don't merge them; they still need a review.
 
@@ -17,7 +17,7 @@ The PRs come from two bots:
 ## Tools
 
 - **`gh`** for PRs, diffs and commits.
-- **DDCI MCP** (`ddci-mcp-prod`), repository `DataDog/browser-sdk`: `getCIStatus` (by `pull_request_number`) lists failed tasks, `getJobErrorSummary` then `getJobLogs` explain them, `retryJob` reruns one. A manual job (`ci-image`) only appears as a task once someone has played it.
+- **DDCI MCP** (`ddci-mcp-prod`), repository `DataDog/browser-sdk`: `getCIStatus` (by `pull_request_number`) lists failed tasks, `getJobErrorSummary` then `getJobLogs` explain them, `retryJob` reruns one. The default `detail_level` only lists pending and failed tasks, so use `detail_level: "full"` to see successful ones such as a finished `ci-image`. A manual job (`ci-image`) only appears as a task once someone has played it.
 - **Datadog MCP** `search_datadog_ci_pipeline_events`, query `@git.repository.id_v2:"github.com/datadog/browser-sdk" @git.branch:<branch>`: GitLab pipeline IDs (`ci_level: pipeline`) and past `ci-image` runs (`ci_level: job`, `@ci.job.name:ci-image`, finished jobs only).
 - **Nothing can play the manual `ci-image` GitLab job.** The user clicks it (step 3c).
 
@@ -116,7 +116,7 @@ git -C "$TMPDIR/ih-stack" rebase --onto <bottom> origin/main   # replays only <n
 
 ### b. Already built?
 
-Find the latest `ci-image` run on the branch and the commit it ran on. That is either a `ci-image` task in `getCIStatus` (the commit is the request's `head_commit`), or a `@ci.job.name:ci-image` job on the branch (`ci_level: job`, `@git.commit.sha`). A run only counts if that commit has the same image inputs as the branch head. Run time isn't enough: an input can change after the bump, and an older pipeline's job can be played later. Run `git fetch origin <sha>` if the commit was rewritten since.
+Find the latest `ci-image` run on the branch and the commit it ran on. That is either a `ci-image` task in `getCIStatus` with `detail_level: "full"` (the commit is the request's `head_commit`), or a `@ci.job.name:ci-image` job on the branch (`ci_level: job`, `@git.commit.sha`). A run only counts if that commit has the same image inputs as the branch head. Run time isn't enough: an input can change after the bump, and an older pipeline's job can be played later. Run `git fetch origin <sha>` if the commit was rewritten since.
 
 ```bash
 image_inputs() {
@@ -131,7 +131,7 @@ Matching `SUCCESS` → the image exists, go to d. Matching `PENDING`/running →
 
 ### c. Ask the user to play `ci-image`
 
-For each layer, give the user the branch's pipeline list (they can play them all at once), `https://gitlab.ddbuild.io/DataDog/browser-sdk/-/pipelines?ref=<url-encoded branch>` (CI Visibility only knows a pipeline once its jobs finish, so don't wait for its ID): "open the newest pipeline (commit `<short sha>`) and play ▶ `ci-image` (first stage), it takes about 5 minutes". Once played, it appears as a `ci-image` task in `getCIStatus`; check it every few minutes until it leaves `PENDING`.
+For each layer, give the user the branch's pipeline list (they can play them all at once), `https://gitlab.ddbuild.io/DataDog/browser-sdk/-/pipelines?ref=<url-encoded branch>` (CI Visibility only knows a pipeline once its jobs finish, so don't wait for its ID): "open the newest pipeline (commit `<short sha>`) and play ▶ `ci-image` (first stage), it takes about 5 minutes". Once played, it appears as a `ci-image` task in `getCIStatus`. Check it every few minutes with `detail_level: "full"` until it leaves `PENDING`; the default view drops the task once it succeeds.
 
 If `ci-image` fails, read its logs (`getJobErrorSummary`, `getJobLogs`). Ask for a second attempt only after pushing a fix; otherwise report the failure and stop on this PR.
 
@@ -192,11 +192,11 @@ git fetch origin <branch>
 git worktree add --detach "$TMPDIR/ih-<n>" FETCH_HEAD
 (cd "$TMPDIR/ih-<n>" && yarn install)
 # ...edit, test, commit (see the `writing-commits-and-prs` skill: 👷 gitmoji, signed commits)
-git -C "$TMPDIR/ih-<n>" push origin HEAD:refs/heads/<branch>
-git worktree remove --force "$TMPDIR/ih-<n>"
+git -C "$TMPDIR/ih-<n>" push origin HEAD:refs/heads/<branch> \
+  && git worktree remove --force "$TMPDIR/ih-<n>"
 ```
 
-The push has no `--force`: if a bot pushed meanwhile it is rejected, so fetch again and redo the change on top.
+The push has no `--force`: if a bot pushed meanwhile it is rejected, so fetch again and redo the change on top. A commit on the detached `HEAD` only exists in its worktree, so remove the worktree only after a successful push. Never remove one holding unpushed commits, including a subagent's.
 
 **Signing.** `main` requires signed commits. Commits, merges and rebases, including the stack rebases that rewrite the bots' commits, all need local signing. Check that `git config commit.gpgsign` is `true` before starting; otherwise pass `-S`. Before pushing, check every commit you created or rewrote. `git log %G?` prints `N` for signed commits when `gpg.ssh.allowedSignersFile` isn't configured, so look for the signature itself:
 
@@ -206,7 +206,7 @@ for c in $(git -C "$TMPDIR/ih-<n>" rev-list origin/main..HEAD); do
 done
 ```
 
-Code PRs are independent. If your agent supports subagents, give each one a single Code PR and this recipe, and have it commit without pushing and report the diff and its reasoning. Show the user each fix and push after approval. Keep rebuild PRs and the stack in the main thread, since they need the user.
+Code PRs are independent. If your agent supports subagents, give each one a single Code PR and this recipe, and have it commit without pushing, leave its worktree in place, and report the worktree path, the diff and its reasoning. Show the user each fix, then push from that worktree after approval and remove it. Keep rebuild PRs and the stack in the main thread, since they need the user.
 
 ## 6. Babysit
 
