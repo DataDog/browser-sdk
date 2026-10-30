@@ -10,7 +10,7 @@ import { globalObject } from '@datadog/js-core/util'
 // Keep the following in sync with packages/browser-rum-slim/src/entries/main.ts
 import { defineGlobal } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { makeRumPublicApi, takeOverEarlyCollection } from '@datadog/browser-rum-core'
+import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { makeProfilerApi } from '../boot/profilerApi'
@@ -94,7 +94,6 @@ const profilerApi = makeProfilerApi()
 export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
   startDeflateWorker,
   createDeflateEncoder,
-  takeOverEarlyCollection,
   sdkName: 'rum-salesforce',
 })
 

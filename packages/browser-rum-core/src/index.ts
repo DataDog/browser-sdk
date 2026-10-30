@@ -74,9 +74,3 @@ export { createHooks } from './domain/hooks'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'
 export type { TransportPayload } from './transport/formDataTransport'
 export { createFormDataTransport } from './transport/formDataTransport'
-export type { EarlyCollectionProfilerTakeover } from './domain/earlyCollection/earlyCollectionTakeover'
-export {
-  stopEarlyCollectionProfiler,
-  takeEarlyCollectionProfiler,
-  takeOverEarlyCollection,
-} from './domain/earlyCollection/earlyCollectionTakeover'

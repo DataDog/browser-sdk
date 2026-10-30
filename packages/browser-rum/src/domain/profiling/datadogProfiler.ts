@@ -7,13 +7,8 @@ import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/b
 import { canUseEventBridge, display, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
 
-import type {
-  EarlyCollectionProfilerTakeover,
-  LifeCycle,
-  RumConfiguration,
-  ViewHistory,
-} from '@datadog/browser-rum-core'
-import { LifeCycleEventType, takeEarlyCollectionProfiler } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
@@ -23,6 +18,8 @@ import type {
   RumProfilerStoppedInstance,
   ProfilingPayload,
 } from './types'
+import { takeEarlyCollectionProfiler } from './earlyCollectionProfiler'
+import type { EarlyCollectionProfiler } from './earlyCollectionProfiler'
 import type { ProfilingContextManager } from './profilingContext'
 import { createBridgeEmitter } from './transport/profilingBridge'
 import { createFormDataEmitter } from './transport/formDataEmitter'
@@ -202,7 +199,7 @@ export function createRumProfiler(
     }
   }
 
-  function startNextProfilerInstance(earlyProfiler?: EarlyCollectionProfilerTakeover): void {
+  function startNextProfilerInstance(earlyProfiler?: EarlyCollectionProfiler): void {
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
       collectProfilerInstance(instance)

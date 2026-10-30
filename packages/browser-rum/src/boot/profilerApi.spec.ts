@@ -1,11 +1,5 @@
-import {
-  BridgeCapability,
-  createIdentityEncoder,
-  EARLY_COLLECTION_GLOBAL_NAME,
-  trackRuntimeError,
-  type RawError,
-} from '@datadog/browser-core'
-import { deepClone, globalObject, noop, Observable } from '@datadog/js-core/util'
+import { BridgeCapability, createIdentityEncoder } from '@datadog/browser-core'
+import { deepClone, globalObject } from '@datadog/js-core/util'
 import {
   MID_HASH_UUID,
   replaceMockableWithSpy,
@@ -16,9 +10,10 @@ import {
   registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
-import { createHooks, LifeCycle, takeEarlyCollectionProfiler, takeOverEarlyCollection } from '@datadog/browser-rum-core'
+import { createHooks, LifeCycle } from '@datadog/browser-rum-core'
 import { mockProfiler } from '../../test'
 import { mockedTrace } from '../domain/profiling/test-utils/mockedTrace'
+import { EARLY_COLLECTION_GLOBAL_NAME, takeEarlyCollectionProfiler } from '../domain/profiling/earlyCollectionProfiler'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { makeProfilerApi } from './profilerApi'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
@@ -115,8 +110,7 @@ describe('profilerApi', () => {
 
     /**
      * Emulates what happens in production: the early collection package starts
-     * a Profiler at HTML parse, and the SDK claims it at init (see
-     * `takeOverEarlyCollection`) for the profiler chunk to adopt.
+     * a Profiler at HTML parse and publishes it on its global.
      */
     function seedEarlyCollectionProfiler(): MockProfilerInstance {
       const ProfilerConstructor = globalObject.Profiler as new (options: {
@@ -127,13 +121,8 @@ describe('profilerApi', () => {
       ;(globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME] = {
         version: 1,
         startClocks: { relative: 1, timeStamp: 2 },
-        buffer: [],
         profiler,
-        stop: noop,
       }
-      // Neutralize the error instrumentation install done by the takeover.
-      replaceMockable(trackRuntimeError, () => new Observable<RawError>())
-      takeOverEarlyCollection(new LifeCycle())
       return profiler
     }
 

@@ -1,5 +1,4 @@
 import type { Hooks, LifeCycle, ProfilerApi, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import { stopEarlyCollectionProfiler } from '@datadog/browser-rum-core'
 import type { DeflateEncoderStreamId, Encoder, SessionContext, SessionManager } from '@datadog/browser-core'
 import {
   BridgeCapability,
@@ -11,6 +10,7 @@ import {
 import { mockable } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { RUMProfiler } from '../domain/profiling/types'
+import { stopEarlyCollectionProfiler } from '../domain/profiling/earlyCollectionProfiler'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
