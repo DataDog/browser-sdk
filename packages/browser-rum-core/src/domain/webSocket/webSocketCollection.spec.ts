@@ -5,6 +5,8 @@ import {
   mockClock,
   mockWebSocket,
   registerCleanupTask,
+  startMockTelemetry,
+  waitNextMicrotask,
   type Clock,
   type MockWebSocket,
 } from '@datadog/browser-core/test'
@@ -25,9 +27,9 @@ import { RumEventType, VitalType, WebSocketTrackingEndReason, WebSocketVitalName
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { emitWebSocketVital } from './emitWebSocketVital'
-import { BUFFER_CAPACITY } from './earlyConnectionsBuffer'
 import type { EarlyWebSocketCollection } from './webSocketCollection'
 import {
+  EARLY_PHASES_BUFFER_CAPACITY,
   resetTrackedConnections,
   startEarlyWebSocketCollection,
   startWebSocketCollection,
@@ -966,21 +968,26 @@ describe('webSocketCollection', () => {
       return collection
     }
 
-    it('emits nothing before the collection started', () => {
+    // The phases buffered before the collection started are replayed in a microtask, which a browser
+    // runs before it dispatches any other event: specs wait for it before driving the sockets on.
+
+    it('emits nothing before the collection started', async () => {
       startEarlyCollection()
 
       dispatchClose(createOpenConnection())
+      await waitNextMicrotask()
 
       expect(emittedVitals()).toHaveSize(0)
     })
 
-    it('reports the whole lifecycle of a connection that ended before the collection started, once it starts', () => {
+    it('reports the whole lifecycle of a connection that ended before the collection started, once it starts', async () => {
       const earlyCollection = startEarlyCollection()
       const socket = createOpenConnection()
       callClose(socket)
       dispatchClose(socket)
 
       startCollection(earlyCollection)
+      await waitNextMicrotask()
 
       expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
         WebSocketVitalName.CONNECTING,
@@ -991,11 +998,12 @@ describe('webSocketCollection', () => {
       expect(webSocketOf(emittedVitals()[0])).toBe(socket)
     })
 
-    it('keeps tracking a connection created before the collection started under the same connection id', () => {
+    it('keeps tracking a connection created before the collection started under the same connection id', async () => {
       const earlyCollection = startEarlyCollection()
       const socket = createConnectingConnection()
 
       startCollection(earlyCollection)
+      await waitNextMicrotask()
       completeHandshake(socket, { at: 10 })
       dispatchClose(socket, { at: 20 })
 
@@ -1012,21 +1020,16 @@ describe('webSocketCollection', () => {
       ])
     })
 
-    it('counts the messages exchanged in the terminal snapshot before the collection started', () => {
+    it('counts the messages exchanged in the terminal snapshot before the collection started', async () => {
       const earlyCollection = startEarlyCollection()
       const socket = createOpenConnection()
       receiveMessage(socket, 30)
       sendMessage(socket, 10)
 
       startCollection(earlyCollection)
+      await waitNextMicrotask()
       dispatchClose(socket)
 
-      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
-        WebSocketVitalName.CONNECTING,
-        WebSocketVitalName.OPEN,
-        WebSocketVitalName.OPEN,
-        WebSocketVitalName.CLOSED,
-      ])
       const { snapshot } = single(closedPayloads())
       expect(snapshot!.inbound).toEqual(jasmine.objectContaining({ message_count: 1, message_size_total: 30 }))
       expect(snapshot!.outbound).toEqual(jasmine.objectContaining({ message_count: 1, message_size_total: 10 }))
@@ -1039,41 +1042,180 @@ describe('webSocketCollection', () => {
 
       startCollection(earlyCollection)
 
-      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2])
-      expect(openPayloads()[1].snapshot.inbound).toEqual(
-        jasmine.objectContaining({ message_count: 1, message_size_total: 30 })
-      )
+      const report = single(openPayloads())
+      expect(report.snapshot_version).toBe(2)
+      expect(report.snapshot.inbound).toEqual(jasmine.objectContaining({ message_count: 1, message_size_total: 30 }))
     })
 
-    it('reports a connection opened before the collection started periodically once it starts', () => {
+    it('replays the buffered phases after the open report made at start', async () => {
+      const earlyCollection = startEarlyCollection()
+      createOpenConnection()
+      advanceTo(10)
+
+      startCollection(earlyCollection)
+      await waitNextMicrotask()
+
+      // emitted out of phase order, each vital is still dated at the phase it reports and carries the
+      // snapshot version it was reported with
+      expect(emittedVitals().map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+      ])
+      expect(emittedVitals().map((event) => event.startClocks.timeStamp)).toEqual([
+        clock.timeStamp(10),
+        clock.timeStamp(0),
+        clock.timeStamp(0),
+      ])
+      // The first payload is the one reported as the collection starts.
+      // The second payload is the one buffered before the collection started,
+      // we need to keep it for connections that close before the collection started.
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([2, 1])
+    })
+
+    it('reports a phase entered in the same task as the start before the replayed ones', async () => {
+      const earlyCollection = startEarlyCollection()
+      const socket = createOpenConnection()
+
+      startCollection(earlyCollection)
+      callClose(socket, { at: 10 })
+      await waitNextMicrotask()
+
+      expect(vitalsOf(socket).map((event) => event.rawRumEvent.vital.name)).toEqual([
+        WebSocketVitalName.OPEN,
+        WebSocketVitalName.CLOSING,
+        WebSocketVitalName.CONNECTING,
+        WebSocketVitalName.OPEN,
+      ])
+    })
+
+    it('reports a connection opened before the collection started periodically once it starts', async () => {
       const earlyCollection = startEarlyCollection()
       createOpenConnection()
 
       startCollection(earlyCollection)
+      await waitNextMicrotask()
       tickPeriodicReport()
 
-      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([1, 2, 3])
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([2, 1, 3])
     })
 
-    it('reports nothing of a connection the full buffer refused, even once the collection started', () => {
+    it('buffers one open phase for a connection still open when the collection starts', async () => {
       const earlyCollection = startEarlyCollection()
-      for (let i = 0; i < BUFFER_CAPACITY; i++) {
-        createConnectingConnection()
-      }
-      const refusedSocket = createOpenConnection()
+      createOpenConnection()
+      // the periodic report, which would buffer more open phases, only runs once the collection started
+      tickPeriodicReport(3)
 
       startCollection(earlyCollection)
-      dispatchClose(refusedSocket)
+      await waitNextMicrotask()
 
-      const refusedSocketVitals = emittedVitals().filter((event) => webSocketOf(event) === refusedSocket)
-      expect(refusedSocketVitals.map((event) => event.rawRumEvent.vital.name)).toEqual([])
+      // the open report the collection makes as it starts, then the one open phase replayed
+      expect(openPayloads().map((payload) => payload.snapshot_version)).toEqual([2, 1])
     })
 
-    it('reports nothing of a connection created before the collection started when tracking is not enabled', () => {
+    describe('buffer capacity', () => {
+      it('replays every phase of a full buffer without drop telemetry', async () => {
+        const telemetry = startMockTelemetry()
+        const earlyCollection = startEarlyCollection()
+        for (let i = 0; i < EARLY_PHASES_BUFFER_CAPACITY / 4; i++) {
+          const socket = createOpenConnection()
+          callClose(socket)
+          dispatchClose(socket)
+        }
+
+        startCollection(earlyCollection)
+        await waitNextMicrotask()
+
+        expect(emittedVitals()).toHaveSize(EARLY_PHASES_BUFFER_CAPACITY)
+        expect(await telemetry.hasEvents()).toBe(false)
+      })
+
+      it('does not replay the phases of a connection whose connecting phase was dropped', async () => {
+        const earlyCollection = startEarlyCollection()
+        const [oldestSocket] = fillBufferWithOpenConnections()
+        dispatchClose(oldestSocket)
+
+        startCollection(earlyCollection)
+        await waitNextMicrotask()
+
+        expect(vitalsOf(oldestSocket)).toEqual([])
+      })
+
+      it('never reports a connection whose connecting phase was dropped, even once it closes', async () => {
+        const earlyCollection = startEarlyCollection()
+        const [oldestSocket] = fillBufferWithOpenConnections()
+        createConnectingConnection()
+
+        startCollection(earlyCollection)
+        expect(vitalsOf(oldestSocket)).toEqual([])
+
+        await waitNextMicrotask()
+        dispatchClose(oldestSocket)
+
+        expect(vitalsOf(oldestSocket)).toEqual([])
+      })
+
+      it('evicts the oldest phases first', async () => {
+        const earlyCollection = startEarlyCollection()
+        const sockets: MockWebSocket[] = []
+        for (let i = 0; i < EARLY_PHASES_BUFFER_CAPACITY + 1; i++) {
+          sockets.push(createConnectingConnection())
+        }
+
+        startCollection(earlyCollection)
+        await waitNextMicrotask()
+
+        expect(emittedVitals().map(webSocketOf)).toEqual(sockets.slice(1))
+      })
+
+      it('reports the number of dropped phases with debug telemetry after the hand-off', async () => {
+        const telemetry = startMockTelemetry()
+        const earlyCollection = startEarlyCollection()
+        fillBufferWithOpenConnections()
+        createOpenConnection()
+
+        expect(await telemetry.hasEvents()).toBe(false)
+
+        startCollection(earlyCollection)
+        await waitNextMicrotask()
+
+        expect(await telemetry.getEvents()).toEqual([
+          jasmine.objectContaining({
+            status: 'debug',
+            message: 'Dropped early WebSocket phases, buffer is full',
+            count: 2,
+            capacity: EARLY_PHASES_BUFFER_CAPACITY,
+          }),
+        ])
+      })
+
+      it('skips the drop telemetry when the early collection stops', async () => {
+        const telemetry = startMockTelemetry()
+        const earlyCollection = startEarlyCollection()
+        fillBufferWithOpenConnections()
+        createOpenConnection()
+
+        earlyCollection.stop()
+
+        expect(await telemetry.hasEvents()).toBe(false)
+      })
+
+      /** Fills the buffer with open connections, two phases each: connecting and open. Oldest first. */
+      function fillBufferWithOpenConnections() {
+        const sockets: MockWebSocket[] = []
+        for (let i = 0; i < EARLY_PHASES_BUFFER_CAPACITY / 2; i++) {
+          sockets.push(createOpenConnection())
+        }
+        return sockets
+      }
+    })
+
+    it('reports nothing of a connection created before the collection started when tracking is not enabled', async () => {
       const earlyCollection = startEarlyCollection()
       const socket = createOpenConnection()
 
       startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
+      await waitNextMicrotask()
       dispatchClose(socket)
 
       expect(emittedVitals()).toHaveSize(0)
@@ -1088,14 +1230,16 @@ describe('webSocketCollection', () => {
       expect(startTracking().flushOpenConnections()).toBe(0)
     })
 
-    it('empties the buffer when tracking is not enabled', () => {
+    it('releases the buffered phases when tracking is not enabled', async () => {
       const earlyCollection = startEarlyCollection()
       createOpenConnection()
+      const observer = jasmine.createSpy('observer')
 
       startCollection(earlyCollection, mockRumConfiguration({ betaTrackWebSockets: false }))
-      earlyCollection.buffer.drain(lifeCycle)
+      earlyCollection.phases.subscribe(observer)
+      await waitNextMicrotask()
 
-      expect(emittedVitals()).toHaveSize(0)
+      expect(observer).not.toHaveBeenCalled()
     })
 
     it('restores the native constructor when tracking is not enabled', () => {
@@ -1107,17 +1251,36 @@ describe('webSocketCollection', () => {
       expect(window.WebSocket).toBe(nativeWebSocket)
     })
 
-    describe('stop()', () => {
-      it('unsubscribes from the WebSocket observable only once when called twice', () => {
-        const unsubscribeSpy = spyOnWebSocketObservableUnsubscribe()
-        const earlyCollection = startEarlyCollection()
+    ;(['stop', 'handOff'] as const).forEach((method) => {
+      describe(`${method}()`, () => {
+        it('unsubscribes from the WebSocket observable only once when called twice', () => {
+          const unsubscribeSpy = spyOnWebSocketObservableUnsubscribe()
+          const earlyCollection = startEarlyCollection()
 
-        earlyCollection.stop()
-        earlyCollection.stop()
+          earlyCollection[method]()
+          earlyCollection[method]()
 
-        expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
+          expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
+        })
+
+        it('replays the buffered phases to the observers already subscribed, then releases them', async () => {
+          const earlyCollection = startEarlyCollection()
+          createOpenConnection()
+          const subscribedBefore = jasmine.createSpy('subscribedBefore')
+          const subscribedAfter = jasmine.createSpy('subscribedAfter')
+          earlyCollection.phases.subscribe(subscribedBefore)
+
+          earlyCollection[method]()
+          earlyCollection.phases.subscribe(subscribedAfter)
+          await waitNextMicrotask()
+
+          expect(subscribedBefore).toHaveBeenCalledTimes(2)
+          expect(subscribedAfter).not.toHaveBeenCalled()
+        })
       })
+    })
 
+    describe('stop()', () => {
       it('restores the native constructor and does not throw when called twice', () => {
         const nativeWebSocket = window.WebSocket
         const earlyCollection = startEarlyCollection()
@@ -1136,16 +1299,6 @@ describe('webSocketCollection', () => {
 
         expect(startTracking().flushOpenConnections()).toBe(0)
       })
-
-      it('empties the buffer', () => {
-        const earlyCollection = startEarlyCollection()
-        createOpenConnection()
-
-        earlyCollection.stop()
-        earlyCollection.buffer.drain(lifeCycle)
-
-        expect(emittedVitals()).toHaveSize(0)
-      })
     })
 
     describe('handOff()', () => {
@@ -1156,26 +1309,6 @@ describe('webSocketCollection', () => {
         earlyCollection.handOff()
 
         expect(startTracking().flushOpenConnections()).toBe(1)
-      })
-
-      it('empties the buffer', () => {
-        const earlyCollection = startEarlyCollection()
-        createOpenConnection()
-
-        earlyCollection.handOff()
-        earlyCollection.buffer.drain(lifeCycle)
-
-        expect(emittedVitals()).toHaveSize(0)
-      })
-
-      it('unsubscribes from the WebSocket observable only once when called twice', () => {
-        const unsubscribeSpy = spyOnWebSocketObservableUnsubscribe()
-        const earlyCollection = startEarlyCollection()
-
-        earlyCollection.handOff()
-        earlyCollection.handOff()
-
-        expect(unsubscribeSpy).toHaveBeenCalledTimes(1)
       })
     })
 
@@ -1228,12 +1361,13 @@ describe('webSocketCollection', () => {
       expect(webSocketOf(single(emittedVitals()))).toBe(socket)
     })
 
-    it('reports closing buffered before start and closed after start under the same connection id', () => {
+    it('reports closing buffered before start and closed after start under the same connection id', async () => {
       const earlyCollection = startEarlyCollection()
       const socket = createOpenConnection()
       callClose(socket, { at: 10 })
 
       startCollection(earlyCollection)
+      await waitNextMicrotask()
       dispatchClose(socket, { at: 20 })
 
       const connectionId = single(connectingPayloads()).id
@@ -1270,7 +1404,6 @@ describe('webSocketCollection', () => {
   function startTracking() {
     const tracker = trackWebSocket(initWebSocketObservable(), (instance, connection) => {
       emitWebSocketVital(lifeCycle, instance, connection.getState())
-      return true
     })
     registerCleanupTask(tracker.stop)
     return tracker
@@ -1430,5 +1563,10 @@ describe('webSocketCollection', () => {
   /** The live socket instance a vital's domain context carries. */
   function webSocketOf(event: RawRumEventCollectedData<RawRumWebSocketVitalEvent>) {
     return (event.domainContext as RumWebSocketVitalEventDomainContext).webSocket as unknown as MockWebSocket
+  }
+
+  /** The vitals one socket reported, in the order they were emitted. */
+  function vitalsOf(socket: MockWebSocket) {
+    return emittedVitals().filter((event) => webSocketOf(event) === socket)
   }
 })

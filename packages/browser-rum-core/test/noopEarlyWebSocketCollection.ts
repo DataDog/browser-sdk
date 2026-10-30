@@ -1,9 +1,12 @@
-import { noop } from '@datadog/js-core/util'
-import type { EarlyWebSocketCollection } from '../src/domain/webSocket/webSocketCollection'
+import { BufferedObservable, noop } from '@datadog/js-core/util'
+import {
+  EARLY_PHASES_BUFFER_CAPACITY,
+  type EarlyWebSocketCollection,
+} from '../src/domain/webSocket/webSocketCollection'
 
 export const noopEarlyWebSocketCollection: EarlyWebSocketCollection = {
-  // keeps nothing, so nothing is ever drained
-  buffer: { register: () => false, drain: noop, clear: noop },
+  // notifies nothing, so nothing is ever replayed
+  phases: new BufferedObservable(EARLY_PHASES_BUFFER_CAPACITY),
   stop: noop,
   handOff: noop,
 }

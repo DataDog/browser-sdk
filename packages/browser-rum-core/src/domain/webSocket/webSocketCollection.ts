@@ -1,6 +1,11 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled, PageExitReason } from '@datadog/browser-core'
+import {
+  addTelemetryDebug,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+  PageExitReason,
+} from '@datadog/browser-core'
 import type { Observable, TimeoutId } from '@datadog/js-core/util'
-import { clearInterval, noop, setInterval } from '@datadog/js-core/util'
+import { BufferedObservable, clearInterval, noop, queueMicrotask, setInterval } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import type { WebSocketContext } from '../../browser/webSocketObservable'
@@ -10,10 +15,8 @@ import type { RumConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { emitWebSocketVital } from './emitWebSocketVital'
-import type { TrackedConnection } from './trackedConnection'
+import type { TrackedConnection, TrackedConnectionState } from './trackedConnection'
 import { createTrackedConnection } from './trackedConnection'
-import type { EarlyConnectionsBuffer } from './earlyConnectionsBuffer'
-import { createEarlyConnectionsBuffer } from './earlyConnectionsBuffer'
 
 /**
  * A one flat cadence in every page state that tells how often an open connection reports where it is.
@@ -62,46 +65,75 @@ function hasOpenConnection() {
   return false
 }
 
+/**
+ * Caps the phases buffered before the collection starts. Counted in phases, not connections: before
+ * init a connection enters at most each phase once, so this holds the whole lifecycle of 8 connections.
+ * Past it, the oldest connections lose their first phases and stop being tracked. Dropped phases
+ * are reported with debug telemetry, so the limit can be raised if that count says so.
+ */
+export const EARLY_PHASES_BUFFER_CAPACITY = 32
+
 export interface EarlyWebSocketCollection {
-  /** The phases of the connections opened before the collection started, drained once it starts. */
-  buffer: EarlyConnectionsBuffer
   /**
-   * Stops observing WebSockets, empties the buffer and forgets the connections observed so far.
-   * Does nothing once `stop` or `handOff` was called.
+   * The phases the connections entered before the collection started, replayed in a microtask to
+   * each observer that subscribes before `handOff` or `stop` releases them.
+   */
+  phases: BufferedObservable<{ instance: WebSocket; state: TrackedConnectionState }>
+  /**
+   * Stops observing WebSockets, releases the buffered phases and forgets the connections observed
+   * so far. Does nothing once `stop` or `handOff` was called.
    */
   stop: () => void
   /**
-   * Stops observing WebSockets and empties the buffer, keeping the connections observed so far for
-   * the collection taking over. Does nothing once `stop` or `handOff` was called.
+   * Stops observing WebSockets and releases the buffered phases, keeping the connections observed
+   * so far for the collection taking over. The release waits for the replays already queued, so a
+   * collection that subscribed to `phases` first still gets them. Does nothing once `stop` or
+   * `handOff` was called.
    */
   handOff: () => void
 }
 
 export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
-  const buffer = createEarlyConnectionsBuffer()
+  let status: 'observing' | 'stopped' | 'handedOff' = 'observing'
+
+  const phases = new BufferedObservable<{ instance: WebSocket; state: TrackedConnectionState }>(
+    EARLY_PHASES_BUFFER_CAPACITY,
+    (count) => {
+      // only a hand-off loses data to the drops: a stopped early collection reports no phase at all
+      if (status === 'handedOff') {
+        // monitor-until: 2026-12-15
+        addTelemetryDebug('Dropped early WebSocket phases, buffer is full', {
+          count,
+          capacity: EARLY_PHASES_BUFFER_CAPACITY,
+        })
+      }
+    }
+  )
 
   const subscription = initWebSocketObservable().subscribe((context) => {
-    handleWebSocketContext(context, buffer.register)
+    handleWebSocketContext(context, (instance, connection) => {
+      phases.notify({ instance, state: connection.getState() })
+    })
   })
 
-  let stopped = false
-
-  function stopObserving(forgetConnections: boolean) {
-    if (stopped) {
+  function stopObserving(nextStatus: 'stopped' | 'handedOff') {
+    if (status !== 'observing') {
       return
     }
-    stopped = true
+    status = nextStatus
+
     subscription.unsubscribe()
-    buffer.clear()
-    if (forgetConnections) {
+    phases.unbuffer()
+
+    if (nextStatus === 'stopped') {
       trackedConnections.clear()
     }
   }
 
   return {
-    buffer,
-    stop: () => stopObserving(true),
-    handOff: () => stopObserving(false),
+    phases,
+    stop: () => stopObserving('stopped'),
+    handOff: () => stopObserving('handedOff'),
   }
 }
 
@@ -120,15 +152,31 @@ export function startWebSocketCollection(
     return { stop: noop }
   }
 
-  earlyWebSocketCollection.buffer.drain(lifeCycle)
+  // Before `trackWebSocket`, which reports the open connections as it starts.
+  const replayedConnections = forgetConnectionsWithoutConnectingPhase(earlyWebSocketCollection)
+
+  // Replayed in a microtask, so after the open report the tracker makes as it starts for the
+  // connections already open. Each vital carries the date and the snapshot version of what it
+  // reports, which is what orders them, not the order they are emitted in.
+  // Our backend handles out of order vitals for a given connection, there's no race condition to worry about.
+  const earlyPhasesSubscription = earlyWebSocketCollection.phases.subscribe(({ instance, state }) => {
+    if (!replayedConnections.has(instance)) {
+      return
+    }
+
+    emitWebSocketVital(lifeCycle, instance, state)
+  })
 
   const tracker = trackWebSocket(initWebSocketObservable(), (instance, connection) => {
     emitWebSocketVital(lifeCycle, instance, connection.getState())
-    return true
   })
   // Handed off only once the tracker is subscribed: the observable keeps an observer, so the
-  // instrumentation installed at SDK load stays in place for code that kept the constructor.
+  // instrumentation installed at SDK load stays in place for code that kept the constructor, and
+  // only once this collection has subscribed to the early phases, which the hand-off then releases.
   earlyWebSocketCollection.handOff()
+  // The replay was queued when subscribing, so it has run by then: past it, the set would only keep
+  // the sockets it holds from being garbage collected.
+  queueMicrotask(() => replayedConnections.clear())
 
   // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
   // connections are finalized once; later events on the same WebSocket instance are ignored.
@@ -147,12 +195,34 @@ export function startWebSocketCollection(
 
   return {
     stop: () => {
+      earlyPhasesSubscription.unsubscribe()
       sessionExpiredSubscription.unsubscribe()
       prepareUrgentFlushSubscription.unsubscribe()
       tracker.flushOpenConnections()
       tracker.stop()
     },
   }
+}
+
+/**
+ * Forgets the connections whose connecting phase the early buffer dropped: reported without it, a
+ * connection would be held as incomplete by the backend. Returns the connections whose buffered
+ * phases are replayed.
+ */
+function forgetConnectionsWithoutConnectingPhase(earlyWebSocketCollection: EarlyWebSocketCollection) {
+  const replayedConnections = new Set(
+    earlyWebSocketCollection.phases.items
+      .filter(({ state }) => state.phase === 'connecting')
+      .map(({ instance }) => instance)
+  )
+
+  for (const instance of trackedConnections.keys()) {
+    if (!replayedConnections.has(instance)) {
+      trackedConnections.delete(instance)
+    }
+  }
+
+  return replayedConnections
 }
 
 export function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
@@ -164,7 +234,7 @@ export function isWebSocketCollectionEnabled(configuration: RumConfiguration) {
 
 export function trackWebSocket(
   webSocketContextObservable: Observable<WebSocketContext>,
-  onConnectionUpdate: (instance: WebSocket, connection: TrackedConnection) => boolean
+  onConnectionUpdate: (instance: WebSocket, connection: TrackedConnection) => void
 ): WebSocketConnectionTracker {
   let reportIntervalId: TimeoutId | undefined
 
@@ -249,22 +319,17 @@ export function trackWebSocket(
  * Messages are not phases: they only add to the connection's snapshot, which reaches the caller
  * with the next open report or the closed vital. Calling `onConnectionUpdate` on each message
  * would report one vital per message.
- *
- * On the connecting phase, `onConnectionUpdate` also tells whether the connection should be
- * tracked: when it returns false, the connection is forgotten and its later events are ignored.
  */
 function handleWebSocketContext(
   context: WebSocketContext,
-  onConnectionUpdate: (instance: WebSocket, connection: TrackedConnection) => boolean
+  onConnectionUpdate: (instance: WebSocket, connection: TrackedConnection) => void
 ) {
-  let keepTracking = true
-
   switch (context.state) {
     case 'connecting': {
       const connection = createTrackedConnection(context)
       trackedConnections.set(context.instance, connection)
 
-      keepTracking = onConnectionUpdate(context.instance, connection)
+      onConnectionUpdate(context.instance, connection)
 
       break
     }
@@ -320,9 +385,5 @@ function handleWebSocketContext(
 
       break
     }
-  }
-
-  if (!keepTracking) {
-    trackedConnections.delete(context.instance)
   }
 }

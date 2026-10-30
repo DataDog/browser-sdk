@@ -5,8 +5,10 @@ import type {
   RumVitalWebsocketConnectingEvent,
   RumVitalWebsocketOpenEvent,
 } from '@datadog/browser-rum-core/src/rumEvent.types'
-import { WEBSOCKET_PERIODIC_REPORT_INTERVAL } from '@datadog/browser-rum-core/src/domain/webSocket/webSocketCollection'
-import { BUFFER_CAPACITY as EARLY_CONNECTIONS_BUFFER_CAPACITY } from '@datadog/browser-rum-core/src/domain/webSocket/earlyConnectionsBuffer'
+import {
+  EARLY_PHASES_BUFFER_CAPACITY,
+  WEBSOCKET_PERIODIC_REPORT_INTERVAL,
+} from '@datadog/browser-rum-core/src/domain/webSocket/webSocketCollection'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
@@ -515,8 +517,8 @@ test.describe('rum websockets', () => {
 
         await flushEvents()
 
-        // the connecting and open vitals collected before init, the open report RUM makes as it
-        // starts, then the closing and closed vitals reported live
+        // the open report RUM makes as it starts, the connecting and open vitals collected before
+        // init, replayed right after, then the closing and closed vitals reported live
         const vitals = getWebSocketVitals(intakeRegistry)
         expect(vitals.connecting).toHaveLength(1)
         expect(vitals.open).toHaveLength(2)
@@ -537,43 +539,53 @@ test.describe('rum websockets', () => {
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const ws = new WebSocketPage(page)
 
+        // kept open across init, so that RUM reports it as it starts
         await ws.open()
-        await ws.close()
         await initRum(page)
+        await ws.close()
 
         await flushEvents()
 
-        // the vitals collected before init are emitted as soon as startWebSocketCollection runs: were
-        // it moved above startViewCollection in startRumEventCollection, assembly would find neither
-        // the initial view nor its URL in the histories, and would discard them
+        // the open report RUM makes as it starts is emitted as soon as startWebSocketCollection runs:
+        // were it moved above startViewCollection in startRumEventCollection, assembly would find
+        // neither the initial view nor its URL in the histories, and would discard that report. The
+        // vitals collected before init are replayed in the following microtask, once the view exists.
         const initialView = intakeRegistry.rumViewEvents[0].view
         const vitals = getWebSocketVitals(intakeRegistry)
-        expect(vitals.all).toHaveLength(4)
+        expect(sortByDate(vitals.open).map((vital) => vital.vital.websocket.snapshot_version)).toEqual([1, 2])
+        expect(vitals.all).toHaveLength(5)
         for (const { view } of vitals.all) {
           expect(view).toEqual(expect.objectContaining({ id: initialView.id, url: initialView.url }))
         }
       })
 
-    createTest('never reports the connections opened before init that the early buffer had no room for')
+    createTest('never reports a connection opened before init whose phases the early buffer dropped')
       .withRum(RUM_CONFIGURATION)
       .withRumInit(deferRumInit)
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const ws = new WebSocketPage(page)
 
-        for (let i = 0; i <= EARLY_CONNECTIONS_BUFFER_CAPACITY; i++) {
+        // each connection buffers its connecting and open phases, so one connection more than the
+        // buffer holds drops the two oldest phases: those of the connection opened first
+        const connectionCount = EARLY_PHASES_BUFFER_CAPACITY / 2 + 1
+        for (let i = 0; i < connectionCount; i++) {
           await ws.open()
         }
         await initRum(page)
-        // the page drives the connection opened last, the one the buffer had no room for
+        // send and close act on the connection opened last
         await ws.sendAndExpectEcho()
         await ws.close()
 
         await flushEvents()
 
+        // the connection opened first lost its connecting phase, so it is forgotten rather than
+        // reported incomplete: every connection reported has its connecting vital
         const vitals = getWebSocketVitals(intakeRegistry)
-        expect(getConnectionIds(vitals.all)).toHaveLength(EARLY_CONNECTIONS_BUFFER_CAPACITY)
-        expect(vitals.closing).toHaveLength(0)
+        const connectionIds = getConnectionIds(vitals.all)
+        expect(connectionIds).toHaveLength(connectionCount - 1)
+        expect(getConnectionIds(vitals.connecting)).toEqual(expect.arrayContaining(connectionIds))
+        expect(vitals.closing).toHaveLength(1)
       })
 
     createTest('reports a connection opened before init as soon as RUM starts, then periodically')
