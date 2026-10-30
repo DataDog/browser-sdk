@@ -1,3 +1,5 @@
+import { mockable } from '../util/mockable'
+
 /** One second in milliseconds. */
 export const ONE_SECOND = 1000
 
@@ -151,10 +153,11 @@ export function clocksNow(): ClocksState {
 /**
  * Returns the clocks state at the navigation/process origin (relative = 0).
  *
- * @returns A {@link ClocksState} with `relative = 0` and the navigation start timestamp.
+ * @returns A {@link ClocksState} with `relative = 0` and the navigation start timestamp, rounded to
+ * the millisecond like other timestamps (`performance.timeOrigin` is fractional).
  */
 export function clocksOrigin(): ClocksState {
-  return { relative: 0 as RelativeTime, timeStamp: getTimeOrigin() }
+  return { relative: 0 as RelativeTime, timeStamp: Math.round(mockable(getTimeOrigin)()) as TimeStamp }
 }
 
 /**
