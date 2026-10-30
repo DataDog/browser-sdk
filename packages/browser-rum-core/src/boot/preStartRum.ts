@@ -181,7 +181,8 @@ export function createPreStartStrategy(
       startTrackingConsentContext(assembleTelemetryHook, trackingConsentState)
       telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, assembleTelemetryHook, sdkName)
 
-      if (isWorkerEnvironment) {
+      // Shopify App Pixels run in a Web Worker sandbox
+      if (isWorkerEnvironment && sdkName !== 'rum-shopify') {
         display.warn('The RUM SDK is not supported in a web or service worker environment.')
         return
       }
