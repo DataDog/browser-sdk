@@ -217,6 +217,39 @@ describe('serializeNode for stylesheets', () => {
         [ChangeType.AddNode, [null, 'LINK', ['rel', 'stylesheet'], ['href', unreadableSheet.href]]],
       ])
     })
+
+    it('serializes a stylesheet shared by several elements only once', async () => {
+      const record = await serializeHtml(
+        `
+        <div>
+          <link rel="stylesheet" href="${sheet.href}">
+          <link rel="stylesheet" href="${sheet.href}">
+        </div>
+        `,
+        {
+          before(target: Node): void {
+            // Simulate two elements sharing the same stylesheet. (Browsers don't actually
+            // do this, but we shouldn't depend on that to keep our stylesheet ids correct.)
+            for (const link of (target as Element).querySelectorAll('link')) {
+              Object.defineProperty(link, 'sheet', {
+                value: sheet,
+                configurable: true,
+              })
+            }
+          },
+        }
+      )
+      expect(record?.data).toEqual([
+        [
+          ChangeType.AddNode,
+          [null, 'DIV'],
+          [1, 'LINK', ['rel', 'stylesheet'], ['href', sheet.href]],
+          [0, 'LINK', ['rel', 'stylesheet'], ['href', sheet.href]],
+        ],
+        [ChangeType.AddStyleSheet, [css]],
+        [ChangeType.AttachedStyleSheets, [1, 0], [2, 0]],
+      ])
+    })
   })
 
   describe('for documents with adopted stylesheets', () => {
@@ -260,6 +293,141 @@ describe('serializeNode for stylesheets', () => {
         [ChangeType.ScrollPosition, [0, 0, 0]],
         [ChangeType.AddStyleSheet, [[css]]],
         [ChangeType.AttachedStyleSheets, [0, 0]],
+      ])
+    })
+
+    it('serializes a stylesheet shared with a shadow root only once', async () => {
+      if (!isAdoptedStyleSheetsSupported()) {
+        pending('No adoptedStyleSheets support.')
+      }
+
+      const record = await serializeHtml(
+        `
+        <!doctype HTML>
+        <div></div>
+        `,
+        {
+          input: 'document',
+          before(target: Node): void {
+            const document = target as Document
+            const window = document.defaultView!
+            const sheet = new window.CSSStyleSheet()
+            sheet.insertRule(css)
+            document.adoptedStyleSheets = [sheet]
+            document.querySelector('div')!.attachShadow({ mode: 'open' }).adoptedStyleSheets = [sheet]
+          },
+          after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
+            expect(stats).toEqual({
+              cssText: { count: 1, max: 21, sum: 21 },
+              serializationDuration: jasmine.anything(),
+            })
+          },
+        }
+      )
+      expect(record?.data).toEqual([
+        [
+          ChangeType.AddNode,
+          [null, '#document'],
+          [1, '#doctype', 'html', '', ''],
+          [0, 'HTML'],
+          [1, 'HEAD'],
+          [0, 'BODY'],
+          [1, 'DIV'],
+          [1, '#shadow-root'],
+        ],
+        [ChangeType.ScrollPosition, [0, 0, 0]],
+        [ChangeType.AddStyleSheet, [[css]]],
+        [ChangeType.AttachedStyleSheets, [0, 0], [6, 0]],
+      ])
+    })
+  })
+
+  describe('for shadow roots with adopted stylesheets', () => {
+    function adoptStyleSheets(host: Element, sheets: CSSStyleSheet[]): void {
+      host.attachShadow({ mode: 'open' }).adoptedStyleSheets = sheets
+    }
+
+    function createStyleSheet(document: Document, rule: string): CSSStyleSheet {
+      const sheet = new document.defaultView!.CSSStyleSheet()
+      sheet.insertRule(rule)
+      return sheet
+    }
+
+    beforeEach(() => {
+      if (!isAdoptedStyleSheetsSupported()) {
+        pending('No adoptedStyleSheets support.')
+      }
+    })
+
+    it('serializes the stylesheet', async () => {
+      const record = await serializeHtml('<x-a></x-a>', {
+        before(target: Node): void {
+          adoptStyleSheets(target as Element, [createStyleSheet(target.ownerDocument!, css)])
+        },
+        after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
+          expect(stats).toEqual({
+            cssText: { count: 1, max: 21, sum: 21 },
+            serializationDuration: jasmine.anything(),
+          })
+        },
+      })
+      expect(record?.data).toEqual([
+        [ChangeType.AddNode, [null, 'X-A'], [1, '#shadow-root']],
+        [ChangeType.AddStyleSheet, [[css]]],
+        [ChangeType.AttachedStyleSheets, [1, 0]],
+      ])
+    })
+
+    it('serializes a stylesheet shared by several shadow roots only once', async () => {
+      const record = await serializeHtml('<div><x-a></x-a><x-a></x-a><x-a></x-a><x-b></x-b></div>', {
+        before(target: Node): void {
+          const document = target.ownerDocument!
+          const sheetA = createStyleSheet(document, css)
+          const sheetB = createStyleSheet(document, dynamicCss)
+          for (const host of (target as Element).querySelectorAll('x-a')) {
+            adoptStyleSheets(host, [sheetA])
+          }
+          adoptStyleSheets((target as Element).querySelector('x-b')!, [sheetB])
+        },
+        after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
+          expect(stats).toEqual({
+            cssText: { count: 2, max: 21, sum: 41 },
+            serializationDuration: jasmine.anything(),
+          })
+        },
+      })
+      expect(record?.data).toEqual([
+        [
+          ChangeType.AddNode,
+          [null, 'DIV'],
+          [1, 'X-A'],
+          [1, '#shadow-root'],
+          [3, 'X-A'],
+          [1, '#shadow-root'],
+          [5, 'X-A'],
+          [1, '#shadow-root'],
+          [7, 'X-B'],
+          [1, '#shadow-root'],
+        ],
+        [ChangeType.AddStyleSheet, [[css]], [[dynamicCss]]],
+        [ChangeType.AttachedStyleSheets, [2, 0], [4, 0], [6, 0], [8, 1]],
+      ])
+    })
+
+    it('serializes only the adopted stylesheets that have not already been serialized', async () => {
+      const record = await serializeHtml('<div><x-a></x-a><x-b></x-b></div>', {
+        before(target: Node): void {
+          const document = target.ownerDocument!
+          const sheetA = createStyleSheet(document, css)
+          const sheetB = createStyleSheet(document, dynamicCss)
+          adoptStyleSheets((target as Element).querySelector('x-a')!, [sheetA])
+          adoptStyleSheets((target as Element).querySelector('x-b')!, [sheetB, sheetA])
+        },
+      })
+      expect(record?.data).toEqual([
+        [ChangeType.AddNode, [null, 'DIV'], [1, 'X-A'], [1, '#shadow-root'], [3, 'X-B'], [1, '#shadow-root']],
+        [ChangeType.AddStyleSheet, [[css]], [[dynamicCss]]],
+        [ChangeType.AttachedStyleSheets, [2, 0], [4, 1, 0]],
       ])
     })
   })

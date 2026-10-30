@@ -1,6 +1,6 @@
 import { noop } from '@datadog/js-core/util'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
@@ -368,6 +368,42 @@ describe('trackMutation', () => {
         expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'DIV'], [1, '#shadow-root'], [1, 'SPAN']]])
         expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot, jasmine.anything())
         expect(removeShadowRootSpy).not.toHaveBeenCalled()
+      })
+
+      it('reuses the id of an adopted stylesheet that has already been serialized', async () => {
+        if (!isAdoptedStyleSheetsSupported()) {
+          pending('No adoptedStyleSheets support.')
+        }
+
+        const cssText = 'div { color: green; }'
+        let sheet!: CSSStyleSheet
+
+        const { fullSnapshot, mutation } = await recordMutationOf(
+          '<div><x-a></x-a></div>',
+          (sandbox: HTMLElement): void => {
+            const host = sandbox.ownerDocument.createElement('x-a')
+            sandbox.appendChild(host)
+            host.attachShadow({ mode: 'open' }).adoptedStyleSheets = [sheet]
+          },
+          {
+            scope,
+            beforeFullSnapshot(sandbox: HTMLElement): void {
+              sheet = new sandbox.ownerDocument.defaultView!.CSSStyleSheet()
+              sheet.insertRule(cssText)
+              sandbox.querySelector('x-a')!.attachShadow({ mode: 'open' }).adoptedStyleSheets = [sheet]
+            },
+          }
+        )
+
+        expect(fullSnapshot.data).toEqual([
+          [ChangeType.AddNode, [null, 'DIV'], [1, 'X-A'], [1, '#shadow-root']],
+          [ChangeType.AddStyleSheet, [[cssText]]],
+          [ChangeType.AttachedStyleSheets, [2, 0]],
+        ])
+        expect(mutation?.data).toEqual([
+          [ChangeType.AddNode, [3, 'X-A'], [1, '#shadow-root']],
+          [ChangeType.AttachedStyleSheets, [4, 0]],
+        ])
       })
 
       it('should call removeShadowRoot when host is removed', async () => {
