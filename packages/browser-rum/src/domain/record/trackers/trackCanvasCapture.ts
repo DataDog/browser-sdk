@@ -1,15 +1,21 @@
 import { clearTimeout, setTimeout, noop } from '@datadog/js-core/util'
 import type { TimeoutId } from '@datadog/js-core/util'
+import type { DeflateWorker } from '@datadog/browser-core'
+import { addTelemetryDebug } from '@datadog/browser-core'
 import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'
 import type { CanvasCaptureAttempt } from '../canvas/canvasManager'
 import { CanvasStatus } from '../canvas/canvasManager'
-import { captureCanvasImage, createCanvasSnapshot } from '../canvas/canvasSnapshot'
-import { computeImageHash } from '../canvas/canvasHash'
+import { copyCanvasSnapshot, createCanvasSnapshot } from '../canvas/canvasSnapshot'
+import { captureInWorker } from '../canvas/canvasWorker'
 import type { Tracker } from './tracker.types'
 
-export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: () => void): Tracker => {
+export const trackCanvasCapture = (
+  scope: RecordingScope,
+  worker: DeflateWorker,
+  notifyContentMutated: () => void
+): Tracker => {
   const canvasManager = scope.canvasManager
   const configuration = scope.configuration.sessionReplayCanvasRecording
   const maxFramesPerSecond = configuration?.maxFramesPerSecond ?? 0
@@ -80,41 +86,34 @@ export const trackCanvasCapture = (scope: RecordingScope, notifyContentMutated: 
     }
 
     try {
-      const snapshot = captureAttempt.snapshot ?? createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
+      const snapshot = captureAttempt.snapshot
+        ? copyCanvasSnapshot(captureAttempt.snapshot)
+        : createCanvasSnapshot(canvas, configuration?.maxImageDimension ?? 1000)
       if (!snapshot) {
         markDirtyIfCurrent(captureAttempt, canvas)
         canvasManager.discardCaptureAttempt(canvas, captureAttempt)
         return // snapshot failed; leave it dirty
       }
 
-      const hash = await computeImageHash(snapshot, configuration?.hashingMaxDimension ?? 100)
+      const response = await captureInWorker(worker, snapshot, captureAttempt.lastChangeHash, {
+        hashingMaxDimension: configuration?.hashingMaxDimension ?? 100,
+        encodeQuality: configuration?.encodeQuality ?? 0.5,
+      })
 
       if (cancelled()) {
         return
       }
-      if (hash === undefined) {
-        markDirtyIfCurrent(captureAttempt, canvas)
-        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
-        return // hashing failed; leave it dirty
-      }
-
-      if (hash === captureAttempt.lastChangeHash) {
-        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
-        return // unchanged: no capture/output
-      }
-
-      const image = await captureCanvasImage(snapshot, configuration?.encodeQuality ?? 0.5)
-      if (cancelled()) {
+      if (response?.type === 'canvasCaptured') {
+        canvasManager.addCanvasContentMutation({ canvas, captureAttempt, hash: response.hash, image: response.image })
+        notifyContentMutated()
         return
       }
-      if (!image) {
-        markDirtyIfCurrent(captureAttempt, canvas)
-        canvasManager.discardCaptureAttempt(canvas, captureAttempt)
-        return // encoding failed; leave it dirty
+      if (response?.type !== 'canvasUnchanged') {
+        // monitor-until: 2027-04-30
+        addTelemetryDebug('Canvas capture failed', { 'error.name': response ? response.errorName : 'timeout' })
+        markDirtyIfCurrent(captureAttempt, canvas) // hashing or encoding failed; leave it dirty
       }
-
-      canvasManager.addCanvasContentMutation({ canvas, captureAttempt, hash, image })
-      notifyContentMutated()
+      canvasManager.discardCaptureAttempt(canvas, captureAttempt)
     } catch (error) {
       if (!cancelled()) {
         canvasManager.markCanvas(canvas, isSecurityError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)

@@ -18,7 +18,7 @@ import {
 import type { ViewEndedEvent } from '../../../browser-rum-core/src/domain/view/trackViews'
 import { appendElement, mockRumConfiguration } from '../../../browser-rum-core/test'
 
-import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
+import { recordsPerFullSnapshot, readReplayPayload, skipIfOffscreenCanvasIsNotSupported } from '../../test'
 import type { ReplayPayload, ResourcePayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
@@ -199,13 +199,11 @@ describe('startRecording', () => {
   })
 
   it('flushes queued canvas content before an urgent exit', async () => {
+    skipIfOffscreenCanvasIsNotSupported()
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     // the canvas must exist before recording starts so the initial full snapshot assigns it a node id
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
-    spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
-      callback(new Blob([], { type: 'image/png' }))
-    )
 
     const canvasSendSpy = jasmine.createSpy()
     const canvasSendOnExitSpy = jasmine.createSpy()
@@ -238,12 +236,10 @@ describe('startRecording', () => {
   })
 
   it('does not flush queued canvas content when the page is terminated', async () => {
+    skipIfOffscreenCanvasIsNotSupported()
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
-    spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
-      callback(new Blob([], { type: 'image/png' }))
-    )
 
     const canvasSendSpy = jasmine.createSpy()
     const canvasSendOnExitSpy = jasmine.createSpy()
@@ -277,12 +273,10 @@ describe('startRecording', () => {
 
   describe('when calling stop()', () => {
     it('flushes queued canvas content before stopping collectors', async () => {
+      skipIfOffscreenCanvasIsNotSupported()
       const clock = mockClock()
       const requestIdleCallbackMock = mockRequestIdleCallback()
       const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
-      spyOn(HTMLCanvasElement.prototype, 'toBlob').and.callFake((callback: BlobCallback) =>
-        callback(new Blob([], { type: 'image/png' }))
-      )
 
       const canvasSendSpy = jasmine.createSpy()
       const resourceHttpRequest = {

@@ -138,12 +138,14 @@ export function createCanvasManager(): CanvasManager {
     },
 
     setCanvasSnapshot: (canvas, snapshot) => {
+      canvasSnapshots.get(canvas)?.bitmap.close()
       canvasSnapshots.set(canvas, snapshot)
     },
 
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
       canvasTrackingStates.delete(canvas)
+      canvasSnapshots.get(canvas)?.bitmap.close()
       canvasSnapshots.delete(canvas)
       forgetCanvasObserver(canvas)
     },
