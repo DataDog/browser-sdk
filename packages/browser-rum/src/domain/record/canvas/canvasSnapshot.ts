@@ -1,10 +1,16 @@
-export interface CanvasSnapshot {
+import type { CanvasSnapshotImage } from '@datadog/browser-core'
+
+export type CanvasSnapshot = {
   canvasHeight: number
   canvasWidth: number
-  bitmap: ImageBitmap
-}
+} & CanvasSnapshotImage
 
-export function createCanvasSnapshot(canvas: HTMLCanvasElement, maxImageDimension: number): CanvasSnapshot | undefined {
+export type BitmapCanvasSnapshot = CanvasSnapshot & { bitmap: ImageBitmap }
+
+export function createCanvasSnapshot(
+  canvas: HTMLCanvasElement,
+  maxImageDimension: number
+): BitmapCanvasSnapshot | undefined {
   const canvasWidth = canvas.width
   const canvasHeight = canvas.height
   const bitmap = createDownscaledBitmap(canvas, canvasWidth, canvasHeight, maxImageDimension)
@@ -15,8 +21,11 @@ export function createCanvasSnapshot(canvas: HTMLCanvasElement, maxImageDimensio
   return { canvasHeight, canvasWidth, bitmap }
 }
 
-// Transferring a bitmap to the worker detaches it, so a snapshot that must be kept is copied first.
+// Transferring a snapshot to the worker detaches it, so a snapshot that must be kept is copied first.
 export function copyCanvasSnapshot(snapshot: CanvasSnapshot): CanvasSnapshot | undefined {
+  if ('pixels' in snapshot) {
+    return { ...snapshot, pixels: { ...snapshot.pixels, data: snapshot.pixels.data.slice(0) } }
+  }
   const { width, height } = snapshot.bitmap
   const bitmap = createDownscaledBitmap(snapshot.bitmap, width, height, Math.max(width, height))
   if (!bitmap) {
@@ -24,6 +33,12 @@ export function copyCanvasSnapshot(snapshot: CanvasSnapshot): CanvasSnapshot | u
   }
 
   return { ...snapshot, bitmap }
+}
+
+export function closeCanvasSnapshot(snapshot: CanvasSnapshot) {
+  if ('bitmap' in snapshot) {
+    snapshot.bitmap.close()
+  }
 }
 
 // Downscales `image` (of size `width`x`height`) to fit within `maxDimension`. Drawing it synchronously

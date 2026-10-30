@@ -634,6 +634,8 @@ export interface RumPublicApiOptions {
     onInitializationFailure: () => void
   ) => DeflateWorker | undefined
   createDeflateEncoder?: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
+  // Called within init() with the validated configuration, as RUM starts asynchronously
+  onInit?: (configuration: RumConfiguration) => void
   sdkName?: SdkName
 }
 

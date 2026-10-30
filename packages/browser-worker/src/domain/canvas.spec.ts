@@ -2,7 +2,7 @@ import type { CanvasCaptureResponse } from '@datadog/browser-core'
 import { replaceMockable } from '@datadog/browser-core/test'
 import { globalObject } from '@datadog/js-core/util'
 import { captureCanvas } from './canvas'
-import { createAction } from './canvas.specHelper'
+import { createAction, createPixelsAction } from './canvas.specHelper'
 
 describe('captureCanvas', () => {
   beforeEach(() => {
@@ -107,6 +107,44 @@ describe('captureCanvas', () => {
     await captureCanvas(action)
 
     expect(closeSpy).toHaveBeenCalled()
+  })
+
+  describe('with WebGPU pixels', () => {
+    it('captures BGRA pixels with padded rows', async () => {
+      const response = (await captureCanvas(
+        createPixelsAction([0, 0, 255, 255], { format: 'bgra8unorm' })
+      )) as CapturedResponse
+
+      expect(response.type).toBe('canvasCaptured')
+      expectRed(await readFirstPixel(response.image))
+    })
+
+    it('ignores the texture alpha of an opaque canvas', async () => {
+      const response = (await captureCanvas(createPixelsAction([255, 0, 0, 0]))) as CapturedResponse
+
+      expectRed(await readFirstPixel(response.image))
+    })
+
+    it('unpremultiplies the pixels of a premultiplied canvas', async () => {
+      const response = (await captureCanvas(
+        createPixelsAction([128, 0, 0, 128], { alphaMode: 'premultiplied' })
+      )) as CapturedResponse
+
+      const [red, green, blue, alpha] = await readFirstPixel(response.image)
+      expect(red).toBeGreaterThan(240)
+      expect(green).toBeLessThan(15)
+      expect(blue).toBeLessThan(15)
+      expect(Math.abs(alpha - 128)).toBeLessThan(10)
+    })
+
+    it('downscales the pixels to fit the maximum image dimension', async () => {
+      const response = (await captureCanvas(
+        createPixelsAction([255, 0, 0, 255], { width: 4, height: 2, maxImageDimension: 2 })
+      )) as CapturedResponse
+
+      const bitmap = await createImageBitmap(response.image)
+      expect([bitmap.width, bitmap.height]).toEqual([2, 1])
+    })
   })
 })
 

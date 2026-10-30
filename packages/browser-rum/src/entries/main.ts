@@ -13,6 +13,7 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
+import { trackWebGPUCanvasConfigurations } from '../domain/webGpuCanvasConfigurations'
 import { makeProfilerApi } from '../boot/profilerApi'
 
 export type {
@@ -95,6 +96,7 @@ const profilerApi = makeProfilerApi()
 export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
   startDeflateWorker,
   createDeflateEncoder,
+  onInit: trackWebGPUCanvasConfigurations,
   sdkName: 'rum',
 })
 
