@@ -415,7 +415,8 @@ test.describe('Service workers Rum', () => {
 })
 
 test.describe('Web workers Rum', () => {
-  createTest('web worker with worker rum-shopify')
+  // Keep "shopify" out of the title: CI runs those tests only on a schedule, against a live store
+  createTest('dedicated web worker with worker rum')
     .withWorker(
       createWorker({ dedicated: true, importScripts: true }).withRum(
         {
