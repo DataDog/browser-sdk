@@ -10,6 +10,7 @@ import {
 import { mockable } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { RUMProfiler } from '../domain/profiling/types'
+import { stopEarlyCollectionProfiler } from '../domain/profiling/earlyCollectionProfiler'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
@@ -30,22 +31,28 @@ export function makeProfilerApi(): ProfilerApi {
     if (!session) {
       // No session tracked, no profiling.
       // Note: No Profiling context is set at this stage.
+      stopEarlyCollectionProfiler()
       return
     }
 
     if (!isProfilingSampled(configuration, session)) {
+      stopEarlyCollectionProfiler()
       return
     }
 
     // Listen to events and add the profiling context to them.
     const profilingContextManager = startProfilingContext(hooks)
 
-    // Browser support check
+    // Browser support check. This also avoids downloading the profiler chunk
+    // on browsers that don't support the Profiler API. Other startup errors
+    // (e.g. missing `Document-Policy: js-profiling` header) are only detectable
+    // when constructing a Profiler instance, and are handled by the chunk.
     if (!mockable(isProfilingSupported)()) {
       profilingContextManager.set({
         status: 'error',
         error_reason: 'not-supported-by-browser',
       })
+      stopEarlyCollectionProfiler()
       return
     }
 
@@ -53,6 +60,7 @@ export function makeProfilerApi(): ProfilerApi {
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
           profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
+          stopEarlyCollectionProfiler()
           return
         }
 
@@ -62,18 +70,25 @@ export function makeProfilerApi(): ProfilerApi {
           sessionManager,
           profilingContextManager,
           createEncoder,
-          viewHistory,
-          undefined
+          viewHistory
         )
         profiler.start()
       })
-      .catch(monitorError)
+      .catch((e: unknown) => {
+        stopEarlyCollectionProfiler()
+        monitorError(e)
+      })
   }
 
   return {
     onRumStart,
     stop: () => {
       profiler?.stop()
+      // In case the profiler chunk has not been loaded yet, also stop the
+      // Profiler instance started by the early collection package. When the
+      // chunk has already adopted it, this is a no-op (adoption clears the
+      // takeover state).
+      stopEarlyCollectionProfiler()
     },
   }
 }

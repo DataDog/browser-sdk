@@ -2,6 +2,7 @@ import { globalObject, mockable, clearTimeout, setTimeout } from '@datadog/js-co
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import type { Profiler } from '@datadog/js-core/util'
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
+import type { ClocksState } from '@datadog/js-core/time'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import { canUseEventBridge, display, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
@@ -17,6 +18,8 @@ import type {
   RumProfilerStoppedInstance,
   ProfilingPayload,
 } from './types'
+import { takeEarlyCollectionProfiler } from './earlyCollectionProfiler'
+import type { EarlyCollectionProfiler } from './earlyCollectionProfiler'
 import type { ProfilingContextManager } from './profilingContext'
 import { createBridgeEmitter } from './transport/profilingBridge'
 import { createFormDataEmitter } from './transport/formDataEmitter'
@@ -108,8 +111,11 @@ export function createRumProfiler(
       addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
-    // Start profiler instance
-    startNextProfilerInstance()
+    // Start profiler instance. When collection was started by the early
+    // collection package (a standalone snippet evaluated before the SDK
+    // bundle), adopt its running Profiler instance as the first instance, so
+    // the first collected profile covers the early collection period too.
+    startNextProfilerInstance(takeEarlyCollectionProfiler())
     triggerQuotaCheck()
   }
 
@@ -193,15 +199,7 @@ export function createRumProfiler(
     }
   }
 
-  function startNextProfilerInstance(): void {
-    // These APIs might be unavailable in some browsers
-    const profilerConstructor = globalObject.Profiler
-
-    if (!profilerConstructor) {
-      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
-      throw new Error('RUM Profiler is not supported in this browser.')
-    }
-
+  function startNextProfilerInstance(earlyProfiler?: EarlyCollectionProfiler): void {
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
       collectProfilerInstance(instance)
@@ -210,36 +208,61 @@ export function createRumProfiler(
     const { cleanupTasks } = addEventListeners(instance)
 
     let profiler: Profiler
-    try {
-      // We have to create new Profiler each time we start a new instance
-      profiler = new profilerConstructor({
-        sampleInterval: profilerConfiguration.sampleIntervalMs,
-        // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-        maxBufferSize: Math.round(
-          (profilerConfiguration.collectIntervalMs * 1.5) / profilerConfiguration.sampleIntervalMs
-        ),
-      })
-    } catch (e) {
-      if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
-        // Missing Response Header (`js-profiling`) that is required to enable the profiler.
-        // We should suggest the user to enable the Response Header in their server configuration.
-        display.warn(
-          '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
-          e
-        )
-        profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
-      } else {
-        profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
+    let startClocks: ClocksState
+    if (earlyProfiler) {
+      // Adopt the Profiler instance started by the early collection package,
+      // so the first collected profile covers the early collection period.
+      profiler = earlyProfiler.profiler
+      startClocks = earlyProfiler.startClocks
+    } else {
+      // These APIs might be unavailable in some browsers
+      const profilerConstructor = globalObject.Profiler
+
+      if (!profilerConstructor) {
+        profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
+        throw new Error('RUM Profiler is not supported in this browser.')
       }
-      return
+
+      try {
+        // We have to create new Profiler each time we start a new instance
+        profiler = new profilerConstructor({
+          sampleInterval: profilerConfiguration.sampleIntervalMs,
+          // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
+          maxBufferSize: Math.round(
+            (profilerConfiguration.collectIntervalMs * 1.5) / profilerConfiguration.sampleIntervalMs
+          ),
+        })
+      } catch (e) {
+        if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
+          // Missing Response Header (`js-profiling`) that is required to enable the profiler.
+          // We should suggest the user to enable the Response Header in their server configuration.
+          display.warn(
+            '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
+            e
+          )
+          profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
+        } else {
+          profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
+        }
+        return
+      }
+      startClocks = clocksNow()
     }
 
-    profilingContextManager.set({ status: 'running', error_reason: undefined })
+    profilingContextManager.set({
+      status: 'running',
+      error_reason: undefined,
+      // `early` when adopting the Profiler instance started by the early
+      // collection package (the first profile covers the early collection
+      // period), `standard` when starting a new Profiler instance from
+      // scratch.
+      collection_type: earlyProfiler ? 'early' : 'standard',
+    })
 
     // Kick-off the new instance
     instance = {
       state: 'running',
-      startClocks: clocksNow(),
+      startClocks,
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       views: [],

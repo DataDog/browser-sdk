@@ -481,6 +481,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-early-collection@workspace:packages/browser-early-collection":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-early-collection@workspace:packages/browser-early-collection"
+  dependencies:
+    "@datadog/browser-core": "workspace:*"
+    "@datadog/js-core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/browser-logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/browser-logs"
