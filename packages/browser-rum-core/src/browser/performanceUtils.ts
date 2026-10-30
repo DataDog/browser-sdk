@@ -1,6 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { toRelativeTime, relativeNow } from '@datadog/js-core/time'
 import { findLast, isNumber } from '@datadog/browser-core'
+import { globalObject } from '@datadog/js-core/util'
 import type { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackNavigationTimings'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
@@ -11,7 +12,12 @@ function isValidNavigationEntry(entry: Pick<RumPerformanceNavigationTiming, 'loa
   return !(entry.loadEventEnd > 0 && entry.domComplete <= 0)
 }
 
-export function getNavigationEntry(): RumPerformanceNavigationTiming {
+export function getNavigationEntry(): RumPerformanceNavigationTiming | undefined {
+  // Without a document (e.g. in a Web Worker), there is no page navigation to report.
+  if (!globalObject.document) {
+    return
+  }
+
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
     const navigationEntry = performance.getEntriesByType(
       RumPerformanceEntryType.NAVIGATION
@@ -25,7 +31,7 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
   const entry: RumPerformanceNavigationTiming = {
     entryType: RumPerformanceEntryType.NAVIGATION as const,
     initiatorType: 'navigation' as const,
-    name: window.location.href,
+    name: globalObject.location.href,
     startTime: 0 as RelativeTime,
     duration: timings.loadEventEnd,
     decodedBodySize: 0,

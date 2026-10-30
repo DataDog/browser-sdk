@@ -32,6 +32,10 @@ function listenToCookieStoreChange() {
 export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 
 function watchCookieFallback(cookieName: string, callback: (event: string | undefined) => void) {
+  // Without a document (e.g. in a Web Worker), there are no cookies to watch, and getCookie() would throw.
+  if (!globalObject.document) {
+    return
+  }
   let previousCookieValue = getCookie(cookieName)
   const watchCookieIntervalId = setInterval(() => {
     const cookieValue = getCookie(cookieName)

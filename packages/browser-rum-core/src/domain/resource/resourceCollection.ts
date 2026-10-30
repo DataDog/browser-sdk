@@ -72,7 +72,10 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   })
 
   const { stop: stopRunOnReadyState } = runOnReadyState('interactive', () => {
-    handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
+    handleResource(() => {
+      const navigationEntry = getNavigationEntry()
+      return navigationEntry && assembleResource(navigationEntry, undefined, configuration)
+    })
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {

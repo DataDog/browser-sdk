@@ -114,7 +114,7 @@ test.describe('feature name', () => {
 - `.withRum(config?)` - Initialize RUM SDK with optional config
 - `.withLogs(config?)` - Initialize Logs SDK with optional config
 - `.withRumSlim()` - Also test with rum-slim variant
-- `.withWorker(worker)` - Test with Service Worker (pass a `createWorker()` builder)
+- `.withWorker(worker)` - Test with a Service Worker or dedicated Web Worker (pass a `createWorker()` builder)
 
 **Custom Initialization:**
 
@@ -260,8 +260,9 @@ createTest('worker with logs')
 ```
 
 - `createWorker({ importScripts: true })` - Use `importScripts` instead of ES modules
+- `createWorker({ dedicated: true })` - Run as a dedicated Web Worker (`new Worker()`) instead of a Service Worker
 - `.withLogs(config?)` - Initialize Logs SDK in the worker
-- `.withRum(config?)` - Initialize RUM SDK in the worker
+- `.withRum(config?, { sdk? })` - Initialize RUM SDK in the worker; `sdk` picks the bundle (`/datadog-<sdk>.js`, default `rum`)
 - `evaluateInWorker(fn)` - Execute a function inside the service worker scope
 - ESM workers only work in Chromium; use `test.skip` for other browsers
 

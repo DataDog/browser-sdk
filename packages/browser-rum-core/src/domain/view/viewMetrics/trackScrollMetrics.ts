@@ -1,7 +1,7 @@
 import { ONE_SECOND, elapsed, relativeNow } from '@datadog/js-core/time'
 import type { Duration, ClocksState } from '@datadog/js-core/time'
 import { monitor } from '@datadog/js-core/monitor'
-import { Observable, throttle } from '@datadog/js-core/util'
+import { throttle, Observable, globalObject } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
@@ -79,6 +79,10 @@ export function computeScrollValues() {
 
 export function createScrollValuesObservable(throttleDuration = THROTTLE_SCROLL_DURATION): Observable<ScrollValues> {
   return new Observable<ScrollValues>((observable) => {
+    // Feature guard: without a document (e.g. a Web Worker) there is nothing to scroll
+    if (!globalObject.document) {
+      return
+    }
     function notify() {
       observable.notify(computeScrollValues())
     }

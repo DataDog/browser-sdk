@@ -19,6 +19,7 @@ import {
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import {
+  globalObject,
   mockable,
   setInterval,
   clearInterval,
@@ -222,7 +223,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  const location = shallowClone(mockable(window.location))
+  const location = shallowClone(mockable(globalObject.location))
   const contextManager = createContextManager()
 
   let sessionIsActive = true
@@ -271,7 +272,8 @@ function newView(
   )
 
   let viewMetricsTracking =
-    loadingType === ViewLoadingType.INITIAL_LOAD
+    // Initial view metrics rely on page APIs: without a document (e.g. in a Web Worker), skip them.
+    loadingType === ViewLoadingType.INITIAL_LOAD && globalObject.document
       ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
 

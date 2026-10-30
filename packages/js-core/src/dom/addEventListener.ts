@@ -1,5 +1,6 @@
 import { monitor } from '../entries/monitor'
 import type { CookieStore, CookieStoreEventMap } from '../util/globalObject'
+import { globalObject } from '../util/globalObject'
 import { getZoneJsOriginalValue } from '../util/getZoneJsOriginalValue'
 import { noop } from '../util/noop'
 import type { VisualViewport, VisualViewportEventMap } from './types'
@@ -190,9 +191,11 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
   const options = passive ? { capture, passive } : capture
 
-  // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
+  // Use EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
   const listenerTarget =
-    window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
+    globalObject.EventTarget && eventTarget instanceof globalObject.EventTarget
+      ? globalObject.EventTarget.prototype
+      : eventTarget
 
   const add = getZoneJsOriginalValue(listenerTarget, 'addEventListener')
   eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))

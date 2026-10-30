@@ -414,6 +414,33 @@ test.describe('Service workers Rum', () => {
     })
 })
 
+test.describe('Web workers Rum', () => {
+  // Keep "shopify" out of the title: CI runs those tests only on a schedule, against a live store
+  createTest('dedicated web worker with worker rum')
+    .withWorker(
+      createWorker({ dedicated: true, importScripts: true }).withRum(
+        {
+          trackViewsManually: true,
+          sessionReplaySampleRate: 0,
+          profilingSampleRate: 0,
+          trackUserInteractions: false,
+          trackResources: false,
+          trackLongTasks: false,
+          sessionPersistence: 'memory',
+        },
+        { sdk: 'rum-shopify' }
+      )
+    )
+    .run(async ({ flushEvents, intakeRegistry, evaluateInWorker }) => {
+      await evaluateInWorker(() => {
+        self.DD_RUM!.startView()
+      })
+      await flushEvents()
+
+      expect(intakeRegistry.rumViewEvents.length).toBeGreaterThan(0)
+    })
+})
+
 const NO_SESSION_WARNING = 'Datadog Browser SDK: The RUM SDK is not supported in a web or service worker environment.'
 
 function expectNoSessionWarning(browserName: string, logs: BrowserLog[]) {

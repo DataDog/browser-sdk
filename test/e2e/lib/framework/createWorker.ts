@@ -4,6 +4,8 @@ import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helper
 
 interface WorkerOptions {
   importScripts?: boolean
+  // Run as a dedicated Web Worker (`new Worker()`) instead of a Service Worker
+  dedicated?: boolean
 }
 
 export function createWorker(options: WorkerOptions = {}) {
@@ -12,14 +14,19 @@ export function createWorker(options: WorkerOptions = {}) {
 
 export class Worker {
   public importScripts: boolean
+  public dedicated: boolean
+  public rumSdk: string | undefined
   public rumConfiguration: RumInitConfiguration | undefined
   public logsConfiguration: LogsInitConfiguration | undefined
 
-  constructor({ importScripts = false }: WorkerOptions = {}) {
+  constructor({ importScripts = false, dedicated = false }: WorkerOptions = {}) {
     this.importScripts = importScripts
+    this.dedicated = dedicated
   }
 
-  withRum(rumInitConfiguration: Partial<RumInitConfiguration> = {}) {
+  // `sdk` selects the bundle loaded in the worker: `/datadog-<sdk>.js`
+  withRum(rumInitConfiguration: Partial<RumInitConfiguration> = {}, { sdk }: { sdk?: string } = {}) {
+    this.rumSdk = sdk
     this.rumConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumInitConfiguration }
     return this
   }

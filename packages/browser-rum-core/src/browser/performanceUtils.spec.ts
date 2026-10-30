@@ -38,7 +38,7 @@ describe('getNavigationEntry', () => {
       toJSON: jasmine.any(Function),
     }
 
-    const navigationEntry = getNavigationEntry()
+    const navigationEntry = getNavigationEntry()!
 
     expect(navigationEntry).toEqual(jasmine.objectContaining(expectation))
 
@@ -101,7 +101,7 @@ describe('getNavigationEntry', () => {
     })
 
     it('falls back to deprecated performance timing', () => {
-      const navigationEntry = getNavigationEntry()
+      const navigationEntry = getNavigationEntry()!
 
       expect(navigationEntry.domComplete).toBe(456 as RelativeTime)
       expect(navigationEntry.domContentLoadedEventEnd).toBe(345 as RelativeTime)

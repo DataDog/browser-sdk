@@ -49,6 +49,7 @@ export interface CallerLocation {
 
 export interface WorkerOptions {
   importScripts?: boolean
+  rumSdk?: string
   rumConfiguration?: RumInitConfiguration
   logsConfiguration?: LogsInitConfiguration
 }
@@ -259,8 +260,11 @@ export function workerSetup(setupOptions: SetupOptions, servers: Servers) {
   }
 
   if (worker?.rumConfiguration) {
+    const rumScriptUrl = `/datadog-${worker.rumSdk ?? 'rum'}.js`
     setup += js`
-      ${worker.importScripts ? js`importScripts('/datadog-rum.js');` : js`import '/datadog-rum.js';`}
+      ${worker.importScripts ? js`importScripts('${rumScriptUrl}');` : js`import '${rumScriptUrl}';`}
+      // Log errors caught by the SDK monitor to the console, so the no-console-error teardown check catches them
+      DD_RUM._setDebug(true)
       DD_RUM.init(${formatConfiguration(worker.rumConfiguration, servers)})
       DD_RUM.setGlobalContext(${JSON.stringify(context)})
     `
