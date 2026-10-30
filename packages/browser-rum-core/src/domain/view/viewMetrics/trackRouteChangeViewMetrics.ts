@@ -1,4 +1,5 @@
 import type { RelativeTime } from '@datadog/js-core/time'
+import { elapsed } from '@datadog/js-core/time'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type {
@@ -11,8 +12,9 @@ import { computeLcpSubParts } from './trackLargestContentfulPaint'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
 
 /**
- * Tracks LCP for a `route_change` view via Chrome's Soft Navigation API (gated behind
- * ExperimentalFeature.SOFT_NAVIGATION + browser support, see trackViews.ts).
+ * Tracks FCP and LCP for a `route_change` view via Chrome's Soft Navigation API (gated behind
+ * ExperimentalFeature.SOFT_NAVIGATION + browser support, see trackViews.ts), and passes the soft
+ * navigation's `navigationId` to `setNavigationId` so CLS and INP only count entries from it onward.
  *
  * Gated behind the experimental flag while validating in production; the plan is to make this
  * the default behavior for route_change views once stable, likely in v8.
@@ -22,7 +24,11 @@ import type { InitialViewMetrics } from './trackInitialViewMetrics'
  * ICP entries keep being tracked until `stop()`, since by then the `interactionId` to filter on
  * is already known.
  */
-export function trackRouteChangeViewMetrics(configuration: RumConfiguration, scheduleViewUpdate: () => void) {
+export function trackRouteChangeViewMetrics(
+  configuration: RumConfiguration,
+  scheduleViewUpdate: () => void,
+  setNavigationId: (navigationId: number) => void
+) {
   const initialViewMetrics: InitialViewMetrics = {}
 
   let softNavEntry: RumSoftNavigationEntry | undefined
@@ -54,6 +60,12 @@ export function trackRouteChangeViewMetrics(configuration: RumConfiguration, sch
     // update, which doesn't create a new RUM view per areDifferentLocation() in trackViews.ts),
     // that entry gets misattributed here. Accepted, compounding edge case.
     softNavEntry = entries[0]
+    initialViewMetrics.firstContentfulPaint = elapsed(
+      softNavEntry.startTime,
+      softNavEntry.presentationTime || softNavEntry.paintTime
+    )
+    setNavigationId(softNavEntry.navigationId)
+    scheduleViewUpdate()
 
     // The ICP entry for this interaction might have arrived before this soft-navigation entry
     // (Chrome's documented ordering caveat) -- re-scan everything seen so far now that we know

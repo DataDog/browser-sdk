@@ -179,7 +179,10 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
         entryType: RumPerformanceEntryType.SOFT_NAVIGATION,
         name: 'https://example.com/soft-nav',
         startTime: 1000 as RelativeTime,
+        navigationId: 2,
         interactionId: 42,
+        paintTime: 1100 as RelativeTime,
+        presentationTime: 1120 as RelativeTime,
         getLargestInteractionContentfulPaint: () => null,
       }
       break

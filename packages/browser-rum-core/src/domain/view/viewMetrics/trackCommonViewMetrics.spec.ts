@@ -38,7 +38,8 @@ describe('trackCommonViewMetrics', () => {
         mockRumConfiguration(),
         scheduleViewUpdateSpy,
         ViewLoadingType.INITIAL_LOAD,
-        clocksOrigin()
+        clocksOrigin(),
+        false
       )
 
       registerCleanupTask(stop)

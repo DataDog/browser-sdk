@@ -28,6 +28,7 @@ describe('trackInteractionToNextPaint', () => {
   let interactionCountMock: ReturnType<typeof mockInteractionCount>
   let getInteractionToNextPaint: ReturnType<typeof trackInteractionToNextPaint>['getInteractionToNextPaint']
   let setViewEnd: ReturnType<typeof trackInteractionToNextPaint>['setViewEnd']
+  let setNavigationId: ReturnType<typeof trackInteractionToNextPaint>['setNavigationId']
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   function newInteraction(overrides: Partial<RumPerformanceEventTiming | RumFirstInputTiming>) {
@@ -38,7 +39,7 @@ describe('trackInteractionToNextPaint', () => {
     notifyPerformanceEntries([entry])
   }
 
-  function startINPTracking(viewStart = 0 as RelativeTime) {
+  function startINPTracking(viewStart = 0 as RelativeTime, isSoftNavigationTracked = false) {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     interactionCountMock = mockInteractionCount()
@@ -46,10 +47,12 @@ describe('trackInteractionToNextPaint', () => {
     const interactionToNextPaintTracking = trackInteractionToNextPaint(
       mockRumConfiguration(),
       viewStart,
-      ViewLoadingType.INITIAL_LOAD
+      ViewLoadingType.INITIAL_LOAD,
+      isSoftNavigationTracked
     )
     getInteractionToNextPaint = interactionToNextPaintTracking.getInteractionToNextPaint
     setViewEnd = interactionToNextPaintTracking.setViewEnd
+    setNavigationId = interactionToNextPaintTracking.setNavigationId
 
     registerCleanupTask(() => {
       interactionToNextPaintTracking.stop()
@@ -108,6 +111,54 @@ describe('trackInteractionToNextPaint', () => {
       time: 1 as RelativeTime,
       subParts: { inputDelay: 1099 as Duration, processingDuration: 0 as Duration, presentationDelay: 0 as Duration },
     })
+  })
+
+  it('should recompute the INP from the soft navigation onward once its navigationId is set', () => {
+    startINPTracking(0 as RelativeTime, true)
+    newInteraction({
+      interactionId: 1,
+      duration: 300 as Duration,
+      startTime: 1 as RelativeTime,
+      navigationId: 1,
+    })
+    newInteraction({
+      interactionId: 2,
+      duration: 100 as Duration,
+      startTime: 2 as RelativeTime,
+      navigationId: 2,
+    })
+    expect(getInteractionToNextPaint()?.value).toBe(300 as Duration)
+
+    setNavigationId(2)
+
+    expect(getInteractionToNextPaint()).toEqual(
+      jasmine.objectContaining({ value: 100 as Duration, time: 2 as RelativeTime })
+    )
+  })
+
+  it('should return undefined when every interaction is from before the soft navigation', () => {
+    startINPTracking(0 as RelativeTime, true)
+    newInteraction({
+      interactionId: 1,
+      duration: 300 as Duration,
+      startTime: 1 as RelativeTime,
+      navigationId: 1,
+    })
+
+    setNavigationId(2)
+
+    expect(getInteractionToNextPaint()).toBeUndefined()
+  })
+
+  it('should only count the interactions from the soft navigation onward', () => {
+    startINPTracking(0 as RelativeTime, true)
+    interactionCountMock.incrementInteractionCount() // interaction below 40ms, so no performance entry
+
+    setNavigationId(2)
+    expect(getInteractionToNextPaint()).toBeUndefined()
+
+    interactionCountMock.incrementInteractionCount()
+    expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
   })
 
   it('should cap INP value', () => {
