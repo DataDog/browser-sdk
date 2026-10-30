@@ -43,7 +43,7 @@ datadogDebugger.init({
 })
 ```
 
-The SDK's `init().service` and `init().version` default to the build plugin's `metadata.service` and `metadata.version` values injected into the bundle. The build plugin needs the service to upload the build's function list, which Live Debugger uses to create probes, so setting it there is enough. If you pass a value in both places and they differ, the SDK keeps the `init()` value and logs a warning. If neither `init()` nor the build plugin provides a service, the SDK logs an error and doesn't start.
+The SDK's `init().service` and `init().version` default to the build plugin's `metadata.service` and `metadata.version` values injected into the bundle. Because the build plugin already needs `metadata.service` to upload the build's function list, which Live Debugger uses to create probes, you don't need to set `service` in `init()` as well. If you pass a value in both places and they differ, the SDK keeps the `init()` value and logs a warning. If neither `init()` nor the build plugin provides a service, the SDK logs an error and doesn't start.
 
 If you set `version` for version-specific probe targeting, use an immutable deployed build identifier.
 
