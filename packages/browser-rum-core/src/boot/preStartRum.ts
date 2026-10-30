@@ -42,6 +42,8 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
 import { callPluginsOnInit } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
+import type { EarlyWebSocketCollection } from '../domain/webSocket/webSocketCollection'
+import { isWebSocketCollectionEnabled } from '../domain/webSocket/webSocketCollection'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
@@ -57,11 +59,12 @@ export type DoStartRum = (
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, sdkName }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
+  earlyWebSocketCollection: EarlyWebSocketCollection,
   doStartRum: DoStartRum
 ): Strategy {
   const BUFFER_LIMIT = 500
   const bufferApiCalls = new BufferedObservable<(startRumResult: StartRumResult) => void>(BUFFER_LIMIT, (count) => {
-    // monitor-until: 2026-10-14
+    // monitor-until: 2027-02-14
     addTelemetryDebug('preStartRum buffer data lost', { count })
   })
 
@@ -85,8 +88,6 @@ export function createPreStartStrategy(
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
 
-  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
-
   const emptyContext: Context = {}
 
   let started = false
@@ -95,8 +96,6 @@ export function createPreStartStrategy(
     if (started || !cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
       return
     }
-
-    trackingConsentStateSubscription.unsubscribe()
 
     let initialViewOptions: ViewOptions | undefined
 
@@ -171,6 +170,10 @@ export function createPreStartStrategy(
         // `startDeflateWorker` should have logged an error message explaining the issue
         return
       }
+    }
+
+    if (!isWebSocketCollectionEnabled(configuration)) {
+      earlyWebSocketCollection.stop()
     }
 
     cachedConfiguration = configuration
@@ -257,6 +260,7 @@ export function createPreStartStrategy(
       // But, we should not ignore the init() call from the Synthetics-injected RUM instance, so the
       // internal `ignoreInitIfSyntheticsWillInjectRum` option is here to bypass this condition.
       if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
+        earlyWebSocketCollection.stop()
         return
       }
 
