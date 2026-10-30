@@ -1,5 +1,3 @@
-import { mockable } from '../util/mockable'
-
 /** One second in milliseconds. */
 export const ONE_SECOND = 1000
 
@@ -153,11 +151,10 @@ export function clocksNow(): ClocksState {
 /**
  * Returns the clocks state at the navigation/process origin (relative = 0).
  *
- * @returns A {@link ClocksState} with `relative = 0` and the navigation start timestamp, rounded to
- * the millisecond like other timestamps (`performance.timeOrigin` is fractional).
+ * @returns A {@link ClocksState} with `relative = 0` and the navigation start timestamp.
  */
 export function clocksOrigin(): ClocksState {
-  return { relative: 0 as RelativeTime, timeStamp: Math.round(mockable(getTimeOrigin)()) as TimeStamp }
+  return { relative: 0 as RelativeTime, timeStamp: getTimeOrigin() }
 }
 
 /**
@@ -234,15 +231,26 @@ let timeOrigin: TimeStamp | undefined
  * `timeOrigin` can be much farther in the past than the actual navigation start (Firefox 71,
  * https://bugzilla.mozilla.org/show_bug.cgi?id=1429926) and is not supported in Safari <15.
  * Falls back to `performance.timeOrigin` in environments without `performance.timing`
- * (Service Workers, Node.js)
+ * (Web Workers, Service Workers, Node.js), rounded to the millisecond like other timestamps since
+ * it is fractional.
  *
- * @returns The time origin as a {@link TimeStamp}.
+ * @returns The time origin as a {@link TimeStamp}, in whole milliseconds.
  */
 export function getTimeOrigin(): TimeStamp {
   if (timeOrigin === undefined) {
-    timeOrigin = (performance.timing?.navigationStart ?? performance.timeOrigin) as TimeStamp
+    timeOrigin = (performance.timing?.navigationStart ?? Math.round(performance.timeOrigin)) as TimeStamp
   }
   return timeOrigin
+}
+
+/**
+ * Clears the cached time origin, so the next {@link getTimeOrigin} call computes it again.
+ * Intended for tests.
+ *
+ * @internal
+ */
+export function resetTimeOrigin() {
+  timeOrigin = undefined
 }
 
 function getCorrectedTimeStamp(relativeTime: RelativeTime): TimeStamp {

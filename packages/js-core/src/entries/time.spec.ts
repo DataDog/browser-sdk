@@ -1,12 +1,21 @@
-import { replaceMockable } from '../../../browser-core/test'
+import { registerCleanupTask } from '../../../browser-core/test'
 import type { TimeStamp } from './time'
-import { clocksOrigin, getTimeOrigin } from './time'
+import { getTimeOrigin, resetTimeOrigin } from './time'
 
-describe('clocksOrigin', () => {
-  it('rounds a fractional time origin to an integer timestamp', () => {
+describe('getTimeOrigin', () => {
+  it('rounds performance.timeOrigin when performance.timing is unavailable', () => {
     // Without `performance.timing` (e.g. in a Web Worker), the time origin comes from `performance.timeOrigin`, which is fractional
-    replaceMockable(getTimeOrigin, () => 1730284800123.456 as TimeStamp)
+    const originalTiming = performance.timing
+    const originalTimeOrigin = performance.timeOrigin
+    Object.defineProperty(performance, 'timing', { configurable: true, value: undefined })
+    Object.defineProperty(performance, 'timeOrigin', { configurable: true, value: 1730284800123.456 })
+    resetTimeOrigin()
+    registerCleanupTask(() => {
+      Object.defineProperty(performance, 'timing', { configurable: true, value: originalTiming })
+      Object.defineProperty(performance, 'timeOrigin', { configurable: true, value: originalTimeOrigin })
+      resetTimeOrigin()
+    })
 
-    expect(clocksOrigin().timeStamp).toBe(1730284800123 as TimeStamp)
+    expect(getTimeOrigin()).toBe(1730284800123 as TimeStamp)
   })
 })

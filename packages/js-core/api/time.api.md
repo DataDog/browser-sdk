@@ -76,6 +76,9 @@ export type RelativeTime = number & {
 // @public
 export function relativeToClocks(relative: RelativeTime): ClocksState;
 
+// @internal
+export function resetTimeOrigin(): void;
+
 // @public
 export type ServerDuration = number & {
     s: 'Duration in ns';
