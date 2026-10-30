@@ -28,10 +28,6 @@ test.describe('recorder canvas resource upload', () => {
         await page.evaluate(drawCanvas, { contextType, preserveDrawingBuffer })
 
         await expect.poll(() => intakeRegistry.replayResourceRequests.length).toBe(1)
-        if (browserName === 'webkit') {
-          // WebKit may omit beforeunload during navigation, so trigger the SDK's flush listener before flushEvents().
-          await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
-        }
         await flushEvents()
 
         expect(intakeRegistry.replayResourceRequests).toHaveLength(1)

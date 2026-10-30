@@ -3,7 +3,7 @@ import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager, InitContext } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
   display,
@@ -136,6 +136,7 @@ export function createPreStartStrategy(
 
   function doInit(
     initConfiguration: RumInitConfiguration,
+    initContext: InitContext | undefined,
     errorStack?: string,
     remoteConfigurationMetadata?: RemoteConfigurationMetadata
   ) {
@@ -173,6 +174,13 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+
+    if (initContext?.user) {
+      userContext.setContext(initContext.user)
+    }
+    if (initContext?.account) {
+      accountContext.setContext(initContext.account)
+    }
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
 
@@ -233,7 +241,7 @@ export function createPreStartStrategy(
   }
 
   const strategy: Strategy = {
-    init(initConfiguration, publicApi, errorStack) {
+    init(initConfiguration, publicApi, errorStack, initContext) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -285,7 +293,7 @@ export function createPreStartStrategy(
             fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
               .then((resolvedInitConfiguration) => {
                 if (resolvedInitConfiguration) {
-                  doInit(resolvedInitConfiguration, errorStack)
+                  doInit(resolvedInitConfiguration, initContext, errorStack)
                 }
               })
               .catch(monitorError)
@@ -293,11 +301,16 @@ export function createPreStartStrategy(
             const resolvedRemoteConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
             if (resolvedRemoteConfiguration) {
-              doInit(resolvedRemoteConfiguration.initConfiguration, errorStack, resolvedRemoteConfiguration.metadata)
+              doInit(
+                resolvedRemoteConfiguration.initConfiguration,
+                initContext,
+                errorStack,
+                resolvedRemoteConfiguration.metadata
+              )
             }
           }
         } else {
-          doInit(initConfiguration, errorStack)
+          doInit(initConfiguration, initContext, errorStack)
         }
       }
     },

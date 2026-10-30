@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-nuxt",
-  "version": "7.16.0",
+  "version": "7.16.2",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -44,8 +44,8 @@
     }
   },
   "devDependencies": {
-    "vue": "3.5.43",
-    "vue-router": "5.3.1"
+    "vue": "3.5.44",
+    "vue-router": "5.4.0"
   },
   "repository": {
     "type": "git",
