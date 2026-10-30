@@ -231,14 +231,14 @@ let timeOrigin: TimeStamp | undefined
  * `timeOrigin` can be much farther in the past than the actual navigation start (Firefox 71,
  * https://bugzilla.mozilla.org/show_bug.cgi?id=1429926) and is not supported in Safari <15.
  * Falls back to `performance.timeOrigin` in environments without `performance.timing`
- * (Web Workers, Service Workers, Node.js), rounded to the millisecond like other timestamps since
- * it is fractional.
+ * (Web Workers, Service Workers, Node.js). `performance.timeOrigin` is fractional, so it is floored
+ * to whole milliseconds, like `navigationStart`: the origin is never later than the actual one.
  *
  * @returns The time origin as a {@link TimeStamp}, in whole milliseconds.
  */
 export function getTimeOrigin(): TimeStamp {
   if (timeOrigin === undefined) {
-    timeOrigin = (performance.timing?.navigationStart ?? Math.round(performance.timeOrigin)) as TimeStamp
+    timeOrigin = (performance.timing?.navigationStart ?? Math.floor(performance.timeOrigin)) as TimeStamp
   }
   return timeOrigin
 }
