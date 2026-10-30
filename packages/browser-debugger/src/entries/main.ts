@@ -13,8 +13,14 @@ import type { Site } from '@datadog/js-core/transport'
 import { initDebuggerTransport, onEntry, onReturn, onThrow } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'
+import type { onCatch } from '../domain/exceptionReplay'
+import { startExceptionReplay } from '../domain/exceptionReplay'
+import { exceptionReplayPlugin } from '../domain/exceptionReplayPlugin'
+import type { ExceptionReplayPlugin } from '../domain/exceptionReplayPlugin'
 import { getProbes } from '../domain/probes'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
+
+export type { ExceptionReplayPlugin }
 
 export interface DebuggerBuildMetadata {
   version?: string
@@ -170,6 +176,25 @@ export interface DatadogDebugger extends PublicApi {
    * ```
    */
   init: (initConfiguration: DebuggerInitConfiguration) => void
+
+  /**
+   * Create the Exception Replay plugin for the RUM Browser SDK. Register it with
+   * `DD_RUM.init({ plugins: [...] })` to capture the arguments of the instrumented functions an
+   * error passes through, and show them on the error's stack frames in Error Tracking.
+   *
+   * Requires an application built with the Live Debugger build plugin's `exceptionReplay` option.
+   * Exception Replay starts once the plugin is registered and `init()` is called.
+   *
+   * @category Exception Replay
+   * @example
+   * ```ts
+   * datadogRum.init({
+   *   // ...
+   *   plugins: [datadogDebugger.exceptionReplayPlugin()],
+   * })
+   * ```
+   */
+  exceptionReplayPlugin: () => ExceptionReplayPlugin
 }
 
 export interface BrowserWindow {
@@ -179,6 +204,7 @@ export interface BrowserWindow {
   $dd_return?: typeof onReturn
   $dd_throw?: typeof onThrow
   $dd_probes?: typeof getProbes
+  $dd_catch?: typeof onCatch
 }
 
 function resolveDebuggerVersion(initConfiguration: DebuggerInitConfiguration): string | undefined {
@@ -224,6 +250,7 @@ function makeDebuggerPublicApi(): DatadogDebugger {
       debuggerGlobal.$dd_return = onReturn
       debuggerGlobal.$dd_throw = onThrow
       debuggerGlobal.$dd_probes = getProbes
+      mockable(startExceptionReplay)()
 
       mockable(startDeliveryApiPolling)({
         service: resolvedConfiguration.service,
@@ -237,6 +264,7 @@ function makeDebuggerPublicApi(): DatadogDebugger {
         maxUnreachableDuration: resolvedConfiguration.maxUnreachableDuration,
       })
     },
+    exceptionReplayPlugin,
   })
 }
 

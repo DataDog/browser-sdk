@@ -264,6 +264,7 @@ export function createPreStartStrategy(
         initConfiguration,
         publicApi,
         registerAssembleEventHook: hooks.assembleEvent.register,
+        registerEventCollectedHook: hooks.eventCollected.register,
       })
 
       if (typeof shouldContinue === 'boolean') {

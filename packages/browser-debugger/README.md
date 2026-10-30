@@ -51,6 +51,29 @@ If you set `version` for version-specific probe targeting, use an immutable depl
 
 When the [RUM Browser SDK][4] is loaded on the page, the first hit of each probe creates a RUM custom action named `probe: <function> (<file>)`. For probes evaluated at function entry, the action lasts until the instrumented function returns or throws. For probes evaluated at function exit, the action is a point in time at the function exit. The action's context includes the probe, the ID of the snapshot sent for that hit, and the outcome (`return` or `throw`, with the error type). Only hits that pass sampling and the probe condition count. To disable this, set `trackProbeHitsAsRumActions: false` in `init()`.
 
+## Exception Replay
+
+Exception Replay captures the arguments and `this` of the instrumented functions an error passes through, and shows them on the error's stack frames in Error Tracking, without adding probes. It requires the [RUM Browser SDK][4]:
+
+1. Build your application with the Live Debugger build plugin's [`exceptionReplay`][8] option.
+2. Register the Exception Replay plugin when initializing the RUM Browser SDK:
+
+   ```js
+   import { datadogRum } from '@datadog/browser-rum'
+   import { datadogDebugger } from '@datadog/browser-debugger'
+
+   datadogRum.init({
+     // ...
+     plugins: [datadogDebugger.exceptionReplayPlugin()],
+   })
+   ```
+
+3. Initialize the Live Debugger SDK as shown in [Usage](#usage).
+
+The SDK captures the three innermost instrumented frames of an exception as it's thrown. It only sends them as snapshots once RUM sends the error, after `beforeSend` and the event rate limits. It doesn't capture anything in sessions that RUM doesn't track. An error with the same type and innermost instrumented function is reported with snapshots at most once an hour. Values of variables and properties with sensitive names, such as `password` or `token`, are redacted. Local variables aren't captured.
+
+Exception Replay snapshots count toward the `maxSnapshotsPerSecondGlobally` limit.
+
 ## Troubleshooting
 
 Need help? Contact [Datadog Support][3].
@@ -64,3 +87,4 @@ Need help? Contact [Datadog Support][3].
 [5]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger
 [6]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#source-maps
 [7]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#limitations-during-preview
+[8]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#livedebuggerexceptionreplay
