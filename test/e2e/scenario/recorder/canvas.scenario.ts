@@ -3,6 +3,7 @@ import { decodeChangeRecords, findChangeRecords } from '@datadog/browser-rum/tes
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
 import { APPLICATION_ID } from '../../lib/helpers/configuration'
+import { readImagePixel } from './canvasImage'
 
 test.describe('recorder canvas resource upload', () => {
   // With preserveDrawingBuffer disabled, the recorder must capture WebGL pixels before the browser clears them.
@@ -109,18 +110,4 @@ function drawCanvas({
     // Exercise a WebGL2-specific drawing method to verify its instrumentation.
     context.clearBufferfv(context.COLOR, 0, new Float32Array([1, 0, 0, 1]))
   }
-}
-
-// Decode the uploaded image onto a detached canvas and return its center pixel as [red, green, blue, alpha].
-// Reading the uploaded bytes verifies the recorder's output, rather than just the original canvas drawing.
-async function readImagePixel(base64Image: string) {
-  const image = new Image()
-  image.src = `data:image/webp;base64,${base64Image}`
-  await image.decode()
-  const canvas = document.createElement('canvas')
-  canvas.width = image.naturalWidth
-  canvas.height = image.naturalHeight
-  const context = canvas.getContext('2d')!
-  context.drawImage(image, 0, 0)
-  return Array.from(context.getImageData(5, 5, 1, 1).data)
 }
