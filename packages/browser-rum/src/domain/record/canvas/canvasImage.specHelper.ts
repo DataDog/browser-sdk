@@ -1,10 +1,3 @@
-// Canvas capture needs OffscreenCanvas, which is missing on Firefox < 105 and Safari < 16.4.
-export function skipIfOffscreenCanvasIsNotSupported() {
-  if (typeof OffscreenCanvas === 'undefined') {
-    pending('OffscreenCanvas is not supported')
-  }
-}
-
 export function bitmapPixels(bitmap: ImageBitmap): number[] {
   const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext('2d')!
   context.drawImage(bitmap, 0, 0)

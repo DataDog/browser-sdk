@@ -11,7 +11,7 @@ import {
   replaceMockableWithSpy,
   startMockTelemetry,
 } from '@datadog/browser-core/test'
-import { MockWorker, recordsPerFullSnapshot } from '../../../test'
+import { MockWorker, recordsPerFullSnapshot, skipIfOffscreenCanvasIsNotSupported } from '../../../test'
 import { createDeflateWorker, DeflateWorkerStatus, getDeflateWorkerStatus, resetDeflateWorkerState } from '../deflate'
 import type {
   AddNodeChange,
@@ -29,7 +29,6 @@ import { record } from './record'
 import type { EmitRecordCallback } from './record.types'
 import { createChangeDecoder } from './encoding'
 import { resetCanvasWorkerWarning } from './canvas/canvasWorker'
-import { skipIfOffscreenCanvasIsNotSupported } from './canvas/canvasImage.specHelper'
 
 describe('record', () => {
   let recordApi: RecordAPI

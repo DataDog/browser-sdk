@@ -1,7 +1,8 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
+import { skipIfOffscreenCanvasIsNotSupported } from '../../../../test'
 import type { CanvasSnapshot } from './canvasSnapshot'
 import { copyCanvasSnapshot, createCanvasSnapshot } from './canvasSnapshot'
-import { bitmapPixels, skipIfOffscreenCanvasIsNotSupported } from './canvasImage.specHelper'
+import { bitmapPixels } from './canvasImage.specHelper'
 
 describe('createCanvasSnapshot', () => {
   beforeEach(() => {

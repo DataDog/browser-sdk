@@ -24,6 +24,10 @@ test.describe('recorder canvas resource upload', () => {
           !!process.env.CI && browserName === 'firefox' && contextType !== '2d',
           'Headless Firefox cannot create WebGL/WebGL2 contexts in our Linux CI image'
         )
+        test.skip(
+          !(await page.evaluate(() => 'OffscreenCanvas' in window)),
+          "Canvas recording needs OffscreenCanvas, which Playwright's Linux WebKit 17.4 build lacks"
+        )
 
         await page.evaluate(drawCanvas, { contextType, preserveDrawingBuffer })
 
