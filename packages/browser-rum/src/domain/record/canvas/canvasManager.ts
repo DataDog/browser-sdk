@@ -1,5 +1,6 @@
 import { getMutationObserverConstructor } from '@datadog/js-core/dom'
 import type { CanvasSnapshot } from './canvasSnapshot'
+import { closeCanvasSnapshot } from './canvasSnapshot'
 
 export const enum CanvasStatus {
   /** The canvas is clean, meaning it has not been marked as dirty or tainted */
@@ -138,14 +139,20 @@ export function createCanvasManager(): CanvasManager {
     },
 
     setCanvasSnapshot: (canvas, snapshot) => {
-      canvasSnapshots.get(canvas)?.bitmap.close()
+      const previousSnapshot = canvasSnapshots.get(canvas)
+      if (previousSnapshot) {
+        closeCanvasSnapshot(previousSnapshot)
+      }
       canvasSnapshots.set(canvas, snapshot)
     },
 
     forgetCanvas: (canvas) => {
       dirtyCanvases.delete(canvas)
       canvasTrackingStates.delete(canvas)
-      canvasSnapshots.get(canvas)?.bitmap.close()
+      const previousSnapshot = canvasSnapshots.get(canvas)
+      if (previousSnapshot) {
+        closeCanvasSnapshot(previousSnapshot)
+      }
       canvasSnapshots.delete(canvas)
       forgetCanvasObserver(canvas)
     },

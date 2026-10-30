@@ -107,14 +107,11 @@ export class MockWorker extends MockEventTarget implements DeflateWorker {
 }
 
 // Like the real worker, but hashes the full bitmap pixels, which is enough to detect changes.
-async function captureCanvas({
-  id,
-  bitmap,
-  canvasWidth,
-  canvasHeight,
-  lastChangeHash,
-  encodeQuality,
-}: CanvasCaptureAction): Promise<CanvasCaptureResponse> {
+async function captureCanvas(action: CanvasCaptureAction): Promise<CanvasCaptureResponse> {
+  if (!('bitmap' in action)) {
+    throw new Error('MockWorker only captures bitmap snapshots')
+  }
+  const { id, bitmap, canvasWidth, canvasHeight, lastChangeHash, encodeQuality } = action
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
   const context = canvas.getContext('2d')!
   context.drawImage(bitmap, 0, 0)
