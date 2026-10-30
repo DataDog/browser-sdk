@@ -54,11 +54,6 @@ export function getTelemetryOrgApiKey(site: string): string | undefined {
   return getOptionalSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 }
 
-export function getTelemetryOrgApplicationKey(site: string): string | undefined {
-  const normalizedSite = site.replaceAll('.', '-')
-  return getOptionalSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
-}
-
 export function getNpmToken(): string {
   return getSecretKey('ci.browser-sdk.npm_token')
 }
