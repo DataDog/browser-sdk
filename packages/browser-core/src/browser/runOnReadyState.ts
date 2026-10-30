@@ -11,7 +11,7 @@ export function runOnReadyState(
     return { stop: noop }
   }
   const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
-  return addEventListener(globalObject.window, eventName, callback, { once: true })
+  return addEventListener(window, eventName, callback, { once: true })
 }
 
 export function asyncRunOnReadyState(expectedReadyState: 'complete' | 'interactive'): Promise<void> {

@@ -282,7 +282,7 @@ function supportPerformanceObject() {
 }
 
 export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
-  return !!globalObject.PerformanceObserver?.supportedEntryTypes.includes(entryType)
+  return globalObject.PerformanceObserver.supportedEntryTypes.includes(entryType)
 }
 
 function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(entries: Array<EntryTypeToReturnType[T]>) {

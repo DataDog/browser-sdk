@@ -144,19 +144,18 @@ type EventMapFor<T> = T extends Window
  * - passes an options object only when `passive` is set, and emulates `once`;
  * - returns a `stop` function to remove the listener.
  *
- * @param eventTarget - The target to listen on. `undefined` (e.g. `window` in a Web Worker) adds no
- * listener and returns a no-op `stop`.
+ * @param eventTarget - The target to listen on.
  * @param eventName - The event to listen for; its type narrows the `listener` event type.
  * @param listener - Called with each received event.
  * @param options - `capture`, `passive`, and `once` (the listener is removed after its first call).
  * @returns An object whose `stop` function removes the listener.
  */
 export function addEventListener<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  eventTarget: Target | undefined,
+  eventTarget: Target,
   eventName: EventName,
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   options?: AddEventListenerOptions
-): { stop: () => void } {
+) {
   return addEventListeners(eventTarget, [eventName], listener, options)
 }
 
@@ -165,8 +164,7 @@ export function addEventListener<Target extends EventTarget, EventName extends k
  * {@link addEventListener}, except that with `once: true` the listener is called at most once in
  * total, even if several of the events are received.
  *
- * @param eventTarget - The target to listen on. `undefined` (e.g. `window` in a Web Worker) adds no
- * listener and returns a no-op `stop`.
+ * @param eventTarget - The target to listen on.
  * @param eventNames - The events to listen for.
  * @param listener - Called with each received event.
  * @param options - Listener options.
@@ -176,15 +174,11 @@ export function addEventListener<Target extends EventTarget, EventName extends k
  * @returns An object whose `stop` function removes the listeners for all `eventNames`.
  */
 export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  eventTarget: Target | undefined,
+  eventTarget: Target,
   eventNames: EventName[],
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
-): { stop: () => void } {
-  if (!eventTarget) {
-    return { stop: noop }
-  }
-
+) {
   const listenerWithMonitor = monitor((event: TrustableEvent) => {
     if (!event.isTrusted && !event.__ddIsTrusted && allowUntrustedEventsFromConfiguration === false) {
       return

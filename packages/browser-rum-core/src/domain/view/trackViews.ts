@@ -272,7 +272,8 @@ function newView(
   )
 
   let viewMetricsTracking =
-    loadingType === ViewLoadingType.INITIAL_LOAD
+    // Initial view metrics rely on page APIs: without a document (e.g. in a Web Worker), skip them.
+    loadingType === ViewLoadingType.INITIAL_LOAD && globalObject.document
       ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
 

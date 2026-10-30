@@ -33,7 +33,7 @@ export interface LargestContentfulPaint {
 export function trackLargestContentfulPaint(
   configuration: RumConfiguration,
   firstHidden: FirstHidden,
-  eventTarget: Window | undefined,
+  eventTarget: Window,
   callback: (largestContentfulPaint: LargestContentfulPaint) => void
 ) {
   // Ignore entries that come after the first user interaction. According to the documentation, the

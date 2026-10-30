@@ -1,5 +1,5 @@
 import { monitor } from '@datadog/js-core/monitor'
-import { globalObject } from '@datadog/js-core/util'
+import { globalObject, noop } from '@datadog/js-core/util'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
@@ -7,10 +7,14 @@ import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 export type DisplayContext = ReturnType<typeof startDisplayContext>
 
 export function startDisplayContext(assembleHook: AssembleHook) {
-  // Without a window (e.g. in a Web Worker), `viewport` stays undefined and events have no display.
+  // Without a window (e.g. in a Web Worker), there is no viewport: events have no display.
+  if (!globalObject.window) {
+    return { stop: noop }
+  }
+
   let viewport: ViewportDimension | undefined
   // Use requestAnimationFrame to delay the calculation of viewport dimensions until after SDK initialization, preventing long tasks.
-  const animationFrameId = globalObject.window?.requestAnimationFrame?.(
+  const animationFrameId = requestAnimationFrame(
     monitor(() => {
       viewport = getViewportDimension()
     })
@@ -29,7 +33,7 @@ export function startDisplayContext(assembleHook: AssembleHook) {
     stop: () => {
       unsubscribeViewport()
       if (animationFrameId) {
-        globalObject.window?.cancelAnimationFrame(animationFrameId)
+        cancelAnimationFrame(animationFrameId)
       }
     },
   }

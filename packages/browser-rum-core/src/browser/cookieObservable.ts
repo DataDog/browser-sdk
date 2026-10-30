@@ -15,7 +15,7 @@ export function createCookieObservable(cookieName: string) {
 
 function listenToCookieStoreChange() {
   return (cookieName: string, callback: (event: string | undefined) => void) => {
-    const listener = addEventListener(globalObject.cookieStore, DOM_EVENT.CHANGE, (event) => {
+    const listener = addEventListener(globalObject.cookieStore!, DOM_EVENT.CHANGE, (event) => {
       // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
       // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
       const changeEvent =
@@ -32,9 +32,6 @@ function listenToCookieStoreChange() {
 export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 
 function watchCookieFallback(cookieName: string, callback: (event: string | undefined) => void) {
-  if (!globalObject.document) {
-    return
-  }
   let previousCookieValue = getCookie(cookieName)
   const watchCookieIntervalId = setInterval(() => {
     const cookieValue = getCookie(cookieName)
