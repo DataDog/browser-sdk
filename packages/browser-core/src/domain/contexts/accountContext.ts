@@ -1,9 +1,9 @@
 import type { Hook } from '@datadog/js-core/assembly'
 import { SKIPPED } from '@datadog/js-core/assembly'
+import { isEmptyObject } from '@datadog/js-core/util'
 import type { Configuration } from '../configuration'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
-import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { createContextManager } from '../context/contextManager'
 
 /**

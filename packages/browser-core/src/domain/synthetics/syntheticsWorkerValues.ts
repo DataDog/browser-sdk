@@ -1,6 +1,5 @@
-import { globalObject, isWorkerEnvironment } from '@datadog/js-core/util'
+import { globalObject, isWorkerEnvironment, tryJsonParse } from '@datadog/js-core/util'
 import { getInitCookie } from '../../browser/cookie'
-import { tryJsonParse } from '../../tools/utils/objectUtils'
 
 const cookieNamePrefix = 'datadog-synthetics-'
 export const SYNTHETICS_TEST_ID_COOKIE_NAME = `${cookieNamePrefix}public-id`
