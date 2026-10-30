@@ -61,6 +61,37 @@ import { initConsoleObservable } from './consoleObservable'
       expect(consoleLog.message).toBe('Hello {\n  "foo": "bar"\n}')
     })
 
+    it('should notify after calling the original method', () => {
+      consoleSpy.and.callFake(() => expect(notifyLog).not.toHaveBeenCalled())
+
+      console[api]('foo')
+
+      expect(consoleSpy).toHaveBeenCalled()
+      expect(notifyLog).toHaveBeenCalled()
+    })
+
+    it('should restore the original method when unsubscribing', () => {
+      consoleSubscription.unsubscribe()
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(console[api]).toBe(consoleSpy)
+    })
+
+    it('should not remove a third party instrumentation added afterward when unsubscribing', () => {
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const instrumentedConsoleApi = console[api]
+      const thirdPartyInstrumentation = (...params: unknown[]) => instrumentedConsoleApi(...params)
+      console[api] = thirdPartyInstrumentation
+
+      consoleSubscription.unsubscribe()
+      console[api]('foo')
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(console[api]).toBe(thirdPartyInstrumentation)
+      expect(consoleSpy).toHaveBeenCalledWith('foo')
+      expect(notifyLog).not.toHaveBeenCalled()
+    })
+
     it('should allow multiple callers', () => {
       const notifyOtherCaller = jasmine.createSpy('notifyOtherCaller')
       // eslint-disable-next-line @typescript-eslint/unbound-method
