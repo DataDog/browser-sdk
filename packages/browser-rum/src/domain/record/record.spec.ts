@@ -1,9 +1,18 @@
-import { noop } from '@datadog/js-core/util'
-import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
+import { globalObject, noop } from '@datadog/js-core/util'
+import { DefaultPrivacyLevel, display, findLast } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { createNewEvent, collectAsyncCalls, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import { recordsPerFullSnapshot } from '../../../test'
+import {
+  createNewEvent,
+  collectAsyncCalls,
+  mockClock,
+  registerCleanupTask,
+  replaceMockable,
+  replaceMockableWithSpy,
+  startMockTelemetry,
+} from '@datadog/browser-core/test'
+import { MockWorker, recordsPerFullSnapshot } from '../../../test'
+import { createDeflateWorker, DeflateWorkerStatus, getDeflateWorkerStatus, resetDeflateWorkerState } from '../deflate'
 import type {
   AddNodeChange,
   BrowserChangeRecord,
@@ -19,6 +28,8 @@ import type { RecordAPI } from './record'
 import { record } from './record'
 import type { EmitRecordCallback } from './record.types'
 import { createChangeDecoder } from './encoding'
+import { resetCanvasWorkerWarning } from './canvas/canvasWorker'
+import { skipIfOffscreenCanvasIsNotSupported } from './canvas/canvasImage.specHelper'
 
 describe('record', () => {
   let recordApi: RecordAPI
@@ -74,22 +85,39 @@ describe('record', () => {
   })
 
   describe('canvas mutation tracking', () => {
-    it('instruments canvas drawing when canvas recording is enabled', () => {
+    const CANVAS_RECORDING_CONFIGURATION: Partial<RumConfiguration> = {
+      sessionReplayCanvasRecording: {
+        enable: true,
+        maxFramesPerSecond: 1,
+        hashingMaxDimension: 100,
+        maxImageDimension: 1000,
+        encodeQuality: 0.5,
+      },
+    }
+    let mockWorker: MockWorker
+    let createDeflateWorkerSpy: jasmine.Spy
+
+    beforeEach(() => {
+      mockWorker = new MockWorker()
+      createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).and.callFake(() => mockWorker)
+      registerCleanupTask(() => {
+        resetDeflateWorkerState()
+        resetCanvasWorkerWarning()
+      })
+    })
+
+    function isFillRectInstrumented(originalFillRect: unknown) {
+      return Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value !== originalFillRect
+    }
+
+    it('instruments canvas drawing in a canvas worker when canvas recording is enabled', () => {
+      skipIfOffscreenCanvasIsNotSupported()
       const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
 
-      startRecording({
-        sessionReplayCanvasRecording: {
-          enable: true,
-          maxFramesPerSecond: 1,
-          hashingMaxDimension: 100,
-          maxImageDimension: 1000,
-          encodeQuality: 0.5,
-        },
-      })
+      startRecording(CANVAS_RECORDING_CONFIGURATION)
 
-      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).not.toBe(
-        originalFillRect
-      )
+      expect(isFillRectInstrumented(originalFillRect)).toBe(true)
+      expect(getDeflateWorkerStatus('canvas')).toBe(DeflateWorkerStatus.Loading)
     })
 
     it('does not instrument canvas drawing when canvas recording is disabled', () => {
@@ -97,9 +125,8 @@ describe('record', () => {
 
       startRecording()
 
-      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
-        originalFillRect
-      )
+      expect(isFillRectInstrumented(originalFillRect)).toBe(false)
+      expect(createDeflateWorkerSpy).not.toHaveBeenCalled()
     })
 
     it('does not instrument canvas drawing when the maximum frame rate is zero', () => {
@@ -107,17 +134,56 @@ describe('record', () => {
 
       startRecording({
         sessionReplayCanvasRecording: {
-          enable: true,
+          ...CANVAS_RECORDING_CONFIGURATION.sessionReplayCanvasRecording!,
           maxFramesPerSecond: 0,
-          hashingMaxDimension: 100,
-          maxImageDimension: 1000,
-          encodeQuality: 0.5,
         },
       })
 
-      expect(Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value).toBe(
-        originalFillRect
+      expect(isFillRectInstrumented(originalFillRect)).toBe(false)
+      expect(createDeflateWorkerSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not record canvases when OffscreenCanvas is not supported, but keeps recording the page', async () => {
+      replaceMockable(globalObject.OffscreenCanvas, undefined as unknown as typeof OffscreenCanvas)
+      const displayWarnSpy = spyOn(display, 'warn')
+      const telemetry = startMockTelemetry()
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording(CANVAS_RECORDING_CONFIGURATION)
+      recordApi.stop()
+      startRecording(CANVAS_RECORDING_CONFIGURATION)
+
+      expect(isFillRectInstrumented(originalFillRect)).toBe(false)
+      expect(createDeflateWorkerSpy).not.toHaveBeenCalled()
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        'Session Replay canvas recording is not supported by this browser.'
       )
+      expect(await telemetry.getEvents()).toEqual([
+        jasmine.objectContaining({ message: 'Canvas recording unsupported' }),
+      ])
+      expect(getEmittedRecordCount()).toBeGreaterThan(0)
+    })
+
+    it('stops the canvas trackers when the canvas worker fails to start', () => {
+      skipIfOffscreenCanvasIsNotSupported()
+      spyOn(display, 'error')
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+      startRecording(CANVAS_RECORDING_CONFIGURATION)
+
+      mockWorker.dispatchErrorEvent()
+
+      expect(isFillRectInstrumented(originalFillRect)).toBe(false)
+    })
+
+    it('does not start the canvas trackers when the canvas worker already failed', () => {
+      skipIfOffscreenCanvasIsNotSupported()
+      spyOn(display, 'error')
+      createDeflateWorkerSpy.and.throwError(new Error('CSP'))
+      const originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
+
+      startRecording(CANVAS_RECORDING_CONFIGURATION)
+
+      expect(isFillRectInstrumented(originalFillRect)).toBe(false)
     })
   })
 

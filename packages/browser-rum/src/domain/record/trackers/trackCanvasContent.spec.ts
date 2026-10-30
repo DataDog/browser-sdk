@@ -2,6 +2,7 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
+import { bitmapPixels, skipIfOffscreenCanvasIsNotSupported } from '../canvas/canvasImage.specHelper'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { Tracker } from './tracker.types'
 import { trackCanvasContent } from './trackCanvasContent'
@@ -16,6 +17,7 @@ describe('trackCanvasContent', () => {
   let tracker: Tracker | undefined
 
   beforeEach(() => {
+    skipIfOffscreenCanvasIsNotSupported()
     canvas = document.createElement('canvas')
     context = canvas.getContext('2d')!
     markCanvasDirtySpy = jasmine.createSpy()
@@ -230,7 +232,7 @@ describe('trackCanvasContent', () => {
     await Promise.resolve()
 
     const snapshot = canvasManager.startCaptureAttempt(webGLCanvas).snapshot!
-    expect(Array.from(snapshot.source.getContext('2d')!.getImageData(0, 0, 1, 1).data)).toEqual([255, 0, 0, 255])
+    expect(bitmapPixels(snapshot.bitmap)).toEqual([255, 0, 0, 255])
   })
 
   it('does not freeze WebGL content before an inserted canvas is serialized', async () => {
