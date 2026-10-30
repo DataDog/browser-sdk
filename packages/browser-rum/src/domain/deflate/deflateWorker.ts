@@ -1,4 +1,4 @@
-import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
+import type { DeflateWorker, SdkWorkerResponse } from '@datadog/browser-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import { addTelemetryError, display } from '@datadog/browser-core'
 import { mockable, setTimeout } from '@datadog/js-core/util'
@@ -113,7 +113,7 @@ export function doStartDeflateWorker(configuration: RumConfiguration, source: st
     const { stop: removeMessageListener } = addEventListener(
       worker,
       'message',
-      ({ data }: MessageEvent<DeflateWorkerResponse>) => {
+      ({ data }: MessageEvent<SdkWorkerResponse>) => {
         if (data.type === 'errored') {
           onError(configuration, source, name, data.error, data.streamId)
         } else if (data.type === 'initialized') {
