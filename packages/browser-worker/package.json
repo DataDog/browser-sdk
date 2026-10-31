@@ -30,6 +30,6 @@
     "access": "public"
   },
   "devDependencies": {
-    "webpack": "5.112.0"
+    "webpack": "5.112.2"
   }
 }
