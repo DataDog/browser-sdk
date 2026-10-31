@@ -81,6 +81,25 @@ export function mockCookies({ filter }: { filter?: (cookie: Cookie) => boolean }
   }
 }
 
+/**
+ * Simulates an opaque-origin document (ex: a sandboxed iframe without `allow-same-origin`), where
+ * reading or writing document.cookie throws a SecurityError.
+ */
+export function mockUnreadableCookies() {
+  const throwSecurityError = () => {
+    throw new DOMException('Access is denied', 'SecurityError')
+  }
+  Object.defineProperty(document, 'cookie', {
+    get: throwSecurityError,
+    set: throwSecurityError,
+    configurable: true,
+  })
+
+  registerCleanupTask(() => {
+    delete (document as any).cookie
+  })
+}
+
 function parseSingleCookieString(cookieString: string) {
   const parts = cookieString.split(';')
   const [name, value] = parts.shift()!.split('=')
