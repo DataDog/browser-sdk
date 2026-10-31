@@ -1,5 +1,6 @@
 import { computeStackTrace } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
 import type { BrowserWindow } from '../entries/main'
 import { initDebuggerTransport, resetDebuggerTransport } from './api'
 import {
@@ -10,7 +11,7 @@ import {
   sendExceptionReplay,
   startExceptionReplay,
 } from './exceptionReplay'
-import { clearProbes } from './probes'
+import { checkGlobalSnapshotBudget, clearProbes } from './probes'
 
 const browserWindow = window as BrowserWindow
 
@@ -67,6 +68,22 @@ describe('exceptionReplay', () => {
       return outerFunction()
     } catch (e) {
       onCatch('src/outermost.ts;outermostFunction', e, undefined, {})
+      throw e
+    }
+  }
+
+  // Reading its argument advances the clock, like a capture that takes `ms` and can't be interrupted
+  function slowFunction(clock: Clock, ms: number) {
+    const args = {
+      get value() {
+        clock.tick(ms)
+        return 1
+      },
+    }
+    try {
+      throw new Error('slow')
+    } catch (e) {
+      onCatch('src/slow.ts;slowFunction', e, undefined, args)
       throw e
     }
   }
@@ -341,14 +358,12 @@ describe('exceptionReplay', () => {
     expect(reportError(error)).toBeUndefined()
   })
 
-  it('should respect the global snapshot budget', () => {
+  it('should neither use nor be limited by the snapshot budget of probes', () => {
     initTransport({ maxSnapshotsPerSecondGlobally: 1 })
     const error = catchError(() => callingFunction(1, 2))
 
-    const attributes = reportError(error)!
-
-    expect(attributes.frames.length).toBe(1)
-    expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    expect(reportError(error)!.frames.length).toBe(2)
+    expect(checkGlobalSnapshotBudget(performance.now(), true)).toBeTrue()
   })
 
   it('should not capture an exception with the same fingerprint for an hour after reporting it', () => {
@@ -394,5 +409,31 @@ describe('exceptionReplay', () => {
 
     clock.tick(1001)
     expect(reportError(catchError(typeErrorFunction))).toBeDefined()
+  })
+
+  it('should stop capturing the frames of an exception once the capture time budget is used up', () => {
+    const clock = mockClock()
+    function callingSlowFunction() {
+      try {
+        return slowFunction(clock, 30)
+      } catch (e) {
+        onCatch('src/calling-slow.ts;callingSlowFunction', e, undefined, {})
+        throw e
+      }
+    }
+
+    expect(reportError(catchError(callingSlowFunction))!.frames.length).toBe(1)
+  })
+
+  it('should pause capturing until the time spent beyond the capture time budget is made up', () => {
+    const clock = mockClock()
+    // 75 ms puts the 25 ms budget 50 ms in debt, which takes 2 s to make up
+    expect(reportError(catchError(() => slowFunction(clock, 75)))).toBeDefined()
+
+    clock.tick(1500)
+    expect(reportError(catchError(() => throwingFunction(1)))).toBeUndefined()
+
+    clock.tick(600)
+    expect(reportError(catchError(() => throwingFunction(2)))).toBeDefined()
   })
 })
