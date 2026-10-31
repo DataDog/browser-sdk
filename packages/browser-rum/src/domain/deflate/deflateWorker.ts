@@ -45,7 +45,11 @@ type DeflateWorkerState =
 export type CreateDeflateWorker = typeof createDeflateWorker
 
 export function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
-  return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([__BUILD_ENV__WORKER_STRING__])))
+  return new Worker(
+    getWorkerTrustedTypePolicy().createScriptURL(
+      configuration.workerUrl || URL.createObjectURL(new Blob([__BUILD_ENV__WORKER_STRING__]))
+    )
+  )
 }
 
 /**
@@ -169,4 +173,26 @@ function onError(configuration: RumConfiguration, source: string, name: WorkerNa
       stream_id: streamId,
     })
   }
+}
+
+// Trusted Types are not yet in TypeScript lib
+interface WindowWithTrustedTypes {
+  trustedTypes?: {
+    createPolicy(name: string, policy: TrustedTypesPolicy): TrustedTypesPolicy
+  }
+}
+
+interface TrustedTypesPolicy {
+  createScriptURL(url: string): string
+}
+
+let workerTrustedTypePolicyCache: TrustedTypesPolicy | undefined
+function getWorkerTrustedTypePolicy(): TrustedTypesPolicy {
+  if (!workerTrustedTypePolicyCache) {
+    const trustedTypes = (window as WindowWithTrustedTypes).trustedTypes
+    workerTrustedTypePolicyCache = trustedTypes
+      ? trustedTypes.createPolicy('datadog-worker', { createScriptURL: (url) => url })
+      : { createScriptURL: (url) => url }
+  }
+  return workerTrustedTypePolicyCache
 }
