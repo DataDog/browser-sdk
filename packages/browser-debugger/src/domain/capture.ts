@@ -297,7 +297,6 @@ function captureObject(
   )
 }
 
-// Slow for objects with many keys, and the deadline can't interrupt it, so call it once per object.
 function getOwnKeys(obj: object): Array<string | symbol> {
   const keys = Object.getOwnPropertyNames(obj)
   const symbolKeys = Object.getOwnPropertySymbols(obj)
