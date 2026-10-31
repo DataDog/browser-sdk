@@ -404,6 +404,23 @@ describe('capture', () => {
       expect(result.size).toBe(30)
     })
 
+    it('should list the keys of an object only once', () => {
+      const obj: any = { [Symbol('sym')]: 'value' }
+      for (let i = 0; i < 30; i++) {
+        obj[`field${i}`] = i
+      }
+      const getOwnPropertyNamesSpy = spyOn(Object, 'getOwnPropertyNames').and.callThrough()
+      const getOwnPropertySymbolsSpy = spyOn(Object, 'getOwnPropertySymbols').and.callThrough()
+
+      const result = capture(obj, { ...defaultOpts, maxFieldCount: 5 }, noTimeout()) as any
+
+      expect(getOwnPropertyNamesSpy.calls.allArgs().filter(([arg]) => arg === obj).length).toBe(1)
+      expect(getOwnPropertySymbolsSpy.calls.allArgs().filter(([arg]) => arg === obj).length).toBe(1)
+      expect(Object.keys(result.fields)).toEqual(['field0', 'field1', 'field2', 'field3', 'field4'])
+      expect(result.notCapturedReason).toBe('fieldCount')
+      expect(result.size).toBe(31)
+    })
+
     it('should handle objects with symbol keys', () => {
       if (!('description' in Symbol.prototype)) {
         pending('Symbol.description is not supported in this browser')
