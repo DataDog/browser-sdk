@@ -8,15 +8,20 @@ import { captureArguments, isDebuggerTransportInitialized, queueExceptionSnapsho
 import type { ExceptionSnapshot } from './api'
 import type { CaptureContext } from './capture'
 import { formatThrowable, formatUnknownError, safeReadErrorProperty } from './error'
-import { checkGlobalSnapshotBudget } from './probes'
 import { mapStackFrames } from './stacktrace'
 
 // Like the Java tracer, only capture the innermost frames, which are closest to the cause.
 const MAX_FRAMES_PER_EXCEPTION = 3
 
 // Exceptions are captured as they're thrown, before it's known whether they will be reported, so
-// cap the work for code that throws and catches a lot of exceptions.
+// cap the work for code that throws and catches a lot of exceptions. These limits are separate from
+// the probes' snapshot budget, so neither feature can use up the other's.
 const MAX_EXCEPTIONS_CAPTURED_PER_SECOND = 10
+
+// Capturing blocks the main thread, so also cap the time it takes. The deadline can't interrupt
+// everything, such as reading the property names of a huge object, so time spent beyond the budget
+// is carried over, and capturing pauses until the budget recovers.
+const CAPTURE_BUDGET_MS_PER_SECOND = 25
 
 // Like the tracers, report snapshots for a given exception fingerprint at most once an hour.
 const FINGERPRINT_COOLDOWN_MS = 60 * 60 * 1000
@@ -57,6 +62,8 @@ let capturedExceptions = new WeakMap<object, CapturedException | false>()
 let lastReportByFingerprint = new Map<string, number>()
 let captureWindowStart = -Infinity
 let capturesInWindow = 0
+let captureBudgetMs = CAPTURE_BUDGET_MS_PER_SECOND
+let captureBudgetUpdatedAt = -Infinity
 let pluginRegistered = false
 let debuggerStarted = false
 let isSessionTracked: () => boolean = () => true
@@ -85,6 +92,8 @@ export function resetExceptionReplay(): void {
   lastReportByFingerprint = new Map()
   captureWindowStart = -Infinity
   capturesInWindow = 0
+  captureBudgetMs = CAPTURE_BUDGET_MS_PER_SECOND
+  captureBudgetUpdatedAt = -Infinity
   pluginRegistered = false
   debuggerStarted = false
   isSessionTracked = () => true
@@ -133,8 +142,14 @@ export function onCatch(functionId: string, error: unknown, self: unknown, args:
       return
     }
 
+    const start = performance.now()
+    const budgetMs = refillCaptureBudget(start)
+    if (budgetMs <= 0) {
+      return
+    }
+
     const captureCtx: CaptureContext = {
-      deadline: performance.now() + SNAPSHOT_TIMEOUT_MS,
+      deadline: start + Math.min(SNAPSHOT_TIMEOUT_MS, budgetMs),
       timedOut: false,
       // Unlike probes, Exception Replay captures data nobody asked for, so redact sensitive names
       redact: true,
@@ -145,6 +160,8 @@ export function onCatch(functionId: string, error: unknown, self: unknown, args:
       arguments: captureArguments(args, self, {}, captureCtx),
       callStack: new Error(),
     })
+    // Charge the time actually spent, which can go past the deadline
+    captureBudgetMs -= performance.now() - start
   } catch (e) {
     monitorError(e)
   }
@@ -165,6 +182,10 @@ function startCapture(functionId: string, error: object): CapturedException | fa
     return false
   }
 
+  if (refillCaptureBudget(now) <= 0) {
+    return false
+  }
+
   if (now - captureWindowStart > 1000) {
     captureWindowStart = now
     capturesInWindow = 0
@@ -175,6 +196,16 @@ function startCapture(functionId: string, error: object): CapturedException | fa
   capturesInWindow++
 
   return { fingerprint, frames: [] }
+}
+
+// Adds the budget earned since the last update, up to one second's worth, and returns the budget
+function refillCaptureBudget(now: number): number {
+  captureBudgetMs = Math.min(
+    CAPTURE_BUDGET_MS_PER_SECOND,
+    captureBudgetMs + ((now - captureBudgetUpdatedAt) * CAPTURE_BUDGET_MS_PER_SECOND) / 1000
+  )
+  captureBudgetUpdatedAt = now
+  return captureBudgetMs
 }
 
 /**
@@ -251,10 +282,6 @@ function prepareSnapshots(error: object, exception: CapturedException): Exceptio
     const index = findFrameIndex(errorFrames, callFrames, fromIndex)
     if (index === undefined) {
       continue
-    }
-
-    if (!checkGlobalSnapshotBudget(performance.now(), true)) {
-      break
     }
 
     const snapshotId = generateUUID()
