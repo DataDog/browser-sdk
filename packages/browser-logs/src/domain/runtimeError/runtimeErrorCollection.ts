@@ -1,8 +1,9 @@
+import { monitor } from '@datadog/js-core/monitor'
 import type { ClocksState } from '@datadog/js-core/time'
 import { combine, noop } from '@datadog/js-core/util'
 import type { BufferedData } from '@datadog/browser-core'
 import type { Observable, Context } from '@datadog/js-core/util'
-import { ErrorSource, BufferedDataType } from '@datadog/browser-core'
+import { computeRuntimeError, ErrorSource, BufferedDataType } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -25,24 +26,26 @@ export function startRuntimeErrorCollection(
     return { stop: noop }
   }
 
-  const rawErrorSubscription = bufferedDataObservable.subscribe((bufferedData) => {
-    if (bufferedData.type === BufferedDataType.RUNTIME_ERROR) {
-      const error = bufferedData.data
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: combine(
-          {
-            message: error.message,
-            date: error.startClocks.timeStamp,
-            error: createErrorFieldFromRawError(error),
-            _dd: { debug_ids: error.debugIds },
-            origin: ErrorSource.SOURCE,
-            status: StatusType.error,
-          },
-          error.context
-        ),
-      })
-    }
-  })
+  const rawErrorSubscription = bufferedDataObservable.subscribe(
+    monitor((bufferedData) => {
+      if (bufferedData.type === BufferedDataType.RUNTIME_ERROR) {
+        const error = computeRuntimeError(bufferedData.data)
+        lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+          rawLogsEvent: combine(
+            {
+              message: error.message,
+              date: error.startClocks.timeStamp,
+              error: createErrorFieldFromRawError(error),
+              _dd: { debug_ids: error.debugIds },
+              origin: ErrorSource.SOURCE,
+              status: StatusType.error,
+            },
+            error.context
+          ),
+        })
+      }
+    })
+  )
 
   return {
     stop: () => {

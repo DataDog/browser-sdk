@@ -3,6 +3,7 @@ import { clocksNow } from '@datadog/js-core/time'
 import { normalizeUrl, globalObject, Observable } from '@datadog/js-core/util'
 import type { GlobalObject } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
+import { createHandlingStack } from '../tools/stackTrace/handlingStack'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { readBytesFromStream } from '../tools/readBytesFromStream'
@@ -71,7 +72,7 @@ function createFetchObservable() {
     }
 
     const { stop } = instrumentMethod(globalObject, 'fetch', (call) => beforeSend(call, observable), {
-      computeHandlingStack: true,
+      computeHandlingStack: createHandlingStack,
     })
 
     return stop

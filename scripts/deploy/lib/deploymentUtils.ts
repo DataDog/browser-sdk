@@ -7,6 +7,7 @@ export const packages: Package[] = [
   { packageName: 'browser-logs', service: 'browser-logs-sdk' },
   { packageName: 'browser-rum', service: 'browser-rum-sdk' },
   { packageName: 'browser-rum-slim', service: 'browser-rum-sdk' },
+  { packageName: 'browser-rum-buffer', service: 'browser-rum-sdk' },
   { packageName: 'browser-debugger', service: 'browser-debugger-sdk' },
   { packageName: 'browser-rum-shopify', service: 'browser-rum-sdk' },
 ]

@@ -1,6 +1,7 @@
 import { stopMonitorErrorCollection } from '@datadog/js-core/monitor'
 import { setDebugMode } from '@datadog/js-core/util'
 import { resetAllowUntrustedEvents } from '@datadog/js-core/dom'
+import { resetRumBuffer } from '../../browser-rum-buffer/test/cleanup'
 import { resetManageResourceTimingBufferFull } from '../../browser-rum-core/src/browser/performanceObservable'
 import { resetWebSocketObservable } from '../../browser-rum-core/src/browser/webSocketObservable'
 import { resetExperimentalFeatures } from '../src/tools/experimentalFeatures'
@@ -13,10 +14,12 @@ import { resetReplayStats } from '../../browser-rum/src/domain/replayStats'
 import { resetInteractionCountPolyfill } from '../../browser-rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
 import { resetTelemetry } from '../src/domain/telemetry'
 import { resetSampleDecisionCache } from '../src/domain/sampler'
+import { registerCleanupTask } from './registerCleanupTask'
 import { startLeakDetection } from './leakDetection'
 ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(() => {
+  registerCleanupTask(resetRumBuffer)
   // prevent 'Some of your tests did a full page reload!' issue
   window.onbeforeunload = () => 'stop'
   startLeakDetection()

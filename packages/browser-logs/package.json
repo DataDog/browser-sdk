@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
+    "@datadog/browser-rum-buffer": "workspace:*",
     "@datadog/js-core": "workspace:*"
   },
   "peerDependencies": {
