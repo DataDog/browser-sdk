@@ -6036,7 +6036,7 @@ __metadata:
     eslint-plugin-import-x: "npm:4.17.1"
     eslint-plugin-jasmine: "npm:4.2.2"
     eslint-plugin-jsdoc: "npm:65.3.15"
-    eslint-plugin-unicorn: "npm:78.0.0"
+    eslint-plugin-unicorn: "npm:79.0.0"
     express: "npm:5.3.0"
     globals: "npm:17.13.0"
     html-webpack-plugin: "npm:5.6.8"
@@ -7971,9 +7971,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-unicorn@npm:78.0.0":
-  version: 78.0.0
-  resolution: "eslint-plugin-unicorn@npm:78.0.0"
+"eslint-plugin-unicorn@npm:79.0.0":
+  version: 79.0.0
+  resolution: "eslint-plugin-unicorn@npm:79.0.0"
   dependencies:
     "@eslint-community/eslint-utils": "npm:^4.10.1"
     "@eslint/css-tree": "npm:^4.1.1"
@@ -8003,7 +8003,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/9d9fd5f73b2b7b8816e3cf886d81086512550fb989fa22d8cf25201ca8f36270190ce3826a2430dbaa45ea45e6e1de965b697d7b32d9900b9cf71ca2b376e6f9
+  checksum: 10c0/0500ca6e90d38e8fa0285ac08b12e2e6dbb5a416645dd31b6f62e64a80651e6ee4c939f30dd69275f316e4c722ced39d49d14d36177f9d4778853bd7cd797885
   languageName: node
   linkType: hard
 
