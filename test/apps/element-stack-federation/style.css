@@ -1,0 +1,166 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #f3f5fa;
+  color: #202438;
+  font:
+    15px/1.55 system-ui,
+    sans-serif;
+}
+header,
+main {
+  max-width: 1440px;
+  margin: auto;
+  padding: 32px;
+}
+header {
+  padding-bottom: 18px;
+}
+h1 {
+  font-size: clamp(28px, 3.2vw, 44px);
+  letter-spacing: -1.5px;
+  margin: 8px 0;
+}
+h2 {
+  font-size: 19px;
+  margin: 8px 0;
+}
+p {
+  color: #606779;
+  margin: 8px 0;
+}
+.eyebrow,
+.badge {
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 1.5px;
+  color: #6650a4;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+article,
+.results {
+  background: white;
+  border: 1px solid #e0e4ee;
+  border-radius: 14px;
+  padding: 24px;
+}
+article {
+  border-top: 4px solid #735bcc;
+}
+.vue {
+  border-top-color: #229c74;
+}
+.angular {
+  border-top-color: #d04870;
+}
+.remote-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.remote-heading button {
+  font-size: 12px;
+  padding: 6px 9px;
+  background: #f3f5fa;
+  color: #434a60;
+}
+.status {
+  font-size: 12px;
+  color: #16825b;
+}
+article section,
+api-boundary,
+property-boundary {
+  display: block;
+  border-top: 1px solid #edf0f5;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+article section h2,
+api-boundary h2,
+property-boundary h2 {
+  font-size: 15px;
+}
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 7px;
+  padding: 9px 14px;
+  background: #5a43a3;
+  color: white;
+  font: inherit;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+button:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+output {
+  display: inline-block;
+  padding: 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+.shell-action {
+  display: flex;
+  align-items: center;
+  margin-top: 22px;
+  gap: 10px;
+}
+.shell-action span {
+  color: #6f7486;
+  font-size: 13px;
+}
+.results {
+  margin-top: 24px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  text-align: left;
+}
+th {
+  color: #7d8191;
+  font-size: 12px;
+}
+td,
+th {
+  border-bottom: 1px solid #edf0f5;
+  padding: 12px 8px;
+}
+pre {
+  background: #f6f7fb;
+  padding: 18px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+summary {
+  cursor: pointer;
+  color: #6650a4;
+}
+.note {
+  margin: 22px 0;
+  font-size: 12px;
+}
+a {
+  color: #5a43a3;
+}
+@media (max-width: 1000px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  header,
+  main {
+    padding: 20px;
+  }
+}

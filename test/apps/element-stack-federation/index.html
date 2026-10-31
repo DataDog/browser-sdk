@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Federated click attribution</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/prototype-sdk.js"></script>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">BROWSER SDK · MODULE FEDERATION</p>
+      <h1>Three frameworks. One RUM instance.</h1>
+      <p>Each remote owns its click boundary. Service and version come from real build-plugin instrumentation.</p>
+      <div class="shell-action">
+        <button id="shell-click">Shell click</button><output id="shell-count">0</output><span>mfe-shell · 0.1.0</span>
+      </div>
+    </header>
+    <main>
+      <div class="grid">
+        <article class="react">
+          <div class="remote-heading">
+            <div>
+              <span class="badge">REMOTE 01</span>
+              <h2>React</h2>
+              <p>checkout-react · 1.1.0 · :3111</p>
+            </div>
+            <button id="react-toggle" disabled>Unmount</button>
+          </div>
+          <p class="status" id="react-status">Loading…</p>
+          <div id="react-container"></div>
+        </article>
+        <article class="vue">
+          <div class="remote-heading">
+            <div>
+              <span class="badge">REMOTE 02</span>
+              <h2>Vue</h2>
+              <p>catalog-vue · 2.2.0 · :3112</p>
+            </div>
+            <button id="vue-toggle" disabled>Unmount</button>
+          </div>
+          <p class="status" id="vue-status">Loading…</p>
+          <div id="vue-container"></div>
+        </article>
+        <article class="angular">
+          <div class="remote-heading">
+            <div>
+              <span class="badge">REMOTE 03</span>
+              <h2>Angular</h2>
+              <p>account-angular · 3.3.0 · :3113</p>
+            </div>
+            <button id="angular-toggle" disabled>Unmount</button>
+          </div>
+          <p class="status" id="angular-status">Loading…</p>
+          <div id="angular-container"></div>
+        </article>
+      </div>
+      <section class="results">
+        <h2>Click attribution</h2>
+        <p>
+          Click any button in a remote, then compare with a shell click. Events are displayed locally and dropped in
+          <code>beforeSend</code>.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Service</th>
+              <th>Version</th>
+              <th>Registration</th>
+            </tr>
+          </thead>
+          <tbody id="event-rows"></tbody>
+        </table>
+        <details>
+          <summary>Inspect captured stacks</summary>
+          <pre id="events">[]</pre>
+        </details>
+      </section>
+    </main>
+    <script src="/main.js"></script>
+  </body>
+</html>

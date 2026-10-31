@@ -24,6 +24,8 @@ export interface RumViewEventDomainContext {
 }
 
 export interface RumActionEventDomainContext {
+  /** Stack captured when the closest MFE DOM boundary was registered. */
+  elementStack?: string
   events?: Event[]
   handlingStack?: string
 }

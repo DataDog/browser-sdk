@@ -12,6 +12,7 @@ export function createHandlingStack(
   type:
     | 'console error'
     | 'action'
+    | 'element'
     | 'error'
     | 'instrumented method'
     | 'instrumented constructor'
