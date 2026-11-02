@@ -11,7 +11,7 @@ import {
 import type { Duration } from '@datadog/js-core/time'
 import { deepClone } from '@datadog/js-core/util'
 
-import { BridgeCapability, createIdentityEncoder, createValueHistory } from '@datadog/browser-core'
+import { BridgeCapability, createValueHistory } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import {
   LifeCycle,
@@ -34,6 +34,7 @@ import {
   LOW_HASH_UUID,
   mockSourceCodeContext,
 } from '@datadog/browser-core/test'
+import { createIdentityEncoder } from '@datadog/js-core/transport'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'

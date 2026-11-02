@@ -1,5 +1,5 @@
 import type { BufferedData } from '@datadog/browser-core'
-import { ErrorSource, display, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
+import { ErrorSource, display } from '@datadog/browser-core'
 import { BufferedObservable } from '@datadog/js-core/util'
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
@@ -15,6 +15,7 @@ import {
   FAKE_REPORT,
 } from '@datadog/browser-core/test'
 
+import { FLUSH_DURATION_LIMIT } from '@datadog/js-core/transport'
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { Logger } from '../domain/logger'

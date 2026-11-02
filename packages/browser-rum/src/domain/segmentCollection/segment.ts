@@ -1,5 +1,5 @@
-import type { Encoder, EncoderResult } from '@datadog/browser-core'
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
+import type { Encoder, EncoderResult } from '@datadog/js-core/transport'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'

@@ -1,4 +1,4 @@
-import { addExperimentalFeatures, ExperimentalFeature, PageExitReason } from '@datadog/browser-core'
+import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
 import { resetAllowUntrustedEvents, setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import {
   createMockWebSocket,
@@ -11,6 +11,7 @@ import {
 import type { Duration } from '@datadog/js-core/time'
 import { clocksNow, ONE_HOUR, ONE_MINUTE, toServerDuration } from '@datadog/js-core/time'
 import { globalObject, noop } from '@datadog/js-core/util'
+import { PageExitReason } from '@datadog/js-core/transport'
 import { mockRumConfiguration } from '../../../test'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import type { RumWebSocketVitalEventDomainContext } from '../../domainContext.types'

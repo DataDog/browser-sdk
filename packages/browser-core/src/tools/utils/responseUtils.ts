@@ -1,7 +1,3 @@
-export function isServerError(status: number) {
-  return status >= 500
-}
-
 export function tryToClone(response: Response): Response | undefined {
   try {
     return response.clone()

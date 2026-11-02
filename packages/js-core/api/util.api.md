@@ -193,6 +193,9 @@ export function isMatchOption(value: unknown): value is string | RegExp | ((valu
 export function isPercentage(value: unknown): value is number;
 
 // @public
+export function isServerError(status: number): boolean;
+
+// @public
 export function isValidUrl(url: string): boolean;
 
 // @public

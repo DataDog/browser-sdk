@@ -2,12 +2,13 @@ import { globalObject, mockable, clearTimeout, setTimeout } from '@datadog/js-co
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import type { Profiler } from '@datadog/js-core/util'
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
-import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
+import type { SessionManager, DeflateEncoderStreamId } from '@datadog/browser-core'
 import { canUseEventBridge, display, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
 
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { Encoder } from '@datadog/js-core/transport'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,

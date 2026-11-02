@@ -11,7 +11,6 @@ import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js
 import type { Subscription, Context, ContextValue } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import {
-  PageExitReason,
   shallowClone,
   display,
   createContextManager,
@@ -28,6 +27,7 @@ import {
   generateUUID,
   throttle,
 } from '@datadog/js-core/util'
+import { PageExitReason } from '@datadog/js-core/transport'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

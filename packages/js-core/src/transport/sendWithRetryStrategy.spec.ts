@@ -1,6 +1,8 @@
-import { ONE_MEBI_BYTE, Observable } from '@datadog/js-core/util'
-import { mockClock, setNavigatorOnLine } from '../../test'
-import type { Clock } from '../../test'
+import { mockClock, setNavigatorOnLine } from '../../../browser-core/test'
+import type { Clock } from '../../../browser-core/test'
+import { ONE_MEBI_BYTE } from '../util/byteUtils'
+import { Observable } from '../util/observable'
+import type { Payload, HttpResponse, HttpRequestEvent } from './payload'
 import type { RetryState } from './sendWithRetryStrategy'
 import {
   newRetryState,
@@ -10,7 +12,6 @@ import {
   MAX_QUEUE_BYTES_COUNT,
   INITIAL_BACKOFF_TIME,
 } from './sendWithRetryStrategy'
-import type { Payload, HttpResponse, HttpRequestEvent } from './httpRequest'
 
 describe('sendWithRetryStrategy', () => {
   const ENDPOINT_TYPE = 'logs'

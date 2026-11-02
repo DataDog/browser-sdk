@@ -1,19 +1,7 @@
 import { globalObject, Observable } from '@datadog/js-core/util'
 import { addEventListeners, addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
-import { objectValues } from '../tools/utils/polyfills'
-
-export const PageExitReason = {
-  HIDDEN: 'visibility_hidden',
-  UNLOADING: 'before_unload',
-  PAGE_TERMINATED: 'page_terminated',
-  FROZEN: 'page_frozen',
-} as const
-
-export type PageExitReason = (typeof PageExitReason)[keyof typeof PageExitReason]
-
-export interface PageMayExitEvent {
-  reason: PageExitReason
-}
+import { PageExitReason } from '@datadog/js-core/transport'
+import type { PageMayExitEvent } from '@datadog/js-core/transport'
 
 export function createPageMayExitObservable(): Observable<PageMayExitEvent> {
   return new Observable<PageMayExitEvent>((observable) => {
@@ -64,8 +52,4 @@ export function createPageMayExitObservable(): Observable<PageMayExitEvent> {
       stopPageHideListener()
     }
   })
-}
-
-export function isPageExitReason(reason: string): reason is PageExitReason {
-  return objectValues(PageExitReason).includes(reason as PageExitReason)
 }

@@ -3,11 +3,11 @@ import type {
   DeflateEncoder,
   DeflateEncoderStreamId,
   DeflateWorker,
-  EncoderResult,
 } from '@datadog/browser-core'
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import { concatBuffers } from '@datadog/js-core/util'
 import { addEventListener } from '@datadog/js-core/dom'
+import type { EncoderResult } from '@datadog/js-core/transport'
 
 export function createDeflateEncoder(worker: DeflateWorker, streamId: DeflateEncoderStreamId): DeflateEncoder {
   let rawBytesCount = 0
