@@ -1,7 +1,7 @@
 import { isWorkerEnvironment, mockable, BufferedObservable, noop } from '@datadog/js-core/util'
 import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
-import { monitorError } from '@datadog/js-core/monitor'
+import { callMonitored, monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager, InitContext } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
@@ -26,6 +26,7 @@ import {
   startTelemetrySessionContext,
   addTelemetryDebug,
   isAllowedTrackingOrigins,
+  isThenable,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -40,7 +41,8 @@ import {
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
-import { callPluginsOnInit } from '../domain/plugins'
+import type { RumPlugin, RumPluginOnInitOptions } from '../domain/plugins'
+import { callPluginsOnInit, callPluginsOnRumStart } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -84,6 +86,10 @@ export function createPreStartStrategy(
   let sessionManager: SessionManager | undefined
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
+
+  // Set when init() calls the plugins' onInit. Plugins added before that wait for it.
+  let pluginOnInitOptions: RumPluginOnInitOptions | undefined
+  const pluginsAddedBeforeInit: RumPlugin[] = []
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
@@ -223,6 +229,22 @@ export function createPreStartStrategy(
     })
   }
 
+  function startAddedPlugin(plugin: RumPlugin, onInitOptions: RumPluginOnInitOptions) {
+    // init() has already called the other plugins, so this one can't abort it: ignore what onInit
+    // returns. Its errors are reported, so they can't stop init() or the other plugins.
+    const onInitResult = callMonitored(() => plugin.onInit?.(onInitOptions))
+    if (isThenable(onInitResult)) {
+      onInitResult.then(noop, monitorError)
+    }
+
+    // Called once RUM starts, or right away if it has already started
+    bufferApiCalls.notify((startRumResult) =>
+      callMonitored(() =>
+        callPluginsOnRumStart([plugin], { addEvent: startRumResult.addEvent, addError: startRumResult.addError })
+      )
+    )
+  }
+
   const addOperationStepVital = (
     name: string,
     stepType: 'start' | 'end',
@@ -260,11 +282,16 @@ export function createPreStartStrategy(
         return
       }
 
-      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, {
+      pluginOnInitOptions = {
         initConfiguration,
         publicApi,
         registerAssembleEventHook: hooks.assembleEvent.register,
-      })
+      }
+      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, pluginOnInitOptions)
+
+      for (const plugin of pluginsAddedBeforeInit.splice(0)) {
+        startAddedPlugin(plugin, pluginOnInitOptions)
+      }
 
       if (typeof shouldContinue === 'boolean') {
         if (shouldContinue) {
@@ -316,6 +343,14 @@ export function createPreStartStrategy(
 
     get initConfiguration() {
       return cachedInitConfiguration
+    },
+
+    addPlugin(plugin) {
+      if (pluginOnInitOptions) {
+        startAddedPlugin(plugin, pluginOnInitOptions)
+      } else {
+        pluginsAddedBeforeInit.push(plugin)
+      }
     },
 
     getInternalContext: noop as () => undefined,

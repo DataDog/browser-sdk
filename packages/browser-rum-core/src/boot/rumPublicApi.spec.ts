@@ -156,6 +156,32 @@ describe('rum public api', () => {
     })
   })
 
+  describe('addPlugin', () => {
+    it('starts a plugin added after init()', async () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.addPlugin(plugin)
+
+      expect(plugin.onInit).toHaveBeenCalledOnceWith(jasmine.objectContaining({ publicApi: rumPublicApi }))
+      await collectAsyncCalls(plugin.onRumStart, 1)
+      expect(plugin.onRumStart).toHaveBeenCalledOnceWith(jasmine.objectContaining({ addError: jasmine.any(Function) }))
+    })
+
+    it('starts a plugin added after RUM has started', async () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      rumPublicApi.addPlugin(plugin)
+
+      expect(plugin.onInit).toHaveBeenCalledTimes(1)
+      await collectAsyncCalls(plugin.onRumStart, 1)
+    })
+  })
+
   describe('addAction', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let rumPublicApi: RumPublicApi
