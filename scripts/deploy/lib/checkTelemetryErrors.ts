@@ -29,7 +29,7 @@ function createTelemetryAgent(): Agent {
 
 function getQueries(datacenters: string[], version: string): Query[] {
   // Errors tagged as known issues by the telemetry pipeline are not considered.
-  const query = `@ddsource:browser status:error @version:${version} @datacenter:(${datacenters.join(' OR ')}) -@known_issue_status:*`
+  const query = `source:browser status:error version:${version}@datacenter:(${datacenters.join(' OR ')}) -@known_issue_status:*`
 
   // Thresholds apply per datacenter, so every query is grouped by datacenter first.
   return [
