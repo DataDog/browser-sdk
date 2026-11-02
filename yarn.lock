@@ -6126,7 +6126,7 @@ __metadata:
     karma-spec-reporter: "npm:0.0.37"
     karma-webpack: "npm:5.0.0"
     minimatch: "npm:10.2.6"
-    node-forge: "npm:1.4.0"
+    node-forge: "npm:1.4.1"
     prettier: "npm:3.9.10"
     puppeteer: "npm:25.16.0"
     swc-loader: "npm:0.2.7"
@@ -12040,10 +12040,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-forge@npm:1.4.0":
-  version: 1.4.0
-  resolution: "node-forge@npm:1.4.0"
-  checksum: 10c0/67330a5f1f95257a4c8a93b7d555abe87b5f15e350123aa396c97a21a8ca94f9c6549008eb2c73668a91e0d7e3a905785acbd8f8bd0751c29401292011f8f8e1
+"node-forge@npm:1.4.1":
+  version: 1.4.1
+  resolution: "node-forge@npm:1.4.1"
+  checksum: 10c0/1938a0355fe863bc577fde6f59458c1e0e66ba0aedf56cde7fef7dba7f43227e8770941d4e50d42a5bced7d7965564e9b0230b8b064d9a9efb70d0c6830cd777
   languageName: node
   linkType: hard
 
