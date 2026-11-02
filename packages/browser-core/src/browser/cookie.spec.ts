@@ -1,5 +1,5 @@
-import { mockBaseConfiguration, mockCookies } from '../../test'
-import { buildCookieOptions, getCurrentSite } from './cookie'
+import { mockBaseConfiguration, mockCookies, mockUnreadableCookies, registerCleanupTask } from '../../test'
+import { buildCookieOptions, getCookie, getCookies, getCurrentSite, getInitCookie, resetInitCookies } from './cookie'
 
 describe('cookie', () => {
   describe('getCurrentSite', () => {
@@ -36,6 +36,11 @@ describe('cookie', () => {
       expect(getCurrentSite('', '')).toBeUndefined()
     })
 
+    it('returns undefined when document.cookie is not accessible', () => {
+      mockUnreadableCookies()
+      expect(getCurrentSite('example.com')).toBeUndefined()
+    })
+
     it('caches the result', () => {
       const { setter } = mockCookies()
 
@@ -45,6 +50,26 @@ describe('cookie', () => {
       expect(getCurrentSite('example.com')).toBe('example.com')
       expect(setter).toHaveBeenCalledTimes(2)
     })
+  })
+})
+
+describe('getInitCookie', () => {
+  beforeEach(() => {
+    resetInitCookies()
+    registerCleanupTask(resetInitCookies)
+  })
+
+  it('returns undefined when document.cookie is not accessible', () => {
+    mockUnreadableCookies()
+    expect(getInitCookie('foo')).toBeUndefined()
+  })
+})
+
+describe('getCookie and getCookies', () => {
+  it('return no value when document.cookie is not accessible', () => {
+    mockUnreadableCookies()
+    expect(getCookie('foo')).toBeUndefined()
+    expect(getCookies('foo')).toEqual([])
   })
 })
 
