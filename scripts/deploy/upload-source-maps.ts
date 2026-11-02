@@ -91,8 +91,9 @@ const ORG2_CLOUDFRONT_BASE_URL = 'https://d20xtzwzcl0ceb.cloudfront.net'
 function uploadToOrg2(packageName: string, service: string, prefix: string, bundleFolder: string): void {
   const apiKey = getOrg2ApiKey()
 
-  // A root-relative prefix matches the files on any domain (CDN, CloudFront). The CloudFront URL prefix is kept for
-  // profiling (PROF-13923), whose source map matching may rely on the full URL.
+  // Upload with both prefixes: the root-relative one matches stack frames from the CDN
+  // (www.datadoghq-browser-agent.com/<dc>/v7/...), and the CloudFront one matches canary deployments, which load the
+  // SDK from CloudFront URLs.
   const org2Prefixes = [prefix, `${ORG2_CLOUDFRONT_BASE_URL}${prefix === '/' ? '' : prefix}`]
 
   for (const org2Prefix of org2Prefixes) {
