@@ -29,6 +29,7 @@ import type { RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
+import type { AssembleHookParams } from '../domain/hooks'
 import type { ManualAction } from '../domain/action/trackManualActions'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
@@ -688,6 +689,106 @@ describe('preStartRum', () => {
 
         expect(doStartRumSpy).not.toHaveBeenCalled()
       })
+    })
+  })
+
+  describe('addPlugin', () => {
+    it('calls onInit with the options given to the init plugins', () => {
+      const initPlugin = { name: 'init', onInit: jasmine.createSpy() }
+      const addedPlugin = { name: 'added', onInit: jasmine.createSpy() }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [initPlugin] }, PUBLIC_API)
+      strategy.addPlugin(addedPlugin)
+
+      expect(addedPlugin.onInit).toHaveBeenCalledOnceWith(initPlugin.onInit.calls.mostRecent().args[0])
+    })
+
+    it('waits for init() when the plugin is added before it', () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.addPlugin(plugin)
+      expect(plugin.onInit).not.toHaveBeenCalled()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(plugin.onInit).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not let the plugin abort the initialization', async () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.addPlugin({ name: 'a', onInit: () => false })
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+
+      expect(doStartRumSpy).toHaveBeenCalled()
+    })
+
+    it('starts RUM when the onInit of a plugin added before init() throws or rejects', async () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.addPlugin({
+        name: 'a',
+        onInit: () => {
+          throw new Error('boom')
+        },
+      })
+      strategy.addPlugin({ name: 'b', onInit: () => Promise.reject(new Error('boom')) })
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+
+      expect(doStartRumSpy).toHaveBeenCalled()
+    })
+
+    it('calls onRumStart once RUM starts', async () => {
+      const plugin = { name: 'a', onRumStart: jasmine.createSpy() }
+      const startRumResult = { addEvent: noop, addError: noop } as unknown as StartRumResult
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue(startRumResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      strategy.addPlugin(plugin)
+      expect(plugin.onRumStart).not.toHaveBeenCalled()
+
+      await collectAsyncCalls(plugin.onRumStart, 1)
+      expect(doStartRumSpy).toHaveBeenCalled()
+      expect(plugin.onRumStart).toHaveBeenCalledOnceWith({
+        addEvent: startRumResult.addEvent,
+        addError: startRumResult.addError,
+      })
+    })
+
+    it('starts the plugin when RUM has already started', async () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue({} as StartRumResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+      strategy.addPlugin(plugin)
+
+      expect(plugin.onInit).toHaveBeenCalledTimes(1)
+      await collectAsyncCalls(plugin.onRumStart, 1)
+    })
+
+    it('registers assemble hooks on the hooks RUM uses', async () => {
+      const assembleCallback = jasmine.createSpy()
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue({} as StartRumResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+      strategy.addPlugin({
+        name: 'a',
+        onInit: ({ registerAssembleEventHook }) => {
+          registerAssembleEventHook(assembleCallback)
+        },
+      })
+
+      const hooks = doStartRumSpy.calls.mostRecent().args[5]
+      hooks.assembleEvent.trigger({ eventType: 'error' } as AssembleHookParams)
+      expect(assembleCallback).toHaveBeenCalledTimes(1)
     })
   })
 
