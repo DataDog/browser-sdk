@@ -143,7 +143,7 @@ describe('check-telemetry-errors', () => {
       assert.deepEqual(body.filter.indexes, ['rum-sdk-telemetry-logs'])
       assert.strictEqual(
         body.filter.query,
-        'source:browser status:error version:6.2.1@datacenter:(us1 OR eu1) -@known_issue_status:*'
+        'source:browser status:error version:6.2.1 @datacenter:(us1 OR eu1) -@known_issue_status:*'
       )
     }
     assert.deepEqual(
