@@ -13,7 +13,7 @@ import {
   createFakeTelemetryObject,
   createSessionManagerMock,
 } from '@datadog/browser-core/test'
-import { mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
+import { mockRumConfiguration, noopEarlyWebSocketCollection, noopProfilerApi, noopRecorderApi } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
@@ -46,6 +46,7 @@ function startRumStub(
     noopRecorderApi,
     undefined,
     new Observable(),
+    noopEarlyWebSocketCollection,
     undefined,
     reportError
   )
@@ -70,6 +71,7 @@ describe('session expiration lifecycle', () => {
       undefined,
       createIdentityEncoder,
       new BufferedObservable<BufferedData>(100),
+      noopEarlyWebSocketCollection,
       createFakeTelemetryObject(),
       createHooks()
     )
@@ -183,6 +185,7 @@ describe('view events', () => {
       undefined,
       createIdentityEncoder,
       new BufferedObservable<BufferedData>(100),
+      noopEarlyWebSocketCollection,
       createFakeTelemetryObject(),
       createHooks(),
       'rum'
