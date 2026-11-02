@@ -111,7 +111,7 @@
     "rolldown": "1.2.15"
   },
   "volta": {
-    "node": "26.12.1",
+    "node": "26.12.0",
     "yarn": "4.18.1"
   },
   "packageManager": "yarn@4.18.1"
