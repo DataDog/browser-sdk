@@ -30,7 +30,7 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
  * If there are multiple cookies with the same name, returns the first one
  */
 export function getCookie(name: string) {
-  const value = findCommaSeparatedValue(document.cookie, name)
+  const value = findCommaSeparatedValue(readDocumentCookie(), name)
 
   if (value === '') {
     return
@@ -43,7 +43,7 @@ export function getCookie(name: string) {
  * Returns all the values of the cookies with the given name
  */
 export function getCookies(name: string): string[] {
-  return findAllCommaSeparatedValues(document.cookie).get(name) || []
+  return findAllCommaSeparatedValues(readDocumentCookie()).get(name) || []
 }
 
 let initCookieParsed: Map<string, string> | undefined
@@ -56,9 +56,21 @@ let initCookieParsed: Map<string, string> | undefined
  */
 export function getInitCookie(name: string) {
   if (!initCookieParsed) {
-    initCookieParsed = findCommaSeparatedValues(document.cookie)
+    initCookieParsed = findCommaSeparatedValues(readDocumentCookie())
   }
   return initCookieParsed.get(name)
+}
+
+/**
+ * Accessing document.cookie throws a SecurityError in opaque-origin documents (ex: sandboxed iframes
+ * without `allow-same-origin`). Treat them as having no cookies.
+ */
+function readDocumentCookie(): string {
+  try {
+    return document.cookie
+  } catch {
+    return ''
+  }
 }
 
 export function resetInitCookies() {
@@ -93,11 +105,16 @@ export function getCurrentSite(
 
       const domainLevels = defaultHostName.split('.')
       let candidateDomain = domainLevels.pop()!
-      while (domainLevels.length && !getCookie(testCookieName)) {
-        candidateDomain = `${domainLevels.pop()!}.${candidateDomain}`
-        setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+      try {
+        while (domainLevels.length && !getCookie(testCookieName)) {
+          candidateDomain = `${domainLevels.pop()!}.${candidateDomain}`
+          setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+        }
+        deleteCookie(testCookieName, { domain: candidateDomain })
+      } catch {
+        // Writing document.cookie throws a SecurityError in opaque-origin documents
+        return undefined
       }
-      deleteCookie(testCookieName, { domain: candidateDomain })
       getCurrentSiteCache = candidateDomain
     }
   }
