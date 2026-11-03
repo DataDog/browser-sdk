@@ -260,7 +260,7 @@ e2e:
     - yarn build:apps
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
-    # Shopify is excluded here: it runs on a schedule or manually (see e2e-shopify)
+    # Shopify is excluded here: it only runs on a schedule (see e2e-shopify-scheduled)
     - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER --grep-invert "shopify"
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
@@ -659,13 +659,17 @@ api-performance-benchmark:
     - node ./scripts/api-performance/index.ts
 
 ########################################################################################################################
-# Shopify e2e (scheduled or manual, against a live external store)
+# Shopify e2e (scheduled, against a live external store)
 ########################################################################################################################
 
-.e2e-shopify:
+e2e-shopify-scheduled:
+  stage: task
   extends:
     - .base-configuration
     - .resource-allocation-4-cpus
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "e2e-shopify-scheduled"
   artifacts:
     when: always
     reports:
@@ -677,24 +681,6 @@ api-performance-benchmark:
     - FORCE_COLOR=1 PW_BROWSER=chromium yarn test:e2e --project=chromium -g "shopify"
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
-
-e2e-shopify-scheduled:
-  extends: .e2e-shopify
-  stage: task
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "e2e-shopify-scheduled"
-
-# Optional on any branch pipeline: hits the live store, so it's not part of the default e2e run.
-e2e-shopify:
-  extends:
-    - .e2e-shopify
-    - .test-allowed-branches
-  stage: test
-  needs: []
-  when: manual
-  allow_failure: true
-  interruptible: true
 
 e2e-shopify-scheduled-failure:
   extends: .prepare_notification
