@@ -848,6 +848,21 @@ describe('capture redaction', () => {
     ])
   })
 
+  it('should redact the values of fields and map entries with sensitive symbol keys', () => {
+    const passwordKey = Symbol('password')
+    const tokenKey = Symbol('token')
+
+    expect(
+      captureFields({ [passwordKey]: 'hunter2', [Symbol('name')]: 'alice' }, defaultOpts, redactingContext())
+    ).toEqual({
+      password: { type: 'string', notCapturedReason: 'redactedIdent' },
+      name: { type: 'string', value: 'alice' },
+    })
+    expect(capture(new Map([[tokenKey, 'abc']]), defaultOpts, redactingContext()).entries).toEqual([
+      [jasmine.objectContaining({ type: 'symbol' }), { type: 'string', notCapturedReason: 'redactedIdent' }],
+    ])
+  })
+
   it('should not read a redacted field twice', () => {
     const getter = jasmine.createSpy('getter').and.returnValue('hunter2')
     const obj = {}

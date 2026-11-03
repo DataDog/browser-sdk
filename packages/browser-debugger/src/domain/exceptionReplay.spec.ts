@@ -254,6 +254,72 @@ describe('exceptionReplay', () => {
     expect(attributes.frames[0].index).toBe(0)
   })
 
+  it('should capture an async function awaiting a callee that throws before its first await', async () => {
+    async function asyncCallee(value: number) {
+      try {
+        if (value > 0) {
+          throw new Error('boom')
+        }
+        await Promise.resolve()
+      } catch (e) {
+        onCatch('src/async.ts;asyncCallee', e, undefined, { value })
+        throw e
+      }
+    }
+    async function asyncCaller() {
+      try {
+        await asyncCallee(1)
+      } catch (e) {
+        onCatch('src/async.ts;asyncCaller', e, undefined, {})
+        throw e
+      }
+    }
+    let error: unknown
+    async function awaitingFunction() {
+      try {
+        await asyncCaller()
+      } catch (e) {
+        error = e
+      }
+    }
+
+    await awaitingFunction()
+    const attributes = reportError(error)!
+
+    // Once `asyncCaller` resumes, `awaitingFunction` is an async frame located at the `await`, while
+    // the error's stack has it at the call
+    expect(attributes.frames.map(({ index }) => index)).toEqual([
+      stackIndexOf(error, 'asyncCallee'),
+      stackIndexOf(error, 'asyncCaller'),
+    ])
+  })
+
+  it('should not link a function without callers to an unrelated frame of the same script', async () => {
+    function rejectLater() {
+      return new Promise((_, reject) => {
+        setTimeout(function timerCallback() {
+          reject(new Error('boom'))
+        })
+      })
+    }
+    async function awaitingFunction() {
+      try {
+        await rejectLater()
+      } catch (e) {
+        onCatch('src/async.ts;awaitingFunction', e, undefined, {})
+        throw e
+      }
+    }
+
+    // Not awaited, so `awaitingFunction` has no callers once it resumes
+    const error = await new Promise((resolve) => {
+      awaitingFunction().catch(resolve)
+    })
+
+    // The error's only frame is `timerCallback`, from the same script as `awaitingFunction`
+    expect(reportError(error)).toBeUndefined()
+  })
+
   it('should not send snapshots for exceptions that are not reported', () => {
     catchError(() => callingFunction(1, 2))
 
@@ -285,6 +351,16 @@ describe('exceptionReplay', () => {
 
     expect(reportError(error)).toBe(attributes)
     expect(sentSnapshots().map(({ id }) => id)).toEqual(attributes.frames.map(({ snapshotId }) => snapshotId))
+  })
+
+  it('should not send the snapshots of a dropped error once another error with its fingerprint is reported', () => {
+    const dropped = catchError(() => throwingFunction(1))
+    expect(collectExceptionReplay(dropped)).toBeDefined()
+    expect(reportError(catchError(() => throwingFunction(2)))).toBeDefined()
+    mockBatchAdd.calls.reset()
+
+    expect(reportError(dropped)).toBeUndefined()
+    expect(mockBatchAdd).not.toHaveBeenCalled()
   })
 
   it('should not capture exceptions in sessions that RUM does not track', () => {
@@ -423,6 +499,32 @@ describe('exceptionReplay', () => {
     }
 
     expect(reportError(catchError(callingSlowFunction))!.frames.length).toBe(1)
+  })
+
+  it('should charge the capture time budget when capturing throws', () => {
+    const clock = mockClock()
+    const args = new Proxy(
+      {},
+      {
+        ownKeys() {
+          clock.tick(75)
+          throw new Error('ownKeys')
+        },
+      }
+    )
+    function throwingWhileCapturing() {
+      try {
+        throw new Error('boom')
+      } catch (e) {
+        onCatch('src/proxy.ts;throwingWhileCapturing', e, undefined, args)
+        throw e
+      }
+    }
+
+    catchError(throwingWhileCapturing)
+    clock.tick(1500)
+
+    expect(reportError(catchError(() => throwingFunction(1)))).toBeUndefined()
   })
 
   it('should pause capturing until the time spent beyond the capture time budget is made up', () => {

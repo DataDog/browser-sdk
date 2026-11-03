@@ -16,14 +16,18 @@ describe('exceptionReplayPlugin', () => {
   let eventCollectedHook: EventCollectedHook
   let batchAdd: jasmine.Spy
 
-  function initPlugin({ isSessionTracked = true } = {}) {
+  function initPlugin({ isSessionTracked = true, rumStarted = true } = {}) {
     const registerAssembleEventHook = jasmine.createSpy('registerAssembleEventHook')
     const registerEventCollectedHook = jasmine.createSpy('registerEventCollectedHook')
-    exceptionReplayPlugin().onInit({
+    const plugin = exceptionReplayPlugin()
+    plugin.onInit({
       publicApi: { getInternalContext: () => (isSessionTracked ? {} : undefined) },
       registerAssembleEventHook,
       registerEventCollectedHook,
     })
+    if (rumStarted) {
+      plugin.onRumStart()
+    }
     assembleHook = registerAssembleEventHook.calls.mostRecent().args[0]
     eventCollectedHook = registerEventCollectedHook.calls.mostRecent().args[0]
   }
@@ -116,6 +120,13 @@ describe('exceptionReplayPlugin', () => {
     const error = catchError(throwingFunction)
 
     expect(assemble('error', error)).toBe(SKIPPED)
+  })
+
+  it('should capture errors thrown before RUM starts, as their session is not known yet', () => {
+    initPlugin({ isSessionTracked: false, rumStarted: false })
+    const error = catchError(throwingFunction)
+
+    expect(assemble('error', error)).not.toBe(SKIPPED)
   })
 
   it('should not start with a RUM Browser SDK that lacks the event collected hook', () => {
