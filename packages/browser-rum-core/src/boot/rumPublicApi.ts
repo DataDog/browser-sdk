@@ -180,6 +180,14 @@ export interface RumPublicApi extends PublicApi {
    * @category Init
    * @experimental
    * @param plugin - The plugin to add
+   * @example
+   * ```ts
+   * // In an SDK that loads separately, once the RUM Browser SDK has loaded
+   * window.DD_RUM.onReady(() => {
+   *   window.DD_RUM.addPlugin(plugin)
+   * })
+   * ```
+   * @hidden
    */
   addPlugin: (plugin: RumPlugin) => void
 
