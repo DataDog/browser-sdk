@@ -22,8 +22,6 @@ describe('trackRuntimeError', () => {
     }
   }
 
-  beforeEach(disableJasmineUncaughtExceptionTracking)
-
   it('should collect unhandled error', async () => {
     const error = await errorViaTrackRuntimeError(() => {
       throw new Error(ERROR_MESSAGE)

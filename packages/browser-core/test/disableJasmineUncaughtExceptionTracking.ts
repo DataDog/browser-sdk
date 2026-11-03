@@ -7,6 +7,9 @@ import { registerCleanupTask } from './registerCleanupTask'
  * fails the test.
  *
  * Replace the handler instead of spying on it, so tests can still spy on `window.onerror`.
+ *
+ * This is the Karma implementation. When running with Vitest, this module is aliased to
+ * `test/unit-vitest/disableJasmineUncaughtExceptionTracking.ts` (see `test/unit-vitest/vite.config.ts`).
  */
 export function disableJasmineUncaughtExceptionTracking() {
   const originalOnError = window.onerror
