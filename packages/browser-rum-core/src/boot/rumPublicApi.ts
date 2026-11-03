@@ -6,6 +6,7 @@ import type {
   DeflateEncoderStreamId,
   DeflateEncoder,
   PublicApi,
+  InitContext,
   ContextManager,
   TrackingConsent,
   User,
@@ -47,6 +48,7 @@ import type {
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
+import type { RumPlugin } from '../domain/plugins'
 import { callPluginsOnRumStart } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
@@ -75,17 +77,23 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
+   * @param initContext - Context to set at initialization, such as user and account information
    * @example
    * ```ts
-   * datadogRum.init({
-   *   applicationId: '<DATADOG_APPLICATION_ID>',
-   *   clientToken: '<DATADOG_CLIENT_TOKEN>',
-   *   site: '<DATADOG_SITE>',
-   *   // ...
-   * })
+   * datadogRum.init(
+   *   {
+   *     applicationId: '<DATADOG_APPLICATION_ID>',
+   *     clientToken: '<DATADOG_CLIENT_TOKEN>',
+   *     site: '<DATADOG_SITE>',
+   *     // ...
+   *   },
+   *   {
+   *     user: { id: '<USER_ID>', name: '<USER_NAME>' },
+   *   }
+   * )
    * ```
    */
-  init: (initConfiguration: RumInitConfiguration) => void
+  init: (initConfiguration: RumInitConfiguration, initContext?: InitContext) => void
 
   /**
    * Set the tracking consent of the current user.
@@ -156,6 +164,24 @@ export interface RumPublicApi extends PublicApi {
    * @returns RumInitConfiguration | undefined
    */
   getInitConfiguration: () => RumInitConfiguration | undefined
+
+  /**
+   * Add a plugin after init(), for example from an SDK that loads separately and attaches itself
+   * to RUM. The plugin gets the same options as the plugins passed to init(), with these
+   * differences:
+   * - It can't abort the initialization, and it shouldn't edit the init configuration, which may
+   * already be applied.
+   * - If RUM has already started, it misses the events assembled before it was added.
+   * - If it's added before init(), it waits for init().
+   *
+   * The plugins API is unstable and experimental, and may change without notice. Please use only
+   * plugins provided by Datadog matching the version of the SDK you are using.
+   *
+   * @category Init
+   * @experimental
+   * @param plugin - The plugin to add
+   */
+  addPlugin: (plugin: RumPlugin) => void
 
   /**
    * Add a custom action, stored in `@action`
@@ -631,8 +657,14 @@ export interface RumPublicApiOptions {
 }
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi, errorStack?: string) => void
+  init: (
+    initConfiguration: RumInitConfiguration,
+    publicApi: RumPublicApi,
+    errorStack?: string,
+    initContext?: InitContext
+  ) => void
   initConfiguration: RumInitConfiguration | undefined
+  addPlugin: (plugin: RumPlugin) => void
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
@@ -758,9 +790,9 @@ export function makeRumPublicApi(
   })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: (initConfiguration) => {
+    init: (initConfiguration, initContext) => {
       const errorStack = new Error().stack
-      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack))
+      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack, initContext))
     },
 
     setTrackingConsent: monitor((trackingConsent) => {
@@ -791,6 +823,8 @@ export function makeRumPublicApi(
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
+
+    addPlugin: monitor((plugin: RumPlugin) => strategy.addPlugin(plugin)),
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')

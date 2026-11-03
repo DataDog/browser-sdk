@@ -79,7 +79,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration, publicApi, errorStack) {
+    init(initConfiguration, publicApi, errorStack, initContext) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -112,6 +112,13 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
+
+      if (initContext?.user) {
+        userContext.setContext(initContext.user)
+      }
+      if (initContext?.account) {
+        accountContext.setContext(initContext.account)
+      }
 
       trackingConsentState.tryToInit(configuration.trackingConsent)
 

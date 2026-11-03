@@ -97,6 +97,17 @@ describe('rum public api', () => {
         expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
       })
     })
+
+    it('sets the user and account provided as init context', () => {
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+      const user = { id: 'user-id', name: 'John Doe' }
+      const account = { id: 'account-id', name: 'Acme' }
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION, { user, account })
+
+      expect(rumPublicApi.getUser()).toEqual(user)
+      expect(rumPublicApi.getAccount()).toEqual(account)
+    })
   })
 
   describe('getInternalContext', () => {
@@ -142,6 +153,32 @@ describe('rum public api', () => {
 
       expect(rumPublicApi.getInitConfiguration()).toEqual(DEFAULT_INIT_CONFIGURATION)
       expect(rumPublicApi.getInitConfiguration()).not.toBe(DEFAULT_INIT_CONFIGURATION)
+    })
+  })
+
+  describe('addPlugin', () => {
+    it('starts a plugin added after init()', async () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.addPlugin(plugin)
+
+      expect(plugin.onInit).toHaveBeenCalledOnceWith(jasmine.objectContaining({ publicApi: rumPublicApi }))
+      await collectAsyncCalls(plugin.onRumStart, 1)
+      expect(plugin.onRumStart).toHaveBeenCalledOnceWith(jasmine.objectContaining({ addError: jasmine.any(Function) }))
+    })
+
+    it('starts a plugin added after RUM has started', async () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      rumPublicApi.addPlugin(plugin)
+
+      expect(plugin.onInit).toHaveBeenCalledTimes(1)
+      await collectAsyncCalls(plugin.onRumStart, 1)
     })
   })
 

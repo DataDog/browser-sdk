@@ -484,6 +484,56 @@ describe('instrumentConstructor', () => {
     expect(container.MyClassWithStaticMembers.staticMethod()).toBe('static-result')
   })
 
+  it('preserves a static member inherited by the original constructor', () => {
+    class Parent {
+      static staticNumber = 123
+    }
+    class Child extends Parent {}
+    const container = { Child }
+
+    instrumentConstructor(container, 'Child', noop)
+
+    expect(container.Child.staticNumber).toBe(123)
+  })
+
+  it("keeps the original constructor's parent on the instrumented constructor", () => {
+    class Parent {}
+    class Child extends Parent {}
+    const container = { Child }
+
+    instrumentConstructor(container, 'Child', noop)
+
+    expect(Object.getPrototypeOf(container.Child)).toBe(Parent)
+  })
+
+  it("keeps a null parent when the original constructor's parent is null", () => {
+    class Original {}
+    Object.setPrototypeOf(Original, null)
+    const container = { Original }
+
+    instrumentConstructor(container, 'Original', noop)
+
+    expect(Object.getPrototypeOf(container.Original)).toBeNull()
+    expect('call' in container.Original).toBeFalse()
+    expect('bind' in container.Original).toBeFalse()
+    expect('toString' in container.Original).toBeFalse()
+  })
+
+  it('keeps an inherited static member on a saved wrapper after stop()', () => {
+    class Parent {
+      static staticNumber = 123
+    }
+    class Child extends Parent {}
+    const container = { Child }
+    const { stop } = instrumentConstructor(container, 'Child', noop)
+    const savedWrapper = container.Child
+
+    stop()
+
+    expect(savedWrapper.staticNumber).toBe(123)
+    expect(container.Child).toBe(Child)
+  })
+
   it('preserves instanceof when instrumented constructor is used as a base class', () => {
     const container = { MyClass }
     instrumentConstructor(container, 'MyClass', noop)
