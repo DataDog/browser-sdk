@@ -16,7 +16,10 @@ import { resetSampleDecisionCache } from '../src/domain/sampler'
 import { startLeakDetection } from './leakDetection'
 ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
 
+let urlBeforeTest: string
+
 beforeEach(() => {
+  urlBeforeTest = location.href
   // prevent 'Some of your tests did a full page reload!' issue
   window.onbeforeunload = () => 'stop'
   startLeakDetection()
@@ -45,6 +48,11 @@ afterEach(() => {
   resetExperimentalFeatures()
   resetManageResourceTimingBufferFull()
   resetAllowUntrustedEvents()
+  // Tests calling `history.pushState()` leave the shared page on another URL. Restore the full URL
+  // (Vitest's includes `?sessionId=…&iframeId=…`), so a page reload still lands on the test runner.
+  if (location.href !== urlBeforeTest) {
+    history.replaceState(history.state, '', urlBeforeTest)
+  }
 })
 
 function clearAllCookies() {
