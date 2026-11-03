@@ -1,5 +1,6 @@
+import type { TrustedTypesWindow } from 'trusted-types/lib'
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest, bundleSetup } from '../lib/framework'
 
 test.describe('transport', () => {
   test.describe('batch flushing on beforeunload', () => {
@@ -79,6 +80,33 @@ test.describe('transport', () => {
   })
 
   test.describe('data compression', () => {
+    createTest('send compressed RUM data with a TrustedScriptURL worker under Trusted Types enforcement')
+      .withSetup(bundleSetup)
+      .withBasePath('/trusted-worker-csp')
+      .withRum({
+        compressIntakeRequests: true,
+        sessionReplaySampleRate: 0,
+        workerUrl: '/worker.js',
+      })
+      .withRumInit((configuration) => {
+        const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
+        if (trustedTypes) {
+          const policy = trustedTypes.createPolicy('dd-test-worker', { createScriptURL: (url) => url })
+          configuration.workerUrl = policy.createScriptURL('/worker.js')
+        }
+        window.DD_RUM!.init(configuration)
+      })
+      .run(async ({ browserName, page, flushEvents, intakeRegistry }) => {
+        test.skip(browserName !== 'chromium', 'Trusted Types enforcement requires Chromium')
+        await page.evaluate(() => {
+          window.DD_RUM!.addAction('trusted-worker', { padding: 'x'.repeat(20000) })
+        })
+        await flushEvents()
+        const deflateRequests = intakeRegistry.rumRequests.filter((request) => request.encoding === 'deflate')
+        expect(deflateRequests.length).toBeGreaterThan(0)
+        expect(deflateRequests.flatMap((request) => request.events).some((event) => event.type === 'action')).toBe(true)
+      })
+
     createTest('send RUM data compressed')
       .withRum({
         compressIntakeRequests: true,

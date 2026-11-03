@@ -1,3 +1,4 @@
+import type { TrustedTypesWindow } from 'trusted-types/lib'
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
@@ -195,6 +196,19 @@ describe('rum public api', () => {
   })
 
   describe('getInitConfiguration', () => {
+    it('preserves the worker URL Trusted Type when cloning the configuration', () => {
+      const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
+      if (!trustedTypes) {
+        pending('Trusted Types are not supported')
+        return
+      }
+      const policy = trustedTypes.createPolicy('dd-public-api-worker-url', { createScriptURL: (url) => url })
+      const workerUrl = policy.createScriptURL('/worker.js')
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, workerUrl })
+      expect(rumPublicApi.getInitConfiguration()!.workerUrl).toBe(workerUrl)
+    })
+
     it('clones the init configuration', () => {
       const { rumPublicApi } = makeRumPublicApiWithDefaults()
 

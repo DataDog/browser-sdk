@@ -1,3 +1,4 @@
+import type { TrustedTypesWindow } from 'trusted-types/lib'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { InitConfiguration } from '@datadog/browser-core'
 import {
@@ -968,6 +969,60 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('workerUrl', () => {
+    it('preserves a genuine TrustedScriptURL', () => {
+      const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
+      if (!trustedTypes) {
+        pending('Trusted Types are not supported')
+        return
+      }
+      const policy = trustedTypes.createPolicy('dd-configuration-worker-url', { createScriptURL: (url) => url })
+      const workerUrl = policy.createScriptURL('/worker.js')
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl })!.workerUrl).toBe(workerUrl)
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+    })
+
+    it('rejects objects that only stringify like a URL', () => {
+      const workerUrl = { toString: () => '/worker.js' }
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: workerUrl as any })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    })
+
+    it('rejects other Trusted Types', () => {
+      const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
+      if (!trustedTypes) {
+        pending('Trusted Types are not supported')
+        return
+      }
+      const policy = trustedTypes.createPolicy('dd-configuration-worker-html', { createHTML: (html) => html })
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          workerUrl: policy.createHTML('/worker.js') as any,
+        })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    })
+
+    it('keeps string validation when Trusted Types are unavailable', () => {
+      const browserWindow = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
+      if ('trustedTypes' in browserWindow) {
+        spyOnProperty(browserWindow, 'trustedTypes', 'get').and.returnValue(undefined)
+      }
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '/worker.js' })!.workerUrl
+      ).toBe('/worker.js')
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: {} as any })).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    })
+
+    it('treats an empty string as absent', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '' })!.workerUrl
+      ).toBeUndefined()
+    })
+
     it('defaults to undefined', () => {
       const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
       expect(configuration.workerUrl).toBeUndefined()

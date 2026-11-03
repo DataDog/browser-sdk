@@ -803,7 +803,13 @@ export function makeRumPublicApi(
 
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
-    getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
+    getInitConfiguration: monitor(() => {
+      const configuration = deepClone(strategy.initConfiguration)
+      if (configuration && strategy.initConfiguration?.workerUrl) {
+        configuration.workerUrl = strategy.initConfiguration.workerUrl
+      }
+      return configuration
+    }),
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')

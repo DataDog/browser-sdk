@@ -45,7 +45,9 @@ type DeflateWorkerState =
 export type CreateDeflateWorker = typeof createDeflateWorker
 
 export function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
-  return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([__BUILD_ENV__WORKER_STRING__])))
+  const workerUrl = configuration.workerUrl || URL.createObjectURL(new Blob([__BUILD_ENV__WORKER_STRING__]))
+  // lib.dom does not include TrustedScriptURL in the Worker constructor signature.
+  return new Worker(workerUrl as string)
 }
 
 /**
@@ -154,7 +156,8 @@ function onError(configuration: RumConfiguration, source: string, name: WorkerNa
   const state = getState(name)
   if (state.status === DeflateWorkerStatus.Loading || state.status === DeflateWorkerStatus.Nil) {
     reportScriptLoadingError({
-      configuredUrl: configuration.workerUrl,
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string -- TrustedScriptURL stringifies to its URL.
+      configuredUrl: configuration.workerUrl?.toString(),
       error,
       source,
       scriptType: 'worker',

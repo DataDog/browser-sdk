@@ -1,4 +1,6 @@
+import type { TrustedTypesWindow } from 'trusted-types/lib'
 import { display } from '@datadog/browser-core'
+import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry, replaceMockableWithSpy } from '@datadog/browser-core/test'
@@ -15,6 +17,35 @@ import {
 
 // Arbitrary stream ids used for tests
 const TEST_STREAM_ID = 5
+
+describe('createDeflateWorker', () => {
+  it('passes a genuine TrustedScriptURL to Worker unchanged', () => {
+    const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
+    if (!trustedTypes) {
+      pending('Trusted Types are not supported')
+      return
+    }
+    const policy = trustedTypes.createPolicy('dd-deflate-worker-url', { createScriptURL: (url) => url })
+    const workerUrl = policy.createScriptURL('/worker.js')
+    const workerSpy = spyOn(window, 'Worker').and.returnValue(new MockWorker())
+    const configuration = mockRumConfiguration({
+      compressIntakeRequests: true,
+      sessionReplaySampleRate: 0,
+      workerUrl,
+    })
+
+    createDeflateWorker(configuration)
+
+    expect(workerSpy).toHaveBeenCalledTimes(1)
+    expect<unknown>(workerSpy.calls.mostRecent().args[0]).toBe(workerUrl)
+  })
+
+  it('passes a string worker URL unchanged', () => {
+    const workerSpy = spyOn(window, 'Worker').and.returnValue(new MockWorker())
+    createDeflateWorker({ workerUrl: '/worker.js' } as RumConfiguration)
+    expect(workerSpy).toHaveBeenCalledOnceWith('/worker.js')
+  })
+})
 
 describe('startDeflateWorker', () => {
   let mockWorker: MockWorker

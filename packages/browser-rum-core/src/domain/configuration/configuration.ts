@@ -1,3 +1,5 @@
+// eslint-disable-next-line local-rules/enforce-prod-deps-imports -- Provided by the @types/trusted-types dependency.
+import type { TrustedScriptURL, TrustedTypesWindow } from 'trusted-types/lib'
 import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   canUseEventBridge,
@@ -12,7 +14,7 @@ import {
   isNonEmptyArray,
   BROWSER_CORE_SCHEMA,
 } from '@datadog/browser-core'
-import { isIndexableObject, isMatchOption } from '@datadog/js-core/util'
+import { globalObject, isIndexableObject, isMatchOption } from '@datadog/js-core/util'
 import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration'
 import type { RumEventDomainContext } from '../../domainContext.types'
@@ -117,11 +119,12 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   /**
    * URL pointing to the Datadog Browser SDK Worker JavaScript file. The URL can be relative or absolute, but is required to have the same origin as the web application.
+   * A TrustedScriptURL created by an application-owned Trusted Types policy can be provided when Trusted Types are enforced.
    * See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.
    *
    * @category Transport
    */
-  workerUrl?: string
+  workerUrl?: string | TrustedScriptURL
 
   /**
    * Compress requests sent to the Datadog intake to reduce bandwidth usage when sending large amounts of data. The compression is done in a Worker thread.
@@ -488,7 +491,6 @@ export const RUM_SCHEMA = {
 
   // Optional strings
   actionNameAttribute: { type: 'string' },
-  workerUrl: { type: 'string' },
   subdomain: { type: 'string' },
 
   // Sample rates
@@ -589,6 +591,7 @@ export type RumConfiguration = Omit<
   allowedGraphQlUrls: GraphQlUrlOption[]
   remoteConfigurationId: string | undefined
   sessionReplayCanvasRecording: CanvasRecordingConfiguration | undefined
+  workerUrl?: string | TrustedScriptURL
 }
 
 /**
@@ -631,6 +634,18 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const workerUrl = initConfiguration.workerUrl
+  const { trustedTypes } = globalObject as typeof globalObject & Pick<TrustedTypesWindow, 'trustedTypes'>
+  if (
+    workerUrl !== undefined &&
+    workerUrl !== null &&
+    typeof workerUrl !== 'string' &&
+    !trustedTypes?.isScriptURL(workerUrl)
+  ) {
+    display.error('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    return
+  }
+
   const allowedTracingUrls = config.allowedTracingUrls.map(normalizeTracingOption).filter(Boolean) as TracingOption[]
 
   if (allowedTracingUrls.length > 0 && !config.service) {
@@ -642,6 +657,7 @@ export function validateAndBuildRumConfiguration(
 
   return {
     ...config,
+    workerUrl: workerUrl || undefined,
     service: config.service || config.applicationId,
     sessionReplayCanvasRecording,
     betaEnableViewUpdates: isViewUpdatesEnabled(config.betaEnableViewUpdates, config.proxy, sdkName),
