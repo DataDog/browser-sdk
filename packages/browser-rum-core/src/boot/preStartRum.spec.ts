@@ -725,20 +725,68 @@ describe('preStartRum', () => {
       expect(doStartRumSpy).toHaveBeenCalled()
     })
 
-    it('starts RUM when the onInit of a plugin added before init() throws or rejects', async () => {
-      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-
-      strategy.addPlugin({
+    it('starts RUM, without calling onRumStart, when the onInit of a plugin added before init() fails', async () => {
+      const throwingPlugin = {
         name: 'a',
         onInit: () => {
           throw new Error('boom')
         },
-      })
-      strategy.addPlugin({ name: 'b', onInit: () => Promise.reject(new Error('boom')) })
+        onRumStart: jasmine.createSpy(),
+      }
+      const rejectingPlugin = {
+        name: 'b',
+        onInit: () => Promise.reject(new Error('boom')),
+        onRumStart: jasmine.createSpy(),
+      }
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue({} as StartRumResult)
+
+      strategy.addPlugin(throwingPlugin)
+      strategy.addPlugin(rejectingPlugin)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(doStartRumSpy, 1)
+      await new Promise((resolve) => setTimeout(resolve))
 
-      expect(doStartRumSpy).toHaveBeenCalled()
+      expect(throwingPlugin.onRumStart).not.toHaveBeenCalled()
+      expect(rejectingPlugin.onRumStart).not.toHaveBeenCalled()
+    })
+
+    it('calls onRumStart once an asynchronous onInit has resolved', async () => {
+      let resolveOnInit!: () => void
+      const plugin = {
+        name: 'a',
+        onInit: () =>
+          new Promise<void>((resolve) => {
+            resolveOnInit = resolve
+          }),
+        onRumStart: jasmine.createSpy(),
+      }
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue({} as StartRumResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      strategy.addPlugin(plugin)
+      await collectAsyncCalls(doStartRumSpy, 1)
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(plugin.onRumStart).not.toHaveBeenCalled()
+
+      resolveOnInit()
+      await collectAsyncCalls(plugin.onRumStart, 1)
+    })
+
+    it('calls onRumStart even when the API calls made before RUM starts overflow their buffer', async () => {
+      const plugin = { name: 'a', onRumStart: jasmine.createSpy() }
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue({ addTiming: noop } as unknown as StartRumResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      strategy.addPlugin(plugin)
+      for (let i = 0; i < 600; i += 1) {
+        strategy.addTiming('timing')
+      }
+      await collectAsyncCalls(doStartRumSpy, 1)
+
+      expect(plugin.onRumStart).toHaveBeenCalledTimes(1)
     })
 
     it('calls onRumStart once RUM starts', async () => {
