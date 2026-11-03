@@ -1,4 +1,3 @@
-import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement, mockRumConfiguration } from '../../test'
 import { getComposedPathSelector, CHARACTER_LIMIT, ATTRIBUTE_VALUE_LIMIT } from './getComposedPathSelector'
@@ -83,7 +82,7 @@ describe('getSelectorFromComposedPath', () => {
       })
 
       it('does not collect non-allowlisted attributes', () => {
-        const element = appendElementInIsolation('<div data-user-email="john@example.com" title="secret info"></div>')
+        const element = appendElementInIsolation('<div lang="en" style="color: red"></div>')
         const result = getComposedPathSelector([element], configuration)
 
         expect(result).toBe('DIV;')
@@ -121,171 +120,151 @@ describe('getSelectorFromComposedPath', () => {
     describe('maskable attributes', () => {
       const maskConfiguration = mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK })
 
-      it('does not collect maskable attributes when the experimental flag is disabled', () => {
-        const element = appendElementInIsolation('<a href="/checkout" aria-label="Checkout" data-area="cart"></a>')
-
-        expect(getComposedPathSelector([element], configuration)).toBe('A;')
-      })
-
-      it('collects the form action when the experimental flag is disabled', () => {
-        const element = appendElementInIsolation('<form action="/users/42/edit" method="post"></form>')
+      it('collects href, aria-label, name, title, alt and data-* attributes', () => {
+        const element = appendElementInIsolation(
+          '<a href="/checkout" aria-label="Checkout" name="n" title="t" alt="a" data-area="cart"></a>'
+        )
 
         expect(getComposedPathSelector([element], configuration)).toBe(
-          'FORM[action="\\/users\\/42\\/edit"][method="post"];'
+          'A[alt="a"][aria-label="Checkout"][data-area="cart"][href="\\/checkout"][name="n"][title="t"];'
         )
       })
 
-      describe('with the experimental flag enabled', () => {
-        beforeEach(() => {
-          addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
-        })
+      it('collects attributes from ancestors', () => {
+        const main = appendElementInIsolation('<main id="shop" data-area="checkout"></main>')
+        const link = appendElement('<a id="checkout-link" href="/checkout" aria-label="Checkout"></a>', main)
+        const span = appendElement('<span class="icon" title="Continue">Continue</span>', link)
 
-        it('collects href, aria-label, name, title, alt and data-* attributes', () => {
-          const element = appendElementInIsolation(
-            '<a href="/checkout" aria-label="Checkout" name="n" title="t" alt="a" data-area="cart"></a>'
+        expect(getComposedPathSelector([span, link, main], configuration)).toBe(
+          'SPAN[title="Continue"].icon;A#checkout-link[aria-label="Checkout"][href="\\/checkout"];MAIN#shop[data-area="checkout"];'
+        )
+      })
+
+      it('does not collect the form action', () => {
+        const element = appendElementInIsolation('<form action="/users/42/edit" method="post"></form>')
+
+        expect(getComposedPathSelector([element], configuration)).toBe('FORM[method="post"];')
+      })
+
+      it('does not collect href on non-anchor elements', () => {
+        const element = appendElementInIsolation('<div href="/foo"></div>')
+
+        expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
+      })
+
+      it('does not collect the data-dd-privacy attribute', () => {
+        const element = appendElementInIsolation('<div data-dd-privacy="allow"></div>')
+
+        expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
+      })
+
+      it('does not collect generated data-* attributes', () => {
+        const element = appendElementInIsolation('<div data-v-7ba5bd90 data-area="cart"></div>')
+
+        expect(getComposedPathSelector([element], configuration)).toBe('DIV[data-area="cart"];')
+      })
+
+      it('collects stable attributes like the other safe attributes', () => {
+        const value = 'a'.repeat(ATTRIBUTE_VALUE_LIMIT + 50)
+        const element = appendElementInIsolation(`<div data-dd-privacy="hidden" data-testid="${value}"></div>`)
+
+        // Kept on hidden elements, not truncated
+        expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-testid="${value}"];`)
+      })
+
+      it('escapes attribute names', () => {
+        const element = appendElementInIsolation('<div data-a;b="x" data-on:click="y"></div>')
+
+        expect(getComposedPathSelector([element], configuration)).toBe('DIV[data-a\\;b="x"][data-on\\:click="y"];')
+      })
+
+      it('drops masked values under the mask privacy level', () => {
+        const element = appendElementInIsolation(
+          '<a href="/orders/42" aria-label="Jane" name="n" title="t" alt="a" data-email="jane@example.com" data-testid="btn"></a>'
+        )
+
+        expect(getComposedPathSelector([element], maskConfiguration)).toBe('A[data-testid="btn"];')
+      })
+
+      it('drops masked values whatever the value of enablePrivacyForActionName', () => {
+        const element = appendElementInIsolation('<div title="Jane"></div>')
+
+        expect(
+          getComposedPathSelector(
+            [element],
+            mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, enablePrivacyForActionName: false })
           )
+        ).toBe('DIV;')
+      })
 
-          expect(getComposedPathSelector([element], configuration)).toBe(
-            'A[alt="a"][aria-label="Checkout"][data-area="cart"][href="\\/checkout"][name="n"][title="t"];'
+      it('drops masked values when the element privacy level is mask', () => {
+        const element = appendElementInIsolation('<div data-dd-privacy="mask" title="Jane"></div>')
+
+        expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
+      })
+
+      it('drops allowlisted values under the mask privacy level', () => {
+        ;(window as BrowserWindow).$DD_ALLOW = new Set(['checkout'])
+        registerCleanupTask(() => {
+          delete (window as BrowserWindow).$DD_ALLOW
+        })
+        const element = appendElementInIsolation('<div title="Checkout"></div>')
+
+        expect(getComposedPathSelector([element], maskConfiguration)).toBe('DIV;')
+      })
+
+      it('does not mask allowlisted values under the mask-unless-allowlisted privacy level', () => {
+        ;(window as BrowserWindow).$DD_ALLOW = new Set(['checkout'])
+        registerCleanupTask(() => {
+          delete (window as BrowserWindow).$DD_ALLOW
+        })
+        const element = appendElementInIsolation('<div title="Checkout" aria-label="Jane"></div>')
+
+        expect(
+          getComposedPathSelector(
+            [element],
+            mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED })
           )
-        })
+        ).toBe('DIV[title="Checkout"];')
+      })
 
-        it('collects attributes from ancestors', () => {
-          const main = appendElementInIsolation('<main id="shop" data-area="checkout"></main>')
-          const link = appendElement('<a id="checkout-link" href="/checkout" aria-label="Checkout"></a>', main)
-          const span = appendElement('<span class="icon" title="Continue">Continue</span>', link)
+      it('drops the masked action name attribute when it is a maskable attribute', () => {
+        const element = appendElementInIsolation('<div title="Jane"></div>')
 
-          expect(getComposedPathSelector([span, link, main], configuration)).toBe(
-            'SPAN[title="Continue"].icon;A#checkout-link[aria-label="Checkout"][href="\\/checkout"];MAIN#shop[data-area="checkout"];'
+        expect(
+          getComposedPathSelector(
+            [element],
+            mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, actionNameAttribute: 'title' })
           )
-        })
+        ).toBe('DIV;')
+      })
 
-        it('does not collect the form action', () => {
-          const element = appendElementInIsolation('<form action="/users/42/edit" method="post"></form>')
+      it('drops the masked action name attribute when its name contains digits', () => {
+        const element = appendElementInIsolation('<div data-ga4-label="Jane"></div>')
 
-          expect(getComposedPathSelector([element], configuration)).toBe('FORM[method="post"];')
-        })
-
-        it('does not collect href on non-anchor elements', () => {
-          const element = appendElementInIsolation('<div href="/foo"></div>')
-
-          expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
-        })
-
-        it('does not collect the data-dd-privacy attribute', () => {
-          const element = appendElementInIsolation('<div data-dd-privacy="allow"></div>')
-
-          expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
-        })
-
-        it('does not collect generated data-* attributes', () => {
-          const element = appendElementInIsolation('<div data-v-7ba5bd90 data-area="cart"></div>')
-
-          expect(getComposedPathSelector([element], configuration)).toBe('DIV[data-area="cart"];')
-        })
-
-        it('collects stable attributes like the other safe attributes', () => {
-          const value = 'a'.repeat(ATTRIBUTE_VALUE_LIMIT + 50)
-          const element = appendElementInIsolation(`<div data-dd-privacy="hidden" data-testid="${value}"></div>`)
-
-          // Kept on hidden elements, not truncated
-          expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-testid="${value}"];`)
-        })
-
-        it('escapes attribute names', () => {
-          const element = appendElementInIsolation('<div data-a;b="x" data-on:click="y"></div>')
-
-          expect(getComposedPathSelector([element], configuration)).toBe('DIV[data-a\\;b="x"][data-on\\:click="y"];')
-        })
-
-        it('drops masked values under the mask privacy level', () => {
-          const element = appendElementInIsolation(
-            '<a href="/orders/42" aria-label="Jane" name="n" title="t" alt="a" data-email="jane@example.com" data-testid="btn"></a>'
+        expect(
+          getComposedPathSelector(
+            [element],
+            mockRumConfiguration({
+              defaultPrivacyLevel: NodePrivacyLevel.MASK,
+              actionNameAttribute: 'data-ga4-label',
+            })
           )
+        ).toBe('DIV;')
+      })
 
-          expect(getComposedPathSelector([element], maskConfiguration)).toBe('A[data-testid="btn"];')
-        })
+      it('does not collect maskable attributes from hidden elements', () => {
+        const element = appendElementInIsolation('<div data-dd-privacy="hidden" title="Jane" role="button"></div>')
 
-        it('drops masked values whatever the value of enablePrivacyForActionName', () => {
-          const element = appendElementInIsolation('<div title="Jane"></div>')
+        expect(getComposedPathSelector([element], configuration)).toBe('DIV[role="button"];')
+      })
 
-          expect(
-            getComposedPathSelector(
-              [element],
-              mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, enablePrivacyForActionName: false })
-            )
-          ).toBe('DIV;')
-        })
+      it('truncates long values', () => {
+        const element = appendElementInIsolation(`<div title="${'a'.repeat(ATTRIBUTE_VALUE_LIMIT + 50)}"></div>`)
 
-        it('drops masked values when the element privacy level is mask', () => {
-          const element = appendElementInIsolation('<div data-dd-privacy="mask" title="Jane"></div>')
-
-          expect(getComposedPathSelector([element], configuration)).toBe('DIV;')
-        })
-
-        it('drops allowlisted values under the mask privacy level', () => {
-          ;(window as BrowserWindow).$DD_ALLOW = new Set(['checkout'])
-          registerCleanupTask(() => {
-            delete (window as BrowserWindow).$DD_ALLOW
-          })
-          const element = appendElementInIsolation('<div title="Checkout"></div>')
-
-          expect(getComposedPathSelector([element], maskConfiguration)).toBe('DIV;')
-        })
-
-        it('does not mask allowlisted values under the mask-unless-allowlisted privacy level', () => {
-          ;(window as BrowserWindow).$DD_ALLOW = new Set(['checkout'])
-          registerCleanupTask(() => {
-            delete (window as BrowserWindow).$DD_ALLOW
-          })
-          const element = appendElementInIsolation('<div title="Checkout" aria-label="Jane"></div>')
-
-          expect(
-            getComposedPathSelector(
-              [element],
-              mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED })
-            )
-          ).toBe('DIV[title="Checkout"];')
-        })
-
-        it('drops the masked action name attribute when it is a maskable attribute', () => {
-          const element = appendElementInIsolation('<div title="Jane"></div>')
-
-          expect(
-            getComposedPathSelector(
-              [element],
-              mockRumConfiguration({ defaultPrivacyLevel: NodePrivacyLevel.MASK, actionNameAttribute: 'title' })
-            )
-          ).toBe('DIV;')
-        })
-
-        it('drops the masked action name attribute when its name contains digits', () => {
-          const element = appendElementInIsolation('<div data-ga4-label="Jane"></div>')
-
-          expect(
-            getComposedPathSelector(
-              [element],
-              mockRumConfiguration({
-                defaultPrivacyLevel: NodePrivacyLevel.MASK,
-                actionNameAttribute: 'data-ga4-label',
-              })
-            )
-          ).toBe('DIV;')
-        })
-
-        it('does not collect maskable attributes from hidden elements', () => {
-          const element = appendElementInIsolation('<div data-dd-privacy="hidden" title="Jane" role="button"></div>')
-
-          expect(getComposedPathSelector([element], configuration)).toBe('DIV[role="button"];')
-        })
-
-        it('truncates long values', () => {
-          const element = appendElementInIsolation(`<div title="${'a'.repeat(ATTRIBUTE_VALUE_LIMIT + 50)}"></div>`)
-
-          expect(getComposedPathSelector([element], configuration)).toBe(
-            `DIV[title="${'a'.repeat(ATTRIBUTE_VALUE_LIMIT)}"];`
-          )
-        })
+        expect(getComposedPathSelector([element], configuration)).toBe(
+          `DIV[title="${'a'.repeat(ATTRIBUTE_VALUE_LIMIT)}"];`
+        )
       })
     })
 
@@ -394,41 +373,24 @@ describe('getSelectorFromComposedPath', () => {
         expect(result.length).toBeLessThanOrEqual(CHARACTER_LIMIT)
       })
 
-      it('splits an attribute when truncating with the experimental flag disabled', () => {
+      it('does not split an attribute when truncating', () => {
         const value = 'a'.repeat(100)
         const composedPath = Array.from({ length: 30 }, () =>
           appendElementInIsolation(`<div data-testid="${value}"></div>`)
         )
         const result = getComposedPathSelector(composedPath, configuration)
 
-        // 17 elements use 2040 characters: the 18th element is cut at the limit
-        expect(result).toBe(`${`DIV[data-testid="${value}"];`.repeat(17)}DIV[data`)
+        // 17 elements use 2040 characters: only the 18th tag name fits
+        expect(result).toBe(`${`DIV[data-testid="${value}"];`.repeat(17)}DIV`)
       })
 
-      describe('with the experimental flag enabled', () => {
-        beforeEach(() => {
-          addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES])
-        })
+      it('stops before a token that does not fit', () => {
+        const element = appendElementInIsolation(
+          `<div data-testid="${'a'.repeat(CHARACTER_LIMIT - 20)}" data-qa="${'b'.repeat(30)}"></div>`
+        )
 
-        it('does not split an attribute when truncating', () => {
-          const value = 'a'.repeat(100)
-          const composedPath = Array.from({ length: 30 }, () =>
-            appendElementInIsolation(`<div data-testid="${value}"></div>`)
-          )
-          const result = getComposedPathSelector(composedPath, configuration)
-
-          // 17 elements use 2040 characters: only the 18th tag name fits
-          expect(result).toBe(`${`DIV[data-testid="${value}"];`.repeat(17)}DIV`)
-        })
-
-        it('stops before a token that does not fit', () => {
-          const element = appendElementInIsolation(
-            `<div data-testid="${'a'.repeat(CHARACTER_LIMIT - 20)}" data-qa="${'b'.repeat(30)}"></div>`
-          )
-
-          // attributes are sorted: data-qa fits, data-testid does not
-          expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-qa="${'b'.repeat(30)}"]`)
-        })
+        // attributes are sorted: data-qa fits, data-testid does not
+        expect(getComposedPathSelector([element], configuration)).toBe(`DIV[data-qa="${'b'.repeat(30)}"]`)
       })
     })
 

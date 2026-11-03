@@ -1,4 +1,4 @@
-import { safeTruncate, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
+import { safeTruncate } from '@datadog/browser-core'
 import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
@@ -42,7 +42,7 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
 ])
 
 /**
- * Attributes that can contain PII, collected behind an experimental flag (like `data-*`) when not masked
+ * Attributes that can contain PII, collected (like `data-*`) when not masked
  */
 const MASKABLE_ATTRIBUTES = ['aria-label', 'name', 'title', 'alt']
 
@@ -62,7 +62,7 @@ interface MaskingContext {
  * This function:
  * 1. Filters out non-Element items (Document, Window, ShadowRoot)
  * 2. Extracts the selector tokens of each element
- * 3. Truncates the selector string (between tokens when enabled) if it exceeds the character limit
+ * 3. Truncates the selector string (between tokens) if it exceeds the character limit
  * 4. Returns the selector string
  *
  * @param composedPath - The composedPath from a MouseEvent
@@ -79,31 +79,20 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
     return ''
   }
 
-  const isAttributesEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR_ATTRIBUTES)
   const { actionNameAttribute } = configuration
   // The form `action` can contain PII (ex: `/users/42/edit`)
-  const safeAttributes = isAttributesEnabled ? SAFE_ATTRIBUTES.filter((name) => name !== 'action') : SAFE_ATTRIBUTES
+  const safeAttributes = SAFE_ATTRIBUTES.filter((name) => name !== 'action')
   const allowedAttributes = actionNameAttribute ? [actionNameAttribute].concat(safeAttributes) : safeAttributes
-  const masking: MaskingContext | undefined = isAttributesEnabled
-    ? {
-        // Do not exempt the action name attribute from privacy
-        configuration: { ...configuration, actionNameAttribute: undefined },
-        // Shared across the path
-        nodePrivacyLevelCache: new Map(),
-      }
-    : undefined
+  const masking: MaskingContext = {
+    // Do not exempt the action name attribute from privacy
+    configuration: { ...configuration, actionNameAttribute: undefined },
+    // Shared across the path
+    nodePrivacyLevelCache: new Map(),
+  }
 
   let result = ''
   for (const element of elements) {
-    const tokens = getSelectorTokensFromElement(element, allowedAttributes, masking)
-    if (!masking) {
-      result += tokens.join('')
-      if (result.length >= CHARACTER_LIMIT) {
-        return safeTruncate(result, CHARACTER_LIMIT)
-      }
-      continue
-    }
-    for (const token of tokens) {
+    for (const token of getSelectorTokensFromElement(element, allowedAttributes, masking)) {
       // Never split an attribute key and value
       if (result.length + token.length > CHARACTER_LIMIT) {
         return result
@@ -120,7 +109,7 @@ export function getComposedPathSelector(composedPath: EventTarget[], configurati
 function getSelectorTokensFromElement(
   element: Element,
   allowedAttributes: MatchOption[],
-  masking: MaskingContext | undefined
+  masking: MaskingContext
 ): string[] {
   return [getTagNameSelector(element), getIDSelector(element) || ''].concat(
     extractAttributes(element, allowedAttributes, masking),
@@ -160,17 +149,13 @@ function computePositionDataString(element: Element): string {
 }
 
 /**
- * Extracts the safe attributes, and the unmasked maskable attributes when enabled, sorted
+ * Extracts the safe attributes, and the unmasked maskable attributes, sorted
  */
-function extractAttributes(
-  element: Element,
-  allowedAttributes: MatchOption[],
-  masking: MaskingContext | undefined
-): string[] {
+function extractAttributes(element: Element, allowedAttributes: MatchOption[], masking: MaskingContext): string[] {
   const result: string[] = []
   for (const attribute of Array.from(element.attributes)) {
     const name = attribute.name
-    if (masking && isMaskableAttribute(element, name, allowedAttributes)) {
+    if (isMaskableAttribute(element, name, allowedAttributes)) {
       const nodePrivacyLevel = getNodePrivacyLevel(
         element,
         masking.configuration.defaultPrivacyLevel,

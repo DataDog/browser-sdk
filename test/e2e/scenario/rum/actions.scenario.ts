@@ -784,7 +784,6 @@ test.describe('action collection with composed path selector', () => {
     .withRum({
       trackUserInteractions: true,
       defaultPrivacyLevel: 'mask',
-      enableExperimentalFeatures: ['composed_path_selector_attributes'],
     })
     .withBody(html`
       <div data-dd-privacy="allow">
