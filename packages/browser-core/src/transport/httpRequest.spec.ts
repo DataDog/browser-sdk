@@ -128,8 +128,63 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('sendBeacon')
     })
 
-    it('should use fetch over sendBeacon when the bytes count is too high', async () => {
-      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: RECOMMENDED_REQUEST_BYTES_LIMIT })
+    it('should use fetch over sendBeacon for a single message over the bytes limit', async () => {
+      const bigMessage = createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT)
+      request.sendOnExit({ data: bigMessage, bytesCount: bigMessage.length })
+
+      await interceptor.waitForAllFetchCalls()
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('fetch')
+    })
+
+    it('should split messages over the bytes limit into several sendBeacon requests', () => {
+      const message = createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT * 0.4)
+      const data = [message, message, message].join('\n')
+
+      request.sendOnExit({ data, bytesCount: data.length })
+
+      expect(requests.map(({ type, body }) => ({ type, body }))).toEqual([
+        { type: 'sendBeacon', body: `${message}\n${message}` },
+        { type: 'sendBeacon', body: message },
+      ])
+    })
+
+    it('should send each split part to every endpoint', () => {
+      request = createHttpRequest([endpointBuilder, mockEndpointBuilder('http://my.website2')], noop)
+      const message = createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT * 0.6)
+      const data = [message, message].join('\n')
+
+      request.sendOnExit({ data, bytesCount: data.length })
+
+      expect(requests.map(({ type, url }) => ({ type, url }))).toEqual([
+        { type: 'sendBeacon', url: ENDPOINT_URL },
+        { type: 'sendBeacon', url: ENDPOINT_URL },
+        { type: 'sendBeacon', url: 'http://my.website2' },
+        { type: 'sendBeacon', url: 'http://my.website2' },
+      ])
+    })
+
+    it('should only use fetch for a split part made of a single message over the bytes limit', async () => {
+      const smallMessage = createMessage(100)
+      const bigMessage = createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT)
+      const data = [smallMessage, bigMessage, smallMessage].join('\n')
+
+      request.sendOnExit({ data, bytesCount: data.length })
+
+      await interceptor.waitForAllFetchCalls()
+
+      expect(requests.map(({ type, body }) => ({ type, body }))).toEqual([
+        { type: 'sendBeacon', body: smallMessage },
+        { type: 'fetch', body: bigMessage },
+        { type: 'sendBeacon', body: smallMessage },
+      ])
+    })
+
+    it('should not split a payload that is not a string', async () => {
+      const data = new Blob([createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT)])
+
+      request.sendOnExit({ data, bytesCount: data.size, encoding: 'deflate' })
 
       await interceptor.waitForAllFetchCalls()
 
@@ -164,6 +219,11 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
   })
+
+  function createMessage(bytesCount: number) {
+    const emptyMessage = '{"foo":""}'
+    return `{"foo":"${'a'.repeat(Math.floor(bytesCount) - emptyMessage.length)}"}`
+  }
 
   describe('HttpRequestEvent observable', () => {
     const observedEvents: HttpRequestEvent[] = []
