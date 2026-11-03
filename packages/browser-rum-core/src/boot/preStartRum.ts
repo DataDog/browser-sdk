@@ -87,7 +87,7 @@ export function createPreStartStrategy(
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
 
-  // Set when init() calls the plugins' onInit. Plugins added before that wait for it.
+  // Set once the init() plugins have let init() continue. Plugins added before that wait for it.
   let pluginOnInitOptions: RumPluginOnInitOptions | undefined
   const pluginsAddedBeforeInit: RumPlugin[] = []
   // Added plugins waiting for RUM to start. They're kept out of bufferApiCalls, which drops its
@@ -239,12 +239,30 @@ export function createPreStartStrategy(
   }
 
   /**
+   * Starts the plugins added so far, once the init() plugins have let init() continue. Like for the
+   * init() plugins, init() waits for their onInit, so their hooks are registered before any event
+   * is assembled.
+   */
+  function startPluginsAddedBeforeInit(onInitOptions: RumPluginOnInitOptions): true | Promise<true> {
+    pluginOnInitOptions = onInitOptions
+
+    const addedPluginInits: Array<PromiseLike<void>> = []
+    for (const plugin of pluginsAddedBeforeInit.splice(0)) {
+      const addedPluginInit = startAddedPlugin(plugin, onInitOptions)
+      if (addedPluginInit) {
+        addedPluginInits.push(addedPluginInit)
+      }
+    }
+    return addedPluginInits.length ? Promise.all(addedPluginInits).then(() => true as const) : true
+  }
+
+  /**
    * Returns a promise that settles once an asynchronous onInit has, so init() can wait for it.
    */
   function startAddedPlugin(plugin: RumPlugin, onInitOptions: RumPluginOnInitOptions): PromiseLike<void> | undefined {
-    // init() has already called the other plugins, so this one can't abort it: ignore what onInit
-    // returns. If it fails, report the error, which can't stop init() or the other plugins, and
-    // skip onRumStart, as RUM doesn't start when the onInit of an init() plugin fails.
+    // The init() plugins have already let init() continue, so this one can't abort it. If its onInit
+    // returns false or fails, skip its onRumStart, as RUM doesn't start when the onInit of an init()
+    // plugin does, and report the error, which can't stop init() or the other plugins.
     let onInitResult: ReturnType<NonNullable<RumPlugin['onInit']>> | undefined
     try {
       onInitResult = plugin.onInit?.(onInitOptions)
@@ -254,9 +272,15 @@ export function createPreStartStrategy(
     }
 
     if (isThenable(onInitResult)) {
-      return onInitResult.then(() => callAddedPluginOnRumStartOnceStarted(plugin), monitorError)
+      return onInitResult.then((result) => {
+        if (result !== false) {
+          callAddedPluginOnRumStartOnceStarted(plugin)
+        }
+      }, monitorError)
     }
-    callAddedPluginOnRumStartOnceStarted(plugin)
+    if (onInitResult !== false) {
+      callAddedPluginOnRumStartOnceStarted(plugin)
+    }
   }
 
   function callAddedPluginOnRumStartOnceStarted(plugin: RumPlugin) {
@@ -317,21 +341,13 @@ export function createPreStartStrategy(
         registerEventCollectedHook: hooks.eventCollected.register,
         isTrackingConsentGranted: trackingConsentState.isGranted,
       }
-      pluginOnInitOptions = onInitOptions
       const initPluginsResult = callPluginsOnInit(initConfiguration.plugins, onInitOptions)
 
-      // Like for the init() plugins, wait for the onInit of the plugins added before init(), so
-      // their hooks are registered before any event is assembled
-      const addedPluginInits: Array<PromiseLike<void>> = []
-      for (const plugin of pluginsAddedBeforeInit.splice(0)) {
-        const addedPluginInit = startAddedPlugin(plugin, onInitOptions)
-        if (addedPluginInit) {
-          addedPluginInits.push(addedPluginInit)
-        }
-      }
-      const shouldContinue = addedPluginInits.length
-        ? Promise.all(addedPluginInits).then(() => initPluginsResult)
-        : initPluginsResult
+      // If an init() plugin aborts init(), the added plugins wait for a later init()
+      const shouldContinue =
+        typeof initPluginsResult === 'boolean'
+          ? initPluginsResult && startPluginsAddedBeforeInit(onInitOptions)
+          : initPluginsResult.then((result) => result && startPluginsAddedBeforeInit(onInitOptions))
 
       if (typeof shouldContinue === 'boolean') {
         if (shouldContinue) {
