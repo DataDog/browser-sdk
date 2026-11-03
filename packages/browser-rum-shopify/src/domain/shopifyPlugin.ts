@@ -1,4 +1,4 @@
-import { mockable } from '@datadog/js-core/util'
+import { isWorkerEnvironment, mockable } from '@datadog/js-core/util'
 import type { RumPlugin } from '@datadog/browser-rum-core'
 import { patchSandboxedIframeApis } from '../boot/patchSandboxedIframeApis'
 import type { ShopifyAnalyticsApi } from './shopifyAnalytics'
@@ -30,7 +30,11 @@ export function shopifyPlugin(configuration: ShopifyPluginConfiguration): RumPlu
         return false
       }
 
-      mockable(patchSandboxedIframeApis)()
+      // Shopify is expected to run in a Web Worker in the future: no sandboxed iframe (nor `document`) to patch
+      const isWorker = mockable(isWorkerEnvironment)
+      if (!isWorker) {
+        mockable(patchSandboxedIframeApis)()
+      }
       mockable(initShopifyBindings)(publicApi, analytics)
 
       initConfiguration.trackViewsManually = true // Views are started explicitly via startView()
@@ -39,7 +43,7 @@ export function shopifyPlugin(configuration: ShopifyPluginConfiguration): RumPlu
       initConfiguration.trackUserInteractions = false // Pixel sandbox iframe has no real DOM to interact with
       initConfiguration.trackResources = false // Iframe resources are not meaningful
       initConfiguration.trackLongTasks = false // PerformanceObserver tracks the empty iframe
-      initConfiguration.sessionPersistence = 'cookie'
+      initConfiguration.sessionPersistence = isWorker ? 'memory' : 'cookie' // Workers have no cookies
     },
   }
 }
