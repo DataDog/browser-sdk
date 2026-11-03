@@ -1,11 +1,12 @@
 import { SKIPPED } from '@datadog/js-core/assembly'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumPlugin, RumPluginOnInitOptions } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
 import type { BrowserWindow } from '../entries/main'
 import { initDebuggerTransport, resetDebuggerTransport } from './api'
 import { display } from './display'
 import { onCatch, resetExceptionReplay, startExceptionReplay } from './exceptionReplay'
-import { exceptionReplayPlugin } from './exceptionReplayPlugin'
+import type { RumGlobal } from './exceptionReplayPlugin'
+import { addExceptionReplayPluginToRum, exceptionReplayPlugin } from './exceptionReplayPlugin'
 import { clearProbes } from './probes'
 
 type AssembleHook = Parameters<RumPluginOnInitOptions['registerAssembleEventHook']>[0]
@@ -165,5 +166,68 @@ describe('exceptionReplayPlugin', () => {
     const error = catchError(throwingFunction)
 
     expect(assemble('action', error)).toBe(SKIPPED)
+  })
+})
+
+describe('addExceptionReplayPluginToRum', () => {
+  const rumWindow = window as { DD_RUM?: RumGlobal }
+
+  beforeEach(() => {
+    const originalRum = rumWindow.DD_RUM
+    delete rumWindow.DD_RUM
+
+    registerCleanupTask(() => {
+      rumWindow.DD_RUM = originalRum
+    })
+  })
+
+  it('should be compatible with the RUM Browser SDK public API', () => {
+    // Fails to compile if the RUM Browser SDK's public API stops matching what the plugin uses
+    const isCompatible: RumPublicApi extends Required<RumGlobal> ? true : false = true
+
+    expect(isCompatible).toBeTrue()
+  })
+
+  it('should add the plugin to RUM', () => {
+    const addPlugin = jasmine.createSpy('addPlugin')
+    rumWindow.DD_RUM = { onReady: (callback) => callback(), addPlugin }
+
+    addExceptionReplayPluginToRum()
+
+    expect(addPlugin).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'exception-replay' }))
+  })
+
+  it('should wait for RUM to load when it uses the async loading snippet', () => {
+    const queuedCallbacks: Array<() => void> = []
+    rumWindow.DD_RUM = {
+      onReady: (callback) => {
+        queuedCallbacks.push(callback)
+      },
+    }
+    addExceptionReplayPluginToRum()
+
+    // Like the RUM Browser SDK when it loads: replace the snippet, then run its queued callbacks
+    const addPlugin = jasmine.createSpy('addPlugin')
+    rumWindow.DD_RUM = { onReady: (callback) => callback(), addPlugin }
+    queuedCallbacks.forEach((callback) => callback())
+
+    expect(addPlugin).toHaveBeenCalledTimes(1)
+  })
+
+  it('should warn when the RUM Browser SDK is too old to add plugins after init', () => {
+    const displaySpy = spyOn(display, 'warn')
+    rumWindow.DD_RUM = { onReady: (callback) => callback() }
+
+    addExceptionReplayPluginToRum()
+
+    expect(displaySpy).toHaveBeenCalled()
+  })
+
+  it('should do nothing without the RUM Browser SDK', () => {
+    const displaySpy = spyOn(display, 'warn')
+
+    addExceptionReplayPluginToRum()
+
+    expect(displaySpy).not.toHaveBeenCalled()
   })
 })

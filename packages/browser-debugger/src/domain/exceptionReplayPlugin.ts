@@ -1,4 +1,5 @@
 import { SKIPPED } from '@datadog/js-core/assembly'
+import { globalObject } from '@datadog/js-core/util'
 import { display } from './display'
 import { collectExceptionReplay, registerExceptionReplayPlugin, sendExceptionReplay } from './exceptionReplay'
 
@@ -42,6 +43,35 @@ export interface ExceptionReplayPlugin {
   onRumStart(): void
 }
 
+export interface RumGlobal {
+  // The async loading snippet also defines it, and queues the callbacks until the SDK loads
+  onReady?: (callback: () => void) => void
+  // Missing from RUM Browser SDK versions older than this plugin
+  addPlugin?: (plugin: ExceptionReplayPlugin) => void
+}
+
+interface BrowserWindow {
+  DD_RUM?: RumGlobal
+}
+
+/**
+ * Add the Exception Replay plugin to the RUM Browser SDK on the page, once it has loaded. Called by
+ * `DD_DEBUGGER.init()`, so customers don't have to change their RUM configuration.
+ *
+ * Does nothing if the RUM Browser SDK isn't on the page, since the Live Debugger SDK also works
+ * without it.
+ */
+export function addExceptionReplayPluginToRum(): void {
+  ;(globalObject as BrowserWindow).DD_RUM?.onReady?.(() => {
+    const rum = (globalObject as BrowserWindow).DD_RUM
+    if (!rum?.addPlugin) {
+      display.warn('Exception Replay requires a version of the RUM Browser SDK that matches the Live Debugger SDK.')
+      return
+    }
+    rum.addPlugin(exceptionReplayPlugin())
+  })
+}
+
 /**
  * Create the Exception Replay plugin for the RUM Browser SDK.
  *
@@ -51,8 +81,9 @@ export interface ExceptionReplayPlugin {
  * sends them as snapshots once the event passes `beforeSend` and the event rate limits, so Error
  * Tracking can show them on the error's stack frames.
  *
- * Exception Replay only starts once the plugin is registered and `DD_DEBUGGER.init()` is called. It
- * doesn't capture anything in sessions that RUM doesn't track, or before tracking consent is granted.
+ * Exception Replay only starts once RUM has called the plugin's `onInit` and `DD_DEBUGGER.init()` is
+ * called. It doesn't capture anything in sessions that RUM doesn't track, or before tracking consent
+ * is granted.
  */
 export function exceptionReplayPlugin(): ExceptionReplayPlugin {
   let rumStarted = false
