@@ -39,7 +39,7 @@ import {
   serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
+import type { StartOperationOptions, FailureReason } from '../domain/vital/vitalCollection'
 import { callPluginsOnInit } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
@@ -226,14 +226,14 @@ export function createPreStartStrategy(
   const addOperationStepVital = (
     name: string,
     stepType: 'start' | 'end',
-    options?: OperationOptions,
+    options?: StartOperationOptions,
     failureReason?: FailureReason
   ) => {
     bufferApiCalls.notify((startRumResult) =>
       startRumResult.addOperationStepVital(
         sanitize(name)!,
         stepType,
-        sanitize(options) as OperationOptions,
+        sanitize(options) as StartOperationOptions,
         sanitize(failureReason) as FailureReason | undefined
       )
     )

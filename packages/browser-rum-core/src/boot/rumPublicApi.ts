@@ -45,6 +45,7 @@ import type {
   AddDurationVitalOptions,
   DurationVitalOptions,
   OperationOptions,
+  StartOperationOptions,
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
@@ -526,7 +527,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Vital - Operation
    * @param name - Name of the operation
-   * @param options - Options for the operation (operationKey, context, description)
+   * @param options - Options for the operation (operationKey, context, description, abandonOnPageExit)
    * @example
    * ```ts
    * datadogRum.startOperation('checkout')
@@ -534,7 +535,7 @@ export interface RumPublicApi extends PublicApi {
    * datadogRum.succeedOperation('checkout')
    * ```
    */
-  startOperation: (name: string, options?: OperationOptions) => void
+  startOperation: (name: string, options?: StartOperationOptions) => void
 
   /**
    * Mark an operation as successful.
