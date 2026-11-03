@@ -49,6 +49,7 @@ export default defineConfig(
       'test/apps/microfrontend',
       'test/apps/nextjs',
       'test/apps/angular-app',
+      'test/apps/angular-ssr-app',
       'test/apps/vue-router-app',
       'test/apps/vue-router-v4-app',
       'test/apps/nuxt-app',

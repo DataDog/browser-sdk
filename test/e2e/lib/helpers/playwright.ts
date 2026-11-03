@@ -4,3 +4,4 @@ export const VUE_ROUTER_APP_PORT = process.env.VUE_ROUTER_APP_PORT!
 export const VUE_ROUTER_V4_APP_PORT = process.env.VUE_ROUTER_V4_APP_PORT!
 export const NUXT_APP_PORT = process.env.NUXT_APP_PORT!
 export const NUXT_VUE_ROUTER_V4_APP_PORT = process.env.NUXT_VUE_ROUTER_V4_APP_PORT!
+export const ANGULAR_SSR_APP_PORT = process.env.ANGULAR_SSR_APP_PORT!

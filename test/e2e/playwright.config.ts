@@ -93,6 +93,16 @@ const baseWebServers = [
     },
   },
   {
+    name: 'angular ssr app',
+    stdout: 'pipe' as const,
+    cwd: path.join(__dirname, '../apps/angular-ssr-app'),
+    command: 'yarn start',
+    env: { PORT: '0' },
+    wait: {
+      stdout: /Node Express server listening on http:\/\/localhost:(?<angular_ssr_app_port>\d+)/,
+    },
+  },
+  {
     name: 'nuxt app',
     stdout: 'pipe' as const,
     cwd: path.join(__dirname, '../apps/nuxt-app'),

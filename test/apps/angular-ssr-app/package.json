@@ -1,0 +1,52 @@
+{
+  "name": "angular-ssr-app",
+  "private": true,
+  "scripts": {
+    "build": "ng build",
+    "start": "node dist/angular-ssr-app/server/server.mjs"
+  },
+  "dependencies": {
+    "@angular/common": "22.2.3",
+    "@angular/compiler": "22.2.3",
+    "@angular/core": "22.2.3",
+    "@angular/platform-browser": "22.2.3",
+    "@angular/platform-server": "22.2.3",
+    "@angular/router": "22.2.3",
+    "@angular/ssr": "22.2.5",
+    "express": "5.1.0",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum": "*",
+    "@datadog/browser-rum-angular": "*"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-angular": {
+      "optional": true
+    }
+  },
+  "resolutions": {
+    "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
+    "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
+    "@datadog/browser-rum-angular": "file:../../../packages/browser-rum-angular/package.tgz",
+    "@datadog/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
+    "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz"
+  },
+  "devDependencies": {
+    "@angular/build": "22.2.5",
+    "@angular/cli": "22.2.5",
+    "@angular/compiler-cli": "22.2.3",
+    "@types/express": "5.0.1",
+    "@types/node": "22.12.0",
+    "typescript": "6.0.2"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  }
+}

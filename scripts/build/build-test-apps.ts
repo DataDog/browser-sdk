@@ -32,6 +32,7 @@ const APPS: AppConfig[] = [
   { name: 'microfrontend' },
   { name: 'nextjs' },
   { name: 'angular-app' },
+  { name: 'angular-ssr-app' },
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
   { name: 'instrumentation-overhead' },
