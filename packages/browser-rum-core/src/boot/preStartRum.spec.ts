@@ -751,6 +751,25 @@ describe('preStartRum', () => {
       expect(rejectingPlugin.onRumStart).not.toHaveBeenCalled()
     })
 
+    it('waits for the asynchronous onInit of a plugin added before init() to start RUM', async () => {
+      let resolveOnInit!: () => void
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.addPlugin({
+        name: 'a',
+        onInit: () =>
+          new Promise<void>((resolve) => {
+            resolveOnInit = resolve
+          }),
+      })
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await new Promise((resolve) => setTimeout(resolve))
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+
+      resolveOnInit()
+      await collectAsyncCalls(doStartRumSpy, 1)
+    })
+
     it('calls onRumStart once an asynchronous onInit has resolved', async () => {
       let resolveOnInit!: () => void
       const plugin = {
