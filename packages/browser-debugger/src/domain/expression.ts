@@ -116,12 +116,24 @@ export type ExpressionNode =
 export type CompiledExpression = (context: Record<string, unknown>) => unknown
 
 /**
- * Variables visible to an expression: the runtime context, then the bindings of each enclosing `any`, `all` or
- * `filter` operation (`$dd_it`, or `$dd_key` and `$dd_value`)
+ * Variables visible to an expression: the runtime context, and the bindings of the enclosing `any`, `all` and `filter`
+ * operations, innermost first
  */
 interface Scope {
-  variables: Record<string, unknown>
-  parent?: Scope
+  context: Record<string, unknown>
+  iteration?: Iteration
+}
+
+/**
+ * Bindings of an `any`, `all` or `filter` operation: `$dd_it` for the items of a collection, or `$dd_key` and
+ * `$dd_value` for the entries of an object
+ */
+interface Iteration {
+  isEntry: boolean
+  item: unknown
+  key: unknown
+  value: unknown
+  parent: Iteration | undefined
 }
 
 type Evaluator = (scope: Scope) => unknown
@@ -135,7 +147,7 @@ type Evaluator = (scope: Scope) => unknown
  */
 export function compile(node: ExpressionNode): CompiledExpression {
   const evaluate = compileNode(node)
-  return (context) => evaluate({ variables: context })
+  return (context) => evaluate({ context })
 }
 
 function compileNode(node: ExpressionNode): Evaluator {
@@ -252,15 +264,16 @@ function evaluateUndefined(): undefined {
 
 /**
  * Compile a reference, resolved like a JavaScript identifier: in the innermost iteration bindings first, then in the
- * context, then on the global object
+ * context, then on the global object.
+ *
+ * Unlike in evaluated code, top-level `let`, `const` and `class` declarations of classic scripts can't be resolved:
+ * they aren't properties of the global object, and only evaluated code can read them.
  */
 function compileReference(identifier: string, isTypeofOperand = false): Evaluator {
   const name = toVariableName(assertIdentifier(identifier))
-  return (scope) => {
-    for (let current: Scope | undefined = scope; current; current = current.parent) {
-      if (Object.prototype.hasOwnProperty.call(current.variables, name)) {
-        return current.variables[name]
-      }
+  const resolveOutsideIterations: Evaluator = (scope) => {
+    if (Object.prototype.hasOwnProperty.call(scope.context, name)) {
+      return scope.context[name]
     }
     if (name in globalObject) {
       return (globalObject as unknown as Record<string, unknown>)[name]
@@ -270,6 +283,34 @@ function compileReference(identifier: string, isTypeofOperand = false): Evaluato
     }
     throw new ReferenceError(`${name} is not defined`)
   }
+
+  // Read iteration bindings from named properties rather than by name, which halves the cost per item of `any`, `all`
+  // and `filter`
+  if (name === '$dd_it') {
+    return (scope) => {
+      const iteration = findIteration(scope, false)
+      return iteration ? iteration.item : resolveOutsideIterations(scope)
+    }
+  }
+  if (name === '$dd_key' || name === '$dd_value') {
+    const isKey = name === '$dd_key'
+    return (scope) => {
+      const iteration = findIteration(scope, true)
+      if (!iteration) {
+        return resolveOutsideIterations(scope)
+      }
+      return isKey ? iteration.key : iteration.value
+    }
+  }
+  return resolveOutsideIterations
+}
+
+function findIteration(scope: Scope, isEntry: boolean): Iteration | undefined {
+  let iteration = scope.iteration
+  while (iteration && iteration.isEntry !== isEntry) {
+    iteration = iteration.parent
+  }
+  return iteration
 }
 
 // Like JavaScript's `typeof`, don't throw on a reference to an undeclared variable
@@ -319,23 +360,26 @@ function filter(collection: unknown, predicate: Evaluator, scope: Scope): unknow
 }
 
 // Predicates run synchronously and nothing keeps a reference to their scope, so all the items of a collection share one
-function createItemPredicate(predicate: Evaluator, parent: Scope): (item: unknown) => unknown {
-  const variables: Record<string, unknown> = { $dd_it: undefined }
-  const scope: Scope = { variables, parent }
+function createItemPredicate(predicate: Evaluator, scope: Scope): (item: unknown) => unknown {
+  const { iteration, predicateScope } = createIterationScope(scope, false)
   return (item) => {
-    variables.$dd_it = item
-    return predicate(scope)
+    iteration.item = item
+    return predicate(predicateScope)
   }
 }
 
-function createEntryPredicate(predicate: Evaluator, parent: Scope): (entry: [string, unknown]) => unknown {
-  const variables: Record<string, unknown> = { $dd_key: undefined, $dd_value: undefined }
-  const scope: Scope = { variables, parent }
+function createEntryPredicate(predicate: Evaluator, scope: Scope): (entry: [string, unknown]) => unknown {
+  const { iteration, predicateScope } = createIterationScope(scope, true)
   return ([key, value]) => {
-    variables.$dd_key = key
-    variables.$dd_value = value
-    return predicate(scope)
+    iteration.key = key
+    iteration.value = value
+    return predicate(predicateScope)
   }
+}
+
+function createIterationScope(scope: Scope, isEntry: boolean): { iteration: Iteration; predicateScope: Scope } {
+  const iteration: Iteration = { isEntry, item: undefined, key: undefined, value: undefined, parent: scope.iteration }
+  return { iteration, predicateScope: { context: scope.context, iteration } }
 }
 
 function contains(obj: unknown, elm: unknown): boolean {

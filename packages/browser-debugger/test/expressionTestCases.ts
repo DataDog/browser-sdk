@@ -645,6 +645,12 @@ export const logicalOperators: TestCase[] = [
     { arr: [1, 2], obj: { foo: 2 } },
     true,
   ],
+  [
+    { any: [{ ref: 'obj' }, { any: [{ ref: 'arr' }, { eq: [{ ref: '@it' }, { ref: '@key' }] }] }] },
+    { obj: { foo: 0 }, arr: ['foo'] },
+    true,
+  ],
+  [{ ref: '@it' }, {}, new ReferenceError('$dd_it is not defined')],
 
   [{ or: [{ ref: 'bar' }, { ref: 'foo' }] }, { bar: 42 }, 42],
   [{ or: [{ ref: 'bar' }, { ref: 'foo' }] }, { bar: 0 }, new ReferenceError('foo is not defined')],
