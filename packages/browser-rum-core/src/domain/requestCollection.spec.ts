@@ -1,3 +1,4 @@
+import { createDataBuffer } from '@datadog/browser-rum-buffer'
 import { RequestType, startBufferingData } from '@datadog/browser-core'
 import { createEndpointBuilder, type EndpointPayload } from '@datadog/js-core/transport'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
@@ -22,7 +23,7 @@ describe('collect fetch', () => {
 
   beforeEach(() => {
     mockFetchManager = mockFetch()
-    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData(createDataBuffer())
 
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
@@ -190,7 +191,7 @@ describe('collect xhr', () => {
 
   beforeEach(() => {
     mockXhr()
-    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData(createDataBuffer())
 
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
@@ -358,7 +359,7 @@ describe('GraphQL response text collection', () => {
     const configuration = mockRumConfiguration({
       allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors }],
     })
-    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData(createDataBuffer())
     const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
     const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer, bufferedDataObservable)
     registerCleanupTask(() => {

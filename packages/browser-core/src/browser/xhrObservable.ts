@@ -2,6 +2,7 @@ import { elapsed, timeStampNow, clocksNow } from '@datadog/js-core/time'
 import type { Duration, ClocksState } from '@datadog/js-core/time'
 import { normalizeUrl, globalObject, Observable } from '@datadog/js-core/util'
 import { addEventListener } from '@datadog/js-core/dom'
+import { createHandlingStack } from '../tools/stackTrace/handlingStack'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 
@@ -53,7 +54,7 @@ function createXhrObservable() {
       (call) => {
         sendXhr(call, observable)
       },
-      { computeHandlingStack: true }
+      { computeHandlingStack: createHandlingStack }
     )
 
     const { stop: stopInstrumentingAbort } = instrumentMethod(XMLHttpRequest.prototype, 'abort', abortXhr)

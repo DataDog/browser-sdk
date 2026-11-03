@@ -1,3 +1,4 @@
+import { getOrCreateRumBuffer } from '@datadog/browser-rum-buffer'
 import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
 import { deepClone, mockable, generateUUID } from '@datadog/js-core/util'
 import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
@@ -679,7 +680,7 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedData = startBufferingData()
+  const bufferedData = startBufferingData(getOrCreateRumBuffer())
 
   let strategy = createPreStartStrategy(
     options,

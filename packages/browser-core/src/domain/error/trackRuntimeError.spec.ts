@@ -1,24 +1,43 @@
-import { disableJasmineUncaughtExceptionTracking, wait } from '../../../test'
+import { noop } from '@datadog/js-core/util'
+import { clocksNow } from '@datadog/js-core/time'
+import { disableJasmineUncaughtExceptionTracking, registerCleanupTask, wait } from '../../../test'
+import { computeRuntimeError } from './computeRuntimeError'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
 
 describe('trackRuntimeError', () => {
+  it('captures errors without reading their properties', () => {
+    spyOn(window as any, 'onerror')
+    const error = new Error('early')
+    const readCause = jasmine.createSpy().and.returnValue(undefined)
+    Object.defineProperty(error, 'cause', { get: readCause })
+    const received = jasmine.createSpy()
+    const subscription = trackRuntimeError().subscribe(received)
+    registerCleanupTask(subscription.unsubscribe)
+
+    window.onerror!('early', 'https://example.com/app.js', 12, 34, error)
+
+    expect(readCause).not.toHaveBeenCalled()
+    expect(received).toHaveBeenCalledTimes(1)
+  })
+
   const ERROR_MESSAGE = 'foo'
 
   const errorViaTrackRuntimeError = async (callback: () => void): Promise<RawError> => {
     disableJasmineUncaughtExceptionTracking()
 
     const errorObservable = trackRuntimeError()
+    let unsubscribe = noop
     const errorNotification = new Promise<RawError>((resolve) => {
-      errorObservable.subscribe((e: RawError) => resolve(e))
+      ;({ unsubscribe } = errorObservable.subscribe((error) => resolve(computeRuntimeError(error))))
     })
 
     try {
       await invokeAndWaitForErrorHandlers(callback)
       return await errorNotification
     } finally {
-      stop()
+      unsubscribe()
     }
   }
 
@@ -44,15 +63,17 @@ describe('trackRuntimeError', () => {
   })
 })
 
-describe('instrumentOnError', () => {
+describe('onerror capture and processing', () => {
   const testLineNo = 1337
   const testColNo = 42
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnError = async (callback: () => void) => {
     const onErrorSpy = spyOn(window as any, 'onerror')
-    const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
-    const { stop } = instrumentOnError(callbackSpy)
+    const callbackSpy = jasmine.createSpy<(originalError: unknown, error: RawError) => void>()
+    const { stop } = instrumentOnError((originalError, onError) => {
+      callbackSpy(originalError, computeRuntimeError({ originalError, onError, startClocks: clocksNow() }))
+    })
 
     try {
       await invokeAndWaitForErrorHandlers(callback)
@@ -79,7 +100,7 @@ describe('instrumentOnError', () => {
 
     const [originalError, stack] = spy.calls.mostRecent().args
     expect(originalError).toBe(error)
-    expect(stack).toBeUndefined()
+    expect(stack.message).toBe(ERROR_MESSAGE)
   })
 
   it('should notify unhandled string', async () => {
@@ -150,7 +171,7 @@ describe('instrumentOnError', () => {
         })
 
         const [, stack] = spy.calls.mostRecent().args
-        expect(stack).toBeUndefined()
+        expect(stack.stack).toBe('No stack, consider using an instance of Error')
       })
     })
 
@@ -161,8 +182,8 @@ describe('instrumentOnError', () => {
         })
 
         const [, stack] = spy.calls.mostRecent().args
-        expect(stack!.name).toEqual('ReferenceError')
-        expect(stack!.message).toEqual('foo is undefined')
+        expect(stack.type).toEqual('ReferenceError')
+        expect(stack.message).toEqual('foo is undefined')
       })
 
       it('should separate name, message for default error types (e.g. Uncaught ReferenceError)', async () => {
@@ -172,8 +193,8 @@ describe('instrumentOnError', () => {
         })
 
         const [, stack] = spy.calls.mostRecent().args
-        expect(stack!.name).toEqual('ReferenceError')
-        expect(stack!.message).toEqual('foo is undefined')
+        expect(stack.type).toEqual('ReferenceError')
+        expect(stack.message).toEqual('foo is undefined')
       })
 
       it('should separate name, message for default error types on Opera Mini', async () => {
@@ -186,8 +207,8 @@ describe('instrumentOnError', () => {
         })
 
         const [, stack] = spy.calls.mostRecent().args
-        expect(stack!.name).toEqual('ReferenceError')
-        expect(stack!.message).toEqual('Undefined variable: foo')
+        expect(stack.type).toEqual('ReferenceError')
+        expect(stack.message).toEqual('Undefined variable: foo')
       })
 
       it('should separate name, message for error with multiline message', async () => {
@@ -200,8 +221,8 @@ describe('instrumentOnError', () => {
         })
 
         const [, stack] = spy.calls.mostRecent().args
-        expect(stack!.message).toEqual("foo is not a function. (In 'my.function(\n foo)")
-        expect(stack!.name).toEqual('TypeError')
+        expect(stack.message).toEqual("foo is not a function. (In 'my.function(\n foo)")
+        expect(stack.type).toEqual('TypeError')
       })
 
       it('should ignore unknown error types', async () => {
@@ -211,8 +232,8 @@ describe('instrumentOnError', () => {
 
         // TODO: should we attempt to parse this?
         const [, stack] = spy.calls.mostRecent().args
-        expect(stack!.name).toEqual(undefined)
-        expect(stack!.message).toEqual('CustomError: woo scary')
+        expect(stack.type).toEqual(undefined)
+        expect(stack.message).toEqual('Uncaught "CustomError: woo scary"')
       })
 
       it('should ignore arbitrary messages passed through onerror', async () => {
@@ -221,8 +242,8 @@ describe('instrumentOnError', () => {
         })
 
         const [, stack] = spy.calls.mostRecent().args
-        expect(stack!.name).toEqual(undefined)
-        expect(stack!.message).toEqual('all work and no play makes homer: something something')
+        expect(stack.type).toEqual(undefined)
+        expect(stack.message).toEqual('Uncaught "all work and no play makes homer: something something"')
       })
 
       it('should handle object message passed through onerror', async () => {
@@ -231,7 +252,7 @@ describe('instrumentOnError', () => {
         })
 
         const [error, stack] = spy.calls.mostRecent().args
-        expect(stack!.message).toBeUndefined()
+        expect(stack.message).toBe('Uncaught {"foo":"bar"}')
         expect(error).toEqual({ foo: 'bar' }) // consider the message as initial error
       })
     })
@@ -249,8 +270,8 @@ describe('instrumentOnError', () => {
         })
 
         const [error, stack] = spy.calls.mostRecent().args
-        expect(stack!.message).toBe('Any error message')
-        expect(stack!.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
+        expect(stack.message).toBe('Uncaught "Actual Error Message"')
+        expect(stack.stack).toContain('https://example.com:1337:42')
         expect(error).toEqual('Actual Error Message')
       })
 
@@ -263,8 +284,8 @@ describe('instrumentOnError', () => {
         })
 
         const [error, stack] = spy.calls.mostRecent().args
-        expect(stack!.message).toBe('Any error message')
-        expect(stack!.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
+        expect(stack.message).toBe('Uncaught {"message":"SyntaxError","data":"foo"}')
+        expect(stack.stack).toContain('https://example.com:1337:42')
         expect(error).toEqual({ message: 'SyntaxError', data: 'foo' })
       })
     })

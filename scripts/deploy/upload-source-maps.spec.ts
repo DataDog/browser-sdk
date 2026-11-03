@@ -125,6 +125,14 @@ describe('upload-source-maps', () => {
         },
         {
           command:
+            'mv packages/browser-rum-buffer/bundle/datadog-rum-buffer.js packages/browser-rum-buffer/bundle/datadog-rum-buffer-v6.js',
+        },
+        {
+          command:
+            'mv packages/browser-rum-buffer/bundle/datadog-rum-buffer.js.map packages/browser-rum-buffer/bundle/datadog-rum-buffer-v6.js.map',
+        },
+        {
+          command:
             'mv packages/browser-debugger/bundle/datadog-debugger.js packages/browser-debugger/bundle/datadog-debugger-v6.js',
         },
         {
@@ -160,6 +168,11 @@ describe('upload-source-maps', () => {
         },
         {
           command:
+            'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
             'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
           env,
         },
@@ -186,6 +199,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
       {
@@ -222,6 +240,11 @@ describe('upload-source-maps', () => {
       },
       {
         command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
@@ -246,6 +269,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net/us1/v6 --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net/us1/v6 --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
       {
@@ -295,6 +323,14 @@ describe('upload-source-maps', () => {
       {
         command:
           'mv packages/browser-rum-slim/bundle/datadog-rum-slim.js.map packages/browser-rum-slim/bundle/datadog-rum-slim-staging.js.map',
+      },
+      {
+        command:
+          'mv packages/browser-rum-buffer/bundle/datadog-rum-buffer.js packages/browser-rum-buffer/bundle/datadog-rum-buffer-staging.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-buffer/bundle/datadog-rum-buffer.js.map packages/browser-rum-buffer/bundle/datadog-rum-buffer-staging.js.map',
       },
       {
         command:
@@ -348,6 +384,16 @@ describe('upload-source-maps', () => {
       },
       {
         command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_STAGING,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_STAGING,
       },
@@ -382,6 +428,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
       {
@@ -434,6 +485,14 @@ describe('upload-source-maps', () => {
       },
       {
         command:
+          'mv packages/browser-rum-buffer/bundle/datadog-rum-buffer.js packages/browser-rum-buffer/bundle/datadog-rum-buffer-canary.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-buffer/bundle/datadog-rum-buffer.js.map packages/browser-rum-buffer/bundle/datadog-rum-buffer-canary.js.map',
+      },
+      {
+        command:
           'mv packages/browser-debugger/bundle/datadog-debugger.js packages/browser-debugger/bundle/datadog-debugger-canary.js',
       },
       {
@@ -469,6 +528,11 @@ describe('upload-source-maps', () => {
       },
       {
         command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
@@ -493,6 +557,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
       {
@@ -546,6 +615,14 @@ describe('upload-source-maps', () => {
       },
       {
         command:
+          'mv packages/browser-rum-buffer/bundle/datadog-rum-buffer.js packages/browser-rum-buffer/bundle/datadog-rum-buffer-v7-canary.js',
+      },
+      {
+        command:
+          'mv packages/browser-rum-buffer/bundle/datadog-rum-buffer.js.map packages/browser-rum-buffer/bundle/datadog-rum-buffer-v7-canary.js.map',
+      },
+      {
+        command:
           'mv packages/browser-debugger/bundle/datadog-debugger.js packages/browser-debugger/bundle/datadog-debugger-v7-canary.js',
       },
       {
@@ -581,6 +658,11 @@ describe('upload-source-maps', () => {
       },
       {
         command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
           'datadog-ci sourcemaps upload packages/browser-debugger/bundle --service browser-debugger-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-debugger/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
@@ -605,6 +687,11 @@ describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/browser-rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_ORG2_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/browser-rum-buffer/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix https://d20xtzwzcl0ceb.cloudfront.net --project-path @datadog/browser-rum-buffer/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_ORG2_PROD,
       },
       {

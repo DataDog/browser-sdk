@@ -1,6 +1,6 @@
 import { callMonitored } from '@datadog/js-core/monitor'
 import { setTimeout, noop } from '@datadog/js-core/util'
-import { createHandlingStack } from './stackTrace/handlingStack'
+import type { createHandlingStack } from './stackTrace/handlingStack'
 
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
@@ -101,7 +101,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   targetPrototype: TARGET,
   method: METHOD,
   onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
-  { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
+  { computeHandlingStack }: { computeHandlingStack?: typeof createHandlingStack } = {}
 ) {
   let original = targetPrototype[method]
 
@@ -129,7 +129,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
       {
         target: this,
         parameters,
-        handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
+        handlingStack: computeHandlingStack?.('instrumented method'),
       },
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call -- TARGET[METHOD] is any under the index signature; value is verified as a function above
       () => original.apply(this, parameters)
@@ -174,7 +174,7 @@ export function instrumentConstructor<CONTAINER extends { [key: string]: any }, 
   container: CONTAINER,
   constructor: CONSTRUCTOR,
   onPreCall: (this: null, callInfos: InstrumentedConstructorCall<CONTAINER[CONSTRUCTOR]>) => void,
-  { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
+  { computeHandlingStack }: { computeHandlingStack?: typeof createHandlingStack } = {}
 ) {
   const original = container[constructor]
 
@@ -214,7 +214,7 @@ export function instrumentConstructor<CONTAINER extends { [key: string]: any }, 
       onPreCall,
       {
         parameters,
-        handlingStack: computeHandlingStack ? createHandlingStack('instrumented constructor') : undefined,
+        handlingStack: computeHandlingStack?.('instrumented constructor'),
       },
       () =>
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return

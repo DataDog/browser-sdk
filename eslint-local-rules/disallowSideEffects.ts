@@ -37,6 +37,7 @@ const packagesRoot = path.resolve(import.meta.dirname, '..', 'packages')
 
 // Those modules are known to have side effects when evaluated
 const pathsWithSideEffect = new Set([
+  `${packagesRoot}/browser-rum-buffer/src/entries/standalone.ts`,
   `${packagesRoot}/browser-logs/src/entries/main.ts`,
   `${packagesRoot}/browser-rum/src/entries/main.ts`,
   `${packagesRoot}/browser-rum/src/entries/salesforce.ts`,
@@ -57,6 +58,7 @@ const packagesWithoutSideEffect = new Set([
   '@datadog/js-core/dom',
   '@datadog/browser-core',
   '@datadog/browser-rum-core',
+  '@datadog/browser-rum-buffer',
   '@datadog/browser-rum-react/internal',
   'react',
   'react-router-dom',

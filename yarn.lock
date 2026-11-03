@@ -486,6 +486,7 @@ __metadata:
   resolution: "@datadog/browser-logs@workspace:packages/browser-logs"
   dependencies:
     "@datadog/browser-core": "workspace:*"
+    "@datadog/browser-rum-buffer": "workspace:*"
     "@datadog/js-core": "workspace:*"
   peerDependencies:
     "@datadog/browser-rum": "workspace:*"
@@ -536,11 +537,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-rum-buffer@workspace:*, @datadog/browser-rum-buffer@workspace:packages/browser-rum-buffer":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-buffer@workspace:packages/browser-rum-buffer"
+  dependencies:
+    "@datadog/browser-core": "workspace:*"
+    "@datadog/js-core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-core@workspace:*, @datadog/browser-rum-core@workspace:packages/browser-rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/browser-rum-core"
   dependencies:
     "@datadog/browser-core": "workspace:*"
+    "@datadog/browser-rum-buffer": "workspace:*"
     "@datadog/js-core": "workspace:*"
     ajv: "npm:8.20.0"
   languageName: unknown

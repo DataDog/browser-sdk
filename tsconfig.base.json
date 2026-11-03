@@ -21,6 +21,8 @@
 
       "@datadog/browser-logs": ["./packages/browser-logs/src/entries/main"],
 
+      "@datadog/browser-rum-buffer": ["./packages/browser-rum-buffer/src/entries/main"],
+
       "@datadog/browser-rum-core": ["./packages/browser-rum-core/src"],
 
       "@datadog/browser-rum": ["./packages/browser-rum/src/entries/main"],

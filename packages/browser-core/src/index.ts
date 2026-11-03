@@ -15,6 +15,8 @@ export {
   initFeatureFlags,
   ExperimentalFeature,
 } from './tools/experimentalFeatures'
+export { computeRuntimeError } from './domain/error/computeRuntimeError'
+export type { RuntimeError } from './domain/error/trackRuntimeError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export type { StackTrace } from './tools/stackTrace/computeStackTrace'
 export { computeStackTrace } from './tools/stackTrace/computeStackTrace'
