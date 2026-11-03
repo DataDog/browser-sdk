@@ -106,6 +106,19 @@ describe('exceptionReplay', () => {
     return attributes
   }
 
+  // Whether the stack of a resumed async function includes the function awaiting it
+  async function hasAsyncStackTraces(): Promise<boolean> {
+    async function resumedFunction() {
+      await Promise.resolve()
+      return computeStackTrace(new Error()).stack
+    }
+    async function awaitingCaller() {
+      return await resumedFunction()
+    }
+    const frames = await awaitingCaller()
+    return frames.some((frame) => frame.func?.includes('awaitingCaller'))
+  }
+
   function stackIndexOf(error: unknown, functionName: string): number {
     return computeStackTrace(error).stack.findIndex((frame) => frame.func?.includes(functionName))
   }
@@ -287,11 +300,12 @@ describe('exceptionReplay', () => {
     const attributes = reportError(error)!
 
     // Once `asyncCaller` resumes, `awaitingFunction` is an async frame located at the `await`, while
-    // the error's stack has it at the call
-    expect(attributes.frames.map(({ index }) => index)).toEqual([
-      stackIndexOf(error, 'asyncCallee'),
-      stackIndexOf(error, 'asyncCaller'),
-    ])
+    // the error's stack has it at the call. Browsers without async stack traces show no caller for
+    // `asyncCaller`, so its frame can't be confirmed and gets no snapshot.
+    const capturedFunctions = (await hasAsyncStackTraces()) ? ['asyncCallee', 'asyncCaller'] : ['asyncCallee']
+    expect(attributes.frames.map(({ index }) => index)).toEqual(
+      capturedFunctions.map((functionName) => stackIndexOf(error, functionName))
+    )
   })
 
   it('should not link a function without callers to an unrelated frame of the same script', async () => {
