@@ -1,7 +1,7 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import type { MatchOption, TaskQueue } from '@datadog/browser-core'
 import { elapsed, toServerDuration } from '@datadog/js-core/time'
-import { createTaskQueue, display, RequestType, ResourceType } from '@datadog/browser-core'
+import { createTaskQueue, display, PageExitReason, RequestType, ResourceType } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
 import {
@@ -330,6 +330,19 @@ describe('resourceCollection', () => {
       const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(resourceEvent.resource.response).toBeUndefined()
     })
+  })
+
+  it('collects pending resources when the page may exit', () => {
+    setupResourceCollection()
+    taskQueuePushSpy.and.callThrough()
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+    expect(rawRumEvents.length).toBe(0)
+
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
+
+    expect(rawRumEvents.length).toBe(1)
+    expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.type).toBe(ResourceType.IMAGE)
   })
 
   it('creates a resource from a performance entry without a matching request', () => {

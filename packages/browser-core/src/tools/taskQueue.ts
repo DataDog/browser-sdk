@@ -20,6 +20,11 @@ export const MAX_EXECUTION_TIME_ON_TIMEOUT = 30
 
 export interface TaskQueue {
   push(task: Task): void
+  /**
+   * Run all pending tasks synchronously, ignoring the idle time budget. Use it when the page may
+   * exit, so pending tasks get a chance to run before the page goes away.
+   */
+  flush(): void
   stop(): void
 }
 
@@ -56,6 +61,11 @@ export function createTaskQueue(): TaskQueue {
     push(task) {
       if (pendingTasks.push(task) === 1) {
         scheduleNextRun()
+      }
+    },
+    flush() {
+      while (pendingTasks.length) {
+        pendingTasks.shift()!()
       }
     },
     stop() {
