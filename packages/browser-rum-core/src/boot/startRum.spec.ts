@@ -234,12 +234,15 @@ describe('view events', () => {
     clock.tick(VIEW_DURATION - relativeNow())
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {
-      eventType: 'rum'
-      event: RumEvent
-    }
-    expect(lastBridgeMessage.event.type).toBe('view')
-    expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
+    const bridgeEvents = sendSpy.calls
+      .allArgs()
+      .map(([message]) => (JSON.parse(message) as { eventType: 'rum'; event: RumEvent }).event)
+    const lastRumViewEvent = findLast(
+      bridgeEvents,
+      (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
+    )!
+
+    expect(lastRumViewEvent.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })
 
   it('sends a view update with the correct sdk name', () => {
