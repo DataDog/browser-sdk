@@ -753,6 +753,21 @@ describe('preStartRum', () => {
       expect(plugin.onInit).toHaveBeenCalledTimes(1)
     })
 
+    it('starts a plugin added before an init() with an invalid configuration at the next init()', () => {
+      spyOn(display, 'error')
+      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.addPlugin(plugin)
+      strategy.init(INVALID_INIT_CONFIGURATION, PUBLIC_API)
+      expect(plugin.onInit).not.toHaveBeenCalled()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(plugin.onInit).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ initConfiguration: DEFAULT_INIT_CONFIGURATION })
+      )
+    })
+
     it('starts a plugin added while the init() plugins run once they let init() continue', async () => {
       let resolveInitPlugin!: () => void
       const plugin = { name: 'a', onInit: jasmine.createSpy() }
