@@ -316,7 +316,7 @@ function captureObjectPropertiesFields(
       typeof key === 'symbol' ? key.description || key.toString() : keyStr.includes('.') ? replaceDots(keyStr) : keyStr
 
     fields[keyName] =
-      ctx.redact && typeof key === 'string' && isRedactedIdentifier(key)
+      ctx.redact && isRedactedKey(key)
         ? captureRedactedProperty(obj, key)
         : captureProperty(obj, key, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   }
@@ -413,7 +413,7 @@ function captureMap(
     }
     entries.push([
       captureValue(key, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
-      ctx.redact && typeof key === 'string' && isRedactedIdentifier(key)
+      ctx.redact && isRedactedKey(key)
         ? captureRedactedValue(value)
         : captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
     ])
@@ -538,7 +538,15 @@ function captureProperty(
   }
 }
 
-function captureRedactedProperty(obj: any, property: string): CapturedValue {
+// Symbol keys are captured under their description, so they're redacted by it too
+function isRedactedKey(key: unknown): boolean {
+  if (typeof key === 'symbol') {
+    return key.description !== undefined && isRedactedIdentifier(key.description)
+  }
+  return typeof key === 'string' && isRedactedIdentifier(key)
+}
+
+function captureRedactedProperty(obj: any, property: string | symbol): CapturedValue {
   try {
     return captureRedactedValue(obj[property])
   } catch {

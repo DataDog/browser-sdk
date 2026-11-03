@@ -38,6 +38,7 @@ interface ExceptionReplayPluginOnInitOptions {
 export interface ExceptionReplayPlugin {
   name: string
   onInit(options: ExceptionReplayPluginOnInitOptions): void
+  onRumStart(): void
 }
 
 /**
@@ -53,6 +54,8 @@ export interface ExceptionReplayPlugin {
  * doesn't capture anything in sessions that RUM doesn't track.
  */
 export function exceptionReplayPlugin(): ExceptionReplayPlugin {
+  let rumStarted = false
+
   return {
     name: 'exception-replay',
     onInit({ publicApi, registerAssembleEventHook, registerEventCollectedHook }) {
@@ -61,7 +64,9 @@ export function exceptionReplayPlugin(): ExceptionReplayPlugin {
         return
       }
 
-      registerExceptionReplayPlugin(() => publicApi.getInternalContext() !== undefined)
+      // Until RUM starts, its session isn't known yet, and RUM reports the errors it buffered once
+      // it starts, so they're captured
+      registerExceptionReplayPlugin(() => !rumStarted || publicApi.getInternalContext() !== undefined)
 
       registerAssembleEventHook(({ eventType, domainContext }) => {
         if (eventType !== 'error') {
@@ -93,6 +98,9 @@ export function exceptionReplayPlugin(): ExceptionReplayPlugin {
           sendExceptionReplay(domainContext.error)
         }
       })
+    },
+    onRumStart() {
+      rumStarted = true
     },
   }
 }

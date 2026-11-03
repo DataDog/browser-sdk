@@ -70,7 +70,7 @@ Exception Replay captures the arguments and `this` of the instrumented functions
 
 3. Initialize the Live Debugger SDK as shown in [Usage](#usage).
 
-The SDK captures the three innermost instrumented frames of an exception as it's thrown. It only sends them as snapshots once RUM sends the error, after `beforeSend` and the event rate limits. It doesn't capture anything in sessions that RUM doesn't track. An error with the same type and innermost instrumented function is reported with snapshots at most once an hour. Values of variables and properties with sensitive names, such as `password` or `token`, are redacted. Local variables aren't captured.
+The SDK captures the three innermost instrumented frames of an exception as it's thrown. It only sends them as snapshots once RUM sends the error, after `beforeSend` and the event rate limits. It doesn't capture anything in sessions that RUM doesn't track. Snapshots are linked to frames by their position in `error.stack`, so a `beforeSend` that removes or reorders frames there can show them on the wrong frames. An error with the same type and innermost instrumented function is reported with snapshots at most once an hour. Values of variables and properties with sensitive names, such as `password` or `token`, are redacted. Local variables aren't captured.
 
 To limit the time spent on the main thread, Exception Replay captures at most 10 exceptions per second, and spends at most 25 ms per second on average capturing them. When a capture takes longer, capturing pauses until the time is made up. These limits are separate from `maxSnapshotsPerSecondGlobally`, which only applies to probes.
 

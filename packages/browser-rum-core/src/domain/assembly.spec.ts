@@ -807,6 +807,22 @@ describe('rum assembly', () => {
       })
     })
 
+    it('is triggered before the event is dispatched', () => {
+      const { lifeCycle, hooks } = setupAssemblyTestWithDefaults()
+      const calls: string[] = []
+      hooks.eventCollected.register(() => {
+        calls.push('eventCollected')
+      })
+      const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, () => {
+        calls.push('RUM_EVENT_COLLECTED')
+      })
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
+
+      expect(calls).toEqual(['eventCollected', 'RUM_EVENT_COLLECTED'])
+    })
+
     it('is not triggered for events dismissed by beforeSend', () => {
       const { lifeCycle, hooks } = setupAssemblyTestWithDefaults({
         partialConfiguration: { beforeSend: () => false },

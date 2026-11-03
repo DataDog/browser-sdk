@@ -154,14 +154,17 @@ export function onCatch(functionId: string, error: unknown, self: unknown, args:
       // Unlike probes, Exception Replay captures data nobody asked for, so redact sensitive names
       redact: true,
     }
-    exception.frames.push({
-      functionId,
-      timestamp: timeStampNow(),
-      arguments: captureArguments(args, self, {}, captureCtx),
-      callStack: new Error(),
-    })
-    // Charge the time actually spent, which can go past the deadline
-    captureBudgetMs -= performance.now() - start
+    try {
+      exception.frames.push({
+        functionId,
+        timestamp: timeStampNow(),
+        arguments: captureArguments(args, self, {}, captureCtx),
+        callStack: new Error(),
+      })
+    } finally {
+      // Charge the time actually spent, which can go past the deadline, even if capturing threw
+      captureBudgetMs -= performance.now() - start
+    }
   } catch (e) {
     monitorError(e)
   }
@@ -222,6 +225,13 @@ export function collectExceptionReplay(error: unknown): ExceptionReplayAttribute
     const exception = capturedExceptions.get(error)
     if (!exception) {
       return
+    }
+
+    // The error was assembled before but RUM dropped it, and another exception with the same
+    // fingerprint has been reported since
+    if (exception.pendingSnapshots && isCoolingDown(exception.fingerprint, performance.now())) {
+      exception.pendingSnapshots = undefined
+      exception.attributes = null
     }
 
     if (exception.attributes === undefined) {
@@ -334,8 +344,11 @@ function recordReport(fingerprint: string): void {
  * function's own frame differs, as it has moved to its catch block, so only its URL is compared.
  *
  * Both stacks can be truncated (V8 keeps 10 frames by default), so only the callers present in both
- * are compared.
+ * are compared. A function without callers has nothing to compare, so its frame in the error's stack
+ * must also look like the same function.
  */
+type StackFrame = StackTrace['stack'][number]
+
 function findFrameIndex(
   errorFrames: StackTrace['stack'],
   callFrames: StackTrace['stack'],
@@ -353,9 +366,13 @@ function findFrameIndex(
     }
 
     const comparedCount = Math.min(callers.length, errorFrames.length - index - 1)
-    // A function with callers needs at least one of them in the error's stack to confirm the match.
-    // A function without callers is at the bottom of both stacks.
-    if (callers.length > 0 ? comparedCount === 0 : index !== errorFrames.length - 1) {
+    if (callers.length > 0) {
+      // A function with callers needs at least one of them in the error's stack to confirm the match
+      if (comparedCount === 0) {
+        continue
+      }
+    } else if (index !== errorFrames.length - 1 || !isSameFunction(errorFrames[index], functionFrame)) {
+      // A function without callers is at the bottom of both stacks
       continue
     }
 
@@ -369,8 +386,38 @@ function findFrameIndex(
   }
 }
 
-function isSameLocation(a: StackTrace['stack'][number], b: StackTrace['stack'][number]): boolean {
-  return a.url === b.url && a.line === b.line && a.column === b.column
+// After an `await`, the stack shows a caller as an async frame located at the `await` instead of the
+// call, as in `async main` (Chrome) or `async*main` (Firefox), so only its line can be compared.
+const ASYNC_FRAME_PREFIX = /^async[ *]/
+
+function isSameLocation(a: StackFrame, b: StackFrame): boolean {
+  return a.url === b.url && a.line === b.line && (a.column === b.column || isAsyncFrame(a) || isAsyncFrame(b))
+}
+
+function isAsyncFrame(frame: StackFrame): boolean {
+  return frame.func !== undefined && ASYNC_FRAME_PREFIX.test(frame.func)
+}
+
+// Compares function names when both frames have one. Otherwise, the frame from the error's stack must
+// come first: it's where the function threw or called a callee, before reaching its catch block.
+function isSameFunction(errorFrame: StackFrame, functionFrame: StackFrame): boolean {
+  const errorFunction = getFunctionName(errorFrame)
+  const functionName = getFunctionName(functionFrame)
+  if (errorFunction !== undefined && functionName !== undefined) {
+    return errorFunction === functionName
+  }
+  return (
+    errorFrame.line !== undefined &&
+    functionFrame.line !== undefined &&
+    (errorFrame.line < functionFrame.line ||
+      (errorFrame.line === functionFrame.line && (errorFrame.column ?? 0) < (functionFrame.column ?? 0)))
+  )
+}
+
+function getFunctionName(frame: StackFrame): string | undefined {
+  const name = frame.func?.replace(ASYNC_FRAME_PREFIX, '')
+  // `computeStackTrace` names unknown functions `?`
+  return name && name !== '?' ? name : undefined
 }
 
 function isObject(value: unknown): value is object {
