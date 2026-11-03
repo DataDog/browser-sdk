@@ -171,8 +171,8 @@ export interface RumPublicApi extends PublicApi {
    * differences:
    * - It can't abort the initialization: if its `onInit` returns `false`, only its own `onRumStart`
    * is skipped. It shouldn't edit the init configuration, which may already be applied.
-   * - If it's added before the plugins passed to init() have let init() continue, it starts then,
-   * and RUM waits for its `onInit` before starting, as for those plugins.
+   * - If it's added before init() has accepted the configuration, it starts then, and RUM waits for
+   * its `onInit` before starting, as for the plugins passed to init().
    * - If it's added after that, RUM doesn't wait for it, so it misses the events assembled before
    * its hooks are registered.
    *
