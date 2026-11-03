@@ -776,7 +776,7 @@ test.describe('action collection with composed path selector', () => {
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
-        'BUTTON#my-button[data-test-id="test-btn"].bar.baz.foo:nth-child(2):nth-of-type(2);'
+        'BUTTON#my-button[data-random="secret"][data-test-id="test-btn"].bar.baz.foo:nth-child(2):nth-of-type(2);'
       )
     })
 
