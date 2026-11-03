@@ -264,6 +264,7 @@ export function createPreStartStrategy(
         initConfiguration,
         publicApi,
         registerAssembleEventHook: hooks.assembleEvent.register,
+        startView: (options, startClocks) => strategy.startView(options, startClocks),
       })
 
       if (typeof shouldContinue === 'boolean') {

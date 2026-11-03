@@ -1,20 +1,37 @@
 import { VERSION } from '@angular/core'
 import { callMonitored } from '@datadog/js-core/monitor'
+import type { ClocksState } from '@datadog/js-core/time'
+import { clocksNow } from '@datadog/js-core/time'
+import { BufferedObservable } from '@datadog/js-core/util'
 import { display, toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumPlugin, StartRumResult } from '@datadog/browser-rum-core'
 
-type ViewOptions = Parameters<RumPublicApi['startView']>[0]
+type ViewOptions = NonNullable<Parameters<StartRumResult['startView']>[0]>
 type ErrorPayload = Parameters<NonNullable<StartRumResult['addError']>>[0]
 
-// RUM might start after views and errors are reported, or never (e.g. during server-side
-// rendering). Until then, keep plain data only: a callback created in a framework scope (router
-// subscription...) would keep that whole scope alive, and minifiers can inline functions into such
-// scopes. Keep only the latest view, and a bounded number of errors like the core SDK does.
-const MAX_PENDING_ERRORS = 500
-let pendingView: ViewOptions | undefined
-let pendingErrors: ErrorPayload[] = []
-let startView: ((view: ViewOptions) => void) | undefined
-let addError: ((error: ErrorPayload) => void) | undefined
+interface PendingView {
+  options: ViewOptions
+  startClocks: ClocksState
+}
+
+// Views and errors are buffered until RUM is ready, like the core SDK buffers API calls made before
+// `init()`. RUM might never be ready (e.g. during server-side rendering), so:
+// - the buffers are bounded (same limit as the core SDK)
+// - they hold plain data, not callbacks: a callback created in a framework scope (router
+//   subscription...) would keep that whole scope alive, and minifiers can inline functions into
+//   such scopes
+const BUFFER_LIMIT = 500
+let viewBuffer: BufferedObservable<PendingView> | undefined
+let errorBuffer: BufferedObservable<ErrorPayload> | undefined
+
+// Created lazily: modules must not have side effects
+function getViewBuffer() {
+  return (viewBuffer ??= new BufferedObservable<PendingView>(BUFFER_LIMIT))
+}
+
+function getErrorBuffer() {
+  return (errorBuffer ??= new BufferedObservable<ErrorPayload>(BUFFER_LIMIT))
+}
 
 /**
  * Angular plugin configuration.
@@ -50,29 +67,26 @@ export interface AngularPluginConfiguration {
 export function angularPlugin(configuration: AngularPluginConfiguration = {}): RumPlugin {
   return {
     name: 'angular',
-    onInit({ publicApi, initConfiguration }) {
-      startView = (view) => {
+    onInit({ initConfiguration, startView }) {
+      // Views keep the time they happened, including the ones buffered before init()
+      getViewBuffer().subscribe(({ options, startClocks }) => {
         if (!configuration.router) {
           display.warn('`router: true` is missing from the angular plugin configuration, the view will not be tracked.')
           return
         }
-        publicApi.startView(view)
-      }
-      if (pendingView) {
-        startView(pendingView)
-        pendingView = undefined
-      }
+        startView(options, startClocks)
+      })
+      getViewBuffer().unbuffer()
       if (configuration.router) {
         initConfiguration.trackViewsManually = true
       }
     },
-    onRumStart({ addError: rumAddError }) {
-      if (!rumAddError) {
+    onRumStart({ addError }) {
+      if (!addError) {
         return
       }
-      addError = (error) => callMonitored(() => rumAddError(error))
-      pendingErrors.forEach(addError)
-      pendingErrors = []
+      getErrorBuffer().subscribe((error) => callMonitored(() => addError(error)))
+      getErrorBuffer().unbuffer()
     },
     getConfigurationTelemetry() {
       const angularIntegration = toMajorVersionIntegration('angular', VERSION.major)
@@ -84,28 +98,15 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
   } satisfies RumPlugin
 }
 
-export function startAngularViewWhenReady(view: ViewOptions) {
-  if (startView) {
-    startView(view)
-  } else {
-    pendingView = view
-  }
+export function startAngularViewWhenReady(options: ViewOptions) {
+  getViewBuffer().notify({ options, startClocks: clocksNow() })
 }
 
 export function addAngularErrorWhenReady(error: ErrorPayload) {
-  if (addError) {
-    addError(error)
-    return
-  }
-  pendingErrors.push(error)
-  if (pendingErrors.length > MAX_PENDING_ERRORS) {
-    pendingErrors.shift()
-  }
+  getErrorBuffer().notify(error)
 }
 
 export function resetAngularPlugin() {
-  pendingView = undefined
-  pendingErrors = []
-  startView = undefined
-  addError = undefined
+  viewBuffer = undefined
+  errorBuffer = undefined
 }

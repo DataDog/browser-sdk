@@ -383,6 +383,31 @@ describe('preStartRum', () => {
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
 
+        it('lets plugins start views at the time they happened', async () => {
+          const testClock = mockClock()
+          clock = testClock
+          const plugin: RumPlugin = {
+            name: 'a',
+            onInit: ({ startView }) => {
+              startView({ name: 'foo' }, { relative: testClock.relative(10), timeStamp: testClock.timeStamp(10) })
+              startView({ name: 'bar' }, { relative: testClock.relative(20), timeStamp: testClock.timeStamp(20) })
+            },
+          }
+          testClock.tick(30)
+
+          strategy.init({ ...MANUAL_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+          await collectAsyncCalls(doStartRumSpy, 1)
+          await collectAsyncCalls(startViewSpy, 1)
+
+          // The first view becomes the initial view, the next ones keep the time they were given
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
+          expect(initialViewOptions).toEqual({ name: 'foo' })
+          expect(startViewSpy).toHaveBeenCalledOnceWith(
+            { name: 'bar' },
+            { relative: testClock.relative(20), timeStamp: testClock.timeStamp(20) }
+          )
+        })
+
         it('calling startView twice before init should start rum and create a new view', async () => {
           clock = mockClock()
           clock.tick(10)

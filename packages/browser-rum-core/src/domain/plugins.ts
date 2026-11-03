@@ -18,6 +18,11 @@ export interface RumPluginOnInitOptions {
    * assembled, including events buffered during the pre-start phase.
    */
   registerAssembleEventHook: AssembleHook['register']
+  /**
+   * Start a view at the given time. Unlike `publicApi.startView`, which uses the current time, this
+   * lets plugins report views that happened before the SDK was initialized at the time they happened.
+   */
+  startView: StartRumResult['startView']
 }
 
 /**

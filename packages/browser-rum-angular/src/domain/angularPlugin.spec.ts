@@ -1,12 +1,17 @@
 import { VERSION } from '@angular/core'
-import { toMajorVersionIntegration } from '@datadog/browser-core'
+import { display, toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '../../../browser-core/test'
+import { collectAsyncCalls, mockClock, registerCleanupTask } from '../../../browser-core/test'
 import { addAngularErrorWhenReady, angularPlugin, resetAngularPlugin, startAngularViewWhenReady } from './angularPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 const ERROR_PAYLOAD = { error: new Error('foo') } as Parameters<typeof addAngularErrorWhenReady>[0]
+
+// The plugin's buffers replay in a microtask, after which values are forwarded right away
+function flushMicrotasks() {
+  return new Promise<void>((resolve) => queueMicrotask(resolve))
+}
 
 describe('angularPlugin', () => {
   beforeEach(() => {
@@ -26,48 +31,62 @@ describe('angularPlugin', () => {
     )
   })
 
-  it('starts views reported before onInit when onInit is called', () => {
-    const startView = jasmine.createSpy()
-    const publicApi = { startView } as unknown as RumPublicApi
-    startAngularViewWhenReady({ name: '/foo', url: '/foo' })
-    expect(startView).not.toHaveBeenCalled()
-
+  function initPlugin(startView: jasmine.Spy, configuration = { router: true }) {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-    angularPlugin({ router: true }).onInit!({
-      publicApi,
+    angularPlugin(configuration).onInit!({
+      publicApi: PUBLIC_API,
       initConfiguration: { ...INIT_CONFIGURATION },
-    } as RumPluginOnInitOptions)
+      startView,
+    } as unknown as RumPluginOnInitOptions)
+  }
 
-    expect(startView).toHaveBeenCalledOnceWith({ name: '/foo', url: '/foo' })
-  })
-
-  it('only starts the latest view reported before onInit', () => {
+  it('starts the views reported before onInit, at the time they happened', async () => {
+    const clock = mockClock()
     const startView = jasmine.createSpy()
-    const publicApi = { startView } as unknown as RumPublicApi
+    clock.tick(10)
     startAngularViewWhenReady({ name: '/foo', url: '/foo' })
+    clock.tick(10)
     startAngularViewWhenReady({ name: '/bar', url: '/bar' })
+    clock.tick(10)
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-    angularPlugin({ router: true }).onInit!({
-      publicApi,
-      initConfiguration: { ...INIT_CONFIGURATION },
-    } as RumPluginOnInitOptions)
+    initPlugin(startView)
 
-    expect(startView).toHaveBeenCalledOnceWith({ name: '/bar', url: '/bar' })
+    expect((await collectAsyncCalls(startView, 2)).allArgs()).toEqual([
+      [
+        { name: '/foo', url: '/foo' },
+        { relative: clock.relative(10), timeStamp: clock.timeStamp(10) },
+      ],
+      [
+        { name: '/bar', url: '/bar' },
+        { relative: clock.relative(20), timeStamp: clock.timeStamp(20) },
+      ],
+    ])
   })
 
-  it('starts views right away once onInit was called', () => {
+  it('starts views right away once onInit was called', async () => {
+    const clock = mockClock()
     const startView = jasmine.createSpy()
-    const publicApi = { startView } as unknown as RumPublicApi
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-    angularPlugin({ router: true }).onInit!({
-      publicApi,
-      initConfiguration: { ...INIT_CONFIGURATION },
-    } as RumPluginOnInitOptions)
+    initPlugin(startView)
+    await flushMicrotasks()
+    clock.tick(10)
 
     startAngularViewWhenReady({ name: '/foo', url: '/foo' })
 
-    expect(startView).toHaveBeenCalledOnceWith({ name: '/foo', url: '/foo' })
+    expect(startView).toHaveBeenCalledOnceWith(
+      { name: '/foo', url: '/foo' },
+      { relative: clock.relative(10), timeStamp: clock.timeStamp(10) }
+    )
+  })
+
+  it('warns instead of starting views when router is not enabled', async () => {
+    const displayWarnSpy = spyOn(display, 'warn')
+    const startView = jasmine.createSpy()
+    startAngularViewWhenReady({ name: '/foo', url: '/foo' })
+
+    initPlugin(startView, { router: false })
+
+    await collectAsyncCalls(displayWarnSpy, 1)
+    expect(startView).not.toHaveBeenCalled()
   })
 
   it('enforce manual view tracking when router is enabled', () => {
@@ -103,17 +122,17 @@ describe('angularPlugin', () => {
     })
   })
 
-  it('adds errors reported before onRumStart when onRumStart is called', () => {
+  it('adds errors reported before onRumStart when onRumStart is called', async () => {
     const addError = jasmine.createSpy()
     addAngularErrorWhenReady(ERROR_PAYLOAD)
     expect(addError).not.toHaveBeenCalled()
 
     angularPlugin().onRumStart!({ addError })
 
-    expect(addError).toHaveBeenCalledOnceWith(ERROR_PAYLOAD)
+    expect((await collectAsyncCalls(addError, 1)).argsFor(0)).toEqual([ERROR_PAYLOAD])
   })
 
-  it('keeps the 500 latest errors reported before onRumStart', () => {
+  it('keeps the 500 latest errors reported before onRumStart', async () => {
     const addError = jasmine.createSpy()
     for (let i = 0; i < 501; i++) {
       addAngularErrorWhenReady({ ...ERROR_PAYLOAD, context: { i } })
@@ -121,13 +140,14 @@ describe('angularPlugin', () => {
 
     angularPlugin().onRumStart!({ addError })
 
-    expect(addError).toHaveBeenCalledTimes(500)
-    expect(addError.calls.first().args[0].context).toEqual({ i: 1 })
+    const calls = await collectAsyncCalls(addError, 500)
+    expect(calls.first().args[0].context).toEqual({ i: 1 })
   })
 
-  it('adds errors right away once onRumStart was called', () => {
+  it('adds errors right away once onRumStart was called', async () => {
     const addError = jasmine.createSpy()
     angularPlugin().onRumStart!({ addError })
+    await flushMicrotasks()
 
     addAngularErrorWhenReady(ERROR_PAYLOAD)
 
