@@ -1,5 +1,5 @@
 import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
-import { deepClone, mockable, generateUUID } from '@datadog/js-core/util'
+import { ConsoleApiName, deepClone, mockable, generateUUID } from '@datadog/js-core/util'
 import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
   DeflateWorker,
@@ -679,7 +679,8 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedData = startBufferingData()
+  // RUM only collects console errors
+  const bufferedData = startBufferingData([ConsoleApiName.error])
 
   let strategy = createPreStartStrategy(
     options,

@@ -2,28 +2,28 @@ import { callMonitored } from '@datadog/js-core/monitor'
 import type { StackTrace } from './computeStackTrace'
 import { computeStackTrace } from './computeStackTrace'
 
+export type HandlingStackType =
+  | 'console error'
+  | 'action'
+  | 'error'
+  | 'instrumented method'
+  | 'instrumented constructor'
+  | 'log'
+  | 'nuxt error'
+  | 'react error'
+  | 'nextjs error'
+  | 'vue error'
+  | 'angular error'
+  | 'view'
+  | 'vital'
+
 /**
  * Creates a stacktrace without SDK internal frames.
  * Constraints:
  * - Has to be called at the utmost position of the call stack.
  * - No monitored function should encapsulate it, that is why we need to use callMonitored inside it.
  */
-export function createHandlingStack(
-  type:
-    | 'console error'
-    | 'action'
-    | 'error'
-    | 'instrumented method'
-    | 'instrumented constructor'
-    | 'log'
-    | 'nuxt error'
-    | 'react error'
-    | 'nextjs error'
-    | 'vue error'
-    | 'angular error'
-    | 'view'
-    | 'vital'
-): string {
+export function createHandlingStack(type: HandlingStackType): string {
   /**
    * Skip the two internal frames:
    * - SDK API (console.error, ...)

@@ -279,11 +279,14 @@ export interface LogsPublicApiOptions {
 
 export function makeLogsPublicApi(options: LogsPublicApiOptions = {}): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedDataObservable = startBufferingData().observable
+  // The configuration is not known yet, so instrument all console APIs until init()
+  const bufferedData = startBufferingData()
+  const bufferedDataObservable = bufferedData.observable
 
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
+    bufferedData.restrictConsoleApis,
     (configuration, logsSessionManager, hooks) => {
       const startLogsResult = mockable(startLogs)(
         configuration,

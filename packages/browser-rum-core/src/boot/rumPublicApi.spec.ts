@@ -1,11 +1,19 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
-import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
+import {
+  BufferedDataType,
+  display,
+  DefaultPrivacyLevel,
+  ResourceType,
+  startTelemetry,
+  startSessionManager,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
   mockClock,
+  waitNextMicrotask,
   mockEventBridge,
   createFakeTelemetryObject,
   replaceMockable,
@@ -55,6 +63,47 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
+  describe('console instrumentation', () => {
+    /* eslint-disable no-console, @typescript-eslint/unbound-method */
+    it('only instruments console.error', () => {
+      spyOn(console, 'log')
+      spyOn(console, 'debug')
+      spyOn(console, 'info')
+      spyOn(console, 'warn')
+      spyOn(console, 'error')
+      const originalConsoleMethods = { ...console }
+
+      makeRumPublicApiWithDefaults()
+
+      expect(console.log).toBe(originalConsoleMethods.log)
+      expect(console.debug).toBe(originalConsoleMethods.debug)
+      expect(console.info).toBe(originalConsoleMethods.info)
+      expect(console.warn).toBe(originalConsoleMethods.warn)
+      expect(console.error).not.toBe(originalConsoleMethods.error)
+    })
+
+    it('collects console errors made before init', async () => {
+      spyOn(console, 'error')
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+      console.error('before init')
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+
+      const consoleMessages: string[] = []
+      startRumSpy.calls.mostRecent().args[6].subscribe((data) => {
+        if (data.type === BufferedDataType.CONSOLE) {
+          consoleMessages.push(data.data.message)
+        }
+      })
+      // buffered data is replayed in a microtask
+      await waitNextMicrotask()
+
+      expect(consoleMessages).toEqual(['before init'])
+    })
+    /* eslint-enable no-console, @typescript-eslint/unbound-method */
+  })
+
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
