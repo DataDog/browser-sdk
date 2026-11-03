@@ -120,6 +120,11 @@ function assembleResource(
 
   const startClocks = relativeToClocks(entry.startTime)
   const duration = computeResourceEntryDuration(entry)
+  // Discard resources with invalid timings (ex: when `performance` is replaced by a fake
+  // implementation, like Playwright's clock) instead of sending an invalid event.
+  if (!Number.isFinite(duration)) {
+    return
+  }
 
   const networkHeaders = computeNetworkHeaders(request, configuration)
 

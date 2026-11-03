@@ -534,6 +534,18 @@ describe('resourceCollection', () => {
     )
   })
 
+  it('should not collect a resource with an invalid duration', () => {
+    setupResourceCollection()
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        initiatorType: 'navigation',
+        responseEnd: undefined as unknown as RelativeTime,
+      }),
+    ])
+    runTasks()
+    expect(rawRumEvents.length).toBe(0)
+  })
+
   it('should discard 0 status code', () => {
     setupResourceCollection()
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
