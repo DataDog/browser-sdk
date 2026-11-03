@@ -338,6 +338,30 @@ describe('exceptionReplay', () => {
     expect(reportError(error)).toBeUndefined()
   })
 
+  it('should not link an unnamed function without callers to a named frame of the same script', async () => {
+    function rejectLater() {
+      return new Promise((_, reject) => {
+        setTimeout(function timerCallback() {
+          reject(new Error('boom'))
+        })
+      })
+    }
+
+    // An anonymous function defined after `timerCallback`, with no callers once it resumes
+    const error = await new Promise((resolve) => {
+      ;(async () => {
+        try {
+          await rejectLater()
+        } catch (e) {
+          onCatch('src/async.ts;<anonymous>', e, undefined, {})
+          throw e
+        }
+      })().catch(resolve)
+    })
+
+    expect(reportError(error)).toBeUndefined()
+  })
+
   it('should not send snapshots for exceptions that are not reported', () => {
     catchError(() => callingFunction(1, 2))
 
