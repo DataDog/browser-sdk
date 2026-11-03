@@ -53,21 +53,10 @@ When the [RUM Browser SDK][4] is loaded on the page, the first hit of each probe
 
 ## Exception Replay
 
-Exception Replay captures the arguments and `this` of the instrumented functions an error passes through, and shows them on the error's stack frames in Error Tracking, without adding probes. It requires the [RUM Browser SDK][4]:
+Exception Replay captures the arguments and `this` of the instrumented functions an error passes through, and shows them on the error's stack frames in Error Tracking, without adding probes. It requires the [RUM Browser SDK][4], at the same version as the Live Debugger SDK:
 
 1. Build your application with the Live Debugger build plugin's [`exceptionReplay`][8] option.
-2. Register the Exception Replay plugin when initializing the RUM Browser SDK:
-
-   ```js
-   import { datadogRum } from '@datadog/browser-rum'
-   import { datadogDebugger } from '@datadog/browser-debugger'
-
-   datadogRum.init({
-     // ...
-     plugins: [datadogDebugger.exceptionReplayPlugin()],
-   })
-   ```
-
+2. Load the RUM Browser SDK, or its async loading snippet, before you call `DD_DEBUGGER.init()`. With npm, importing `@datadog/browser-rum` is enough. You don't need to change your RUM configuration: `DD_DEBUGGER.init()` adds Exception Replay to the RUM Browser SDK, whether or not RUM is already initialized.
 3. Initialize the Live Debugger SDK as shown in [Usage](#usage). It must send to the same Datadog site and organization as the RUM Browser SDK, or Error Tracking can't find the snapshots of RUM errors.
 
 The SDK captures the three innermost instrumented frames of an exception as it's thrown. It only sends them as snapshots once RUM sends the error, after `beforeSend` and the event rate limits. It doesn't capture anything in sessions that RUM doesn't track, or before tracking consent is granted. Snapshots are linked to frames by their position in `error.stack`, so a `beforeSend` that removes or reorders frames there can show them on the wrong frames. An error with the same type and innermost instrumented function is reported with snapshots at most once an hour. Values of variables and properties with sensitive names, such as `password` or `token`, are redacted. Local variables aren't captured.

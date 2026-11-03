@@ -636,17 +636,6 @@ test.describe('debugger', () => {
 
   createTest('link Exception Replay snapshots to the RUM error event')
     .withRum()
-    .withRumInit((configuration) => {
-      // The debugger is loaded after RUM, so wait for it to create the plugin
-      const initRum = () => {
-        window.DD_RUM!.init({ ...configuration, plugins: [(window as any).DD_DEBUGGER.exceptionReplayPlugin()] })
-      }
-      if ((window as any).DD_DEBUGGER) {
-        ;(window as any).DD_DEBUGGER.onReady(initRum)
-      } else {
-        document.addEventListener('DOMContentLoaded', initRum)
-      }
-    })
     .withDebugger()
     .withBody(EXCEPTION_REPLAY_BODY)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -697,19 +686,7 @@ test.describe('debugger', () => {
   createTest('do not send Exception Replay snapshots for errors dismissed by beforeSend')
     .withRum()
     .withRumInit((configuration) => {
-      // The debugger is loaded after RUM, so wait for it to create the plugin
-      const initRum = () => {
-        window.DD_RUM!.init({
-          ...configuration,
-          plugins: [(window as any).DD_DEBUGGER.exceptionReplayPlugin()],
-          beforeSend: (event) => event.type !== 'error',
-        })
-      }
-      if ((window as any).DD_DEBUGGER) {
-        ;(window as any).DD_DEBUGGER.onReady(initRum)
-      } else {
-        document.addEventListener('DOMContentLoaded', initRum)
-      }
+      window.DD_RUM!.init({ ...configuration, beforeSend: (event) => event.type !== 'error' })
     })
     .withDebugger()
     .withBody(EXCEPTION_REPLAY_BODY)

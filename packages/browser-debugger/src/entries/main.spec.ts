@@ -4,6 +4,7 @@ import { initDebuggerTransport } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'
 import { registerExceptionReplayPlugin, resetExceptionReplay, startExceptionReplay } from '../domain/exceptionReplay'
+import { addExceptionReplayPluginToRum } from '../domain/exceptionReplayPlugin'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 import type { BrowserWindow, DebuggerBuildMetadata, DebuggerInitConfiguration } from './main'
 import { datadogDebugger } from './main'
@@ -38,22 +39,23 @@ describe('datadogDebugger', () => {
     })
   })
 
-  it('should only expose init, exceptionReplayPlugin, version, and onReady', () => {
+  it('should only expose init, version, and onReady', () => {
     expect(datadogDebugger).toEqual({
       init: jasmine.any(Function),
-      exceptionReplayPlugin: jasmine.any(Function),
       version: jasmine.any(String),
       onReady: jasmine.any(Function),
     })
   })
 
-  it('should start Exception Replay on init', () => {
+  it('should start Exception Replay and add its plugin to RUM on init', () => {
     mockInitDependencies()
     const startExceptionReplaySpy = replaceMockableWithSpy(startExceptionReplay)
+    const addExceptionReplayPluginToRumSpy = replaceMockableWithSpy(addExceptionReplayPluginToRum)
 
     datadogDebugger.init(INIT_CONFIGURATION)
 
     expect(startExceptionReplaySpy).toHaveBeenCalled()
+    expect(addExceptionReplayPluginToRumSpy).toHaveBeenCalled()
   })
 
   it('should install the Exception Replay catch hook on init once the plugin is registered', () => {
