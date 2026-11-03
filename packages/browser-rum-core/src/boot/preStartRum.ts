@@ -238,7 +238,10 @@ export function createPreStartStrategy(
     })
   }
 
-  function startAddedPlugin(plugin: RumPlugin, onInitOptions: RumPluginOnInitOptions) {
+  /**
+   * Returns a promise that settles once an asynchronous onInit has, so init() can wait for it.
+   */
+  function startAddedPlugin(plugin: RumPlugin, onInitOptions: RumPluginOnInitOptions): PromiseLike<void> | undefined {
     // init() has already called the other plugins, so this one can't abort it: ignore what onInit
     // returns. If it fails, report the error, which can't stop init() or the other plugins, and
     // skip onRumStart, as RUM doesn't start when the onInit of an init() plugin fails.
@@ -251,10 +254,9 @@ export function createPreStartStrategy(
     }
 
     if (isThenable(onInitResult)) {
-      onInitResult.then(() => callAddedPluginOnRumStartOnceStarted(plugin), monitorError)
-    } else {
-      callAddedPluginOnRumStartOnceStarted(plugin)
+      return onInitResult.then(() => callAddedPluginOnRumStartOnceStarted(plugin), monitorError)
     }
+    callAddedPluginOnRumStartOnceStarted(plugin)
   }
 
   function callAddedPluginOnRumStartOnceStarted(plugin: RumPlugin) {
@@ -308,16 +310,26 @@ export function createPreStartStrategy(
         return
       }
 
-      pluginOnInitOptions = {
+      const onInitOptions: RumPluginOnInitOptions = {
         initConfiguration,
         publicApi,
         registerAssembleEventHook: hooks.assembleEvent.register,
       }
-      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, pluginOnInitOptions)
+      pluginOnInitOptions = onInitOptions
+      const initPluginsResult = callPluginsOnInit(initConfiguration.plugins, onInitOptions)
 
+      // Like for the init() plugins, wait for the onInit of the plugins added before init(), so
+      // their hooks are registered before any event is assembled
+      const addedPluginInits: Array<PromiseLike<void>> = []
       for (const plugin of pluginsAddedBeforeInit.splice(0)) {
-        startAddedPlugin(plugin, pluginOnInitOptions)
+        const addedPluginInit = startAddedPlugin(plugin, onInitOptions)
+        if (addedPluginInit) {
+          addedPluginInits.push(addedPluginInit)
+        }
       }
+      const shouldContinue = addedPluginInits.length
+        ? Promise.all(addedPluginInits).then(() => initPluginsResult)
+        : initPluginsResult
 
       if (typeof shouldContinue === 'boolean') {
         if (shouldContinue) {
