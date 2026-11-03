@@ -169,11 +169,11 @@ export interface RumPublicApi extends PublicApi {
    * Add a plugin after init(), for example from an SDK that loads separately and attaches itself
    * to RUM. The plugin gets the same options as the plugins passed to init(), with these
    * differences:
-   * - It can't abort the initialization, and it shouldn't edit the init configuration, which may
-   * already be applied.
-   * - If it's added before init(), it waits for init(), and RUM waits for its `onInit` before
-   * starting, as for the plugins passed to init().
-   * - If it's added after init(), RUM doesn't wait for it, so it misses the events assembled before
+   * - It can't abort the initialization: if its `onInit` returns `false`, only its own `onRumStart`
+   * is skipped. It shouldn't edit the init configuration, which may already be applied.
+   * - If it's added before the plugins passed to init() have let init() continue, it starts then,
+   * and RUM waits for its `onInit` before starting, as for those plugins.
+   * - If it's added after that, RUM doesn't wait for it, so it misses the events assembled before
    * its hooks are registered.
    *
    * The plugins API is unstable and experimental, and may change without notice. Please use only
