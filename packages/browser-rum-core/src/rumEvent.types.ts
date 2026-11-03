@@ -322,6 +322,7 @@ export type RumErrorEvent = CommonProperties &
         | 'linux'
         | 'maui'
         | 'nodejs'
+        | 'unreal'
       /**
        * Resource properties of the error
        */
@@ -1345,6 +1346,7 @@ export interface CommonProperties {
     | 'electron'
     | 'cpp'
     | 'maui'
+    | 'unreal'
   /**
    * View properties
    */
@@ -1717,6 +1719,7 @@ export interface ViewContainerSchema {
       | 'electron'
       | 'cpp'
       | 'maui'
+      | 'unreal'
     [k: string]: unknown
   }
   [k: string]: unknown
