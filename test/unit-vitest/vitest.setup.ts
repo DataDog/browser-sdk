@@ -71,51 +71,80 @@ window.afterEach = (fn, timeout) => vitest.afterEach(supportDone(fn), timeout)
 window.beforeAll = (fn, timeout) => vitest.beforeAll(supportDone(fn), timeout)
 window.afterAll = (fn, timeout) => vitest.afterAll(supportDone(fn), timeout)
 
-const matchersUtil = new jasmineLib.MatchersUtil({
-  customTesters: [],
-  pp: jasmineLib.makePrettyPrinter(),
-})
+// Like Jasmine (with `stopSpecOnExpectationFailure`), record failures before throwing them, so the
+// test still fails if the code under test catches the error (ex: `callMonitored(() => expect(...))`).
+// Recorded failures that were not reported are checked once the test finishes (see below).
+let failuresOfCurrentTest: Error[] = []
+function recordFailure(error: Error) {
+  failuresOfCurrentTest.push(error)
+  return error
+}
+
+const pp = jasmineLib.makePrettyPrinter()
+const matchersUtil = new jasmineLib.MatchersUtil({ customTesters: [], pp })
+
+function addExpectationResult(passed: boolean, result: { message: string }) {
+  if (!passed) {
+    throw recordFailure(new Error(result.message))
+  }
+}
 
 window.expect = ((actual: any) =>
-  jasmineLib.Expectation.factory({
-    matchersUtil,
-    actual,
-    addExpectationResult(passed: boolean, result: any) {
-      if (!passed) {
-        throw new Error(result.message)
-      }
-    },
-  })) as unknown as typeof window.expect
+  jasmineLib.Expectation.factory({ matchersUtil, actual, addExpectationResult })) as unknown as typeof window.expect
 
 window.expectAsync = (actual: any) =>
-  jasmineLib.Expectation.asyncFactory({
-    matchersUtil,
-    actual,
-    addExpectationResult(passed: boolean, result: any) {
-      if (!passed) {
-        throw new Error(result.message)
-      }
-    },
-  })
+  jasmineLib.Expectation.asyncFactory({ matchersUtil, actual, addExpectationResult })
+
+window.fail = (error?: unknown) => {
+  if (error instanceof Error) {
+    throw recordFailure(error)
+  }
+  throw recordFailure(
+    new Error(error === undefined ? 'Failed' : `Failed: ${typeof error === 'string' ? error : pp(error)}`)
+  )
+}
 
 // Fail tests that call console methods without spying on them, to keep the test output clean.
 // Calls made after a test ends are reported by the next test.
-if (vitest.inject('failOnUnexpectedConsoleCalls')) {
-  const unexpectedConsoleCalls: string[] = []
+// With `isolate: false`, this file runs again for each spec file in the same page: patch the console
+// only once, and share the calls across spec files so none is lost between two files.
+const UNEXPECTED_CONSOLE_CALLS = Symbol.for('vitest.setup.unexpectedConsoleCalls')
+const unexpectedConsoleCalls: string[] | undefined = vitest.inject('failOnUnexpectedConsoleCalls')
+  ? ((window as any)[UNEXPECTED_CONSOLE_CALLS] ??= trackConsoleCalls())
+  : undefined
+
+function trackConsoleCalls() {
+  const calls: string[] = []
   for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
     const originalMethod = console[method].bind(console)
     console[method] = (...args: unknown[]) => {
-      unexpectedConsoleCalls.push(`${method}: ${args.map(String).join(' ')}`)
+      calls.push(`${method}: ${args.map(String).join(' ')}`)
       originalMethod(...args)
     }
   }
-  vitest.afterEach(() => {
-    if (unexpectedConsoleCalls.length) {
-      const calls = unexpectedConsoleCalls.splice(0)
-      throw new Error(`Unexpected console calls:\n${calls.join('\n')}`)
+  return calls
+}
+
+// `onTestFinished` hooks run in reverse order: registering these before the spy cleanup below and the
+// `registerCleanupTask()` tasks makes them run after, as cleanups can fail expectations or call
+// console methods too.
+vitest.beforeEach(() => {
+  failuresOfCurrentTest = []
+  vitest.onTestFinished(({ task }) => {
+    const reportedMessages = task.result?.errors?.map((error) => error.message) ?? []
+    // Like Jasmine, which stops the test at its first failure, only report the first one
+    const unreportedFailure = failuresOfCurrentTest.find((error) => !reportedMessages.includes(error.message))
+    failuresOfCurrentTest = []
+    if (unreportedFailure) {
+      throw unreportedFailure
     }
   })
-}
+  vitest.onTestFinished(() => {
+    if (unexpectedConsoleCalls?.length) {
+      throw new Error(`Unexpected console calls:\n${unexpectedConsoleCalls.splice(0).join('\n')}`)
+    }
+  })
+})
 
 // After each is executed before `onTestFinished`, so it's too soon to clear the spies
 vitest.beforeEach(() => {
