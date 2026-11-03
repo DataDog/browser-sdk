@@ -90,6 +90,10 @@ export function createPreStartStrategy(
   // Set when init() calls the plugins' onInit. Plugins added before that wait for it.
   let pluginOnInitOptions: RumPluginOnInitOptions | undefined
   const pluginsAddedBeforeInit: RumPlugin[] = []
+  // Added plugins waiting for RUM to start. They're kept out of bufferApiCalls, which drops its
+  // oldest entries when it's full.
+  const addedPluginsAwaitingRumStart: RumPlugin[] = []
+  let startedRum: StartRumResult | undefined
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
@@ -131,6 +135,11 @@ export function createPreStartStrategy(
     )
 
     started = true
+
+    startedRum = startRumResult
+    for (const plugin of addedPluginsAwaitingRumStart.splice(0)) {
+      callAddedPluginOnRumStart(plugin, startRumResult)
+    }
 
     bufferApiCalls.subscribe((callback) => {
       if (callback !== callbackToSkip) {
@@ -231,17 +240,34 @@ export function createPreStartStrategy(
 
   function startAddedPlugin(plugin: RumPlugin, onInitOptions: RumPluginOnInitOptions) {
     // init() has already called the other plugins, so this one can't abort it: ignore what onInit
-    // returns. Its errors are reported, so they can't stop init() or the other plugins.
-    const onInitResult = callMonitored(() => plugin.onInit?.(onInitOptions))
-    if (isThenable(onInitResult)) {
-      onInitResult.then(noop, monitorError)
+    // returns. If it fails, report the error, which can't stop init() or the other plugins, and
+    // skip onRumStart, as RUM doesn't start when the onInit of an init() plugin fails.
+    let onInitResult: ReturnType<NonNullable<RumPlugin['onInit']>> | undefined
+    try {
+      onInitResult = plugin.onInit?.(onInitOptions)
+    } catch (error) {
+      monitorError(error)
+      return
     }
 
-    // Called once RUM starts, or right away if it has already started
-    bufferApiCalls.notify((startRumResult) =>
-      callMonitored(() =>
-        callPluginsOnRumStart([plugin], { addEvent: startRumResult.addEvent, addError: startRumResult.addError })
-      )
+    if (isThenable(onInitResult)) {
+      onInitResult.then(() => callAddedPluginOnRumStartOnceStarted(plugin), monitorError)
+    } else {
+      callAddedPluginOnRumStartOnceStarted(plugin)
+    }
+  }
+
+  function callAddedPluginOnRumStartOnceStarted(plugin: RumPlugin) {
+    if (startedRum) {
+      callAddedPluginOnRumStart(plugin, startedRum)
+    } else {
+      addedPluginsAwaitingRumStart.push(plugin)
+    }
+  }
+
+  function callAddedPluginOnRumStart(plugin: RumPlugin, startRumResult: StartRumResult) {
+    callMonitored(() =>
+      callPluginsOnRumStart([plugin], { addEvent: startRumResult.addEvent, addError: startRumResult.addError })
     )
   }
 
