@@ -1,4 +1,5 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
+import { callMonitored } from '@datadog/js-core/monitor'
 import { requestIdleCallback } from './requestIdleCallback'
 
 /**
@@ -65,7 +66,9 @@ export function createTaskQueue(): TaskQueue {
     },
     flush() {
       while (pendingTasks.length) {
-        pendingTasks.shift()!()
+        // Unlike the idle callback, the caller isn't monitored: report errors so a failing task
+        // doesn't prevent the remaining tasks (and the caller, ex: the page exit flush) from running.
+        callMonitored(pendingTasks.shift()!)
       }
     },
     stop() {

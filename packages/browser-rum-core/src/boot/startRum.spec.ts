@@ -223,6 +223,24 @@ describe('view events', () => {
     expect(lastRumViewEvent.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })
 
+  it('counts the resources collected on page unload in the last view update', () => {
+    setupViewCollectionTest()
+
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    const rumEvents = interceptor.requests.flatMap((request) =>
+      request.body.split('\n').map((line) => JSON.parse(line) as RumEvent)
+    )
+    const resourceEvents = rumEvents.filter((rumEvent) => rumEvent.type === RumEventType.RESOURCE)
+    const lastRumViewEvent = findLast(
+      rumEvents,
+      (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
+    )!
+
+    expect(resourceEvents.length).toBeGreaterThan(0)
+    expect(lastRumViewEvent.view.resource.count).toBe(resourceEvents.length)
+  })
+
   it('sends a view update on page unload when bridge is present', () => {
     const eventBridge = mockEventBridge()
     const sendSpy = spyOn(eventBridge, 'send')
@@ -234,15 +252,12 @@ describe('view events', () => {
     clock.tick(VIEW_DURATION - relativeNow())
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    const bridgeEvents = sendSpy.calls
-      .allArgs()
-      .map(([message]) => (JSON.parse(message) as { eventType: 'rum'; event: RumEvent }).event)
-    const lastRumViewEvent = findLast(
-      bridgeEvents,
-      (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
-    )!
-
-    expect(lastRumViewEvent.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
+    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {
+      eventType: 'rum'
+      event: RumEvent
+    }
+    expect(lastBridgeMessage.event.type).toBe('view')
+    expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })
 
   it('sends a view update with the correct sdk name', () => {
