@@ -725,6 +725,61 @@ describe('preStartRum', () => {
       expect(doStartRumSpy).toHaveBeenCalled()
     })
 
+    it('does not call onRumStart when the onInit of an added plugin returns false', async () => {
+      const syncPlugin = { name: 'a', onInit: () => false as const, onRumStart: jasmine.createSpy() }
+      const asyncPlugin = { name: 'b', onInit: () => Promise.resolve(false as const), onRumStart: jasmine.createSpy() }
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue({} as StartRumResult)
+
+      strategy.addPlugin(syncPlugin)
+      strategy.addPlugin(asyncPlugin)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+      await new Promise((resolve) => setTimeout(resolve))
+
+      expect(syncPlugin.onRumStart).not.toHaveBeenCalled()
+      expect(asyncPlugin.onRumStart).not.toHaveBeenCalled()
+    })
+
+    it('starts a plugin added before an aborted init() at the next init()', () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.addPlugin(plugin)
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [{ name: 'init', onInit: () => false }] }, PUBLIC_API)
+      expect(plugin.onInit).not.toHaveBeenCalled()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(plugin.onInit).toHaveBeenCalledTimes(1)
+    })
+
+    it('starts a plugin added while the init() plugins run once they let init() continue', async () => {
+      let resolveInitPlugin!: () => void
+      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          plugins: [
+            {
+              name: 'init',
+              onInit: () =>
+                new Promise<void>((resolve) => {
+                  resolveInitPlugin = resolve
+                }),
+            },
+          ],
+        },
+        PUBLIC_API
+      )
+      strategy.addPlugin(plugin)
+      expect(plugin.onInit).not.toHaveBeenCalled()
+
+      resolveInitPlugin()
+      await collectAsyncCalls(plugin.onInit, 1)
+    })
+
     it('starts RUM, without calling onRumStart, when the onInit of a plugin added before init() fails', async () => {
       const throwingPlugin = {
         name: 'a',
