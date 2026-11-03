@@ -87,9 +87,12 @@ export function createPreStartStrategy(
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
 
-  // Set once the init() plugins have let init() continue. Plugins added before that wait for it.
+  // Set once init() has accepted the configuration. Plugins added before that wait for it.
   let pluginOnInitOptions: RumPluginOnInitOptions | undefined
   const pluginsAddedBeforeInit: RumPlugin[] = []
+  // Like for the init() plugins, RUM waits for the onInit of the plugins added before init() accepted
+  // the configuration, so their hooks are registered before any event is assembled
+  let waitingForAddedPluginInits = false
   // Added plugins waiting for RUM to start. They're kept out of bufferApiCalls, which drops its
   // oldest entries when it's full.
   const addedPluginsAwaitingRumStart: RumPlugin[] = []
@@ -102,7 +105,14 @@ export function createPreStartStrategy(
   let started = false
 
   function tryStartRum() {
-    if (started || !cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
+    if (
+      started ||
+      waitingForAddedPluginInits ||
+      !cachedInitConfiguration ||
+      !cachedConfiguration ||
+      !sessionManager ||
+      !telemetry
+    ) {
       return
     }
 
@@ -152,6 +162,7 @@ export function createPreStartStrategy(
   function doInit(
     initConfiguration: RumInitConfiguration,
     initContext: InitContext | undefined,
+    pluginOnInitOptionsOfInit: RumPluginOnInitOptions,
     errorStack?: string,
     remoteConfigurationMetadata?: RemoteConfigurationMetadata
   ) {
@@ -189,6 +200,9 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+
+    // Only now, so the added plugins wait for a later init() when this one is aborted or rejected
+    startPluginsAddedBeforeInit(pluginOnInitOptionsOfInit)
 
     if (initContext?.user) {
       userContext.setContext(initContext.user)
@@ -238,12 +252,7 @@ export function createPreStartStrategy(
     })
   }
 
-  /**
-   * Starts the plugins added so far, once the init() plugins have let init() continue. Like for the
-   * init() plugins, init() waits for their onInit, so their hooks are registered before any event
-   * is assembled.
-   */
-  function startPluginsAddedBeforeInit(onInitOptions: RumPluginOnInitOptions): true | Promise<true> {
+  function startPluginsAddedBeforeInit(onInitOptions: RumPluginOnInitOptions) {
     pluginOnInitOptions = onInitOptions
 
     const addedPluginInits: Array<PromiseLike<void>> = []
@@ -253,7 +262,16 @@ export function createPreStartStrategy(
         addedPluginInits.push(addedPluginInit)
       }
     }
-    return addedPluginInits.length ? Promise.all(addedPluginInits).then(() => true as const) : true
+
+    if (addedPluginInits.length) {
+      waitingForAddedPluginInits = true
+      Promise.all(addedPluginInits)
+        .then(() => {
+          waitingForAddedPluginInits = false
+          tryStartRum()
+        })
+        .catch(monitorError)
+    }
   }
 
   /**
@@ -341,13 +359,7 @@ export function createPreStartStrategy(
         registerEventCollectedHook: hooks.eventCollected.register,
         isTrackingConsentGranted: trackingConsentState.isGranted,
       }
-      const initPluginsResult = callPluginsOnInit(initConfiguration.plugins, onInitOptions)
-
-      // If an init() plugin aborts init(), the added plugins wait for a later init()
-      const shouldContinue =
-        typeof initPluginsResult === 'boolean'
-          ? initPluginsResult && startPluginsAddedBeforeInit(onInitOptions)
-          : initPluginsResult.then((result) => result && startPluginsAddedBeforeInit(onInitOptions))
+      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, onInitOptions)
 
       if (typeof shouldContinue === 'boolean') {
         if (shouldContinue) {
@@ -375,7 +387,7 @@ export function createPreStartStrategy(
             fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
               .then((resolvedInitConfiguration) => {
                 if (resolvedInitConfiguration) {
-                  doInit(resolvedInitConfiguration, initContext, errorStack)
+                  doInit(resolvedInitConfiguration, initContext, onInitOptions, errorStack)
                 }
               })
               .catch(monitorError)
@@ -386,13 +398,14 @@ export function createPreStartStrategy(
               doInit(
                 resolvedRemoteConfiguration.initConfiguration,
                 initContext,
+                onInitOptions,
                 errorStack,
                 resolvedRemoteConfiguration.metadata
               )
             }
           }
         } else {
-          doInit(initConfiguration, initContext, errorStack)
+          doInit(initConfiguration, initContext, onInitOptions, errorStack)
         }
       }
     },
