@@ -14,6 +14,7 @@ type StartSubscriber = (addError: StartRumResult['addError']) => void
 let globalPublicApi: RumPublicApi | undefined
 let globalAddError: StartRumResult['addError'] | undefined
 let lastNavigationUrl: string | undefined
+let lastStartedAppRouterPathname: string | undefined
 let routerType: NextjsRouterType | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
@@ -55,6 +56,16 @@ function detectNextjsRouterType(): NextjsRouterType {
   return document.getElementById('__NEXT_DATA__') ? 'pages-router' : 'app-router'
 }
 
+export function startAppRouterView(pathname: string, viewName: string) {
+  if (!globalPublicApi || pathname === lastStartedAppRouterPathname) {
+    return
+  }
+
+  // Keep the guard outside React so discarded mount renders do not reset it.
+  lastStartedAppRouterPathname = pathname
+  startNextjsView(viewName)
+}
+
 export function startNextjsView(viewName: string) {
   if (globalPublicApi) {
     // Use the URL captured by onRouterTransitionStart if available, since React renders before pushState updates window.location
@@ -91,5 +102,6 @@ export function resetNextjsPlugin() {
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
   lastNavigationUrl = undefined
+  lastStartedAppRouterPathname = undefined
   routerType = undefined
 }

@@ -20,6 +20,7 @@ import {
   startTelemetrySessionContext,
   isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
+import type { ConsoleApiName } from '@datadog/js-core/util'
 import { BufferedObservable, mockable, noop } from '@datadog/js-core/util'
 import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import type { Hooks } from '../domain/hooks'
@@ -41,6 +42,7 @@ export type DoStartLogs = (
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
+  restrictConsoleApis: (apis: ConsoleApiName[]) => void,
   doStartLogs: DoStartLogs,
   sdkName?: string
 ): Strategy {
@@ -79,7 +81,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration, publicApi, errorStack) {
+    init(initConfiguration, publicApi, errorStack, initContext) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -112,6 +114,17 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
+
+      if (initContext?.user) {
+        userContext.setContext(initContext.user)
+      }
+      if (initContext?.account) {
+        accountContext.setContext(initContext.account)
+      }
+
+      // Stop instrumenting console APIs that are not forwarded as soon as possible, as each
+      // instrumented call serializes its parameters.
+      restrictConsoleApis(configuration.forwardConsoleLogs)
 
       trackingConsentState.tryToInit(configuration.trackingConsent)
 

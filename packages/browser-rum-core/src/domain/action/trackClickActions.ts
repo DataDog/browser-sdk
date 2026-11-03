@@ -268,7 +268,7 @@ function computeClickActionBase(
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
   const composedPath = event.composedPath()
-  const composedPathSelector = getComposedPathSelector(composedPath, configuration.actionNameAttribute)
+  const composedPathSelector = getComposedPathSelector(composedPath, configuration)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)

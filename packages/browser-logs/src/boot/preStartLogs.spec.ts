@@ -1,4 +1,5 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
+import { ConsoleApiName } from '@datadog/js-core/util'
 import {
   collectAsyncCalls,
   type Clock,
@@ -208,6 +209,72 @@ describe('preStartLogs', () => {
     })
   })
 
+  describe('init context', () => {
+    const USER = { id: 'user-id', name: 'John Doe' }
+    const ACCOUNT = { id: 'account-id', name: 'Acme' }
+    const INIT_CONTEXT = { user: USER, account: ACCOUNT }
+
+    it('sets the user and account provided at init', () => {
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+
+    it('applies the user and account to the started logs', async () => {
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+      const setUserContextSpy = jasmine.createSpy()
+      const setAccountContextSpy = jasmine.createSpy()
+      doStartLogsSpy.and.returnValue({
+        userContext: { setContext: setUserContextSpy },
+        accountContext: { setContext: setAccountContextSpy },
+      } as unknown as StartLogsResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
+      await collectAsyncCalls(setUserContextSpy, 1)
+
+      expect(setUserContextSpy).toHaveBeenCalledOnceWith(USER)
+      expect(setAccountContextSpy).toHaveBeenCalledOnceWith(ACCOUNT)
+    })
+
+    it('overrides the user and account set before init', () => {
+      const { strategy } = createPreStartStrategyWithDefaults()
+      strategy.userContext.setContext({ id: 'previous-user-id', email: 'previous@example.com' })
+      strategy.accountContext.setContext({ id: 'previous-account-id', plan: 'free' })
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+
+    it('does not set the user and account when the configuration is invalid', () => {
+      spyOn(display, 'error')
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(INVALID_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
+
+      expect(strategy.userContext.getContext()).toEqual({})
+      expect(strategy.accountContext.getContext()).toEqual({})
+    })
+
+    it('does not override the user and account on subsequent init calls', () => {
+      spyOn(display, 'error')
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, INIT_CONTEXT)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi, undefined, {
+        user: { id: 'other-user-id' },
+        account: { id: 'other-account-id' },
+      })
+
+      expect(strategy.userContext.getContext()).toEqual(USER)
+      expect(strategy.accountContext.getContext()).toEqual(ACCOUNT)
+    })
+  })
+
   describe('internal context', () => {
     it('should return undefined if not initialized', () => {
       const { strategy } = createPreStartStrategyWithDefaults()
@@ -273,6 +340,41 @@ describe('preStartLogs', () => {
     })
   })
 
+  describe('console APIs', () => {
+    it('restricts the console APIs to the forwarded ones as soon as the configuration is valid', () => {
+      const { strategy, restrictConsoleApisSpy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+          forwardConsoleLogs: [ConsoleApiName.warn],
+        },
+        {} as LogsPublicApi
+      )
+
+      expect(restrictConsoleApisSpy).toHaveBeenCalledOnceWith([ConsoleApiName.warn])
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+
+    it('restricts the console APIs to none by default', () => {
+      const { strategy, restrictConsoleApisSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
+
+      expect(restrictConsoleApisSpy).toHaveBeenCalledOnceWith([])
+    })
+
+    it('does not restrict the console APIs when the configuration is invalid', () => {
+      const { strategy, restrictConsoleApisSpy } = createPreStartStrategyWithDefaults()
+      spyOn(display, 'error')
+
+      strategy.init(INVALID_INIT_CONFIGURATION, {} as LogsPublicApi)
+
+      expect(restrictConsoleApisSpy).not.toHaveBeenCalled()
+    })
+  })
+
   describe('telemetry', () => {
     it('starts telemetry during init() by default', async () => {
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
@@ -328,15 +430,23 @@ function createPreStartStrategyWithDefaults({
     handleLog: handleLogSpy,
   } as unknown as StartLogsResult)
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
+  const restrictConsoleApisSpy = jasmine.createSpy<(apis: ConsoleApiName[]) => void>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   replaceMockable(startSessionManager, startSessionManagerMock)
 
   return {
-    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy, sdkName),
+    strategy: createPreStartStrategy(
+      getCommonContextSpy,
+      trackingConsentState,
+      restrictConsoleApisSpy,
+      doStartLogsSpy,
+      sdkName
+    ),
     startTelemetrySpy,
     handleLogSpy,
     doStartLogsSpy,
     getCommonContextSpy,
+    restrictConsoleApisSpy,
     getLoggedMessage: (index: number) => {
       const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
       return { message, logger, handlingStack, savedCommonContext, savedDate }

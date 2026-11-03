@@ -1,20 +1,15 @@
 'use client'
 
-import { useRef } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import { mockable } from '@datadog/js-core/util'
-import { startNextjsView } from '../nextjsPlugin'
+import { startAppRouterView } from '../nextjsPlugin'
 import { computeViewNameFromParams } from './computeViewNameFromParams'
 
 export function DatadogAppRouter() {
   const pathname = mockable(usePathname)()
   const params = mockable(useParams)()
-  const previousPathname = mockable(useRef)<string | null>(null)
 
-  if (previousPathname.current !== pathname) {
-    previousPathname.current = pathname
-    startNextjsView(computeViewNameFromParams(pathname, params))
-  }
+  startAppRouterView(pathname, computeViewNameFromParams(pathname, params))
 
   return null
 }

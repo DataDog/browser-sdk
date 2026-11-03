@@ -230,6 +230,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Configures recording canvas elements in Session Replay. Canvas recording is disabled when this option is omitted.
    *
    * @category Session Replay
+   * @hidden
    */
   sessionReplayCanvasRecording?:
     | {
@@ -851,6 +852,8 @@ export function serializeRumConfiguration(
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
     beta_enable_view_updates: isViewUpdatesEnabled(configuration.betaEnableViewUpdates, configuration.proxy, sdkName),
     beta_track_web_sockets: configuration.betaTrackWebSockets,
+    session_replay_canvas_recording: configuration.sessionReplayCanvasRecording?.enable,
+    session_replay_canvas_recording_quality: configuration.sessionReplayCanvasRecording?.quality,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

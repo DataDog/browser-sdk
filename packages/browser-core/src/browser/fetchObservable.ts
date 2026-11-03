@@ -106,9 +106,14 @@ function beforeSend(
 
   observable.notify(context)
 
-  // Those properties can be changed by observable subscribers
-  parameters[0] = context.input as RequestInfo | URL
-  parameters[1] = context.init
+  // Those properties can be changed by observable subscribers. Only write back the changed ones to
+  // keep the original call arity: `fetch(url)` must not become `fetch(url, undefined)`.
+  if (context.input !== input) {
+    parameters[0] = context.input as RequestInfo | URL
+  }
+  if (context.init !== init) {
+    parameters[1] = context.init
+  }
 
   onPostCall((responsePromise) => {
     afterSend(observable, responsePromise, context).catch(monitorError)

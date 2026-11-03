@@ -779,4 +779,31 @@ test.describe('action collection with composed path selector', () => {
         'BUTTON#my-button[data-test-id="test-btn"].bar.baz.foo:nth-child(2):nth-of-type(2);'
       )
     })
+
+  createTest('should collect unmasked attributes and drop masked ones')
+    .withRum({
+      trackUserInteractions: true,
+      defaultPrivacyLevel: 'mask',
+      enableExperimentalFeatures: ['composed_path_selector_attributes'],
+    })
+    .withBody(html`
+      <div data-dd-privacy="allow">
+        <button id="allowed-button" aria-label="Checkout" data-area="cart">Click</button>
+      </div>
+      <button id="masked-button" aria-label="Jane Doe" data-area="cart" data-test-id="test-btn">Click</button>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.locator('#allowed-button').click()
+      await page.locator('#masked-button').click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(2)
+      expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
+        'BUTTON#allowed-button[aria-label="Checkout"][data-area="cart"];DIV:nth-child(1);'
+      )
+      expect(actionEvents[1]._dd.action?.target?.composed_path_selector).toBe(
+        'BUTTON#masked-button[data-test-id="test-btn"]:nth-child(2);'
+      )
+    })
 })

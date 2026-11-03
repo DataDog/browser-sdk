@@ -20,6 +20,37 @@
 
 ---
 
+## v7.16.2
+
+**Public Changes:**
+
+- 🐛 Deduplicate Next.js views across discarded mount renders ([#5111](https://github.com/DataDog/browser-sdk/pull/5111))
+- 📝 Hide sessionReplayCanvasRecording from generated docs ([#5187](https://github.com/DataDog/browser-sdk/pull/5187))
+
+**Internal Changes:**
+
+- 👷 Report bundle sizes as a single metric tagged by bundle name ([#5171](https://github.com/DataDog/browser-sdk/pull/5171))
+- 👷 Update dependency vite to v8.3.3 [SECURITY] ([#5164](https://github.com/DataDog/browser-sdk/pull/5164))
+- 👷 Update dependency eslint-plugin-unicorn to v78 ([#5172](https://github.com/DataDog/browser-sdk/pull/5172))
+- 🔊 Report canvas recording in configuration telemetry ([#5168](https://github.com/DataDog/browser-sdk/pull/5168))
+
+## v7.16.1
+
+**Public Changes:**
+
+- 🐛 Avoid adding an undefined argument to fetch calls ([#5159](https://github.com/DataDog/browser-sdk/pull/5159))
+- 🐛 [RUMS-6434] Do not mask `<slot>` name attribute in session replay ([#5141](https://github.com/DataDog/browser-sdk/pull/5141))
+- ⚡️ Use rest parameters in instrumentMethod and instrumentConstructor ([#5153](https://github.com/DataDog/browser-sdk/pull/5153))
+- 📝 Document Browser Live Debugger Preview limitations ([#5145](https://github.com/DataDog/browser-sdk/pull/5145))
+- 📝 document all @datadog/js-core exports ([#5115](https://github.com/DataDog/browser-sdk/pull/5115))
+- 📝 Document browser Live Debugger requirements ([#5139](https://github.com/DataDog/browser-sdk/pull/5139))
+
+**Internal Changes:**
+
+- 👷 add running-tests and writing-commits-and-prs skills ([#5120](https://github.com/DataDog/browser-sdk/pull/5120))
+- ♻️ move generateUUID and throttle to @datadog/js-core/util ([#4843](https://github.com/DataDog/browser-sdk/pull/4843))
+- ♻️ move DOM and timer utilities to @datadog/js-core ([#5022](https://github.com/DataDog/browser-sdk/pull/5022))
+
 ## v7.16.0
 
 **Public Changes:**

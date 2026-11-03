@@ -180,8 +180,9 @@ export function shouldMaskAttribute(
     case 'alt':
     case 'placeholder':
     case 'aria-label':
-    case 'name':
       return true
+    case 'name':
+      return tagName !== 'SLOT'
   }
   if (tagName === 'A' && attributeName === 'href') {
     return true

@@ -2,6 +2,7 @@ import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/tim
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
 import {
+  BufferedDataType,
   display,
   DefaultPrivacyLevel,
   ResourceType,
@@ -13,6 +14,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
   mockClock,
+  waitNextMicrotask,
   mockEventBridge,
   createFakeTelemetryObject,
   startMockTelemetry,
@@ -158,6 +160,47 @@ describe('rum public api', () => {
     })
   })
 
+  describe('console instrumentation', () => {
+    /* eslint-disable no-console, @typescript-eslint/unbound-method */
+    it('only instruments console.error', () => {
+      spyOn(console, 'log')
+      spyOn(console, 'debug')
+      spyOn(console, 'info')
+      spyOn(console, 'warn')
+      spyOn(console, 'error')
+      const originalConsoleMethods = { ...console }
+
+      makeRumPublicApiWithDefaults()
+
+      expect(console.log).toBe(originalConsoleMethods.log)
+      expect(console.debug).toBe(originalConsoleMethods.debug)
+      expect(console.info).toBe(originalConsoleMethods.info)
+      expect(console.warn).toBe(originalConsoleMethods.warn)
+      expect(console.error).not.toBe(originalConsoleMethods.error)
+    })
+
+    it('collects console errors made before init', async () => {
+      spyOn(console, 'error')
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+      console.error('before init')
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+
+      const consoleMessages: string[] = []
+      startRumSpy.calls.mostRecent().args[6].subscribe((data) => {
+        if (data.type === BufferedDataType.CONSOLE) {
+          consoleMessages.push(data.data.message)
+        }
+      })
+      // buffered data is replayed in a microtask
+      await waitNextMicrotask()
+
+      expect(consoleMessages).toEqual(['before init'])
+    })
+    /* eslint-enable no-console, @typescript-eslint/unbound-method */
+  })
+
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
@@ -199,6 +242,17 @@ describe('rum public api', () => {
         await collectAsyncCalls(recorderApiOnRumStartSpy, 1)
         expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
       })
+    })
+
+    it('sets the user and account provided as init context', () => {
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+      const user = { id: 'user-id', name: 'John Doe' }
+      const account = { id: 'account-id', name: 'Acme' }
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION, { user, account })
+
+      expect(rumPublicApi.getUser()).toEqual(user)
+      expect(rumPublicApi.getAccount()).toEqual(account)
     })
   })
 

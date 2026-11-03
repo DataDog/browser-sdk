@@ -214,6 +214,25 @@ describe('instrumentMethod', () => {
     )
   })
 
+  it('computes the handling stack with a custom type', () => {
+    const object = { method: () => 1 }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentMethod(object, 'method', instrumentationSpy, {
+      computeHandlingStack: true,
+      handlingStackType: 'console error',
+    })
+
+    function foo() {
+      object.method()
+    }
+
+    foo()
+
+    expect(instrumentationSpy.calls.mostRecent().args[0].handlingStack).toEqual(
+      jasmine.stringMatching(/^HandlingStack: console error\n {2}at foo @/)
+    )
+  })
+
   describe('stop()', () => {
     it('does not call the instrumentation anymore', () => {
       const object = { method: () => 1 }
@@ -224,6 +243,17 @@ describe('instrumentMethod', () => {
 
       object.method()
       expect(instrumentationSpy).not.toHaveBeenCalled()
+    })
+
+    it('calls the original method with the same parameters when the instrumentation is still referenced', () => {
+      const object = { method: (a: number, b: number) => a + b }
+      const { stop } = instrumentMethod(object, 'method', noop)
+      // A third party may keep a reference to the instrumentation, e.g. by wrapping it
+      const instrumentedMethod = object.method
+
+      stop()
+
+      expect(instrumentedMethod(2, 3)).toBe(5)
     })
 
     describe('when the method has been instrumented by a third party', () => {
@@ -372,6 +402,17 @@ describe('instrumentConstructor', () => {
     expect(instrumentationSpy).not.toHaveBeenCalled()
   })
 
+  it('passes the parameters to the original when the constructor is invoked without new', () => {
+    // Some constructors, like `Date` or `String`, can also be called without `new`
+    function callableConstructor(value: number) {
+      return value * 2
+    }
+    const container = { callableConstructor }
+    instrumentConstructor(container, 'callableConstructor', noop)
+
+    expect(container.callableConstructor(21)).toBe(42)
+  })
+
   it('preserves instanceof on the constructed instance', () => {
     const container = { MyClass }
     instrumentConstructor(container, 'MyClass', noop)
@@ -460,6 +501,56 @@ describe('instrumentConstructor', () => {
 
     expect(container.MyClassWithStaticMembers.staticNumber).toBe(123)
     expect(container.MyClassWithStaticMembers.staticMethod()).toBe('static-result')
+  })
+
+  it('preserves a static member inherited by the original constructor', () => {
+    class Parent {
+      static staticNumber = 123
+    }
+    class Child extends Parent {}
+    const container = { Child }
+
+    instrumentConstructor(container, 'Child', noop)
+
+    expect(container.Child.staticNumber).toBe(123)
+  })
+
+  it("keeps the original constructor's parent on the instrumented constructor", () => {
+    class Parent {}
+    class Child extends Parent {}
+    const container = { Child }
+
+    instrumentConstructor(container, 'Child', noop)
+
+    expect(Object.getPrototypeOf(container.Child)).toBe(Parent)
+  })
+
+  it("keeps a null parent when the original constructor's parent is null", () => {
+    class Original {}
+    Object.setPrototypeOf(Original, null)
+    const container = { Original }
+
+    instrumentConstructor(container, 'Original', noop)
+
+    expect(Object.getPrototypeOf(container.Original)).toBeNull()
+    expect('call' in container.Original).toBeFalse()
+    expect('bind' in container.Original).toBeFalse()
+    expect('toString' in container.Original).toBeFalse()
+  })
+
+  it('keeps an inherited static member on a saved wrapper after stop()', () => {
+    class Parent {
+      static staticNumber = 123
+    }
+    class Child extends Parent {}
+    const container = { Child }
+    const { stop } = instrumentConstructor(container, 'Child', noop)
+    const savedWrapper = container.Child
+
+    stop()
+
+    expect(savedWrapper.staticNumber).toBe(123)
+    expect(container.Child).toBe(Child)
   })
 
   it('preserves instanceof when instrumented constructor is used as a base class', () => {
