@@ -127,8 +127,8 @@ function installCatchHook(): void {
  */
 export function onCatch(functionId: string, error: unknown, self: unknown, args: Record<string, unknown> = {}): void {
   try {
-    // Captures are kept with the thrown value, which must be an object for that
-    if (!isObject(error)) {
+    // RUM only reports the stack of errors, which their snapshots are linked to
+    if (!isError(error)) {
       return
     }
 
@@ -170,11 +170,10 @@ export function onCatch(functionId: string, error: unknown, self: unknown, args:
   }
 }
 
-function startCapture(functionId: string, error: object): CapturedException | false {
+function startCapture(functionId: string, error: Error): CapturedException | false {
   const now = performance.now()
   // The innermost instrumented function is the first one to see the exception
-  const errorType = isError(error) ? safeReadErrorProperty(error, 'name') : undefined
-  const fingerprint = `${errorType ?? ''};${functionId}`
+  const fingerprint = `${safeReadErrorProperty(error, 'name') ?? ''};${functionId}`
 
   if (isCoolingDown(fingerprint, now)) {
     return false
@@ -391,7 +390,16 @@ function findFrameIndex(
 const ASYNC_FRAME_PREFIX = /^async[ *]/
 
 function isSameLocation(a: StackFrame, b: StackFrame): boolean {
-  return a.url === b.url && a.line === b.line && (a.column === b.column || isAsyncFrame(a) || isAsyncFrame(b))
+  if (a.url !== b.url || a.line !== b.line) {
+    return false
+  }
+  if (a.column === b.column) {
+    return true
+  }
+  // Without the column, the line could hold several functions, as in a minified bundle
+  const aName = getFunctionName(a)
+  const bName = getFunctionName(b)
+  return (isAsyncFrame(a) || isAsyncFrame(b)) && (aName === undefined || bName === undefined || aName === bName)
 }
 
 function isAsyncFrame(frame: StackFrame): boolean {

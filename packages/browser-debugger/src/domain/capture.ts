@@ -559,7 +559,8 @@ function captureRedactedValue(value: unknown): CapturedValue {
   if (value === null) {
     type = 'null'
   } else if (typeof value === 'object') {
-    type = getConstructorName(value) ?? 'Object'
+    // Not the constructor name, which a redacted object controls, as in `{ constructor: { name } }`
+    type = Array.isArray(value) ? 'Array' : 'Object'
   } else if (typeof value === 'function') {
     type = 'Function'
   } else {

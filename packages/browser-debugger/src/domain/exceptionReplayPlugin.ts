@@ -26,6 +26,7 @@ type AssembleEventHook = (params: EventHookParams) => ExceptionReplayEventAttrib
 type EventCollectedHook = (params: EventHookParams) => void
 
 interface ExceptionReplayPluginOnInitOptions {
+  initConfiguration: { trackingConsent?: string }
   publicApi: { getInternalContext: () => object | undefined }
   registerAssembleEventHook: (callback: AssembleEventHook) => unknown
   // Missing from RUM Browser SDK versions older than this plugin
@@ -51,22 +52,24 @@ export interface ExceptionReplayPlugin {
  * Tracking can show them on the error's stack frames.
  *
  * Exception Replay only starts once the plugin is registered and `DD_DEBUGGER.init()` is called. It
- * doesn't capture anything in sessions that RUM doesn't track.
+ * doesn't capture anything in sessions that RUM doesn't track, or before tracking consent is granted.
  */
 export function exceptionReplayPlugin(): ExceptionReplayPlugin {
   let rumStarted = false
 
   return {
     name: 'exception-replay',
-    onInit({ publicApi, registerAssembleEventHook, registerEventCollectedHook }) {
+    onInit({ initConfiguration, publicApi, registerAssembleEventHook, registerEventCollectedHook }) {
       if (!registerEventCollectedHook) {
         display.warn('Exception Replay requires a version of the RUM Browser SDK that matches the Live Debugger SDK.')
         return
       }
 
       // Until RUM starts, its session isn't known yet, and RUM reports the errors it buffered once
-      // it starts, so they're captured
-      registerExceptionReplayPlugin(() => !rumStarted || publicApi.getInternalContext() !== undefined)
+      // it starts, so they're captured, unless RUM is waiting for tracking consent
+      registerExceptionReplayPlugin(() =>
+        rumStarted ? publicApi.getInternalContext() !== undefined : initConfiguration.trackingConsent !== 'not-granted'
+      )
 
       registerAssembleEventHook(({ eventType, domainContext }) => {
         if (eventType !== 'error') {
