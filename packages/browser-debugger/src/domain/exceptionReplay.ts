@@ -406,12 +406,14 @@ function isAsyncFrame(frame: StackFrame): boolean {
   return frame.func !== undefined && ASYNC_FRAME_PREFIX.test(frame.func)
 }
 
-// Compares function names when both frames have one. Otherwise, the frame from the error's stack must
-// come first: it's where the function threw or called a callee, before reaching its catch block.
+// Compares function names, so a frame with a name and one without are from different functions.
+// When neither has one, the frame from the error's stack must come first: it's where the function
+// threw or called a callee, before reaching its catch block. Two unnamed functions of the same script
+// can still be mistaken for each other.
 function isSameFunction(errorFrame: StackFrame, functionFrame: StackFrame): boolean {
   const errorFunction = getFunctionName(errorFrame)
   const functionName = getFunctionName(functionFrame)
-  if (errorFunction !== undefined && functionName !== undefined) {
+  if (errorFunction !== undefined || functionName !== undefined) {
     return errorFunction === functionName
   }
   return (
