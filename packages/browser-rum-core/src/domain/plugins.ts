@@ -24,6 +24,11 @@ export interface RumPluginOnInitOptions {
    * an event only if the event itself is sent.
    */
   registerEventCollectedHook: EventCollectedHook['register']
+  /**
+   * Whether tracking consent is granted, whether it was set with the `trackingConsent` init option
+   * or with `setTrackingConsent()`, including before init(). RUM doesn't start until it is.
+   */
+  isTrackingConsentGranted: () => boolean
 }
 
 /**

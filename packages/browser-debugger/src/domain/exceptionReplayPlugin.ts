@@ -27,11 +27,11 @@ type AssembleEventHook = (params: EventHookParams) => ExceptionReplayEventAttrib
 type EventCollectedHook = (params: EventHookParams) => void
 
 interface ExceptionReplayPluginOnInitOptions {
-  initConfiguration: { trackingConsent?: string }
   publicApi: { getInternalContext: () => object | undefined }
   registerAssembleEventHook: (callback: AssembleEventHook) => unknown
   // Missing from RUM Browser SDK versions older than this plugin
   registerEventCollectedHook?: (callback: EventCollectedHook) => unknown
+  isTrackingConsentGranted?: () => boolean
 }
 
 /**
@@ -90,8 +90,8 @@ export function exceptionReplayPlugin(): ExceptionReplayPlugin {
 
   return {
     name: 'exception-replay',
-    onInit({ initConfiguration, publicApi, registerAssembleEventHook, registerEventCollectedHook }) {
-      if (!registerEventCollectedHook) {
+    onInit({ publicApi, registerAssembleEventHook, registerEventCollectedHook, isTrackingConsentGranted }) {
+      if (!registerEventCollectedHook || !isTrackingConsentGranted) {
         display.warn('Exception Replay requires a version of the RUM Browser SDK that matches the Live Debugger SDK.')
         return
       }
@@ -99,7 +99,7 @@ export function exceptionReplayPlugin(): ExceptionReplayPlugin {
       // Until RUM starts, its session isn't known yet, and RUM reports the errors it buffered once
       // it starts, so they're captured, unless RUM is waiting for tracking consent
       registerExceptionReplayPlugin(() =>
-        rumStarted ? publicApi.getInternalContext() !== undefined : initConfiguration.trackingConsent !== 'not-granted'
+        rumStarted ? publicApi.getInternalContext() !== undefined : isTrackingConsentGranted()
       )
 
       registerAssembleEventHook(({ eventType, domainContext }) => {

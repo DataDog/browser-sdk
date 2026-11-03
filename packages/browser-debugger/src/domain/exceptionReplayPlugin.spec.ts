@@ -20,14 +20,14 @@ describe('exceptionReplayPlugin', () => {
   function initPlugin({
     isSessionTracked = true,
     rumStarted = true,
-    trackingConsent,
-  }: { isSessionTracked?: boolean; rumStarted?: boolean; trackingConsent?: string } = {}) {
+    isTrackingConsentGranted = true,
+  }: { isSessionTracked?: boolean; rumStarted?: boolean; isTrackingConsentGranted?: boolean } = {}) {
     const registerAssembleEventHook = jasmine.createSpy('registerAssembleEventHook')
     const registerEventCollectedHook = jasmine.createSpy('registerEventCollectedHook')
     const plugin = exceptionReplayPlugin()
     plugin.onInit({
-      initConfiguration: { trackingConsent },
       publicApi: { getInternalContext: () => (isSessionTracked ? {} : undefined) },
+      isTrackingConsentGranted: () => isTrackingConsentGranted,
       registerAssembleEventHook,
       registerEventCollectedHook,
     })
@@ -136,19 +136,32 @@ describe('exceptionReplayPlugin', () => {
   })
 
   it('should not capture errors thrown before RUM starts while tracking consent is not granted', () => {
-    initPlugin({ rumStarted: false, trackingConsent: 'not-granted' })
+    initPlugin({ rumStarted: false, isTrackingConsentGranted: false })
     const error = catchError(throwingFunction)
 
     expect(assemble('error', error)).toBe(SKIPPED)
+  })
+
+  it('should not start with a RUM Browser SDK that does not tell whether tracking consent is granted', () => {
+    const displaySpy = spyOn(display, 'warn')
+
+    exceptionReplayPlugin().onInit({
+      publicApi: { getInternalContext: () => ({}) },
+      registerAssembleEventHook: jasmine.createSpy('registerAssembleEventHook'),
+      registerEventCollectedHook: jasmine.createSpy('registerEventCollectedHook'),
+    })
+
+    expect(displaySpy).toHaveBeenCalled()
+    expect((window as BrowserWindow).$dd_catch).toBeUndefined()
   })
 
   it('should not start with a RUM Browser SDK that lacks the event collected hook', () => {
     const displaySpy = spyOn(display, 'warn')
 
     exceptionReplayPlugin().onInit({
-      initConfiguration: {},
       publicApi: { getInternalContext: () => ({}) },
       registerAssembleEventHook: jasmine.createSpy('registerAssembleEventHook'),
+      isTrackingConsentGranted: () => true,
     })
 
     expect(displaySpy).toHaveBeenCalled()
