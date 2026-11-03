@@ -1,9 +1,16 @@
 import type { ContextManager } from '@datadog/browser-core'
-import { createContextManager, TrackingConsent, startTelemetry, startSessionManager } from '@datadog/browser-core'
-import { getDebugMode } from '@datadog/js-core/util'
+import {
+  BufferedDataType,
+  createContextManager,
+  TrackingConsent,
+  startTelemetry,
+  startSessionManager,
+} from '@datadog/browser-core'
+import { ConsoleApiName, getDebugMode } from '@datadog/js-core/util'
 import {
   collectAsyncCalls,
   createFakeTelemetryObject,
+  waitNextMicrotask,
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
@@ -85,6 +92,68 @@ describe('logs entry', () => {
         },
       })
     })
+  })
+
+  describe('console instrumentation', () => {
+    beforeEach(() => {
+      spyOn(console, 'log')
+      spyOn(console, 'warn')
+    })
+
+    /* eslint-disable no-console */
+    it('instruments all console APIs before init', () => {
+      const originalConsoleLog = console.log
+      const originalConsoleWarn = console.warn
+
+      makeLogsPublicApiWithDefaults()
+
+      expect(console.log).not.toBe(originalConsoleLog)
+      expect(console.warn).not.toBe(originalConsoleWarn)
+    })
+
+    it('stops instrumenting non forwarded console APIs at init', () => {
+      const originalConsoleLog = console.log
+      const originalConsoleWarn = console.warn
+      const { logsPublicApi } = makeLogsPublicApiWithDefaults()
+
+      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, forwardConsoleLogs: [ConsoleApiName.warn] })
+
+      expect(console.log).toBe(originalConsoleLog)
+      expect(console.warn).not.toBe(originalConsoleWarn)
+    })
+
+    it('stops instrumenting all console APIs at init by default', () => {
+      const originalConsoleLog = console.log
+      const originalConsoleWarn = console.warn
+      const { logsPublicApi } = makeLogsPublicApiWithDefaults()
+
+      logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(console.log).toBe(originalConsoleLog)
+      expect(console.warn).toBe(originalConsoleWarn)
+    })
+
+    it('collects forwarded console calls made before init', async () => {
+      const { logsPublicApi, startLogsSpy } = makeLogsPublicApiWithDefaults()
+
+      console.warn('before init')
+      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, forwardConsoleLogs: [ConsoleApiName.warn] })
+      console.warn('after init')
+      console.log('not forwarded')
+      await collectAsyncCalls(startLogsSpy, 1)
+
+      const consoleMessages: string[] = []
+      startLogsSpy.calls.mostRecent().args[3].subscribe((data) => {
+        if (data.type === BufferedDataType.CONSOLE) {
+          consoleMessages.push(data.data.message)
+        }
+      })
+      // buffered data is replayed in a microtask
+      await waitNextMicrotask()
+
+      expect(consoleMessages).toEqual(['before init', 'after init'])
+    })
+    /* eslint-enable no-console */
   })
 
   it('buffered calls should be replayed before microtasks scheduled after init', async () => {
