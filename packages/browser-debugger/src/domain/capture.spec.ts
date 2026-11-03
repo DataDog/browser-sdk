@@ -863,6 +863,12 @@ describe('capture redaction', () => {
     ])
   })
 
+  it('should not use the constructor name of a redacted object', () => {
+    expect(captureFields({ password: { constructor: { name: 'hunter2' } } }, defaultOpts, redactingContext())).toEqual({
+      password: { type: 'Object', notCapturedReason: 'redactedIdent' },
+    })
+  })
+
   it('should not read a redacted field twice', () => {
     const getter = jasmine.createSpy('getter').and.returnValue('hunter2')
     const obj = {}

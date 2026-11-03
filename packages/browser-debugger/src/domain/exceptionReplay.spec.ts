@@ -106,17 +106,18 @@ describe('exceptionReplay', () => {
     return attributes
   }
 
-  // Whether the stack of a resumed async function includes the function awaiting it
-  async function hasAsyncStackTraces(): Promise<boolean> {
+  // Whether, once an async function resumes, its stack shows the function awaiting it on the line
+  // of its `await`
+  async function hasAsyncCallersOnAwaitLine(): Promise<boolean> {
     async function resumedFunction() {
       await Promise.resolve()
       return computeStackTrace(new Error()).stack
     }
     async function awaitingCaller() {
-      return await resumedFunction()
+      return [computeStackTrace(new Error()).stack[0].line, await resumedFunction()] as const
     }
-    const frames = await awaitingCaller()
-    return frames.some((frame) => frame.func?.includes('awaitingCaller'))
+    const [awaitLine, resumedFrames] = await awaitingCaller()
+    return resumedFrames.some((frame) => frame.func?.includes('awaitingCaller') && frame.line === awaitLine)
   }
 
   function stackIndexOf(error: unknown, functionName: string): number {
@@ -299,13 +300,16 @@ describe('exceptionReplay', () => {
     await awaitingFunction()
     const attributes = reportError(error)!
 
-    // Once `asyncCaller` resumes, `awaitingFunction` is an async frame located at the `await`, while
-    // the error's stack has it at the call. Browsers without async stack traces show no caller for
-    // `asyncCaller`, so its frame can't be confirmed and gets no snapshot.
-    const capturedFunctions = (await hasAsyncStackTraces()) ? ['asyncCallee', 'asyncCaller'] : ['asyncCallee']
-    expect(attributes.frames.map(({ index }) => index)).toEqual(
-      capturedFunctions.map((functionName) => stackIndexOf(error, functionName))
-    )
+    const indexes = attributes.frames.map(({ index }) => index)
+    // `asyncCallee` throws before its first `await`, so its frame is the innermost one. Once
+    // `asyncCaller` resumes, its stack shows `awaitingFunction` as an async frame located at the
+    // `await`, while the error's stack has it at the call. Browsers that don't show it on that line,
+    // or don't show it at all, leave `asyncCaller` without a snapshot, but never put it elsewhere.
+    if (await hasAsyncCallersOnAwaitLine()) {
+      expect(indexes).toEqual([0, 1])
+    } else {
+      expect([[0], [0, 1]]).toContain(indexes)
+    }
   })
 
   it('should not link a function without callers to an unrelated frame of the same script', async () => {
@@ -416,6 +420,15 @@ describe('exceptionReplay', () => {
   it('should return undefined for errors without captured frames', () => {
     expect(reportError(new Error('not thrown through instrumented code'))).toBeUndefined()
     expect(reportError(undefined)).toBeUndefined()
+  })
+
+  it('should not capture thrown objects that are not errors', () => {
+    // RUM doesn't report the stack of an object that isn't an `Error`, even if it has one
+    const thrown = { message: 'boom', stack: new Error('boom').stack }
+
+    onCatch('src/throwing.ts;throwingFunction', thrown, undefined, {})
+
+    expect(reportError(thrown)).toBeUndefined()
   })
 
   it('should ignore thrown values that are not objects', () => {
