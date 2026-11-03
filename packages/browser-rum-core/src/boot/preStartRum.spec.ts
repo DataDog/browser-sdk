@@ -28,7 +28,7 @@ import {
 import type { RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import type { RumPlugin } from '../domain/plugins'
+import type { RumPlugin, RumPluginOnInitOptions } from '../domain/plugins'
 import type { AssembleHookParams } from '../domain/hooks'
 import type { ManualAction } from '../domain/action/trackManualActions'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -616,6 +616,20 @@ describe('preStartRum', () => {
     })
 
     describe('plugins', () => {
+      it('tells plugins whether tracking consent is granted, including when it was set before init()', () => {
+        const plugin = { name: 'a', onInit: jasmine.createSpy() }
+        const trackingConsentState = createTrackingConsentState()
+        const { strategy } = createPreStartStrategyWithDefaults({ trackingConsentState })
+
+        trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+        const { isTrackingConsentGranted } = plugin.onInit.calls.mostRecent().args[0] as RumPluginOnInitOptions
+        expect(isTrackingConsentGranted()).toBeFalse()
+
+        trackingConsentState.update(TrackingConsent.GRANTED)
+        expect(isTrackingConsentGranted()).toBeTrue()
+      })
+
       it('calls the onInit method on provided plugins', () => {
         const plugin = { name: 'a', onInit: jasmine.createSpy() }
         const { strategy } = createPreStartStrategyWithDefaults()
