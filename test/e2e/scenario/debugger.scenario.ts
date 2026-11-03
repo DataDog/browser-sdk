@@ -18,6 +18,7 @@ function makeProbe({
   evaluateAt = 'EXIT' as const,
   condition,
   segments,
+  captureExpressions,
 }: {
   id?: string
   version?: number
@@ -28,6 +29,7 @@ function makeProbe({
   evaluateAt?: 'ENTRY' | 'EXIT'
   condition?: { dsl: string; json: unknown }
   segments?: Array<{ str?: string; dsl?: string; json?: unknown }>
+  captureExpressions?: Array<{ name: string; expr: { dsl: string; json: unknown } }>
 } = {}) {
   return {
     id,
@@ -38,6 +40,7 @@ function makeProbe({
     segments: segments ?? [{ str: template }],
     captureSnapshot,
     capture: {},
+    captureExpressions,
     sampling: { snapshotsPerSecond: 5000 },
     evaluateAt,
     when: condition,
@@ -527,6 +530,42 @@ test.describe('debugger', () => {
 
       expect(intakeRegistry.debuggerEvents.length).toBeGreaterThanOrEqual(1)
       expect(intakeRegistry.debuggerEvents[0].message).toBe('Probe hit')
+    })
+
+  createTest('evaluate probe expressions on a page whose CSP does not allow unsafe-eval')
+    .withDebugger()
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      const probe = makeProbe({
+        captureSnapshot: false,
+        condition: { dsl: 'a == "foo"', json: { eq: [{ ref: 'a' }, 'foo'] } },
+        template: 'Result is: {@return}',
+        segments: [{ str: 'Result is: ' }, { dsl: '@return', json: { ref: '@return' } }],
+        captureExpressions: [{ name: 'b', expr: { dsl: 'b', json: { ref: 'b' } } }],
+      })
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await injectInstrumentedFunction(page)
+
+      // Call the function from a page task: Chromium doesn't enforce the page CSP on code that page.evaluate() runs
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            setTimeout(() => {
+              ;(window as any).testFunction('foo', 'bar')
+              resolve()
+            })
+          })
+      )
+
+      await flushEvents()
+
+      expect(intakeRegistry.debuggerEvents).toHaveLength(1)
+      const event = intakeRegistry.debuggerEvents[0]
+      const snapshot = (event.debugger as any).snapshot
+      expect(event.message).toBe('Result is: foobar')
+      expect(snapshot.evaluationErrors).toBeUndefined()
+      expect(snapshot.captures.return.captureExpressions.b.value).toBe('bar')
     })
 
   createTest('omit trace correlation data when no active span is available')

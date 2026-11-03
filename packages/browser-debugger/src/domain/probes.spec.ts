@@ -13,20 +13,6 @@ import { createProbe } from './probe.specHelper'
 
 const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
 
-interface CaptureExpressionsWithCache {
-  expressions: Array<{
-    name: string
-    expression: string
-    capture: {
-      maxReferenceDepth?: number
-      maxCollectionSize?: number
-      maxFieldCount?: number
-      maxLength?: number
-    }
-  }>
-  evaluateExpression: (expression: string, context: Record<string, any>) => unknown
-}
-
 describe('probes', () => {
   beforeEach(() => {
     clearProbes()
@@ -161,11 +147,8 @@ describe('probes', () => {
 
       initializeProbe(probe)
 
-      expect(probe.condition).toEqual(
-        jasmine.objectContaining({
-          evaluate: jasmine.any(Function),
-        })
-      )
+      expect(probe.condition).toEqual(jasmine.any(Function))
+      expect(probe.condition!({ x: 10 })).toBe(true)
     })
 
     it('should throw when condition compilation fails', () => {
@@ -219,7 +202,7 @@ describe('probes', () => {
       expect(probe.msBetweenSampling).toBeLessThan(1) // 5000 per second = 0.2ms
     })
 
-    it('should evaluate dynamic template with cached functions', () => {
+    it('should evaluate dynamic template', () => {
       const probe = createProbe({
         template: '{x}',
         segments: [{ dsl: 'x', json: { ref: 'x' } }],
@@ -247,24 +230,21 @@ describe('probes', () => {
 
       initializeProbe(probe)
 
-      const compiledCaptureExpressions = probe.compiledCaptureExpressions as CaptureExpressionsWithCache
-      expect(compiledCaptureExpressions.expressions.length).toBe(2)
-      expect(compiledCaptureExpressions.expressions[0]).toEqual(
-        jasmine.objectContaining({
+      const compiledCaptureExpressions = probe.compiledCaptureExpressions!
+      expect(compiledCaptureExpressions).toEqual([
+        {
           name: 'arg',
-          expression: 'arg',
+          evaluate: jasmine.any(Function),
           capture: { maxReferenceDepth: 3, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 6 },
-        })
-      )
-      expect(compiledCaptureExpressions.expressions[1]).toEqual(
-        jasmine.objectContaining({
+        },
+        {
           name: 'obj.value',
+          evaluate: jasmine.any(Function),
           capture: { maxReferenceDepth: 1, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 2 },
-        })
-      )
-      expect(compiledCaptureExpressions.expressions[1].expression).toContain('obj')
-      expect(compiledCaptureExpressions.expressions[1].expression).toContain('value')
-      expect(compiledCaptureExpressions.evaluateExpression('arg', { arg: 1 })).toBe(1)
+        },
+      ])
+      expect(compiledCaptureExpressions[0].evaluate({ arg: 1 })).toBe(1)
+      expect(compiledCaptureExpressions[1].evaluate({ obj: { value: 2 } })).toBe(2)
       expect(probe.captureExpressions).toBeUndefined()
     })
 
