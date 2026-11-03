@@ -13,10 +13,18 @@ import {
   createFakeTelemetryObject,
   createSessionManagerMock,
 } from '@datadog/browser-core/test'
-import { mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
+import {
+  appendElement,
+  createPerformanceEntry,
+  mockPerformanceObserver,
+  mockRumConfiguration,
+  noopProfilerApi,
+  noopRecorderApi,
+} from '../../test'
+import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'
-import type { RumEvent, RumViewEvent } from '../rumEvent.types'
+import type { RumActionEvent, RumEvent, RumResourceEvent, RumViewEvent } from '../rumEvent.types'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { createHooks } from '../domain/hooks'
@@ -174,9 +182,9 @@ describe('view events', () => {
   let interceptor: ReturnType<typeof interceptRequests>
   let stop: () => void
 
-  function setupViewCollectionTest() {
+  function setupViewCollectionTest(partialConfiguration: Partial<RumConfiguration> = {}) {
     const startResult = startRum(
-      mockRumConfiguration(),
+      mockRumConfiguration(partialConfiguration),
       createSessionManagerMock(),
       noopRecorderApi,
       noopProfilerApi,
@@ -239,6 +247,37 @@ describe('view events', () => {
 
     expect(resourceEvents.length).toBeGreaterThan(0)
     expect(lastRumViewEvent.view.resource.count).toBe(resourceEvents.length)
+  })
+
+  it('counts the resources collected on page unload in the ongoing click action', () => {
+    const { notifyPerformanceEntries } = mockPerformanceObserver()
+    setupViewCollectionTest({ trackUserInteractions: true })
+    const button = appendElement('<button>click me</button>')
+
+    const eventProperties = { target: button, clientX: 0, clientY: 0, isPrimary: true }
+    button.dispatchEvent(createNewEvent('pointerdown', { ...eventProperties, timeStamp: relativeNow() }))
+    clock.tick(10)
+    button.dispatchEvent(createNewEvent('pointerup', { ...eventProperties, timeStamp: relativeNow() }))
+    button.dispatchEvent(createNewEvent('click', { ...eventProperties, timeStamp: relativeNow() }))
+    clock.tick(10)
+
+    // A resource started during the click, still waiting in the resource task queue
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { startTime: relativeNow() })])
+
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    const rumEvents = interceptor.requests.flatMap((request) =>
+      request.body.split('\n').map((line) => JSON.parse(line) as RumEvent)
+    )
+    const actionEvent = rumEvents.find((rumEvent): rumEvent is RumActionEvent => rumEvent.type === RumEventType.ACTION)!
+    const actionResources = rumEvents.filter(
+      (rumEvent): rumEvent is RumResourceEvent =>
+        rumEvent.type === RumEventType.RESOURCE &&
+        ([] as string[]).concat(rumEvent.action?.id ?? []).includes(actionEvent.action.id!)
+    )
+
+    expect(actionResources.length).toBe(1)
+    expect(actionEvent.action.resource!.count).toBe(1)
   })
 
   it('sends a view update on page unload when bridge is present', () => {
