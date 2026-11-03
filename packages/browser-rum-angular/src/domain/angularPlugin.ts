@@ -1,16 +1,20 @@
 import { VERSION } from '@angular/core'
-import { toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
+import { callMonitored } from '@datadog/js-core/monitor'
+import { display, toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
-type InitSubscriber = (configuration: AngularPluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addError: StartRumResult['addError']) => void
+type ViewOptions = Parameters<RumPublicApi['startView']>[0]
+type ErrorPayload = Parameters<NonNullable<StartRumResult['addError']>>[0]
 
-let globalPublicApi: RumPublicApi | undefined
-let globalConfiguration: AngularPluginConfiguration | undefined
-let globalAddError: StartRumResult['addError'] | undefined
-
-const onRumInitSubscribers: InitSubscriber[] = []
-const onRumStartSubscribers: StartSubscriber[] = []
+// RUM might start after views and errors are reported, or never (e.g. during server-side
+// rendering). Until then, keep plain data only: a callback created in a framework scope (router
+// subscription...) would keep that whole scope alive, and minifiers can inline functions into such
+// scopes. Keep only the latest view, and a bounded number of errors like the core SDK does.
+const MAX_PENDING_ERRORS = 500
+let pendingView: ViewOptions | undefined
+let pendingErrors: ErrorPayload[] = []
+let startView: ((view: ViewOptions) => void) | undefined
+let addError: ((error: ErrorPayload) => void) | undefined
 
 /**
  * Angular plugin configuration.
@@ -47,22 +51,28 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
   return {
     name: 'angular',
     onInit({ publicApi, initConfiguration }) {
-      globalPublicApi = publicApi
-      globalConfiguration = configuration
-      for (const subscriber of onRumInitSubscribers) {
-        subscriber(globalConfiguration, globalPublicApi)
+      startView = (view) => {
+        if (!configuration.router) {
+          display.warn('`router: true` is missing from the angular plugin configuration, the view will not be tracked.')
+          return
+        }
+        publicApi.startView(view)
+      }
+      if (pendingView) {
+        startView(pendingView)
+        pendingView = undefined
       }
       if (configuration.router) {
         initConfiguration.trackViewsManually = true
       }
     },
-    onRumStart({ addError }) {
-      globalAddError = addError
-      if (addError) {
-        for (const subscriber of onRumStartSubscribers) {
-          subscriber(addError)
-        }
+    onRumStart({ addError: rumAddError }) {
+      if (!rumAddError) {
+        return
       }
+      addError = (error) => callMonitored(() => rumAddError(error))
+      pendingErrors.forEach(addError)
+      pendingErrors = []
     },
     getConfigurationTelemetry() {
       const angularIntegration = toMajorVersionIntegration('angular', VERSION.major)
@@ -74,26 +84,28 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
   } satisfies RumPlugin
 }
 
-export function onRumInit(callback: InitSubscriber) {
-  if (globalConfiguration && globalPublicApi) {
-    callback(globalConfiguration, globalPublicApi)
+export function startAngularViewWhenReady(view: ViewOptions) {
+  if (startView) {
+    startView(view)
   } else {
-    onRumInitSubscribers.push(callback)
+    pendingView = view
   }
 }
 
-export function onRumStart(callback: StartSubscriber) {
-  if (globalAddError) {
-    callback(globalAddError)
-  } else {
-    onRumStartSubscribers.push(callback)
+export function addAngularErrorWhenReady(error: ErrorPayload) {
+  if (addError) {
+    addError(error)
+    return
+  }
+  pendingErrors.push(error)
+  if (pendingErrors.length > MAX_PENDING_ERRORS) {
+    pendingErrors.shift()
   }
 }
 
 export function resetAngularPlugin() {
-  globalPublicApi = undefined
-  globalConfiguration = undefined
-  globalAddError = undefined
-  onRumInitSubscribers.length = 0
-  onRumStartSubscribers.length = 0
+  pendingView = undefined
+  pendingErrors = []
+  startView = undefined
+  addError = undefined
 }
