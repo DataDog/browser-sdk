@@ -2,6 +2,7 @@ import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import type { TelemetryEvent } from '@datadog/browser-core'
 import { createHook } from '@datadog/js-core/assembly'
 import type { Hook } from '@datadog/js-core/assembly'
+import { Observable } from '@datadog/js-core/util'
 import type { RecursivePartial } from '@datadog/js-core/util'
 import type { RumEvent } from '../rumEvent.types'
 import type { AssembledRumEvent, RawRumEvent } from '../rawRumEvent.types'
@@ -37,7 +38,12 @@ export interface EventCollectedHookParams {
   readonly domainContext: RumEventDomainContext<RawRumEvent['type']>
 }
 
-export type EventCollectedHook = Hook<EventCollectedHookParams, void>
+// Unlike the assemble hooks, callbacks can't discard the event, which is about to be sent, so every
+// callback is called, whatever the others return.
+export interface EventCollectedHook {
+  register(this: void, callback: (params: EventCollectedHookParams) => void): { unregister: () => void }
+  trigger(this: void, params: EventCollectedHookParams): void
+}
 
 export interface Hooks {
   assembleEventDefaults: AssembleHook
@@ -51,6 +57,19 @@ export function createHooks(): Hooks {
     assembleEventDefaults: createHook(),
     assembleTelemetry: createHook(),
     assembleEvent: createHook(),
-    eventCollected: createHook(),
+    eventCollected: createEventCollectedHook(),
+  }
+}
+
+function createEventCollectedHook(): EventCollectedHook {
+  const observable = new Observable<EventCollectedHookParams>()
+  return {
+    register(callback) {
+      const { unsubscribe } = observable.subscribe(callback)
+      return { unregister: unsubscribe }
+    },
+    trigger(params) {
+      observable.notify(params)
+    },
   }
 }
