@@ -81,15 +81,41 @@ const polyfillTesterPlugin: Plugin = {
 // Use the XHR methods saved before the tests run: specs instrument `XMLHttpRequest.prototype`
 // (ex: `xhrObservable`), so reporting their expected errors would trigger that instrumentation
 // (and be flagged as a leaked listener).
+// Also report how each page load happened and the page lifecycle events fired by the browser, to
+// find out what reloads the page during some runs ("The iframe was reloaded during a test").
+// Events dispatched by specs (not trusted) are ignored. Events fired while the page unloads are
+// sent with `sendBeacon`, saved for the same reason as the XHR methods.
 const ERROR_REPORTER = `;(function () {
   var open = XMLHttpRequest.prototype.open
   var send = XMLHttpRequest.prototype.send
+  var sendBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator)
+  function format(kind, message) {
+    return kind + ' @ ' + location.pathname + ': ' + message
+  }
   function report(kind, message) {
     try {
       var xhr = new XMLHttpRequest()
       open.call(xhr, 'POST', '/__report_error__')
-      send.call(xhr, kind + ' @ ' + location.pathname + ': ' + message)
+      send.call(xhr, format(kind, message))
     } catch (e) {}
+  }
+  function reportWhileUnloading(kind, message) {
+    try {
+      if (!sendBeacon || !sendBeacon('/__report_error__', format(kind, message))) {
+        report(kind, message)
+      }
+    } catch (e) {}
+  }
+  function getNavigationType() {
+    try {
+      var entries = performance.getEntriesByType && performance.getEntriesByType('navigation')
+      if (entries && entries[0]) {
+        return entries[0].type
+      }
+      return performance.navigation ? ['navigate', 'reload', 'back_forward'][performance.navigation.type] : 'unknown'
+    } catch (e) {
+      return 'unknown'
+    }
   }
   window.addEventListener('error', function (event) {
     report('error', event.message + ' (' + event.filename + ':' + event.lineno + ':' + event.colno + ')')
@@ -98,7 +124,30 @@ const ERROR_REPORTER = `;(function () {
     var reason = event.reason
     report('unhandledrejection', reason && reason.stack ? reason.stack : String(reason))
   })
-  report('loaded', navigator.userAgent)
+  window.addEventListener('beforeunload', function (event) {
+    if (event.isTrusted) {
+      reportWhileUnloading('beforeunload', location.href)
+    }
+  })
+  window.addEventListener('pagehide', function (event) {
+    if (event.isTrusted) {
+      reportWhileUnloading('pagehide', 'persisted=' + event.persisted + ' ' + location.href)
+    }
+  })
+  document.addEventListener('freeze', function (event) {
+    if (event.isTrusted) {
+      reportWhileUnloading('freeze', location.href)
+    }
+  })
+  document.addEventListener('visibilitychange', function (event) {
+    if (event.isTrusted) {
+      report('visibilitychange', document.visibilityState + ' ' + location.href)
+    }
+  })
+  report(
+    'loaded',
+    'navigation=' + getNavigationType() + ' wasDiscarded=' + document.wasDiscarded + ' ' + location.href + ' ' + navigator.userAgent
+  )
 })()`
 const errorReporterPlugin: Plugin = {
   name: 'error-reporter',
