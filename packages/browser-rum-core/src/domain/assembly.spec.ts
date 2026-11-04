@@ -1,6 +1,6 @@
 import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
 import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
-import { SKIPPED } from '@datadog/js-core/assembly'
+import { DISCARDED, SKIPPED } from '@datadog/js-core/assembly'
 import type { SessionManager } from '@datadog/browser-core'
 import { display, startGlobalContext, startTabContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -821,6 +821,18 @@ describe('rum assembly', () => {
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
 
       expect(calls).toEqual(['eventCollected', 'RUM_EVENT_COLLECTED'])
+    })
+
+    it('calls every callback, even after one returns DISCARDED', () => {
+      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
+      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      hooks.eventCollected.register(() => DISCARDED)
+      hooks.eventCollected.register(eventCollectedSpy)
+
+      notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
+
+      expect(eventCollectedSpy).toHaveBeenCalledTimes(1)
+      expect(serverRumEvents.length).toBe(1)
     })
 
     it('is not triggered for events dismissed by beforeSend', () => {
