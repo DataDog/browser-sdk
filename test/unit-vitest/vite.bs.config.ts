@@ -78,12 +78,17 @@ const polyfillTesterPlugin: Plugin = {
 
 // Some BrowserStack browsers (e.g. Safari) don't expose console logs: report page errors to the
 // Vite server so they show up in the terminal.
+// Use the XHR methods saved before the tests run: specs instrument `XMLHttpRequest.prototype`
+// (ex: `xhrObservable`), so reporting their expected errors would trigger that instrumentation
+// (and be flagged as a leaked listener).
 const ERROR_REPORTER = `;(function () {
+  var open = XMLHttpRequest.prototype.open
+  var send = XMLHttpRequest.prototype.send
   function report(kind, message) {
     try {
       var xhr = new XMLHttpRequest()
-      xhr.open('POST', '/__report_error__')
-      xhr.send(kind + ' @ ' + location.pathname + ': ' + message)
+      open.call(xhr, 'POST', '/__report_error__')
+      send.call(xhr, kind + ' @ ' + location.pathname + ': ' + message)
     } catch (e) {}
   }
   window.addEventListener('error', function (event) {
