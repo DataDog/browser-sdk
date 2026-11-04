@@ -219,6 +219,16 @@ describe('startDeflateWorker', () => {
         'Foo failed to start: a timeout occurred while initializing the Worker'
       )
     })
+
+    it('does not time out a worker started after a reset', () => {
+      startDeflateWorkerWithDefaults()
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY / 2)
+      resetDeflateWorkerState()
+
+      startDeflateWorkerWithDefaults()
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY / 2)
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
   })
 
   describe('worker unknown error', () => {

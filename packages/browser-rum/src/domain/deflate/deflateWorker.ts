@@ -1,7 +1,7 @@
 import type { DeflateWorker, SdkWorkerResponse } from '@datadog/browser-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import { addTelemetryError, display } from '@datadog/browser-core'
-import { mockable, setTimeout } from '@datadog/js-core/util'
+import { clearTimeout, mockable, setTimeout } from '@datadog/js-core/util'
 import { addEventListener } from '@datadog/js-core/dom'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { reportScriptLoadingError } from '../scriptLoadingError'
@@ -122,8 +122,9 @@ export function doStartDeflateWorker(configuration: RumConfiguration, source: st
       }
     )
     worker.postMessage({ action: 'init' })
-    setTimeout(() => onTimeout(source, name), INITIALIZATION_TIME_OUT_DELAY)
+    const timeoutId = setTimeout(() => onTimeout(source, name), INITIALIZATION_TIME_OUT_DELAY)
     const stop = () => {
+      clearTimeout(timeoutId)
       removeErrorListener()
       removeMessageListener()
     }
