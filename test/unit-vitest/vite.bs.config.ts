@@ -85,10 +85,14 @@ const polyfillTesterPlugin: Plugin = {
 // find out what reloads the page during some runs ("The iframe was reloaded during a test").
 // Events dispatched by specs (not trusted) are ignored. Events fired while the page unloads are
 // sent with `sendBeacon`, saved for the same reason as the XHR methods.
+// Also report when the WebSockets to the test server (Vite's client and Vitest's) open and close:
+// Vite's client reloads the page when its WebSocket closes. Listeners are added with the
+// `addEventListener` saved before the tests run, as the leak detection replaces it during tests.
 const ERROR_REPORTER = `;(function () {
   var open = XMLHttpRequest.prototype.open
   var send = XMLHttpRequest.prototype.send
   var sendBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator)
+  var addEventListener = EventTarget.prototype.addEventListener
   function format(kind, message) {
     return kind + ' @ ' + location.pathname + ': ' + message
   }
@@ -144,6 +148,37 @@ const ERROR_REPORTER = `;(function () {
       report('visibilitychange', document.visibilityState + ' ' + location.href)
     }
   })
+  var NativeWebSocket = window.WebSocket
+  if (NativeWebSocket) {
+    var TrackedWebSocket = function (url, protocols) {
+      var socket = protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols)
+      if (socket.url.indexOf('//' + location.host + '/') === -1) {
+        return socket
+      }
+      var createdAt = Date.now()
+      var description = socket.url.replace(/token=[^&]*/, 'token=***') + (protocols ? ' (' + protocols + ')' : '')
+      addEventListener.call(socket, 'open', function () {
+        report('websocket open', 'after ' + (Date.now() - createdAt) + 'ms ' + description)
+      })
+      addEventListener.call(socket, 'error', function () {
+        report('websocket error', 'after ' + (Date.now() - createdAt) + 'ms ' + description)
+      })
+      addEventListener.call(socket, 'close', function (event) {
+        reportWhileUnloading(
+          'websocket close',
+          'code=' + event.code + ' reason=' + event.reason + ' wasClean=' + event.wasClean +
+            ' after ' + (Date.now() - createdAt) + 'ms ' + description
+        )
+      })
+      return socket
+    }
+    TrackedWebSocket.prototype = NativeWebSocket.prototype
+    TrackedWebSocket.CONNECTING = NativeWebSocket.CONNECTING
+    TrackedWebSocket.OPEN = NativeWebSocket.OPEN
+    TrackedWebSocket.CLOSING = NativeWebSocket.CLOSING
+    TrackedWebSocket.CLOSED = NativeWebSocket.CLOSED
+    window.WebSocket = TrackedWebSocket
+  }
   report(
     'loaded',
     'navigation=' + getNavigationType() + ' wasDiscarded=' + document.wasDiscarded + ' ' + location.href + ' ' + navigator.userAgent
