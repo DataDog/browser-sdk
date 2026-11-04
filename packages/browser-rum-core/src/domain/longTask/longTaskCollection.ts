@@ -1,7 +1,7 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import { toServerDuration, relativeToClocks } from '@datadog/js-core/time'
 import { buildDebugIdByUrl } from '@datadog/browser-core'
-import { generateUUID } from '@datadog/js-core/util'
+import { generateUUID, noop } from '@datadog/js-core/util'
 import type { RawRumLongTaskEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -22,6 +22,11 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: Rum
   const entryType = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
     ? RumPerformanceEntryType.LONG_ANIMATION_FRAME
     : RumPerformanceEntryType.LONG_TASK
+
+  // Observing an unsupported entry type makes Firefox log "Ignoring unsupported entryTypes"
+  if (!supportPerformanceTimingEvent(entryType)) {
+    return { stop: noop }
+  }
 
   const subscription = createPerformanceObservable({
     type: entryType,

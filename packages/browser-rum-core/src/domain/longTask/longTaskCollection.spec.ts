@@ -178,4 +178,16 @@ describe('longTaskCollection', () => {
       expect(rawRumEvents.length).toBe(0)
     })
   })
+
+  describe('when browser supports neither long-animation-frame nor longtask', () => {
+    it('should not observe any long task entry type', () => {
+      const { activeObserverCount } = mockPerformanceObserver({ supportedEntryTypes: [] })
+
+      const longTaskCollection = startLongTaskCollection(new LifeCycle(), mockRumConfiguration())
+      registerCleanupTask(longTaskCollection.stop)
+
+      expect(activeObserverCount(RumPerformanceEntryType.LONG_TASK)).toBe(0)
+      expect(activeObserverCount(RumPerformanceEntryType.LONG_ANIMATION_FRAME)).toBe(0)
+    })
+  })
 })

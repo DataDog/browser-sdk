@@ -37,7 +37,6 @@ export interface BrowserLog {
 }
 
 const IGNORE_LOG_MESSAGES = [
-  'Ignoring unsupported entryTypes:',
   'Layout was forced before the page was fully loaded.',
   // Salesforce generates console errors we cannot control
   'O11Y Error {name: Error, message: Unsupported WebVital metrics',
