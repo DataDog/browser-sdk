@@ -1,5 +1,5 @@
 import { VERSION } from '@angular/core'
-import { toMajorVersionIntegration } from '@datadog/browser-core'
+import { display, toMajorVersionIntegration } from '@datadog/browser-core'
 import type {
   RumInitConfiguration,
   RumPluginOnInitOptions,
@@ -63,13 +63,17 @@ describe('angularPlugin', () => {
     expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/a', url: '/a' })
   })
 
-  it('does not start views when router is disabled', async () => {
+  it('does not start views and warns when router is disabled', async () => {
+    const warnSpy = spyOn(display, 'warn')
     startAngularViewWhenReady({ name: '/a', url: '/a' })
 
     const startViewSpy = callOnInit({ router: false })
     await waitNextMicrotask()
 
     expect(startViewSpy).not.toHaveBeenCalled()
+    expect(warnSpy).toHaveBeenCalledOnceWith(
+      '`router: true` is missing from the angular plugin configuration, the view will not be tracked.'
+    )
   })
 
   it('keeps only the 500 most recent views before onInit', async () => {
