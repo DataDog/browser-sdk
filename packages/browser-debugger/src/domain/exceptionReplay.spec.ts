@@ -106,12 +106,17 @@ describe('exceptionReplay', () => {
     return attributes
   }
 
-  // Whether, once an async function resumes, its stack shows the function awaiting it on the line
-  // of its `await`
+  // Whether, once an async function resumes from an `await` that rejects, its stack shows the
+  // function awaiting it on the line of its `await`. Chrome and Edge 80 (V8 8.0) only show it after
+  // an `await` that fulfills.
   async function hasAsyncCallersOnAwaitLine(): Promise<boolean> {
     async function resumedFunction() {
-      await Promise.resolve()
-      return computeStackTrace(new Error()).stack
+      try {
+        await Promise.reject(new Error())
+        return []
+      } catch {
+        return computeStackTrace(new Error()).stack
+      }
     }
     async function awaitingCaller() {
       return [computeStackTrace(new Error()).stack[0].line, await resumedFunction()] as const
