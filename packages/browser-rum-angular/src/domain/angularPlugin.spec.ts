@@ -1,8 +1,13 @@
 import { VERSION } from '@angular/core'
 import { toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '../../../browser-core/test'
-import { angularPlugin, onRumInit, onRumStart, resetAngularPlugin } from './angularPlugin'
+import type {
+  RumInitConfiguration,
+  RumPluginOnInitOptions,
+  RumPublicApi,
+  StartRumResult,
+} from '@datadog/browser-rum-core'
+import { registerCleanupTask, waitNextMicrotask } from '../../../browser-core/test'
+import { addAngularErrorWhenReady, angularPlugin, resetAngularPlugin, startAngularViewWhenReady } from './angularPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
@@ -25,38 +30,82 @@ describe('angularPlugin', () => {
     )
   })
 
-  it('calls callbacks registered with onRumInit during onInit', () => {
-    const callbackSpy = jasmine.createSpy()
-    const pluginConfiguration = {}
-    onRumInit(callbackSpy)
-
-    expect(callbackSpy).not.toHaveBeenCalled()
-
+  function callOnInit(configuration = { router: true }) {
+    const startViewSpy = jasmine.createSpy()
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-    angularPlugin(pluginConfiguration).onInit!({
-      publicApi: PUBLIC_API,
-      initConfiguration: INIT_CONFIGURATION,
+    angularPlugin(configuration).onInit!({
+      publicApi: { startView: startViewSpy } as unknown as RumPublicApi,
+      initConfiguration: { ...INIT_CONFIGURATION },
     } as RumPluginOnInitOptions)
+    return startViewSpy
+  }
 
-    expect(callbackSpy).toHaveBeenCalledTimes(1)
-    expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-    expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+  function fakeError(id: number) {
+    return { error: id } as unknown as Parameters<NonNullable<StartRumResult['addError']>>[0]
+  }
+
+  it('starts views queued before onInit, in order', async () => {
+    startAngularViewWhenReady({ name: '/a', url: '/a' })
+    startAngularViewWhenReady({ name: '/b', url: '/b' })
+
+    const startViewSpy = callOnInit()
+    await waitNextMicrotask()
+
+    expect(startViewSpy.calls.allArgs()).toEqual([[{ name: '/a', url: '/a' }], [{ name: '/b', url: '/b' }]])
   })
 
-  it('calls callbacks immediately if onInit was already invoked', () => {
-    const callbackSpy = jasmine.createSpy()
-    const pluginConfiguration = {}
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
-    angularPlugin(pluginConfiguration).onInit!({
-      publicApi: PUBLIC_API,
-      initConfiguration: INIT_CONFIGURATION,
-    } as RumPluginOnInitOptions)
+  it('starts views immediately after onInit', async () => {
+    const startViewSpy = callOnInit()
+    await waitNextMicrotask()
 
-    onRumInit(callbackSpy)
+    startAngularViewWhenReady({ name: '/a', url: '/a' })
 
-    expect(callbackSpy).toHaveBeenCalledTimes(1)
-    expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-    expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/a', url: '/a' })
+  })
+
+  it('does not start views when router is disabled', async () => {
+    startAngularViewWhenReady({ name: '/a', url: '/a' })
+
+    const startViewSpy = callOnInit({ router: false })
+    await waitNextMicrotask()
+
+    expect(startViewSpy).not.toHaveBeenCalled()
+  })
+
+  it('keeps only the 500 most recent views before onInit', async () => {
+    for (let i = 0; i < 501; i++) {
+      startAngularViewWhenReady({ name: `/${i}` })
+    }
+
+    const startViewSpy = callOnInit()
+    await waitNextMicrotask()
+
+    expect(startViewSpy).toHaveBeenCalledTimes(500)
+    expect(startViewSpy.calls.first().args[0]).toEqual({ name: '/1' })
+  })
+
+  it('adds errors queued before onRumStart, then adds new errors immediately', async () => {
+    addAngularErrorWhenReady(fakeError(1))
+    const addErrorSpy = jasmine.createSpy()
+
+    angularPlugin().onRumStart!({ addError: addErrorSpy })
+    await waitNextMicrotask()
+    addAngularErrorWhenReady(fakeError(2))
+
+    expect(addErrorSpy.calls.allArgs()).toEqual([[fakeError(1)], [fakeError(2)]])
+  })
+
+  it('keeps only the 500 most recent errors before onRumStart', async () => {
+    for (let i = 0; i < 501; i++) {
+      addAngularErrorWhenReady(fakeError(i))
+    }
+    const addErrorSpy = jasmine.createSpy()
+
+    angularPlugin().onRumStart!({ addError: addErrorSpy })
+    await waitNextMicrotask()
+
+    expect(addErrorSpy).toHaveBeenCalledTimes(500)
+    expect(addErrorSpy.calls.first().args[0]).toEqual(fakeError(1))
   })
 
   it('enforce manual view tracking when router is enabled', () => {
@@ -90,25 +139,5 @@ describe('angularPlugin', () => {
       router: false,
       integrations: [toMajorVersionIntegration('angular', VERSION.major)],
     })
-  })
-
-  it('calls onRumStart subscribers during onRumStart', () => {
-    const callbackSpy = jasmine.createSpy()
-    const addErrorSpy = jasmine.createSpy()
-    onRumStart(callbackSpy)
-
-    angularPlugin().onRumStart!({ addError: addErrorSpy })
-
-    expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
-  })
-
-  it('calls onRumStart subscribers immediately if already started', () => {
-    const addErrorSpy = jasmine.createSpy()
-    angularPlugin().onRumStart!({ addError: addErrorSpy })
-
-    const callbackSpy = jasmine.createSpy()
-    onRumStart(callbackSpy)
-
-    expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
   })
 })

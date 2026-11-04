@@ -1,20 +1,10 @@
-import { display } from '@datadog/browser-core'
-import { onRumInit } from '../angularPlugin'
+import { startAngularViewWhenReady } from '../angularPlugin'
 import type { RouteSnapshot } from './types'
 
 const PRIMARY_OUTLET = 'primary'
 
-export function startAngularView(root: RouteSnapshot, url: string) {
-  onRumInit((configuration, rumPublicApi) => {
-    if (!configuration.router) {
-      display.warn('`router: true` is missing from the angular plugin configuration, the view will not be tracked.')
-      return
-    }
-
-    const viewName = computeViewName(root)
-
-    rumPublicApi.startView({ name: viewName, url })
-  })
+export function startAngularView(name: string, url: string) {
+  startAngularViewWhenReady({ name, url })
 }
 
 export function computeViewName(root: RouteSnapshot): string {
