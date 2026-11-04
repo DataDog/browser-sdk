@@ -16,16 +16,19 @@ import { isLayoutShiftSupported, MAX_WINDOW_DURATION, trackCumulativeLayoutShift
 interface StartCLSTrackingArgs {
   viewStart: RelativeTime
   isLayoutShiftSupported: boolean
+  isSoftNavigationTracked: boolean
 }
 
 describe('trackCumulativeLayoutShift', () => {
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
   let clsCallback: jasmine.Spy<(csl: CumulativeLayoutShift) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+  let setNavigationId: (navigationId: number) => void
 
   function startCLSTracking({
     viewStart = 0 as RelativeTime,
     isLayoutShiftSupported = true,
+    isSoftNavigationTracked = false,
   }: Partial<StartCLSTrackingArgs> = {}) {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
@@ -35,7 +38,13 @@ describe('trackCumulativeLayoutShift', () => {
       get: () => (isLayoutShiftSupported ? ['layout-shift'] : []),
     })
 
-    const clsTrackingResult = trackCumulativeLayoutShift(mockRumConfiguration(), viewStart, clsCallback)
+    const clsTrackingResult = trackCumulativeLayoutShift(
+      mockRumConfiguration(),
+      viewStart,
+      clsCallback,
+      isSoftNavigationTracked
+    )
+    setNavigationId = clsTrackingResult.setNavigationId
 
     registerCleanupTask(() => {
       clsTrackingResult.stop()
@@ -93,6 +102,49 @@ describe('trackCumulativeLayoutShift', () => {
     expect(clsCallback.calls.mostRecent().args[0]).toEqual({
       value: 0,
     })
+  })
+
+  it('should recompute the CLS from the soft navigation onward once its navigationId is set', () => {
+    startCLSTracking({ isSoftNavigationTracked: true })
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.1,
+        startTime: 1 as RelativeTime,
+        navigationId: 1,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.2,
+        startTime: 2 as RelativeTime,
+        navigationId: 2,
+      }),
+    ])
+    expect(clsCallback.calls.mostRecent().args[0].value).toBe(0.3)
+
+    setNavigationId(2)
+
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      value: 0.2,
+      time: 2 as RelativeTime,
+      targetSelector: undefined,
+      previousRect: undefined,
+      currentRect: undefined,
+      devicePixelRatio: jasmine.any(Number),
+    })
+  })
+
+  it('should reset the CLS when every layout shift is from before the soft navigation', () => {
+    startCLSTracking({ isSoftNavigationTracked: true })
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, {
+        value: 0.1,
+        startTime: 1 as RelativeTime,
+        navigationId: 1,
+      }),
+    ])
+
+    setNavigationId(2)
+
+    expect(clsCallback.calls.mostRecent().args[0]).toEqual({ value: 0 })
   })
 
   it('should round the cumulative layout shift value to 4 decimals', () => {
