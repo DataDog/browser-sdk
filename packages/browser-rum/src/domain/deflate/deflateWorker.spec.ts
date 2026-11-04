@@ -220,6 +220,21 @@ describe('startDeflateWorker', () => {
       )
     })
 
+    it('does not time out a worker started after a previous one errored', () => {
+      const erroredWorker = new MockWorker()
+      createDeflateWorkerSpy.and.returnValue(erroredWorker)
+      startDeflateWorkerWithDefaults()
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY / 2)
+      erroredWorker.dispatchErrorEvent()
+      resetDeflateWorkerState()
+      displaySpy.calls.reset()
+
+      createDeflateWorkerSpy.and.callFake(() => new Worker(URL.createObjectURL(new Blob(['']))))
+      startDeflateWorkerWithDefaults()
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY / 2)
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
     it('does not time out a worker started after a reset', () => {
       startDeflateWorkerWithDefaults()
       clock.tick(INITIALIZATION_TIME_OUT_DELAY / 2)

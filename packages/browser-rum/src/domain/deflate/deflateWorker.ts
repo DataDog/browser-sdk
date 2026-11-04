@@ -122,7 +122,7 @@ export function doStartDeflateWorker(configuration: RumConfiguration, source: st
       }
     )
     worker.postMessage({ action: 'init' })
-    const timeoutId = setTimeout(() => onTimeout(source, name), INITIALIZATION_TIME_OUT_DELAY)
+    const timeoutId = setTimeout(() => onTimeout(source, name, worker), INITIALIZATION_TIME_OUT_DELAY)
     const stop = () => {
       clearTimeout(timeoutId)
       removeErrorListener()
@@ -135,9 +135,10 @@ export function doStartDeflateWorker(configuration: RumConfiguration, source: st
   }
 }
 
-function onTimeout(source: string, name: WorkerName) {
+function onTimeout(source: string, name: WorkerName, worker: DeflateWorker) {
   const state = getState(name)
-  if (state.status === DeflateWorkerStatus.Loading) {
+  // The worker may have errored or been replaced (ex: after a reset) since this timeout was set
+  if (state.status === DeflateWorkerStatus.Loading && state.worker === worker) {
     display.error(`${source} failed to start: a timeout occurred while initializing the Worker`)
     state.initializationFailureCallbacks.forEach((callback) => callback())
     states.set(name, { status: DeflateWorkerStatus.Error })
