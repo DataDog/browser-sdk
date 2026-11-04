@@ -52,8 +52,6 @@ import type { VitalContext } from './vitalHistory'
 import { createVitalHistory } from './vitalHistory'
 
 describe('profiler', () => {
-  // Store the original pathname
-  const originalPathname = document.location.pathname
   let emitPayloadSpy: jasmine.Spy
   let checkProfilingQuotaSpy: jasmine.Spy
 
@@ -63,10 +61,10 @@ describe('profiler', () => {
     checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' }))
   })
 
+  // The page URL changed by some tests is restored by `forEach.ts`. Don't restore it here as well:
+  // Safari rejects more than 100 history changes per 30 seconds.
   afterEach(() => {
     restorePageVisibility()
-    // Go back to the original pathname
-    history.pushState({}, '', originalPathname)
   })
 
   let lifeCycle = new LifeCycle()
