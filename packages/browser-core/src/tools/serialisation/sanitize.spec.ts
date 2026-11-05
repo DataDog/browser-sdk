@@ -234,15 +234,19 @@ describe('sanitize', () => {
     it('should not use toJSON methods added to arrays and objects prototypes', () => {
       const toJSONArray = jasmine.createSpy('toJSONArray', () => 'Array').and.callThrough()
       const toJSONObject = jasmine.createSpy('toJSONObject', () => 'Object').and.callThrough()
+      // Remove them before the test ends, even if it fails: Vitest's messages to its server are
+      // garbled while they are defined (see `jsonStringify.spec.ts`)
       ;(Array.prototype as any).toJSON = toJSONArray
       ;(Object.prototype as any).toJSON = toJSONObject
-
-      const arr = [{ a: 1, b: 2 }]
-      expect(sanitize(arr)).toEqual([{ a: 1, b: 2 }])
-      expect(toJSONArray).toHaveBeenCalledTimes(0)
-      expect(toJSONObject).toHaveBeenCalledTimes(0)
-      delete (Array.prototype as any).toJSON
-      delete (Object.prototype as any).toJSON
+      try {
+        const arr = [{ a: 1, b: 2 }]
+        expect(sanitize(arr)).toEqual([{ a: 1, b: 2 }])
+        expect(toJSONArray).toHaveBeenCalledTimes(0)
+        expect(toJSONObject).toHaveBeenCalledTimes(0)
+      } finally {
+        delete (Array.prototype as any).toJSON
+        delete (Object.prototype as any).toJSON
+      }
     })
 
     it('should survive a faulty toJSON', () => {
@@ -258,15 +262,18 @@ describe('sanitize', () => {
     it('should restore prototype toJSON methods when sanitization throws', () => {
       const toJSON = jasmine.createSpy('toJSON', () => 'Object').and.callThrough()
       ;(Object.prototype as any).toJSON = toJSON
-      const obj = {
-        get x() {
-          throw new Error('Cannot sanitize')
-        },
-      }
+      try {
+        const obj = {
+          get x() {
+            throw new Error('Cannot sanitize')
+          },
+        }
 
-      expect(() => sanitize(obj)).toThrowError('Cannot sanitize')
-      expect(Object.prototype.hasOwnProperty.call(Object.prototype, 'toJSON')).toBe(true)
-      delete (Object.prototype as any).toJSON
+        expect(() => sanitize(obj)).toThrowError('Cannot sanitize')
+        expect(Object.prototype.hasOwnProperty.call(Object.prototype, 'toJSON')).toBe(true)
+      } finally {
+        delete (Object.prototype as any).toJSON
+      }
     })
   })
 
