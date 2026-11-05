@@ -313,18 +313,21 @@ export async function fetchRemoteConfiguration(
   configuration: RumInitConfiguration
 ): Promise<FetchRemoteConfigurationResult> {
   let response: Response | undefined
+  let remoteConfiguration: RemoteConfiguration | undefined
   try {
     response = await fetch(buildEndpoint(configuration))
+    if (response.ok) {
+      remoteConfiguration = await response.json()
+    }
   } catch {
-    response = undefined
+    // Network error, or the body download was interrupted (e.g. connection dropped, page unloading)
   }
-  if (!response?.ok) {
+  if (!response || !remoteConfiguration) {
     return {
       ok: false,
       error: new Error('Error fetching the remote configuration.'),
     }
   }
-  const remoteConfiguration: RemoteConfiguration = await response.json()
   if (remoteConfiguration.rum || remoteConfiguration.profiling) {
     return {
       ok: true,
