@@ -44,7 +44,7 @@ export function resetCanvasWorkerWarning() {
 let nextCaptureId = 0
 
 /**
- * Transfers the snapshot bitmap to the worker, and resolves with its response, or with undefined if
+ * Transfers the snapshot to the worker, and resolves with its response, or with undefined if
  * the worker doesn't respond in time.
  */
 export function captureInWorker(
@@ -58,14 +58,12 @@ export function captureInWorker(
     {
       action: 'captureCanvas',
       id,
-      bitmap: snapshot.bitmap,
-      canvasWidth: snapshot.canvasWidth,
-      canvasHeight: snapshot.canvasHeight,
+      ...snapshot,
       lastChangeHash,
       hashingMaxDimension,
       encodeQuality,
     },
-    [snapshot.bitmap]
+    ['bitmap' in snapshot ? snapshot.bitmap : snapshot.pixels.data]
   )
 
   return new Promise((resolve) => {

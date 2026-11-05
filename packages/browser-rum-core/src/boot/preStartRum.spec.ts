@@ -227,6 +227,31 @@ describe('preStartRum', () => {
       })
     })
 
+    describe('onInit', () => {
+      it('is called within init with the configuration, before RUM starts', () => {
+        const onInitSpy = jasmine.createSpy()
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+          rumPublicApiOptions: { onInit: onInitSpy },
+        })
+
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+        expect(onInitSpy).toHaveBeenCalledOnceWith(
+          jasmine.objectContaining({ applicationId: DEFAULT_INIT_CONFIGURATION.applicationId })
+        )
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
+      it('is not called when the configuration is invalid', () => {
+        const onInitSpy = jasmine.createSpy()
+        const { strategy } = createPreStartStrategyWithDefaults({ rumPublicApiOptions: { onInit: onInitSpy } })
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, applicationId: undefined as unknown as string }, PUBLIC_API)
+
+        expect(onInitSpy).not.toHaveBeenCalled()
+      })
+    })
+
     describe('deflate worker', () => {
       let strategy: Strategy
       let startDeflateWorkerSpy: jasmine.Spy

@@ -1,10 +1,13 @@
-import { noop } from '@datadog/js-core/util'
+import { mockable, noop } from '@datadog/js-core/util'
 import { instrumentMethod } from '@datadog/browser-core'
 import { getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { RecordingScope } from '../recordingScope'
 import { CanvasStatus } from '../canvas/canvasManager'
+import type { CanvasSnapshot } from '../canvas/canvasSnapshot'
 import { createCanvasSnapshot } from '../canvas/canvasSnapshot'
+import { forgetWebGPUCanvasConfiguration, getWebGPUCanvasConfiguration } from '../../webGpuCanvasConfigurations'
+import { readWebGPUTexture } from '../canvas/webGpuReadback'
 import type { Tracker } from './tracker.types'
 
 const CANVAS_2D_DRAWING_METHODS = [
@@ -49,7 +52,7 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
   const snapshotInterval = ONE_SECOND / configuration.maxFramesPerSecond
   const canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
   // WebGPU canvases whose current texture was requested, snapshotted after the next queue submit
-  const drawnWebGPUCanvases = new Set<HTMLCanvasElement>()
+  const drawnWebGPUCanvases = new Map<HTMLCanvasElement, GPUTexture>()
   let stopped = false
 
   const markCanvasDirty = (canvas: HTMLCanvasElement | OffscreenCanvas) => {
@@ -71,8 +74,20 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
     return trackingState
   }
 
+  const storeSnapshot = (htmlCanvas: HTMLCanvasElement, snapshot: CanvasSnapshot | undefined) => {
+    if (snapshot && !stopped) {
+      scope.canvasManager.setCanvasSnapshot(htmlCanvas, snapshot)
+      markCanvasDirty(htmlCanvas)
+    }
+  }
+
   // Snapshots the canvas in a microtask, while its drawing buffer is still available
-  const scheduleSnapshot = (htmlCanvas: HTMLCanvasElement, trackingState: CanvasTrackingState) => {
+  const scheduleSnapshot = (
+    htmlCanvas: HTMLCanvasElement,
+    trackingState: CanvasTrackingState,
+    takeSnapshot: () => CanvasSnapshot | undefined | Promise<CanvasSnapshot | undefined> = () =>
+      createCanvasSnapshot(htmlCanvas, configuration.maxImageDimension)
+  ) => {
     const now = performance.now()
     if (trackingState.snapshotScheduled || now < trackingState.nextSnapshotTime) {
       return
@@ -91,10 +106,16 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
       }
 
       try {
-        const snapshot = createCanvasSnapshot(htmlCanvas, configuration.maxImageDimension)
-        if (snapshot) {
-          scope.canvasManager.setCanvasSnapshot(htmlCanvas, snapshot)
-          markCanvasDirty(htmlCanvas)
+        const snapshot = takeSnapshot()
+        if (snapshot instanceof Promise) {
+          // Keep a single readback in flight per canvas, as the GPU can take longer than the snapshot interval
+          trackingState.snapshotScheduled = true
+          void snapshot.then((resolvedSnapshot) => {
+            trackingState.snapshotScheduled = false
+            storeSnapshot(htmlCanvas, resolvedSnapshot)
+          })
+        } else {
+          storeSnapshot(htmlCanvas, snapshot)
         }
       } catch (error) {
         scope.canvasManager.markCanvas(
@@ -126,12 +147,25 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
 
   const trackWebGPUSubmit = () => {
     // WebGPU has no preserveDrawingBuffer: the canvas texture is discarded once presented
-    drawnWebGPUCanvases.forEach((canvas) =>
-      scheduleSnapshot(
-        canvas,
-        getTrackingState(canvas, () => false)
-      )
-    )
+    drawnWebGPUCanvases.forEach((texture, canvas) => {
+      const trackingState = getTrackingState(canvas, () => false)
+      const webGPUConfiguration = getWebGPUCanvasConfiguration(canvas)
+      if (!webGPUConfiguration) {
+        scheduleSnapshot(canvas, trackingState)
+        return
+      }
+      scheduleSnapshot(canvas, trackingState, () => {
+        const { width: canvasWidth, height: canvasHeight } = canvas
+        return mockable(readWebGPUTexture)(texture, webGPUConfiguration, configuration.maxImageDimension).then(
+          (pixels) => ({ canvasWidth, canvasHeight, pixels }),
+          () => {
+            // Read this canvas synchronously from now on
+            forgetWebGPUCanvasConfiguration(canvas)
+            return undefined
+          }
+        )
+      })
+    })
     drawnWebGPUCanvases.clear()
   }
 
@@ -172,9 +206,9 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
   if (typeof GPUCanvasContext !== 'undefined' && typeof GPUQueue !== 'undefined') {
     instrumentationStoppers.push(
       instrumentMethod(GPUCanvasContext.prototype, 'getCurrentTexture', ({ target: context, onPostCall }) => {
-        onPostCall(() => {
+        onPostCall((texture) => {
           if (scope.nodeIds.get(context.canvas as HTMLCanvasElement) !== undefined) {
-            drawnWebGPUCanvases.add(context.canvas as HTMLCanvasElement)
+            drawnWebGPUCanvases.set(context.canvas as HTMLCanvasElement, texture)
           }
         })
       }),

@@ -55,7 +55,7 @@ export type DoStartRum = (
 ) => StartRumResult
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, sdkName }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, onInit, sdkName }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   doStartRum: DoStartRum
 ): Strategy {
@@ -174,6 +174,7 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+    onInit?.(configuration)
 
     if (initContext?.user) {
       userContext.setContext(initContext.user)

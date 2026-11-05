@@ -23,18 +23,34 @@ export type DeflateWorkerAction =
 
 // Action to send to hash a canvas snapshot and, if it changed since the last capture, encode it.
 // The worker will respond with a CanvasCaptureResponse with the same id.
-export interface CanvasCaptureAction {
+export type CanvasCaptureAction = {
   action: 'captureCanvas'
   id: number
-  // Downscaled snapshot of the canvas, transferred to the worker
-  bitmap: ImageBitmap
-  // Dimensions of the canvas itself, which can differ from the bitmap ones
+  // Dimensions of the canvas itself, which can differ from the snapshot ones
   canvasWidth: number
   canvasHeight: number
   // Hash returned by the last successful capture of this canvas, if any
   lastChangeHash: string | undefined
   hashingMaxDimension: number
   encodeQuality: number
+} & CanvasSnapshotImage
+
+// Snapshot of the canvas, transferred to the worker
+export type CanvasSnapshotImage =
+  // Downscaled bitmap
+  | { bitmap: ImageBitmap }
+  // Pixels read back from a WebGPU canvas texture, downscaled by the worker
+  | { pixels: CanvasPixels }
+
+export interface CanvasPixels {
+  data: ArrayBuffer
+  width: number
+  height: number
+  // Rows are padded to a multiple of 256 bytes, as WebGPU requires for texture copies
+  bytesPerRow: number
+  format: 'bgra8unorm' | 'rgba8unorm'
+  alphaMode: GPUCanvasAlphaMode
+  maxImageDimension: number
 }
 
 export type DeflateWorkerResponse =

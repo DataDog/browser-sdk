@@ -1,7 +1,20 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { CanvasPixels } from '@datadog/browser-core'
+import { isChromium } from '@datadog/browser-core'
+import {
+  collectAsyncCalls,
+  registerCleanupTask,
+  replaceMockable,
+  replaceMockableWithSpy,
+  wait,
+} from '@datadog/browser-core/test'
+import { noop } from '@datadog/js-core/util'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
+import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
 import type { CanvasManager } from '../canvas/canvasManager'
 import { CanvasStatus, createCanvasManager } from '../canvas/canvasManager'
+import type { BitmapCanvasSnapshot } from '../canvas/canvasSnapshot'
+import { trackWebGPUCanvasConfigurations } from '../../webGpuCanvasConfigurations'
+import { readWebGPUTexture } from '../canvas/webGpuReadback'
 import { skipIfOffscreenCanvasIsNotSupported } from '../../../../test'
 import { bitmapPixels } from '../canvas/canvasImage.specHelper'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
@@ -232,7 +245,7 @@ describe('trackCanvasContent', () => {
     webGLContext.clear(webGLContext.COLOR_BUFFER_BIT)
     await Promise.resolve()
 
-    const snapshot = canvasManager.startCaptureAttempt(webGLCanvas).snapshot!
+    const snapshot = canvasManager.startCaptureAttempt(webGLCanvas).snapshot as BitmapCanvasSnapshot
     expect(bitmapPixels(snapshot.bitmap)).toEqual([255, 0, 0, 255])
   })
 
@@ -257,9 +270,13 @@ describe('trackCanvasContent', () => {
   describe('WebGPU', () => {
     // Most test browsers have no WebGPU adapter, so the WebGPU classes are faked around a 2D canvas
     class FakeGPUCanvasContext {
+      texture = {} as GPUTexture
       constructor(readonly canvas: HTMLCanvasElement) {}
+      configure(_configuration: GPUCanvasConfiguration) {
+        // Only observed by trackWebGPUCanvasConfigurations
+      }
       getCurrentTexture() {
-        return {}
+        return this.texture
       }
     }
     class FakeGPUQueue {
@@ -303,7 +320,9 @@ describe('trackCanvasContent', () => {
 
       expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
       expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGPUCanvas, CanvasStatus.Dirty)
-      expect(bitmapPixels(canvasManager.startCaptureAttempt(webGPUCanvas).snapshot!.bitmap)).toEqual([255, 0, 0, 255])
+      expect(
+        bitmapPixels((canvasManager.startCaptureAttempt(webGPUCanvas).snapshot as BitmapCanvasSnapshot).bitmap)
+      ).toEqual([255, 0, 0, 255])
     })
 
     it('does not freeze WebGPU content when the canvas texture was not requested before the submit', async () => {
@@ -330,6 +349,92 @@ describe('trackCanvasContent', () => {
       await Promise.resolve()
 
       expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+    })
+
+    describe('when the canvas is configured after RUM started', () => {
+      const device = {} as GPUDevice
+      const pixels: CanvasPixels = {
+        data: new ArrayBuffer(256),
+        width: 1,
+        height: 1,
+        bytesPerRow: 256,
+        format: 'bgra8unorm',
+        alphaMode: 'opaque',
+        maxImageDimension: 1000,
+      }
+      let readWebGPUTextureSpy: jasmine.Spy<typeof readWebGPUTexture>
+
+      beforeEach(() => {
+        replaceMockable(isChromium, () => false)
+        const configurationTracker = trackWebGPUCanvasConfigurations(
+          mockRumConfiguration({
+            sessionReplayCanvasRecording: {
+              enable: true,
+              maxFramesPerSecond: Infinity,
+              hashingMaxDimension: 100,
+              maxImageDimension: 1000,
+              encodeQuality: 0.5,
+            },
+          })
+        )
+        registerCleanupTask(() => configurationTracker.stop())
+        webGPUContext.configure({ device, format: 'bgra8unorm' })
+        readWebGPUTextureSpy = replaceMockableWithSpy(readWebGPUTexture)
+      })
+
+      it('reads the canvas texture back instead of drawing the canvas', async () => {
+        readWebGPUTextureSpy.and.returnValue(Promise.resolve(pixels))
+        const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot')
+        startTracking(true, Infinity, 100, 1000, webGPUCanvas)
+        markCanvasDirtySpy.calls.reset()
+
+        webGPUContext.getCurrentTexture()
+        queue.submit()
+        await collectAsyncCalls(setCanvasSnapshotSpy, 1)
+
+        expect(readWebGPUTextureSpy).toHaveBeenCalledOnceWith(
+          webGPUContext.texture,
+          { device, format: 'bgra8unorm', alphaMode: 'opaque' },
+          1000
+        )
+        expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(webGPUCanvas, { canvasWidth: 1, canvasHeight: 1, pixels })
+        expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGPUCanvas, CanvasStatus.Dirty)
+      })
+
+      it('keeps a single readback in flight per canvas', async () => {
+        readWebGPUTextureSpy.and.returnValue(new Promise(noop))
+        startTracking(true, Infinity, 100, 1000, webGPUCanvas)
+
+        webGPUContext.getCurrentTexture()
+        queue.submit()
+        await Promise.resolve()
+        webGPUContext.getCurrentTexture()
+        queue.submit()
+        await Promise.resolve()
+
+        expect(readWebGPUTextureSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('draws the canvas once its texture cannot be read back', async () => {
+        readWebGPUTextureSpy.and.returnValue(Promise.reject(new Error('device lost')))
+        const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+        startTracking(true, Infinity, 100, 1000, webGPUCanvas)
+
+        webGPUContext.getCurrentTexture()
+        queue.submit()
+        await wait()
+        expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+
+        webGPUContext.getCurrentTexture()
+        queue.submit()
+        await Promise.resolve()
+
+        expect(readWebGPUTextureSpy).toHaveBeenCalledTimes(1)
+        expect(setCanvasSnapshotSpy).toHaveBeenCalledOnceWith(
+          webGPUCanvas,
+          jasmine.objectContaining({ bitmap: jasmine.any(ImageBitmap) })
+        )
+      })
     })
   })
 

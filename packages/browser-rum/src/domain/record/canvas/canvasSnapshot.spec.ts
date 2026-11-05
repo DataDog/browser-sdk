@@ -1,6 +1,6 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { skipIfOffscreenCanvasIsNotSupported } from '../../../../test'
-import type { CanvasSnapshot } from './canvasSnapshot'
+import type { BitmapCanvasSnapshot, CanvasSnapshot } from './canvasSnapshot'
 import { copyCanvasSnapshot, createCanvasSnapshot } from './canvasSnapshot'
 import { bitmapPixels } from './canvasImage.specHelper'
 
@@ -61,11 +61,32 @@ describe('copyCanvasSnapshot', () => {
   it('copies the pixels and the canvas dimensions into a new bitmap', () => {
     const snapshot = createSnapshot(createCanvas(4, 2, ['red']), 2)
 
-    const copy = copyCanvasSnapshot(snapshot)!
+    const copy = copyCanvasSnapshot(snapshot) as BitmapCanvasSnapshot
 
     expect(copy.bitmap).not.toBe(snapshot.bitmap)
     expect([copy.canvasWidth, copy.canvasHeight]).toEqual([4, 2])
     expect(bitmapPixels(copy.bitmap)).toEqual(bitmapPixels(snapshot.bitmap))
+  })
+
+  it('copies the pixels of a WebGPU snapshot into a new buffer', () => {
+    const snapshot: CanvasSnapshot = {
+      canvasWidth: 4,
+      canvasHeight: 2,
+      pixels: {
+        data: new Uint8Array([1, 2, 3, 4]).buffer,
+        width: 1,
+        height: 1,
+        bytesPerRow: 256,
+        format: 'bgra8unorm',
+        alphaMode: 'opaque',
+        maxImageDimension: 1000,
+      },
+    }
+
+    const copy = copyCanvasSnapshot(snapshot) as typeof snapshot
+
+    expect(copy.pixels.data).not.toBe(snapshot.pixels.data)
+    expect(copy).toEqual(snapshot)
   })
 })
 
@@ -90,6 +111,6 @@ function fill(canvas: HTMLCanvasElement, color: string) {
   context.fillRect(0, 0, canvas.width, canvas.height)
 }
 
-function createSnapshot(canvas: HTMLCanvasElement, maxImageDimension: number): CanvasSnapshot {
+function createSnapshot(canvas: HTMLCanvasElement, maxImageDimension: number): BitmapCanvasSnapshot {
   return createCanvasSnapshot(canvas, maxImageDimension)!
 }
