@@ -65,6 +65,43 @@ const downlevelStaticAssetsPlugin: Plugin = {
   },
 }
 
+// Vite's client is loaded in the test pages even though HMR is off, and keeps a WebSocket to the
+// server. On BrowserStack, that connection gets dropped (code 1006, detected when the client sends
+// its ping every 30s), and the client then reloads the page once the server answers again, which
+// fails the run with "The iframe was reloaded during a test". Vitest's own WebSocket isn't
+// affected. Unlike it, nothing is ever sent to the browser on Vite's, so it is likely dropped for
+// inactivity: send a message every 15s, and don't reload the page if it is dropped anyway (the
+// error reporter logs it).
+const VITE_CLIENT = /\/node_modules\/vite\/dist\/client\/client\.mjs$/
+const VITE_CLIENT_RELOAD_ON_DISCONNECT = 'console.log(`[vite] server connection lost. Polling for restart...`);'
+export const viteClientNoReloadPlugin: Plugin = {
+  name: 'vite-client-no-reload-on-disconnect',
+  // Before `downlevelModulesPlugin` transforms the client
+  enforce: 'pre',
+  transform(code, id) {
+    if (!VITE_CLIENT.test(id.split('?')[0])) {
+      return
+    }
+    if (!code.includes(VITE_CLIENT_RELOAD_ON_DISCONNECT)) {
+      throw new Error("Can't find the reload on disconnect in Vite's client: update viteClientNoReloadPlugin")
+    }
+    // Leave the `vite:ws:disconnect` handler before it logs, waits for the server and reloads
+    return code.replace(VITE_CLIENT_RELOAD_ON_DISCONNECT, 'return;')
+  },
+}
+
+const VITE_KEEPALIVE_INTERVAL = 15_000
+export const viteKeepalivePlugin: Plugin = {
+  name: 'vite-websocket-keepalive',
+  configureServer(server) {
+    const interval = setInterval(() => {
+      server.ws.send({ type: 'custom', event: 'datadog:keepalive' })
+    }, VITE_KEEPALIVE_INTERVAL)
+    interval.unref()
+    server.httpServer?.once('close', () => clearInterval(interval))
+  },
+}
+
 // Vitest's client relies on recent built-ins (e.g. Object.hasOwn). The orchestrator page gets the
 // polyfills via `orchestratorScripts`; inject them first in the tester page too.
 const POLYFILLS_PATH = resolve(import.meta.dirname, 'vitestBrowserPolyfills.js')
@@ -205,7 +242,14 @@ const errorReporterPlugin: Plugin = {
 const config = mergeConfig(
   baseConfig,
   defineConfig({
-    plugins: [downlevelStaticAssetsPlugin, downlevelModulesPlugin, polyfillTesterPlugin, errorReporterPlugin],
+    plugins: [
+      downlevelStaticAssetsPlugin,
+      downlevelModulesPlugin,
+      polyfillTesterPlugin,
+      errorReporterPlugin,
+      viteClientNoReloadPlugin,
+      viteKeepalivePlugin,
+    ],
     // Vite serves sources untranspiled by default; target the oldest browser of the matrix.
     oxc: { target: TARGET },
     optimizeDeps: { rolldownOptions: { transform: { target: TARGET } } },
