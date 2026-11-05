@@ -120,7 +120,7 @@ export const trackCanvasCapture = (
       canvasManager.discardCaptureAttempt(canvas, captureAttempt)
     } catch (error) {
       if (!cancelled()) {
-        canvasManager.markCanvas(canvas, isSecurityError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)
+        canvasManager.markCanvas(canvas, isTaintError(error) ? CanvasStatus.Tainted : CanvasStatus.Dirty)
         canvasManager.discardCaptureAttempt(canvas, captureAttempt)
       }
     }
@@ -136,6 +136,7 @@ export const trackCanvasCapture = (
   }
 }
 
-function isSecurityError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'SecurityError'
+// SecurityError: reading the pixels of a tainted canvas. DataCloneError: posting a tainted bitmap to the worker.
+function isTaintError(error: unknown): boolean {
+  return error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'DataCloneError')
 }

@@ -6,7 +6,7 @@ export const enum CanvasStatus {
   Clean,
   /** The canvas is dirty, meaning it has been marked as dirty by a draw operation */
   Dirty,
-  /** The canvas is tainted, meaning it has been marked as tainted by a SecurityError */
+  /** The canvas is tainted, meaning it has been marked as tainted by a SecurityError or DataCloneError */
   Tainted,
 }
 

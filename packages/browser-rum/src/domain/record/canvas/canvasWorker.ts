@@ -54,19 +54,25 @@ export function captureInWorker(
   { hashingMaxDimension, encodeQuality }: { hashingMaxDimension: number; encodeQuality: number }
 ): Promise<CanvasCaptureResponse | undefined> {
   const id = nextCaptureId++
-  worker.postMessage(
-    {
-      action: 'captureCanvas',
-      id,
-      bitmap: snapshot.bitmap,
-      canvasWidth: snapshot.canvasWidth,
-      canvasHeight: snapshot.canvasHeight,
-      lastChangeHash,
-      hashingMaxDimension,
-      encodeQuality,
-    },
-    [snapshot.bitmap]
-  )
+  try {
+    worker.postMessage(
+      {
+        action: 'captureCanvas',
+        id,
+        bitmap: snapshot.bitmap,
+        canvasWidth: snapshot.canvasWidth,
+        canvasHeight: snapshot.canvasHeight,
+        lastChangeHash,
+        hashingMaxDimension,
+        encodeQuality,
+      },
+      [snapshot.bitmap]
+    )
+  } catch (error) {
+    // The bitmap stays attached when the transfer fails (ex: DataCloneError for a tainted bitmap)
+    snapshot.bitmap.close()
+    throw error
+  }
 
   return new Promise((resolve) => {
     const { stop: removeMessageListener } = addEventListener(

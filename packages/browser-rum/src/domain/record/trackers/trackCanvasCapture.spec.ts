@@ -442,6 +442,27 @@ describe('trackCanvasCapture', () => {
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
   })
 
+  it('stops trying to capture a canvas when its bitmap cannot be posted to the worker', async () => {
+    const postMessageSpy = spyOn(worker, 'postMessage').and.throwError(
+      new DOMException('Non-origin-clean ImageBitmap cannot be transferred.', 'DataCloneError')
+    )
+    const closeSpy = spyOn(ImageBitmap.prototype, 'close').and.callThrough()
+    startTracking()
+
+    markCanvasDirtyAndWaitForCapture()
+    await waitForCanvasCapture()
+
+    expect(postMessageSpy).toHaveBeenCalledTimes(1)
+    expect(closeSpy).toHaveBeenCalledTimes(1)
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
+
+    markCanvasDirtyAndWaitForCapture()
+    await waitForCanvasCapture()
+
+    expect(postMessageSpy).toHaveBeenCalledTimes(1)
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
+  })
+
   for (const [privacyLevel, masked] of privacyLevels) {
     it(`${masked ? 'does not capture' : 'captures'} a canvas when the privacy level is ${privacyLevel}`, async () => {
       canvas.setAttribute(PRIVACY_ATTR_NAME, privacyLevel)
