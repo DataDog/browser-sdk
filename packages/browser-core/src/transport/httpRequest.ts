@@ -71,14 +71,20 @@ export function createHttpRequest<Body extends Payload = Payload>(
   bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT
 ): HttpRequest<Body> {
   const observable = new Observable<HttpRequestEvent<Body>>()
-  const retryState = newRetryState<Body>()
+  // Each endpoint needs its own retry state: queued payloads don't remember their endpoint, so with
+  // a shared state they would be retried to whichever endpoint drains the queue.
+  const senders = endpointBuilders.map((endpointBuilder) => ({
+    endpointBuilder,
+    retryState: newRetryState<Body>(),
+  }))
 
   return {
     observable,
     send: (payload: Body) => {
-      for (const endpointBuilder of endpointBuilders) {
+      for (const { endpointBuilder, retryState } of senders) {
         sendWithRetryStrategy(
-          payload,
+          // Each endpoint gets its own copy, as retries record their attempts on the payload
+          { ...payload },
           retryState,
           (payload, onResponse) => {
             fetchStrategy(endpointBuilder, payload, onResponse)
