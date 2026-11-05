@@ -27,7 +27,8 @@ export function trackCommonViewMetrics(
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
-  viewStart: ClocksState
+  viewStart: ClocksState,
+  isSoftNavigationTracked: boolean
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
   let hasManualLoadingTime = false
@@ -52,20 +53,22 @@ export function trackCommonViewMetrics(
     commonViewMetrics.scroll = newScrollMetrics
   })
 
-  const { stop: stopCLSTracking } = trackCumulativeLayoutShift(
+  const { stop: stopCLSTracking, setNavigationId: setCLSNavigationId } = trackCumulativeLayoutShift(
     configuration,
     viewStart.relative,
     (cumulativeLayoutShift) => {
       commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
       scheduleViewUpdate()
-    }
+    },
+    isSoftNavigationTracked
   )
 
   const {
     stop: stopINPTracking,
     getInteractionToNextPaint,
     setViewEnd: setINPViewEnd,
-  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType)
+    setNavigationId: setINPNavigationId,
+  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
 
   return {
     stop: () => {
@@ -78,6 +81,10 @@ export function trackCommonViewMetrics(
     setViewEnd: (viewEndTime: RelativeTime) => {
       viewEnded = true
       setINPViewEnd(viewEndTime)
+    },
+    setNavigationId: (navigationId: number) => {
+      setCLSNavigationId(navigationId)
+      setINPNavigationId(navigationId)
     },
     getCommonViewMetrics: () => {
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()

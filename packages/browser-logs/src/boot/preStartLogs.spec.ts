@@ -1,4 +1,5 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
+import { ConsoleApiName } from '@datadog/js-core/util'
 import {
   collectAsyncCalls,
   type Clock,
@@ -339,6 +340,41 @@ describe('preStartLogs', () => {
     })
   })
 
+  describe('console APIs', () => {
+    it('restricts the console APIs to the forwarded ones as soon as the configuration is valid', () => {
+      const { strategy, restrictConsoleApisSpy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+          forwardConsoleLogs: [ConsoleApiName.warn],
+        },
+        {} as LogsPublicApi
+      )
+
+      expect(restrictConsoleApisSpy).toHaveBeenCalledOnceWith([ConsoleApiName.warn])
+      expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+
+    it('restricts the console APIs to none by default', () => {
+      const { strategy, restrictConsoleApisSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
+
+      expect(restrictConsoleApisSpy).toHaveBeenCalledOnceWith([])
+    })
+
+    it('does not restrict the console APIs when the configuration is invalid', () => {
+      const { strategy, restrictConsoleApisSpy } = createPreStartStrategyWithDefaults()
+      spyOn(display, 'error')
+
+      strategy.init(INVALID_INIT_CONFIGURATION, {} as LogsPublicApi)
+
+      expect(restrictConsoleApisSpy).not.toHaveBeenCalled()
+    })
+  })
+
   describe('telemetry', () => {
     it('starts telemetry during init() by default', async () => {
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
@@ -394,15 +430,23 @@ function createPreStartStrategyWithDefaults({
     handleLog: handleLogSpy,
   } as unknown as StartLogsResult)
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
+  const restrictConsoleApisSpy = jasmine.createSpy<(apis: ConsoleApiName[]) => void>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   replaceMockable(startSessionManager, startSessionManagerMock)
 
   return {
-    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy, sdkName),
+    strategy: createPreStartStrategy(
+      getCommonContextSpy,
+      trackingConsentState,
+      restrictConsoleApisSpy,
+      doStartLogsSpy,
+      sdkName
+    ),
     startTelemetrySpy,
     handleLogSpy,
     doStartLogsSpy,
     getCommonContextSpy,
+    restrictConsoleApisSpy,
     getLoggedMessage: (index: number) => {
       const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
       return { message, logger, handlingStack, savedCommonContext, savedDate }
