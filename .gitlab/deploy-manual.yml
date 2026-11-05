@@ -12,8 +12,9 @@ stages:
       aud: dd-octo-sts
 
 # Deploys are blocked when a cordon (infra freeze) is active on the target datacenters or the prod
-# environment. For an approved freeze exception (#freeze-exception-requests), run the job with the
-# variable OVERRIDE_CORDON=<incident or exception link>.
+# environment. For an approved freeze exception, start the job manually with the variable
+# OVERRIDE_CORDON=<incident or exception link>. Retries can't set variables, so for a deploy-auto
+# step, run the same step from the deploy-manual pipeline instead.
 .deploy-prod:
   stage: deploy
   when: manual

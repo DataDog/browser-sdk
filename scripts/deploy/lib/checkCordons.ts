@@ -58,7 +58,7 @@ export async function checkCordons(targets: CordonTarget[]): Promise<void> {
       logOverride(overrideReason)
       return
     }
-    throw new Error(`Failed to check cordons for ${targetNames}. ${HOW_TO_OVERRIDE}`, { cause: error })
+    throw new Error(`Failed to check cordons for ${targetNames}.\n\n${HOW_TO_OVERRIDE}`, { cause: error })
   }
 
   if (cordons.length === 0) {
@@ -77,9 +77,12 @@ export async function checkCordons(targets: CordonTarget[]): Promise<void> {
   throw new Error(`Active cordons for ${targetNames}:\n${cordonList}\n\n${HOW_TO_OVERRIDE}`)
 }
 
-const HOW_TO_OVERRIDE =
-  'To deploy anyway, get a freeze exception approved (#freeze-exception-requests), then re-run the job ' +
-  'with the variable OVERRIDE_CORDON=<incident or exception link>.'
+const HOW_TO_OVERRIDE = `To deploy anyway:
+  1. Get a freeze exception approved through the freeze exception process.
+  2. Run the deploy again with the variable OVERRIDE_CORDON=<incident or exception link>:
+     - manual job: set the variable when starting the job
+     - deploy-auto step (retries can't set variables): run the same step from the deploy-manual pipeline
+     - canary job: run a new pipeline with the variable`
 
 async function fetchActiveCordons(targets: CordonTarget[]): Promise<Cordon[]> {
   const cordonsByName = new Map<string, Cordon>()
