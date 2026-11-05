@@ -386,6 +386,20 @@ describe('trackCanvasCapture', () => {
     ])
   })
 
+  it('stops trying to capture a canvas when the worker reports a SecurityError', async () => {
+    const onCanvasCapture = startTracking()
+
+    markCanvasDirtyAndWaitForCapture()
+    respondToNextCapture((id) => ({ type: 'canvasCaptureFailed', id, errorName: 'SecurityError' }))
+    await waitForCanvasCapture()
+
+    expect(onCanvasCapture).not.toHaveBeenCalled()
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
+
+    canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
+    expect(canvasManager.takeCapturableCanvases()).toEqual([])
+  })
+
   it('leaves the canvas dirty when the worker does not respond in time', async () => {
     const onCanvasCapture = startTracking()
 

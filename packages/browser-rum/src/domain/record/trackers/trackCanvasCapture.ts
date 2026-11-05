@@ -111,7 +111,11 @@ export const trackCanvasCapture = (
       if (response?.type !== 'canvasUnchanged') {
         // monitor-until: 2027-04-30
         addTelemetryDebug('Canvas capture failed', { 'error.name': response ? response.errorName : 'timeout' })
-        markDirtyIfCurrent(captureAttempt, canvas) // hashing or encoding failed; leave it dirty
+        if (response?.errorName === 'SecurityError') {
+          canvasManager.markCanvas(canvas, CanvasStatus.Tainted)
+        } else {
+          markDirtyIfCurrent(captureAttempt, canvas) // hashing or encoding failed; leave it dirty
+        }
       }
       canvasManager.discardCaptureAttempt(canvas, captureAttempt)
     } catch (error) {
