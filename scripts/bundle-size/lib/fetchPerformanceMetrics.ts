@@ -16,7 +16,9 @@ export interface PerformanceMetric {
 }
 
 export async function fetchBundleSizes(commitId: string): Promise<PerformanceMetric[]> {
-  const series = await queryMetrics(`avg:browser_sdk.bundle_size.uncompressed{commit:${commitId}} by {bundle_name}`)
+  // Several pipelines can report the same commit (e.g. `main` and a branch pushed at that commit), with identical
+  // sizes. Averaging them right after one of them reported has returned half the real size, `max` doesn't.
+  const series = await queryMetrics(`max:browser_sdk.bundle_size.uncompressed{commit:${commitId}} by {bundle_name}`)
   const bundleSizes: PerformanceMetric[] = []
   for (const { tag_set: tagSet, pointlist } of series) {
     const name = tagSet?.find((tag) => tag.startsWith('bundle_name:'))?.slice('bundle_name:'.length)
