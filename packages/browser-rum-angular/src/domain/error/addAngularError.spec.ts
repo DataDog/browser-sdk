@@ -60,4 +60,20 @@ describe('addAngularError', () => {
       })
     )
   })
+
+  it('does not throw when reading dd_context throws', async () => {
+    const addErrorSpy = jasmine.createSpy()
+    await initializeAngularPlugin({
+      addError: addErrorSpy,
+    })
+    const originalError = new Error('error message')
+    Object.defineProperty(originalError, 'dd_context', {
+      get() {
+        throw new Error('dd_context getter error')
+      },
+    })
+
+    expect(() => addAngularError(originalError)).not.toThrow()
+    expect(addErrorSpy).not.toHaveBeenCalled()
+  })
 })

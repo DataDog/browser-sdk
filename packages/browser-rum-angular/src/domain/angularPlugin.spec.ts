@@ -30,8 +30,7 @@ describe('angularPlugin', () => {
     )
   })
 
-  function callOnInit(configuration = { router: true }) {
-    const startViewSpy = jasmine.createSpy()
+  function callOnInit(configuration = { router: true }, startViewSpy = jasmine.createSpy()) {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
     angularPlugin(configuration).onInit!({
       publicApi: { startView: startViewSpy } as unknown as RumPublicApi,
@@ -56,6 +55,16 @@ describe('angularPlugin', () => {
 
   it('starts views immediately after onInit', async () => {
     const startViewSpy = callOnInit()
+    await waitNextMicrotask()
+
+    startAngularViewWhenReady({ name: '/a', url: '/a' })
+
+    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/a', url: '/a' })
+  })
+
+  it('starts each view once when onInit runs several times', async () => {
+    const startViewSpy = callOnInit()
+    callOnInit(undefined, startViewSpy)
     await waitNextMicrotask()
 
     startAngularViewWhenReady({ name: '/a', url: '/a' })

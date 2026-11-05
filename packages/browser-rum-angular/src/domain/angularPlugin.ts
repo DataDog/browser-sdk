@@ -1,6 +1,7 @@
 import { VERSION } from '@angular/core'
 import { callMonitored } from '@datadog/js-core/monitor'
 import { BufferedObservable } from '@datadog/js-core/util'
+import type { Subscription } from '@datadog/js-core/util'
 import { display, toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumPlugin, StartRumResult, ViewOptions } from '@datadog/browser-rum-core'
 
@@ -13,6 +14,8 @@ const BUFFER_LIMIT = 500
 
 let views: BufferedObservable<ViewOptions> | undefined
 let errors: BufferedObservable<ErrorPayload> | undefined
+// onInit may run several times (e.g. init retried after an invalid configuration): keep a single view subscriber
+let viewSubscription: Subscription | undefined
 
 function getViews() {
   return (views ??= new BufferedObservable(BUFFER_LIMIT))
@@ -57,7 +60,8 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
   return {
     name: 'angular',
     onInit({ publicApi, initConfiguration }) {
-      getViews().subscribe((view) => {
+      viewSubscription?.unsubscribe()
+      viewSubscription = getViews().subscribe((view) => {
         if (!configuration.router) {
           display.warn('`router: true` is missing from the angular plugin configuration, the view will not be tracked.')
           return
@@ -94,6 +98,8 @@ export function addAngularErrorWhenReady(error: ErrorPayload) {
 }
 
 export function resetAngularPlugin() {
+  viewSubscription?.unsubscribe()
+  viewSubscription = undefined
   views = undefined
   errors = undefined
 }
