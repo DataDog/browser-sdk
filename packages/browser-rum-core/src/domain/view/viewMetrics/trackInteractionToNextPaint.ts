@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import { globalObject, noop } from '@datadog/js-core/util'
+import { noop } from '@datadog/js-core/util'
 import { ONE_MINUTE, elapsed } from '@datadog/js-core/time'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
 import {
@@ -349,7 +349,7 @@ function createSubPartsTracker(longestInteractions: ReturnType<typeof trackLonge
 export function isInteractionToNextPaintSupported() {
   return (
     supportPerformanceTimingEvent(RumPerformanceEntryType.EVENT) &&
-    globalObject.PerformanceEventTiming &&
+    window.PerformanceEventTiming &&
     'interactionId' in PerformanceEventTiming.prototype
   )
 }
