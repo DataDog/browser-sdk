@@ -28,7 +28,8 @@ export function trackCommonViewMetrics(
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
-  viewStart: ClocksState
+  viewStart: ClocksState,
+  isSoftNavigationTracked: boolean
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
   let hasManualLoadingTime = false
@@ -56,20 +57,31 @@ export function trackCommonViewMetrics(
       })
     : { stop: noop }
 
-  const { stop: stopCLSTracking } = configuration.betaTrackViewMetrics
-    ? trackCumulativeLayoutShift(configuration, viewStart.relative, (cumulativeLayoutShift) => {
-        commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-        scheduleViewUpdate()
-      })
-    : { stop: noop }
+  const { stop: stopCLSTracking, setNavigationId: setCLSNavigationId } = configuration.betaTrackViewMetrics
+    ? trackCumulativeLayoutShift(
+        configuration,
+        viewStart.relative,
+        (cumulativeLayoutShift) => {
+          commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
+          scheduleViewUpdate()
+        },
+        isSoftNavigationTracked
+      )
+    : { stop: noop, setNavigationId: noop }
 
   const {
     stop: stopINPTracking,
     getInteractionToNextPaint,
     setViewEnd: setINPViewEnd,
+    setNavigationId: setINPNavigationId,
   } = configuration.betaTrackViewMetrics
-    ? trackInteractionToNextPaint(configuration, viewStart.relative, loadingType)
-    : { stop: noop, getInteractionToNextPaint: (): InteractionToNextPaint | undefined => undefined, setViewEnd: noop }
+    ? trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
+    : {
+        stop: noop,
+        getInteractionToNextPaint: (): InteractionToNextPaint | undefined => undefined,
+        setViewEnd: noop,
+        setNavigationId: noop,
+      }
 
   return {
     stop: () => {
@@ -82,6 +94,10 @@ export function trackCommonViewMetrics(
     setViewEnd: (viewEndTime: RelativeTime) => {
       viewEnded = true
       setINPViewEnd(viewEndTime)
+    },
+    setNavigationId: (navigationId: number) => {
+      setCLSNavigationId(navigationId)
+      setINPNavigationId(navigationId)
     },
     getCommonViewMetrics: () => {
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
