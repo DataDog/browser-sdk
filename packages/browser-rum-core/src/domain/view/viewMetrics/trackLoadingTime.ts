@@ -24,7 +24,8 @@ export function trackLoadingTime(
   viewStart: ClocksState,
   callback: (loadingTime: Duration) => void
 ) {
-  let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
+  // Without view metrics, nothing reports the load event (see trackInitialViewMetrics)
+  let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD && configuration.betaTrackViewMetrics
   let isWaitingForActivityLoadingTime = true
   const loadingTimeCandidates: Duration[] = []
   // Without view metrics (e.g. in a Web Worker, no page to hide), the page is considered never hidden
