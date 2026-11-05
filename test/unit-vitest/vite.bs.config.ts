@@ -70,11 +70,10 @@ const downlevelStaticAssetsPlugin: Plugin = {
 // its ping every 30s), and the client then reloads the page once the server answers again, which
 // fails the run with "The iframe was reloaded during a test". Vitest's own WebSocket isn't
 // affected. Unlike it, nothing is ever sent to the browser on Vite's, so it is likely dropped for
-// inactivity: send a message every 15s, and don't reload the page if it is dropped anyway (the
-// error reporter logs it).
+// inactivity: send a message every 15s, and don't reload the page if it is dropped anyway.
 const VITE_CLIENT = /\/node_modules\/vite\/dist\/client\/client\.mjs$/
 const VITE_CLIENT_RELOAD_ON_DISCONNECT = 'console.log(`[vite] server connection lost. Polling for restart...`);'
-export const viteClientNoReloadPlugin: Plugin = {
+const viteClientNoReloadPlugin: Plugin = {
   name: 'vite-client-no-reload-on-disconnect',
   // Before `downlevelModulesPlugin` transforms the client
   enforce: 'pre',
@@ -91,7 +90,7 @@ export const viteClientNoReloadPlugin: Plugin = {
 }
 
 const VITE_KEEPALIVE_INTERVAL = 15_000
-export const viteKeepalivePlugin: Plugin = {
+const viteKeepalivePlugin: Plugin = {
   name: 'vite-websocket-keepalive',
   configureServer(server) {
     const interval = setInterval(() => {
@@ -118,45 +117,15 @@ const polyfillTesterPlugin: Plugin = {
 // Use the XHR methods saved before the tests run: specs instrument `XMLHttpRequest.prototype`
 // (ex: `xhrObservable`), so reporting their expected errors would trigger that instrumentation
 // (and be flagged as a leaked listener).
-// Also report how each page load happened and the page lifecycle events fired by the browser, to
-// find out what reloads the page during some runs ("The iframe was reloaded during a test").
-// Events dispatched by specs (not trusted) are ignored. Events fired while the page unloads are
-// sent with `sendBeacon`, saved for the same reason as the XHR methods.
-// Also report when the WebSockets to the test server (Vite's client and Vitest's) open and close:
-// Vite's client reloads the page when its WebSocket closes. Listeners are added with the
-// `addEventListener` saved before the tests run, as the leak detection replaces it during tests.
 const ERROR_REPORTER = `;(function () {
   var open = XMLHttpRequest.prototype.open
   var send = XMLHttpRequest.prototype.send
-  var sendBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator)
-  var addEventListener = EventTarget.prototype.addEventListener
-  function format(kind, message) {
-    return kind + ' @ ' + location.pathname + ': ' + message
-  }
   function report(kind, message) {
     try {
       var xhr = new XMLHttpRequest()
       open.call(xhr, 'POST', '/__report_error__')
-      send.call(xhr, format(kind, message))
+      send.call(xhr, kind + ' @ ' + location.pathname + ': ' + message)
     } catch (e) {}
-  }
-  function reportWhileUnloading(kind, message) {
-    try {
-      if (!sendBeacon || !sendBeacon('/__report_error__', format(kind, message))) {
-        report(kind, message)
-      }
-    } catch (e) {}
-  }
-  function getNavigationType() {
-    try {
-      var entries = performance.getEntriesByType && performance.getEntriesByType('navigation')
-      if (entries && entries[0]) {
-        return entries[0].type
-      }
-      return performance.navigation ? ['navigate', 'reload', 'back_forward'][performance.navigation.type] : 'unknown'
-    } catch (e) {
-      return 'unknown'
-    }
   }
   window.addEventListener('error', function (event) {
     report('error', event.message + ' (' + event.filename + ':' + event.lineno + ':' + event.colno + ')')
@@ -165,61 +134,7 @@ const ERROR_REPORTER = `;(function () {
     var reason = event.reason
     report('unhandledrejection', reason && reason.stack ? reason.stack : String(reason))
   })
-  window.addEventListener('beforeunload', function (event) {
-    if (event.isTrusted) {
-      reportWhileUnloading('beforeunload', location.href)
-    }
-  })
-  window.addEventListener('pagehide', function (event) {
-    if (event.isTrusted) {
-      reportWhileUnloading('pagehide', 'persisted=' + event.persisted + ' ' + location.href)
-    }
-  })
-  document.addEventListener('freeze', function (event) {
-    if (event.isTrusted) {
-      reportWhileUnloading('freeze', location.href)
-    }
-  })
-  document.addEventListener('visibilitychange', function (event) {
-    if (event.isTrusted) {
-      report('visibilitychange', document.visibilityState + ' ' + location.href)
-    }
-  })
-  var NativeWebSocket = window.WebSocket
-  if (NativeWebSocket) {
-    var TrackedWebSocket = function (url, protocols) {
-      var socket = protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols)
-      if (socket.url.indexOf('//' + location.host + '/') === -1) {
-        return socket
-      }
-      var createdAt = Date.now()
-      var description = socket.url.replace(/token=[^&]*/, 'token=***') + (protocols ? ' (' + protocols + ')' : '')
-      addEventListener.call(socket, 'open', function () {
-        report('websocket open', 'after ' + (Date.now() - createdAt) + 'ms ' + description)
-      })
-      addEventListener.call(socket, 'error', function () {
-        report('websocket error', 'after ' + (Date.now() - createdAt) + 'ms ' + description)
-      })
-      addEventListener.call(socket, 'close', function (event) {
-        reportWhileUnloading(
-          'websocket close',
-          'code=' + event.code + ' reason=' + event.reason + ' wasClean=' + event.wasClean +
-            ' after ' + (Date.now() - createdAt) + 'ms ' + description
-        )
-      })
-      return socket
-    }
-    TrackedWebSocket.prototype = NativeWebSocket.prototype
-    TrackedWebSocket.CONNECTING = NativeWebSocket.CONNECTING
-    TrackedWebSocket.OPEN = NativeWebSocket.OPEN
-    TrackedWebSocket.CLOSING = NativeWebSocket.CLOSING
-    TrackedWebSocket.CLOSED = NativeWebSocket.CLOSED
-    window.WebSocket = TrackedWebSocket
-  }
-  report(
-    'loaded',
-    'navigation=' + getNavigationType() + ' wasDiscarded=' + document.wasDiscarded + ' ' + location.href + ' ' + navigator.userAgent
-  )
+  report('loaded', navigator.userAgent)
 })()`
 const errorReporterPlugin: Plugin = {
   name: 'error-reporter',
