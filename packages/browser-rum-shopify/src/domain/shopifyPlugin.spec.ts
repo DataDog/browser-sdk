@@ -1,6 +1,5 @@
 import { TIMEOUT_ERROR_MESSAGE } from '@datadog/browser-core'
-import { isWorkerEnvironment } from '@datadog/js-core/util'
-import { mockClock, replaceMockable, replaceMockableWithSpy } from '@datadog/browser-core/test'
+import { mockClock, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
 import { patchSandboxedIframeApis } from '../boot/patchSandboxedIframeApis'
 import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
@@ -70,26 +69,6 @@ describe('shopifyPlugin', () => {
           sessionPersistence: 'cookie',
         })
       )
-    })
-
-    it('does not patch iframe APIs and uses memory persistence in a worker environment', async () => {
-      replaceMockable(isWorkerEnvironment, true)
-      const patchSpy = replaceMockableWithSpy(patchSandboxedIframeApis)
-      const initBindingsSpy = replaceMockableWithSpy(initShopifyBindings)
-      const publicApi = {} as RumPublicApi
-      const { analytics, emit } = createFakeAnalytics()
-      const initConfiguration = { sessionPersistence: 'cookie' } as unknown as RumInitConfiguration
-
-      const result = shopifyPlugin({ shopifyAnalytics: analytics }).onInit!({
-        initConfiguration,
-        publicApi,
-      } as RumPluginOnInitOptions)
-      emit('page_viewed', pageViewedEvent('https://shop.example/checkout'))
-      await result
-
-      expect(patchSpy).not.toHaveBeenCalled()
-      expect(initBindingsSpy).toHaveBeenCalledWith(publicApi, analytics)
-      expect(initConfiguration.sessionPersistence).toBe('memory')
     })
 
     it('does not patch or wire bindings when the first viewed page is not a checkout page', async () => {

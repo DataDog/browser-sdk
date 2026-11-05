@@ -24,10 +24,20 @@ export class Worker {
     this.dedicated = dedicated
   }
 
+  public rumInit: (initConfiguration: RumInitConfiguration) => void = (configuration) => {
+    self.DD_RUM!.init(configuration)
+  }
+
   // `sdk` selects the bundle loaded in the worker: `/datadog-<sdk>.js`
   withRum(rumInitConfiguration: Partial<RumInitConfiguration> = {}, { sdk }: { sdk?: string } = {}) {
     this.rumSdk = sdk
     this.rumConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumInitConfiguration }
+    return this
+  }
+
+  // Like `createTest().withRumInit()`: the function is inlined in the worker and calls `DD_RUM.init()` itself
+  withRumInit(rumInit: (initConfiguration: RumInitConfiguration) => void) {
+    this.rumInit = rumInit
     return this
   }
 
