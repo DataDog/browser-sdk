@@ -24,7 +24,7 @@ export function trackNavigationTimings(callback: (timings: NavigationTimings) =>
   return waitAfterLoadEvent(() => {
     const entry = mockable(getNavigationEntry)()
 
-    if (entry && !isIncompleteNavigation(entry)) {
+    if (!isIncompleteNavigation(entry)) {
       callback(processNavigationEntry(entry))
     }
   })

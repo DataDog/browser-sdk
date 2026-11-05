@@ -74,8 +74,7 @@ export function trackLargestContentfulPaint(
       const resourceUrl = computeLcpEntryUrl(lcpEntry)
       const lcpValue = lcpEntry.startTime
 
-      const navigationEntry = getNavigationEntry()
-      const subParts = computeLcpSubParts(resourceUrl, lcpValue, navigationEntry && sanitizeFirstByte(navigationEntry))
+      const subParts = computeLcpSubParts(resourceUrl, lcpValue, sanitizeFirstByte(getNavigationEntry()))
 
       callback({
         value: lcpValue,
