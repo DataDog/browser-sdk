@@ -426,6 +426,7 @@ test.describe('Web workers Rum', () => {
           trackUserInteractions: false,
           trackResources: false,
           trackLongTasks: false,
+          betaTrackViewMetrics: false,
           sessionPersistence: 'memory',
         },
         { sdk: 'rum-shopify' }

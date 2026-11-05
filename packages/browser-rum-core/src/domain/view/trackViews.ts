@@ -272,13 +272,13 @@ function newView(
   )
 
   let viewMetricsTracking =
-    // Initial view metrics rely on page APIs: without a document (e.g. in a Web Worker), skip them.
-    loadingType === ViewLoadingType.INITIAL_LOAD && globalObject.document
+    loadingType === ViewLoadingType.INITIAL_LOAD && configuration.betaTrackViewMetrics
       ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
 
   if (
     loadingType === ViewLoadingType.ROUTE_CHANGE &&
+    configuration.betaTrackViewMetrics &&
     isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
     supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
   ) {

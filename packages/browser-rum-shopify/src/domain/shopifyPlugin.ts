@@ -43,6 +43,7 @@ export function shopifyPlugin(configuration: ShopifyPluginConfiguration): RumPlu
       initConfiguration.trackUserInteractions = false // Pixel sandbox iframe has no real DOM to interact with
       initConfiguration.trackResources = false // Iframe resources are not meaningful
       initConfiguration.trackLongTasks = false // PerformanceObserver tracks the empty iframe
+      initConfiguration.betaTrackViewMetrics = false // Page metrics of the sandbox iframe / worker are meaningless
       initConfiguration.sessionPersistence = isWorker ? 'memory' : 'cookie' // Workers have no cookies
     },
   }

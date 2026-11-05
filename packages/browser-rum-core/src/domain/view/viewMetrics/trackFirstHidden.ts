@@ -1,5 +1,5 @@
 import type { ClocksState, RelativeTime } from '@datadog/js-core/time'
-import { globalObject, noop } from '@datadog/js-core/util'
+import { noop } from '@datadog/js-core/util'
 import { addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 
@@ -9,12 +9,7 @@ export interface Options {
   viewStart: ClocksState
 }
 
-export function trackFirstHidden(viewStart: ClocksState, eventTarget = globalObject.window) {
-  // Without a window (e.g. in a Web Worker), the page is never hidden.
-  if (!eventTarget) {
-    return { timeStamp: Infinity as RelativeTime, stop: noop }
-  }
-
+export function trackFirstHidden(viewStart: ClocksState, eventTarget: Window = window) {
   if (document.visibilityState === 'hidden') {
     return { timeStamp: 0 as RelativeTime, stop: noop }
   }
