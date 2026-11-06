@@ -16,8 +16,6 @@ import { getCssRulesString, serializeDOMAttributes, serializeVirtualAttributes }
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind } from './serializationTransaction'
 import type { VirtualAttributes } from './serialization.types'
-import type { SerializationMetric, SerializationStats } from './serializationStats'
-import { createSerializationStats } from './serializationStats'
 
 const CSS_FILE_URL = '/base/packages/browser-rum/test/record/toto.css'
 
@@ -339,12 +337,10 @@ function valueOfAttribute(attributes: RoleAnnotatedAttributeAssignment[], name: 
 }
 
 describe('serializeVirtualAttributes', () => {
-  let stats: SerializationStats
   let transaction: SerializationTransaction
 
   beforeEach(() => {
-    stats = createSerializationStats()
-    transaction = createSerializationTransactionForTesting({ stats })
+    transaction = createSerializationTransactionForTesting()
   })
 
   function expectVirtualAttributes(
@@ -362,13 +358,6 @@ describe('serializeVirtualAttributes', () => {
 
   describe('when serializing CSS text', () => {
     const cssText = 'div { background-color: green; top: 5px; }'
-    const cssTextStats: SerializationMetric = { count: 1, max: 42, sum: 42 }
-    const emptyStats: SerializationMetric = { count: 0, max: 0, sum: 0 }
-
-    function checkStats(privacyLevel: NodePrivacyLevel): void {
-      expect(stats.cssText).toEqual(privacyLevel === NodePrivacyLevel.HIDDEN ? emptyStats : cssTextStats)
-      stats.cssText = { ...emptyStats }
-    }
 
     it('handles link element stylesheets', async () => {
       const cssBlob = new Blob([cssText], { type: 'text/css' })
@@ -391,12 +380,12 @@ describe('serializeVirtualAttributes', () => {
         return
       }
 
-      expectVirtualAttributes(link, { _cssText: cssText }, checkStats)
+      expectVirtualAttributes(link, { _cssText: cssText })
     })
 
     it('handles style element stylesheets', () => {
       const style = appendElement(`<style>${cssText}</style>`)
-      expectVirtualAttributes(style, { _cssText: cssText }, checkStats)
+      expectVirtualAttributes(style, { _cssText: cssText })
     })
 
     it('handles link element stylesheets with a relative href after the base URL changed', async () => {
@@ -435,7 +424,7 @@ describe('serializeVirtualAttributes', () => {
       // lose the stylesheet (RUMS-6225).
       expect(link.href).not.toBe(link.sheet!.href!)
 
-      expectVirtualAttributes(link, { _cssText: cssText }, checkStats)
+      expectVirtualAttributes(link, { _cssText: cssText })
     })
   })
 
