@@ -477,7 +477,6 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
-    acorn: "npm:8.19.0"
   languageName: unknown
   linkType: soft
 
@@ -5485,7 +5484,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn@npm:8.19.0, acorn@npm:^8.15.0, acorn@npm:^8.16.0":
+"acorn@npm:^8.15.0, acorn@npm:^8.16.0":
   version: 8.19.0
   resolution: "acorn@npm:8.19.0"
   bin:

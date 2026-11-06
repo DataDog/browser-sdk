@@ -1,4 +1,5 @@
-import { evaluateProbeCondition, compileCondition, isConditionEvaluationError } from './condition'
+import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
+import { compile } from './expression'
 
 describe('condition', () => {
   describe('evaluateProbeCondition', () => {
@@ -11,7 +12,7 @@ describe('condition', () => {
 
     it('should return true for simple true condition', () => {
       const probe: any = {
-        condition: compileCondition('true'),
+        condition: compile(true),
       }
       const result = evaluateProbeCondition(probe, {})
 
@@ -20,7 +21,7 @@ describe('condition', () => {
 
     it('should return false for simple false condition', () => {
       const probe: any = {
-        condition: compileCondition('false'),
+        condition: compile(false),
       }
       const result = evaluateProbeCondition(probe, {})
 
@@ -29,7 +30,7 @@ describe('condition', () => {
 
     it('should evaluate condition with context variables', () => {
       const probe: any = {
-        condition: compileCondition('x > 5'),
+        condition: compile({ gt: [{ ref: 'x' }, 5] }),
       }
 
       expect(evaluateProbeCondition(probe, { x: 10 })).toBe(true)
@@ -38,7 +39,7 @@ describe('condition', () => {
 
     it('should evaluate complex conditions', () => {
       const probe: any = {
-        condition: compileCondition('x > 5 && y < 20'),
+        condition: compile({ and: [{ gt: [{ ref: 'x' }, 5] }, { lt: [{ ref: 'y' }, 20] }] }),
       }
 
       expect(evaluateProbeCondition(probe, { x: 10, y: 15 })).toBe(true)
@@ -48,7 +49,7 @@ describe('condition', () => {
 
     it('should evaluate conditions with string operations', () => {
       const probe: any = {
-        condition: compileCondition('name === "John"'),
+        condition: compile({ eq: [{ ref: 'name' }, 'John'] }),
       }
 
       expect(evaluateProbeCondition(probe, { name: 'John' })).toBe(true)
@@ -57,7 +58,7 @@ describe('condition', () => {
 
     it('should evaluate conditions with multiple variables', () => {
       const probe: any = {
-        condition: compileCondition('a + b === 10'),
+        condition: compile({ eq: [{ ref: 'a' }, { ref: 'b' }] }),
       }
 
       expect(evaluateProbeCondition(probe, { a: 5, b: 5 })).toBe(true)
@@ -66,7 +67,7 @@ describe('condition', () => {
 
     it('should coerce non-boolean results to boolean', () => {
       const probe: any = {
-        condition: compileCondition('x'),
+        condition: compile({ ref: 'x' }),
       }
 
       expect(evaluateProbeCondition(probe, { x: 1 })).toBe(true)
@@ -83,7 +84,7 @@ describe('condition', () => {
         when: {
           dsl: 'nonExistent.property',
         },
-        condition: compileCondition('nonExistent.property'),
+        condition: compile({ getmember: [{ ref: 'nonExistent' }, 'property'] }),
       }
 
       expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
@@ -96,18 +97,36 @@ describe('condition', () => {
       })
     })
 
+    it('should handle type errors in condition', () => {
+      const probe: any = {
+        when: {
+          dsl: 'len(x)',
+        },
+        condition: compile({ len: { ref: 'x' } }),
+      }
+
+      expect(() => evaluateProbeCondition(probe, { x: 42 })).toThrowMatching((error) => {
+        expect(isConditionEvaluationError(error)).toBeTrue()
+        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+          expr: 'len(x)',
+          message: 'TypeError: Cannot get length of variable',
+        })
+        return true
+      })
+    })
+
     it('should handle syntax errors in condition', () => {
       const probe: any = {
         when: {
-          dsl: 'invalid syntax !!!',
+          dsl: 'matches(s, "[")',
         },
-        condition: compileCondition('invalid syntax !!!'),
+        condition: compile({ matches: [{ ref: 's' }, '['] }),
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
+      expect(() => evaluateProbeCondition(probe, { s: 'foo' })).toThrowMatching((error) => {
         expect(isConditionEvaluationError(error)).toBeTrue()
         expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'invalid syntax !!!',
+          expr: 'matches(s, "[")',
           message: jasmine.stringMatching(/^SyntaxError: /),
         })
         return true
@@ -124,10 +143,8 @@ describe('condition', () => {
         when: {
           dsl: 'throw iframe error',
         },
-        condition: {
-          evaluate: () => () => {
-            throw iframeError
-          },
+        condition: () => {
+          throw iframeError
         },
       }
 
@@ -146,15 +163,13 @@ describe('condition', () => {
         when: {
           dsl: 'throw non-coercible value',
         },
-        condition: {
-          evaluate: () => () => {
-            // eslint-disable-next-line @typescript-eslint/only-throw-error
-            throw {
-              toString() {
-                throw new Error('Cannot coerce')
-              },
-            }
-          },
+        condition: () => {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
+          throw {
+            toString() {
+              throw new Error('Cannot coerce')
+            },
+          }
         },
       }
 
@@ -173,19 +188,17 @@ describe('condition', () => {
         when: {
           dsl: 'throw hostile error-like value',
         },
-        condition: {
-          evaluate: () => () => {
-            // eslint-disable-next-line @typescript-eslint/only-throw-error
-            throw {
-              [Symbol.toStringTag]: 'Error',
-              get name() {
-                throw new Error('Cannot read name')
-              },
-              get message() {
-                throw new Error('Cannot read message')
-              },
-            }
-          },
+        condition: () => {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
+          throw {
+            [Symbol.toStringTag]: 'Error',
+            get name() {
+              throw new Error('Cannot read name')
+            },
+            get message() {
+              throw new Error('Cannot read message')
+            },
+          }
         },
       }
 
@@ -201,7 +214,7 @@ describe('condition', () => {
 
     it('should handle conditions with special variables', () => {
       const probe: any = {
-        condition: compileCondition('$dd_return > 0'),
+        condition: compile({ gt: [{ ref: '@return' }, 0] }),
       }
 
       expect(evaluateProbeCondition(probe, { $dd_return: 10 })).toBe(true)
@@ -210,7 +223,7 @@ describe('condition', () => {
 
     it('should handle conditions with this context', () => {
       const probe: any = {
-        condition: compileCondition('this.value === 42'),
+        condition: compile({ eq: [{ getmember: [{ ref: 'this' }, 'value'] }, 42] }),
       }
 
       expect(evaluateProbeCondition(probe, { this: { value: 42 } })).toBe(true)
@@ -219,7 +232,7 @@ describe('condition', () => {
 
     it('should handle array operations', () => {
       const probe: any = {
-        condition: compileCondition('arr.length > 0'),
+        condition: compile({ gt: [{ len: { ref: 'arr' } }, 0] }),
       }
 
       expect(evaluateProbeCondition(probe, { arr: [1, 2, 3] })).toBe(true)
@@ -228,7 +241,7 @@ describe('condition', () => {
 
     it('should handle object property checks', () => {
       const probe: any = {
-        condition: compileCondition('obj.hasOwnProperty("key")'),
+        condition: compile({ ne: [{ getmember: [{ ref: 'obj' }, 'key'] }, { ref: 'undefined' }] }),
       }
 
       expect(evaluateProbeCondition(probe, { obj: { key: 'value' } })).toBe(true)
@@ -237,7 +250,7 @@ describe('condition', () => {
 
     it('should handle typeof checks', () => {
       const probe: any = {
-        condition: compileCondition('typeof value === "number"'),
+        condition: compile({ instanceof: [{ ref: 'value' }, 'number'] }),
       }
 
       expect(evaluateProbeCondition(probe, { value: 42 })).toBe(true)
@@ -246,7 +259,7 @@ describe('condition', () => {
 
     it('should handle nested property access', () => {
       const probe: any = {
-        condition: compileCondition('user.profile.age >= 18'),
+        condition: compile({ ge: [{ getmember: [{ getmember: [{ ref: 'user' }, 'profile'] }, 'age'] }, 18] }),
       }
 
       expect(evaluateProbeCondition(probe, { user: { profile: { age: 25 } } })).toBe(true)
@@ -255,7 +268,9 @@ describe('condition', () => {
 
     it('should handle null/undefined checks', () => {
       const probe: any = {
-        condition: compileCondition('value !== null && value !== undefined'),
+        condition: compile({
+          and: [{ ne: [{ ref: 'value' }, null] }, { ne: [{ ref: 'value' }, { ref: 'undefined' }] }],
+        }),
       }
 
       expect(evaluateProbeCondition(probe, { value: 42 })).toBe(true)

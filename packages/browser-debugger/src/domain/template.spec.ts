@@ -1,5 +1,4 @@
 import { templateRequiresEvaluation, compileSegments, evaluateProbeMessage, browserInspect } from './template'
-import { formatUnknownError } from './error'
 
 function defineThrowingGetter(obj: object) {
   Object.defineProperty(obj, 'throwing', {
@@ -35,18 +34,16 @@ describe('template', () => {
   describe('compileSegments', () => {
     it('should compile static string segments', () => {
       const segments = [{ str: 'hello' }, { str: ' world' }]
-      const result = compileSegments(segments)
+      const evaluate = compileSegments(segments)
 
-      expect(result).toBe('["hello"," world"]')
+      expect(evaluate({})).toEqual(['hello', ' world'])
     })
 
     it('should compile DSL expression segments', () => {
       const segments = [{ str: 'Value: ' }, { dsl: 'x', json: { ref: 'x' } }]
-      const result = compileSegments(segments)
+      const evaluate = compileSegments(segments)
 
-      expect(result).toContain('(() => {')
-      expect(result).toContain('try {')
-      expect(result).toContain('catch (e) {')
+      expect(evaluate({ x: 'foo' })).toEqual(['Value: ', 'foo'])
     })
 
     it('should compile mixed static and dynamic segments', () => {
@@ -56,20 +53,29 @@ describe('template', () => {
         { str: ', y=' },
         { dsl: 'y', json: { ref: 'y' } },
       ]
-      const result = compileSegments(segments)
+      const evaluate = compileSegments(segments)
 
-      expect(result).toContain('"x="')
-      expect(result).toContain('(() => {')
-      expect(result).toContain('", y="')
+      expect(evaluate({ x: 1, y: 2 })).toEqual(['x=', '1', ', y=', '2'])
     })
 
-    it('should generate error handling for DSL evaluation', () => {
-      const segments = [{ dsl: 'badExpr', json: { ref: 'nonExistent' } }]
-      const code = compileSegments(segments)
+    it('should inspect non-string expression results', () => {
+      const segments = [{ dsl: 'obj', json: { ref: 'obj' } }]
+      const evaluate = compileSegments(segments)
 
-      expect(code).toContain('catch (e)')
-      expect(code).toContain('expr: "badExpr"')
-      expect(code).toContain('message: $dd_format_error(e)')
+      expect(evaluate({ obj: { a: 1 } })).toEqual(['{"a":1}'])
+    })
+
+    it('should return the error of a failing DSL expression', () => {
+      const segments = [{ dsl: 'badExpr', json: { ref: 'nonExistent' } }]
+      const evaluate = compileSegments(segments)
+
+      expect(evaluate({})).toEqual([{ expr: 'badExpr', message: 'ReferenceError: nonExistent is not defined' }])
+    })
+
+    it('should throw when a DSL expression is invalid', () => {
+      const segments = [{ dsl: 'bad identifier', json: { ref: 'bad identifier' } }]
+
+      expect(() => compileSegments(segments)).toThrowError(SyntaxError)
     })
   })
 
@@ -363,7 +369,7 @@ describe('template', () => {
       ]
 
       const probe: any = {
-        evaluateTemplate: evaluateSegments(segments),
+        evaluateTemplate: compileSegments(segments),
       }
 
       const context = {
@@ -379,7 +385,7 @@ describe('template', () => {
       const segments = [{ str: 'Simple message with ' }, { dsl: 'a', json: { ref: 'a' } }]
 
       const probe: any = {
-        evaluateTemplate: evaluateSegments(segments),
+        evaluateTemplate: compileSegments(segments),
       }
 
       // Context without 'this'
@@ -468,28 +474,11 @@ describe('template', () => {
         { dsl: 'count', json: { ref: 'count' } },
         { str: ' items' },
       ]
+      const probe: any = {
+        evaluateTemplate: compileSegments(segments),
+      }
 
-      const compiledCode = compileSegments(segments)
-      expect(compiledCode).toBeTruthy()
-
-      // The compiled code would be used to create a function
-      // This demonstrates the flow even though the actual function creation
-      // happens in the probe initialization
+      expect(evaluateProbeMessage(probe, { name: 'Ada', count: 3 })).toBe('User Ada has 3 items')
     })
   })
 })
-
-function evaluateSegments(segments: Array<{ str?: string; dsl?: string; json?: any }>) {
-  const fnBodyTemplate = `return ${compileSegments(segments)};`
-
-  return (context: Record<string, any>): unknown[] => {
-    const { this: thisValue, ...otherContext } = context
-    const contextKeys = Object.keys(otherContext)
-    const contextValues = Object.values(otherContext)
-    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-    const fn = new Function('$dd_inspect', '$dd_format_error', ...contextKeys, fnBodyTemplate) as (
-      ...args: any[]
-    ) => unknown[]
-    return fn.call(thisValue, browserInspect, formatUnknownError, ...contextValues)
-  }
-}

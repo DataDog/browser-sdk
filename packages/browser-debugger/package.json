@@ -18,9 +18,6 @@
     "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-debugger.js",
     "prepack": "yarn build"
   },
-  "devDependencies": {
-    "acorn": "8.19.0"
-  },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/js-core": "workspace:*"
