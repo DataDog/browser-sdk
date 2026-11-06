@@ -65,8 +65,9 @@ export function resetFetchObservable() {
 
 function createFetchObservable() {
   return new Observable<FetchContext>((observable) => {
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
-    if (!globalObject.fetch) {
+    const fetch = globalObject.fetch as typeof globalObject.fetch & { polyfill?: boolean }
+    // XHR-backed polyfills are already observed through the XHR observable.
+    if (!fetch || (fetch.polyfill === true && 'XMLHttpRequest' in globalObject)) {
       return
     }
 

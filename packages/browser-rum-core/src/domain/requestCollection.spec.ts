@@ -1,13 +1,13 @@
-import { RequestType, startBufferingData } from '@datadog/browser-core'
+import { createContextManager, RequestType, startBufferingData } from '@datadog/browser-core'
 import { createEndpointBuilder, type EndpointPayload } from '@datadog/js-core/transport'
-import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
-import { registerCleanupTask, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
+import type { MockFetch, MockFetchManager, MockXhr } from '@datadog/browser-core/test'
+import { createSessionManagerMock, registerCleanupTask, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { trackFetch, trackXhr } from './requestCollection'
 import type { Tracer } from './tracing/tracer'
-import { clearTracingIfNeeded } from './tracing/tracer'
+import { clearTracingIfNeeded, startTracer } from './tracing/tracer'
 import { createSpanIdentifier, createTraceIdentifier } from './tracing/identifier'
 
 const DEFAULT_PAYLOAD = {} as EndpointPayload
@@ -343,6 +343,74 @@ describe('collect xhr', () => {
         },
       })
     })
+  })
+})
+
+describe('collect XHR-backed fetch polyfill', () => {
+  it('should collect one request and inject tracing headers once', async () => {
+    mockFetch()
+    mockXhr()
+    const setRequestHeader = jasmine.createSpy<(name: string, value: string) => void>()
+    window.fetch = Object.assign(
+      (input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((resolve) => {
+          const xhr = Object.assign(new XMLHttpRequest(), { setRequestHeader })
+          xhr.open(init?.method || 'GET', input as string)
+          new Headers(init?.headers).forEach((value, name) => xhr.setRequestHeader(name, value))
+          xhr.addEventListener('load', () => resolve(new Response(xhr.responseText, { status: xhr.status })))
+          xhr.send()
+          ;(xhr as unknown as MockXhr).complete(200, 'ok')
+        }),
+      { polyfill: true }
+    )
+    const configuration = mockRumConfiguration({
+      allowedTracingUrls: [{ match: location.origin, propagatorTypes: ['datadog'] }],
+      traceSampleRate: 100,
+      sessionSampleRate: 100,
+      propagateTraceBaggage: false,
+    })
+    const tracer = startTracer(
+      configuration,
+      createSessionManagerMock(),
+      createContextManager(),
+      createContextManager()
+    )
+    const lifeCycle = new LifeCycle()
+    const startSpy = jasmine.createSpy<(event: RequestStartEvent) => void>()
+    const completeSpy = jasmine.createSpy<(event: RequestCompleteEvent) => void>()
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+    const { stop: stopXhrTracking } = trackXhr(lifeCycle, tracer, bufferedDataObservable)
+    const { stop: stopFetchTracking } = trackFetch(lifeCycle, configuration, tracer, bufferedDataObservable)
+    registerCleanupTask(() => {
+      stopXhrTracking()
+      stopFetchTracking()
+      stopBuffering()
+    })
+    await Promise.resolve()
+
+    const response = await window.fetch('/polyfilled-request', { method: 'POST' })
+
+    expect(await response.text()).toBe('ok')
+    expect({
+      startedRequests: startSpy.calls.count(),
+      completedRequests: completeSpy.calls.count(),
+      tracingHeaders: setRequestHeader.calls.count(),
+    }).toEqual({ startedRequests: 1, completedRequests: 1, tracingHeaders: 4 })
+    const request = completeSpy.calls.mostRecent().args[0]
+    expect(request.type).toBe(RequestType.XHR)
+    expect(request.url).toBe(`${location.origin}/polyfilled-request`)
+    expect(request.method).toBe('POST')
+    expect(request.status).toBe(200)
+    expect(setRequestHeader.calls.allArgs()).toEqual(
+      jasmine.arrayContaining([
+        ['x-datadog-origin', 'rum'],
+        ['x-datadog-parent-id', request.spanId!.toString()],
+        ['x-datadog-sampling-priority', '1'],
+        ['x-datadog-trace-id', request.traceId!.toString()],
+      ])
+    )
   })
 })
 
