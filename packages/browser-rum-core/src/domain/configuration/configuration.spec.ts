@@ -1,4 +1,4 @@
-import type { TrustedTypesWindow } from 'trusted-types/lib'
+import type { TrustedScriptURL } from 'trusted-types/lib'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { InitConfiguration } from '@datadog/browser-core'
 import {
@@ -16,6 +16,7 @@ import type {
 import {
   EXHAUSTIVE_INIT_CONFIGURATION,
   mockEventBridge,
+  registerCleanupTask,
   SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
 } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
@@ -970,13 +971,8 @@ describe('validateAndBuildRumConfiguration', () => {
 
   describe('workerUrl', () => {
     it('preserves a genuine TrustedScriptURL', () => {
-      const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
-      if (!trustedTypes) {
-        pending('Trusted Types are not supported')
-        return
-      }
-      const policy = trustedTypes.createPolicy('dd-configuration-worker-url', { createScriptURL: (url) => url })
-      const workerUrl = policy.createScriptURL('/worker.js')
+      const workerUrl = { toString: () => '/worker.js' } as TrustedScriptURL
+      mockTrustedTypes((value) => value === workerUrl)
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl })!.workerUrl).toBe(workerUrl)
       expect(displayErrorSpy).not.toHaveBeenCalled()
     })
@@ -990,26 +986,19 @@ describe('validateAndBuildRumConfiguration', () => {
     })
 
     it('rejects other Trusted Types', () => {
-      const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
-      if (!trustedTypes) {
-        pending('Trusted Types are not supported')
-        return
-      }
-      const policy = trustedTypes.createPolicy('dd-configuration-worker-html', { createHTML: (html) => html })
+      const workerUrl = { toString: () => '/worker.js' } as TrustedScriptURL
+      mockTrustedTypes(() => false)
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          workerUrl: policy.createHTML('/worker.js') as any,
+          workerUrl,
         })
       ).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
     })
 
     it('keeps string validation when Trusted Types are unavailable', () => {
-      const browserWindow = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
-      if ('trustedTypes' in browserWindow) {
-        spyOnProperty(browserWindow, 'trustedTypes', 'get').and.returnValue(undefined)
-      }
+      mockTrustedTypes(undefined)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '/worker.js' })!.workerUrl
       ).toBe('/worker.js')
@@ -1038,6 +1027,21 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBe('https://example.org/worker.js')
     })
   })
+
+  function mockTrustedTypes(isScriptURL: ((value: unknown) => boolean) | undefined) {
+    const trustedTypesDescriptor = Object.getOwnPropertyDescriptor(window, 'trustedTypes')
+    Object.defineProperty(window, 'trustedTypes', {
+      configurable: true,
+      value: isScriptURL && { isScriptURL },
+    })
+    registerCleanupTask(() => {
+      if (trustedTypesDescriptor) {
+        Object.defineProperty(window, 'trustedTypes', trustedTypesDescriptor)
+      } else {
+        delete (window as Window & { trustedTypes?: unknown }).trustedTypes
+      }
+    })
+  }
 
   describe('version parameter validation', () => {
     it('should not reject null', () => {

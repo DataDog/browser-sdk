@@ -46,7 +46,7 @@ export type CreateDeflateWorker = typeof createDeflateWorker
 
 export function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
   const workerUrl = configuration.workerUrl || URL.createObjectURL(new Blob([__BUILD_ENV__WORKER_STRING__]))
-  // lib.dom does not include TrustedScriptURL in the Worker constructor signature.
+  // TrustedScriptURL is missing from the Worker constructor signature in lib.dom, even though browsers accept it.
   return new Worker(workerUrl as string)
 }
 

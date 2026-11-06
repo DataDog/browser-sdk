@@ -38,7 +38,7 @@ import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import { DEFAULT_TRACKED_RESOURCE_HEADERS } from '../domain/configuration'
+import { DEFAULT_TRACKED_RESOURCE_HEADERS, isTrustedScriptURL } from '../domain/configuration'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
@@ -805,8 +805,9 @@ export function makeRumPublicApi(
 
     getInitConfiguration: monitor(() => {
       const configuration = deepClone(strategy.initConfiguration)
-      if (configuration && strategy.initConfiguration?.workerUrl) {
-        configuration.workerUrl = strategy.initConfiguration.workerUrl
+      const workerUrl = strategy.initConfiguration?.workerUrl
+      if (configuration && isTrustedScriptURL(workerUrl)) {
+        configuration.workerUrl = workerUrl
       }
       return configuration
     }),

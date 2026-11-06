@@ -80,32 +80,60 @@ test.describe('transport', () => {
   })
 
   test.describe('data compression', () => {
-    createTest('send compressed RUM data with a TrustedScriptURL worker under Trusted Types enforcement')
-      .withSetup(bundleSetup)
-      .withBasePath('/trusted-worker-csp')
-      .withRum({
-        compressIntakeRequests: true,
-        sessionReplaySampleRate: 0,
-        workerUrl: '/worker.js',
-      })
-      .withRumInit((configuration) => {
-        const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
-        if (trustedTypes) {
+    test.describe('Trusted Types worker', () => {
+      test.skip(({ browserName }) => browserName !== 'chromium', 'Trusted Types enforcement requires Chromium')
+
+      createTest('send compressed RUM data with a TrustedScriptURL worker under Trusted Types enforcement')
+        .withSetup(bundleSetup)
+        .withBasePath('/trusted-worker-csp')
+        .withRum({
+          compressIntakeRequests: true,
+          sessionReplaySampleRate: 0,
+          workerUrl: '/worker.js',
+        })
+        .withRumInit((configuration) => {
+          const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
+          if (!trustedTypes) {
+            throw new Error('Trusted Types are required for this test')
+          }
           const policy = trustedTypes.createPolicy('dd-test-worker', { createScriptURL: (url) => url })
           configuration.workerUrl = policy.createScriptURL('/worker.js')
-        }
-        window.DD_RUM!.init(configuration)
-      })
-      .run(async ({ browserName, page, flushEvents, intakeRegistry }) => {
-        test.skip(browserName !== 'chromium', 'Trusted Types enforcement requires Chromium')
-        await page.evaluate(() => {
-          window.DD_RUM!.addAction('trusted-worker', { padding: 'x'.repeat(20000) })
+          window.DD_RUM!.init(configuration)
         })
-        await flushEvents()
-        const deflateRequests = intakeRegistry.rumRequests.filter((request) => request.encoding === 'deflate')
-        expect(deflateRequests.length).toBeGreaterThan(0)
-        expect(deflateRequests.flatMap((request) => request.events).some((event) => event.type === 'action')).toBe(true)
-      })
+        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+          const trustedTypesState = await page.evaluate(() => {
+            const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
+            let rejectsString = false
+            try {
+              const worker = new Worker('/worker.js')
+              worker.terminate()
+            } catch (error) {
+              rejectsString = error instanceof TypeError
+            }
+            return {
+              available: !!trustedTypes,
+              workerUrlIsTrusted: trustedTypes?.isScriptURL(window.DD_RUM!.getInitConfiguration()?.workerUrl),
+              rejectsString,
+            }
+          })
+          expect(trustedTypesState).toEqual({ available: true, workerUrlIsTrusted: true, rejectsString: true })
+          await page.evaluate(() => {
+            window.DD_RUM!.addAction('trusted-worker', { padding: 'x'.repeat(20000) })
+          })
+          await flushEvents()
+          const deflateRequests = intakeRegistry.rumRequests.filter((request) => request.encoding === 'deflate')
+          expect(deflateRequests.length).toBeGreaterThan(0)
+          expect(deflateRequests.flatMap((request) => request.events).some((event) => event.type === 'action')).toBe(
+            true
+          )
+          withBrowserLogs((logs) => {
+            const errors = logs.filter((log) => log.level === 'error')
+            const isExpectedError = (message: string) => message.includes("requires 'TrustedScriptURL' assignment")
+            expect(errors.filter((log) => isExpectedError(log.message))).toHaveLength(1)
+            expect(errors.filter((log) => !isExpectedError(log.message))).toHaveLength(0)
+          })
+        })
+    })
 
     createTest('send RUM data compressed')
       .withRum({

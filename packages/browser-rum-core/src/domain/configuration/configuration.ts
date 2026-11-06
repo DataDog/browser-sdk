@@ -1,4 +1,4 @@
-// eslint-disable-next-line local-rules/enforce-prod-deps-imports -- Provided by the @types/trusted-types dependency.
+// eslint-disable-next-line local-rules/enforce-prod-deps-imports -- TypeScript requires the 'trusted-types/lib' entry point.
 import type { TrustedScriptURL, TrustedTypesWindow } from 'trusted-types/lib'
 import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
@@ -620,6 +620,11 @@ function isViewUpdatesEnabled(
   return explicit ?? (!proxy && sdkName !== 'rum-salesforce')
 }
 
+export function isTrustedScriptURL(value: unknown): value is TrustedScriptURL {
+  const { trustedTypes } = globalObject as typeof globalObject & Pick<TrustedTypesWindow, 'trustedTypes'>
+  return trustedTypes?.isScriptURL(value) === true
+}
+
 export function validateAndBuildRumConfiguration(
   initConfiguration: RumInitConfiguration,
   sdkName?: SdkName
@@ -635,12 +640,11 @@ export function validateAndBuildRumConfiguration(
   }
 
   const workerUrl = initConfiguration.workerUrl
-  const { trustedTypes } = globalObject as typeof globalObject & Pick<TrustedTypesWindow, 'trustedTypes'>
   if (
     workerUrl !== undefined &&
     workerUrl !== null &&
     typeof workerUrl !== 'string' &&
-    !trustedTypes?.isScriptURL(workerUrl)
+    !isTrustedScriptURL(workerUrl)
   ) {
     display.error('"workerUrl" must be a non-empty string or a TrustedScriptURL')
     return

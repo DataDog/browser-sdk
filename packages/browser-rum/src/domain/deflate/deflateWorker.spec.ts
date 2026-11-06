@@ -1,9 +1,9 @@
-import type { TrustedTypesWindow } from 'trusted-types/lib'
+import type { TrustedScriptURL } from 'trusted-types/lib'
 import { display } from '@datadog/browser-core'
 import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
-import { mockClock, startMockTelemetry, replaceMockableWithSpy } from '@datadog/browser-core/test'
+import { mockClock, startMockTelemetry, replaceMockableWithSpy, registerCleanupTask } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreateDeflateWorker, WorkerName } from './deflateWorker'
 import {
@@ -20,13 +20,20 @@ const TEST_STREAM_ID = 5
 
 describe('createDeflateWorker', () => {
   it('passes a genuine TrustedScriptURL to Worker unchanged', () => {
-    const { trustedTypes } = window as Window & Pick<TrustedTypesWindow, 'trustedTypes'>
-    if (!trustedTypes) {
-      pending('Trusted Types are not supported')
-      return
-    }
-    const policy = trustedTypes.createPolicy('dd-deflate-worker-url', { createScriptURL: (url) => url })
-    const workerUrl = policy.createScriptURL('/worker.js')
+    const workerUrl = { toString: () => '/worker.js' } as TrustedScriptURL
+    const trustedTypesDescriptor = Object.getOwnPropertyDescriptor(window, 'trustedTypes')
+    Object.defineProperty(window, 'trustedTypes', {
+      configurable: true,
+      value: { isScriptURL: (value: unknown) => value === workerUrl },
+    })
+    registerCleanupTask(() => {
+      if (trustedTypesDescriptor) {
+        Object.defineProperty(window, 'trustedTypes', trustedTypesDescriptor)
+      } else {
+        delete (window as Window & { trustedTypes?: unknown }).trustedTypes
+      }
+    })
+
     const workerSpy = spyOn(window, 'Worker').and.returnValue(new MockWorker())
     const configuration = mockRumConfiguration({
       compressIntakeRequests: true,
