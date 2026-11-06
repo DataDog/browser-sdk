@@ -71,6 +71,12 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
     }
   })
 
+  // Resource events wait in an idle-callback task queue (up to IDLE_CALLBACK_TIMEOUT). Run them
+  // before the page exits, else resources that finished right before the exit are never sent.
+  const prepareUrgentFlushSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
+    taskQueue.flush()
+  })
+
   const { stop: stopRunOnReadyState } = runOnReadyState('interactive', () => {
     handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
   })
@@ -92,6 +98,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
     stopResource: manualResources.stopResource,
     stop: () => {
       stopRunOnReadyState()
+      prepareUrgentFlushSubscription.unsubscribe()
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
       resourceTracker.stopAll()
@@ -113,6 +120,11 @@ function assembleResource(
 
   const startClocks = relativeToClocks(entry.startTime)
   const duration = computeResourceEntryDuration(entry)
+  // Discard resources with invalid timings (ex: when `performance` is replaced by a fake
+  // implementation, like Playwright's clock) instead of sending an invalid event.
+  if (!Number.isFinite(duration)) {
+    return
+  }
 
   const networkHeaders = computeNetworkHeaders(request, configuration)
 
