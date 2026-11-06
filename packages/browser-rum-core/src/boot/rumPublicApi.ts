@@ -48,6 +48,7 @@ import type {
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
+import type { RumPlugin } from '../domain/plugins'
 import { callPluginsOnRumStart } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
@@ -163,6 +164,34 @@ export interface RumPublicApi extends PublicApi {
    * @returns RumInitConfiguration | undefined
    */
   getInitConfiguration: () => RumInitConfiguration | undefined
+
+  /**
+   * Add a plugin after init(), for example from an SDK that loads separately and attaches itself
+   * to RUM. The plugin gets the same options as the plugins passed to init(), with these
+   * differences:
+   * - It can't abort the initialization: if its `onInit` returns `false`, only its own `onRumStart`
+   * is skipped. It shouldn't edit the init configuration, which may already be applied.
+   * - If it's added before init() has accepted the configuration, it starts then, and RUM waits for
+   * its `onInit` before starting, as for the plugins passed to init().
+   * - If it's added after that, RUM doesn't wait for it, so it misses the events assembled before
+   * its hooks are registered.
+   *
+   * The plugins API is unstable and experimental, and may change without notice. Please use only
+   * plugins provided by Datadog matching the version of the SDK you are using.
+   *
+   * @category Init
+   * @experimental
+   * @param plugin - The plugin to add
+   * @example
+   * ```ts
+   * // In an SDK that loads separately, once the RUM Browser SDK has loaded
+   * window.DD_RUM.onReady(() => {
+   *   window.DD_RUM.addPlugin(plugin)
+   * })
+   * ```
+   * @hidden
+   */
+  addPlugin: (plugin: RumPlugin) => void
 
   /**
    * Add a custom action, stored in `@action`
@@ -645,6 +674,7 @@ export interface Strategy {
     initContext?: InitContext
   ) => void
   initConfiguration: RumInitConfiguration | undefined
+  addPlugin: (plugin: RumPlugin) => void
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
@@ -804,6 +834,8 @@ export function makeRumPublicApi(
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
+
+    addPlugin: monitor((plugin: RumPlugin) => strategy.addPlugin(plugin)),
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')
