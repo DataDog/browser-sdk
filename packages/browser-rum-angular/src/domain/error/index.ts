@@ -1,2 +1,2 @@
 export { addAngularError } from './addAngularError'
-export { provideDatadogErrorHandler } from './provideDatadogErrorHandler'
+export { provideDatadogErrorHandler, provideNoopDatadogErrorHandler } from './provideDatadogErrorHandler'

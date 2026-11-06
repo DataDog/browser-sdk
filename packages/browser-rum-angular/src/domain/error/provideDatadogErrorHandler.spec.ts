@@ -1,10 +1,13 @@
-import type { EnvironmentInjector } from '@angular/core'
+import type { EnvironmentInjector, EnvironmentProviders } from '@angular/core'
 import { ErrorHandler, Injector, createEnvironmentInjector } from '@angular/core'
 import { initializeAngularPlugin } from '../../../test/initializeAngularPlugin'
-import { provideDatadogErrorHandler } from './provideDatadogErrorHandler'
+import { provideDatadogErrorHandler, provideNoopDatadogErrorHandler } from './provideDatadogErrorHandler'
 
-function createErrorHandler(): ErrorHandler {
-  const injector = createEnvironmentInjector([provideDatadogErrorHandler()], Injector.NULL as EnvironmentInjector)
+function createErrorHandler(providers: EnvironmentProviders[] = []): ErrorHandler {
+  const injector = createEnvironmentInjector(
+    [provideDatadogErrorHandler(), providers],
+    Injector.NULL as EnvironmentInjector
+  )
   return injector.get(ErrorHandler)
 }
 
@@ -27,6 +30,18 @@ describe('provideDatadogErrorHandler', () => {
     const handler = createErrorHandler()
     handler.handleError(new Error('test error'))
 
+    expect(consoleErrorSpy).toHaveBeenCalled()
+  })
+
+  it('does not report errors with provideNoopDatadogErrorHandler(), but still logs them to the console', () => {
+    const addErrorSpy = jasmine.createSpy()
+    initializeAngularPlugin({ addError: addErrorSpy })
+
+    const consoleErrorSpy = spyOn(console, 'error')
+    const handler = createErrorHandler([provideNoopDatadogErrorHandler()])
+    handler.handleError(new Error('test error'))
+
+    expect(addErrorSpy).not.toHaveBeenCalled()
     expect(consoleErrorSpy).toHaveBeenCalled()
   })
 })
