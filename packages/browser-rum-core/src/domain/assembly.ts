@@ -102,6 +102,7 @@ export function startRumAssembly(
         if (isEmptyObject(serverRumEvent.context!)) {
           delete serverRumEvent.context
         }
+        hooks.eventCollected.trigger({ eventType: serverRumEvent.type, event: serverRumEvent, domainContext })
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
       }
     }

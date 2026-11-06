@@ -356,6 +356,8 @@ export function createPreStartStrategy(
         initConfiguration,
         publicApi,
         registerAssembleEventHook: hooks.assembleEvent.register,
+        registerEventCollectedHook: hooks.eventCollected.register,
+        isTrackingConsentGranted: trackingConsentState.isGranted,
       }
       const shouldContinue = callPluginsOnInit(initConfiguration.plugins, onInitOptions)
 
