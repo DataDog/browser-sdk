@@ -4,6 +4,7 @@ import { command } from '../lib/command.ts'
 import { DatacenterType, getAllDatacentersMetadata } from '../lib/datacenter.ts'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 import { checkTelemetryErrors, hasTelemetryCredentials } from './lib/checkTelemetryErrors.ts'
+import { checkCordons, datacenterToCordonTargets } from './lib/checkCordons.ts'
 
 /**
  * Orchestrate the deployments of the artifacts for specific DCs
@@ -47,6 +48,9 @@ export async function main(...args: string[]): Promise<void> {
     printLog('No datacenters found, skipping deployment.')
     return
   }
+
+  // Make sure no target datacenter is cordoned (infra freeze) before deploying
+  await checkCordons(datacenters.flatMap(datacenterToCordonTargets))
 
   // Skip all telemetry error checks for gov datacenter deployments
   const isGovOnly = datacenters.every((dc) => dc === 'gov')
