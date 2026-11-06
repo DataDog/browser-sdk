@@ -6,9 +6,9 @@ import type {
 } from '@datadog/browser-rum-core'
 import { noop } from '@datadog/js-core/util'
 import { angularPlugin, resetAngularPlugin } from '../src/domain/angularPlugin'
-import { registerCleanupTask } from '../../browser-core/test'
+import { registerCleanupTask, waitNextMicrotask } from '../../browser-core/test'
 
-export function initializeAngularPlugin({
+export async function initializeAngularPlugin({
   addError = noop,
 }: {
   addError?: StartRumResult['addError']
@@ -26,4 +26,7 @@ export function initializeAngularPlugin({
   registerCleanupTask(() => {
     resetAngularPlugin()
   })
+
+  // Buffered views and errors are replayed, and new ones delivered, after a microtask
+  await waitNextMicrotask()
 }
