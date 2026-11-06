@@ -62,8 +62,9 @@ const config: ViteUserConfig = {
     isolate: false,
 
     // Run files and tests in random order (like Jasmine's `random: true`). Reproduce an order
-    // with `--sequence.seed=<seed>`.
-    sequence: { shuffle: { files: true, tests: true } },
+    // with `--sequence.seed=<seed>`. Run the setup files in order (Vitest runs them in parallel by
+    // default): forEach.ts uses the Jasmine globals defined by vitest.setup.ts.
+    sequence: { shuffle: { files: true, tests: true }, setupFiles: 'list' },
 
     provide: {
       // Fail tests calling console methods without spying on them (CI only)
@@ -77,7 +78,7 @@ const config: ViteUserConfig = {
     coverage: {
       enabled: Boolean(process.env.CI),
       provider: 'istanbul',
-      include: ['packages/*/src/**/*.ts'],
+      include: ['packages/*/src/**/*.ts', 'developer-extension/src/**/*.ts'],
       exclude: ['**/*.spec.ts', '**/*.d.ts', '**/capturedExceptions.ts', '**/specHelper.ts'],
       reporter: ['text-summary', 'html', 'clover'],
       reportsDirectory: getCoverageReportDirectory(),

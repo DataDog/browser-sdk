@@ -20,6 +20,8 @@ Use this strategy to test the integration on Real applications.
 
 ## Work with unit tests
 
+Unit tests run in Playwright's Chromium: install it once with `yarn playwright install chromium` (`yarn test:e2e:setup` also does it).
+
 1. Write a unit test.
 2. Run `yarn test <path/to/your.spec.ts>` in the project root. It launches the tests in watch mode in a headless Chromium.
 3. To narrow down further, temporarily replace `describe(...)` with `fdescribe(...)` or `it(...)` with `fit(...)` (this only applies within the selected files).
