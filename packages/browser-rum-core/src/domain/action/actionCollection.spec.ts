@@ -31,7 +31,8 @@ describe('actionCollection', () => {
       hooks,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration()
+      mockRumConfiguration(),
+      new WeakMap()
     )
     registerCleanupTask(actionCollection.stop)
     addAction = actionCollection.addAction
@@ -52,6 +53,7 @@ describe('actionCollection', () => {
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
+      elementStack: 'mfe-stack',
       nameSource: ActionNameSource.TEXT_CONTENT,
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
@@ -107,6 +109,7 @@ describe('actionCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       events: [event],
+      elementStack: 'mfe-stack',
     })
   })
 

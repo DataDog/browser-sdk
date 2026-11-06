@@ -28,6 +28,27 @@ import { createHooks } from './hooks'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
+    it('allows manual element stack attribution without serializing the stack', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          beforeSend: (event, context) => {
+            if (event.type === RumEventType.ACTION && context.elementStack === 'mfe-stack') {
+              event.service = 'manual-mfe'
+              event.version = '2.0.0'
+            }
+          },
+        },
+      })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        domainContext: { events: [], elementStack: 'mfe-stack' },
+      })
+      expect(serverRumEvents[0].service).toBe('manual-mfe')
+      expect(serverRumEvents[0].version).toBe('2.0.0')
+      expect(JSON.stringify(serverRumEvents[0])).not.toContain('mfe-stack')
+      expect(JSON.stringify(serverRumEvents[0])).not.toContain('elementStack')
+    })
+
     describe('fields modification', () => {
       describe('modifiable fields', () => {
         it('should allow modification', () => {

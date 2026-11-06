@@ -24,6 +24,8 @@ export interface RumViewEventDomainContext {
 }
 
 export interface RumActionEventDomainContext {
+  /** Stack captured when the closest click boundary was registered. */
+  elementStack?: string
   events?: Event[]
   handlingStack?: string
 }
