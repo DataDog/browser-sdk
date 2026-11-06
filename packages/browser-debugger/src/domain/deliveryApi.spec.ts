@@ -212,16 +212,44 @@ describe('deliveryApi', () => {
       expect(probes![0].id).toBe(probe.id)
     })
 
+    it('should register log probes under where.functionId, including anonymous functions', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [createProbe({ where: { functionId: 'src/utils.js;<anonymous>@1:11:0' } })],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes('src/utils.js;<anonymous>@1:11:0')).toEqual([jasmine.objectContaining({ id: 'test-probe' })])
+    })
+
+    it('should ignore log probes without where.functionId', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [{ ...createProbe(), where: { typeName: 'test.js', methodName: 'testMethod' } }],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getAllProbes()).toEqual([])
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
     it('should ignore log probes without a method location', async () => {
       respondWith({
         nextCursor: 'cursor-1',
         updates: [
-          createProbe({
+          {
+            ...createProbe(),
             where: {
               sourceFile: 'test.js',
               lines: ['16'],
             },
-          }),
+          },
         ],
         deletions: [],
       })
@@ -281,10 +309,10 @@ describe('deliveryApi', () => {
       respondWith({
         nextCursor: 'cursor-1',
         updates: [
-          createProbe({ id: 'valid-before', where: { typeName: 'test.js', methodName: 'before' } }),
+          createProbe({ id: 'valid-before', where: { functionId: 'test.js;before' } }),
           createProbe({
             id: 'invalid',
-            where: { typeName: 'test.js', methodName: 'invalid' },
+            where: { functionId: 'test.js;invalid' },
             captureSnapshot: false,
             captureExpressions: [
               {
@@ -293,7 +321,7 @@ describe('deliveryApi', () => {
               },
             ],
           }),
-          createProbe({ id: 'valid-after', where: { typeName: 'test.js', methodName: 'after' } }),
+          createProbe({ id: 'valid-after', where: { functionId: 'test.js;after' } }),
         ],
         deletions: [],
       })

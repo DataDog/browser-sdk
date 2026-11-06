@@ -22,6 +22,11 @@ let globalSnapshotSamplingRateWindowStart = 0
 let snapshotsSampledWithinTheLastSecond = 0
 
 export interface ProbeWhere {
+  /**
+   * Opaque function ID embedded by the build plugin in the instrumented function. Used as-is to match
+   * the probe, never computed or parsed.
+   */
+  functionId: string
   typeName?: string
   methodName?: string
   sourceFile?: string
@@ -86,7 +91,6 @@ export interface Probe {
 }
 
 export interface InitializedProbe extends Probe {
-  functionId: string
   condition?: CompiledCondition
   evaluateTemplate?: (context: Record<string, any>) => unknown[]
   compiledCaptureExpressions?: CompiledCaptureExpressions
@@ -154,13 +158,14 @@ export function resetProbeBudgetConfiguration(): void {
  */
 export function addProbe(probe: Probe): void {
   initializeProbe(probe)
-  let probes = activeProbes[probe.functionId]
+  const functionId = probe.where.functionId
+  let probes = activeProbes[functionId]
   if (!probes) {
     probes = []
-    activeProbes[probe.functionId] = probes
+    activeProbes[functionId] = probes
   }
   probes.push(probe)
-  probeIdToFunctionId[probe.id] = probe.functionId
+  probeIdToFunctionId[probe.id] = functionId
 }
 
 /**
@@ -353,9 +358,6 @@ export function checkConditionErrorBudget(probe: InitializedProbe, now: number):
  * @param probe - The probe configuration
  */
 export function initializeProbe(probe: Probe): asserts probe is InitializedProbe {
-  // TODO: Add support for anonymous functions (Currently only uniquely named functions are supported)
-  ;(probe as InitializedProbe).functionId = `${probe.where.typeName};${probe.where.methodName}`
-
   // Compile condition if present
   try {
     if (probe.when?.json) {
