@@ -1,6 +1,6 @@
 import type { Context } from '@datadog/js-core/util'
-import { noop } from '@datadog/js-core/util'
-import { display, objectEntries, SANITIZE_DEFAULT_MAX_CHARACTER_COUNT } from '@datadog/browser-core'
+import { noop, objectEntries, SANITIZE_DEFAULT_MAX_CHARACTER_COUNT } from '@datadog/js-core/util'
+import { display } from '@datadog/browser-core'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 

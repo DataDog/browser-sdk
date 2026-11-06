@@ -1,6 +1,5 @@
 import type { ContextManager, SessionManager } from '@datadog/browser-core'
 import {
-  objectEntries,
   shallowClone,
   matchList,
   TraceContextInjection,
@@ -9,6 +8,7 @@ import {
   canUseEventBridge,
   getEventBridge,
 } from '@datadog/browser-core'
+import { objectEntries } from '@datadog/js-core/util'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
