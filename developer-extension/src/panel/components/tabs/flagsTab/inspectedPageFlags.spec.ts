@@ -28,7 +28,7 @@ function stored(key: string): unknown {
 
 describe('inspectedPageFlags read/write against page localStorage', () => {
   beforeEach(() => {
-    // Karma runs in a real browser, so evalInWindow's code can be evaluated directly
+    // Unit tests run in a real browser, so evalInWindow's code can be evaluated directly
     // against the test page's own localStorage.
     const previousChrome = (globalThis as any).chrome
     ;(globalThis as any).chrome = {

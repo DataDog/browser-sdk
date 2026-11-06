@@ -5,7 +5,6 @@
 
 import * as vitest from 'vitest'
 import jasmineRequire from 'jasmine-core/lib/jasmine-core/jasmine.js'
-import { trackCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
 const jasmineLib = jasmineRequire.core(jasmineRequire)
 // Vitest is the runner: don't let Jasmine install its global error handlers, which forward
@@ -57,8 +56,6 @@ vitest.afterEach(() => {
   currentTestCtx = null
 })
 window.pending = (reason) => currentTestCtx?.skip(reason)
-
-trackCurrentJasmineSpec()
 
 window.describe = vitest.describe
 window.fdescribe = vitest.describe.only

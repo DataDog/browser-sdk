@@ -134,9 +134,8 @@ function runTests(): Promise<boolean> {
 
     function killIt(message: string): void {
       printError(`Killing the browserstack job because of ${message}`)
-      // use 'SIGKILL' instead of 'SIGTERM' because Karma intercepts 'SIGTERM' and terminates the process with a 0 exit code,
-      // which is not what we want here (we want to indicate a failure).
-      // see https://github.com/karma-runner/karma/blob/master/lib/server.js#L391
+      // use 'SIGKILL' instead of 'SIGTERM' so the test command can't intercept the signal and terminate the process with
+      // a 0 exit code, which is not what we want here (we want to indicate a failure).
       child.kill('SIGKILL')
     }
   })
