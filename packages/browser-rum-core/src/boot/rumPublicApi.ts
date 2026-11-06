@@ -38,7 +38,7 @@ import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import { DEFAULT_TRACKED_RESOURCE_HEADERS } from '../domain/configuration'
+import { DEFAULT_TRACKED_RESOURCE_HEADERS, isTrustedScriptURL } from '../domain/configuration'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
@@ -803,7 +803,14 @@ export function makeRumPublicApi(
 
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
-    getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
+    getInitConfiguration: monitor(() => {
+      const configuration = deepClone(strategy.initConfiguration)
+      const workerUrl = strategy.initConfiguration?.workerUrl
+      if (configuration && isTrustedScriptURL(workerUrl)) {
+        configuration.workerUrl = workerUrl
+      }
+      return configuration
+    }),
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')
