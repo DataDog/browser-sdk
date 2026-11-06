@@ -272,6 +272,15 @@ class TestBuilder {
     const url = worker.importScripts ? '/sw.js?importScripts=true' : '/sw.js'
     const options = worker.importScripts ? '{}' : '{ type: "module" }'
 
+    if (worker.dedicated) {
+      this.withBody(html`
+        <script>
+          window.myWorker = new Worker('${url}', ${options})
+        </script>
+      `)
+      return this
+    }
+
     // Service workers require HTTPS or localhost due to browser security restrictions
     this.withHostName('localhost')
     this.withBody(html`
@@ -528,6 +537,11 @@ function createTestContext(
     },
     evaluateInWorker: async (fn: () => void) => {
       await page.evaluate(async (code) => {
+        if (window.myWorker) {
+          window.myWorker.postMessage({ __type: 'evaluate', code })
+          return
+        }
+
         const { active, installing, waiting } = window.myServiceWorker
         const worker = active ?? (await waitForActivation(installing ?? waiting!))
         worker.postMessage({ __type: 'evaluate', code })

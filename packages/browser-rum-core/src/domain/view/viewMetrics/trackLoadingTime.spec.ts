@@ -49,13 +49,14 @@ describe('trackLoadingTime', () => {
 
   function startLoadingTimeTracking(
     loadType: ViewLoadingType = ViewLoadingType.ROUTE_CHANGE,
-    viewStart = clocksOrigin()
+    viewStart = clocksOrigin(),
+    configuration = mockRumConfiguration()
   ) {
     const loadingTimeTracking = trackLoadingTime(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(),
+      configuration,
       loadType,
       viewStart,
       loadingTimeCallback
@@ -83,6 +84,18 @@ describe('trackLoadingTime', () => {
 
   it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
     startLoadingTimeTracking()
+
+    emulatePageActivityDuringViewLoading()
+
+    expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
+  })
+
+  it('should not wait for the load event on an initial view when view metrics are disabled', () => {
+    startLoadingTimeTracking(
+      ViewLoadingType.INITIAL_LOAD,
+      clocksOrigin(),
+      mockRumConfiguration({ betaTrackViewMetrics: false })
+    )
 
     emulatePageActivityDuringViewLoading()
 

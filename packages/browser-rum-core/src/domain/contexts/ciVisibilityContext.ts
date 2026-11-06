@@ -1,12 +1,13 @@
 import { display, getInitCookie } from '@datadog/browser-core'
 import { SKIPPED } from '@datadog/js-core/assembly'
+import { globalObject } from '@datadog/js-core/util'
 import { createCookieObservable } from '../../browser/cookieObservable'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 import { SessionType } from './sessionContext'
 
 export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-execution-id'
 
-export interface CiTestWindow extends Window {
+export interface CiTestWindow {
   Cypress?: {
     env: (key: string) => string | undefined
   }
@@ -46,7 +47,7 @@ export function startCiVisibilityContext(
 }
 
 function readCypressTraceId(): string | undefined {
-  const cypress = (window as CiTestWindow).Cypress
+  const cypress = (globalObject as CiTestWindow).Cypress
   if (!cypress) {
     return undefined
   }

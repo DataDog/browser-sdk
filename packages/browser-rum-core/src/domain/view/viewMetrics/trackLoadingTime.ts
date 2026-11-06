@@ -1,4 +1,5 @@
-import type { ClocksState, Duration } from '@datadog/js-core/time'
+import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
+import { noop } from '@datadog/js-core/util'
 import type { Observable } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { elapsed } from '@datadog/js-core/time'
@@ -23,10 +24,14 @@ export function trackLoadingTime(
   viewStart: ClocksState,
   callback: (loadingTime: Duration) => void
 ) {
-  let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
+  // Without view metrics, nothing reports the load event (see trackInitialViewMetrics)
+  let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD && configuration.betaTrackViewMetrics
   let isWaitingForActivityLoadingTime = true
   const loadingTimeCandidates: Duration[] = []
-  const firstHidden = trackFirstHidden(viewStart)
+  // Without view metrics (e.g. in a Web Worker, no page to hide), the page is considered never hidden
+  const firstHidden = configuration.betaTrackViewMetrics
+    ? trackFirstHidden(viewStart)
+    : { timeStamp: Infinity as RelativeTime, stop: noop }
 
   function invokeCallbackIfAllCandidatesAreReceived() {
     if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {

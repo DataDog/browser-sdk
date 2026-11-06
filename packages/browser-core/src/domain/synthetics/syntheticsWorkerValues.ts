@@ -53,9 +53,10 @@ function getRawSyntheticsContext(): unknown {
   }
 
   return {
-    test_id: (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID || getInitCookie(SYNTHETICS_TEST_ID_COOKIE_NAME),
+    test_id:
+      (globalObject as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID || getInitCookie(SYNTHETICS_TEST_ID_COOKIE_NAME),
     result_id:
-      (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID || getInitCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME),
+      (globalObject as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID || getInitCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME),
   }
 }
 

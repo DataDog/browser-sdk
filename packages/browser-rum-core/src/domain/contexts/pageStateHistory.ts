@@ -1,6 +1,7 @@
 import { elapsed, toServerDuration, relativeNow } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { SKIPPED } from '@datadog/js-core/assembly'
+import { globalObject, noop } from '@datadog/js-core/util'
 import { createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { addEventListeners, DOM_EVENT } from '@datadog/js-core/dom'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -38,6 +39,11 @@ export function startPageStateHistory(
   assembleHook: AssembleHook,
   maxPageStateEntriesSelectable = MAX_PAGE_STATE_ENTRIES_SELECTABLE
 ): PageStateHistory {
+  // Without a window (e.g. in a Web Worker), there are no page lifecycle events to track.
+  if (!globalObject.window) {
+    return { wasInPageStateDuringPeriod: () => false, addPageState: noop, stop: noop }
+  }
+
   const pageStateEntryHistory = createValueHistory<PageStateEntry>({
     expireDelay: PAGE_STATE_CONTEXT_TIME_OUT_DELAY,
     maxEntries: MAX_PAGE_STATE_ENTRIES,

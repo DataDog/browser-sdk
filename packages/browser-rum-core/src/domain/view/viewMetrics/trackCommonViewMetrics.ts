@@ -1,5 +1,6 @@
 import type { ClocksState, RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/js-core/util'
+import { noop } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { elapsed, timeStampNow } from '@datadog/js-core/time'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
@@ -49,26 +50,38 @@ export function trackCommonViewMetrics(
     }
   )
 
-  const { stop: stopScrollMetricsTracking } = trackScrollMetrics(viewStart, (newScrollMetrics) => {
-    commonViewMetrics.scroll = newScrollMetrics
-  })
+  // Automatic view metrics can be disabled (e.g. in a Web Worker), manual loading time is always kept
+  const { stop: stopScrollMetricsTracking } = configuration.betaTrackViewMetrics
+    ? trackScrollMetrics(viewStart, (newScrollMetrics) => {
+        commonViewMetrics.scroll = newScrollMetrics
+      })
+    : { stop: noop }
 
-  const { stop: stopCLSTracking, setNavigationId: setCLSNavigationId } = trackCumulativeLayoutShift(
-    configuration,
-    viewStart.relative,
-    (cumulativeLayoutShift) => {
-      commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-      scheduleViewUpdate()
-    },
-    isSoftNavigationTracked
-  )
+  const { stop: stopCLSTracking, setNavigationId: setCLSNavigationId } = configuration.betaTrackViewMetrics
+    ? trackCumulativeLayoutShift(
+        configuration,
+        viewStart.relative,
+        (cumulativeLayoutShift) => {
+          commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
+          scheduleViewUpdate()
+        },
+        isSoftNavigationTracked
+      )
+    : { stop: noop, setNavigationId: noop }
 
   const {
     stop: stopINPTracking,
     getInteractionToNextPaint,
     setViewEnd: setINPViewEnd,
     setNavigationId: setINPNavigationId,
-  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
+  } = configuration.betaTrackViewMetrics
+    ? trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
+    : {
+        stop: noop,
+        getInteractionToNextPaint: (): InteractionToNextPaint | undefined => undefined,
+        setViewEnd: noop,
+        setNavigationId: noop,
+      }
 
   return {
     stop: () => {
