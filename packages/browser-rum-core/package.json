@@ -21,7 +21,8 @@
     "@datadog/js-core": "workspace:*"
   },
   "devDependencies": {
-    "ajv": "8.20.0"
+    "ajv": "8.20.0",
+    "vitest": "4.1.8"
   },
   "repository": {
     "type": "git",
