@@ -30,6 +30,12 @@ describe('canUseEventBridge', () => {
   it('should not detect when the bridge is absent', () => {
     expect(canUseEventBridge()).toBeFalse()
   })
+
+  it('should not detect when the bridge does not provide any allowed webView host', () => {
+    const eventBridge = mockEventBridge()
+    eventBridge.getAllowedWebViewHosts = () => 'null'
+    expect(canUseEventBridge('foo.bar')).toBeFalse()
+  })
 })
 
 describe('matchesHostEntry', () => {

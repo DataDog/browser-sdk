@@ -26,7 +26,8 @@ export function trackViewportResize(emitRecord: EmitRecordCallback<BrowserIncrem
 
 export function trackVisualViewportResize(emitRecord: EmitRecordCallback<VisualViewportRecord>): Tracker {
   const visualViewport = window.visualViewport
-  if (!visualViewport) {
+  // Some pages replace `window.visualViewport` with an object that is not an EventTarget
+  if (!visualViewport || !('addEventListener' in visualViewport)) {
     return { stop: noop }
   }
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
