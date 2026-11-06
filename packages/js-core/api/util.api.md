@@ -329,6 +329,9 @@ export type RecursivePartial<T> = {
 };
 
 // @public
+export function replaceMockable<T>(value: T, replacement: T): void;
+
+// @public
 export interface SampleBufferFullEvent extends Event {
     readonly target: Profiler;
 }
