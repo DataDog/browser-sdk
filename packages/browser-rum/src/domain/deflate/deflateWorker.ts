@@ -1,7 +1,7 @@
 import type { DeflateWorker, SdkWorkerResponse } from '@datadog/browser-core'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import { addTelemetryError, display } from '@datadog/browser-core'
-import { mockable, setTimeout } from '@datadog/js-core/util'
+import { clearTimeout, mockable, setTimeout } from '@datadog/js-core/util'
 import { addEventListener } from '@datadog/js-core/dom'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { reportScriptLoadingError } from '../scriptLoadingError'
@@ -122,8 +122,9 @@ export function doStartDeflateWorker(configuration: RumConfiguration, source: st
       }
     )
     worker.postMessage({ action: 'init' })
-    setTimeout(() => onTimeout(source, name), INITIALIZATION_TIME_OUT_DELAY)
+    const timeoutId = setTimeout(() => onTimeout(source, name, worker), INITIALIZATION_TIME_OUT_DELAY)
     const stop = () => {
+      clearTimeout(timeoutId)
       removeErrorListener()
       removeMessageListener()
     }
@@ -134,9 +135,10 @@ export function doStartDeflateWorker(configuration: RumConfiguration, source: st
   }
 }
 
-function onTimeout(source: string, name: WorkerName) {
+function onTimeout(source: string, name: WorkerName, worker: DeflateWorker) {
   const state = getState(name)
-  if (state.status === DeflateWorkerStatus.Loading) {
+  // The worker may have errored or been replaced (ex: after a reset) since this timeout was set
+  if (state.status === DeflateWorkerStatus.Loading && state.worker === worker) {
     display.error(`${source} failed to start: a timeout occurred while initializing the Worker`)
     state.initializationFailureCallbacks.forEach((callback) => callback())
     states.set(name, { status: DeflateWorkerStatus.Error })

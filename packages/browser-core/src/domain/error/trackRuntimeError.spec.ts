@@ -1,4 +1,4 @@
-import { disableJasmineUncaughtExceptionTracking, wait } from '../../../test'
+import { disableJasmineUncaughtExceptionTracking, registerCleanupTask, wait } from '../../../test'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
@@ -50,7 +50,15 @@ describe('instrumentOnError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnError = async (callback: () => void) => {
-    const onErrorSpy = spyOn(window as any, 'onerror')
+    // Replace the handler instead of spying on it: with Karma, `disableJasmineUncaughtExceptionTracking`
+    // restores Jasmine's handler in a cleanup task, which runs before Jasmine restores its spies (it
+    // would then put back the disabled handler)
+    const onErrorSpy = jasmine.createSpy('onerror')
+    const originalOnError = window.onerror
+    window.onerror = onErrorSpy
+    registerCleanupTask(() => {
+      window.onerror = originalOnError
+    })
     const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
     const { stop } = instrumentOnError(callbackSpy)
 
@@ -62,6 +70,8 @@ describe('instrumentOnError', () => {
       stop()
     }
   }
+
+  beforeEach(disableJasmineUncaughtExceptionTracking)
 
   it('should call original error handler', async () => {
     // withInstrumentOnError() asserts that the original error handler has been called for
@@ -287,6 +297,8 @@ describe('instrumentUnhandledRejection', () => {
       stop()
     }
   }
+
+  beforeEach(disableJasmineUncaughtExceptionTracking)
 
   it('should call original unhandled rejection handler', async () => {
     // withInstrumentOnUnhandledRejection() asserts that the original unhandled
