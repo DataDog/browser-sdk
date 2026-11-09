@@ -106,7 +106,8 @@ stages:
       - schedules
     variables:
       # Release commits: `vX.Y.Z` (legacy release script) or `chore(release): vX.Y.Z` (release-please)
-      - $CI_COMMIT_TITLE =~ /^(v[0-9.]+|chore\(release\): v[0-9.]+)/
+      # Quoted: the `: ` in the pattern would otherwise make YAML parse this item as a mapping.
+      - '$CI_COMMIT_TITLE =~ /^(v[0-9.]+|chore\(release\): v[0-9.]+)/'
 
 .tags:
   only:
