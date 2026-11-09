@@ -21,8 +21,11 @@ interface GitHubPR {
   }
 }
 
-interface GitHubRelease {
+export interface GitHubRelease {
+  id: number
   html_url: string
+  tag_name: string
+  draft: boolean
 }
 
 interface GitHubReleaseParams {
@@ -64,6 +67,38 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
     tag_name: version,
     name: version,
     body,
+  })
+}
+
+/**
+ * Find a GitHub release by its tag, including draft releases. Only the 100 most recent releases are
+ * considered, which is enough to find the release being deployed.
+ *
+ * @param tag - The tag of the release, e.g. `v1.2.3`.
+ */
+export async function findGitHubRelease(tag: string): Promise<GitHubRelease | undefined> {
+  // Draft releases are only listed for tokens with push access, and `GET releases/tags/{tag}`
+  // ignores them.
+  using releaseToken = getGithubReleaseToken()
+  const releases = await callGitHubApi<GitHubRelease[]>('GET', 'releases?per_page=100', releaseToken)
+  return releases.find((release) => release.tag_name === tag)
+}
+
+/**
+ * Publish a draft GitHub release.
+ *
+ * @param releaseId - The id of the draft release.
+ * @param options - Publication options.
+ * @param options.makeLatest - Whether the release should be marked as the latest release.
+ */
+export async function publishGitHubRelease(
+  releaseId: number,
+  { makeLatest }: { makeLatest: boolean }
+): Promise<GitHubRelease> {
+  using releaseToken = getGithubReleaseToken()
+  return await callGitHubApi<GitHubRelease>('PATCH', `releases/${releaseId}`, releaseToken, {
+    draft: false,
+    make_latest: makeLatest ? 'true' : 'false',
   })
 }
 
