@@ -209,7 +209,8 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
+    clock.setDate(new Date(Date.now() + VIEW_DURATION - relativeNow()))
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
@@ -231,7 +232,8 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
+    clock.setDate(new Date(Date.now() + VIEW_DURATION - relativeNow()))
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {
@@ -248,7 +250,8 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
+    clock.setDate(new Date(Date.now() + VIEW_DURATION - relativeNow()))
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body

@@ -29,7 +29,21 @@ export function mockClock() {
      * invokation (the start of the test).
      */
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
-    tick: (ms: number) => jasmine.clock().tick(ms),
+    /**
+     * Moves the clock forward by X milliseconds, running the timers due in the meantime.
+     *
+     * Jasmine aborts the whole tick when a timer callback clears another timer due at the very same
+     * instant (it `return`s instead of skipping that timer), leaving the clock short of the
+     * requested duration. Keep ticking until the full duration has elapsed.
+     */
+    tick: (ms: number) => {
+      const end = Date.now() + ms
+      let remaining = ms
+      do {
+        jasmine.clock().tick(remaining)
+        remaining = end - Date.now()
+      } while (remaining > 0)
+    },
     setDate: (date: Date) => jasmine.clock().mockDate(date),
     /**
      * Moves the system clock (`Date.now()`) by X milliseconds, forward or back, while
