@@ -40,7 +40,7 @@ function getSourceUrl(
   }
 
   let stack
-  if (rawRumEvent.type === 'action' && 'elementStack' in domainContext) {
+  if ('elementStack' in domainContext) {
     stack = domainContext.elementStack
   } else if ('handlingStack' in domainContext) {
     stack = domainContext.handlingStack
