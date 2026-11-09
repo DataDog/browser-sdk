@@ -33,10 +33,13 @@ export interface EarlyCollectionProfiler {
  * profiler chunk can adopt it as its first instance and keep the samples
  * collected while it was downloading.
  *
- * Takes ownership of the instance: the global is deleted, so it can be taken
- * only once (e.g. when the profiler restarts). Returns `undefined` when the
- * package did not run, its contract version is not recognized, or its
- * Profiler instance is not usable anymore (already stopped).
+ * Takes ownership of the instance: only the consumed `profiler` field is
+ * removed from the global, which is otherwise left in place (its remaining
+ * fields stay consumable independently, e.g. by the buffered collectors of
+ * the next contract iterations), and the instance can be taken only once
+ * (e.g. when the profiler restarts). Returns `undefined` when the package
+ * did not run, its contract version is not recognized, or its Profiler
+ * instance is not usable anymore (already stopped).
  */
 export function takeEarlyCollectionProfiler(): EarlyCollectionProfiler | undefined {
   const owner = globalObject as EarlyCollectionGlobalOwner
@@ -50,7 +53,7 @@ export function takeEarlyCollectionProfiler(): EarlyCollectionProfiler | undefin
     // global is left untouched.
     return undefined
   }
-  delete owner[EARLY_COLLECTION_GLOBAL_NAME]
+  delete (rawGlobal as { profiler?: Profiler }).profiler
   return { profiler, startClocks }
 }
 

@@ -53,16 +53,23 @@ describe('earlyCollectionProfiler', () => {
     return (globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]
   }
 
-  it('takes the early Profiler instance, with the time it started, and deletes the global', () => {
+  it('takes the early Profiler instance, with the time it started, and removes only the consumed profiler field from the global', () => {
     const earlyCollection = setEarlyCollection()
+    const earlyProfilerInstance = earlyCollection.profiler
 
     const earlyProfiler = takeEarlyCollectionProfiler()
 
     expect(earlyProfiler).toEqual({
-      profiler: earlyCollection.profiler,
+      profiler: earlyProfilerInstance,
       startClocks: { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
     })
-    expect(readEarlyCollection()).toBeUndefined()
+    // The global remains, with only the consumed field removed, so the
+    // remaining fields stay consumable independently (e.g. by the buffered
+    // collectors of the next contract iterations).
+    expect(readEarlyCollection()).toEqual({
+      version: 1,
+      startClocks: { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
+    })
     // The instance can be taken only once.
     expect(takeEarlyCollectionProfiler()).toBeUndefined()
   })
@@ -89,12 +96,17 @@ describe('earlyCollectionProfiler', () => {
   describe('stopEarlyCollectionProfiler', () => {
     it('stops the early Profiler instance and discards its samples', async () => {
       const earlyCollection = setEarlyCollection()
+      const earlyProfilerInstance = earlyCollection.profiler
 
       stopEarlyCollectionProfiler()
       await Promise.resolve()
 
-      expect(earlyCollection.profiler.stopCalls).toBe(1)
-      expect(readEarlyCollection()).toBeUndefined()
+      expect(earlyProfilerInstance.stopCalls).toBe(1)
+      // The consumed profiler field is removed, the rest of the global remains.
+      expect(readEarlyCollection()).toEqual({
+        version: 1,
+        startClocks: { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
+      })
     })
 
     it('is a no-op when the early collection package did not run', () => {

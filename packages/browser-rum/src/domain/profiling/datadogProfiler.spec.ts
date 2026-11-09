@@ -1173,15 +1173,22 @@ describe('profiler', () => {
       profiler.stop()
     })
 
-    it('deletes the early collection global when adopting the instance, so it cannot be adopted twice', () => {
+    it('removes the consumed profiler field from the early collection global when adopting the instance, so it cannot be adopted twice', () => {
       const { profiler, instances } = setupProfiler(undefined, undefined, undefined, {})
 
       profiler.start()
 
-      // The global is deleted on adoption: a profiler restart (e.g. session
+      // Only the consumed profiler field is removed on adoption: the global
+      // remains with its other fields, and a profiler restart (e.g. session
       // renewal) starts its own instance instead of re-adopting it.
-      expect((globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]).toBeUndefined()
       expect(takeEarlyCollectionProfiler()).toBeUndefined()
+      expect(
+        (
+          (globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME] as {
+            profiler?: unknown
+          }
+        ).profiler
+      ).toBeUndefined()
       expect(instances.size).toBe(1)
 
       profiler.stop()
