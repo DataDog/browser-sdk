@@ -1,10 +1,10 @@
 import { safeTruncate, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
 import { ONE_KIBI_BYTE } from '@datadog/js-core/util'
 import type { MatchOption } from '@datadog/browser-core'
-import type { RumConfiguration } from './configuration'
-import { getNodePrivacyLevel, isAllowlisted, shouldMaskAttribute } from './privacy'
-import type { NodePrivacyLevelCache } from './privacy'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from './privacyConstants'
+import type { RumConfiguration } from '../configuration'
+import { getNodePrivacyLevel, isAllowlisted, shouldMaskAttribute } from '../privacy'
+import type { NodePrivacyLevelCache } from '../privacy'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../privacyConstants'
 import {
   STABLE_ATTRIBUTES,
   isGeneratedValue,
@@ -12,7 +12,7 @@ import {
   getTagNameSelector,
   getNthOfTypeSelector,
   getAttributeValueSelector,
-} from './getSelectorFromElement'
+} from '../getSelectorFromElement'
 
 const FILTERED_TAGNAMES = ['HTML', 'BODY']
 
