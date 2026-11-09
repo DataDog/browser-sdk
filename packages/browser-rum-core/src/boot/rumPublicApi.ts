@@ -830,6 +830,10 @@ export function makeRumPublicApi(
       const stack = createHandlingStack('element')
       callMonitored(() => {
         addTelemetryUsage({ feature: 'attach-element-stack' })
+        if (!(element instanceof Element)) {
+          display.warn(`Invalid element provided (expected an Element, got ${typeof element}). Ignoring.`)
+          return
+        }
         if (stack?.includes('\n')) {
           elementStacks.set(element, stack)
         }
