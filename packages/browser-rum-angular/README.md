@@ -135,6 +135,28 @@ export class AppModule {}
 
 When enabled, the integration uses route patterns as view names instead of resolved URLs. For example, navigating to `/article/2` generates a view named `/article/:articleId` instead.
 
+## Server-side rendering
+
+RUM does not run during server-side rendering. If you use `provideDatadogRouter()` or `provideDatadogErrorHandler()`, add their no-op versions to your server application config, so they don't keep data from each render in memory:
+
+```typescript
+// app.config.server.ts
+import { ApplicationConfig, mergeApplicationConfig } from '@angular/core'
+import { provideServerRendering } from '@angular/ssr'
+import { provideNoopDatadogErrorHandler, provideNoopDatadogRouter } from '@datadog/browser-rum-angular'
+import { appConfig } from './app.config'
+
+const serverConfig: ApplicationConfig = {
+  providers: [provideServerRendering(), provideNoopDatadogRouter(), provideNoopDatadogErrorHandler()],
+}
+
+export const config = mergeApplicationConfig(appConfig, serverConfig)
+```
+
+With NgModule, add them to the `providers` of your server module (`AppServerModule`).
+
+`provideNoopDatadogErrorHandler()` keeps Angular's default behavior of logging errors to the console. If you report errors from your own `ErrorHandler` with `addAngularError`, skip that call on the server.
+
 ## Go Further with Datadog Angular Integration
 
 ### Traces
