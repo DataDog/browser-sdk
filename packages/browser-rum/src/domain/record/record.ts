@@ -15,8 +15,7 @@ import {
   trackViewEnd,
   trackViewportResize,
   trackVisualViewportResize,
-  trackCanvasContent,
-  trackCanvasCapture,
+  trackCanvas,
 } from './trackers'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
@@ -25,7 +24,6 @@ import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback, EmitResourceCallback } from './record.types'
 import { createRecordingScope } from './recordingScope'
 import { createCanvasManager } from './canvas/canvasManager'
-import { startCanvasWorker } from './canvas/canvasWorker'
 
 export interface RecordOptions {
   emitRecord: EmitRecordCallback
@@ -91,23 +89,13 @@ export function record(options: RecordOptions): RecordAPI {
     trackFocus(processRecord),
     trackVisualViewportResize(processRecord),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
+    trackCanvas(scope, mutationTracker.notifyContentMutated),
   ]
-
-  const canvasTrackers: Tracker[] = []
-  // The rest of the recording keeps running if the canvas worker fails to start.
-  const canvasWorker = startCanvasWorker(configuration, () => canvasTrackers.forEach((tracker) => tracker.stop()))
-  if (canvasWorker) {
-    canvasTrackers.push(
-      trackCanvasContent(scope),
-      trackCanvasCapture(scope, canvasWorker, mutationTracker.notifyContentMutated)
-    )
-  }
 
   return {
     stop: () => {
       shadowRootsController.stop()
       trackers.forEach((tracker) => tracker.stop())
-      canvasTrackers.forEach((tracker) => tracker.stop())
       stopFullSnapshots()
       canvasManager.reset()
     },
