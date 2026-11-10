@@ -26,7 +26,6 @@
     "typecheck": "tsc -b --noEmit true",
     "dev": "yarn dev-server start",
     "dev-server": "node scripts/dev-server/index.ts",
-    "release": "node ./scripts/release/prepare-release.ts --push",
     "test": "yarn test:unit:watch",
     "test:unit": "karma start ./test/unit/karma.local.conf.js",
     "test:script": "node --test --experimental-test-module-mocks './scripts/**/*.spec.*'",
