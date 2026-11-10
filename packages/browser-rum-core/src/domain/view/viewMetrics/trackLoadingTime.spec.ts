@@ -94,7 +94,7 @@ describe('trackLoadingTime', () => {
     startLoadingTimeTracking(
       ViewLoadingType.INITIAL_LOAD,
       clocksOrigin(),
-      mockRumConfiguration({ betaTrackViewMetrics: false })
+      mockRumConfiguration({ trackAutomaticViewMetrics: false })
     )
 
     emulatePageActivityDuringViewLoading()

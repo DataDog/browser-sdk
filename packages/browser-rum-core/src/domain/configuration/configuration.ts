@@ -395,7 +395,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * @internal
    */
-  betaTrackViewMetrics?: boolean | undefined
+  trackAutomaticViewMetrics?: boolean | undefined
 }
 
 /**
@@ -512,7 +512,7 @@ export const RUM_SCHEMA = {
   trackViewsManually: { type: 'boolean', default: false, strict: false },
   betaEnableViewUpdates: { type: 'boolean' },
   betaTrackWebSockets: { type: 'boolean', default: false, strict: false },
-  betaTrackViewMetrics: { type: 'boolean', default: true, strict: false },
+  trackAutomaticViewMetrics: { type: 'boolean', default: true, strict: false },
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
   startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },

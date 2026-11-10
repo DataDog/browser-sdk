@@ -1,6 +1,5 @@
 import type { ClocksState, RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/js-core/util'
-import { noop } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { elapsed, timeStampNow } from '@datadog/js-core/time'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
@@ -34,6 +33,9 @@ export function trackCommonViewMetrics(
   const commonViewMetrics: CommonViewMetrics = {}
   let hasManualLoadingTime = false
   let viewEnded = false
+  let scrollMetricsTracking: ReturnType<typeof trackScrollMetrics> | undefined
+  let clsTracking: ReturnType<typeof trackCumulativeLayoutShift> | undefined
+  let inpTracking: ReturnType<typeof trackInteractionToNextPaint> | undefined
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -51,56 +53,40 @@ export function trackCommonViewMetrics(
   )
 
   // Automatic view metrics can be disabled (e.g. in a Web Worker), manual loading time is always kept
-  const { stop: stopScrollMetricsTracking } = configuration.betaTrackViewMetrics
-    ? trackScrollMetrics(viewStart, (newScrollMetrics) => {
-        commonViewMetrics.scroll = newScrollMetrics
-      })
-    : { stop: noop }
-
-  const { stop: stopCLSTracking, setNavigationId: setCLSNavigationId } = configuration.betaTrackViewMetrics
-    ? trackCumulativeLayoutShift(
-        configuration,
-        viewStart.relative,
-        (cumulativeLayoutShift) => {
-          commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-          scheduleViewUpdate()
-        },
-        isSoftNavigationTracked
-      )
-    : { stop: noop, setNavigationId: noop }
-
-  const {
-    stop: stopINPTracking,
-    getInteractionToNextPaint,
-    setViewEnd: setINPViewEnd,
-    setNavigationId: setINPNavigationId,
-  } = configuration.betaTrackViewMetrics
-    ? trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
-    : {
-        stop: noop,
-        getInteractionToNextPaint: (): InteractionToNextPaint | undefined => undefined,
-        setViewEnd: noop,
-        setNavigationId: noop,
-      }
+  if (configuration.trackAutomaticViewMetrics) {
+    scrollMetricsTracking = trackScrollMetrics(viewStart, (newScrollMetrics) => {
+      commonViewMetrics.scroll = newScrollMetrics
+    })
+    clsTracking = trackCumulativeLayoutShift(
+      configuration,
+      viewStart.relative,
+      (cumulativeLayoutShift) => {
+        commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
+        scheduleViewUpdate()
+      },
+      isSoftNavigationTracked
+    )
+    inpTracking = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
+  }
 
   return {
     stop: () => {
       stopLoadingTimeTracking()
-      stopCLSTracking()
-      stopScrollMetricsTracking()
+      clsTracking?.stop()
+      scrollMetricsTracking?.stop()
     },
-    stopINPTracking,
+    stopINPTracking: () => inpTracking?.stop(),
     setLoadEvent,
     setViewEnd: (viewEndTime: RelativeTime) => {
       viewEnded = true
-      setINPViewEnd(viewEndTime)
+      inpTracking?.setViewEnd(viewEndTime)
     },
     setNavigationId: (navigationId: number) => {
-      setCLSNavigationId(navigationId)
-      setINPNavigationId(navigationId)
+      clsTracking?.setNavigationId(navigationId)
+      inpTracking?.setNavigationId(navigationId)
     },
     getCommonViewMetrics: () => {
-      commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
+      commonViewMetrics.interactionToNextPaint = inpTracking?.getInteractionToNextPaint()
       return commonViewMetrics
     },
     setLoadingTime: (callTimestamp?: TimeStamp) => {

@@ -256,7 +256,7 @@ function newView(
 
   const isSoftNavigationTracked =
     loadingType === ViewLoadingType.ROUTE_CHANGE &&
-    configuration.betaTrackViewMetrics &&
+    configuration.trackAutomaticViewMetrics &&
     isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
     supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
 
@@ -280,7 +280,7 @@ function newView(
   )
 
   let viewMetricsTracking =
-    loadingType === ViewLoadingType.INITIAL_LOAD && configuration.betaTrackViewMetrics
+    loadingType === ViewLoadingType.INITIAL_LOAD && configuration.trackAutomaticViewMetrics
       ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
 
