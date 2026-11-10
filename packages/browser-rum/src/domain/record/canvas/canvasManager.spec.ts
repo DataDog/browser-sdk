@@ -1,6 +1,6 @@
 import { registerCleanupTask, waitNextMicrotask } from '@datadog/browser-core/test'
 import { CanvasStatus, createCanvasManager } from './canvasManager'
-import { createCanvasSnapshot } from './canvasSnapshot'
+import type { CanvasSnapshot } from './canvasSnapshot'
 
 describe('CanvasManager', () => {
   it('tracks whether a canvas is capturable', () => {
@@ -124,7 +124,7 @@ describe('CanvasManager', () => {
   it('keeps a frozen snapshot when retrying a rejected capture', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
-    const snapshot = createCanvasSnapshot(canvas, 1000)!
+    const snapshot = createFakeSnapshot()
     canvasManager.setCanvasSnapshot(canvas, snapshot)
 
     const captureAttempt = canvasManager.startCaptureAttempt(canvas)
@@ -163,15 +163,26 @@ describe('CanvasManager', () => {
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
+  it('closes the bitmap of a replaced snapshot', () => {
+    const canvasManager = createCanvasManager()
+    const canvas = appendCanvas()
+    const closeSpy = jasmine.createSpy()
+    canvasManager.setCanvasSnapshot(canvas, createFakeSnapshot(closeSpy))
+
+    canvasManager.setCanvasSnapshot(canvas, createFakeSnapshot())
+
+    expect(closeSpy).toHaveBeenCalled()
+  })
+
   it('forgets per-node capture state and its latest snapshot', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
-    const snapshot = createCanvasSnapshot(canvas, 1000)!
+    const closeSpy = jasmine.createSpy()
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     const captureAttempt = canvasManager.startCaptureAttempt(canvas)
     captureAttempt.setLastChangeHash('hash')
-    canvasManager.setCanvasSnapshot(canvas, snapshot)
+    canvasManager.setCanvasSnapshot(canvas, createFakeSnapshot(closeSpy))
 
     canvasManager.forgetCanvas(canvas)
 
@@ -182,6 +193,7 @@ describe('CanvasManager', () => {
     const nextCaptureAttempt = canvasManager.startCaptureAttempt(canvas)
     expect(nextCaptureAttempt.lastChangeHash).toBeUndefined()
     expect(nextCaptureAttempt.snapshot).toBeUndefined()
+    expect(closeSpy).toHaveBeenCalled()
     canvasManager.discardCaptureAttempt(canvas, nextCaptureAttempt)
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
@@ -201,7 +213,7 @@ describe('CanvasManager', () => {
   it('resets capture hashes for a new record stream', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
-    const snapshot = createCanvasSnapshot(canvas, 1000)!
+    const snapshot = createFakeSnapshot()
 
     const captureAttempt = canvasManager.startCaptureAttempt(canvas)
     captureAttempt.setLastChangeHash('hash')
@@ -255,4 +267,8 @@ function appendCanvas(): HTMLCanvasElement {
   document.body.appendChild(canvas)
   registerCleanupTask(() => canvas.remove())
   return canvas
+}
+
+function createFakeSnapshot(close = jasmine.createSpy()): CanvasSnapshot {
+  return { canvasWidth: 1, canvasHeight: 1, bitmap: { close } as unknown as ImageBitmap }
 }

@@ -20,6 +20,57 @@
 
 ---
 
+## v7.17.1
+
+**Public Changes:**
+
+- 🐛 [PANA-9575] Ensure that stylesheets are always assigned the same id ([#5157](https://github.com/DataDog/browser-sdk/pull/5157))
+- 🐛 [RUM-19676] Keep a separate retry queue per intake when dual shipping ([#5244](https://github.com/DataDog/browser-sdk/pull/5244))
+- 🐛 [RUM-19671] Handle remote configuration body read failures like fetch failures ([#5241](https://github.com/DataDog/browser-sdk/pull/5241))
+
+**Internal Changes:**
+
+- 👷 Apply stale workflow to all issues and PRs ([#5243](https://github.com/DataDog/browser-sdk/pull/5243))
+
+## v7.17.0
+
+**Public Changes:**
+
+- ✨ [DEBUG-6328] Default the Live Debugger service to the build plugin's ([#5148](https://github.com/DataDog/browser-sdk/pull/5148))
+- ✨ [RUM-18974] Allow setting user and account at init ([#5176](https://github.com/DataDog/browser-sdk/pull/5176))
+- 🐛 Round clocksOrigin timestamp when the time origin is fractional ([#5208](https://github.com/DataDog/browser-sdk/pull/5208))
+- 🐛 [RUM-19299] Only instrument the console APIs that are collected ([#5182](https://github.com/DataDog/browser-sdk/pull/5182))
+- 🐛 Don't break SDK init when document.cookie is not accessible ([#5178](https://github.com/DataDog/browser-sdk/pull/5178))
+- 🐛 [RUM-19391] Send oversized page-exit batches as several beacons ([#5218](https://github.com/DataDog/browser-sdk/pull/5218))
+- 🐛 Keep WebSocket constants when the page subclasses WebSocket before RUM loads ([#5170](https://github.com/DataDog/browser-sdk/pull/5170))
+- ⚡️ Halve the Live Debugger's capture time for objects with many keys ([#5217](https://github.com/DataDog/browser-sdk/pull/5217))
+- ⚗️ [RUM-17885] Use the Soft Navigation API for `route_change` FCP, CLS and INP ([#5167](https://github.com/DataDog/browser-sdk/pull/5167))
+- ⚗️ [RUM-19388] Hash and encode canvas captures in the worker ([#5201](https://github.com/DataDog/browser-sdk/pull/5201))
+- ⚗️ [RUM-19387] Support running parallel Session Replay workers ([#5200](https://github.com/DataDog/browser-sdk/pull/5200))
+- ⚗️ Collect masked click-target attributes in composed_path_selector ([#5073](https://github.com/DataDog/browser-sdk/pull/5073))
+
+**Internal Changes:**
+
+- 👷 Update dependency minimatch to v11 [SECURITY] ([#5223](https://github.com/DataDog/browser-sdk/pull/5223))
+- 👷 Update dependency nuxt to v4.6.3 [SECURITY] ([#5222](https://github.com/DataDog/browser-sdk/pull/5222))
+- 👷 Update dependency node-forge to v1.4.1 [SECURITY] ([#5221](https://github.com/DataDog/browser-sdk/pull/5221))
+- 👷 Update dependency eslint-plugin-unicorn to v79 ([#5216](https://github.com/DataDog/browser-sdk/pull/5216))
+- 👷 Update all non-major dependencies ([#5215](https://github.com/DataDog/browser-sdk/pull/5215))
+- 👷 Fix handling-dependency-prs skill name and apply review follow-ups ([#5203](https://github.com/DataDog/browser-sdk/pull/5203))
+- 👷 Add handling-dependency-prs skill ([#5190](https://github.com/DataDog/browser-sdk/pull/5190))
+- 👷 move the pipeline category when closing or reopening a ticket in the triage skill ([#5191](https://github.com/DataDog/browser-sdk/pull/5191))
+- 👷 Update dependency @playwright/test to v1.64.1 ([#5151](https://github.com/DataDog/browser-sdk/pull/5151))
+- 👷 add triaging-telemetry-errors skill ([#5169](https://github.com/DataDog/browser-sdk/pull/5169))
+- 👷 Update all non-major dependencies ([#5152](https://github.com/DataDog/browser-sdk/pull/5152))
+- 👷 Bump chrome to 156.0.8078.47-1 ([#5162](https://github.com/DataDog/browser-sdk/pull/5162))
+- 👷 Update dependency undici to v8.12.2 [SECURITY] ([#5174](https://github.com/DataDog/browser-sdk/pull/5174))
+- 👷 Update dependency next to v16.4.1 [SECURITY] ([#5173](https://github.com/DataDog/browser-sdk/pull/5173))
+- 👷 Update dependency nuxt to v4.6.2 [SECURITY] ([#5175](https://github.com/DataDog/browser-sdk/pull/5175))
+- ✅ [RUM-19516] Quarantine flaky image resource check in salesforce e2e ([#5236](https://github.com/DataDog/browser-sdk/pull/5236))
+- ✅ Ignore Shopify checkout OTLP requests in Shopify e2e console checks ([#5228](https://github.com/DataDog/browser-sdk/pull/5228))
+- ✅ [RUM-19391] Make flushEvents fire beforeunload in WebKit ([#5204](https://github.com/DataDog/browser-sdk/pull/5204))
+- 🔥 Remove CLAUDE.md stubs and outdated Cursor rules ([#5219](https://github.com/DataDog/browser-sdk/pull/5219))
+
 ## v7.16.2
 
 **Public Changes:**

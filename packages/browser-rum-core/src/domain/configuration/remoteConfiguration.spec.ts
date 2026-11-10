@@ -119,6 +119,21 @@ describe('remoteConfiguration', () => {
       })
     })
 
+    it('should return an error if reading the response body fails', async () => {
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.reject(new TypeError('Failed to fetch')),
+        })
+      )
+
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: false,
+        error: new Error('Error fetching the remote configuration.'),
+      })
+    })
+
     it('should succeed if the remote config contains only a profiling section', async () => {
       interceptor.withFetch(() =>
         Promise.resolve({
