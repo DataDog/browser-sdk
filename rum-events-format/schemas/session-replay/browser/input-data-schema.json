@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/input-data-schema.json",
+  "title": "InputData",
+  "type": "object",
+  "description": "Browser-specific. Schema of an InputData.",
+  "allOf": [
+    {
+      "required": ["source", "id"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 5,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        },
+        "id": {
+          "type": "integer",
+          "description": "Id for the target node for this InputData."
+        }
+      }
+    },
+    {
+      "$ref": "input-state-schema.json"
+    }
+  ]
+}

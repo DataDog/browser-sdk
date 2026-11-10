@@ -232,8 +232,8 @@ export default defineConfig(
         {
           commonjs: true,
           ignore: [
-            // The json-schema-to-typescript is built on demand (see scripts/cli build_json2type)
-            // and is not always available in the node_modules. Skip the import check.
+            // json-schema-to-typescript is not installed: scripts/json-schemas.ts downloads and
+            // builds it on demand, and scripts/lib/global.d.ts declares its types.
             'json-schema-to-typescript',
           ],
         },

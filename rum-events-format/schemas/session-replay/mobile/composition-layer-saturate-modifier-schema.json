@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-saturate-modifier-schema.json",
+  "title": "CompositionLayerSaturateModifier",
+  "type": "object",
+  "description": "Applies a saturation adjustment to the rendered layer contents.",
+  "required": ["type", "value"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "saturate",
+      "description": "The type of the modifier.",
+      "readOnly": true
+    },
+    "value": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Saturation multiplier. 1 leaves content unchanged. 0 removes saturation.",
+      "readOnly": true
+    }
+  }
+}

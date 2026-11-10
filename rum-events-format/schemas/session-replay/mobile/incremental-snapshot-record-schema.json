@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/incremental-snapshot-record-schema.json",
+  "title": "MobileIncrementalSnapshotRecord",
+  "type": "object",
+  "description": "Mobile-specific. Schema of a Record type which contains mutations of a screen.",
+  "allOf": [
+    {
+      "$ref": "../common/_common-record-schema.json"
+    },
+    {
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 11,
+          "readOnly": true
+        },
+        "data": {
+          "$ref": "incremental-data-schema.json"
+        },
+        "slotId": {
+          "type": "string",
+          "description": "Unique ID of the slot that generated this record.",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

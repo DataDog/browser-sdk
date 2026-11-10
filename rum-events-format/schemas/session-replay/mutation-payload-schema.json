@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mutation-payload-schema.json",
+  "title": "MutationPayload",
+  "description": "Schema of a MutationPayload.",
+  "oneOf": [
+    {
+      "$ref": "browser/mutation-payload-schema.json"
+    },
+    {
+      "$ref": "mobile/mutation-payload-schema.json"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/stylesheets/stylesheet-media-list-schema.json",
+  "title": "StyleSheetMediaList",
+  "description": "Schema representing the list of media for which a CSS stylesheet is active.",
+  "type": "array",
+  "items": { "$ref": "../string-references/string-or-string-reference-schema.json" }
+}

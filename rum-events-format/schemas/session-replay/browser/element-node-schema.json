@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/element-node-schema.json",
+  "title": "ElementNode",
+  "type": "object",
+  "description": "Schema of an Element Node.",
+  "required": ["type", "tagName", "attributes", "childNodes"],
+  "properties": {
+    "type": {
+      "type": "integer",
+      "description": "The type of this Node.",
+      "const": 2,
+      "readOnly": true
+    },
+    "tagName": {
+      "type": "string",
+      "description": "TagName for this Node"
+    },
+    "attributes": {
+      "$ref": "attributes-schema.json"
+    },
+    "childNodes": {
+      "type": "array",
+      "items": {
+        "$ref": "serialized-node-with-id-schema.json"
+      }
+    },
+    "isSVG": {
+      "const": true,
+      "description": "Is this node a SVG instead of a HTML"
+    }
+  }
+}

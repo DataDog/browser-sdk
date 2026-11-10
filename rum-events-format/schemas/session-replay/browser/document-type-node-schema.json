@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/document-type-node-schema.json",
+  "title": "DocumentTypeNode",
+  "type": "object",
+  "description": "Schema of a Document Type Node.",
+  "required": ["type", "name", "publicId", "systemId"],
+  "properties": {
+    "type": {
+      "type": "integer",
+      "description": "The type of this Node.",
+      "const": 1,
+      "readOnly": true
+    },
+    "name": {
+      "type": "string",
+      "description": "Name for this DocumentType"
+    },
+    "publicId": {
+      "type": "string",
+      "description": "PublicId for this DocumentType"
+    },
+    "systemId": {
+      "type": "string",
+      "description": "SystemId for this DocumentType"
+    }
+  }
+}

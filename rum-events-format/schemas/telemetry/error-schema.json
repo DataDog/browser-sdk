@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "telemetry/error-schema.json",
+  "title": "TelemetryErrorEvent",
+  "type": "object",
+  "description": "Schema of all properties of a telemetry error event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "required": ["telemetry"],
+      "properties": {
+        "telemetry": {
+          "type": "object",
+          "description": "The telemetry log information",
+          "required": ["status", "message"],
+          "additionalProperties": true,
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Telemetry type",
+              "const": "log"
+            },
+            "status": {
+              "type": "string",
+              "description": "Level/severity of the log",
+              "const": "error"
+            },
+            "message": {
+              "type": "string",
+              "description": "Body of the log"
+            },
+            "error": {
+              "type": "object",
+              "description": "Error properties",
+              "properties": {
+                "stack": {
+                  "type": "string",
+                  "description": "The stack trace or the complementary information about the error"
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "The error type or kind (or code in some cases)"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/wireframe-schema.json",
+  "title": "Wireframe",
+  "type": "object",
+  "description": "Schema of a Wireframe type.",
+  "oneOf": [
+    {
+      "$ref": "shape-wireframe-schema.json"
+    },
+    {
+      "$ref": "text-wireframe-schema.json"
+    },
+    {
+      "$ref": "image-wireframe-schema.json"
+    },
+    {
+      "$ref": "placeholder-wireframe-schema.json"
+    },
+    {
+      "$ref": "webview-wireframe-schema.json"
+    },
+    {
+      "$ref": "embedded-content-wireframe-schema.json"
+    }
+  ]
+}

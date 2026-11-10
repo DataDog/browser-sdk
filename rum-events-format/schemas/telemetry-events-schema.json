@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "telemetry-events-schema.json",
+  "title": "TelemetryEvent",
+  "type": "object",
+  "description": "Schema of all properties of a telemetry event",
+  "oneOf": [
+    {
+      "$ref": "telemetry/error-schema.json"
+    },
+    {
+      "$ref": "telemetry/debug-schema.json"
+    },
+    {
+      "$ref": "telemetry/configuration-schema.json"
+    },
+    {
+      "$ref": "telemetry/usage-schema.json"
+    }
+  ]
+}

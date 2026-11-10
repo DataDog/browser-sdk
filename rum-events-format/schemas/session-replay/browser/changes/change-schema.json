@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/change-schema.json",
+  "title": "Change",
+  "description": "Browser-specific. Schema representing an individual change within a BrowserChangeData collection.",
+  "oneOf": [
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 0 }],
+      "additionalItems": { "$ref": "add-string-change-schema.json" },
+      "description": "Newly added strings."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 1 }],
+      "additionalItems": { "$ref": "add-node-change-schema.json" },
+      "description": "Newly added nodes."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 2 }],
+      "additionalItems": { "$ref": "remove-node-change-schema.json" },
+      "description": "Newly removed nodes."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 3 }],
+      "additionalItems": { "$ref": "attribute-change-schema.json" },
+      "description": "Changes to the attributes of a node."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 4 }],
+      "additionalItems": { "$ref": "text-change-schema.json" },
+      "description": "Changes to the text content of a node."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 5 }],
+      "additionalItems": { "$ref": "size-change-schema.json" },
+      "description": "Changes to the size of a node."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 6 }],
+      "additionalItems": { "$ref": "scroll-position-change-schema.json" },
+      "description": "Changes to the scroll position of a node."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 7 }],
+      "additionalItems": { "$ref": "add-stylesheet-change-schema.json" },
+      "description": "Newly added stylesheets."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 8 }],
+      "additionalItems": { "$ref": "attached-stylesheets-change-schema.json" },
+      "description": "Changes to the stylesheets attached to a node."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 9 }],
+      "additionalItems": { "$ref": "media-playback-state-change-schema.json" },
+      "description": "Changes to the playback state of the media associated with a node."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 10 }],
+      "additionalItems": { "$ref": "visual-viewport-change-schema.json" },
+      "description": "Changes to the visual viewport."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 11 }],
+      "additionalItems": { "$ref": "add-role-annotated-strings-change-schema.json" },
+      "description": "Newly added role-annotated strings."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 12 }],
+      "additionalItems": { "$ref": "input-value-change-schema.json" },
+      "description": "Changes to form element values."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 13 }],
+      "additionalItems": { "$ref": "input-selection-change-schema.json" },
+      "description": "Changes to form element selection state."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 14 }],
+      "additionalItems": false,
+      "description": "Clears the string table, removing all strings."
+    },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": [{ "const": 15 }],
+      "additionalItems": { "$ref": "image-content-change-schema.json" },
+      "description": "Changes to the image content of a node."
+    }
+  ]
+}

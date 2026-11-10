@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/incremental-snapshot-record-schema.json",
+  "title": "IncrementalSnapshotRecord",
+  "description": "Schema of a Record type which contains mutations of a screen.",
+  "oneOf": [
+    {
+      "$ref": "browser/incremental-snapshot-record-schema.json"
+    },
+    {
+      "$ref": "mobile/incremental-snapshot-record-schema.json"
+    }
+  ]
+}

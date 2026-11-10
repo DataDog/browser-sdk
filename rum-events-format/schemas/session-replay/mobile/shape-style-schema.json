@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/shape-style-schema.json",
+  "title": "ShapeStyle",
+  "type": "object",
+  "description": "The style of this wireframe.",
+  "allOf": [
+    {
+      "properties": {
+        "backgroundColor": {
+          "type": "string",
+          "pattern": "^#[A-Fa-f0-9]{6}([A-Fa-f0-9]{2})?$",
+          "description": "The background color for this wireframe as a String hexadecimal. Follows the #RRGGBBAA color format with the alpha value as optional. The default value is #FFFFFF00.",
+          "readOnly": true
+        },
+        "backgroundGradient": {
+          "description": "The background gradient for this wireframe.",
+          "readOnly": true,
+          "allOf": [
+            {
+              "$ref": "shape-gradient-schema.json"
+            }
+          ]
+        },
+        "opacity": {
+          "type": "number",
+          "description": "The opacity of this wireframe. Takes values from 0 to 1, default value is 1.",
+          "readOnly": true
+        },
+        "cornerRadius": {
+          "type": "number",
+          "description": "The corner(border) radius of this wireframe in pixels. The default value is 0.",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

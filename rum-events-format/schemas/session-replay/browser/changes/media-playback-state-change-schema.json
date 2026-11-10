@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/media-playback-state-change-schema.json",
+  "title": "MediaPlaybackStateChange",
+  "description": "Browser-specific. Schema representing a change to the playback state of the media associated with an <audio> or <video> element.",
+  "type": "array",
+  "minItems": 2,
+  "items": [
+    { "$ref": "node-references/node-id-schema.json" },
+    {
+      "oneOf": [
+        {
+          "title": "PlaybackStatePlaying",
+          "description": "A playback state indicating that the associated media is playing.",
+          "const": 0
+        },
+        {
+          "title": "PlaybackStatePaused",
+          "description": "A playback state indicating that the associated media is paused.",
+          "const": 1
+        }
+      ]
+    }
+  ],
+  "additionalItems": false
+}

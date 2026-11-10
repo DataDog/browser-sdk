@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/shape-border-schema.json",
+  "title": "ShapeBorder",
+  "type": "object",
+  "description": "The border properties of this wireframe. The default value is null (no-border).",
+  "allOf": [
+    {
+      "required": ["color", "width"],
+      "properties": {
+        "color": {
+          "type": "string",
+          "pattern": "^#[A-Fa-f0-9]{6}([A-Fa-f0-9]{2})?$",
+          "description": "The border color as a String hexadecimal. Follows the #RRGGBBAA color format with the alpha value as optional.",
+          "readOnly": true
+        },
+        "width": {
+          "type": "integer",
+          "description": "The width of the border in pixels.",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

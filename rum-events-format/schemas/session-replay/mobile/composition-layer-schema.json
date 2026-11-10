@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-schema.json",
+  "title": "CompositionLayer",
+  "type": "object",
+  "description": "A rendering group that groups child wireframes and child layers. Does not draw pixels itself. Ordered rendering modifiers and compositing are applied to its composed output.",
+  "required": ["id", "x", "y", "width", "height", "children"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Stable layer identifier, persistent throughout the view lifetime.",
+      "readOnly": true
+    },
+    "x": {
+      "type": "integer",
+      "description": "The position in pixels on the X axis of the layer in absolute coordinates. Uses the same coordinate space as mobile wireframes.",
+      "readOnly": true
+    },
+    "y": {
+      "type": "integer",
+      "description": "The position in pixels on the Y axis of the layer in absolute coordinates. Uses the same coordinate space as mobile wireframes.",
+      "readOnly": true
+    },
+    "width": {
+      "type": "integer",
+      "description": "The width in pixels of the layer. Uses the same coordinate space as mobile wireframes.",
+      "readOnly": true
+    },
+    "height": {
+      "type": "integer",
+      "description": "The height in pixels of the layer. Uses the same coordinate space as mobile wireframes.",
+      "readOnly": true
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "$ref": "composition-layer-child-schema.json"
+      },
+      "description": "Ordered back-to-front references to child wireframes or child layers.",
+      "readOnly": true
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "$ref": "composition-layer-modifier-schema.json"
+      },
+      "description": "Ordered list of rendering modifiers applied to the composed layer output in array order.",
+      "readOnly": true
+    },
+    "compositeOperation": {
+      "type": "string",
+      "enum": ["sourceOver", "destinationIn", "destinationOut", "plusDarker"],
+      "description": "Operation used when compositing the rendered group into its parent.",
+      "readOnly": true
+    }
+  }
+}

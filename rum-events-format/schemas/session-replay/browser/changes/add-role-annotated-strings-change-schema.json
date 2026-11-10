@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/add-role-annotated-strings-change-schema.json",
+  "title": "AddRoleAnnotatedStringsChange",
+  "description": "Browser-specific. Schema representing the addition of a sequence of strings to the string table, annotated as belonging to a particular string role.",
+  "type": "array",
+  "minItems": 1,
+  "items": [{ "$ref": "string-references/string-role-schema.json" }],
+  "additionalItems": { "$ref": "string-references/string-literal-schema.json" }
+}

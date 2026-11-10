@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_vital-websocket-common-schema.json",
+  "title": "RumVitalWebsocketCommonProperties",
+  "type": "object",
+  "description": "Schema of common properties for a WebSocket vital event. One connection reports a stream of vitals over its lifetime, one per phase, all sharing the same vital.websocket.id",
+  "allOf": [
+    {
+      "$ref": "_vital-common-schema.json"
+    },
+    {
+      "required": ["vital"],
+      "properties": {
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["type", "name", "websocket"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of the vital.",
+              "const": "websocket",
+              "readOnly": true
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the vital, identifying the phase of the connection it reports: websocket_connecting, websocket_open, websocket_closing or websocket_closed",
+              "readOnly": true
+            },
+            "websocket": {
+              "type": "object",
+              "description": "WebSocket properties",
+              "required": ["id"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "UUID of the WebSocket connection, stable across every vital reported for that connection. It is not vital.id, which identifies a single vital",
+                  "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

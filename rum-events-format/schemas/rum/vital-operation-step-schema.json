@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/vital-operation-step-schema.json",
+  "title": "RumVitalOperationStepEvent",
+  "type": "object",
+  "description": "Schema for a vital operation step event.",
+  "allOf": [
+    {
+      "$ref": "_vital-common-schema.json"
+    },
+    {
+      "properties": {
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["type", "step_type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of the vital.",
+              "const": "operation_step",
+              "readOnly": true
+            },
+            "operation_key": {
+              "type": "string",
+              "description": "Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')",
+              "readOnly": true
+            },
+            "step_type": {
+              "type": "string",
+              "description": "Type of the step that triggered the vital, if applicable",
+              "enum": ["start", "update", "retry", "end"],
+              "readOnly": true
+            },
+            "failure_reason": {
+              "type": "string",
+              "description": "Reason for the failure of the step, if applicable",
+              "enum": ["error", "abandoned", "other"],
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

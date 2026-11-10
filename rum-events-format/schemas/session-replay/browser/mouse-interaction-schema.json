@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/mouse-interaction-schema.json",
+  "title": "MouseInteraction",
+  "type": "object",
+  "description": "Browser-specific. Schema of a MouseInteraction.",
+  "oneOf": [
+    {
+      "required": ["type", "id", "x", "y"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "enum": [0, 1, 2, 3, 4, 7, 9],
+          "description": "The type of MouseInteraction: 0=mouseup, 1=mousedown, 2=click, 3=contextmenu, 4=dblclick, 7=touchstart, 9=touchend",
+          "readOnly": true
+        },
+        "id": {
+          "type": "integer",
+          "description": "Id for the target node for this MouseInteraction."
+        },
+        "x": {
+          "type": "number",
+          "description": "X-axis coordinate for this MouseInteraction."
+        },
+        "y": {
+          "type": "number",
+          "description": "Y-axis coordinate for this MouseInteraction."
+        }
+      }
+    },
+    {
+      "required": ["type", "id"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "enum": [5, 6],
+          "description": "The type of MouseInteraction: 5=focus, 6=blur",
+          "readOnly": true
+        },
+        "id": {
+          "type": "integer",
+          "description": "Id for the target node for this MouseInteraction."
+        }
+      }
+    }
+  ]
+}

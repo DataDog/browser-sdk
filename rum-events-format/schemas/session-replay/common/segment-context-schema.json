@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/segment-context-schema.json",
+  "title": "SegmentContext",
+  "type": "object",
+  "description": "Schema of a Session Replay Segment context.",
+  "required": ["application", "session", "view"],
+  "properties": {
+    "application": {
+      "type": "object",
+      "description": "Application properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID of the application",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "description": "Session properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID of the session",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+        }
+      }
+    },
+    "view": {
+      "type": "object",
+      "description": "View properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID of the view",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+        }
+      }
+    }
+  }
+}

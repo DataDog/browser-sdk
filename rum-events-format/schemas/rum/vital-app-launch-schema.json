@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/vital-app-launch-schema.json",
+  "title": "RumVitalAppLaunchEvent",
+  "type": "object",
+  "description": "Schema for app launch metrics.",
+  "allOf": [
+    {
+      "$ref": "_vital-common-schema.json"
+    },
+    {
+      "properties": {
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["type", "app_launch_metric", "duration"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of the vital.",
+              "const": "app_launch",
+              "readOnly": true
+            },
+            "app_launch_metric": {
+              "type": "string",
+              "description": "The metric of the app launch.",
+              "enum": ["ttid", "ttfd"],
+              "readOnly": true
+            },
+            "duration": {
+              "type": "number",
+              "description": "Duration of the vital in nanoseconds.",
+              "readOnly": true
+            },
+            "startup_type": {
+              "type": "string",
+              "description": "The type of the app launch.",
+              "enum": ["cold_start", "warm_start"],
+              "readOnly": true
+            },
+            "is_prewarmed": {
+              "type": "boolean",
+              "description": "Whether the app launch was prewarmed.",
+              "readOnly": true
+            },
+            "has_saved_instance_state_bundle": {
+              "type": "boolean",
+              "description": "If the app launch had a saved instance state bundle.",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

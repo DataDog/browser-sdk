@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-child-schema.json",
+  "title": "CompositionLayerChild",
+  "type": "object",
+  "description": "A reference to a child wireframe or child layer in a composition layer.",
+  "required": ["type", "id"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["wireframe", "layer"],
+      "description": "The type of the child reference.",
+      "readOnly": true
+    },
+    "id": {
+      "type": "integer",
+      "description": "The id of the referenced wireframe or layer.",
+      "readOnly": true
+    }
+  }
+}

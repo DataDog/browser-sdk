@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/add-node-change-schema.json",
+  "title": "AddNodeChange",
+  "description": "Browser-specific. Schema representing the addition of a new node to the document.",
+  "anyOf": [
+    {
+      "title": "AddCDataSectionNodeChange",
+      "description": "Schema representing the addition of a new #cdata-section node.",
+      "type": "array",
+      "minItems": 2,
+      "items": [
+        { "$ref": "node-references/insertion-point-schema.json" },
+        {
+          "oneOf": [
+            { "const": "#cdata-section" },
+            {
+              "description": "The node name expressed as a literal string in the NodeName string role.",
+              "const": { "role": 1, "string": "#cdata-section" }
+            },
+            { "$ref": "string-references/string-reference-schema.json" }
+          ]
+        }
+      ],
+      "additionalItems": false
+    },
+    {
+      "title": "AddDocTypeNodeChange",
+      "description": "Schema representing the addition of a new #doctype node, using the format [#doctype, name, public ID, system ID].",
+      "type": "array",
+      "minItems": 5,
+      "items": [
+        { "$ref": "node-references/insertion-point-schema.json" },
+        {
+          "oneOf": [
+            { "const": "#doctype" },
+            {
+              "description": "The node name expressed as a literal string in the NodeName string role.",
+              "const": { "role": 1, "string": "#doctype" }
+            },
+            { "$ref": "string-references/string-reference-schema.json" }
+          ]
+        },
+        { "$ref": "string-references/string-or-string-reference-schema.json" },
+        { "$ref": "string-references/string-or-string-reference-schema.json" },
+        { "$ref": "string-references/string-or-string-reference-schema.json" }
+      ],
+      "additionalItems": false
+    },
+    {
+      "title": "AddDocumentNodeChange",
+      "description": "Schema representing the addition of a new #document node.",
+      "type": "array",
+      "minItems": 2,
+      "items": [
+        { "$ref": "node-references/insertion-point-schema.json" },
+        {
+          "oneOf": [
+            { "const": "#document" },
+            {
+              "description": "The node name expressed as a literal string in the NodeName string role.",
+              "const": { "role": 1, "string": "#document" }
+            },
+            { "$ref": "string-references/string-reference-schema.json" }
+          ]
+        }
+      ],
+      "additionalItems": false
+    },
+    {
+      "title": "AddDocumentFragmentNodeChange",
+      "description": "Schema representing the addition of a new #document-fragment node.",
+      "type": "array",
+      "minItems": 2,
+      "items": [
+        { "$ref": "node-references/insertion-point-schema.json" },
+        {
+          "oneOf": [
+            { "const": "#document-fragment" },
+            {
+              "description": "The node name expressed as a literal string in the NodeName string role.",
+              "const": { "role": 1, "string": "#document-fragment" }
+            },
+            { "$ref": "string-references/string-reference-schema.json" }
+          ]
+        }
+      ],
+      "additionalItems": false
+    },
+    {
+      "title": "AddElementNodeChange",
+      "description": "Schema representing the addition of a new element node.",
+      "type": "array",
+      "minItems": 2,
+      "items": [
+        { "$ref": "node-references/insertion-point-schema.json" },
+        { "$ref": "string-references/string-or-string-reference-schema.json" }
+      ],
+      "additionalItems": { "$ref": "attributes/attribute-assignment-schema.json" }
+    },
+    {
+      "title": "AddShadowRootNodeChange",
+      "description": "Schema representing the addition of a new #shadow-root node.",
+      "type": "array",
+      "minItems": 2,
+      "items": [
+        { "$ref": "node-references/insertion-point-schema.json" },
+        {
+          "oneOf": [
+            { "const": "#shadow-root" },
+            {
+              "description": "The node name expressed as a literal string in the NodeName string role.",
+              "const": { "role": 1, "string": "#shadow-root" }
+            },
+            { "$ref": "string-references/string-reference-schema.json" }
+          ]
+        }
+      ],
+      "additionalItems": false
+    },
+    {
+      "title": "AddTextNodeChange",
+      "description": "Schema representing the addition of a new #text node.",
+      "type": "array",
+      "minItems": 3,
+      "items": [
+        { "$ref": "node-references/insertion-point-schema.json" },
+        {
+          "oneOf": [
+            { "const": "#text" },
+            {
+              "description": "The node name expressed as a literal string in the NodeName string role.",
+              "const": { "role": 1, "string": "#text" }
+            },
+            { "$ref": "string-references/string-reference-schema.json" }
+          ]
+        },
+        { "$ref": "string-references/string-or-string-reference-schema.json" }
+      ],
+      "additionalItems": false
+    }
+  ]
+}

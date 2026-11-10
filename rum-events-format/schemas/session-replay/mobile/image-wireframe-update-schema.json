@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/image-wireframe-update-schema.json",
+  "title": "ImageWireframeUpdate",
+  "type": "object",
+  "description": "Schema of all properties of a ImageWireframeUpdate.",
+  "allOf": [
+    {
+      "$ref": "_common-shape-wireframe-update-schema.json"
+    },
+    {
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of the wireframe.",
+          "const": "image",
+          "readOnly": true
+        },
+        "base64": {
+          "type": "string",
+          "description": "base64 representation of the image. Not required as the ImageWireframe can be initialised without any base64",
+          "readOnly": false
+        },
+        "resourceId": {
+          "type": "string",
+          "description": "Unique identifier of the image resource",
+          "readOnly": false
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "MIME type of the image file",
+          "readOnly": false
+        },
+        "isEmpty": {
+          "type": "boolean",
+          "description": "Flag describing an image wireframe that should render an empty state placeholder",
+          "readOnly": false
+        }
+      }
+    }
+  ]
+}

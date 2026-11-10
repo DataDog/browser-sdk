@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/mutation-data-schema.json",
+  "title": "BrowserMutationData",
+  "type": "object",
+  "description": "Browser-specific. Schema of a MutationData.",
+  "allOf": [
+    {
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 0,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        }
+      }
+    },
+    {
+      "$ref": "mutation-payload-schema.json"
+    }
+  ]
+}

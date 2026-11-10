@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/embedded-content-wireframe-schema.json",
+  "title": "EmbeddedContentWireframe",
+  "type": "object",
+  "description": "Schema of all properties of an EmbeddedContentWireframe.",
+  "allOf": [
+    {
+      "$ref": "_common-shape-wireframe-schema.json"
+    },
+    {
+      "required": ["type", "slotId"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of the wireframe.",
+          "const": "embedded_content",
+          "readOnly": true
+        },
+        "slotId": {
+          "type": "string",
+          "description": "Unique Id of the slot containing this embedded content.",
+          "readOnly": true
+        },
+        "isVisible": {
+          "type": "boolean",
+          "description": "Whether this embedded content is visible or not.",
+          "readOnly": true
+        },
+        "permanentId": {
+          "type": "string",
+          "description": "A globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate wireframes with RUM action events.",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

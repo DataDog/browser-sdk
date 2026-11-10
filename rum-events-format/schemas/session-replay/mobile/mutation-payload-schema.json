@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/mutation-payload-schema.json",
+  "title": "MobileMutationPayload",
+  "type": "object",
+  "description": "Mobile-specific. Schema of a MutationPayload.",
+  "required": ["adds", "removes", "updates"],
+  "properties": {
+    "adds": {
+      "type": "array",
+      "readOnly": true,
+      "items": {
+        "type": "object",
+        "required": ["wireframe"],
+        "properties": {
+          "previousId": {
+            "type": "integer",
+            "description": "The previous wireframe id next or after which this new wireframe is drawn or attached to, respectively."
+          },
+          "wireframe": {
+            "$ref": "wireframe-schema.json"
+          }
+        }
+      },
+      "description": "Contains the newly added wireframes."
+    },
+    "removes": {
+      "type": "array",
+      "readOnly": true,
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The id of the wireframe that needs to be removed."
+          }
+        }
+      },
+      "description": "Contains the removed wireframes as an array of ids."
+    },
+    "updates": {
+      "type": "array",
+      "readOnly": true,
+      "items": {
+        "$ref": "wireframe-update-mutation-schema.json"
+      },
+      "description": "Contains the updated wireframes mutations."
+    }
+  }
+}

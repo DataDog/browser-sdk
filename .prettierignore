@@ -9,6 +9,7 @@ test/**/.nuxt
 test/**/.output
 test/apps/nextjs/next-env.d.ts
 yarn.lock
+/rum-events-format/schemas
 /generated-docs
 /developer-extension/.output
 /developer-extension/.wxt

@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/scroll-position-schema.json",
+  "title": "ScrollPosition",
+  "type": "object",
+  "description": "Browser-specific. Schema of a ScrollPosition.",
+  "required": ["id", "x", "y"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Id for the target node for this ScrollPosition."
+    },
+    "x": {
+      "type": "number",
+      "description": "X-axis coordinate for this ScrollPosition."
+    },
+    "y": {
+      "type": "number",
+      "description": "Y-axis coordinate for this ScrollPosition."
+    }
+  }
+}
