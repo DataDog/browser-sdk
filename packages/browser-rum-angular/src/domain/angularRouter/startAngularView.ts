@@ -1,11 +1,6 @@
-import { startAngularViewWhenReady } from '../angularPlugin'
 import type { RouteSnapshot } from './types'
 
 const PRIMARY_OUTLET = 'primary'
-
-export function startAngularView(name: string, url: string) {
-  startAngularViewWhenReady({ name, url })
-}
 
 export function computeViewName(root: RouteSnapshot): string {
   const segments: string[] = []
