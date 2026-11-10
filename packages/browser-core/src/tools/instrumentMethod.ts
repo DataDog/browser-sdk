@@ -1,5 +1,6 @@
 import { callMonitored } from '@datadog/js-core/monitor'
 import { setTimeout, noop } from '@datadog/js-core/util'
+import type { HandlingStackType } from './stackTrace/handlingStack'
 import { createHandlingStack } from './stackTrace/handlingStack'
 
 /**
@@ -101,7 +102,10 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   targetPrototype: TARGET,
   method: METHOD,
   onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
-  { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
+  {
+    computeHandlingStack,
+    handlingStackType = 'instrumented method',
+  }: { computeHandlingStack?: boolean; handlingStackType?: HandlingStackType } = {}
 ) {
   let original = targetPrototype[method]
 
@@ -129,7 +133,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
       {
         target: this,
         parameters,
-        handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
+        handlingStack: computeHandlingStack ? createHandlingStack(handlingStackType) : undefined,
       },
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call -- TARGET[METHOD] is any under the index signature; value is verified as a function above
       () => original.apply(this, parameters)

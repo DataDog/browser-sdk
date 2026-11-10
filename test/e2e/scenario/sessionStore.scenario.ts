@@ -246,6 +246,52 @@ test.describe('Session Stores', () => {
       expect(logsContext?.session_id).toBe(sessionId)
       expect(rumContext?.session_id).toBe(sessionId)
     })
+
+  test.describe('in a sandboxed iframe without `allow-same-origin`', () => {
+    // document.cookie throws a SecurityError in this opaque-origin context
+    createTest('falls back to the next sessionPersistence and sends events')
+      .withRum({ sessionPersistence: ['cookie', 'memory'] })
+      .withLogs({ sessionPersistence: ['cookie', 'memory'] })
+      .withSetup(bundleSetup)
+      .run(async ({ page, flushEvents, intakeRegistry, servers, flushBrowserLogs }) => {
+        await injectSdkInASandboxedIframe(page, servers.crossOrigin.origin)
+        await flushEvents()
+
+        expect(intakeRegistry.rumViewEvents.map((event) => event.view.url)).toContain('about:srcdoc')
+        expect(intakeRegistry.logsEvents.map((event) => event.message)).toContain('sandboxed iframe log')
+
+        // The SDK reports the failed cookie access as console errors
+        flushBrowserLogs()
+      })
+
+    async function injectSdkInASandboxedIframe(page: Page, bundlesOrigin: string) {
+      await page.evaluate(
+        (bundlesOrigin) =>
+          new Promise<void>((resolve) => {
+            const rumConfiguration = JSON.stringify(window.DD_RUM!.getInitConfiguration())
+            const logsConfiguration = JSON.stringify(window.DD_LOGS!.getInitConfiguration())
+            const iframe = document.createElement('iframe')
+            iframe.setAttribute('sandbox', 'allow-scripts')
+            iframe.srcdoc = `
+              <script src="${bundlesOrigin}/datadog-rum.js" crossorigin></script>
+              <script src="${bundlesOrigin}/datadog-logs.js" crossorigin></script>
+              <script>
+                DD_RUM.init(${rumConfiguration})
+                DD_LOGS.init(${logsConfiguration})
+                DD_LOGS.logger.log('sandboxed iframe log')
+                parent.postMessage('sandboxed iframe ready', '*')
+              </script>`
+            window.addEventListener('message', (event) => {
+              if (event.data === 'sandboxed iframe ready') {
+                resolve()
+              }
+            })
+            document.body.appendChild(iframe)
+          }),
+        bundlesOrigin
+      )
+    }
+  })
 })
 
 async function getSessionIdFromLocalStorage(page: Page): Promise<string | undefined> {

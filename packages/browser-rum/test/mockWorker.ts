@@ -1,4 +1,4 @@
-import type { DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
+import type { CanvasCaptureAction, CanvasCaptureResponse, DeflateWorker, SdkWorkerAction } from '@datadog/browser-core'
 import { createNewEvent, MockEventTarget } from '../../browser-core/test'
 
 export class MockWorker extends MockEventTarget implements DeflateWorker {
@@ -6,11 +6,12 @@ export class MockWorker extends MockEventTarget implements DeflateWorker {
   public onmessageerror = null
   public onerror = null
 
-  readonly pendingMessages: DeflateWorkerAction[] = []
+  readonly pendingMessages: SdkWorkerAction[] = []
 
   private streams = new Map<number, Uint8Array[]>()
+  private canvasCaptures: Array<Promise<void>> = []
 
-  postMessage(message: DeflateWorkerAction): void {
+  postMessage(message: SdkWorkerAction): void {
     this.pendingMessages.push(message)
   }
 
@@ -77,8 +78,22 @@ export class MockWorker extends MockEventTarget implements DeflateWorker {
         case 'reset':
           this.streams.delete(message.streamId)
           break
+        case 'captureCanvas':
+          this.canvasCaptures.push(
+            captureCanvas(message).then((data) => {
+              this.dispatchEvent(createNewEvent('message', { data }))
+            })
+          )
+          break
       }
     }
+  }
+
+  /** Resolves once the processed canvas captures have been responded to */
+  async waitForCanvasCaptures() {
+    const canvasCaptures = this.canvasCaptures
+    this.canvasCaptures = []
+    await Promise.all(canvasCaptures)
   }
 
   dispatchErrorEvent() {
@@ -88,5 +103,30 @@ export class MockWorker extends MockEventTarget implements DeflateWorker {
 
   dispatchErrorMessage(error: Error | string, streamId?: number) {
     this.dispatchEvent(createNewEvent('message', { data: { type: 'errored', error, streamId } }))
+  }
+}
+
+// Like the real worker, but hashes the full bitmap pixels, which is enough to detect changes.
+async function captureCanvas({
+  id,
+  bitmap,
+  canvasWidth,
+  canvasHeight,
+  lastChangeHash,
+  encodeQuality,
+}: CanvasCaptureAction): Promise<CanvasCaptureResponse> {
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
+  const context = canvas.getContext('2d')!
+  context.drawImage(bitmap, 0, 0)
+  bitmap.close()
+  const hash = `${canvasWidth}x${canvasHeight}-${context.getImageData(0, 0, canvas.width, canvas.height).data.join(',')}`
+  if (hash === lastChangeHash) {
+    return { type: 'canvasUnchanged', id }
+  }
+  return {
+    type: 'canvasCaptured',
+    id,
+    hash,
+    image: await canvas.convertToBlob({ type: 'image/webp', quality: encodeQuality }),
   }
 }

@@ -1,6 +1,6 @@
 import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
 import { monitor, monitorError } from '@datadog/js-core/monitor'
-import { buildUrl, globalObject, ONE_KIBI_BYTE, Observable } from '@datadog/js-core/util'
+import { buildUrl, computeBytesCount, globalObject, ONE_KIBI_BYTE, Observable } from '@datadog/js-core/util'
 import { fetch } from '@datadog/js-core/dom'
 import type { Context } from '@datadog/js-core/util'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
@@ -10,6 +10,8 @@ import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
  * ensure that we leave room for logs, rum and potential other users
  */
 export const RECOMMENDED_REQUEST_BYTES_LIMIT = 16 * ONE_KIBI_BYTE
+
+const MESSAGE_SEPARATOR_BYTES_COUNT = 1
 
 /**
  * Use POST request without content type to:
@@ -69,14 +71,20 @@ export function createHttpRequest<Body extends Payload = Payload>(
   bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT
 ): HttpRequest<Body> {
   const observable = new Observable<HttpRequestEvent<Body>>()
-  const retryState = newRetryState<Body>()
+  // Each endpoint needs its own retry state: queued payloads don't remember their endpoint, so with
+  // a shared state they would be retried to whichever endpoint drains the queue.
+  const senders = endpointBuilders.map((endpointBuilder) => ({
+    endpointBuilder,
+    retryState: newRetryState<Body>(),
+  }))
 
   return {
     observable,
     send: (payload: Body) => {
-      for (const endpointBuilder of endpointBuilders) {
+      for (const { endpointBuilder, retryState } of senders) {
         sendWithRetryStrategy(
-          payload,
+          // Each endpoint gets its own copy, as retries record their attempts on the payload
+          { ...payload },
           retryState,
           (payload, onResponse) => {
             fetchStrategy(endpointBuilder, payload, onResponse)
@@ -92,11 +100,49 @@ export function createHttpRequest<Body extends Payload = Payload>(
      * keep using sendBeaconStrategy on exit
      */
     sendOnExit: (payload: Body) => {
+      const beaconPayloads = splitPayloadForBeacon(payload, bytesLimit)
       for (const endpointBuilder of endpointBuilders) {
-        sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
+        for (const beaconPayload of beaconPayloads) {
+          sendBeaconStrategy(endpointBuilder, bytesLimit, beaconPayload)
+        }
       }
     },
   }
+}
+
+/**
+ * sendBeacon is only used for payloads under the bytes limit. A bigger payload falls back to a
+ * plain fetch, which the page unload can cancel (WebKit cancels it as soon as a navigation starts).
+ * A batch flushed on page exit can go over the limit, e.g. when the final view update grows the
+ * view already in the batch. Split such a payload at message boundaries into parts under the limit,
+ * so each part can still be sent with sendBeacon. A single message over the limit can't be split.
+ */
+function splitPayloadForBeacon<Body extends Payload>(payload: Body, bytesLimit: number): Body[] {
+  if (payload.bytesCount < bytesLimit || typeof payload.data !== 'string') {
+    return [payload]
+  }
+
+  const payloads: Body[] = []
+  let messages: string[] = []
+  let bytesCount = 0
+
+  for (const message of payload.data.split('\n')) {
+    const messageBytesCount = computeBytesCount(message)
+    if (messages.length > 0 && bytesCount + MESSAGE_SEPARATOR_BYTES_COUNT + messageBytesCount >= bytesLimit) {
+      payloads.push({ ...payload, data: messages.join('\n'), bytesCount })
+      messages = []
+      bytesCount = 0
+    }
+    bytesCount += (messages.length > 0 ? MESSAGE_SEPARATOR_BYTES_COUNT : 0) + messageBytesCount
+    messages.push(message)
+  }
+
+  if (payloads.length === 0) {
+    return [payload]
+  }
+
+  payloads.push({ ...payload, data: messages.join('\n'), bytesCount })
+  return payloads
 }
 
 function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, payload: Payload) {

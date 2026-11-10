@@ -1,9 +1,10 @@
 import type { EndpointBuilder } from '@datadog/js-core/transport'
 import { noop } from '@datadog/js-core/util'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
-import type { Request } from '../../test'
+import type { Clock, Request } from '../../test'
 import {
   collectAsyncCalls,
+  mockClock,
   mockEndpointBuilder,
   interceptRequests,
   DEFAULT_FETCH_MOCK,
@@ -13,6 +14,7 @@ import {
 } from '../../test'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 import { createHttpRequest, fetchStrategy, RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
+import { INITIAL_BACKOFF_TIME, MAX_ONGOING_BYTES_COUNT } from './sendWithRetryStrategy'
 
 describe('httpRequest', () => {
   const ENDPOINT_URL = 'http://my.website'
@@ -128,8 +130,63 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('sendBeacon')
     })
 
-    it('should use fetch over sendBeacon when the bytes count is too high', async () => {
-      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: RECOMMENDED_REQUEST_BYTES_LIMIT })
+    it('should use fetch over sendBeacon for a single message over the bytes limit', async () => {
+      const bigMessage = createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT)
+      request.sendOnExit({ data: bigMessage, bytesCount: bigMessage.length })
+
+      await interceptor.waitForAllFetchCalls()
+
+      expect(requests.length).toEqual(1)
+      expect(requests[0].type).toBe('fetch')
+    })
+
+    it('should split messages over the bytes limit into several sendBeacon requests', () => {
+      const message = createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT * 0.4)
+      const data = [message, message, message].join('\n')
+
+      request.sendOnExit({ data, bytesCount: data.length })
+
+      expect(requests.map(({ type, body }) => ({ type, body }))).toEqual([
+        { type: 'sendBeacon', body: `${message}\n${message}` },
+        { type: 'sendBeacon', body: message },
+      ])
+    })
+
+    it('should send each split part to every endpoint', () => {
+      request = createHttpRequest([endpointBuilder, mockEndpointBuilder('http://my.website2')], noop)
+      const message = createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT * 0.6)
+      const data = [message, message].join('\n')
+
+      request.sendOnExit({ data, bytesCount: data.length })
+
+      expect(requests.map(({ type, url }) => ({ type, url }))).toEqual([
+        { type: 'sendBeacon', url: ENDPOINT_URL },
+        { type: 'sendBeacon', url: ENDPOINT_URL },
+        { type: 'sendBeacon', url: 'http://my.website2' },
+        { type: 'sendBeacon', url: 'http://my.website2' },
+      ])
+    })
+
+    it('should only use fetch for a split part made of a single message over the bytes limit', async () => {
+      const smallMessage = createMessage(100)
+      const bigMessage = createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT)
+      const data = [smallMessage, bigMessage, smallMessage].join('\n')
+
+      request.sendOnExit({ data, bytesCount: data.length })
+
+      await interceptor.waitForAllFetchCalls()
+
+      expect(requests.map(({ type, body }) => ({ type, body }))).toEqual([
+        { type: 'sendBeacon', body: smallMessage },
+        { type: 'fetch', body: bigMessage },
+        { type: 'sendBeacon', body: smallMessage },
+      ])
+    })
+
+    it('should not split a payload that is not a string', async () => {
+      const data = new Blob([createMessage(RECOMMENDED_REQUEST_BYTES_LIMIT)])
+
+      request.sendOnExit({ data, bytesCount: data.size, encoding: 'deflate' })
 
       await interceptor.waitForAllFetchCalls()
 
@@ -164,6 +221,11 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
   })
+
+  function createMessage(bytesCount: number) {
+    const emptyMessage = '{"foo":""}'
+    return `{"foo":"${'a'.repeat(Math.floor(bytesCount) - emptyMessage.length)}"}`
+  }
 
   describe('HttpRequestEvent observable', () => {
     const observedEvents: HttpRequestEvent[] = []
@@ -207,9 +269,10 @@ describe('httpRequest', () => {
       await interceptor.waitForAllFetchCalls()
       await wait(0)
 
+      const sentPayload = { ...payload, retry: { count: 1, lastFailureStatus: 429 } }
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
+        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
       ])
     })
 
@@ -225,12 +288,137 @@ describe('httpRequest', () => {
       await interceptor.waitForAllFetchCalls()
       await wait(0)
 
+      const sentPayload = { ...payload, retry: { count: 2, lastFailureStatus: 429 } }
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
+        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
+        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
       ])
     })
+  })
+})
+
+describe('httpRequest with several endpoints', () => {
+  interface FetchCall {
+    endpoint: 'primary' | 'replica'
+    url: string
+    body: string
+    status?: number
+    resolve: (status: number) => void
+  }
+
+  let clock: Clock
+  let fetchCalls: FetchCall[]
+  let request: HttpRequest
+
+  beforeEach(() => {
+    clock = mockClock()
+    fetchCalls = []
+    interceptRequests()
+      .withFetch()
+      .and.callFake(
+        (url, config) =>
+          new Promise<Response>((resolve) => {
+            fetchCalls.push({
+              endpoint: (url as string).includes('datadoghq.eu') ? 'primary' : 'replica',
+              url: url as string,
+              body: config!.body as string,
+              resolve: (status) => resolve({ status, type: 'cors' } as Response),
+            })
+          })
+      )
+    request = createHttpRequest(
+      [
+        createEndpointBuilder({ clientToken: 'token', site: 'datadoghq.eu' }, 'rum'),
+        createEndpointBuilder({ clientToken: 'token', site: 'datadoghq.com' }, 'rum'),
+      ],
+      noop
+    )
+  })
+
+  async function flushPromises() {
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve()
+    }
+  }
+
+  function pendingCalls() {
+    return fetchCalls.filter((call) => call.status === undefined)
+  }
+
+  async function respond(call: FetchCall | undefined, status: number) {
+    call!.status = status
+    call!.resolve(status)
+    await flushPromises()
+  }
+
+  function respondTo(endpoint: FetchCall['endpoint'], body: string, status: number) {
+    return respond(
+      pendingCalls().find((call) => call.endpoint === endpoint && call.body === body),
+      status
+    )
+  }
+
+  async function respondToAll(status: number) {
+    while (pendingCalls().length > 0) {
+      await respond(pendingCalls()[0], status)
+    }
+  }
+
+  function received() {
+    return fetchCalls.filter((call) => call.status === 200).map((call) => `${call.endpoint}:${call.body}`)
+  }
+
+  it('retries a failed request to its own endpoint when another endpoint succeeds', async () => {
+    request.send({ data: 'A', bytesCount: 10 })
+    await respondTo('primary', 'A', 503)
+    await respondTo('replica', 'A', 200)
+
+    clock.tick(INITIAL_BACKOFF_TIME)
+    await respondToAll(200)
+
+    expect(received()).toEqual(['replica:A', 'primary:A'])
+  })
+
+  it('retries each endpoint on its own when they all fail', async () => {
+    request.send({ data: 'A', bytesCount: 10 })
+    await respondTo('primary', 'A', 503)
+    await respondTo('replica', 'A', 503)
+    request.send({ data: 'B', bytesCount: 10 })
+
+    clock.tick(INITIAL_BACKOFF_TIME)
+    await respondToAll(200)
+
+    expect(received()).toEqual(['primary:A', 'replica:A', 'primary:B', 'replica:B'])
+  })
+
+  it('counts retries per endpoint', async () => {
+    request.send({ data: 'A', bytesCount: 10 })
+    await respondTo('primary', 'A', 503)
+    await respondTo('replica', 'A', 503)
+
+    clock.tick(INITIAL_BACKOFF_TIME)
+
+    expect(
+      pendingCalls().map((call) => [call.endpoint, new URL(call.url).searchParams.get('_dd.retry_count')])
+    ).toEqual([
+      ['primary', '1'],
+      ['replica', '1'],
+    ])
+  })
+
+  it('gives each endpoint its own in-flight bytes budget', () => {
+    // Two of these payloads fit in one endpoint's budget, four don't
+    const bytesCount = MAX_ONGOING_BYTES_COUNT * 0.4
+    request.send({ data: 'A', bytesCount })
+    request.send({ data: 'B', bytesCount })
+
+    expect(fetchCalls.map((call) => `${call.endpoint}:${call.body}`)).toEqual([
+      'primary:A',
+      'replica:A',
+      'primary:B',
+      'replica:B',
+    ])
   })
 })
 
