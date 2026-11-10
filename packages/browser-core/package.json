@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-core",
-  "version": "7.17.0",
+  "version": "7.17.1",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.mjs",
@@ -26,7 +26,7 @@
     "@datadog/js-core": "workspace:*"
   },
   "devDependencies": {
-    "pako": "3.0.2"
+    "pako": "3.0.3"
   },
   "volta": {
     "extends": "../../package.json"
