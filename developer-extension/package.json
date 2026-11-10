@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "7.17.0",
+  "version": "7.17.1",
   "private": true,
   "scripts": {
     "build": "wxt build",
