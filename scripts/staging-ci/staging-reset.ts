@@ -33,7 +33,7 @@ runMain(async () => {
     printLog(`Changing staging branch in ${CI_FILE}...`)
 
     await replaceCiFileVariable('CURRENT_STAGING', NEW_STAGING_BRANCH)
-    command`git commit ${CI_FILE} -m ${`👷 Bump staging to ${NEW_STAGING_BRANCH}`}`.run()
+    command`git commit ${CI_FILE} -m ${`chore(ci): Bump staging to ${NEW_STAGING_BRANCH}`}`.run()
     command`git push origin ${MAIN_BRANCH}`.run()
   } else {
     printLog(`Staging branch already up to date in ${CI_FILE}. Skipping.`)
