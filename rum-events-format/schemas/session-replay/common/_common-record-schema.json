@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/_common-record-schema.json",
+  "title": "CommonRecordSchema",
+  "type": "object",
+  "description": "Schema of common properties for a Record event type.",
+  "required": ["timestamp"],
+  "properties": {
+    "timestamp": {
+      "type": "integer",
+      "description": "Defines the UTC time in milliseconds when this Record was performed."
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/record-schema.json",
+  "title": "MobileRecord",
+  "type": "object",
+  "description": "Mobile-specific. Schema of a Session Replay Record.",
+  "oneOf": [
+    {
+      "$ref": "full-snapshot-record-schema.json"
+    },
+    {
+      "$ref": "incremental-snapshot-record-schema.json"
+    },
+    {
+      "$ref": "../common/meta-record-schema.json"
+    },
+    {
+      "$ref": "../common/focus-record-schema.json"
+    },
+    {
+      "$ref": "../common/view-end-record-schema.json"
+    },
+    {
+      "$ref": "../common/visual-viewport-record-schema.json"
+    }
+  ]
+}

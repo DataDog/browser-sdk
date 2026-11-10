@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-brightness-bias-modifier-schema.json",
+  "title": "CompositionLayerBrightnessBiasModifier",
+  "type": "object",
+  "description": "Adds a signed brightness bias to the rendered layer contents.",
+  "required": ["type", "value"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "brightnessBias",
+      "description": "The type of the modifier.",
+      "readOnly": true
+    },
+    "value": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1,
+      "description": "Brightness bias from -1 to 1 added to each normalized RGB channel (alpha is unchanged). 0 leaves content unchanged. Positive values brighten; negative values darken. Each channel is clamped to [0, 1] after the bias is applied.",
+      "readOnly": true
+    }
+  }
+}

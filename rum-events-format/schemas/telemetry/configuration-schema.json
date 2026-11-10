@@ -1,0 +1,619 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "telemetry/configuration-schema.json",
+  "title": "TelemetryConfigurationEvent",
+  "type": "object",
+  "description": "Schema of all properties of a telemetry configuration event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "required": ["telemetry"],
+      "properties": {
+        "telemetry": {
+          "type": "object",
+          "description": "The telemetry configuration information",
+          "required": ["type", "configuration"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Telemetry type",
+              "const": "configuration"
+            },
+            "configuration": {
+              "type": "object",
+              "description": "Configuration properties",
+              "properties": {
+                "session_sample_rate": {
+                  "type": "integer",
+                  "description": "The percentage of sessions tracked",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "telemetry_sample_rate": {
+                  "type": "integer",
+                  "description": "The percentage of telemetry events sent",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "telemetry_configuration_sample_rate": {
+                  "type": "integer",
+                  "description": "The percentage of telemetry configuration events sent after being sampled by telemetry_sample_rate",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "telemetry_usage_sample_rate": {
+                  "type": "integer",
+                  "description": "The percentage of telemetry usage events sent after being sampled by telemetry_sample_rate",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "trace_sample_rate": {
+                  "type": "integer",
+                  "description": "The percentage of requests traced",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "trace_context_injection": {
+                  "type": "string",
+                  "description": "The opt-in configuration to add trace context",
+                  "enum": ["all", "sampled"],
+                  "readOnly": false
+                },
+                "premium_sample_rate": {
+                  "type": "integer",
+                  "description": "The percentage of sessions with Browser RUM & Session Replay pricing tracked (deprecated in favor of session_replay_sample_rate)",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "replay_sample_rate": {
+                  "type": "integer",
+                  "description": "The percentage of sessions with Browser RUM & Session Replay pricing tracked (deprecated in favor of session_replay_sample_rate)",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "session_replay_sample_rate": {
+                  "type": "integer",
+                  "description": "The percentage of sessions with RUM & Session Replay pricing tracked",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "readOnly": false
+                },
+                "tracking_consent": {
+                  "type": "string",
+                  "description": "The initial tracking consent value",
+                  "enum": ["granted", "not-granted", "pending"]
+                },
+                "start_session_replay_recording_manually": {
+                  "type": "boolean",
+                  "description": "Whether the session replay start is handled manually",
+                  "readOnly": false
+                },
+                "start_recording_immediately": {
+                  "type": "boolean",
+                  "description": "Whether Session Replay should automatically start a recording when enabled",
+                  "readOnly": false
+                },
+                "session_replay_canvas_recording": {
+                  "type": "boolean",
+                  "description": "Whether canvas elements are recorded in Session Replay",
+                  "readOnly": false
+                },
+                "session_replay_canvas_recording_quality": {
+                  "type": "string",
+                  "description": "The quality preset requested for canvas recording in Session Replay",
+                  "enum": ["low", "medium", "high"],
+                  "readOnly": false
+                },
+                "use_proxy": {
+                  "type": "boolean",
+                  "description": "Whether a proxy is used",
+                  "readOnly": false
+                },
+                "use_before_send": {
+                  "type": "boolean",
+                  "description": "Whether beforeSend callback function is used"
+                },
+                "silent_multiple_init": {
+                  "type": "boolean",
+                  "description": "Whether initialization fails silently if the SDK is already initialized"
+                },
+                "track_session_across_subdomains": {
+                  "type": "boolean",
+                  "description": "Whether sessions across subdomains for the same site are tracked"
+                },
+                "track_resources": {
+                  "type": "boolean",
+                  "description": "Whether resources are tracked",
+                  "readOnly": false
+                },
+                "track_early_requests": {
+                  "type": "boolean",
+                  "description": "Whether early requests are tracked",
+                  "readOnly": false
+                },
+                "track_long_task": {
+                  "type": "boolean",
+                  "description": "Whether long tasks are tracked",
+                  "readOnly": false
+                },
+                "track_bfcache_views": {
+                  "type": "boolean",
+                  "description": "Whether views loaded from the bfcache are tracked",
+                  "readOnly": false
+                },
+                "use_cross_site_session_cookie": {
+                  "type": "boolean",
+                  "description": "Whether a secure cross-site session cookie is used (deprecated)"
+                },
+                "use_partitioned_cross_site_session_cookie": {
+                  "type": "boolean",
+                  "description": "Whether a partitioned secure cross-site session cookie is used"
+                },
+                "use_secure_session_cookie": {
+                  "type": "boolean",
+                  "description": "Whether a secure session cookie is used"
+                },
+                "allow_fallback_to_local_storage": {
+                  "type": "boolean",
+                  "description": "Whether it is allowed to use LocalStorage when cookies are not available (deprecated in favor of session_persistence)"
+                },
+                "session_persistence": {
+                  "type": "string",
+                  "enum": ["local-storage", "cookie", "memory"],
+                  "description": "Configure the storage strategy for persisting sessions"
+                },
+                "store_contexts_across_pages": {
+                  "type": "boolean",
+                  "description": "Whether contexts are stored in local storage"
+                },
+                "allow_untrusted_events": {
+                  "type": "boolean",
+                  "description": "Whether untrusted events are allowed"
+                },
+                "action_name_attribute": {
+                  "type": "string",
+                  "description": "Attribute to be used to name actions"
+                },
+                "use_allowed_tracing_origins": {
+                  "type": "boolean",
+                  "description": "Whether the allowed tracing origins list is used (deprecated in favor of use_allowed_tracing_urls)"
+                },
+                "use_allowed_tracing_urls": {
+                  "type": "boolean",
+                  "description": "Whether the allowed tracing urls list is used"
+                },
+                "use_allowed_graph_ql_urls": {
+                  "type": "boolean",
+                  "description": "Whether the allowed GraphQL urls list is used"
+                },
+                "use_track_graph_ql_payload": {
+                  "type": "boolean",
+                  "description": "Whether GraphQL payload tracking is used for at least one GraphQL endpoint"
+                },
+                "use_track_graph_ql_response_errors": {
+                  "type": "boolean",
+                  "description": "Whether GraphQL response errors tracking is used for at least one GraphQL endpoint"
+                },
+                "selected_tracing_propagators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["datadog", "b3", "b3multi", "tracecontext"]
+                  },
+                  "description": "A list of selected tracing propagators"
+                },
+                "default_privacy_level": {
+                  "type": "string",
+                  "description": "Session replay default privacy level",
+                  "readOnly": false
+                },
+                "text_and_input_privacy_level": {
+                  "type": "string",
+                  "description": "Session replay text and input privacy level",
+                  "readOnly": false
+                },
+                "image_privacy_level": {
+                  "type": "string",
+                  "description": "Session replay image privacy level",
+                  "readOnly": false
+                },
+                "touch_privacy_level": {
+                  "type": "string",
+                  "description": "Session replay touch privacy level",
+                  "readOnly": false
+                },
+                "enable_privacy_for_action_name": {
+                  "type": "boolean",
+                  "description": "Privacy control for action name",
+                  "readOnly": false
+                },
+                "use_excluded_activity_urls": {
+                  "type": "boolean",
+                  "description": "Whether the request origins list to ignore when computing the page activity is used"
+                },
+                "use_worker_url": {
+                  "type": "boolean",
+                  "description": "Whether the Worker is loaded from an external URL"
+                },
+                "compress_intake_requests": {
+                  "type": "boolean",
+                  "description": "Whether intake requests are compressed"
+                },
+                "track_frustrations": {
+                  "type": "boolean",
+                  "description": "Whether user frustrations are tracked",
+                  "readOnly": false
+                },
+                "track_views_manually": {
+                  "type": "boolean",
+                  "description": "Whether the RUM views creation is handled manually",
+                  "readOnly": false
+                },
+                "track_interactions": {
+                  "type": "boolean",
+                  "description": "Whether user actions are tracked (deprecated in favor of track_user_interactions)",
+                  "readOnly": false
+                },
+                "track_user_interactions": {
+                  "type": "boolean",
+                  "description": "Whether user actions are tracked",
+                  "readOnly": false
+                },
+                "forward_errors_to_logs": {
+                  "type": "boolean",
+                  "description": "Whether console.error logs, uncaught exceptions and network errors are tracked"
+                },
+                "number_of_displays": {
+                  "type": "integer",
+                  "description": "The number of displays available to the device"
+                },
+                "forward_console_logs": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string",
+                      "const": "all"
+                    }
+                  ],
+                  "description": "The console.* tracked"
+                },
+                "forward_reports": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string",
+                      "const": "all"
+                    }
+                  ],
+                  "description": "The reports from the Reporting API tracked"
+                },
+                "use_local_encryption": {
+                  "type": "boolean",
+                  "description": "Whether local encryption is used"
+                },
+                "view_tracking_strategy": {
+                  "type": "string",
+                  "description": "View tracking strategy",
+                  "enum": [
+                    "ActivityViewTrackingStrategy",
+                    "FragmentViewTrackingStrategy",
+                    "MixedViewTrackingStrategy",
+                    "NavigationViewTrackingStrategy"
+                  ]
+                },
+                "swiftui_view_tracking_enabled": {
+                  "type": "boolean",
+                  "description": "Whether SwiftUI view instrumentation is enabled",
+                  "readOnly": false
+                },
+                "swiftui_action_tracking_enabled": {
+                  "type": "boolean",
+                  "description": "Whether SwiftUI action instrumentation is enabled",
+                  "readOnly": false
+                },
+                "track_background_events": {
+                  "type": "boolean",
+                  "description": "Whether RUM events are tracked when the application is in Background",
+                  "readOnly": false
+                },
+                "mobile_vitals_update_period": {
+                  "type": "integer",
+                  "description": "The period between each Mobile Vital sample (in milliseconds)",
+                  "readOnly": false
+                },
+                "track_errors": {
+                  "type": "boolean",
+                  "description": "Whether error monitoring & crash reporting is enabled for the source platform",
+                  "readOnly": false
+                },
+                "track_network_requests": {
+                  "type": "boolean",
+                  "description": "Whether automatic collection of network requests is enabled",
+                  "readOnly": false
+                },
+                "use_tracing": {
+                  "type": "boolean",
+                  "description": "Whether tracing features are enabled"
+                },
+                "track_native_views": {
+                  "type": "boolean",
+                  "description": "Whether native views are tracked (for cross platform SDKs)",
+                  "readOnly": false
+                },
+                "track_native_errors": {
+                  "type": "boolean",
+                  "description": "Whether native error monitoring & crash reporting is enabled (for cross platform SDKs)",
+                  "readOnly": false
+                },
+                "track_native_long_tasks": {
+                  "type": "boolean",
+                  "description": "Whether long task tracking is performed automatically",
+                  "readOnly": false
+                },
+                "track_cross_platform_long_tasks": {
+                  "type": "boolean",
+                  "description": "Whether long task tracking is performed automatically for cross platform SDKs",
+                  "readOnly": false
+                },
+                "use_first_party_hosts": {
+                  "type": "boolean",
+                  "description": "Whether the client has provided a list of first party hosts",
+                  "readOnly": false
+                },
+                "initialization_type": {
+                  "type": "string",
+                  "description": "The type of initialization the SDK used, in case multiple are supported",
+                  "readOnly": false
+                },
+                "track_flutter_performance": {
+                  "type": "boolean",
+                  "description": "Whether Flutter build and raster time tracking is enabled",
+                  "readOnly": false
+                },
+                "batch_size": {
+                  "type": "integer",
+                  "description": "The window duration for batches sent by the SDK (in milliseconds)"
+                },
+                "batch_upload_frequency": {
+                  "type": "integer",
+                  "description": "The upload frequency of batches (in milliseconds)"
+                },
+                "batch_processing_level": {
+                  "type": "integer",
+                  "description": "Maximum number of batches processed sequentially without a delay"
+                },
+                "background_tasks_enabled": {
+                  "type": "boolean",
+                  "description": "Whether UIApplication background tasks are enabled"
+                },
+                "react_version": {
+                  "type": "string",
+                  "description": "The version of React used in a ReactNative application",
+                  "readOnly": false
+                },
+                "react_native_version": {
+                  "type": "string",
+                  "description": "The version of ReactNative used in a ReactNative application",
+                  "readOnly": false
+                },
+                "dart_version": {
+                  "type": "string",
+                  "description": "The version of Dart used in a Flutter application",
+                  "readOnly": false
+                },
+                "unity_version": {
+                  "type": "string",
+                  "description": "The version of Unity used in a Unity application",
+                  "readOnly": false
+                },
+                "maui_version": {
+                  "type": "string",
+                  "description": "The version of MAUI used in a .NET MAUI application",
+                  "readOnly": false
+                },
+                "app_hang_threshold": {
+                  "type": "integer",
+                  "description": "The threshold used for iOS App Hangs monitoring (in milliseconds)"
+                },
+                "use_pci_intake": {
+                  "type": "boolean",
+                  "description": "Whether logs are sent to the PCI-compliant intake",
+                  "readOnly": false
+                },
+                "tracer_api": {
+                  "type": "string",
+                  "description": "The tracer API used by the SDK. Possible values: 'Datadog', 'OpenTelemetry', 'OpenTracing'",
+                  "readOnly": false
+                },
+                "tracer_api_version": {
+                  "type": "string",
+                  "description": "The version of the tracer API used by the SDK. Eg. '0.1.0'",
+                  "readOnly": false
+                },
+                "send_logs_after_session_expiration": {
+                  "type": "boolean",
+                  "description": "Whether logs are sent after the session expiration",
+                  "readOnly": false
+                },
+                "plugins": {
+                  "type": "array",
+                  "description": "The list of plugins enabled",
+                  "items": {
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "The name of the plugin"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "is_main_process": {
+                  "type": "boolean",
+                  "description": "Whether the SDK is initialised on the application's main or a secondary process"
+                },
+                "inv_time_threshold_ms": {
+                  "type": "integer",
+                  "description": "Interval in milliseconds when the last action is considered as the action that created the next view. Only sent if a time based strategy has been used"
+                },
+                "tns_time_threshold_ms": {
+                  "type": "integer",
+                  "description": "The interval in milliseconds during which all network requests will be considered as initial, i.e. caused by the creation of this view. Only sent if a time based strategy has been used"
+                },
+                "track_feature_flags_for_events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["vital", "resource", "action", "long_task"]
+                  },
+                  "description": "The list of events that include feature flags collection. The tracking is always enabled for views and errors."
+                },
+                "track_anonymous_user": {
+                  "type": "boolean",
+                  "description": "Whether the anonymous users are tracked",
+                  "readOnly": false,
+                  "default": true
+                },
+                "use_allowed_tracking_origins": {
+                  "type": "boolean",
+                  "description": "Whether a list of allowed origins is used to control SDK execution in browser extension contexts. When enabled, the SDK will check if the current origin matches the allowed origins list before running.",
+                  "readOnly": false,
+                  "default": false
+                },
+                "sdk_version": {
+                  "type": "string",
+                  "description": "The version of the SDK that is running.",
+                  "readOnly": false
+                },
+                "source": {
+                  "type": "string",
+                  "description": "The source of the SDK, e.g., 'browser', 'ios', 'android', 'flutter', 'react-native', 'unity', 'kotlin-multiplatform', 'maui'.",
+                  "readOnly": false
+                },
+                "variant": {
+                  "type": "string",
+                  "description": "The variant of the SDK build (e.g., standard, lite, etc.).",
+                  "readOnly": false
+                },
+                "remote_configuration_id": {
+                  "type": "string",
+                  "description": "The id of the remote configuration",
+                  "readOnly": false
+                },
+                "use_remote_configuration_proxy": {
+                  "type": "boolean",
+                  "description": "Whether a proxy is used for remote configuration",
+                  "readOnly": false
+                },
+                "remote_configuration": {
+                  "type": "object",
+                  "description": "Metadata of the remote configuration currently applied for this session",
+                  "readOnly": false,
+                  "properties": {
+                    "config_id": {
+                      "type": "string",
+                      "description": "Identifier of the remote configuration bundle this metadata belongs to",
+                      "readOnly": false
+                    },
+                    "version_id": {
+                      "type": "string",
+                      "description": "CDN version identifier of the applied configuration",
+                      "readOnly": false
+                    },
+                    "last_modified": {
+                      "type": "integer",
+                      "description": "CDN publish timestamp of the applied configuration, in ms from epoch",
+                      "readOnly": false
+                    },
+                    "last_synced": {
+                      "type": "integer",
+                      "description": "Timestamp at which the device fetched and cached this configuration version, in ms from epoch",
+                      "readOnly": false
+                    },
+                    "first_applied": {
+                      "type": "integer",
+                      "description": "Timestamp at which this configuration version was first observed as applied by the device, in ms from epoch. Stamped once and reused on every subsequent session that runs on the same version",
+                      "readOnly": false
+                    },
+                    "sync_id": {
+                      "type": "string",
+                      "description": "Identifier of the sync that produced this configuration version, used to deduplicate repeat sessions from the same device without a persistent identifier",
+                      "readOnly": false
+                    }
+                  }
+                },
+                "profiling_sample_rate": {
+                  "type": "number",
+                  "description": "The percentage of sessions with Continuous profiling enabled",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "readOnly": false
+                },
+                "profiling_application_launch_sample_rate": {
+                  "type": "number",
+                  "description": "The percentage of sessions with Application Launch profiling enabled. For mobile SDKs, this is the sampling rate of application launch profiling",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "readOnly": false
+                },
+                "profiling_anr_enabled": {
+                  "type": "boolean",
+                  "description": "Whether collecting a profile when an ANR occurs is enabled on Android",
+                  "readOnly": false
+                },
+                "propagate_trace_baggage": {
+                  "type": "boolean",
+                  "description": "Whether trace baggage is propagated to child spans",
+                  "readOnly": false
+                },
+                "track_resource_headers": {
+                  "type": "string",
+                  "description": "How the SDK tracks resource request/response headers",
+                  "enum": ["default_headers", "custom"],
+                  "readOnly": false
+                },
+                "beta_encode_cookie_options": {
+                  "type": "boolean",
+                  "description": "Whether the beta encode cookie options is enabled",
+                  "readOnly": false
+                },
+                "beta_enable_view_updates": {
+                  "type": "boolean",
+                  "description": "Whether the beta partial view updates feature is enabled",
+                  "readOnly": false
+                },
+                "beta_track_web_sockets": {
+                  "type": "boolean",
+                  "description": "Whether the beta track WebSockets feature is enabled",
+                  "readOnly": false
+                },
+                "use_client_side_stats": {
+                  "type": "boolean",
+                  "description": "Whether tracing feature's client-side-stats generation is enabled"
+                },
+                "use_trace_sampling_rules": {
+                  "type": "boolean",
+                  "description": "Whether trace sampling rules are configured"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

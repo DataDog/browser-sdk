@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/stylesheets/stylesheet-snapshot-schema.json",
+  "title": "StyleSheetSnapshot",
+  "description": "Schema representing a snapshot of a CSS stylesheet.",
+  "type": "array",
+  "minItems": 1,
+  "items": [
+    { "$ref": "stylesheet-rules-schema.json" },
+    {
+      "description": "If non-empty, the list of medias for which this stylesheet is active. Defaults to the empty list if not present.",
+      "$ref": "stylesheet-media-list-schema.json"
+    },
+    {
+      "description": "If true, this stylesheet is disabled. Defaults to false if not present.",
+      "type": "boolean"
+    }
+  ],
+  "additionalItems": false
+}

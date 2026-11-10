@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-clip-modifier-schema.json",
+  "title": "CompositionLayerClipModifier",
+  "type": "object",
+  "description": "Geometric clipping applied to the composed layer output, in coordinates local to the layer rectangle.",
+  "required": ["type", "path"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "clip",
+      "description": "The type of the modifier.",
+      "readOnly": true
+    },
+    "path": {
+      "type": "string",
+      "description": "SVG path string defining the clip region, in coordinates local to the layer rectangle.",
+      "readOnly": true
+    },
+    "fillRule": {
+      "type": "string",
+      "enum": ["nonzero", "evenodd"],
+      "description": "Path fill rule. Defaults to 'nonzero'.",
+      "readOnly": true
+    }
+  }
+}

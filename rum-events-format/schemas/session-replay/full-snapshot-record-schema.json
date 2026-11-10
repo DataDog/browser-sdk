@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/full-snapshot-record-schema.json",
+  "title": "FullSnapshotRecord",
+  "description": "Schema of a Record type which contains the full snapshot of a screen.",
+  "oneOf": [
+    {
+      "$ref": "browser/full-snapshot-record-schema.json"
+    },
+    {
+      "$ref": "mobile/full-snapshot-record-schema.json"
+    }
+  ]
+}

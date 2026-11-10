@@ -1,0 +1,226 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/action-schema.json",
+  "title": "RumActionEvent",
+  "type": "object",
+  "description": "Schema of all properties of an Action event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "$ref": "_view-container-schema.json"
+    },
+    {
+      "required": ["type", "view", "action"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "action",
+          "readOnly": true
+        },
+        "action": {
+          "type": "object",
+          "description": "Action properties",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of the action",
+              "enum": ["custom", "click", "tap", "scroll", "swipe", "application_start", "back"],
+              "readOnly": true
+            },
+            "id": {
+              "type": "string",
+              "description": "UUID of the action",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            },
+            "loading_time": {
+              "type": "integer",
+              "description": "Duration in ns to the action is considered loaded",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "target": {
+              "type": "object",
+              "description": "Action target properties",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Target name",
+                  "readOnly": false
+                }
+              },
+              "readOnly": true
+            },
+            "frustration": {
+              "type": "object",
+              "description": "Action frustration properties",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "array",
+                  "description": "Action frustration types",
+                  "readOnly": true,
+                  "items": {
+                    "type": "string",
+                    "enum": ["rage_click", "dead_click", "error_click", "rage_tap", "error_tap"]
+                  }
+                }
+              },
+              "readOnly": true
+            },
+            "error": {
+              "type": "object",
+              "description": "Properties of the errors of the action",
+              "required": ["count"],
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "description": "Number of errors that occurred on the action",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "crash": {
+              "type": "object",
+              "description": "Properties of the crashes of the action",
+              "required": ["count"],
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "description": "Number of crashes that occurred on the action",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "long_task": {
+              "type": "object",
+              "description": "Properties of the long tasks of the action",
+              "required": ["count"],
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "description": "Number of long tasks that occurred on the action",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "resource": {
+              "type": "object",
+              "description": "Properties of the resources of the action",
+              "required": ["count"],
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "description": "Number of resources that occurred on the action",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "view": {
+          "type": "object",
+          "description": "View properties",
+          "required": [],
+          "properties": {
+            "in_foreground": {
+              "type": "boolean",
+              "description": "Is the action starting in the foreground (focus in browser)",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "_dd": {
+          "type": "object",
+          "description": "Internal properties",
+          "properties": {
+            "action": {
+              "type": "object",
+              "description": "Action properties",
+              "properties": {
+                "position": {
+                  "type": "object",
+                  "description": "Action position properties",
+                  "required": ["x", "y"],
+                  "properties": {
+                    "x": {
+                      "type": "integer",
+                      "description": "X coordinate relative to the target element of the action (in pixels)",
+                      "readOnly": true
+                    },
+                    "y": {
+                      "type": "integer",
+                      "description": "Y coordinate relative to the target element of the action (in pixels)",
+                      "readOnly": true
+                    }
+                  },
+                  "readOnly": true
+                },
+                "target": {
+                  "type": "object",
+                  "description": "Target properties",
+                  "properties": {
+                    "selector": {
+                      "type": "string",
+                      "description": "CSS selector path of the target element",
+                      "readOnly": true
+                    },
+                    "composed_path_selector": {
+                      "type": "string",
+                      "description": "Selector data based on the click event composed path",
+                      "readOnly": true
+                    },
+                    "width": {
+                      "type": "integer",
+                      "description": "Width of the target element (in pixels)",
+                      "readOnly": true
+                    },
+                    "height": {
+                      "type": "integer",
+                      "description": "Height of the target element (in pixels)",
+                      "readOnly": true
+                    },
+                    "permanent_id": {
+                      "type": "string",
+                      "description": "Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate actions with mobile session replay wireframes.",
+                      "readOnly": true
+                    }
+                  }
+                },
+                "name_source": {
+                  "type": "string",
+                  "description": "The strategy of how the auto click action name is computed",
+                  "enum": [
+                    "custom_attribute",
+                    "mask_placeholder",
+                    "standard_attribute",
+                    "text_content",
+                    "mask_disallowed",
+                    "blank"
+                  ],
+                  "readOnly": false
+                }
+              },
+              "readOnly": true
+            }
+          }
+        }
+      }
+    }
+  ]
+}

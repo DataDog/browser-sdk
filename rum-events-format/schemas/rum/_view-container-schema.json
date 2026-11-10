@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_view-container-schema.json",
+  "title": "ViewContainerSchema",
+  "type": "object",
+  "description": "View Container schema for views that are nested (webviews in mobile)",
+  "properties": {
+    "container": {
+      "type": "object",
+      "description": "View Container properties (view wrapping the current view)",
+      "required": ["view", "source"],
+      "properties": {
+        "view": {
+          "type": "object",
+          "description": "Attributes of the view's container",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "ID of the parent view",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the parent view",
+          "enum": [
+            "android",
+            "ios",
+            "browser",
+            "flutter",
+            "react-native",
+            "roku",
+            "unity",
+            "kotlin-multiplatform",
+            "electron",
+            "cpp",
+            "maui"
+          ],
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    }
+  }
+}

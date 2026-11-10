@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "telemetry/_common-schema.json",
+  "title": "CommonTelemetryProperties",
+  "type": "object",
+  "description": "Schema of common properties of Telemetry events",
+  "required": ["_dd", "type", "date", "service", "source", "version"],
+  "properties": {
+    "_dd": {
+      "type": "object",
+      "description": "Internal properties",
+      "required": ["format_version"],
+      "properties": {
+        "format_version": {
+          "type": "integer",
+          "const": 2,
+          "description": "Version of the RUM event format",
+          "readOnly": true
+        }
+      }
+    },
+    "type": {
+      "type": "string",
+      "description": "Telemetry event type. Should specify telemetry only.",
+      "const": "telemetry",
+      "readOnly": true
+    },
+    "date": {
+      "type": "integer",
+      "description": "Start of the event in ms from epoch",
+      "minimum": 0
+    },
+    "service": {
+      "type": "string",
+      "description": "The SDK generating the telemetry event"
+    },
+    "source": {
+      "type": "string",
+      "description": "The source of this event",
+      "enum": [
+        "android",
+        "ios",
+        "browser",
+        "flutter",
+        "react-native",
+        "unity",
+        "kotlin-multiplatform",
+        "electron",
+        "cpp",
+        "maui"
+      ],
+      "readOnly": true
+    },
+    "version": {
+      "type": "string",
+      "description": "The version of the SDK generating the telemetry event"
+    },
+    "application": {
+      "type": "object",
+      "description": "Application properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID of the application",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+        }
+      },
+      "readOnly": true
+    },
+    "session": {
+      "type": "object",
+      "description": "Session properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID of the session",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+        }
+      }
+    },
+    "view": {
+      "type": "object",
+      "description": "View properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID of the view",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "description": "Action properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "description": "UUID of the action",
+          "readOnly": true,
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "effective_sample_rate": {
+      "type": "number",
+      "description": "The actual percentage of telemetry usage per event",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "experimental_features": {
+      "type": "array",
+      "description": "Enabled experimental features",
+      "items": {
+        "type": "string"
+      },
+      "readOnly": true
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "device": {
+          "type": "object",
+          "description": "Device properties",
+          "properties": {
+            "architecture": {
+              "type": "string",
+              "description": "Architecture of the device"
+            },
+            "brand": {
+              "type": "string",
+              "description": "Brand of the device"
+            },
+            "model": {
+              "type": "string",
+              "description": "Model of the device"
+            },
+            "logical_cpu_count": {
+              "type": "number",
+              "description": "Number of logical CPU cores available for scheduling on the device at runtime, as reported by the operating system.",
+              "readOnly": true
+            },
+            "total_ram": {
+              "type": "number",
+              "description": "Total RAM in megabytes",
+              "readOnly": true
+            },
+            "is_low_ram": {
+              "type": "boolean",
+              "description": "Whether the device is considered a low RAM device (Android)",
+              "readOnly": true
+            }
+          }
+        },
+        "os": {
+          "type": "object",
+          "description": "OS properties",
+          "properties": {
+            "build": {
+              "type": "string",
+              "description": "Build of the OS"
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the OS"
+            },
+            "version": {
+              "type": "string",
+              "description": "Version of the OS"
+            }
+          }
+        }
+      }
+    }
+  }
+}

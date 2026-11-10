@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/attached-stylesheets-change-schema.json",
+  "title": "AttachedStyleSheetsChange",
+  "description": "Browser-specific. Schema representing a change to the stylesheets attached to a DOM node. For <link> or <style> elements, which use classic CSSOM APIs, at most one stylesheet can be attached. For #document, #document-fragment, or #shadow-root nodes, which use the `adoptedStyleSheets` API, any number of stylesheets can be attached.",
+  "type": "array",
+  "minItems": 1,
+  "items": [{ "$ref": "node-references/node-id-schema.json" }],
+  "additionalItems": {
+    "$ref": "stylesheets/stylesheet-id-schema.json"
+  }
+}

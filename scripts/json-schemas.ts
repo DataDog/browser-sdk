@@ -1,5 +1,7 @@
 import * as fs from 'node:fs'
+import * as os from 'node:os'
 import * as path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
 
 import type jsonSchemaToTypescriptModule from 'json-schema-to-typescript'
@@ -7,19 +9,29 @@ import { format, resolveConfig } from 'prettier'
 
 import { printLog, printWarning, runMain, fetchHandlingError } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
-import { modifyFile } from './lib/filesUtils.ts'
-import { SCHEMAS } from './lib/generatedSchemaTypes.ts'
+import { RUM_EVENTS_FORMAT_DIR, RUM_EVENTS_FORMAT_SCHEMAS_DIR, SCHEMAS } from './lib/generatedSchemaTypes.ts'
 
-const PACKAGE_JSON_PATH = path.join(import.meta.dirname, '../package.json')
-const JSON2TYPE_PATH = path.join(import.meta.dirname, '../node_modules/json-schema-to-typescript')
+const RUM_EVENTS_FORMAT_README_PATH = path.join(RUM_EVENTS_FORMAT_DIR, 'README.md')
+
+// Fork of json-schema-to-typescript adding `readonly` support. It is only needed to generate types,
+// so it is downloaded and built on demand instead of being installed with the other dependencies.
+// TODO use the npm package once a released version supports the `readOnly` keyword
+const JSON2TYPE_REPOSITORY = 'bcaudan/json-schema-to-typescript'
+const JSON2TYPE_COMMIT = '406ce54242635f4a0181bd573a3cbc896707e4cc'
+const JSON2TYPE_PATH = path.join(
+  import.meta.dirname,
+  '../node_modules/.cache/json-schema-to-typescript',
+  JSON2TYPE_COMMIT
+)
 const prettierConfigPath = path.join(import.meta.dirname, '../.prettierrc.yml')
 
 runMain(async () => {
   const {
-    values: { update: branch, build: shouldBuild, help },
+    values: { update: branch, check: shouldCheck, build: shouldBuild, help },
   } = parseArgs({
     options: {
       update: { type: 'string' },
+      check: { type: 'boolean' },
       build: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
     },
@@ -30,13 +42,15 @@ runMain(async () => {
     return
   }
 
-  if (!branch && !shouldBuild) {
+  if (!branch && !shouldCheck && !shouldBuild) {
     printHelp()
     process.exit(1)
   }
 
   if (branch !== undefined) {
-    await update(branch)
+    await update(await resolveCommit(branch))
+  } else if (shouldCheck) {
+    await update(getCurrentCommit())
   }
 
   if (shouldBuild) {
@@ -49,7 +63,8 @@ function printHelp() {
 Usage: node scripts/json-schemas.ts [options]
 
 Options:
-  --update <branch|commit>  Update @datadog/rum-events-format to the latest commit on <branch> (or a specific full commit hash) and run yarn install
+  --update <branch|commit>  Copy the rum-events-format schemas from the latest commit on <branch> (or a specific full commit hash) to rum-events-format/schemas
+  --check            Copy the rum-events-format schemas again from the commit they were copied from, to restore any local change
   --build            Build json-schema-to-typescript and regenerate TypeScript types from JSON schemas
   --help, -h         Show this help message
 
@@ -60,7 +75,7 @@ Examples:
 `)
 }
 
-async function update(branchOrCommit: string) {
+async function resolveCommit(branchOrCommit: string): Promise<string> {
   let commitHash: string
   if (/^[0-9a-f]{40}$/.test(branchOrCommit)) {
     commitHash = branchOrCommit
@@ -96,16 +111,53 @@ async function update(branchOrCommit: string) {
     printLog(`Latest commit: ${commitHash}`)
   }
 
-  await modifyFile(PACKAGE_JSON_PATH, (content) =>
-    content.replace(
-      /"@datadog\/rum-events-format": "DataDog\/rum-events-format#[^"]+"/,
-      `"@datadog/rum-events-format": "DataDog/rum-events-format#commit=${commitHash}"`
-    )
-  )
-  printLog('Updated @datadog/rum-events-format in package.json')
+  return commitHash
+}
 
-  printLog('Running yarn install...')
-  command`yarn install`.run()
+function getCurrentCommit(): string {
+  const match = /DataDog\/rum-events-format\/tree\/([0-9a-f]{40})/.exec(
+    fs.readFileSync(RUM_EVENTS_FORMAT_README_PATH, 'utf8')
+  )
+  if (!match) {
+    throw new Error(`Could not find the rum-events-format commit in ${RUM_EVENTS_FORMAT_README_PATH}`)
+  }
+  return match[1]
+}
+
+async function update(commitHash: string) {
+  printLog(`Copying rum-events-format schemas from ${commitHash}...`)
+  const archiveDir = await downloadGitHubArchive('DataDog/rum-events-format', commitHash)
+  fs.rmSync(RUM_EVENTS_FORMAT_SCHEMAS_DIR, { recursive: true, force: true })
+  fs.cpSync(path.join(archiveDir, 'schemas'), RUM_EVENTS_FORMAT_SCHEMAS_DIR, { recursive: true })
+  fs.rmSync(archiveDir, { recursive: true, force: true })
+  fs.writeFileSync(
+    RUM_EVENTS_FORMAT_README_PATH,
+    `# RUM events format
+
+This directory contains a copy of the JSON schemas of rum-events-format, so installing, building and
+testing the SDK don't fetch anything from GitHub.
+
+Source: <https://github.com/DataDog/rum-events-format/tree/${commitHash}>
+
+Do not modify it by hand. Run \`yarn json-schemas:sync\` instead.
+`
+  )
+  printLog('Updated rum-events-format/schemas')
+}
+
+/**
+ * Download the archive of a GitHub repository at a given commit, extract it in a new temporary
+ * directory created in `parentDir` and return the path of that directory.
+ */
+async function downloadGitHubArchive(repository: string, commitHash: string, parentDir = os.tmpdir()): Promise<string> {
+  const response = await fetchHandlingError(`https://github.com/${repository}/archive/${commitHash}.tar.gz`)
+  fs.mkdirSync(parentDir, { recursive: true })
+  const archiveDir = fs.mkdtempSync(path.join(parentDir, 'github-archive-'))
+  const archivePath = path.join(archiveDir, 'archive.tar.gz')
+  fs.writeFileSync(archivePath, Buffer.from(await response.arrayBuffer()))
+  command`tar -xzf ${archivePath} -C ${archiveDir} --strip-components=1`.run()
+  fs.rmSync(archivePath)
+  return archiveDir
 }
 
 async function build() {
@@ -138,30 +190,23 @@ let jsonSchemaToTypescriptCache: Promise<typeof jsonSchemaToTypescriptModule> | 
 
 function getJsonSchemaToTypescript() {
   if (!jsonSchemaToTypescriptCache) {
-    jsonSchemaToTypescriptCache = import('json-schema-to-typescript').catch((error: NodeJS.ErrnoException) => {
-      if (error.code !== 'ERR_MODULE_NOT_FOUND') {
-        throw error
+    jsonSchemaToTypescriptCache = (async () => {
+      const entryPoint = path.join(JSON2TYPE_PATH, 'dist/src/index.js')
+      if (!fs.existsSync(entryPoint)) {
+        await buildJsonSchemaToTypescript()
       }
-      buildJsonSchemaToTypescript()
-      return import('json-schema-to-typescript')
-    })
+      return (await import(pathToFileURL(entryPoint).href)) as typeof jsonSchemaToTypescriptModule
+    })()
   }
   return jsonSchemaToTypescriptCache
+}
 
-  // needed because using fork instead of the npm package
-  // TODO remove me when json-schema-to-typescript natively supports readOnly
-  function buildJsonSchemaToTypescript() {
-    printLog('Building json-schema-to-typescript...')
-    // due to installation on node_modules, some of these steps can fail
-    // built version still behaves correctly though
-    try {
-      command`npm i`.withCurrentWorkingDirectory(JSON2TYPE_PATH).run()
-      command`npm run clean`.withCurrentWorkingDirectory(JSON2TYPE_PATH).run()
-      // With yarn 3+, the 'test/' folder is not present, so all built files are put directly in the
-      // 'dist/' folder instead of 'dist/src/'. Using an explicit '--rootDir' fixes this issue.
-      command`npm exec -- tsc --declaration --rootDir .`.withCurrentWorkingDirectory(JSON2TYPE_PATH).run()
-    } catch {
-      // ignore
-    }
-  }
+async function buildJsonSchemaToTypescript() {
+  printLog('Building json-schema-to-typescript...')
+  // Extract next to the final location, so it can be moved there atomically once built
+  const archiveDir = await downloadGitHubArchive(JSON2TYPE_REPOSITORY, JSON2TYPE_COMMIT, path.dirname(JSON2TYPE_PATH))
+  command`npm install --ignore-scripts --no-audit --no-fund`.withCurrentWorkingDirectory(archiveDir).run()
+  command`npm run build:server`.withCurrentWorkingDirectory(archiveDir).run()
+  fs.rmSync(JSON2TYPE_PATH, { recursive: true, force: true })
+  fs.renameSync(archiveDir, JSON2TYPE_PATH)
 }

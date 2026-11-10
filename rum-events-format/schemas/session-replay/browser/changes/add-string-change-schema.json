@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/add-string-change-schema.json",
+  "title": "AddStringChange",
+  "description": "Browser-specific. Schema representing the addition of a string to the string table, annotated as belonging to the default string role.",
+  "type": "string"
+}

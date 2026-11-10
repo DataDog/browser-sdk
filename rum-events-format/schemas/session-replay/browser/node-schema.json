@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/node-schema.json",
+  "title": "BrowserNode",
+  "type": "object",
+  "description": "Schema of a Node type.",
+  "required": ["node", "initialOffset"],
+  "properties": {
+    "node": {
+      "$ref": "serialized-node-with-id-schema.json"
+    },
+    "initialOffset": {
+      "type": "object",
+      "description": "Initial node offset position.",
+      "required": ["top", "left"],
+      "properties": {
+        "top": {
+          "type": "number",
+          "description": "Top position offset for this node."
+        },
+        "left": {
+          "type": "number",
+          "description": "Left position offset for this node."
+        }
+      }
+    }
+  }
+}

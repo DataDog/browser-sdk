@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/frustration-record-schema.json",
+  "title": "FrustrationRecord",
+  "type": "object",
+  "description": "Schema of a Record which signifies a collection of frustration signals.",
+  "allOf": [
+    {
+      "$ref": "../common/_slot-supported-common-record-schema.json"
+    },
+    {
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 9,
+          "readOnly": true
+        },
+        "data": {
+          "type": "object",
+          "description": "Schema of a Session Replay FrustrationRecord data structure type.",
+          "required": ["frustrationTypes", "recordIds"],
+          "properties": {
+            "frustrationTypes": {
+              "type": "array",
+              "description": "Collection of frustration signal types.",
+              "items": {
+                "type": "string",
+                "enum": ["rage_click", "error_click", "dead_click"],
+                "description": "The type of frustration signal.",
+                "readOnly": true
+              }
+            },
+            "recordIds": {
+              "type": "array",
+              "description": "Collection of frustration signal event IDs.",
+              "items": {
+                "type": "integer",
+                "description": "Event ID for this frustration signal.",
+                "readOnly": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/vital-websocket-connecting-schema.json",
+  "title": "RumVitalWebsocketConnectingEvent",
+  "type": "object",
+  "description": "Schema for the vital reported when a WebSocket connection is created. Reported exactly once per connection, when the WebSocket is constructed. Reported with vital.name websocket_connecting",
+  "allOf": [
+    {
+      "$ref": "_vital-websocket-common-schema.json"
+    },
+    {
+      "required": ["vital"],
+      "properties": {
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["websocket"],
+          "properties": {
+            "websocket": {
+              "type": "object",
+              "description": "WebSocket properties. The identity of the connection is reported on this vital.",
+              "required": ["url", "connecting_date"],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "URL the connection was opened on, without its query string",
+                  "readOnly": false
+                },
+                "requested_protocols": {
+                  "type": "array",
+                  "description": "Subprotocols the connection was requested with. Omitted when none was requested",
+                  "items": {
+                    "type": "string",
+                    "readOnly": false
+                  },
+                  "readOnly": false
+                },
+                "connecting_date": {
+                  "type": "integer",
+                  "description": "Date the WebSocket was constructed, in ms from epoch. It is the date the dates of the later phases of the connection are computed from",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

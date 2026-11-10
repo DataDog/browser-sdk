@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/_common-segment-metadata-schema.json",
+  "title": "CommonSegmentMetadataSchema",
+  "type": "object",
+  "description": "Schema of common properties for a Segment Metadata type.",
+  "required": ["start", "end", "records_count"],
+  "properties": {
+    "start": {
+      "type": "integer",
+      "description": "The start UTC timestamp in milliseconds corresponding to the first record in the Segment data. Each timestamp is computed as the UTC interval since 00:00:00.000 01.01.1970."
+    },
+    "end": {
+      "type": "integer",
+      "description": "The end UTC timestamp in milliseconds corresponding to the last record in the Segment data. Each timestamp is computed as the UTC interval since 00:00:00.000 01.01.1970."
+    },
+    "records_count": {
+      "type": "integer",
+      "description": "The number of records in this Segment."
+    },
+    "index_in_view": {
+      "type": "integer",
+      "description": "The index of this Segment in the segments list that was recorded for this view ID. Starts from 0."
+    },
+    "has_full_snapshot": {
+      "type": "boolean",
+      "description": "Whether this Segment contains a full snapshot record or not."
+    }
+  }
+}

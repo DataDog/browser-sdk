@@ -1,0 +1,313 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "profiling/browser/profiler-trace-schema.json",
+  "title": "BrowserProfilerTrace",
+  "type": "object",
+  "description": "Schema of a RUM profiler trace containing profiling data enriched with RUM context.",
+  "required": [
+    "resources",
+    "frames",
+    "stacks",
+    "samples",
+    "startClocks",
+    "endClocks",
+    "clocksOrigin",
+    "sampleInterval",
+    "longTasks",
+    "views"
+  ],
+  "definitions": {
+    "ClocksState": {
+      "title": "ClocksState",
+      "type": "object",
+      "description": "Schema of timing state with both relative and absolute timestamps.",
+      "required": ["relative", "timeStamp"],
+      "properties": {
+        "relative": {
+          "type": "number",
+          "description": "Time relative to navigation start in milliseconds.",
+          "readOnly": true
+        },
+        "timeStamp": {
+          "type": "integer",
+          "description": "Epoch time in milliseconds.",
+          "readOnly": true
+        }
+      }
+    },
+    "ProfilerFrame": {
+      "title": "ProfilerFrame",
+      "type": "object",
+      "description": "Schema of a profiler frame from the JS Self-Profiling API.",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "A function instance name.",
+          "readOnly": true
+        },
+        "resourceId": {
+          "type": "integer",
+          "description": "Index in the trace.resources array.",
+          "readOnly": true
+        },
+        "line": {
+          "type": "integer",
+          "description": "1-based index of the line.",
+          "readOnly": true
+        },
+        "column": {
+          "type": "integer",
+          "description": "1-based index of the column.",
+          "readOnly": true
+        }
+      }
+    },
+    "ProfilerStack": {
+      "title": "ProfilerStack",
+      "type": "object",
+      "description": "Schema of a profiler stack from the JS Self-Profiling API.",
+      "required": ["frameId"],
+      "properties": {
+        "parentId": {
+          "type": "integer",
+          "description": "Index in the trace.stacks array.",
+          "readOnly": true
+        },
+        "frameId": {
+          "type": "integer",
+          "description": "Index in the trace.frames array.",
+          "readOnly": true
+        }
+      }
+    },
+    "ProfilerSample": {
+      "title": "ProfilerSample",
+      "type": "object",
+      "description": "Schema of a profiler sample from the JS Self-Profiling API.",
+      "required": ["timestamp"],
+      "properties": {
+        "timestamp": {
+          "type": "number",
+          "description": "High resolution time relative to the profiling session's time origin.",
+          "readOnly": true
+        },
+        "stackId": {
+          "type": "integer",
+          "description": "Index in the trace.stacks array.",
+          "readOnly": true
+        }
+      }
+    },
+    "LongTaskEntry": {
+      "title": "RumProfilerLongTaskEntry",
+      "type": "object",
+      "description": "Schema of a long task entry recorded during profiling.",
+      "required": ["duration", "entryType", "startClocks"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "RUM Long Task id.",
+          "readOnly": true
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration in ms of the long task or long animation frame.",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "entryType": {
+          "type": "string",
+          "enum": ["longtask", "long-animation-frame"],
+          "description": "Type of the event: long task or long animation frame",
+          "readOnly": true
+        },
+        "startClocks": {
+          "$ref": "#/definitions/ClocksState"
+        }
+      }
+    },
+    "VitalEntry": {
+      "title": "RumProfilerVitalEntry",
+      "type": "object",
+      "description": "Schema of a vital entry recorded during profiling.",
+      "required": ["id", "label", "startClocks"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "RUM Vital id.",
+          "readOnly": true
+        },
+        "label": {
+          "type": "string",
+          "description": "RUM Vital label.",
+          "readOnly": true
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration in ms of the vital.",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "startClocks": {
+          "$ref": "#/definitions/ClocksState"
+        }
+      }
+    },
+    "ActionEntry": {
+      "title": "RumProfilerActionEntry",
+      "type": "object",
+      "description": "Schema of a action entry recorded during profiling.",
+      "required": ["id", "label", "startClocks"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "RUM Action id.",
+          "readOnly": true
+        },
+        "label": {
+          "type": "string",
+          "description": "RUM Action label.",
+          "readOnly": true
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration in ms of the duration vital.",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "startClocks": {
+          "$ref": "#/definitions/ClocksState"
+        }
+      }
+    },
+    "ResourceDebugId": {
+      "title": "ResourceDebugId",
+      "type": "object",
+      "description": "Association between a profiler resource and its debug ID.",
+      "required": ["resourceId", "debugId"],
+      "properties": {
+        "resourceId": {
+          "type": "integer",
+          "description": "Index in the trace.resources array.",
+          "readOnly": true
+        },
+        "debugId": {
+          "type": "string",
+          "description": "Debug ID (UUID) for the resource, used for source map deobfuscation.",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "readOnly": true
+        }
+      }
+    },
+    "ViewEntry": {
+      "title": "RumViewEntry",
+      "type": "object",
+      "description": "Schema of a RUM view entry recorded during profiling.",
+      "required": ["startClocks", "viewId"],
+      "properties": {
+        "startClocks": {
+          "$ref": "#/definitions/ClocksState"
+        },
+        "viewId": {
+          "type": "string",
+          "description": "RUM view id.",
+          "readOnly": true
+        },
+        "viewName": {
+          "type": "string",
+          "description": "RUM view name.",
+          "readOnly": true
+        }
+      }
+    }
+  },
+  "properties": {
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "An array of profiler resources.",
+      "readOnly": true
+    },
+    "debugIds": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ResourceDebugId"
+      },
+      "description": "Mapping of profiler resources to their debug IDs for source map deobfuscation.",
+      "readOnly": true
+    },
+    "frames": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ProfilerFrame"
+      },
+      "description": "An array of profiler frames.",
+      "readOnly": true
+    },
+    "stacks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ProfilerStack"
+      },
+      "description": "An array of profiler stacks.",
+      "readOnly": true
+    },
+    "samples": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ProfilerSample"
+      },
+      "description": "An array of profiler samples.",
+      "readOnly": true
+    },
+    "startClocks": {
+      "$ref": "#/definitions/ClocksState"
+    },
+    "endClocks": {
+      "$ref": "#/definitions/ClocksState"
+    },
+    "clocksOrigin": {
+      "$ref": "#/definitions/ClocksState"
+    },
+    "sampleInterval": {
+      "type": "number",
+      "description": "Sample interval in milliseconds.",
+      "readOnly": true
+    },
+    "longTasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/LongTaskEntry"
+      },
+      "description": "List of detected long tasks.",
+      "readOnly": true
+    },
+    "vitals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/VitalEntry"
+      },
+      "description": "List of detected vital entries.",
+      "readOnly": true
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ActionEntry"
+      },
+      "description": "List of detected action entries.",
+      "readOnly": true
+    },
+    "views": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ViewEntry"
+      },
+      "description": "List of detected navigation entries.",
+      "readOnly": true
+    }
+  }
+}

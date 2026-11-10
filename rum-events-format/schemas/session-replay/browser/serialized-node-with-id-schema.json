@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/serialized-node-with-id-schema.json",
+  "title": "SerializedNodeWithId",
+  "type": "object",
+  "description": "Serialized node contained by this Record.",
+  "allOf": [
+    {
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "integer"
+        }
+      }
+    },
+    {
+      "$ref": "serialized-node-schema.json"
+    }
+  ]
+}

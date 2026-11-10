@@ -1,0 +1,370 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/resource-schema.json",
+  "title": "RumResourceEvent",
+  "type": "object",
+  "description": "Schema of all properties of a Resource event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "$ref": "_action-child-schema.json"
+    },
+    {
+      "$ref": "_view-container-schema.json"
+    },
+    {
+      "required": ["type", "view", "resource"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "resource",
+          "readOnly": true
+        },
+        "view": {
+          "type": "object",
+          "readOnly": true
+        },
+        "resource": {
+          "type": "object",
+          "description": "Resource properties",
+          "required": ["type", "url"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "UUID of the resource",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            },
+            "type": {
+              "type": "string",
+              "description": "Resource type",
+              "enum": ["document", "xhr", "beacon", "fetch", "css", "js", "image", "font", "media", "other", "native"],
+              "readOnly": true
+            },
+            "method": {
+              "type": "string",
+              "description": "HTTP method of the resource",
+              "enum": ["POST", "GET", "HEAD", "PUT", "DELETE", "PATCH", "TRACE", "OPTIONS", "CONNECT"],
+              "readOnly": true
+            },
+            "url": {
+              "type": "string",
+              "description": "URL of the resource",
+              "readOnly": false
+            },
+            "status_code": {
+              "type": "integer",
+              "description": "HTTP status code of the resource",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "duration": {
+              "type": "integer",
+              "description": "Duration of the resource",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "size": {
+              "type": "integer",
+              "description": "Size in octet of the resource response body",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "encoded_body_size": {
+              "type": "integer",
+              "description": "Size in octet of the response body before removing any applied content encodings",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "decoded_body_size": {
+              "type": "integer",
+              "description": "Size in octet of the response body after removing any applied encoding",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "transfer_size": {
+              "type": "integer",
+              "description": "Size in octet of the fetched response resource",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "render_blocking_status": {
+              "type": "string",
+              "description": "Render blocking status of the resource",
+              "enum": ["blocking", "non-blocking"],
+              "readOnly": true
+            },
+            "worker": {
+              "type": "object",
+              "description": "Worker phase properties",
+              "required": ["duration", "start"],
+              "properties": {
+                "duration": {
+                  "type": "integer",
+                  "description": "Duration in nanoseconds of the resource worker phase",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "start": {
+                  "type": "integer",
+                  "description": "Duration in nanoseconds between start of the request and start of the worker phase",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "redirect": {
+              "type": "object",
+              "description": "Redirect phase properties",
+              "required": ["duration", "start"],
+              "properties": {
+                "duration": {
+                  "type": "integer",
+                  "description": "Duration in ns of the resource redirect phase",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "start": {
+                  "type": "integer",
+                  "description": "Duration in ns between start of the request and start of the redirect phase",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "dns": {
+              "type": "object",
+              "description": "DNS phase properties",
+              "required": ["duration", "start"],
+              "properties": {
+                "duration": {
+                  "type": "integer",
+                  "description": "Duration in ns of the resource dns phase",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "start": {
+                  "type": "integer",
+                  "description": "Duration in ns between start of the request and start of the dns phase",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "connect": {
+              "type": "object",
+              "description": "Connect phase properties",
+              "required": ["duration", "start"],
+              "properties": {
+                "duration": {
+                  "type": "integer",
+                  "description": "Duration in ns of the resource connect phase",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "start": {
+                  "type": "integer",
+                  "description": "Duration in ns between start of the request and start of the connect phase",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "ssl": {
+              "type": "object",
+              "description": "SSL phase properties",
+              "required": ["duration", "start"],
+              "properties": {
+                "duration": {
+                  "type": "integer",
+                  "description": "Duration in ns of the resource ssl phase",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "start": {
+                  "type": "integer",
+                  "description": "Duration in ns between start of the request and start of the ssl phase",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "first_byte": {
+              "type": "object",
+              "description": "First Byte phase properties",
+              "required": ["duration", "start"],
+              "properties": {
+                "duration": {
+                  "type": "integer",
+                  "description": "Duration in ns of the resource first byte phase",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "start": {
+                  "type": "integer",
+                  "description": "Duration in ns between start of the request and start of the first byte phase",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "download": {
+              "type": "object",
+              "description": "Download phase properties",
+              "required": ["duration", "start"],
+              "properties": {
+                "duration": {
+                  "type": "integer",
+                  "description": "Duration in ns of the resource download phase",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "start": {
+                  "type": "integer",
+                  "description": "Duration in ns between start of the request and start of the download phase",
+                  "minimum": 0,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "protocol": {
+              "type": "string",
+              "description": "Network protocol used to fetch the resource (e.g., 'http/1.1', 'h2')",
+              "readOnly": true
+            },
+            "delivery_type": {
+              "type": "string",
+              "description": "Delivery type of the resource",
+              "enum": ["cache", "navigational-prefetch", "other"],
+              "readOnly": true
+            },
+            "local_cache_hit": {
+              "type": "boolean",
+              "description": "Whether the resource was served from the device's local cache (deprecated in favor of `delivery_type`/`transfer_size`)",
+              "deprecated": true,
+              "readOnly": true
+            },
+            "provider": {
+              "type": "object",
+              "description": "The provider for this resource",
+              "properties": {
+                "domain": {
+                  "type": "string",
+                  "description": "The domain name of the provider",
+                  "readOnly": true
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The user friendly name of the provider",
+                  "readOnly": true
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The type of provider",
+                  "enum": [
+                    "ad",
+                    "advertising",
+                    "analytics",
+                    "cdn",
+                    "content",
+                    "customer-success",
+                    "first party",
+                    "hosting",
+                    "marketing",
+                    "other",
+                    "social",
+                    "tag-manager",
+                    "utility",
+                    "video"
+                  ],
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "request": {
+              "type": "object",
+              "description": "Request properties",
+              "properties": {
+                "encoded_body_size": {
+                  "type": "integer",
+                  "description": "Size in octet of the request body sent over the network (after encoding)",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "decoded_body_size": {
+                  "type": "integer",
+                  "description": "Size in octet of the request body before any encoding",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "headers": {
+                  "type": "object",
+                  "description": "HTTP headers of the resource request",
+                  "propertyNames": {
+                    "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "readOnly": false
+                }
+              },
+              "readOnly": true
+            },
+            "response": {
+              "type": "object",
+              "description": "Response properties",
+              "properties": {
+                "headers": {
+                  "type": "object",
+                  "description": "HTTP headers of the resource response",
+                  "propertyNames": {
+                    "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "readOnly": false
+                }
+              },
+              "readOnly": true
+            },
+            "graphql": {
+              "allOf": [{ "$ref": "_graphql-schema.json" }],
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "_dd": {
+          "type": "object",
+          "description": "Internal properties",
+          "allOf": [
+            { "$ref": "_trace-schema.json" },
+            {
+              "properties": {
+                "discarded": {
+                  "type": "boolean",
+                  "description": "Whether the resource should be discarded or indexed",
+                  "readOnly": true
+                }
+              }
+            }
+          ],
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

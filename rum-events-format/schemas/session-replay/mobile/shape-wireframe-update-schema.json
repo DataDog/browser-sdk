@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/shape-wireframe-update-schema.json",
+  "title": "ShapeWireframeUpdate",
+  "type": "object",
+  "description": "Schema of a ShapeWireframeUpdate.",
+  "allOf": [
+    {
+      "$ref": "_common-shape-wireframe-update-schema.json"
+    },
+    {
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of the wireframe.",
+          "const": "shape",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

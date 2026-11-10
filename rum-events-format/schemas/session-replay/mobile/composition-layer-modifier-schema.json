@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-modifier-schema.json",
+  "title": "CompositionLayerModifier",
+  "type": "object",
+  "description": "A rendering modifier applied to the composed layer output.",
+  "oneOf": [
+    {
+      "$ref": "composition-layer-clip-modifier-schema.json"
+    },
+    {
+      "$ref": "composition-layer-opacity-modifier-schema.json"
+    },
+    {
+      "$ref": "composition-layer-color-matrix-modifier-schema.json"
+    },
+    {
+      "$ref": "composition-layer-gaussian-blur-modifier-schema.json"
+    },
+    {
+      "$ref": "composition-layer-shadow-modifier-schema.json"
+    },
+    {
+      "$ref": "composition-layer-brightness-bias-modifier-schema.json"
+    },
+    {
+      "$ref": "composition-layer-saturate-modifier-schema.json"
+    },
+    {
+      "$ref": "composition-layer-mask-image-modifier-schema.json"
+    }
+  ]
+}

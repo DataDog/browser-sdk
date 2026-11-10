@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/string-references/role-annotated-string-literal-schema.json",
+  "title": "RoleAnnotatedStringLiteral",
+  "description": "Browser-specific. Schema representing a string literal with an associated string role.",
+  "type": "object",
+  "required": ["role", "string"],
+  "properties": {
+    "role": { "$ref": "string-role-schema.json" },
+    "string": { "$ref": "string-literal-schema.json" }
+  },
+  "additionalProperties": false
+}

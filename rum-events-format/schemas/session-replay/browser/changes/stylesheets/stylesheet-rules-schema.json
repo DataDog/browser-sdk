@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/stylesheets/stylesheet-rules-schema.json",
+  "title": "StyleSheetRules",
+  "description": "Schema representing a CSS stylesheet's rules, encoded either as a single string or as an array containing a separate string for each rule.",
+  "oneOf": [
+    {
+      "$ref": "../string-references/string-or-string-reference-schema.json"
+    },
+    {
+      "type": "array",
+      "items": { "$ref": "../string-references/string-or-string-reference-schema.json" }
+    }
+  ]
+}

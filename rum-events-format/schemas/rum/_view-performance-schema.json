@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_view-performance-schema.json",
+  "title": "ViewPerformanceData",
+  "type": "object",
+  "description": "Schema for view-level RUM performance data (Web Vitals, etc.)",
+  "properties": {
+    "cls": {
+      "type": "object",
+      "description": "Cumulative Layout Shift",
+      "required": ["score"],
+      "properties": {
+        "score": {
+          "type": "number",
+          "description": "Total layout shift score that occurred on the view",
+          "$comment": "Replaces the deprecated `view.cumulative_layout_shift`",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "timestamp": {
+          "type": "integer",
+          "description": "The time of the largest layout shift contributing to CLS, in ns since view start.",
+          "$comment": "Replaces the deprecated `view.cumulative_layout_shift_time`",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "target_selector": {
+          "type": "string",
+          "description": "CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS",
+          "$comment": "Replaces the deprecated `view.cumulative_layout_shift_target_selector`",
+          "readOnly": true
+        },
+        "previous_rect": {
+          "description": "Bounding client rect of the element before the layout shift",
+          "allOf": [{ "$ref": "_rect-schema.json" }]
+        },
+        "current_rect": {
+          "description": "Bounding client rect of the element after the layout shift",
+          "allOf": [{ "$ref": "_rect-schema.json" }]
+        }
+      },
+      "readOnly": true
+    },
+    "fcp": {
+      "type": "object",
+      "description": "First Contentful Paint",
+      "required": ["timestamp"],
+      "properties": {
+        "timestamp": {
+          "type": "integer",
+          "description": "The time of the first rendering, in ns since view start.",
+          "$comment": "Replaces the deprecated `view.first_contentful_paint`",
+          "minimum": 0,
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    },
+    "fid": {
+      "type": "object",
+      "description": "First Input Delay",
+      "required": ["duration", "timestamp"],
+      "properties": {
+        "duration": {
+          "type": "integer",
+          "description": "Duration in ns of the first input event delay",
+          "$comment": "Replaces the deprecated `view.first_input_delay`",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "timestamp": {
+          "type": "integer",
+          "description": "Time of the first input event, in ns since view start.",
+          "$comment": "Replaces the deprecated `view.first_input_time`",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "target_selector": {
+          "type": "string",
+          "description": "CSS selector path of the first input target element",
+          "$comment": "Replaces the deprecated `view.first_input_target_selector`",
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    },
+    "inp": {
+      "type": "object",
+      "description": "Interaction to Next Paint",
+      "required": ["duration"],
+      "properties": {
+        "duration": {
+          "type": "integer",
+          "description": "Longest duration in ns between an interaction and the next paint",
+          "$comment": "Replaces the deprecated `view.interaction_to_next_paint`",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "timestamp": {
+          "type": "integer",
+          "description": "Time of the start of the INP interaction, in ns since view start.",
+          "$comment": "Replaces the deprecated `view.interaction_to_next_paint_time`",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "target_selector": {
+          "type": "string",
+          "description": "CSS selector path of the interacted element for the INP interaction",
+          "$comment": "Replaces the deprecated `view.interaction_to_next_paint_target_selector`",
+          "readOnly": true
+        },
+        "sub_parts": {
+          "type": "object",
+          "description": "Sub-parts of the INP",
+          "required": ["input_delay", "processing_duration", "presentation_delay"],
+          "properties": {
+            "input_delay": {
+              "type": "integer",
+              "description": "Time from the start of the input event to the start of the processing of the event",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "processing_duration": {
+              "type": "integer",
+              "description": "Event handler execution time",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "presentation_delay": {
+              "type": "integer",
+              "description": "Rendering time happening after processing",
+              "minimum": 0,
+              "readOnly": true
+            }
+          }
+        }
+      },
+      "readOnly": true
+    },
+    "lcp": {
+      "type": "object",
+      "description": "Largest Contentful Paint",
+      "required": ["timestamp"],
+      "properties": {
+        "timestamp": {
+          "type": "integer",
+          "description": "Time of the largest contentful paint, in ns since view start.",
+          "$comment": "Replaces the deprecated `view.largest_contentful_paint`",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "target_selector": {
+          "type": "string",
+          "description": "CSS selector path of the largest contentful paint element",
+          "$comment": "Replaces the deprecated `view.largest_contentful_paint_target_selector`",
+          "readOnly": true
+        },
+        "resource_url": {
+          "type": "string",
+          "description": "URL of the largest contentful paint element",
+          "readOnly": false
+        },
+        "sub_parts": {
+          "type": "object",
+          "description": "Sub-parts of the LCP",
+          "required": ["load_delay", "load_time", "render_delay"],
+          "properties": {
+            "load_delay": {
+              "type": "integer",
+              "description": "Time between first_byte and the loading start of the resource associated with the LCP",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "load_time": {
+              "type": "integer",
+              "description": "Time to takes to load the resource attached to the LCP",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "render_delay": {
+              "type": "integer",
+              "description": "Time between the LCP resource finishes loading and the LCP element is fully rendered",
+              "minimum": 0,
+              "readOnly": true
+            }
+          }
+        }
+      },
+      "readOnly": true
+    },
+    "fbc": {
+      "type": "object",
+      "description": "First Build Complete (Flutter)",
+      "required": ["timestamp"],
+      "properties": {
+        "timestamp": {
+          "type": "integer",
+          "description": "Time of all completed `build` methods after a route change, in ns since view start.",
+          "$comment": "Calculated from the timing of a `postFrameCallback` after a route change.",
+          "minimum": 0,
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    }
+  }
+}

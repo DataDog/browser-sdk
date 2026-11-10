@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/document-fragment-node-schema.json",
+  "title": "DocumentFragmentNode",
+  "type": "object",
+  "description": "Schema of a Document FragmentNode.",
+  "required": ["type", "childNodes", "isShadowRoot"],
+  "properties": {
+    "type": {
+      "type": "integer",
+      "description": "The type of this Node.",
+      "const": 11,
+      "readOnly": true
+    },
+    "adoptedStyleSheets": {
+      "type": "array",
+      "description": "Stylesheet added dynamically",
+      "items": {
+        "$ref": "stylesheet-schema.json"
+      },
+      "readOnly": true
+    },
+    "isShadowRoot": {
+      "type": "boolean",
+      "description": "Is this node a shadow root or not",
+      "readOnly": true
+    },
+    "childNodes": {
+      "type": "array",
+      "items": {
+        "$ref": "serialized-node-with-id-schema.json"
+      }
+    }
+  }
+}

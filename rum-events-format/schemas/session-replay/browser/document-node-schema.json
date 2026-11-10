@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/document-node-schema.json",
+  "title": "DocumentNode",
+  "type": "object",
+  "description": "Schema of a Document Node.",
+  "required": ["type", "childNodes"],
+  "properties": {
+    "type": {
+      "type": "integer",
+      "description": "The type of this Node.",
+      "const": 0,
+      "readOnly": true
+    },
+    "adoptedStyleSheets": {
+      "type": "array",
+      "description": "Stylesheet added dynamically",
+      "items": {
+        "$ref": "stylesheet-schema.json"
+      },
+      "readOnly": true
+    },
+    "childNodes": {
+      "type": "array",
+      "items": {
+        "$ref": "serialized-node-with-id-schema.json"
+      }
+    }
+  }
+}

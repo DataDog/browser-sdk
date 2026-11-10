@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/attributes/attribute-assignment-or-deletion-schema.json",
+  "title": "AttributeAssignmentOrDeletion",
+  "description": "Schema representing a change to an attribute, either by assignment of a new value or by deletion of the attribute.",
+  "oneOf": [{ "$ref": "attribute-assignment-schema.json" }, { "$ref": "attribute-deletion-schema.json" }]
+}

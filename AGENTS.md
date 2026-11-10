@@ -127,6 +127,7 @@ For deeper context, see:
 
 - **NEVER manually edit auto-generated files.** They have a `DO NOT MODIFY IT BY HAND` comment at the top — respect it
 - Example: `telemetryEvent.types.ts` is generated from the `rum-events-format` schema repository
+- `rum-events-format/schemas` is a copy of that repository's schemas, updated by `yarn json-schemas:sync`. Don't edit it by hand either
 - Any changes to these files require a **corresponding PR in the upstream source repo first**, then regeneration
 
 ## Manual Testing with Chrome MCP

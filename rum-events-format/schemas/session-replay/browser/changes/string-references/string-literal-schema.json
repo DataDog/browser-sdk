@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/string-references/string-literal-schema.json",
+  "title": "StringLiteral",
+  "description": "Browser-specific. Schema representing a string, expressed as a literal.",
+  "type": "string"
+}

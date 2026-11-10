@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_stream-schema.json",
+  "title": "StreamSchema",
+  "type": "object",
+  "description": "Stream schema for media streaming properties",
+  "properties": {
+    "stream": {
+      "type": "object",
+      "description": "Stream properties",
+      "properties": {
+        "bitrate": {
+          "type": "number",
+          "description": "current bitrate at the time of collection",
+          "minimum": 0
+        },
+        "duration": {
+          "type": "number",
+          "description": "How long is the content (VOD only) (in ms)",
+          "minimum": 0,
+          "readOnly": true
+        },
+        "format": {
+          "type": "string",
+          "description": "Stream format",
+          "readOnly": true
+        },
+        "fps": {
+          "type": "number",
+          "description": "current frames per second at the time of collection",
+          "minimum": 0
+        },
+        "resolution": {
+          "type": "string",
+          "description": "Stream resolution",
+          "readOnly": true
+        },
+        "timestamp": {
+          "type": "integer",
+          "description": "current timestamp at the time of collection",
+          "minimum": 0
+        },
+        "watch_time": {
+          "type": "number",
+          "description": "how much did the media progress since the last context update (in ms)",
+          "minimum": 0
+        },
+        "completion_percent": {
+          "type": "number",
+          "description": "Percentage of amount of time watched relative to its total duration",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "readOnly": true
+    }
+  }
+}

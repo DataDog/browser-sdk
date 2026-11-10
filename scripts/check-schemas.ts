@@ -6,18 +6,19 @@ runMain(() => {
     throw new Error('This script should be run from a clean working tree')
   }
 
-  printLog('Regenerating schemas...')
-  command`node scripts/json-schemas.ts --build`.run()
+  printLog('Copying schemas again and regenerating types...')
+  command`node scripts/json-schemas.ts --check --build`.run()
 
   printLog('Checking untracked changes...')
-  const diff = command`git diff --color`.run()
-  if (diff) {
-    printLog(diff)
+  const status = command`git status --porcelain`.run()
+  if (status) {
+    printLog(status)
+    printLog(command`git diff --color`.run())
     printError(`
 Untracked changes detected.
 * If your PR requires rum-events-format changes, make sure to run \`yarn json-schemas:sync\`.
-* Else, you probably updated the @datadog/rum-events-format ref by mistake. To revert it, restore
-  the previous ref in package.json and run \`yarn install\`.
+* Never modify rum-events-format/schemas or the generated types by hand: change the schemas in the
+  rum-events-format repository first, then run \`yarn json-schemas:sync\`.
 `)
 
     process.exit(1)

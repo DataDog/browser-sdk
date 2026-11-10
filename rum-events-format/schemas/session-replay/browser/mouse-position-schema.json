@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/mouse-position-schema.json",
+  "title": "MousePosition",
+  "type": "object",
+  "description": "Browser-specific. Schema of a MousePosition.",
+  "required": ["x", "y", "id", "timeOffset"],
+  "properties": {
+    "x": {
+      "type": "number",
+      "description": "X-axis coordinate for this MousePosition."
+    },
+    "y": {
+      "type": "number",
+      "description": "Y-axis coordinate for this MousePosition."
+    },
+    "id": {
+      "type": "integer",
+      "description": "Id for the target node for this MousePosition."
+    },
+    "timeOffset": {
+      "type": "integer",
+      "description": "Observed time offset for this MousePosition."
+    }
+  }
+}

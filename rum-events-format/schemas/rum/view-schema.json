@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/view-schema.json",
+  "title": "RumViewEvent",
+  "type": "object",
+  "description": "Schema of all properties of a View event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "$ref": "_view-container-schema.json"
+    },
+    {
+      "$ref": "_stream-schema.json"
+    },
+    {
+      "$ref": "_view-properties-schema.json"
+    },
+    {
+      "required": ["type", "view", "_dd"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "view",
+          "readOnly": true
+        },
+        "view": {
+          "type": "object",
+          "required": ["time_spent", "action", "error", "resource"],
+          "properties": {
+            "time_spent": { "type": "integer" },
+            "action": { "type": "object" },
+            "error": { "type": "object" },
+            "resource": { "type": "object" }
+          }
+        },
+        "_dd": {
+          "type": "object",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

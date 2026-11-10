@@ -1,0 +1,339 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "telemetry/usage/common-features-schema.json",
+  "title": "TelemetryCommonFeaturesUsage",
+  "type": "object",
+  "description": "Schema of features usage common across SDKs",
+  "oneOf": [
+    {
+      "required": ["feature", "tracking_consent"],
+      "title": "SetTrackingConsent",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setTrackingConsent API",
+          "const": "set-tracking-consent"
+        },
+        "tracking_consent": {
+          "type": "string",
+          "description": "The tracking consent value set by the user",
+          "enum": ["granted", "not-granted", "pending"]
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "StopSession",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "stopSession API",
+          "const": "stop-session"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "StartView",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "startView API",
+          "const": "start-view"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetViewContext",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setViewContext API",
+          "const": "set-view-context"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetViewContextProperty",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setViewContextProperty API",
+          "const": "set-view-context-property"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetViewName",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setViewName API",
+          "const": "set-view-name"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "GetViewContext",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "getViewContext API",
+          "const": "get-view-context"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "AddAction",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "addAction API",
+          "const": "add-action"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "AddError",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "addError API",
+          "const": "add-error"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "GetGlobalContext",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "getGlobalContext API",
+          "const": "get-global-context"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetGlobalContext",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setGlobalContext, addAttribute APIs",
+          "const": "set-global-context"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetGlobalContextProperty",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setGlobalContextProperty API",
+          "const": "set-global-context-property"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "RemoveGlobalContextProperty",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "removeGlobalContextProperty API",
+          "const": "remove-global-context-property"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "ClearGlobalContext",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "clearGlobalContext API",
+          "const": "clear-global-context"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "GetUser",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "getUser API",
+          "const": "get-user"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetUser",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setUser, setUserInfo APIs",
+          "const": "set-user"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetUserProperty",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setUserProperty API",
+          "const": "set-user-property"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "RemoveUserProperty",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "removeUserProperty API",
+          "const": "remove-user-property"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "ClearUser",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "clearUser API",
+          "const": "clear-user"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "GetAccount",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "getAccount API",
+          "const": "get-account"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetAccount",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setAccount, setAccountProperty APIs",
+          "const": "set-account"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SetAccountProperty",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "setAccountProperty API",
+          "const": "set-account-property"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "RemoveAccountProperty",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "removeAccountProperty API",
+          "const": "remove-account-property"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "ClearAccount",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "clearAccount API",
+          "const": "clear-account"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "AddFeatureFlagEvaluation",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "addFeatureFlagEvaluation API",
+          "const": "add-feature-flag-evaluation"
+        }
+      }
+    },
+    {
+      "required": ["feature", "action_type"],
+      "title": "AddOperationStepVital",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "addOperationStepVital API",
+          "const": "add-operation-step-vital"
+        },
+        "action_type": {
+          "type": "string",
+          "description": "Operations step type",
+          "enum": ["start", "succeed", "fail"]
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "GraphQLRequest",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "GraphQL request detected",
+          "const": "graphql-request"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "AddViewLoadingTime",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "addViewLoadingTime API",
+          "const": "addViewLoadingTime"
+        },
+        "no_view": {
+          "type": "boolean",
+          "description": "Whether the view is not available"
+        },
+        "no_active_view": {
+          "type": "boolean",
+          "description": "Whether the available view is not active"
+        },
+        "overwritten": {
+          "type": "boolean",
+          "description": "Whether this call overwrote a previously set loading time"
+        }
+      }
+    }
+  ]
+}

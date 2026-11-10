@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/change-record-schema.json",
+  "title": "BrowserChangeRecord",
+  "description": "Browser-specific. Schema of a record type which represents changes using a compact encoding. (Experimental; subject to change.)",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "../common/_slot-supported-common-record-schema.json"
+    },
+    {
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 12,
+          "readOnly": true
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "changes/change-schema.json"
+          }
+        },
+        "id": {
+          "type": "integer"
+        }
+      }
+    }
+  ]
+}

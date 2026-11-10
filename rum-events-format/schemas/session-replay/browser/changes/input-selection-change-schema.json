@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/input-selection-change-schema.json",
+  "title": "InputSelectionChange",
+  "description": "Browser-specific. Schema representing a change to the selection state of one or more 'selection-driven' form input elements; selection-driven inputs include checkboxes, radio buttons, and <select>/<option>. For <select>, the change targets the <option> elements, which allows multiple selection to be expressed naturally. To model correlated changes like updates to radio button groups, the same selection state can be applied to many nodes at once.",
+  "type": "array",
+  "minItems": 1,
+  "items": [
+    {
+      "description": "Browser-specific. The selection state of a form input element.",
+      "oneOf": [
+        {
+          "title": "InputSelectionStateSelected",
+          "description": "The element is selected. For a checkbox or radio button, this means that it is checked; for an <option>, this means that it is selected.",
+          "const": 0
+        },
+        {
+          "title": "InputSelectionStateDeselected",
+          "description": "The element is not selected. For a checkbox or radio button, this means that it is unchecked; for an <option>, this means that it is deselected.",
+          "const": 1
+        },
+        {
+          "title": "InputSelectionStateIndeterminate",
+          "description": "The element is neither selected nor deselected. This state only applies to checkboxes, which render it distinctly from both the selected and deselected states.",
+          "const": 2
+        }
+      ]
+    }
+  ],
+  "additionalItems": { "$ref": "node-references/node-id-schema.json" }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/string-references/string-or-string-reference-schema.json",
+  "title": "StringOrStringReference",
+  "description": "Browser-specific. Schema representing a string, either expressed as a literal, as a literal with an associated string role, or as an index into the string table.",
+  "oneOf": [
+    { "$ref": "string-literal-schema.json" },
+    { "$ref": "role-annotated-string-literal-schema.json" },
+    { "$ref": "string-reference-schema.json" }
+  ]
+}

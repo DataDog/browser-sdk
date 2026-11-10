@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_perf-metric-schema.json",
+  "title": "RumPerfMetric",
+  "type": "object",
+  "description": "Schema of properties for a technical performance metric",
+  "required": ["min", "max", "average"],
+  "properties": {
+    "min": {
+      "type": "number",
+      "description": "The minimum value seen for this metric during the view's lifetime.",
+      "readOnly": true
+    },
+    "max": {
+      "type": "number",
+      "description": "The maximum value seen for this metric during the view's lifetime.",
+      "readOnly": true
+    },
+    "average": {
+      "type": "number",
+      "description": "The average value for this metric during the view's lifetime.",
+      "readOnly": true
+    },
+    "metric_max": {
+      "type": "number",
+      "description": "The maximum possible value we could see for this metric, if such a max is relevant and can vary from session to session.",
+      "readOnly": true
+    }
+  }
+}

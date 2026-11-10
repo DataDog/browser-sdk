@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-update-schema.json",
+  "title": "CompositionLayerUpdate",
+  "type": "object",
+  "description": "Sparse update for a composition layer. Omitted fields are unchanged.",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "The id of the layer to update.",
+      "readOnly": true
+    },
+    "x": {
+      "type": "integer",
+      "description": "Updated X position in absolute coordinates. Uses the same coordinate space as mobile wireframes.",
+      "readOnly": true
+    },
+    "y": {
+      "type": "integer",
+      "description": "Updated Y position in absolute coordinates. Uses the same coordinate space as mobile wireframes.",
+      "readOnly": true
+    },
+    "width": {
+      "type": "integer",
+      "description": "Updated width in pixels. Uses the same coordinate space as mobile wireframes.",
+      "readOnly": true
+    },
+    "height": {
+      "type": "integer",
+      "description": "Updated height in pixels. Uses the same coordinate space as mobile wireframes.",
+      "readOnly": true
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "$ref": "composition-layer-child-schema.json"
+      },
+      "description": "When present, replaces the full child list for this layer.",
+      "readOnly": true
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "$ref": "composition-layer-modifier-schema.json"
+      },
+      "description": "When present, replaces the full modifier list for this layer.",
+      "readOnly": true
+    },
+    "compositeOperation": {
+      "type": "string",
+      "enum": ["sourceOver", "destinationIn", "destinationOut", "plusDarker"],
+      "description": "Updated composite operation for this layer.",
+      "readOnly": true
+    }
+  }
+}

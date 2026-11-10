@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/string-references/string-role-schema.json",
+  "title": "StringRoleId",
+  "description": "Browser-specific. Schema representing a string role.",
+  "oneOf": [
+    {
+      "title": "StringRoleDefault",
+      "description": "The default string role, used for uncategorized strings. Strings added by an AddStringChange are added to this string role.",
+      "const": 0
+    },
+    {
+      "title": "StringRoleNodeName",
+      "description": "A string role containing DOM node names (e.g. 'div', '#text').",
+      "const": 1
+    },
+    {
+      "title": "StringRoleAttributeName",
+      "description": "A string role containing DOM attribute names.",
+      "const": 2
+    },
+    {
+      "title": "StringRoleAttributeValue",
+      "description": "A string role containing DOM attribute values.",
+      "const": 3
+    },
+    {
+      "title": "StringRoleTextContent",
+      "description": "A string role containing DOM text content.",
+      "const": 4
+    },
+    {
+      "title": "StringRoleFormInput",
+      "description": "A string role containing DOM form input values.",
+      "const": 5
+    },
+    {
+      "title": "StringRoleCSS",
+      "description": "A string role containing CSS inline styles and stylesheets.",
+      "const": 6
+    },
+    {
+      "title": "StringRoleURL",
+      "description": "A string role containing URLs.",
+      "const": 7
+    },
+    {
+      "title": "StringRoleResourceId",
+      "description": "A string role containing resource IDs.",
+      "const": 8
+    }
+  ]
+}
