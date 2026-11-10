@@ -35,6 +35,14 @@ export function getGithubReadToken() {
 }
 
 /**
+ * This token is scoped to main branch only. It can open and update the release pull request, and
+ * create release tags and draft GitHub releases.
+ */
+export function getGithubReleasePleaseToken() {
+  return new OctoStsToken('release-please')
+}
+
+/**
  * This token is scoped to main branch only.
  */
 export function getGithubCommitToken() {

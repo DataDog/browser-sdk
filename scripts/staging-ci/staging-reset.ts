@@ -33,7 +33,9 @@ runMain(async () => {
     printLog(`Changing staging branch in ${CI_FILE}...`)
 
     await replaceCiFileVariable('CURRENT_STAGING', NEW_STAGING_BRANCH)
-    command`git commit ${CI_FILE} -m ${`chore(ci): Bump staging to ${NEW_STAGING_BRANCH}`}`.run()
+    // `staging` is a hidden type in release-please-config.json: this weekly commit stays out of the
+    // changelog and doesn't open a release pull request on its own.
+    command`git commit ${CI_FILE} -m ${`staging(ci): Bump staging to ${NEW_STAGING_BRANCH}`}`.run()
     command`git push origin ${MAIN_BRANCH}`.run()
   } else {
     printLog(`Staging branch already up to date in ${CI_FILE}. Skipping.`)
