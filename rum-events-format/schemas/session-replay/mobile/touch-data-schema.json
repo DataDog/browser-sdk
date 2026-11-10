@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/touch-data-schema.json",
+  "title": "TouchData",
+  "type": "object",
+  "description": "Schema of a TouchData.",
+  "allOf": [
+    {
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 2,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        },
+        "positions": {
+          "type": "array",
+          "readOnly": true,
+          "items": {
+            "type": "object",
+            "required": ["id", "x", "y", "timestamp"],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "The touch id of the touch event this position corresponds to. In mobile it is possible to have multiple touch events (fingers touching the screen) happening at the same time.",
+                "readOnly": true
+              },
+              "x": {
+                "type": "integer",
+                "description": "The x coordinate value of the position.",
+                "readOnly": true
+              },
+              "y": {
+                "type": "integer",
+                "description": "The y coordinate value of the position.",
+                "readOnly": true
+              },
+              "timestamp": {
+                "type": "integer",
+                "description": "The UTC timestamp in milliseconds corresponding to the moment the position change was recorded. Each timestamp is computed as the UTC interval since 00:00:00.000 01.01.1970.",
+                "readOnly": true
+              }
+            }
+          },
+          "description": "Contains the positions of the finger on the screen during the touchDown/touchUp event lifecycle."
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "profiling/mobile/profile-rum-metadata-event-schema.json",
+  "title": "MobileRumMetadataEvent",
+  "description": "Schema of the RUM event attachment (rum-mobile-events.json) uploaded alongside a Mobile SDK (Android or iOS) profile. The payload is a flat array of RUM events used to match profiling samples to RUM events by timestamp, enabling profile slicing by event type. Events may be already finished or still ongoing at the time the profile is submitted.",
+  "type": "object",
+  "required": ["type", "id", "start_ns"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "description": "Type of the RUM event.",
+      "enum": ["vital", "long_task", "error"],
+      "readOnly": true
+    },
+    "id": {
+      "type": "string",
+      "description": "RUM event id.",
+      "readOnly": true
+    },
+    "name": {
+      "type": "string",
+      "description": "Optional human-readable name of the event (e.g. the vital label).",
+      "readOnly": true
+    },
+    "start_ns": {
+      "type": "integer",
+      "description": "Event start timestamp in nanoseconds, using the same clock as the profiling samples.",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "duration_ns": {
+      "type": "integer",
+      "description": "Event duration in nanoseconds. If absent, the event is considered ongoing at the time the profile was submitted.",
+      "minimum": 0,
+      "readOnly": true
+    }
+  }
+}

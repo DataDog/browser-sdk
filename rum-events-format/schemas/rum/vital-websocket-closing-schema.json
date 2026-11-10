@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/vital-websocket-closing-schema.json",
+  "title": "RumVitalWebsocketClosingEvent",
+  "type": "object",
+  "description": "Schema for the vital reported when a WebSocket connection starts closing. Reported at most once per connection. Reported with vital.name websocket_closing",
+  "allOf": [
+    {
+      "$ref": "_vital-websocket-common-schema.json"
+    },
+    {
+      "required": ["vital"],
+      "properties": {
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["websocket"],
+          "properties": {
+            "websocket": {
+              "type": "object",
+              "description": "WebSocket properties",
+              "required": ["closing_date", "close_initiator"],
+              "properties": {
+                "closing_date": {
+                  "type": "integer",
+                  "description": "Date the connection was asked to close, in ms from epoch. Computed from the connecting date and the time elapsed since, measured on a monotonic clock",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "close_initiator": {
+                  "type": "string",
+                  "description": "Side that initiated the close. Only reported on this vital, and only as client, since a close observed from the application is always initiated by it. The other values are reported by the connection-level data derived from these vitals",
+                  "enum": ["client", "server", "unknown"],
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

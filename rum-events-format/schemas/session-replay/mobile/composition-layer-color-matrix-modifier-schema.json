@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-color-matrix-modifier-schema.json",
+  "title": "CompositionLayerColorMatrixModifier",
+  "type": "object",
+  "description": "Color transformation using a 4x5 matrix applied to the composed layer output.",
+  "required": ["type", "matrix"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "colorMatrix",
+      "description": "The type of the modifier.",
+      "readOnly": true
+    },
+    "matrix": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 20,
+      "maxItems": 20,
+      "description": "4x5 color matrix encoded as 20 numbers in row-major order. Input and output color channels are normalized to [0, 1]. The transform for each output channel is: R' = m[0]*R + m[1]*G + m[2]*B + m[3]*A + m[4], G' = m[5]*R + m[6]*G + m[7]*B + m[8]*A + m[9], B' = m[10]*R + m[11]*G + m[12]*B + m[13]*A + m[14], A' = m[15]*R + m[16]*G + m[17]*B + m[18]*A + m[19]. Each output channel is clamped to [0, 1] after evaluation.",
+      "readOnly": true
+    }
+  }
+}

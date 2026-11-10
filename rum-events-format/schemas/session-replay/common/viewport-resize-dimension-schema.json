@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/viewport-resize-dimension-schema.json",
+  "type": "object",
+  "title": "ViewportResizeDimension",
+  "description": "Schema of a ViewportResizeDimension.",
+  "required": ["width", "height"],
+  "properties": {
+    "width": {
+      "type": "integer",
+      "description": "The new width of the screen in pixels, normalized based on the device pixels per inch density (DPI). Example: if a device has a DPI = 2, the width is divided by 2 to get a normalized width."
+    },
+    "height": {
+      "type": "integer",
+      "description": "The new height of the screen in pixels, normalized based on the device pixels per inch density (DPI). Example: if a device has a DPI = 2, the height is divided by 2 to get a normalized height."
+    }
+  }
+}

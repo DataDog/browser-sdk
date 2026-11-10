@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/_common-shape-wireframe-schema.json",
+  "title": "CommonShapeWireframe",
+  "type": "object",
+  "description": "Schema of common properties for ShapeWireframe events type and all its sub - types.",
+  "allOf": [
+    {
+      "$ref": "_common-wireframe-schema.json"
+    },
+    {
+      "properties": {
+        "shapeStyle": {
+          "$ref": "shape-style-schema.json"
+        },
+        "border": {
+          "$ref": "shape-border-schema.json"
+        }
+      }
+    }
+  ]
+}

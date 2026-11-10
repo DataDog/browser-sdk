@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "telemetry/usage/browser-features-schema.json",
+  "title": "TelemetryBrowserFeaturesUsage",
+  "type": "object",
+  "description": "Schema of browser specific features usage",
+  "oneOf": [
+    {
+      "required": ["feature"],
+      "title": "StartSessionReplayRecording",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "startSessionReplayRecording API",
+          "const": "start-session-replay-recording"
+        },
+        "is_forced": {
+          "type": "boolean",
+          "description": "Whether the recording is allowed to start even on sessions sampled out of replay"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "StartDurationVital",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "startDurationVital API",
+          "const": "start-duration-vital"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "StopDurationVital",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "stopDurationVital API",
+          "const": "stop-duration-vital"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "AddDurationVital",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "addDurationVital API",
+          "const": "add-duration-vital"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "StartAction",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "startAction API",
+          "const": "start-action"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "StopAction",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "stopAction API",
+          "const": "stop-action"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "StartResource",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "startResource API",
+          "const": "start-resource"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "StopResource",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "stopResource API",
+          "const": "stop-resource"
+        }
+      }
+    },
+    {
+      "required": ["feature"],
+      "title": "SourceCodeContext",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "DD_SOURCE_CODE_CONTEXT global for microfrontends",
+          "const": "source-code-context"
+        }
+      }
+    }
+  ]
+}

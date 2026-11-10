@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-mask-image-modifier-schema.json",
+  "title": "CompositionLayerMaskImageModifier",
+  "type": "object",
+  "description": "Image mask applied to the composed layer output at this point in the modifier order. The referenced image is mapped to the layer bounds and interpreted as an alpha mask: transparent pixels hide content, opaque pixels keep content, and partial alpha multiplies content alpha. RGB channels are ignored.",
+  "required": ["type", "resourceId"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "maskImage",
+      "description": "The type of the modifier.",
+      "readOnly": true
+    },
+    "resourceId": {
+      "type": "string",
+      "description": "Unique identifier of the image resource used as a bounds-aligned alpha mask.",
+      "readOnly": true
+    }
+  }
+}

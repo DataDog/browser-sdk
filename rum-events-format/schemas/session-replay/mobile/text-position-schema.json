@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/text-position-schema.json",
+  "title": "TextPosition",
+  "type": "object",
+  "description": "Schema of all properties of a TextPosition.",
+  "allOf": [
+    {
+      "properties": {
+        "padding": {
+          "type": "object",
+          "properties": {
+            "top": {
+              "type": "integer",
+              "description": "The top padding in pixels. The default value is 0.",
+              "readOnly": true
+            },
+            "bottom": {
+              "type": "integer",
+              "description": "The bottom padding in pixels. The default value is 0.",
+              "readOnly": true
+            },
+            "left": {
+              "type": "integer",
+              "description": "The left padding in pixels. The default value is 0.",
+              "readOnly": true
+            },
+            "right": {
+              "type": "integer",
+              "description": "The right padding in pixels. The default value is 0.",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "alignment": {
+          "type": "object",
+          "properties": {
+            "horizontal": {
+              "type": "string",
+              "description": "The horizontal text alignment. The default value is `left`.",
+              "enum": ["left", "right", "center"],
+              "readOnly": true
+            },
+            "vertical": {
+              "type": "string",
+              "description": "The vertical text alignment. The default value is `top`.",
+              "enum": ["top", "bottom", "center"],
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

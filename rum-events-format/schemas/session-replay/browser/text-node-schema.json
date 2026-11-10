@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/text-node-schema.json",
+  "title": "TextNode",
+  "type": "object",
+  "description": "Schema of a Text Node.",
+  "required": ["type", "textContent"],
+  "properties": {
+    "type": {
+      "type": "integer",
+      "description": "The type of this Node.",
+      "const": 3,
+      "readOnly": true
+    },
+    "textContent": {
+      "type": "string",
+      "description": "Text value for this Text Node"
+    },
+    "isStyle": {
+      "const": true
+    }
+  }
+}

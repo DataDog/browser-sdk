@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum-events-schema.json",
+  "title": "RumEvent",
+  "type": "object",
+  "description": "Schema of all properties of a RUM event",
+  "oneOf": [
+    {
+      "$ref": "rum/action-schema.json"
+    },
+    {
+      "$ref": "rum/transition-schema.json"
+    },
+    {
+      "$ref": "rum/error-schema.json"
+    },
+    {
+      "$ref": "rum/long_task-schema.json"
+    },
+    {
+      "$ref": "rum/resource-schema.json"
+    },
+    {
+      "$ref": "rum/view-schema.json"
+    },
+    {
+      "$ref": "rum/view_update-schema.json"
+    },
+    {
+      "$ref": "rum/execution_context-schema.json"
+    },
+    {
+      "title": "RumVitalEvent",
+      "oneOf": [
+        {
+          "$ref": "rum/vital-duration-schema.json"
+        },
+        {
+          "$ref": "rum/vital-operation-step-schema.json"
+        },
+        {
+          "$ref": "rum/vital-app-launch-schema.json"
+        },
+        {
+          "$ref": "rum/vital-websocket-connecting-schema.json"
+        },
+        {
+          "$ref": "rum/vital-websocket-open-schema.json"
+        },
+        {
+          "$ref": "rum/vital-websocket-closing-schema.json"
+        },
+        {
+          "$ref": "rum/vital-websocket-closed-schema.json"
+        }
+      ]
+    }
+  ]
+}

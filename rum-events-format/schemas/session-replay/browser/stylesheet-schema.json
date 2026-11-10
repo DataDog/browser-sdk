@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/stylesheet-schema.json",
+  "title": "StyleSheet",
+  "type": "object",
+  "description": "Browser-specific. Schema of a StyleSheet",
+  "required": ["cssRules"],
+  "properties": {
+    "cssRules": {
+      "type": "array",
+      "description": "CSS rules applied (rule.cssText)",
+      "items": {
+        "description": "Value of css",
+        "type": "string"
+      }
+    },
+    "media": {
+      "type": "array",
+      "description": "MediaList of the stylesheet",
+      "items": {
+        "description": "Value of css",
+        "type": "string"
+      }
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Is the stylesheet disabled"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/node-added-mutation-schema.json",
+  "title": "AddedNodeMutation",
+  "type": "object",
+  "description": "Schema of an AddedNodeMutation.",
+  "required": ["node", "nextId", "parentId"],
+  "properties": {
+    "node": {
+      "$ref": "serialized-node-with-id-schema.json"
+    },
+    "parentId": {
+      "type": "integer",
+      "description": "Id for the parent node for this AddedNodeMutation."
+    },
+    "nextId": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "description": "Id for the next sibling node for this AddedNodeMutation."
+        },
+        {
+          "type": "null",
+          "description": "Sent when there is no next sibling anymore."
+        }
+      ]
+    },
+    "previousId": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "description": "Id for the previous sibling node for this AddedNodeMutation."
+        },
+        {
+          "type": "null",
+          "description": "Sent when there is no previous sibling anymore."
+        }
+      ]
+    }
+  }
+}

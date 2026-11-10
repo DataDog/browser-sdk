@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/attributes-schema.json",
+  "title": "Attributes",
+  "type": "object",
+  "description": "Schema of an Attributes type.",
+  "additionalProperties": {
+    "type": ["string", "number", "boolean"]
+  }
+}

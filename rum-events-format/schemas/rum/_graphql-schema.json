@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_graphql-schema.json",
+  "title": "RumGraphql",
+  "type": "object",
+  "description": "GraphQL request parameters",
+  "properties": {
+    "operationType": {
+      "type": "string",
+      "description": "Type of the GraphQL operation",
+      "enum": ["query", "mutation", "subscription"],
+      "readOnly": true
+    },
+    "operationName": {
+      "type": "string",
+      "description": "Name of the GraphQL operation",
+      "readOnly": true
+    },
+    "payload": {
+      "type": "string",
+      "description": "Content of the GraphQL operation",
+      "readOnly": false
+    },
+    "variables": {
+      "type": "string",
+      "description": "String representation of the operation variables",
+      "readOnly": false
+    },
+    "error_count": {
+      "type": "integer",
+      "description": "Number of GraphQL errors in the response",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "errors": {
+      "type": "array",
+      "description": "Array of GraphQL errors from the response",
+      "items": {
+        "type": "object",
+        "description": "GraphQL error details",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "readOnly": true
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code (used by some providers)",
+            "readOnly": true
+          },
+          "locations": {
+            "type": "array",
+            "description": "Array of error locations in the GraphQL query",
+            "items": {
+              "type": "object",
+              "description": "Error location",
+              "required": ["line", "column"],
+              "properties": {
+                "line": {
+                  "type": "integer",
+                  "description": "Line number where the error occurred",
+                  "minimum": 1,
+                  "readOnly": true
+                },
+                "column": {
+                  "type": "integer",
+                  "description": "Column number where the error occurred",
+                  "minimum": 1,
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "readOnly": true
+          },
+          "path": {
+            "type": "array",
+            "description": "Path to the field that caused the error",
+            "items": {
+              "oneOf": [{ "type": "string" }, { "type": "integer" }]
+            },
+            "readOnly": true
+          }
+        },
+        "readOnly": true
+      },
+      "readOnly": true
+    }
+  },
+  "readOnly": true
+}

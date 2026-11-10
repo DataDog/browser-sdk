@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/viewport-resize-data-schema.json",
+  "title": "ViewportResizeData",
+  "type": "object",
+  "description": "Schema of a ViewportResizeData.",
+  "allOf": [
+    {
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 4,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        }
+      }
+    },
+    {
+      "$ref": "viewport-resize-dimension-schema.json"
+    }
+  ]
+}

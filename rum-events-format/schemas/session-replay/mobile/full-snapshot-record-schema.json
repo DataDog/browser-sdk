@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/full-snapshot-record-schema.json",
+  "title": "MobileFullSnapshotRecord",
+  "type": "object",
+  "description": "Mobile-specific. Schema of a Record type which contains the full snapshot of a screen.",
+  "allOf": [
+    {
+      "$ref": "../common/_common-record-schema.json"
+    },
+    {
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 10,
+          "readOnly": true
+        },
+        "data": {
+          "type": "object",
+          "readOnly": true,
+          "required": ["wireframes"],
+          "properties": {
+            "wireframes": {
+              "type": "array",
+              "items": {
+                "$ref": "wireframe-schema.json"
+              },
+              "description": "The Wireframes contained by this Record.",
+              "readOnly": true
+            },
+            "compositionTree": {
+              "$ref": "composition-tree-schema.json",
+              "description": "Optional composition tree describing the rendering hierarchy. When present, the player uses this tree for rendering order and group operations.",
+              "readOnly": true
+            }
+          }
+        },
+        "slotId": {
+          "type": "string",
+          "description": "Unique ID of the slot that generated this record.",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

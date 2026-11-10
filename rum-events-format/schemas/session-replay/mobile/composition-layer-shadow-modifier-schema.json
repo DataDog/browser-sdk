@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-shadow-modifier-schema.json",
+  "title": "CompositionLayerShadowModifier",
+  "type": "object",
+  "description": "Drop shadow drawn behind the composed layer output.",
+  "required": ["type", "color", "offsetX", "offsetY", "radius"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "shadow",
+      "description": "The type of the modifier.",
+      "readOnly": true
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[A-Fa-f0-9]{6}([A-Fa-f0-9]{2})?$",
+      "description": "The shadow color as a String hexadecimal. Follows the #RRGGBBAA color format with the alpha value as optional. SDKs should encode the effective shadow alpha in this color and omit the shadow modifier when the effective alpha is 0.",
+      "readOnly": true
+    },
+    "offsetX": {
+      "type": "number",
+      "description": "Horizontal shadow offset in pixels.",
+      "readOnly": true
+    },
+    "offsetY": {
+      "type": "number",
+      "description": "Vertical shadow offset in pixels.",
+      "readOnly": true
+    },
+    "radius": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Blur radius used to create the shadow.",
+      "readOnly": true
+    },
+    "path": {
+      "type": "string",
+      "description": "Optional SVG path string defining the shadow outline, in coordinates local to the layer rectangle. When present, the path is interpreted using the non-zero winding rule. When omitted, the shadow follows the composed layer alpha.",
+      "readOnly": true
+    }
+  }
+}

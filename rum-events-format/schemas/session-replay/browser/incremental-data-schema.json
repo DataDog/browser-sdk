@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/incremental-data-schema.json",
+  "title": "BrowserIncrementalData",
+  "type": "object",
+  "description": "Browser-specific. Schema of a Session Replay IncrementalData type.",
+  "oneOf": [
+    {
+      "$ref": "mutation-data-schema.json"
+    },
+    {
+      "$ref": "mouse-move-data-schema.json"
+    },
+    {
+      "$ref": "mouse-interaction-data-schema.json"
+    },
+    {
+      "$ref": "scroll-data-schema.json"
+    },
+    {
+      "$ref": "input-data-schema.json"
+    },
+    {
+      "$ref": "media-interaction-data-schema.json"
+    },
+    {
+      "$ref": "stylesheet-rule-data-schema.json"
+    },
+    {
+      "$ref": "../common/viewport-resize-data-schema.json"
+    },
+    {
+      "$ref": "../common/pointer-interaction-data-schema.json"
+    }
+  ]
+}

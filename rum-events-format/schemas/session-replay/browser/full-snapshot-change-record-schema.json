@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/full-snapshot-change-record-schema.json",
+  "title": "BrowserFullSnapshotChangeRecord",
+  "type": "object",
+  "description": "Browser-specific. Schema of a Record type which contains a full snapshot of a document in Change format.",
+  "allOf": [
+    {
+      "$ref": "../common/_slot-supported-common-record-schema.json"
+    },
+    {
+      "required": ["data", "format", "type"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 2,
+          "readOnly": true
+        },
+        "format": {
+          "title": "SnapshotFormatChange",
+          "description": "The Change snapshot format.",
+          "const": 1,
+          "readOnly": true
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "changes/change-schema.json"
+          }
+        }
+      }
+    }
+  ]
+}

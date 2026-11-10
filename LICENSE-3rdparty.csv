@@ -61,7 +61,6 @@ dev,globals,MIT,Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorh
 dev,html-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,http-server,MIT,Copyright http-party contributors
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
-dev,json-schema-to-typescript,MIT,
 dev,karma,MIT,Copyright 2011-2019 Google Inc.
 dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google, Inc.
 dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.

@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "profiling/browser/profile-event-schema.json",
+  "title": "BrowserProfileEvent",
+  "type": "object",
+  "description": "Schema of the Browser SDK Profile Event payload.",
+  "allOf": [
+    {
+      "$ref": "../_common-schema.json"
+    },
+    {
+      "type": "object",
+      "required": ["format", "_dd"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "json",
+          "description": "Profile data format.",
+          "readOnly": true
+        },
+        "_dd": {
+          "type": "object",
+          "description": "Datadog internal metadata.",
+          "required": ["clock_drift"],
+          "properties": {
+            "clock_drift": {
+              "type": "number",
+              "description": "Clock drift value. Used by Browser SDK.",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "action": {
+          "type": "object",
+          "description": "Action properties.",
+          "required": ["id", "label"],
+          "properties": {
+            "id": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of action IDs.",
+              "readOnly": true
+            },
+            "label": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of action labels.",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

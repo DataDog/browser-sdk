@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/text-mutation-schema.json",
+  "title": "TextMutation",
+  "type": "object",
+  "description": "Schema of a TextMutation.",
+  "required": ["id", "value"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Id of the mutated node."
+    },
+    "value": {
+      "description": "Value for this TextMutation",
+      "oneOf": [
+        {
+          "type": "null",
+          "description": "Sent when the text content is removed."
+        },
+        {
+          "type": "string",
+          "description": "Text content for this TextMutation."
+        }
+      ]
+    }
+  }
+}

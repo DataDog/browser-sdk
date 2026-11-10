@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/transition-schema.json",
+  "title": "RumTransitionEvent",
+  "type": "object",
+  "description": "Schema of all properties of an Transition event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "required": ["type", "view", "transition", "stream"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "transition",
+          "readOnly": true
+        },
+        "view": {
+          "type": "object",
+          "readOnly": true
+        },
+        "stream": {
+          "type": "object",
+          "description": "Stream properties",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "UUID of the stream",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "transition": {
+          "type": "object",
+          "description": "Transition properties",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of the transition",
+              "readOnly": true
+            },
+            "id": {
+              "type": "string",
+              "description": "UUID of the transition",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            },
+            "timestamp": {
+              "type": "integer",
+              "description": "The player's current timestamp in milliseconds",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "buffer_starvation_duration": {
+              "type": "integer",
+              "description": "Buffer starvation duration, the amount of time spent rebuffering in milliseconds",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "media_start_delay": {
+              "type": "integer",
+              "description": "Media start delay, the amount of time spent loading before playing in milliseconds",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "error_code": {
+              "type": "integer",
+              "description": "Error code, as reported by the player",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "duration": {
+              "type": "integer",
+              "description": "Duration of the event in milliseconds",
+              "minimum": 0,
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/shape-linear-gradient-schema.json",
+  "title": "ShapeLinearGradient",
+  "type": "object",
+  "description": "A linear background gradient for a shape wireframe. Colors before the first stop and after the last stop are clamped to the nearest stop color.",
+  "required": ["type", "stops", "startPoint", "endPoint"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "linear",
+      "description": "The type of the gradient.",
+      "readOnly": true
+    },
+    "stops": {
+      "type": "array",
+      "items": {
+        "$ref": "shape-gradient-stop-schema.json"
+      },
+      "minItems": 2,
+      "description": "Ordered gradient color stops. Positions must be non-decreasing.",
+      "readOnly": true
+    },
+    "startPoint": {
+      "description": "The point where position 0 of the gradient is placed.",
+      "readOnly": true,
+      "allOf": [
+        {
+          "$ref": "shape-gradient-point-schema.json"
+        }
+      ]
+    },
+    "endPoint": {
+      "description": "The point where position 1 of the gradient is placed.",
+      "readOnly": true,
+      "allOf": [
+        {
+          "$ref": "shape-gradient-point-schema.json"
+        }
+      ]
+    }
+  }
+}

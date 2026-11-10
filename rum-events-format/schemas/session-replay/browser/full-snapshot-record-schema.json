@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/full-snapshot-record-schema.json",
+  "title": "BrowserFullSnapshotRecord",
+  "type": "object",
+  "description": "Browser-specific. Schema of a Record type which contains a full snapshot of a document.",
+  "oneOf": [
+    {
+      "$ref": "full-snapshot-v1-record-schema.json"
+    },
+    {
+      "$ref": "full-snapshot-change-record-schema.json"
+    }
+  ]
+}

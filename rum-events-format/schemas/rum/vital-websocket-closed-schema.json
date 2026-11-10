@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/vital-websocket-closed-schema.json",
+  "title": "RumVitalWebsocketClosedEvent",
+  "type": "object",
+  "description": "Schema for the vital reported when a WebSocket connection stops being tracked, whether because it closed or because tracking ended first. Reported at most once per connection. Reported with vital.name websocket_closed",
+  "allOf": [
+    {
+      "$ref": "_vital-websocket-common-schema.json"
+    },
+    {
+      "required": ["vital"],
+      "properties": {
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["websocket"],
+          "properties": {
+            "websocket": {
+              "type": "object",
+              "description": "WebSocket properties",
+              "required": ["url", "closed_date", "duration", "tracking_end_reason", "snapshot_version"],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "URL the connection was opened on, without its query string",
+                  "readOnly": false
+                },
+                "closed_date": {
+                  "type": "integer",
+                  "description": "Date tracking of the connection ended, in ms from epoch. It is the date the connection closed when the tracking end reason is close_event, and the date tracking stopped otherwise. Computed from the connecting date and the time elapsed since, measured on a monotonic clock",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "duration": {
+                  "type": "integer",
+                  "description": "Interval between the connecting date and the closed date of the connection, in nanoseconds. It is not vital.duration, which is reported by duration vitals",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "tracking_end_reason": {
+                  "type": "string",
+                  "description": "Why tracking of the connection ended",
+                  "enum": ["close_event", "session_end", "page_terminated"],
+                  "readOnly": true
+                },
+                "close_code": {
+                  "type": "integer",
+                  "description": "Code the connection was closed with. Reported when, and only when, the tracking end reason is close_event",
+                  "minimum": 0,
+                  "maximum": 65535,
+                  "readOnly": true
+                },
+                "close_reason": {
+                  "type": "string",
+                  "description": "Reason the connection was closed with, as an empty string when the other side supplied none. Reported when, and only when, the tracking end reason is close_event",
+                  "readOnly": false
+                },
+                "was_clean": {
+                  "type": "boolean",
+                  "description": "Whether the connection closed cleanly. Reported when, and only when, the tracking end reason is close_event",
+                  "readOnly": true
+                },
+                "snapshot_version": {
+                  "type": "integer",
+                  "description": "Version of the snapshot within its connection, starting at 1 and incremented on every websocket_open vital and on the websocket_closed vital, so that they can be ordered when they are received out of sequence",
+                  "minimum": 1,
+                  "readOnly": true
+                },
+                "snapshot": {
+                  "type": "object",
+                  "description": "Values of the connection when tracking ended. Omitted when the connection never opened",
+                  "allOf": [
+                    {
+                      "$ref": "_vital-websocket-snapshot-schema.json"
+                    }
+                  ],
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,448 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/error-schema.json",
+  "title": "RumErrorEvent",
+  "type": "object",
+  "description": "Schema of all properties of an Error event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "$ref": "_action-child-schema.json"
+    },
+    {
+      "$ref": "_view-container-schema.json"
+    },
+    {
+      "required": ["type", "view", "error"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "error",
+          "readOnly": true
+        },
+        "error": {
+          "type": "object",
+          "description": "Error properties",
+          "required": ["message", "source"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "UUID of the error",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            },
+            "message": {
+              "type": "string",
+              "description": "Error message",
+              "readOnly": false
+            },
+            "source": {
+              "type": "string",
+              "description": "Source of the error",
+              "enum": ["network", "source", "console", "logger", "agent", "webview", "custom", "report"],
+              "readOnly": true
+            },
+            "stack": {
+              "type": "string",
+              "description": "Stacktrace of the error",
+              "readOnly": false
+            },
+            "causes": {
+              "type": "array",
+              "description": "Causes of the error",
+              "readOnly": false,
+              "items": {
+                "type": "object",
+                "description": "Properties for one of the error causes",
+                "required": ["message", "source"],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "Error message",
+                    "readOnly": false
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of the error",
+                    "readOnly": true
+                  },
+                  "stack": {
+                    "type": "string",
+                    "description": "Stacktrace of the error",
+                    "readOnly": false
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Source of the error",
+                    "enum": ["network", "source", "console", "logger", "agent", "webview", "custom", "report"],
+                    "readOnly": true
+                  }
+                }
+              }
+            },
+            "is_crash": {
+              "type": "boolean",
+              "description": "Whether this error crashed the host application",
+              "readOnly": true
+            },
+            "fingerprint": {
+              "type": "string",
+              "description": "Fingerprint used for Error Tracking custom grouping",
+              "readOnly": false
+            },
+            "type": {
+              "type": "string",
+              "description": "The type of the error",
+              "readOnly": true
+            },
+            "category": {
+              "type": "string",
+              "description": "The specific category of the error. It provides a high-level grouping for different types of errors.",
+              "enum": ["ANR", "App Hang", "Exception", "Watchdog Termination", "Memory Warning", "Network"],
+              "readOnly": true
+            },
+            "handling": {
+              "type": "string",
+              "description": "Whether the error has been handled manually in the source code or not",
+              "enum": ["handled", "unhandled"],
+              "readOnly": true
+            },
+            "handling_stack": {
+              "type": "string",
+              "description": "Handling call stack",
+              "readOnly": false
+            },
+            "source_type": {
+              "type": "string",
+              "description": "Source type of the error (the language or platform impacting the error stacktrace format)",
+              "enum": [
+                "android",
+                "browser",
+                "browser+wasm",
+                "ios",
+                "react-native",
+                "flutter",
+                "roku",
+                "ndk",
+                "ios+il2cpp",
+                "ndk+il2cpp",
+                "windows",
+                "macos",
+                "linux",
+                "maui",
+                "nodejs"
+              ],
+              "readOnly": true
+            },
+            "resource": {
+              "type": "object",
+              "description": "Resource properties of the error",
+              "required": ["method", "status_code", "url"],
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "description": "HTTP method of the resource",
+                  "enum": ["POST", "GET", "HEAD", "PUT", "DELETE", "PATCH", "TRACE", "OPTIONS", "CONNECT"],
+                  "readOnly": true
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP Status code of the resource",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "url": {
+                  "type": "string",
+                  "description": "URL of the resource",
+                  "readOnly": false
+                },
+                "provider": {
+                  "type": "object",
+                  "description": "The provider for this resource",
+                  "properties": {
+                    "domain": {
+                      "type": "string",
+                      "description": "The domain name of the provider",
+                      "readOnly": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The user friendly name of the provider",
+                      "readOnly": true
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "The type of provider",
+                      "enum": [
+                        "ad",
+                        "advertising",
+                        "analytics",
+                        "cdn",
+                        "content",
+                        "customer-success",
+                        "first party",
+                        "hosting",
+                        "marketing",
+                        "other",
+                        "social",
+                        "tag-manager",
+                        "utility",
+                        "video"
+                      ],
+                      "readOnly": true
+                    }
+                  },
+                  "readOnly": true
+                },
+                "graphql": {
+                  "allOf": [{ "$ref": "_graphql-schema.json" }],
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "threads": {
+              "type": "array",
+              "description": "Description of each thread in the process when error happened.",
+              "items": {
+                "type": "object",
+                "description": "Description of the thread in the process when error happened.",
+                "required": ["name", "crashed", "stack"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the thread (e.g. 'Thread 0').",
+                    "readOnly": true
+                  },
+                  "crashed": {
+                    "type": "boolean",
+                    "description": "Tells if the thread crashed.",
+                    "readOnly": true
+                  },
+                  "stack": {
+                    "type": "string",
+                    "description": "Unsymbolicated stack trace of the given thread.",
+                    "readOnly": true
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Platform-specific state of the thread when its state was captured (CPU registers dump for iOS, thread state enum for Android, etc.).",
+                    "readOnly": true
+                  }
+                }
+              }
+            },
+            "binary_images": {
+              "type": "array",
+              "description": "Description of each binary image (native libraries; for Android: .so files) loaded or referenced by the process/application.",
+              "items": {
+                "type": "object",
+                "description": "Description of the binary image (native library; for Android: .so file) loaded or referenced by the process/application.",
+                "required": ["uuid", "name", "is_system"],
+                "properties": {
+                  "uuid": {
+                    "type": "string",
+                    "description": "Build UUID that uniquely identifies the binary image.",
+                    "readOnly": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the library.",
+                    "readOnly": true
+                  },
+                  "is_system": {
+                    "type": "boolean",
+                    "description": "Determines if it's a system or user library.",
+                    "readOnly": true
+                  },
+                  "load_address": {
+                    "type": "string",
+                    "description": "Library's load address (hexadecimal).",
+                    "readOnly": true
+                  },
+                  "max_address": {
+                    "type": "string",
+                    "description": "Max value from the library address range (hexadecimal).",
+                    "readOnly": true
+                  },
+                  "arch": {
+                    "type": "string",
+                    "description": "CPU architecture from the library.",
+                    "readOnly": true
+                  }
+                }
+              },
+              "readOnly": true
+            },
+            "wasm_modules": {
+              "type": "array",
+              "description": "WebAssembly modules available for stack trace symbolication.",
+              "items": {
+                "type": "object",
+                "description": "A WebAssembly module loaded by the application.",
+                "required": ["url", "build_id"],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "URL identifying the WebAssembly module.",
+                    "readOnly": true
+                  },
+                  "build_id": {
+                    "type": "string",
+                    "description": "Build ID used to identify the WebAssembly debug symbols.",
+                    "readOnly": true
+                  },
+                  "debug_info_type": {
+                    "type": "string",
+                    "description": "Debug information format used to symbolicate the WebAssembly module.",
+                    "enum": ["dwarf", "sourcemap", "unknown"],
+                    "readOnly": true
+                  }
+                }
+              },
+              "readOnly": true
+            },
+            "was_truncated": {
+              "type": "boolean",
+              "description": "A boolean value saying if any of the stack traces was truncated due to minification.",
+              "readOnly": true
+            },
+            "meta": {
+              "type": "object",
+              "description": "Platform-specific metadata of the error event.",
+              "properties": {
+                "code_type": {
+                  "type": "string",
+                  "description": "The CPU architecture of the process that crashed.",
+                  "readOnly": true
+                },
+                "parent_process": {
+                  "type": "string",
+                  "description": "Parent process information.",
+                  "readOnly": true
+                },
+                "incident_identifier": {
+                  "type": "string",
+                  "description": "A client-generated 16-byte UUID of the incident.",
+                  "readOnly": true
+                },
+                "process": {
+                  "type": "string",
+                  "description": "The name of the crashed process.",
+                  "readOnly": true
+                },
+                "exception_type": {
+                  "type": "string",
+                  "description": "The name of the corresponding BSD termination signal. (in case of iOS crash)",
+                  "readOnly": true
+                },
+                "exception_codes": {
+                  "type": "string",
+                  "description": "CPU specific information about the exception encoded into 64-bit hexadecimal number preceded by the signal code.",
+                  "readOnly": true
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The location of the executable.",
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "csp": {
+              "type": "object",
+              "description": "Content Security Violation properties",
+              "properties": {
+                "disposition": {
+                  "type": "string",
+                  "description": "In the context of CSP errors, indicates how the violated policy is configured to be treated by the user agent.",
+                  "enum": ["enforce", "report"],
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            },
+            "time_since_app_start": {
+              "type": "integer",
+              "description": "Time since application start when error happened (in milliseconds)",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "freeze": {
+          "type": "object",
+          "description": "Properties of App Hang and ANR errors",
+          "required": ["duration"],
+          "properties": {
+            "duration": {
+              "type": "integer",
+              "description": "Duration of the main thread freeze (in ns)",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "view": {
+          "type": "object",
+          "description": "View properties",
+          "required": [],
+          "properties": {
+            "in_foreground": {
+              "type": "boolean",
+              "description": "Is the error starting in the foreground (focus in browser)",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "feature_flags": {
+          "type": "object",
+          "description": "Feature flags properties",
+          "additionalProperties": true,
+          "readOnly": true
+        },
+        "_dd": {
+          "type": "object",
+          "description": "Internal properties",
+          "allOf": [
+            { "$ref": "_trace-schema.json" },
+            {
+              "properties": {
+                "profiling": {
+                  "type": "object",
+                  "description": "Profiling context",
+                  "allOf": [{ "$ref": "./_profiling-internal-context-schema.json" }]
+                },
+                "debug_ids": {
+                  "type": "array",
+                  "description": "Mapping of source file URLs to their debug IDs for source map deobfuscation",
+                  "items": {
+                    "type": "object",
+                    "description": "Association between a source file URL and its debug ID",
+                    "required": ["url", "id"],
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "description": "URL of the source file"
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "Debug ID (UUID) for the source file",
+                        "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

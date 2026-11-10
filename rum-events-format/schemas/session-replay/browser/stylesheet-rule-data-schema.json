@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/stylesheet-rule-data-schema.json",
+  "title": "StyleSheetRuleData",
+  "type": "object",
+  "description": "Browser-specific. Schema of a StyleSheetRuleData.",
+  "allOf": [
+    {
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 8,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        }
+      }
+    },
+    {
+      "$ref": "stylesheet-rule-schema.json"
+    }
+  ]
+}

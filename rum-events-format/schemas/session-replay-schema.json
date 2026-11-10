@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay-schema.json",
+  "title": "SessionReplay",
+  "type": "object",
+  "description": "Schema of all properties of Session Replay",
+  "allOf": [
+    {
+      "$ref": "session-replay/segment-schema.json"
+    },
+    {
+      "$ref": "session-replay/segment-metadata-schema.json"
+    },
+    {
+      "$ref": "session-replay/record-schema.json"
+    },
+    {
+      "$ref": "session-replay/full-snapshot-record-schema.json"
+    },
+    {
+      "$ref": "session-replay/incremental-snapshot-record-schema.json"
+    },
+    {
+      "$ref": "session-replay/incremental-data-schema.json"
+    },
+    {
+      "$ref": "session-replay/mutation-data-schema.json"
+    },
+    {
+      "$ref": "session-replay/mutation-payload-schema.json"
+    }
+  ]
+}

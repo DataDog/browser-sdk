@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_vital-websocket-snapshot-schema.json",
+  "title": "RumVitalWebsocketSnapshot",
+  "type": "object",
+  "description": "Schema of the WebSocket connection values that change from one vital of a connection to the next. Both directions are present whenever the snapshot is, and are zero-filled while no message has been observed",
+  "required": ["inbound", "outbound"],
+  "properties": {
+    "inbound": {
+      "type": "object",
+      "description": "Messages received from the server",
+      "allOf": [{ "$ref": "_vital-websocket-message-direction-schema.json" }],
+      "readOnly": true
+    },
+    "outbound": {
+      "type": "object",
+      "description": "Messages sent to the server",
+      "allOf": [
+        { "$ref": "_vital-websocket-message-direction-schema.json" },
+        {
+          "required": ["buffered_amount_max"],
+          "properties": {
+            "buffered_amount_max": {
+              "type": "integer",
+              "description": "Largest amount of bytes ever observed queued in the send buffer, sampled after each send is enqueued",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "buffered_amount_at_close": {
+              "type": "integer",
+              "description": "Amount of bytes still queued in the send buffer when tracking ended, in bytes. Set on the websocket_closed vital only",
+              "minimum": 0,
+              "readOnly": true
+            }
+          }
+        }
+      ],
+      "readOnly": true
+    }
+  },
+  "readOnly": true
+}

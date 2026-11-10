@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_action-child-schema.json",
+  "title": "ActionChildProperties",
+  "type": "object",
+  "description": "Schema of all properties of events that can have parent actions",
+  "properties": {
+    "action": {
+      "type": "object",
+      "description": "Action properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "description": "UUID of the action",
+          "readOnly": true,
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+              }
+            }
+          ]
+        }
+      },
+      "readOnly": true
+    }
+  }
+}

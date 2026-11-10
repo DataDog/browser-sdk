@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/timeseries-cpu-schema.json",
+  "title": "RumTimeseriesCpuEvent",
+  "type": "object",
+  "description": "Schema for a CPU timeseries event.",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "required": ["type", "timeseries"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "timeseries",
+          "readOnly": true
+        },
+        "timeseries": {
+          "type": "object",
+          "description": "CPU timeseries properties",
+          "required": ["id", "name", "schema", "start", "end", "data"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "UUID of the timeseries batch",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            },
+            "name": {
+              "type": "string",
+              "description": "Name identifying the timeseries metric",
+              "const": "cpu",
+              "readOnly": true
+            },
+            "schema": {
+              "type": "string",
+              "description": "Wire-shape discriminator for the data field",
+              "const": "object-v2",
+              "readOnly": true
+            },
+            "start": {
+              "type": "integer",
+              "description": "Timestamp of the first sample in nanoseconds from epoch",
+              "readOnly": true
+            },
+            "end": {
+              "type": "integer",
+              "description": "Timestamp of the last sample in nanoseconds from epoch",
+              "readOnly": true
+            },
+            "data": {
+              "type": "object",
+              "description": "Flattened CPU data points",
+              "required": ["timestamps", "values"],
+              "properties": {
+                "timestamps": {
+                  "type": "array",
+                  "description": "Sample timestamps in nanoseconds from epoch",
+                  "items": {
+                    "type": "integer",
+                    "readOnly": true
+                  },
+                  "readOnly": true
+                },
+                "values": {
+                  "type": "object",
+                  "description": "CPU measurements, aligned index-for-index with timestamps",
+                  "required": ["cpu_usage"],
+                  "properties": {
+                    "cpu_usage": {
+                      "type": "array",
+                      "description": "CPU usage as a percentage (0.0 to 100.0)",
+                      "items": {
+                        "type": "number",
+                        "readOnly": true
+                      },
+                      "readOnly": true
+                    }
+                  },
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

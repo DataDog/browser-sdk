@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/meta-record-schema.json",
+  "title": "MetaRecord",
+  "type": "object",
+  "description": "Schema of a Record which contains the screen properties.",
+  "allOf": [
+    {
+      "$ref": "_slot-supported-common-record-schema.json"
+    },
+    {
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 4,
+          "readOnly": true
+        },
+        "data": {
+          "type": "object",
+          "description": "The data contained by this record.",
+          "required": ["width", "height"],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "description": "The width of the screen in pixels, normalized based on the device pixels per inch density (DPI). Example: if a device has a DPI = 2, the normalized width is the current width divided by 2."
+            },
+            "height": {
+              "type": "integer",
+              "description": "The height of the screen in pixels, normalized based on the device pixels per inch density (DPI). Example: if a device has a DPI = 2, the normalized height is the current height divided by 2."
+            },
+            "href": {
+              "type": "string",
+              "description": "Browser-specific. URL of the view described by this record."
+            }
+          }
+        }
+      }
+    }
+  ]
+}

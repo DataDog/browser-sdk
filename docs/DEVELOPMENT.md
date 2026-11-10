@@ -62,17 +62,17 @@ npm view <package>@latest version
 
 ## RUM Events Schema Management
 
-Types auto-generated from [rum-events-format](https://github.com/DataDog/rum-events-format) (Yarn GitHub dependency) → `src/rumEvent.types.ts` (committed).
+Types auto-generated from [rum-events-format](https://github.com/DataDog/rum-events-format) → `src/rumEvent.types.ts` (committed). The schemas are copied to `rum-events-format/schemas` (committed), so installing, building and testing don't fetch anything from GitHub.
 
 ```bash
-yarn json-schemas:sync      # Bump @datadog/rum-events-format to latest master commit + regenerate types
+yarn json-schemas:sync      # Copy the schemas from the latest master commit + regenerate types
 yarn json-schemas:generate  # Regenerate types only
 
 # Try a specific branch of rum-events-format (e.g. while iterating on schema changes)
 node scripts/json-schemas.ts --update YOUR_RUM_EVENTS_FORMAT_BRANCH --build
 ```
 
-**Fork dependency**: Uses `bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support` (v11.0.1) for `readonly` modifier support. Built lazily when generating types (not during `yarn install`) to avoid CI rate limiting.
+**Fork dependency**: Uses a fork of json-schema-to-typescript (`bcaudan/json-schema-to-typescript`, pinned in `scripts/json-schemas.ts`) for `readonly` modifier support. It is not a project dependency: it is downloaded and built in `node_modules/.cache` the first time types are generated.
 
 ⚠️ Never edit generated types manually.
 

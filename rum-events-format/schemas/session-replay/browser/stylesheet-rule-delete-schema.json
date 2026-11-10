@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/stylesheet-rule-delete-schema.json",
+  "title": "StyleSheetDeleteRule",
+  "type": "object",
+  "description": "Browser-specific. Schema of a StyleSheetDeleteRule.",
+  "required": ["index"],
+  "properties": {
+    "index": {
+      "description": "Index of this StyleSheetDeleteRule in its StyleSheet.",
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      ]
+    }
+  }
+}

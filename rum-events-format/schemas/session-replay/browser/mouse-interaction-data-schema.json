@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/mouse-interaction-data-schema.json",
+  "title": "MouseInteractionData",
+  "type": "object",
+  "description": "Browser-specific. Schema of a MouseInteractionData.",
+  "allOf": [
+    {
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 2,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        }
+      }
+    },
+    {
+      "$ref": "mouse-interaction-schema.json"
+    }
+  ]
+}

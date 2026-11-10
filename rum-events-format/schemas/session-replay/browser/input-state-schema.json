@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/input-state-schema.json",
+  "title": "InputState",
+  "type": "object",
+  "description": "Browser-specific. Schema of an InputState.",
+  "oneOf": [
+    {
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Text value for this InputState."
+        }
+      }
+    },
+    {
+      "required": ["isChecked"],
+      "properties": {
+        "isChecked": {
+          "type": "boolean",
+          "description": "Checked state for this InputState."
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "resource-metadata-schema.json",
+  "title": "ResourceMetadata",
+  "type": "object",
+  "description": "Schema of the resource metadata. The metadata to identify the asset's content uploaded to the backend",
+  "required": ["type", "application"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "resource"
+    },
+    "application": {
+      "type": "object",
+      "description": "Application properties",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "UUID of the application",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    }
+  }
+}
