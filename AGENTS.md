@@ -137,6 +137,6 @@ To test with specific config options (e.g. `forwardErrorsToLogs: true`), just ed
 
 ## Git Workflow
 
-- Branch naming: `<username>/<feature>` (e.g., `john.doe/fix-session-bug`)
+- Branch naming: `<username>/<JIRA-KEY>-<feature>` (e.g., `john.doe/RUM-123-fix-session-bug`), or `<username>/<feature>` without a ticket
 - Always branch from `main` unless explicitly decided otherwise
-- Commit messages and PR titles start with a gitmoji (CI checks PR titles). Before committing or opening a PR, read the `writing-commits-and-prs` skill (`.claude/skills/writing-commits-and-prs/SKILL.md`): gitmoji choice, signing, PR template.
+- Commit messages and PR titles follow Conventional Commits with a mandatory scope, e.g. `feat(rum): Add view name API` (CI checks PR titles). Never put a Jira key in the title: add a `Refs: RUM-123` line to the PR description instead. Before committing or opening a PR, read the `writing-commits-and-prs` skill (`.claude/skills/writing-commits-and-prs/SKILL.md`): type and scope choice, signing, PR template.
