@@ -631,10 +631,10 @@ describe('profiler', () => {
         timeStamp: timeStampNow(),
       },
     }
-    const { profiler, profilingContextManager } = setupProfiler(initialViewEntry)
-
     // Navigate to the user view
     history.pushState({}, '', '/user/123')
+
+    const { profiler, profilingContextManager } = setupProfiler(initialViewEntry)
 
     profiler.start()
 
