@@ -13,6 +13,12 @@ variables:
 workflow:
   auto_cancel:
     on_new_commit: interruptible
+  rules:
+    # release-please tags @datadog/js-core releases (`js-core-vX.Y.Z`) on the same commit as the
+    # Browser SDK release (`vX.Y.Z`), whose pipeline deploys and publishes every package.
+    - if: $CI_COMMIT_TAG =~ /^js-core-v/
+      when: never
+    - when: always
 
 cache:
   key:
@@ -53,6 +59,8 @@ stages:
   except:
     refs:
       - /^release\//
+      # release-please's release pull request only bumps versions and updates the changelog
+      - /^release-please--/
       - schedules
 
 .bs-allowed-branches:
@@ -62,6 +70,7 @@ stages:
       - /^mq-working-branch-staging-[0-9]+-[a-z0-9]+$/
       - /^staging-[0-9]+$/
       - /^release\//
+      - /^release-please--/
       - schedules
     variables:
       - $CI_COMMIT_REF_NAME == $NEXT_MAJOR_BRANCH
@@ -73,6 +82,7 @@ stages:
       - tags
       - /^staging-[0-9]+$/
       - /^release\//
+      - /^release-please--/
       - schedules
     variables:
       - $CI_COMMIT_REF_NAME == $NEXT_MAJOR_BRANCH
@@ -95,7 +105,9 @@ stages:
     refs:
       - schedules
     variables:
-      - $CI_COMMIT_TITLE =~ /^v[0-9.]+/
+      # Release commits: `vX.Y.Z` (legacy release script) or `chore(release): vX.Y.Z` (release-please)
+      # Quoted: the `: ` in the pattern would otherwise make YAML parse this item as a mapping.
+      - '$CI_COMMIT_TITLE =~ /^(v[0-9.]+|chore\(release\): v[0-9.]+)/'
 
 .tags:
   only:
