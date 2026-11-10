@@ -294,4 +294,41 @@ describe('BufferedObservable', () => {
     }).not.toThrow()
     await waitNextMicrotask()
   })
+
+  it('exposes the buffered data from oldest to newest in items', () => {
+    const observable = new BufferedObservable<string>(100)
+    observable.notify('first')
+    observable.notify('second')
+
+    expect(observable.items).toEqual(['first', 'second'])
+  })
+
+  it('removes the dropped data from items', () => {
+    const observable = new BufferedObservable<string>(2)
+    observable.notify('first') // dropped
+    observable.notify('second')
+    observable.notify('third')
+
+    expect(observable.items).toEqual(['second', 'third'])
+  })
+
+  it('returns a live view of the buffer from items', () => {
+    const observable = new BufferedObservable<string>(100)
+    const items = observable.items
+
+    observable.notify('first')
+
+    expect(items).toEqual(['first'])
+  })
+
+  it('empties items in a microtask after unbuffer()', async () => {
+    const observable = new BufferedObservable<string>(100)
+    observable.notify('first')
+
+    observable.unbuffer()
+
+    expect(observable.items).toEqual(['first'])
+    await waitNextMicrotask()
+    expect(observable.items).toEqual([])
+  })
 })
