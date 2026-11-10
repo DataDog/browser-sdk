@@ -1,6 +1,6 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { InitContext, RumInitConfiguration } from '@datadog/browser-rum'
-import type { Settings } from '../common/extension.types'
+import type { PageSettings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
@@ -72,7 +72,7 @@ function getSettings() {
     // sessionStorage access throws in sandboxed iframes
     const stringSettings = sessionStorage.getItem(SESSION_STORAGE_SETTINGS_KEY)
     // JSON.parse throws if the stringSettings is not a valid JSON
-    return JSON.parse(stringSettings || 'null') as Settings | null
+    return JSON.parse(stringSettings || 'null') as PageSettings | null
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error getting settings', error)

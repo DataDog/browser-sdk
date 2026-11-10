@@ -1,6 +1,6 @@
 import type { BrowserRecord } from '@datadog/browser-rum/src/types'
 import { createLogger } from '../../common/logger'
-import type { ReplaySandboxLocation } from './getReplaySandboxLocation'
+import type { ReplaySandboxLocation, ReplaySandboxLocationOptions } from './getReplaySandboxLocation'
 import { getReplaySandboxLocation } from './getReplaySandboxLocation'
 import type { MessageBridgeDownRecords, MessageBridgeUp, StaticFrameContext } from './sessionReplayPlayer.types'
 import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } from './sessionReplayPlayer.types'
@@ -12,18 +12,18 @@ export interface ReplaySandbox {
   sendRecord(record: BrowserRecord): void
 }
 
-export interface ReplaySandboxOptions {
+export interface ReplaySandboxOptions extends ReplaySandboxLocationOptions {
   iframe: HTMLIFrameElement
-  signal: AbortSignal
-  useDevReplaySandbox: boolean
+  sandboxFeatureFlags: string[]
 }
 
 export async function createReplaySandbox({
   iframe,
+  sandboxFeatureFlags,
   signal,
-  useDevReplaySandbox,
+  source,
 }: ReplaySandboxOptions): Promise<ReplaySandbox> {
-  const sandboxLocation = await getReplaySandboxLocation(useDevReplaySandbox, signal)
+  const sandboxLocation = await getReplaySandboxLocation({ source, signal })
   signal.throwIfAborted()
 
   const sandboxId = crypto.randomUUID()
@@ -62,7 +62,7 @@ export async function createReplaySandbox({
     signal.addEventListener('abort', () => resolve())
 
     // Begin loading the replay sandbox in the iframe.
-    iframe.src = createSandboxUrl(sandboxLocation, sandboxId)
+    iframe.src = createSandboxUrl(sandboxLocation, sandboxId, sandboxFeatureFlags)
   })
   signal.throwIfAborted()
 
@@ -95,11 +95,16 @@ export async function createReplaySandbox({
   }
 }
 
-function createSandboxUrl(sandboxLocation: ReplaySandboxLocation, sandboxId: string): string {
+function createSandboxUrl(
+  sandboxLocation: ReplaySandboxLocation,
+  sandboxId: string,
+  sandboxFeatureFlags: string[]
+): string {
   const staticContext: StaticFrameContext = {
     sandboxId,
     origin: location.origin,
     featureFlags: {
+      ...Object.fromEntries(sandboxFeatureFlags.map((flagName) => [flagName, true])),
       // Makes the replayed DOM easy to inspect.
       rum_session_replay_iframe_interactive: true,
       // Lets the sandbox talk to the extension's chrome-extension:// origin.

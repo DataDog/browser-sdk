@@ -3,13 +3,15 @@ import { SESSION_STORAGE_SETTINGS_KEY } from '../../common/sessionKeyConstant'
 import { EventListeners } from '../../common/eventListeners'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
-import type { Settings } from '../../common/extension.types'
+import type { PageSettings, Settings } from '../../common/extension.types'
 
 const logger = createLogger('useSettings')
 
 const DEFAULT_SETTINGS: Readonly<Settings> = {
   useDevBundles: false,
-  useDevReplaySandbox: false,
+  replaySandboxSource: 'prod',
+  replaySandboxHash: '',
+  replaySandboxFeatureFlags: [],
   useRumSlim: false,
   blockIntakeRequests: false,
   autoFlush: false,
@@ -29,9 +31,16 @@ const storageLoadingPromise = loadSettingsFromStorage().catch((error) =>
 )
 
 function syncSettingsWithSessionStorage(settings: Settings) {
+  const pageSettings: PageSettings = {
+    useDevBundles: settings.useDevBundles,
+    useRumSlim: settings.useRumSlim,
+    rumConfigurationOverride: settings.rumConfigurationOverride,
+    logsConfigurationOverride: settings.logsConfigurationOverride,
+    debugMode: settings.debugMode,
+  }
   evalInWindow(`sessionStorage.setItem(
     ${JSON.stringify(SESSION_STORAGE_SETTINGS_KEY)},
-    ${JSON.stringify(JSON.stringify(settings))})
+    ${JSON.stringify(JSON.stringify(pageSettings))})
   `).catch((error) => logger.error('Error while synchronizing session storage with extension storage', error))
 }
 

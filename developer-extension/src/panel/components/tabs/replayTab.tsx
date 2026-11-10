@@ -1,8 +1,9 @@
-import { Button, Flex, Checkbox, Badge } from '@mantine/core'
+import { Button, Flex, Checkbox, Badge, Tooltip } from '@mantine/core'
 import React, { useEffect, useRef, useState } from 'react'
 import { TabBase } from '../tabBase'
 import type { SessionReplayPlayer, SessionReplayPlayerState } from '../../sessionReplayPlayer/startSessionReplayPlayer'
 import { startSessionReplayPlayer } from '../../sessionReplayPlayer/startSessionReplayPlayer'
+import { getReplaySandboxSettings } from '../../sessionReplayPlayer/getReplaySandboxSettings'
 import { evalInWindow } from '../../evalInWindow'
 import { createLogger } from '../../../common/logger'
 import { Alert } from '../alert'
@@ -36,7 +37,9 @@ export function ReplayTab() {
 }
 
 function Player() {
-  const [{ useDevReplaySandbox }] = useSettings()
+  const [settings] = useSettings()
+  const { replaySandboxSource, replaySandboxHash, replaySandboxFeatureFlags } = getReplaySandboxSettings(settings)
+
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const [playerState, setPlayerState] = useState<SessionReplayPlayerState>({
     status: 'loading',
@@ -55,7 +58,11 @@ function Player() {
     playerRef.current = startSessionReplayPlayer({
       iframe,
       setPlayerState,
-      useDevReplaySandbox,
+      source:
+        replaySandboxSource === 'static-hash'
+          ? { type: 'static-hash', hash: replaySandboxHash }
+          : { type: replaySandboxSource },
+      sandboxFeatureFlags: replaySandboxFeatureFlags,
       excludeMouseMovements: excludeMouseMovementsRef.current,
       signal: abortController.signal,
     })
@@ -63,7 +70,7 @@ function Player() {
       abortController.abort()
       playerRef.current = undefined
     }
-  }, [useDevReplaySandbox])
+  }, [replaySandboxFeatureFlags, replaySandboxHash, replaySandboxSource])
 
   const downloadRecords = () => {
     if (!playerRef.current?.getRecords) {
@@ -121,12 +128,26 @@ function Player() {
               </Button>
             </Flex>
           </Flex>
-          <Flex align="center">{useDevReplaySandbox ? <Badge color="blue">Dev</Badge> : <></>}</Flex>
+          <Flex align="center" gap="xs">
+            {replaySandboxSource === 'local' && <Badge color="blue">Local</Badge>}
+            {replaySandboxSource === 'static-hash' && <Badge color="blue">Static hash</Badge>}
+            {replaySandboxFeatureFlags.length > 0 && (
+              <Tooltip
+                label={replaySandboxFeatureFlags.map((flagName) => (
+                  <div key={flagName}>{flagName}</div>
+                ))}
+                withArrow
+              >
+                <Badge color="blue">Flags</Badge>
+              </Tooltip>
+            )}
+          </Flex>
         </Flex>
       }
     >
       <iframe ref={frameRef} className={classes.iframe} data-status={playerState.status} />
       {playerState.status === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot />}
+      {playerState.status === 'no-sandbox-build' && <Alert level="error" message="No sandbox build for this hash." />}
       {playerState.status === 'error' && <Alert level="error" message="Unable to load the replay sandbox." />}
     </TabBase>
   )
