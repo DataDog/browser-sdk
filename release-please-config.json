@@ -1,0 +1,148 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/v17.11.2/schemas/config.json",
+  "last-release-sha": "c20c2bff1c68e397bb0f65f29f56cd91575a1585",
+  "separate-pull-requests": false,
+  "group-pull-request-title-pattern": "chore(release): v${version}",
+  "draft": true,
+  "force-tag-creation": true,
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "perf",
+      "section": "Performance Improvements"
+    },
+    {
+      "type": "docs",
+      "section": "Documentation"
+    },
+    {
+      "type": "exp",
+      "section": "Experimental"
+    },
+    {
+      "type": "revert",
+      "section": "Reverts"
+    },
+    {
+      "type": "build",
+      "section": "Internal Changes"
+    },
+    {
+      "type": "chore",
+      "section": "Internal Changes"
+    },
+    {
+      "type": "ci",
+      "section": "Internal Changes"
+    },
+    {
+      "type": "refactor",
+      "section": "Internal Changes"
+    },
+    {
+      "type": "test",
+      "section": "Internal Changes"
+    },
+    {
+      "type": "style",
+      "section": "Internal Changes"
+    },
+    {
+      "type": "staging",
+      "section": "Staging",
+      "hidden": true
+    }
+  ],
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "",
+      "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "developer-extension/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-core/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-logs/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-plugin-wasm/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum-angular/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum-core/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum-nextjs/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum-nuxt/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum-react/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum-shopify/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum-slim/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum-vue/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-rum/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-worker/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "packages/js-core": {
+      "release-type": "node",
+      "component": "js-core",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    }
+  }
+}
