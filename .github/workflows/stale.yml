@@ -20,17 +20,17 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
           stale-issue-message: |
-            This issue has been automatically marked as stale because it has not had recent activity and has the `need-info` label.
+            This issue has been automatically marked as stale because it has not had recent activity.
 
             It will be closed if no further activity occurs within 3 days.
 
           stale-pr-message: |
-            This pull request has been automatically marked as stale because it has not had recent activity and has the `need-info` label.
+            This pull request has been automatically marked as stale because it has not had recent activity.
 
-            It will be closed if no further activity occurs within 3 days.
+            It will be closed if no further activity occurs within 7 days.
 
           stale-issue-label: 'stale'
           close-issue-label: 'automatically closed'
-          only-labels: 'need-info'
+          exempt-issue-labels: 'bug,enhancement'
           days-before-issue-stale: 14
           days-before-issue-close: 3

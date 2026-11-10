@@ -90,23 +90,29 @@ const ORG2_CLOUDFRONT_BASE_URL = 'https://d20xtzwzcl0ceb.cloudfront.net'
 
 function uploadToOrg2(packageName: string, service: string, prefix: string, bundleFolder: string): void {
   const apiKey = getOrg2ApiKey()
-  const org2Prefix = `${ORG2_CLOUDFRONT_BASE_URL}${prefix === '/' ? '' : prefix}`
 
-  printLog(`Uploading ${packageName} source maps with prefix ${org2Prefix} for org2...`)
+  // Upload with both prefixes: the root-relative one matches stack frames from the CDN
+  // (www.datadoghq-browser-agent.com/<dc>/v7/...), and the CloudFront one matches canary deployments, which load the
+  // SDK from CloudFront URLs.
+  const org2Prefixes = [prefix, `${ORG2_CLOUDFRONT_BASE_URL}${prefix === '/' ? '' : prefix}`]
 
-  command`
-    datadog-ci sourcemaps upload ${bundleFolder}
-      --service ${service}
-      --release-version ${getBuildEnvSdkVersion()}
-      --minified-path-prefix ${org2Prefix}
-      --project-path @datadog/${packageName}/
-      --repository-url https://www.github.com/datadog/browser-sdk
-  `
-    .withEnvironment({
-      DATADOG_API_KEY: apiKey,
-      DATADOG_SITE: 'datadoghq.com',
-    })
-    .run()
+  for (const org2Prefix of org2Prefixes) {
+    printLog(`Uploading ${packageName} source maps with prefix ${org2Prefix} for org2...`)
+
+    command`
+      datadog-ci sourcemaps upload ${bundleFolder}
+        --service ${service}
+        --release-version ${getBuildEnvSdkVersion()}
+        --minified-path-prefix ${org2Prefix}
+        --project-path @datadog/${packageName}/
+        --repository-url https://www.github.com/datadog/browser-sdk
+    `
+      .withEnvironment({
+        DATADOG_API_KEY: apiKey,
+        DATADOG_SITE: 'datadoghq.com',
+      })
+      .run()
+  }
 }
 
 function uploadToDatadog(

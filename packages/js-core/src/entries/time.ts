@@ -102,6 +102,16 @@ export function toServerDuration(duration: Duration | undefined) {
 }
 
 /**
+ * Discards a negative server duration while preserving zero and positive values.
+ *
+ * @param duration - The duration in nanoseconds, or `undefined`.
+ * @returns The duration in nanoseconds, or `undefined` if it is negative or missing.
+ */
+export function discardNegativeDuration(duration: ServerDuration | undefined): ServerDuration | undefined {
+  return typeof duration === 'number' && duration < 0 ? undefined : duration
+}
+
+/**
  * Adds a {@link Duration} to a {@link TimeStamp}, preserving the branded type of the result.
  *
  * @param a - The timestamp, in milliseconds.
