@@ -1,0 +1,36 @@
+{
+  "name": "@datadog/browser-early-collection",
+  "version": "7.16.2",
+  "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.mjs",
+  "types": "cjs/index.d.ts",
+  "files": [
+    "bundle/**/*.js",
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-early-collection.js=./entries/main.ts",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-early-collection.js=./entries/main.ts",
+    "prepack": "yarn build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/browser-early-collection"
+  },
+  "devDependencies": {
+    "@datadog/browser-core": "workspace:*",
+    "@datadog/js-core": "workspace:*"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
