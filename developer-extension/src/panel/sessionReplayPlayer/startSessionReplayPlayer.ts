@@ -1,6 +1,7 @@
 import type { BrowserRecord } from '@datadog/browser-rum/src/types'
 import { createLogger } from '../../common/logger'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
+import { NoSandboxBuildError } from './getReplaySandboxLocation'
 import type { ReplaySandbox, ReplaySandboxOptions } from './replaySandbox'
 import { createReplaySandbox } from './replaySandbox'
 import { isMouseMovementRecord } from './recordUtils'
@@ -50,8 +51,12 @@ export function startSessionReplayPlayer(options: SessionReplayPlayerOptions): S
       sandbox = await createReplaySandbox(options)
     } catch (error) {
       if (!signal.aborted) {
-        logger.error('While loading the replay sandbox:', error)
-        store.status = 'error'
+        if (error instanceof NoSandboxBuildError) {
+          store.status = 'no-sandbox-build'
+        } else {
+          logger.error('While loading the replay sandbox:', error)
+          store.status = 'error'
+        }
       }
       return
     }

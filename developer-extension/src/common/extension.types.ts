@@ -45,9 +45,13 @@ export type SdkMessage =
 
 export type EventCollectionStrategy = 'sdk' | 'requests'
 
+export type ReplaySandboxSourceType = 'prod' | 'local' | 'static-hash'
+
 export interface Settings {
   useDevBundles: DevBundlesOverride
-  useDevReplaySandbox: boolean
+  replaySandboxSource: ReplaySandboxSourceType // Active only for `datadogMode: true`.
+  replaySandboxHash: string // Active only for `datadogMode: true`.
+  replaySandboxFeatureFlags: string[] // Active only for `datadogMode: true`.
   useRumSlim: boolean
   blockIntakeRequests: boolean
   autoFlush: boolean
@@ -60,3 +64,12 @@ export interface Settings {
   // Datadog site used for the feature-flag OAuth flow + catalog fetch.
   flagsSite: string
 }
+
+/**
+ * The settings that the content script reads. Other settings are not copied into the
+ * inspected page to prevent them being visible to scripts that run there.
+ */
+export type PageSettings = Pick<
+  Settings,
+  'useDevBundles' | 'useRumSlim' | 'rumConfigurationOverride' | 'logsConfigurationOverride' | 'debugMode'
+>

@@ -1,4 +1,17 @@
-import { Badge, Box, Checkbox, Code, Group, Space, Switch, Text, SegmentedControl, Accordion } from '@mantine/core'
+import {
+  Badge,
+  Box,
+  Checkbox,
+  Code,
+  Group,
+  Space,
+  Switch,
+  Text,
+  SegmentedControl,
+  Accordion,
+  TagsInput,
+  TextInput,
+} from '@mantine/core'
 import React from 'react'
 import { DEV_LOGS_URL, DEV_REPLAY_SANDBOX_URL } from '../../../common/packagesUrlConstants'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
@@ -13,7 +26,9 @@ export function SettingsTab() {
   const [
     {
       useDevBundles,
-      useDevReplaySandbox,
+      replaySandboxSource,
+      replaySandboxHash,
+      replaySandboxFeatureFlags,
       useRumSlim,
       blockIntakeRequests,
       preserveEvents,
@@ -113,7 +128,7 @@ export function SettingsTab() {
                     <Group>
                       <Text>Live replay</Text>
                       <Box style={{ marginLeft: 'auto' }}>
-                        {replayDevServerStatus === DevServerStatus.AVAILABLE && useDevReplaySandbox ? (
+                        {replaySandboxSource !== 'prod' ? (
                           <Badge color="blue">Overridden</Badge>
                         ) : replayDevServerStatus === DevServerStatus.AVAILABLE ? (
                           <Badge color="green">Available</Badge>
@@ -126,24 +141,66 @@ export function SettingsTab() {
                     </Group>
                   </Accordion.Control>
                   <Accordion.Panel>
-                    <Box>
-                      Use the Datadog-internal local development version of the live replay sandbox. The development
-                      server must be running; to start it, run
-                      <Code>yarn dev</Code>.
-                    </Box>
+                    <SettingItem
+                      input={
+                        <Group>
+                          <Text>Sandbox:</Text>
+                          <SegmentedControl
+                            color="violet"
+                            value={replaySandboxSource}
+                            size="xs"
+                            data={[
+                              { value: 'prod', label: 'Prod' },
+                              { value: 'local', label: 'Local' },
+                              { value: 'static-hash', label: 'Static hash' },
+                            ]}
+                            onChange={(value) => setSetting('replaySandboxSource', value)}
+                          />
+                        </Group>
+                      }
+                      description={
+                        <>
+                          {replaySandboxSource === 'prod' && (
+                            <>Use the production version of the live replay sandbox.</>
+                          )}
+                          {replaySandboxSource === 'local' && (
+                            <>
+                              Use the Datadog-internal local development version of the live replay sandbox. The
+                              development server must be running; to start it, run <Code>yarn dev</Code>.
+                            </>
+                          )}
+                          {replaySandboxSource === 'static-hash' && (
+                            <>Use the version of the live replay sandbox that was built for a static hash.</>
+                          )}
+                        </>
+                      }
+                    />
 
-                    <Space h="md" />
+                    {replaySandboxSource === 'static-hash' && (
+                      <SettingItem
+                        input={
+                          <TextInput
+                            label="Static hash"
+                            value={replaySandboxHash}
+                            onChange={(event) => setSetting('replaySandboxHash', event.currentTarget.value.trim())}
+                            size="xs"
+                          />
+                        }
+                      />
+                    )}
 
                     <SettingItem
                       input={
-                        <Switch
-                          label="Override the live replay sandbox"
-                          checked={!!useDevReplaySandbox}
-                          onChange={(event) => setSetting('useDevReplaySandbox', event.currentTarget.checked)}
-                          color="violet"
+                        <TagsInput
+                          label="Feature flags"
+                          value={replaySandboxFeatureFlags}
+                          onChange={(value) => setSetting('replaySandboxFeatureFlags', normalizeFlagNames(value))}
+                          splitChars={[',', ' ', '\n']}
+                          size="xs"
+                          clearable
                         />
                       }
-                      description={<>Activate to use the local development version of the live replay sandbox.</>}
+                      description={<>Enable these feature flags in the live replay sandbox.</>}
                     />
                   </Accordion.Panel>
                 </Accordion.Item>
@@ -278,4 +335,9 @@ function SettingItem({ description, input }: { description?: React.ReactNode; in
 
 function isChecked(target: EventTarget) {
   return target instanceof HTMLInputElement && target.checked
+}
+
+/** Trims the flag names and drops the empty and duplicate ones. */
+function normalizeFlagNames(flagNames: string[]) {
+  return Array.from(new Set(flagNames.map((flagName) => flagName.trim()).filter((flagName) => flagName !== '')))
 }

@@ -1,12 +1,18 @@
 import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
 import type { BrowserRecord, BrowserSegmentMetadata } from '@datadog/browser-rum/src/types'
 import { registerCleanupTask } from '../../../../packages/browser-core/test'
-import { DEV_REPLAY_SANDBOX_ORIGIN, DEV_REPLAY_SANDBOX_URL } from '../../common/packagesUrlConstants'
+import {
+  DEV_REPLAY_SANDBOX_ORIGIN,
+  DEV_REPLAY_SANDBOX_URL,
+  STATIC_HASH_REPLAY_SANDBOX_ORIGIN,
+} from '../../common/packagesUrlConstants'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
 import type { MessageBridgeDownRecords, MessageBridgeUp, StaticFrameContext } from './sessionReplayPlayer.types'
 import { MessageBridgeUpLogLevel, MessageBridgeUpType } from './sessionReplayPlayer.types'
-import type { SessionReplayPlayerState } from './startSessionReplayPlayer'
+import type { SessionReplayPlayerOptions, SessionReplayPlayerState } from './startSessionReplayPlayer'
 import { startSessionReplayPlayer } from './startSessionReplayPlayer'
+
+const STATIC_HASH = '0123456789abcdef0123456789abcdef'
 
 const META_RECORD: BrowserRecord = {
   type: RecordType.Meta,
@@ -51,13 +57,15 @@ describe('startSessionReplayPlayer', () => {
     })
   })
 
-  function startPlayer({ useDevReplaySandbox = true, excludeMouseMovements = false } = {}) {
+  function startPlayer(options: Partial<SessionReplayPlayerOptions> = {}) {
     return startSessionReplayPlayer({
       iframe,
       setPlayerState: (state) => playerStates.push(state),
-      useDevReplaySandbox,
-      excludeMouseMovements,
+      source: { type: 'local' },
+      sandboxFeatureFlags: [],
+      excludeMouseMovements: false,
       signal: abortController.signal,
+      ...options,
     })
   }
 
@@ -105,6 +113,51 @@ describe('startSessionReplayPlayer', () => {
       origin: location.origin,
       featureFlags: { rum_session_replay_iframe_interactive: true, rum_session_replay_disregard_origin: true },
     })
+  })
+
+  it('enables the requested feature flags in the sandbox', async () => {
+    startPlayer({ sandboxFeatureFlags: ['flag_a', 'flag_b'] })
+    await waitForNextTask()
+
+    const staticContext = new URL(sandboxUrls.at(-1)!).searchParams.get('staticContext')!
+    expect((JSON.parse(staticContext) as StaticFrameContext).featureFlags).toEqual({
+      flag_a: true,
+      flag_b: true,
+      rum_session_replay_iframe_interactive: true,
+      rum_session_replay_disregard_origin: true,
+    })
+  })
+
+  it('loads the sandbox build of a static hash', async () => {
+    spyOn(globalThis, 'fetch').and.resolveTo(new Response(null))
+
+    startPlayer({ source: { type: 'static-hash', hash: STATIC_HASH } })
+    await waitForNextTask()
+
+    const url = new URL(sandboxUrls.at(-1)!)
+    expect(`${url.origin}${url.pathname}`).toBe(
+      `${STATIC_HASH_REPLAY_SANDBOX_ORIGIN}/static-app/_h/${STATIC_HASH}/index.html`
+    )
+
+    receiveSandboxMessage(
+      { type: MessageBridgeUpType.READY, sandboxId: getSandboxId() },
+      STATIC_HASH_REPLAY_SANDBOX_ORIGIN
+    )
+    await waitForNextTask()
+
+    expect(playerStates.at(-1)!.status).toBe('waiting-for-full-snapshot')
+  })
+
+  it('reports that there is no sandbox build for the static hash', async () => {
+    spyOn(globalThis, 'fetch').and.resolveTo(new Response('', { status: 403 }))
+    const consoleErrorSpy = spyOn(console, 'error')
+
+    startPlayer({ source: { type: 'static-hash', hash: STATIC_HASH } })
+    await waitForNextTask()
+
+    expect(playerStates.at(-1)!.status).toBe('no-sandbox-build')
+    expect(consoleErrorSpy).not.toHaveBeenCalled()
+    expect(sandboxUrls).toEqual([])
   })
 
   it('waits for a full snapshot when the sandbox is ready', async () => {
@@ -219,7 +272,7 @@ describe('startSessionReplayPlayer', () => {
     spyOn(globalThis, 'fetch').and.resolveTo(new Response('', { status: 503 }))
     const consoleErrorSpy = spyOn(console, 'error')
 
-    const player = startPlayer({ useDevReplaySandbox: false })
+    const player = startPlayer({ source: { type: 'prod' } })
     await waitForNextTask()
 
     expect(playerStates.at(-1)!.status).toBe('error')
@@ -244,7 +297,7 @@ describe('startSessionReplayPlayer', () => {
         })
     )
 
-    startPlayer({ useDevReplaySandbox: false })
+    startPlayer({ source: { type: 'prod' } })
     abortController.abort()
     await waitForNextTask()
 

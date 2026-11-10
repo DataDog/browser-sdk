@@ -1,7 +1,7 @@
 import type { RecordBuffer } from './recordBuffer'
 import { createRecordBuffer } from './recordBuffer'
 
-export type SessionReplayPlayerStatus = 'loading' | 'waiting-for-full-snapshot' | 'ready' | 'error'
+export type SessionReplayPlayerStatus = 'loading' | 'waiting-for-full-snapshot' | 'ready' | 'no-sandbox-build' | 'error'
 
 export interface SessionReplayPlayerState {
   status: SessionReplayPlayerStatus
