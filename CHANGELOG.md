@@ -20,6 +20,18 @@
 
 ---
 
+## v7.17.1
+
+**Public Changes:**
+
+- 🐛 [PANA-9575] Ensure that stylesheets are always assigned the same id ([#5157](https://github.com/DataDog/browser-sdk/pull/5157))
+- 🐛 [RUM-19676] Keep a separate retry queue per intake when dual shipping ([#5244](https://github.com/DataDog/browser-sdk/pull/5244))
+- 🐛 [RUM-19671] Handle remote configuration body read failures like fetch failures ([#5241](https://github.com/DataDog/browser-sdk/pull/5241))
+
+**Internal Changes:**
+
+- 👷 Apply stale workflow to all issues and PRs ([#5243](https://github.com/DataDog/browser-sdk/pull/5243))
+
 ## v7.17.0
 
 **Public Changes:**
