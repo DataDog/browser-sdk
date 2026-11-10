@@ -603,6 +603,34 @@ check-squash-into-staging:
     - node scripts/staging-ci/check-squash-into-staging.ts
 
 ########################################################################################################################
+# Release
+########################################################################################################################
+
+release-please:
+  stage: task
+  extends:
+    - .base-configuration
+  # Must also run on release commits (to create the tag), so it doesn't use `.main`, which skips them.
+  rules:
+    # Same pipelines as `.main` (every main pipeline except schedules).
+    - if: $CI_COMMIT_BRANCH == $MAIN_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
+  # A newer commit must not cancel tag creation, and runs must not overlap.
+  interruptible: false
+  resource_group: release-please
+  variables:
+    # The pre-tag check walks the history back to the previous release.
+    GIT_DEPTH: 0
+  script:
+    - yarn
+    - node scripts/release/check-release-notes.ts
+    - |
+      RELEASE_PLEASE_TOKEN="$(dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.release-please)"
+      trap 'dd-octo-sts revoke --token "$RELEASE_PLEASE_TOKEN"' EXIT
+      # Tag and draft-release a merged release pull request, then open or update the next one.
+      yarn release-please github-release --token "$RELEASE_PLEASE_TOKEN" --repo-url DataDog/browser-sdk --target-branch main
+      yarn release-please release-pr --token "$RELEASE_PLEASE_TOKEN" --repo-url DataDog/browser-sdk --target-branch main
+
+########################################################################################################################
 # Bump e2e chrome version
 ########################################################################################################################
 

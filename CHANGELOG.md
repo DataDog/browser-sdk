@@ -1,22 +1,10 @@
-<!-- DO NOT MODIFY IT BY HAND. This file is generated automatically during the release process. -->
+<!-- DO NOT MODIFY IT BY HAND. This file is generated automatically by release-please. -->
 
 # Changelog
 
-> **Legend**
->
-> - 💥 **Breaking change** - Breaking API changes
->
-> - ✨ **New feature** - New public API, behavior, event, property
->
-> - 🐛 **Bug fix** - Fix bugs, regressions, crashes
->
-> - ⚡️ **Performance** - Improve performance, reduce bundle size
->
-> - 📝 **Documentation** - User-facing documentation
->
-> - ⚗️ **Experimental** - New public feature behind a feature flag
->
-> See [Gitmoji](https://gitmoji.dev/) for a guide on the emojis used.
+Entries are generated from the pull request titles ([Conventional Commits](https://www.conventionalcommits.org/)).
+Releases up to v7.17.1 used [gitmoji](https://gitmoji.dev/) prefixes instead: 💥 breaking change, ✨ new feature,
+🐛 bug fix, ⚡️ performance, 📝 documentation, ⚗️ experimental.
 
 ---
 

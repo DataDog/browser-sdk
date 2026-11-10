@@ -21,6 +21,11 @@ interface GitHubPR {
   }
 }
 
+interface GitHubMergedPR extends GitHubPR {
+  merge_commit_sha: string
+  labels: Array<{ name: string }>
+}
+
 export interface GitHubRelease {
   id: number
   html_url: string
@@ -40,6 +45,17 @@ export async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
     throw new Error('Multiple pull requests found for the branch')
   }
   return pr ? pr[0] : null
+}
+
+/**
+ * Find the merged pull requests whose merge produced the given commit.
+ *
+ * @param sha - The commit sha on the target branch.
+ */
+export async function fetchMergedPullRequests(sha: string): Promise<GitHubMergedPR[]> {
+  using readToken = getGithubReadToken()
+  const pullRequests = await callGitHubApi<GitHubMergedPR[]>('GET', `commits/${sha}/pulls`, readToken)
+  return pullRequests.filter((pullRequest) => pullRequest.merge_commit_sha === sha)
 }
 
 /**
