@@ -7,7 +7,7 @@ import {
 import type { Observable, TimeoutId } from '@datadog/js-core/util'
 import { BufferedObservable, clearInterval, noop, queueMicrotask, setInterval } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
-import { clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
+import { clocksNow, elapsed, ONE_MINUTE, relativeNow } from '@datadog/js-core/time'
 import type { WebSocketContext } from '../../browser/webSocketObservable'
 import { initWebSocketObservable } from '../../browser/webSocketObservable'
 import { WebSocketTrackingEndReason } from '../../rawRumEvent.types'
@@ -94,6 +94,10 @@ export interface EarlyWebSocketCollection {
 }
 
 export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
+  // telemetry
+  const startClocks = clocksNow()
+  let messageCount = 0
+
   let status: 'observing' | 'stopped' | 'handedOff' = 'observing'
 
   const phases = new BufferedObservable<{ instance: WebSocket; state: TrackedConnectionState }>(
@@ -101,9 +105,11 @@ export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
     (count) => {
       // only a hand-off loses data to the drops: a stopped early collection reports no phase at all
       if (status === 'handedOff') {
-        // monitor-until: 2026-12-15
+        // monitor-until: 2027-01-31
         addTelemetryDebug('Dropped early WebSocket phases, buffer is full', {
-          count,
+          phaseCount: count,
+          messageCount,
+          duration: elapsed(startClocks.relative, relativeNow()),
           capacity: EARLY_PHASES_BUFFER_CAPACITY,
         })
       }
@@ -111,6 +117,14 @@ export function startEarlyWebSocketCollection(): EarlyWebSocketCollection {
   )
 
   const subscription = initWebSocketObservable().subscribe((context) => {
+    // ignore a socket constructed before SDK load that still reaches the instrumented `send()`
+    if (
+      (context.state === 'message-in' || context.state === 'message-out') &&
+      trackedConnections.has(context.instance)
+    ) {
+      messageCount += 1
+    }
+
     handleWebSocketContext(context, (instance, connection) => {
       phases.notify({ instance, state: connection.getState() })
     })

@@ -1168,11 +1168,14 @@ describe('webSocketCollection', () => {
         expect(emittedVitals().map(webSocketOf)).toEqual(sockets.slice(1))
       })
 
-      it('reports the number of dropped phases with debug telemetry after the hand-off', async () => {
+      it('reports the dropped phases, messages exchanged and duration with debug telemetry after the hand-off', async () => {
         const telemetry = startMockTelemetry()
         const earlyCollection = startEarlyCollection()
-        fillBufferWithOpenConnections()
+        const [socket] = fillBufferWithOpenConnections()
         createOpenConnection()
+        receiveMessage(socket, 30, { at: 100 })
+        receiveMessage(socket, 30, { at: 200 })
+        sendMessage(socket, 10, { at: 300 })
 
         expect(await telemetry.hasEvents()).toBe(false)
 
@@ -1183,7 +1186,9 @@ describe('webSocketCollection', () => {
           jasmine.objectContaining({
             status: 'debug',
             message: 'Dropped early WebSocket phases, buffer is full',
-            count: 2,
+            phaseCount: 2,
+            messageCount: 3,
+            duration: 300,
             capacity: EARLY_PHASES_BUFFER_CAPACITY,
           }),
         ])
@@ -1198,6 +1203,20 @@ describe('webSocketCollection', () => {
         earlyCollection.stop()
 
         expect(await telemetry.hasEvents()).toBe(false)
+      })
+
+      it('counts no message sent by a socket constructed before the early collection', async () => {
+        const telemetry = startMockTelemetry()
+        const untrackedSocket = createOpenConnection()
+        const earlyCollection = startEarlyCollection()
+        fillBufferWithOpenConnections()
+        createOpenConnection()
+        sendMessage(untrackedSocket, 10)
+
+        startCollection(earlyCollection)
+        await waitNextMicrotask()
+
+        expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining({ messageCount: 0 })])
       })
 
       /** Fills the buffer with open connections, two phases each: connecting and open. Oldest first. */
