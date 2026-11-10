@@ -261,11 +261,11 @@ function newView(
 
   const isSoftNavigationTracked =
     loadingType === ViewLoadingType.ROUTE_CHANGE &&
-    configuration.betaTrackViewMetrics &&
+    !configuration.trackViewMetricsManually &&
     isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
     supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
 
-  const commonViewMetricsTracking = configuration.betaTrackViewMetrics
+  const commonViewMetricsTracking = !configuration.trackViewMetricsManually
     ? trackCommonViewMetrics(
         lifeCycle,
         domMutationObservable,
@@ -279,36 +279,31 @@ function newView(
     : undefined
 
   let viewMetricsTracking: ViewMetricsTracking | undefined
-  let initialViewMetrics: InitialViewMetrics = {}
-  switch (loadingType) {
-    case ViewLoadingType.INITIAL_LOAD:
-      if (commonViewMetricsTracking) {
+  if (commonViewMetricsTracking) {
+    switch (loadingType) {
+      case ViewLoadingType.INITIAL_LOAD:
         viewMetricsTracking = trackInitialViewMetrics(
           configuration,
           startClocks,
           commonViewMetricsTracking.setLoadEvent,
           scheduleViewUpdate
         )
-        initialViewMetrics = viewMetricsTracking.initialViewMetrics
-      }
-      break
+        break
 
-    case ViewLoadingType.ROUTE_CHANGE:
-      if (isSoftNavigationTracked && commonViewMetricsTracking) {
-        viewMetricsTracking = trackRouteChangeViewMetrics(
-          configuration,
-          scheduleViewUpdate,
-          commonViewMetricsTracking.setNavigationId
-        )
-        initialViewMetrics = viewMetricsTracking.initialViewMetrics
-      }
-      break
+      case ViewLoadingType.ROUTE_CHANGE:
+        if (isSoftNavigationTracked) {
+          viewMetricsTracking = trackRouteChangeViewMetrics(
+            configuration,
+            scheduleViewUpdate,
+            commonViewMetricsTracking.setNavigationId
+          )
+        }
+        break
 
-    case ViewLoadingType.BF_CACHE:
-      if (commonViewMetricsTracking) {
-        initialViewMetrics = trackBfcacheMetrics(startClocks, scheduleViewUpdate)
-      }
-      break
+      case ViewLoadingType.BF_CACHE:
+        viewMetricsTracking = trackBfcacheMetrics(startClocks, scheduleViewUpdate)
+        break
+    }
   }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
@@ -349,7 +344,7 @@ function newView(
 
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
-    const commonViewMetrics = { ...commonViewMetricsTracking?.getCommonViewMetrics() }
+    const commonViewMetrics = commonViewMetricsTracking?.getCommonViewMetrics() ?? {}
     if (manualLoadingTime !== undefined) {
       commonViewMetrics.loadingTime = manualLoadingTime
     }
@@ -366,7 +361,7 @@ function newView(
       handlingStack,
       startClocks,
       commonViewMetrics,
-      initialViewMetrics,
+      initialViewMetrics: viewMetricsTracking?.initialViewMetrics ?? {},
       duration: elapsed(startClocks.timeStamp, currentEnd),
       isActive: endClocks === undefined,
       sessionIsActive,

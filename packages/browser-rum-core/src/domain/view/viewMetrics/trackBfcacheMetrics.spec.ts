@@ -30,7 +30,7 @@ describe('trackBfcacheMetrics', () => {
       relative: pageshow.timeStamp as RelativeTime,
       timeStamp: 0 as TimeStamp,
     }
-    const metrics = trackBfcacheMetrics(startClocks, scheduleSpy)
+    const { initialViewMetrics: metrics } = trackBfcacheMetrics(startClocks, scheduleSpy)
 
     expect(metrics.firstContentfulPaint).toEqual(50 as Duration)
     expect(metrics.largestContentfulPaint?.value).toEqual(50 as RelativeTime)

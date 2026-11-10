@@ -1,4 +1,5 @@
 import type { RelativeTime, ClocksState } from '@datadog/js-core/time'
+import { noop } from '@datadog/js-core/util'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
 import { trackRestoredFirstContentfulPaint } from './trackFirstContentfulPaint'
 
@@ -16,5 +17,8 @@ export function trackBfcacheMetrics(viewStart: ClocksState, scheduleViewUpdate: 
     scheduleViewUpdate()
   })
 
-  return initialViewMetrics
+  return {
+    initialViewMetrics,
+    stop: noop,
+  }
 }

@@ -938,7 +938,7 @@ describe('view custom timings', () => {
   })
 })
 
-describe('view metrics when betaTrackViewMetrics is false', () => {
+describe('view metrics when trackViewMetricsManually is true', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
   let viewTest: ViewTest
@@ -947,7 +947,7 @@ describe('view metrics when betaTrackViewMetrics is false', () => {
   beforeEach(() => {
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    viewTest = setupViewTest({ lifeCycle, partialConfig: { betaTrackViewMetrics: false } })
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackViewMetricsManually: true } })
 
     registerCleanupTask(() => {
       viewTest.stop()
