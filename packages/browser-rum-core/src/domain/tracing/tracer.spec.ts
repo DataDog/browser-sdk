@@ -1,6 +1,7 @@
 import type { ContextManager } from '@datadog/browser-core'
 import type { ContextValue } from '@datadog/js-core/util'
-import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
+import { objectEntries } from '@datadog/js-core/util'
+import { display, TraceContextInjection } from '@datadog/browser-core'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
 import { MID_HASH_UUID, MOCK_SESSION_ID, createSessionManagerMock } from '@datadog/browser-core/test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
