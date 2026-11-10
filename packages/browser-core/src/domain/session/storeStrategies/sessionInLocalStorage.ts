@@ -1,4 +1,4 @@
-import { Observable, generateUUID } from '@datadog/js-core/util'
+import { Observable, generateUUID, globalObject } from '@datadog/js-core/util'
 import { addEventListener } from '@datadog/js-core/dom'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
@@ -22,14 +22,18 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
 }
 
 export function initLocalStorageStrategy(): SessionStoreStrategy {
-  const sessionObservable = new Observable<SessionState>(
-    (observable) =>
-      addEventListener(window, 'storage', (event) => {
-        if (event.key === SESSION_STORE_KEY && event.storageArea === localStorage) {
-          observable.notify(toSessionState(event.newValue))
-        }
-      }).stop
-  )
+  const sessionObservable = new Observable<SessionState>((observable) => {
+    // window is not available in non-browser environments exposing localStorage (ex: Node.js 25+)
+    const browserWindow = globalObject.window
+    if (!browserWindow) {
+      return
+    }
+    return addEventListener(browserWindow, 'storage', (event) => {
+      if (event.key === SESSION_STORE_KEY && event.storageArea === localStorage) {
+        observable.notify(toSessionState(event.newValue))
+      }
+    }).stop
+  })
 
   let isFirstCall = true
 
