@@ -1200,6 +1200,49 @@ describe('webSocketCollection', () => {
         expect(await telemetry.hasEvents()).toBe(false)
       })
 
+      it('reports the messages exchanged before the hand-off with debug telemetry', async () => {
+        const telemetry = startMockTelemetry()
+        const earlyCollection = startEarlyCollection()
+        const socket = createOpenConnection()
+        receiveMessage(socket, 30, { at: 100 })
+        receiveMessage(socket, 30, { at: 200 })
+        sendMessage(socket, 10, { at: 300 })
+
+        startCollection(earlyCollection)
+        await waitNextMicrotask()
+
+        expect(await telemetry.getEvents()).toEqual([
+          jasmine.objectContaining({
+            status: 'debug',
+            message: 'WebSocket messages exchanged before RUM start',
+            messageCount: 3,
+            duration: 300,
+          }),
+        ])
+      })
+
+      it('counts no message sent by a socket constructed before the early collection', async () => {
+        const telemetry = startMockTelemetry()
+        const untrackedSocket = createOpenConnection()
+        const earlyCollection = startEarlyCollection()
+        sendMessage(untrackedSocket, 10)
+
+        startCollection(earlyCollection)
+        await waitNextMicrotask()
+
+        expect(await telemetry.hasEvents()).toBe(false)
+      })
+
+      it('skips the message telemetry when the early collection stops', async () => {
+        const telemetry = startMockTelemetry()
+        const earlyCollection = startEarlyCollection()
+        receiveMessage(createOpenConnection(), 30)
+
+        earlyCollection.stop()
+
+        expect(await telemetry.hasEvents()).toBe(false)
+      })
+
       /** Fills the buffer with open connections, two phases each: connecting and open. Oldest first. */
       function fillBufferWithOpenConnections() {
         const sockets: MockWebSocket[] = []
