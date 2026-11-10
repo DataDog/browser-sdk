@@ -2,7 +2,6 @@ import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import { trackBfcacheMetrics } from './trackBfcacheMetrics'
-import type { InitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackBfcacheMetrics', () => {
   let clock: Clock
@@ -23,7 +22,6 @@ describe('trackBfcacheMetrics', () => {
   it('should compute FCP and LCP from the next frame after BFCache restore', () => {
     const pageshow = createPageshowEvent() as PageTransitionEvent
 
-    const metrics: InitialViewMetrics = {}
     const scheduleSpy = jasmine.createSpy('schedule')
 
     clock.tick(50)
@@ -32,7 +30,7 @@ describe('trackBfcacheMetrics', () => {
       relative: pageshow.timeStamp as RelativeTime,
       timeStamp: 0 as TimeStamp,
     }
-    trackBfcacheMetrics(startClocks, metrics, scheduleSpy)
+    const metrics = trackBfcacheMetrics(startClocks, scheduleSpy)
 
     expect(metrics.firstContentfulPaint).toEqual(50 as Duration)
     expect(metrics.largestContentfulPaint?.value).toEqual(50 as RelativeTime)

@@ -7,14 +7,14 @@ import { trackRestoredFirstContentfulPaint } from './trackFirstContentfulPaint'
  * viewport repaints in a single frame. Consequently, LCP almost always equals FCP.
  * (See: https://github.com/GoogleChrome/web-vitals/pull/87)
  */
-export function trackBfcacheMetrics(
-  viewStart: ClocksState,
-  metrics: InitialViewMetrics,
-  scheduleViewUpdate: () => void
-) {
+export function trackBfcacheMetrics(viewStart: ClocksState, scheduleViewUpdate: () => void) {
+  const initialViewMetrics: InitialViewMetrics = {}
+
   trackRestoredFirstContentfulPaint(viewStart.relative, (paintTime) => {
-    metrics.firstContentfulPaint = paintTime
-    metrics.largestContentfulPaint = { value: paintTime as RelativeTime }
+    initialViewMetrics.firstContentfulPaint = paintTime
+    initialViewMetrics.largestContentfulPaint = { value: paintTime as RelativeTime }
     scheduleViewUpdate()
   })
+
+  return initialViewMetrics
 }

@@ -938,6 +938,57 @@ describe('view custom timings', () => {
   })
 })
 
+describe('view metrics when betaTrackViewMetrics is false', () => {
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
+  let viewTest: ViewTest
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+
+  beforeEach(() => {
+    clock = mockClock()
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { betaTrackViewMetrics: false } })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
+  it('does not collect automatic view metrics but keeps the manual loading time', () => {
+    const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
+
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT),
+      createPerformanceEntry(RumPerformanceEntryType.PAINT),
+    ])
+    clock.tick(500)
+    setLoadingTime()
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.initialViewMetrics).toEqual({})
+    expect(lastUpdate.commonViewMetrics).toEqual({
+      loadingTime: clock.relative(500),
+    })
+  })
+
+  it('does not collect paint metrics when restoring from the BFCache', () => {
+    const { getViewUpdate, getViewUpdateCount } = viewTest
+    spyOn(window, 'requestAnimationFrame').and.callFake((callback: FrameRequestCallback) => {
+      callback(performance.now())
+      return 0
+    })
+
+    window.dispatchEvent(createNewEvent('pageshow', { persisted: true }))
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.BF_CACHE)
+    expect(lastUpdate.initialViewMetrics).toEqual({})
+    expect(lastUpdate.commonViewMetrics).toEqual({})
+  })
+})
+
 describe('manual loading time', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
