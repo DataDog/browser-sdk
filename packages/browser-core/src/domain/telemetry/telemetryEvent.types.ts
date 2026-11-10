@@ -398,6 +398,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       maui_version?: string
       /**
+       * The version of Unreal Engine used in an Unreal Engine application
+       */
+      unreal_version?: string
+      /**
        * The threshold used for iOS App Hangs monitoring (in milliseconds)
        */
       app_hang_threshold?: number
@@ -456,7 +460,7 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       sdk_version?: string
       /**
-       * The source of the SDK, e.g., 'browser', 'ios', 'android', 'flutter', 'react-native', 'unity', 'kotlin-multiplatform', 'maui'.
+       * The source of the SDK, e.g., 'browser', 'ios', 'android', 'flutter', 'react-native', 'unity', 'kotlin-multiplatform', 'maui', 'unreal'.
        */
       source?: string
       /**
@@ -600,6 +604,7 @@ export type TelemetryCommonFeaturesUsage =
  * Schema of browser specific features usage
  */
 export type TelemetryBrowserFeaturesUsage =
+  | AttachElementStack
   | StartSessionReplayRecording
   | StartDurationVital
   | StopDurationVital
@@ -654,6 +659,7 @@ export interface CommonTelemetryProperties {
     | 'electron'
     | 'cpp'
     | 'maui'
+    | 'unreal'
   /**
    * The version of the SDK generating the telemetry event
    */
@@ -973,6 +979,13 @@ export interface AddViewLoadingTime {
    * Whether this call overwrote a previously set loading time
    */
   overwritten?: boolean
+  [k: string]: unknown
+}
+export interface AttachElementStack {
+  /**
+   * attachElementStack API
+   */
+  feature: 'attach-element-stack'
   [k: string]: unknown
 }
 export interface StartSessionReplayRecording {

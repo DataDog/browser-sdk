@@ -32,10 +32,10 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
 // Debug IDs are derived from each chunk's content hash, so they're stable across rebuilds
 // (regenerate these constants if app source/deps change). The shared `lib` remote is its own chunk,
 // so its debug ID is the same for every app.
-const APP1_EXPOSE_CHUNK = '__federation_expose_app1-d74be1a93aee64b4d047-app1.js'
-const APP1_DEBUG_ID = '4b3d6a63-fb93-4cad-b3ee-f178b7020ba3'
-const APP2_EXPOSE_CHUNK = '__federation_expose_app2-de619ccf294b7d2c971a-app2.js'
-const APP2_DEBUG_ID = '5f3dc267-79ac-4d44-99b9-251f9931b053'
+const APP1_EXPOSE_CHUNK = '__federation_expose_app1-82d330534aa203d03ba4-app1.js'
+const APP1_DEBUG_ID = '6d2b2e0c-c69f-4e5d-9191-4f84eb030573'
+const APP2_EXPOSE_CHUNK = '__federation_expose_app2-399f699ac61aaa25ade0-app2.js'
+const APP2_DEBUG_ID = '801f67d9-35d5-4c19-b8f2-f96d37e4fda1'
 const LIB_EXPOSE_CHUNK = '__federation_expose_lib-c0a8a100340f04ff2712-lib.js'
 const LIB_DEBUG_ID = '4564c6ea-a5bb-4355-968a-7de8d685fe65'
 
@@ -266,9 +266,57 @@ test.describe('microfrontend', () => {
           expect(viewEvent.service).toBe('mfe-service')
           expect(viewEvent.version).toBe('0.1.0')
         })
+
+      createTest('automatic clicks expose element stacks for manual attribution')
+        .withRum({
+          ...RUM_CONFIG,
+          trackUserInteractions: true,
+          beforeSend: (event, context) => {
+            if (event.type === 'action' && 'elementStack' in context && context.elementStack?.includes('app1.js')) {
+              event.service = 'manual-app1'
+              event.version = 'manual-version'
+            }
+            return true
+          },
+        })
+        .withSetup(microfrontendSetup)
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await page.click('#app1-fetch')
+          await flushEvents()
+          const clicks = intakeRegistry.rumActionEvents.filter((event) => event.action.type === 'click')
+          expect(clicks).toHaveLength(1)
+          expect(clicks[0]).toMatchObject({ service: 'manual-app1', version: 'manual-version' })
+        })
     })
 
     test.describe('with source code bundler plugin', () => {
+      createTest('automatic clicks use element stacks registered after init')
+        .withRum({ ...RUM_CONFIG, trackUserInteractions: true })
+        .withSetup(microfrontendSetup)
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await expect(page.locator('#app1-fetch')).toBeVisible()
+          await expect(page.locator('#app2-fetch')).toBeVisible()
+          await page.click('#app1-fetch')
+          await page.click('#app2-fetch')
+          await flushEvents()
+          const clicks = intakeRegistry.rumActionEvents.filter((event) => event.action.type === 'click')
+          expect(clicks).toHaveLength(2)
+          expect(clicks).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                service: 'mfe-app1-service',
+                version: '1.0.0',
+                action: expect.objectContaining({ target: { name: 'app1-fetch' } }),
+              }),
+              expect.objectContaining({
+                service: 'mfe-app2-service',
+                version: '0.2.0',
+                action: expect.objectContaining({ target: { name: 'app2-fetch' } }),
+              }),
+            ])
+          )
+        })
+
       createTest('errors from console.error should have service and version from source code context')
         .withRum(RUM_CONFIG)
         .withSetup(microfrontendSetup)

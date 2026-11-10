@@ -29,7 +29,8 @@ export function startActionCollection(
   hooks: Hooks,
   domMutationObservable: Observable<MutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  elementStacks: WeakMap<Element, string>
 ) {
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
@@ -42,7 +43,13 @@ export function startActionCollection(
   let clickActions: ReturnType<typeof trackClickActions> | undefined
 
   if (configuration.trackUserInteractions) {
-    clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration)
+    clickActions = trackClickActions(
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      configuration,
+      elementStacks
+    )
   }
 
   const manualActions = trackManualActions(lifeCycle, (action) => {
@@ -144,7 +151,9 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
     },
     duration: action.duration,
     startClocks: action.startClocks,
-    domainContext: isAuto ? { events: action.events } : { handlingStack: action.handlingStack },
+    domainContext: isAuto
+      ? { events: action.events, ...(action.elementStack !== undefined && { elementStack: action.elementStack }) }
+      : { handlingStack: action.handlingStack },
   }
 }
 
