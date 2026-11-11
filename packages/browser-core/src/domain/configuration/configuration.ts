@@ -4,6 +4,7 @@ import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
+import type { CookieAccessFactory } from '../../browser/cookieAccess'
 
 /**
  * Default privacy level for the browser SDK.
@@ -330,7 +331,16 @@ export const BROWSER_CORE_SCHEMA = {
   variant: { type: 'string' },
 } as const
 
-export type Configuration = InferredConfig<typeof BROWSER_CORE_SCHEMA>
+export type Configuration = InferredConfig<typeof BROWSER_CORE_SCHEMA> & {
+  /**
+   * Accesses the session cookie through a host API instead of the browser cookie APIs (ex: the
+   * Shopify app pixel plugin, with Shopify Web Pixels `browser.cookie`). Set by the SDK, not an
+   * init option.
+   *
+   * @internal
+   */
+  sessionCookieAccess?: CookieAccessFactory | undefined
+}
 
 export function serializeConfiguration(initConfiguration: InitConfiguration) {
   return {

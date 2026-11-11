@@ -10,7 +10,7 @@ import type { SessionState } from '../sessionState'
 import type { Configuration } from '../../configuration'
 import { buildCookieOptions } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
-import { CookieApi, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
+import { CookieApi, LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessionStoreStrategy'
 import { createCookieAccess, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 
 function createMockCookieAccess() {
@@ -302,6 +302,35 @@ describe('session in cookie strategy', () => {
       disableDocumentCookie()
       const strategy = await selectCookieStrategy(mockBaseConfiguration())
       expect(strategy).toBeUndefined()
+    })
+
+    it('uses the custom cookie access when provided and working', async () => {
+      disableCookieStore()
+      disableDocumentCookie()
+      const customCookieAccess = () => createMockCookieAccess().mockCookieAccess
+      const strategy = await selectCookieStrategy(mockBaseConfiguration({ sessionCookieAccess: customCookieAccess }))
+      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: customCookieAccess }))
+    })
+
+    it('returns undefined when the custom cookie access does not work', async () => {
+      mockCookies()
+      const customCookieAccess = () => ({
+        ...createMockCookieAccess().mockCookieAccess,
+        getAll: () => Promise.resolve([]),
+      })
+      const strategy = await selectCookieStrategy(mockBaseConfiguration({ sessionCookieAccess: customCookieAccess }))
+      expect(strategy).toBeUndefined()
+    })
+  })
+
+  describe('createCookieAccess', () => {
+    it('creates the session cookie access from a custom cookie access factory', () => {
+      const { mockCookieAccess } = createMockCookieAccess()
+      const customCookieAccess = jasmine.createSpy().and.returnValue(mockCookieAccess)
+      const cookieOptions = { secure: true }
+
+      expect(createCookieAccess(customCookieAccess, cookieOptions)).toBe(mockCookieAccess)
+      expect(customCookieAccess).toHaveBeenCalledOnceWith(SESSION_STORE_KEY, cookieOptions)
     })
   })
 

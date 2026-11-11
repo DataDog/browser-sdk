@@ -3,7 +3,14 @@ import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager, InitContext } from '@datadog/browser-core'
+import type {
+  TrackingConsentState,
+  DeflateWorker,
+  Telemetry,
+  SessionManager,
+  InitContext,
+  CookieAccessFactory,
+} from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
   display,
@@ -83,6 +90,7 @@ export function createPreStartStrategy(
   let cachedConfiguration: RumConfiguration | undefined
   let sessionManager: SessionManager | undefined
   let telemetry: Telemetry | undefined
+  let sessionCookieAccess: CookieAccessFactory | undefined
   const hooks = createHooks()
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
@@ -213,7 +221,7 @@ export function createPreStartStrategy(
         // untraced, and the sampling decision could not be propagated to the backend.
         onSessionManagerReady(startSessionManagerStub())
       } else {
-        void mockable(startSessionManager)(configuration, trackingConsentState)
+        void mockable(startSessionManager)({ ...configuration, sessionCookieAccess }, trackingConsentState)
           .then((newSessionManager) => {
             if (newSessionManager) {
               onSessionManagerReady(newSessionManager)
@@ -265,6 +273,9 @@ export function createPreStartStrategy(
         initConfiguration,
         publicApi,
         registerAssembleEventHook: hooks.assembleEvent.register,
+        setSessionCookieAccess: (cookieAccessFactory) => {
+          sessionCookieAccess = cookieAccessFactory
+        },
       })
 
       if (typeof shouldContinue === 'boolean') {
