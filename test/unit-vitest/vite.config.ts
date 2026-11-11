@@ -79,7 +79,7 @@ const config: ViteUserConfig = {
       enabled: Boolean(process.env.CI),
       provider: 'istanbul',
       include: ['packages/*/src/**/*.ts'],
-      exclude: ['**/*.spec.ts', '**/*.d.ts', '**/capturedExceptions.ts', '**/specHelper.ts'],
+      exclude: ['**/*.spec.ts', '**/*.d.ts', '**/*capturedExceptions.ts', '**/*specHelper.ts'],
       reporter: ['text-summary', 'html', 'clover'],
       reportsDirectory: getCoverageReportDirectory(),
     },
