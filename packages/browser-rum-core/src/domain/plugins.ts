@@ -1,4 +1,5 @@
 import { isThenable } from '@datadog/browser-core'
+import type { CookieAccessFactory } from '@datadog/browser-core'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
@@ -18,6 +19,12 @@ export interface RumPluginOnInitOptions {
    * assembled, including events buffered during the pre-start phase.
    */
   registerAssembleEventHook: AssembleHook['register']
+  /**
+   * Make the cookie session store read and write the session cookie through the given cookie
+   * access, for environments where cookies are only reachable through a host API (ex: Shopify Web
+   * Pixels `browser.cookie`). Only used with the `cookie` session persistence.
+   */
+  setSessionCookieAccess: (cookieAccessFactory: CookieAccessFactory) => void
 }
 
 /**

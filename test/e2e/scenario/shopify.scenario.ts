@@ -1,5 +1,7 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest, SHOPIFY_V2_STORE } from '../lib/framework'
+import { findSessionCookie } from '../lib/helpers/session'
 
 // Skip non chromium browsers because --disable-web-security is chromium-only.
 test.skip(() => test.info().project.name !== 'chromium', 'Shopify dev store is tested on chromium only')
@@ -49,6 +51,40 @@ function isKnownStoreNoise(log: { url?: string; message: string }) {
   )
 }
 
+// Flow: storefront -> product -> add to cart -> checkout
+async function goToCheckout(page: Page) {
+  await page.locator('div').filter({ hasText: 'Generated test data A theme' }).nth(1).click()
+  await page.getByRole('link', { name: 'The Multi-managed Snowboard' }).click()
+
+  // Wait for the product form's custom element to hydrate its AJAX submit handler, otherwise
+  // clicking "Add to cart" below can fall through to a native form submission instead.
+  await page.waitForLoadState('networkidle')
+
+  // Poll the cart API directly instead of a fixed delay: the checkout session Shopify creates
+  // can lag slightly behind the /cart/add response with no other client-visible signal.
+  await Promise.all([
+    page.waitForResponse((res) => res.url().includes('/cart/add') && res.ok()),
+    page.getByRole('button', { name: 'Add to cart' }).click(),
+  ])
+  const getCartItemCount = () =>
+    page.evaluate(async () => {
+      const response = await fetch('/cart.js')
+      // Treat a transient store-side 5xx as "not there yet" so expect.poll retries instead of
+      // failing on a JSON parse error.
+      if (!response.ok) {
+        return 0
+      }
+      const cart = (await response.json()) as { item_count: number }
+      return cart.item_count
+    })
+  await expect.poll(getCartItemCount).toBeGreaterThan(0)
+  await page.getByRole('button', { name: 'Check out' }).click()
+
+  // Wait for the checkout page's Web Pixel to finish loading and subscribe to click events,
+  // otherwise the first form field interactions below can go untracked.
+  await page.waitForLoadState('networkidle')
+}
+
 test.describe(() => {
   // The live dev store's Cloudflare bot protection can trip a verification wall under request volume,
   // even from rapid consecutive solo runs. Force this file's test(s) to run one at a time.
@@ -61,43 +97,14 @@ test.describe(() => {
   })
 
   // Flow: add to cart -> checkout -> thank you -> back to storefront
-  createTest('shopify checkout views and actions')
+  createTest('shopifyV1: checkout views and actions')
     .withRum(baseShopifyRumConfiguration)
     .withShopifyApp()
     .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs, flushBrowserLogs }) => {
       // The full live-store checkout flow runs close to the default 30s test timeout.
       test.slow()
 
-      await page.locator('div').filter({ hasText: 'Generated test data A theme' }).nth(1).click()
-      await page.getByRole('link', { name: 'The Multi-managed Snowboard' }).click()
-
-      // Wait for the product form's custom element to hydrate its AJAX submit handler, otherwise
-      // clicking "Add to cart" below can fall through to a native form submission instead.
-      await page.waitForLoadState('networkidle')
-
-      // Poll the cart API directly instead of a fixed delay: the checkout session Shopify creates
-      // can lag slightly behind the /cart/add response with no other client-visible signal.
-      await Promise.all([
-        page.waitForResponse((res) => res.url().includes('/cart/add') && res.ok()),
-        page.getByRole('button', { name: 'Add to cart' }).click(),
-      ])
-      const getCartItemCount = () =>
-        page.evaluate(async () => {
-          const response = await fetch('/cart.js')
-          // Treat a transient store-side 5xx as "not there yet" so expect.poll retries instead of
-          // failing on a JSON parse error.
-          if (!response.ok) {
-            return 0
-          }
-          const cart = (await response.json()) as { item_count: number }
-          return cart.item_count
-        })
-      await expect.poll(getCartItemCount).toBeGreaterThan(0)
-      await page.getByRole('button', { name: 'Check out' }).click()
-
-      // Wait for the checkout page's Web Pixel to finish loading and subscribe to click events,
-      // otherwise the first form field interactions below can go untracked.
-      await page.waitForLoadState('networkidle')
+      await goToCheckout(page)
 
       const emailInput = page.getByRole('textbox', { name: 'Email' })
       await emailInput.click()
@@ -199,6 +206,37 @@ test.describe(() => {
         { target: 'delivery_postal_code', viewUrl: expect.stringMatching(CHECKOUT_PATH) },
         { target: 'summary_pay_button', viewUrl: expect.stringMatching(CHECKOUT_PATH) },
       ])
+
+      withBrowserLogs((logs) => {
+        const unexpected = logs.filter((log) => log.level === 'error' && !isKnownStoreNoise(log))
+        expect(unexpected).toHaveLength(0)
+      })
+      flushBrowserLogs()
+    })
+
+  // V2: the Datadog Shopify app. Its Web Pixel runs in a worker without `document.cookie`, and
+  // reaches the checkout page cookie through Shopify's async `browser.cookie`.
+  createTest('shopifyV2: app pixel continues the storefront session at checkout')
+    .withShopifyApp(SHOPIFY_V2_STORE)
+    .run(async ({ page, browserContext, withBrowserLogs, flushBrowserLogs }) => {
+      test.slow()
+
+      // Shopify only runs the app pixel with analytics consent. The banner depends on the visitor's
+      // region, and covers the cart's "Check out" button when shown.
+      await page.addLocatorHandler(page.getByRole('heading', { name: 'Cookie consent' }), async () => {
+        await page.getByRole('button', { name: 'Accept' }).click()
+      })
+
+      await expect.poll(async () => (await findSessionCookie(browserContext))?.id).toBeDefined()
+      const storefrontSession = (await findSessionCookie(browserContext))!
+
+      await goToCheckout(page)
+
+      // The storefront SDK doesn't run on checkout: only the app pixel can expand the session cookie.
+      await expect
+        .poll(async () => Number((await findSessionCookie(browserContext))?.expire))
+        .toBeGreaterThan(Number(storefrontSession.expire))
+      expect((await findSessionCookie(browserContext))?.id).toBe(storefrontSession.id)
 
       withBrowserLogs((logs) => {
         const unexpected = logs.filter((log) => log.level === 'error' && !isKnownStoreNoise(log))

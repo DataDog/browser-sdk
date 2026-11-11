@@ -8,7 +8,7 @@ import { buildCookieOptions } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
-import type { CookieAccess } from '../../../browser/cookieAccess'
+import type { CookieAccess, CookieAccessFactory } from '../../../browser/cookieAccess'
 import {
   areCookiesAuthorized,
   createCookieStoreAccess,
@@ -31,6 +31,13 @@ export async function selectCookieStrategy(
   const cookieOptions = buildCookieOptions(configuration)
   if (!cookieOptions) {
     return undefined
+  }
+
+  const { sessionCookieAccess } = configuration
+  if (sessionCookieAccess) {
+    return (await areCookiesAuthorized(sessionCookieAccess, cookieOptions))
+      ? { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: sessionCookieAccess }
+      : undefined
   }
 
   if (isCookieStoreSupported() && (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions))) {
@@ -124,7 +131,13 @@ function isContextGoingAwayError(error: unknown): boolean {
   )
 }
 
-export function createCookieAccess(cookieApi: CookieApi, cookieOptions: CookieOptions): CookieAccess {
+export function createCookieAccess(
+  cookieApi: CookieApi | CookieAccessFactory,
+  cookieOptions: CookieOptions
+): CookieAccess {
+  if (typeof cookieApi === 'function') {
+    return cookieApi(SESSION_STORE_KEY, cookieOptions)
+  }
   return cookieApi === CookieApi.COOKIE_STORE
     ? createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions)
     : createDocumentCookieAccess(SESSION_STORE_KEY, cookieOptions)

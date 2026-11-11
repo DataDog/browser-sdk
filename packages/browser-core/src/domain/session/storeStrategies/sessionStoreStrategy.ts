@@ -1,5 +1,6 @@
 import type { Observable } from '@datadog/js-core/util'
 import type { CookieOptions } from '../../../browser/cookie'
+import type { CookieAccessFactory } from '../../../browser/cookieAccess'
 import type { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 
@@ -14,7 +15,8 @@ export const enum CookieApi {
 export interface CookieSessionStoreStrategyType {
   type: typeof SessionPersistence.COOKIE
   cookieOptions: CookieOptions
-  cookieApi: CookieApi
+  // A factory when the cookies are accessed through a host API (ex: the Shopify app pixel plugin)
+  cookieApi: CookieApi | CookieAccessFactory
 }
 
 export type SessionStoreStrategyType =

@@ -679,6 +679,25 @@ describe('preStartRum', () => {
         expect(doStartRumSpy).not.toHaveBeenCalled()
       })
 
+      it('passes the session cookie access set by a plugin to the session manager', async () => {
+        const customCookieAccess = jasmine.createSpy()
+        const plugin: RumPlugin = {
+          name: 'a',
+          onInit: ({ setSessionCookieAccess }) => setSessionCookieAccess(customCookieAccess),
+        }
+        const startSessionManagerSpy = jasmine
+          .createSpy<typeof startSessionManager>()
+          .and.callFake(createStartSessionManagerMock())
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+          startSessionManagerMock: startSessionManagerSpy,
+        })
+
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+        await collectAsyncCalls(doStartRumSpy, 1)
+
+        expect(startSessionManagerSpy.calls.mostRecent().args[0].sessionCookieAccess).toBe(customCookieAccess)
+      })
+
       it('does not start RUM and does not throw when a plugin onInit promise rejects', async () => {
         const plugin: RumPlugin = { name: 'a', onInit: () => Promise.reject(new Error('boom')) }
         const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
