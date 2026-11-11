@@ -13,6 +13,8 @@ export default function (config) {
   config.set({
     ...karmaBaseConf,
     reporters: ['coverage-istanbul', ...karmaBaseConf.reporters],
+    listenAddress: '127.0.0.1',
+    hostname: '127.0.0.1',
     browsers: ['ChromeHeadlessNoSandbox'],
     coverageIstanbulReporter: {
       reports: coverageReports,

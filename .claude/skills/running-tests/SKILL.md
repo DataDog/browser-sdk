@@ -13,7 +13,7 @@ All test entry points are root `yarn` scripts. Unit tests compile from source. L
 
 | Need                                                                                             | Command                                                                                    |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| Unit, watch mode (`localhost:9876`, `/debug.html` for devtools)                                  | `yarn test`                                                                                |
+| Unit, watch mode (`localhost:9876` or next free port, `/debug.html` for devtools)                | `yarn test`                                                                                |
 | Unit, single run                                                                                 | `yarn test:unit`                                                                           |
 | Specific specs (repeatable, quoted globs OK, also works with `yarn test`)                        | `yarn test:unit --spec 'packages/browser-rum-core/src/domain/view/**/*.spec.ts'`           |
 | Reproduce a CI order (`Randomized with seed 41027`)                                              | `yarn test:unit --seed 41027`                                                              |

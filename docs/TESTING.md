@@ -22,7 +22,7 @@ Use this strategy to test the integration on Real applications.
 
 1. Write a unit test.
 2. Run only your tests by temporarily replacing `describe(...)` with `fdescribe(...)` or `it(...)` with `fit(...)`.
-3. Run `yarn test` in the project root. It will launch the tests in watch mode, and also expose [a local URL](http://localhost:9876/) that you can open in any browser.
+3. Run `yarn test` in the project root. It will launch the tests in watch mode, and also expose [a local URL](http://localhost:9876/) that you can open in any browser. If the port is already in use, Karma picks the next free one: use the URL printed in the terminal.
 4. Look at your terminal to see your test results.
 5. For deeper investigation, open [the "debug" page](http://localhost:9876/debug.html#) to inspect test execution via the devtools.
 
