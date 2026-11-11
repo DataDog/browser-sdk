@@ -610,7 +610,7 @@ __metadata:
     react-dom: "npm:19.3.1"
     react-router: "npm:8.5.1"
     react-router-dom: "npm:7.18.5"
-    react-router-dom-6: "npm:react-router-dom@6.30.6"
+    react-router-dom-6: "npm:react-router-dom@7.18.5"
   peerDependencies:
     "@tanstack/react-router": ">=1.64.0 <2"
     react: 18 || 19
@@ -3010,13 +3010,6 @@ __metadata:
   version: 0.22.1
   resolution: "@remix-run/route-pattern@npm:0.22.1"
   checksum: 10c0/752fd1b76ce5c1c40648ab6a731c18b88ecd16e43d4333a7eb724c852df775761ed70d0caef7da7d2360425886d62b5d6d47e707f15bc922669d1c66b757cd33
-  languageName: node
-  linkType: hard
-
-"@remix-run/router@npm:1.23.4":
-  version: 1.23.4
-  resolution: "@remix-run/router@npm:1.23.4"
-  checksum: 10c0/ef17eb2a606c125f09c55683585099725421af1c11f1c1d1c3841fe4eea3f99eb56b26ecbb17429a173c704ecae336c37e0d74855faa9330667433ef4f419436
   languageName: node
   linkType: hard
 
@@ -13361,20 +13354,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom-6@npm:react-router-dom@6.30.6":
-  version: 6.30.6
-  resolution: "react-router-dom@npm:6.30.6"
-  dependencies:
-    "@remix-run/router": "npm:1.23.4"
-    react-router: "npm:6.30.6"
-  peerDependencies:
-    react: ">=16.8"
-    react-dom: ">=16.8"
-  checksum: 10c0/57dbb2ae4ac787f78c4d10b764c1c5223635378033e33dda4e0a4417144ae847fb43dc98008075951826258287c27c67729ca713c90957cf2ecf9055561bdc2e
-  languageName: node
-  linkType: hard
-
-"react-router-dom@npm:7.18.5":
+"react-router-dom-6@npm:react-router-dom@7.18.5, react-router-dom@npm:7.18.5":
   version: 7.18.5
   resolution: "react-router-dom@npm:7.18.5"
   dependencies:
@@ -13383,17 +13363,6 @@ __metadata:
     react: ">=18"
     react-dom: ">=18"
   checksum: 10c0/9e19ccb3fa061d86ad90eb906657cab6b2e4313b4eb02882f7515493c3d61c978a383ee0954854f2a9238ac013bdd03c526a5de14819c8ecaae62b5280774030
-  languageName: node
-  linkType: hard
-
-"react-router@npm:6.30.6":
-  version: 6.30.6
-  resolution: "react-router@npm:6.30.6"
-  dependencies:
-    "@remix-run/router": "npm:1.23.4"
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 10c0/d101388d92a44e159ef30dd2402a7f7b6aace8f837bb42aed1f8a6b3a4eff769d1822bf69382f0acb85a790628dac081c22bedb2bca12707e0e5e91427010fc3
   languageName: node
   linkType: hard
 
