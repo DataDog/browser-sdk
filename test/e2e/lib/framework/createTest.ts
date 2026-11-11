@@ -23,7 +23,8 @@ import {
 } from '../helpers/playwright'
 import { buildSalesforceUrl } from './buildSalesforceUrl'
 import type { SalesforceApp } from './buildSalesforceUrl'
-import { SHOPIFY_STORE_URL, unlockShopifyStorePassword } from './shopify'
+import type { ShopifyStore } from './shopify'
+import { SHOPIFY_V1_STORE, unlockShopifyStorePassword } from './shopify'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -126,7 +127,7 @@ class TestBuilder {
   } = {}
   private worker: Worker | undefined
   private salesforceApp: SalesforceApp | undefined = undefined
-  private shopifyApp = false
+  private shopifyStore: ShopifyStore | undefined
 
   constructor(
     private title: string,
@@ -308,11 +309,11 @@ class TestBuilder {
     return this
   }
 
-  withShopifyApp() {
-    this.shopifyApp = true
+  withShopifyApp(store: ShopifyStore = SHOPIFY_V1_STORE) {
+    this.shopifyStore = store
     this.setups = [{ factory: shopifySetup }]
     this.baseUrlHooks.push((baseUrl) => {
-      baseUrl.href = SHOPIFY_STORE_URL
+      baseUrl.href = store.url
     })
     return this
   }
@@ -348,7 +349,7 @@ class TestBuilder {
       mockClock: this.mockClock,
       allowWasmUnsafeEval: this.allowWasmUnsafeEval,
       salesforceApp: this.salesforceApp,
-      shopifyApp: this.shopifyApp,
+      shopifyStore: this.shopifyStore,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -575,7 +576,7 @@ function createTestContext(
 
 async function setUpTest(
   browserLogsManager: BrowserLogsManager,
-  { mockClock, shopifyApp }: SetupOptions,
+  { mockClock, shopifyStore }: SetupOptions,
   { baseUrl, page, browserContext }: TestContext
 ) {
   browserContext.on('console', (msg) => {
@@ -606,8 +607,8 @@ async function setUpTest(
   }
   await page.goto(baseUrl)
 
-  if (shopifyApp) {
-    await unlockShopifyStorePassword(page)
+  if (shopifyStore) {
+    await unlockShopifyStorePassword(page, shopifyStore)
   }
 
   await waitForServersIdle()

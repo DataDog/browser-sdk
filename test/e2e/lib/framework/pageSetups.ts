@@ -10,6 +10,7 @@ import { generateUUID } from '@datadog/js-core/util'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 import type { SalesforceApp } from './buildSalesforceUrl'
+import type { ShopifyStore } from './shopify'
 import { getSalesforceLwcSession } from './buildSalesforceUrl'
 
 export interface SetupOptions {
@@ -38,7 +39,7 @@ export interface SetupOptions {
   mockClock: boolean
   allowWasmUnsafeEval: boolean
   salesforceApp: SalesforceApp | undefined
-  shopifyApp: boolean
+  shopifyStore: ShopifyStore | undefined
 }
 
 export interface CallerLocation {
