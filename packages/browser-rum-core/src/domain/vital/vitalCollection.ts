@@ -1,6 +1,6 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
 import { toServerDuration, clocksNow } from '@datadog/js-core/time'
-import { sanitize } from '@datadog/browser-core'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, sanitize } from '@datadog/browser-core'
 import { generateUUID } from '@datadog/js-core/util'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -9,6 +9,7 @@ import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { startEventTracker } from '../eventTracker'
+import { trackOpenOperations } from './trackOpenOperations'
 
 /**
  * Vital options
@@ -38,6 +39,22 @@ export interface DurationVitalOptions extends VitalOptions {
 
 export interface OperationOptions extends VitalOptions {
   operationKey?: string
+}
+
+/**
+ * Options for starting an operation
+ */
+export interface StartOperationOptions extends OperationOptions {
+  /**
+   * [Experimental] Report the operation as failed with reason `abandoned` if the page is terminated
+   * (reloaded, closed, or left without being kept in the back/forward cache) before the operation
+   * ends. Requires the `abandon_operations_on_page_exit` experimental feature.
+   *
+   * Only use it for operations that start and end on the same page: an operation that ends on the
+   * next page, for example after a redirect, would be abandoned when the first page is terminated,
+   * and its real end would then be ignored.
+   */
+  abandonOnPageExit?: boolean
 }
 
 /** @deprecated Use {@link OperationOptions} instead. */
@@ -105,7 +122,29 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
     }
   }
 
+  const openOperations = isExperimentalFeatureEnabled(ExperimentalFeature.ABANDON_OPERATIONS_ON_PAGE_EXIT)
+    ? trackOpenOperations(lifeCycle, (name, operationKey) =>
+        emitOperationStepVital(name, 'end', { operationKey }, 'abandoned')
+      )
+    : undefined
+
   function addOperationStepVital(
+    name: string,
+    stepType: 'start' | 'end',
+    options?: StartOperationOptions & { handlingStack?: string },
+    failureReason?: FailureReason
+  ) {
+    if (stepType === 'start') {
+      if (options?.abandonOnPageExit) {
+        openOperations?.start(name, options.operationKey)
+      }
+    } else {
+      openOperations?.end(name, options?.operationKey)
+    }
+    emitOperationStepVital(name, stepType, options, failureReason)
+  }
+
+  function emitOperationStepVital(
     name: string,
     stepType: 'start' | 'end',
     options?: OperationOptions & { handlingStack?: string },
@@ -154,6 +193,7 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
     addDurationVital,
     startDurationVital,
     stopDurationVital,
+    stop: () => openOperations?.stop(),
   }
 }
 
