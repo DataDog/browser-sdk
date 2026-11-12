@@ -1,4 +1,4 @@
-import { setNavigatorOnLine, setNavigatorConnection } from '../../../test'
+import { setNavigatorOnLine, setNavigatorConnection, registerCleanupTask } from '../../../test'
 import { getConnectivity } from './connectivity'
 
 describe('connectivity', () => {
@@ -28,6 +28,19 @@ describe('connectivity', () => {
     it('should return navigator.connection.type value', () => {
       setNavigatorConnection({ type: 'bluetooth' })
       expect(getConnectivity().interfaces).toEqual(['bluetooth'])
+    })
+
+    it('should not throw if navigator.connection becomes null between two reads', () => {
+      const connections = [{ type: 'wifi', effectiveType: '4g' }, null]
+      Object.defineProperty(navigator, 'connection', {
+        get: () => connections.shift() ?? null,
+        configurable: true,
+      })
+      registerCleanupTask(() => {
+        delete (navigator as any).connection
+      })
+
+      expect(getConnectivity()).toEqual({ status: jasmine.any(String), interfaces: ['wifi'], effective_type: '4g' })
     })
   })
 
