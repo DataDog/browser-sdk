@@ -17,3 +17,22 @@ function randomHexDigit(placeholder: string): string {
   // eslint-disable-next-line no-bitwise
   return (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
 }
+
+/**
+ * Executes a RegExp against a string, resetting its lastIndex to prevent stateful matching.
+ *
+ * @param candidate - The string to match.
+ * @param extractor - The pattern used to extract a value.
+ * @returns The first capture group if nonempty, otherwise the full match, or `undefined` if there is no match.
+ */
+export function extractRegexMatch(candidate: string, extractor: RegExp): string | undefined {
+  // Prevent stateful matching when the RegExp has the global or sticky flag
+  extractor.lastIndex = 0
+
+  const regexResult = extractor.exec(candidate)
+  if (!regexResult) {
+    return undefined
+  }
+  const [match, capture] = regexResult
+  return capture ? capture : match
+}

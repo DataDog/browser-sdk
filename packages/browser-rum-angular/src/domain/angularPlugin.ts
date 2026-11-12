@@ -1,16 +1,29 @@
 import { VERSION } from '@angular/core'
-import { toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import { callMonitored } from '@datadog/js-core/monitor'
+import { BufferedObservable } from '@datadog/js-core/util'
+import type { Subscription } from '@datadog/js-core/util'
+import { display, toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
+import type { RumPlugin, StartRumResult, ViewOptions } from '@datadog/browser-rum-core'
 
-type InitSubscriber = (configuration: AngularPluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addError: StartRumResult['addError']) => void
+type ErrorPayload = Parameters<NonNullable<StartRumResult['addError']>>[0]
 
-let globalPublicApi: RumPublicApi | undefined
-let globalConfiguration: AngularPluginConfiguration | undefined
-let globalAddError: StartRumResult['addError'] | undefined
+// RUM may start late, or never (e.g. during server-side rendering). Until then, buffer plain data
+// rather than callbacks, which would retain the scope they were created in (router, app...), and
+// cap the buffers like the core SDK pre-start buffer.
+const BUFFER_LIMIT = 500
 
-const onRumInitSubscribers: InitSubscriber[] = []
-const onRumStartSubscribers: StartSubscriber[] = []
+let views: BufferedObservable<ViewOptions> | undefined
+let errors: BufferedObservable<ErrorPayload> | undefined
+// onInit may run several times (e.g. init retried after an invalid configuration): keep a single view subscriber
+let viewSubscription: Subscription | undefined
+
+function getViews() {
+  return (views ??= new BufferedObservable(BUFFER_LIMIT))
+}
+
+function getErrors() {
+  return (errors ??= new BufferedObservable(BUFFER_LIMIT))
+}
 
 /**
  * Angular plugin configuration.
@@ -47,21 +60,23 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
   return {
     name: 'angular',
     onInit({ publicApi, initConfiguration }) {
-      globalPublicApi = publicApi
-      globalConfiguration = configuration
-      for (const subscriber of onRumInitSubscribers) {
-        subscriber(globalConfiguration, globalPublicApi)
-      }
+      viewSubscription?.unsubscribe()
+      viewSubscription = getViews().subscribe((view) => {
+        if (!configuration.router) {
+          display.warn('`router: true` is missing from the angular plugin configuration, the view will not be tracked.')
+          return
+        }
+        publicApi.startView(view)
+      })
+      getViews().unbuffer()
       if (configuration.router) {
         initConfiguration.trackViewsManually = true
       }
     },
     onRumStart({ addError }) {
-      globalAddError = addError
       if (addError) {
-        for (const subscriber of onRumStartSubscribers) {
-          subscriber(addError)
-        }
+        getErrors().subscribe((error) => callMonitored(() => addError(error)))
+        getErrors().unbuffer()
       }
     },
     getConfigurationTelemetry() {
@@ -74,26 +89,17 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
   } satisfies RumPlugin
 }
 
-export function onRumInit(callback: InitSubscriber) {
-  if (globalConfiguration && globalPublicApi) {
-    callback(globalConfiguration, globalPublicApi)
-  } else {
-    onRumInitSubscribers.push(callback)
-  }
+export function startAngularViewWhenReady(view: ViewOptions) {
+  getViews().notify(view)
 }
 
-export function onRumStart(callback: StartSubscriber) {
-  if (globalAddError) {
-    callback(globalAddError)
-  } else {
-    onRumStartSubscribers.push(callback)
-  }
+export function addAngularErrorWhenReady(error: ErrorPayload) {
+  getErrors().notify(error)
 }
 
 export function resetAngularPlugin() {
-  globalPublicApi = undefined
-  globalConfiguration = undefined
-  globalAddError = undefined
-  onRumInitSubscribers.length = 0
-  onRumStartSubscribers.length = 0
+  viewSubscription?.unsubscribe()
+  viewSubscription = undefined
+  views = undefined
+  errors = undefined
 }

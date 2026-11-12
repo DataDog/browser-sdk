@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum",
-  "version": "7.16.2",
+  "version": "7.17.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@datadog/browser-worker": "workspace:*",
-    "pako": "3.0.2"
+    "pako": "3.0.3"
   },
   "volta": {
     "extends": "../../package.json"

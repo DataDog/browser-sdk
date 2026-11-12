@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/js-core/time'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
@@ -7,18 +7,57 @@ import { trackRouteChangeViewMetrics } from './trackRouteChangeViewMetrics'
 
 describe('trackRouteChangeViewMetrics', () => {
   let scheduleViewUpdate: jasmine.Spy<() => void>
+  let setNavigationId: jasmine.Spy<(navigationId: number) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let activeObserverCount: (entryType: RumPerformanceEntryType) => number
 
   function startTracking() {
     ;({ notifyPerformanceEntries, activeObserverCount } = mockPerformanceObserver())
-    const tracker = trackRouteChangeViewMetrics(mockRumConfiguration(), scheduleViewUpdate)
+    const tracker = trackRouteChangeViewMetrics(mockRumConfiguration(), scheduleViewUpdate, setNavigationId)
     registerCleanupTask(() => tracker.stop())
     return tracker
   }
 
   beforeEach(() => {
     scheduleViewUpdate = jasmine.createSpy()
+    setNavigationId = jasmine.createSpy()
+  })
+
+  it('should report FCP from the soft-navigation entry presentation time', () => {
+    const { initialViewMetrics } = startTracking()
+
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, {
+        startTime: 1000 as RelativeTime,
+        paintTime: 1100 as RelativeTime,
+        presentationTime: 1120 as RelativeTime,
+      }),
+    ])
+
+    expect(initialViewMetrics.firstContentfulPaint).toBe(120 as Duration)
+    expect(scheduleViewUpdate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should fall back to the paint time for FCP when the presentation time is not available', () => {
+    const { initialViewMetrics } = startTracking()
+
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, {
+        startTime: 1000 as RelativeTime,
+        paintTime: 1100 as RelativeTime,
+        presentationTime: null,
+      }),
+    ])
+
+    expect(initialViewMetrics.firstContentfulPaint).toBe(100 as Duration)
+  })
+
+  it('should notify the navigationId of the soft-navigation entry', () => {
+    startTracking()
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, { navigationId: 4220 })])
+
+    expect(setNavigationId).toHaveBeenCalledOnceWith(4220)
   })
 
   it('should report LCP from the soft-navigation entry seeded ICP', () => {
@@ -49,7 +88,7 @@ describe('trackRouteChangeViewMetrics', () => {
         renderDelay: 250 as RelativeTime,
       },
     })
-    expect(scheduleViewUpdate).toHaveBeenCalledTimes(1)
+    expect(scheduleViewUpdate).toHaveBeenCalled()
   })
 
   it('should pick up an ICP entry that arrived before the soft-navigation entry', () => {
@@ -75,7 +114,7 @@ describe('trackRouteChangeViewMetrics', () => {
     ])
 
     expect(initialViewMetrics.largestContentfulPaint?.value).toBe(250 as RelativeTime)
-    expect(scheduleViewUpdate).toHaveBeenCalledTimes(1)
+    expect(scheduleViewUpdate).toHaveBeenCalled()
   })
 
   it('should update LCP when a bigger ICP entry arrives for the same interaction', () => {
@@ -88,6 +127,7 @@ describe('trackRouteChangeViewMetrics', () => {
         getLargestInteractionContentfulPaint: () => null,
       }),
     ])
+    scheduleViewUpdate.calls.reset()
 
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
@@ -123,6 +163,7 @@ describe('trackRouteChangeViewMetrics', () => {
         getLargestInteractionContentfulPaint: () => null,
       }),
     ])
+    scheduleViewUpdate.calls.reset()
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
         interactionId: 7,
@@ -156,6 +197,7 @@ describe('trackRouteChangeViewMetrics', () => {
         getLargestInteractionContentfulPaint: () => null,
       }),
     ])
+    scheduleViewUpdate.calls.reset()
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
         interactionId: 99,

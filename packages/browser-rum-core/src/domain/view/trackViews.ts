@@ -253,6 +253,11 @@ function newView(
     leading: false,
   })
 
+  const isSoftNavigationTracked =
+    loadingType === ViewLoadingType.ROUTE_CHANGE &&
+    isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
+    supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
+
   const {
     setLoadEvent,
     setViewEnd,
@@ -260,6 +265,7 @@ function newView(
     stopINPTracking,
     getCommonViewMetrics,
     setLoadingTime,
+    setNavigationId,
   } = trackCommonViewMetrics(
     lifeCycle,
     domMutationObservable,
@@ -267,7 +273,8 @@ function newView(
     configuration,
     scheduleViewUpdate,
     loadingType,
-    startClocks
+    startClocks,
+    isSoftNavigationTracked
   )
 
   let viewMetricsTracking =
@@ -275,12 +282,8 @@ function newView(
       ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
 
-  if (
-    loadingType === ViewLoadingType.ROUTE_CHANGE &&
-    isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
-    supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
-  ) {
-    viewMetricsTracking = trackRouteChangeViewMetrics(configuration, scheduleViewUpdate)
+  if (isSoftNavigationTracked) {
+    viewMetricsTracking = trackRouteChangeViewMetrics(configuration, scheduleViewUpdate, setNavigationId)
   }
 
   const {

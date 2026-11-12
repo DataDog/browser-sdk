@@ -34,7 +34,7 @@ const FILES = [
   // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
   // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
   // `afterEach` hooks.
-  'packages/browser-core/test/forEach.spec.ts',
+  'packages/browser-core/test/forEach.ts',
   'packages/browser-rum/test/record/toto.css',
   // Served but not injected into the runner page, so its rules don't leak into other specs.
   { pattern: 'packages/browser-rum/test/record/relativeStylesheet.css', included: false, watched: false },

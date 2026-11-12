@@ -1,11 +1,10 @@
 import type { createContextManager } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import { display, mapValues, getCookie, addTelemetryMetrics, TelemetryMetrics } from '@datadog/browser-core'
-import { isIndexableObject } from '@datadog/js-core/util'
+import { isIndexableObject, extractRegexMatch } from '@datadog/js-core/util'
 import { fetch } from '@datadog/js-core/dom'
 import { monitorError } from '@datadog/js-core/monitor'
 import { buildEndpointUrl } from '@datadog/js-core/transport'
-import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
@@ -313,18 +312,21 @@ export async function fetchRemoteConfiguration(
   configuration: RumInitConfiguration
 ): Promise<FetchRemoteConfigurationResult> {
   let response: Response | undefined
+  let remoteConfiguration: RemoteConfiguration | undefined
   try {
     response = await fetch(buildEndpoint(configuration))
+    if (response.ok) {
+      remoteConfiguration = await response.json()
+    }
   } catch {
-    response = undefined
+    // Network error, or the body download was interrupted (e.g. connection dropped, page unloading)
   }
-  if (!response?.ok) {
+  if (!response || !remoteConfiguration) {
     return {
       ok: false,
       error: new Error('Error fetching the remote configuration.'),
     }
   }
-  const remoteConfiguration: RemoteConfiguration = await response.json()
   if (remoteConfiguration.rum || remoteConfiguration.profiling) {
     return {
       ok: true,
