@@ -13,6 +13,7 @@ import {
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,
+  serializeInitContext,
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
@@ -199,7 +200,10 @@ export function createPreStartStrategy(
         startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
           application: { id: configuration.applicationId },
         })
-        addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata))
+        addTelemetryConfiguration({
+          ...serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata),
+          init_context: serializeInitContext(initContext),
+        })
 
         tryStartRum()
       }

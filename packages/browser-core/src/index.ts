@@ -4,6 +4,7 @@ export {
   DefaultPrivacyLevel,
   TraceContextInjection,
   serializeConfiguration,
+  serializeInitContext,
   isAllowedTrackingOrigins,
 } from './domain/configuration'
 export type { TrackingConsentState } from './domain/trackingConsent'

@@ -106,3 +106,24 @@ export type MapInitConfigurationKey<Key extends string> =
 export type ExtractTelemetryConfiguration<Keys extends keyof RemoveIndex<RawTelemetryConfiguration>> = {
   [Key in Keys]: RawTelemetryConfiguration[Key]
 }
+
+type RawTelemetryInitContext = NonNullable<RawTelemetryConfiguration['init_context']>
+
+/**
+ * Maps the keys of InitContext to their serialized version.
+ */
+export type MapInitContextKey<Key extends string> = `has_${CamelToSnakeCase<Key>}`
+
+/**
+ * Same as ExtractTelemetryConfiguration, for the serialized init context.
+ *
+ * @example
+ * type SerializedInitContext = ExtractTelemetryInitContext<'has_user'>
+ * // equivalent to:
+ * // type SerializedInitContext = {
+ * //   has_user: boolean | undefined;
+ * // }
+ */
+export type ExtractTelemetryInitContext<Keys extends keyof RemoveIndex<RawTelemetryInitContext>> = {
+  [Key in Keys]: RawTelemetryInitContext[Key]
+}
