@@ -1,0 +1,62 @@
+name: Publish npm packages
+
+# Dispatched by the GitLab deploy pipeline (step-6_publish-npm) on a release tag. Packages are
+# published with npm trusted publishing (OIDC), so no npm token is stored.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. v6.0.0). Must match the tag the workflow runs on.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-npm
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # The environment deployment rules restrict this job to `v*` tags.
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check ref
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/tags/$VERSION" ]; then
+            echo "Workflow must run on tag $VERSION (got $GITHUB_REF)"
+            exit 1
+          fi
+
+      - name: Check out code at tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          PACKAGE_VERSION="v$(node -p 'require("./package.json").version')"
+          if [ "$PACKAGE_VERSION" != "$VERSION" ]; then
+            echo "Version mismatch: package.json has $PACKAGE_VERSION, expected $VERSION"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Publish
+        run: node ./scripts/deploy/publish-npm.ts

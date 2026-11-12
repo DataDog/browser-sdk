@@ -25,6 +25,7 @@ describe('publish-npm', () => {
   })
 
   beforeEach(() => {
+    delete process.env.GITHUB_ACTIONS
     publishError = new Error('publish failed')
     getNpmTokenMock.mock.mockImplementation(() => 'fake-token')
 
@@ -79,6 +80,23 @@ describe('publish-npm', () => {
         return true
       }
     )
+  })
+
+  it('should publish with OIDC and provenance on GitHub Actions without fetching the npm token', () => {
+    process.env.GITHUB_ACTIONS = 'true'
+    getNpmTokenMock.mock.resetCalls()
+
+    assert.throws(
+      () => main([]),
+      (error: Error) => {
+        assert.doesNotMatch(error.message, /renew-token/)
+        return true
+      }
+    )
+    assert.equal(getNpmTokenMock.mock.callCount(), 0)
+    const publishCall = commandMock.mock.calls.findLast((call) => isNpmPublishCommand(...call.arguments))
+    assert.ok(publishCall?.arguments.flat(2).includes('--provenance'))
+    delete process.env.GITHUB_ACTIONS
   })
 })
 

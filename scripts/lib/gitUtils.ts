@@ -121,7 +121,7 @@ export function initGitConfig(repository: string): void {
 }
 export const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 
-async function callGitHubApi<T>(method: string, path: string, token: OctoStsToken, body?: any): Promise<T> {
+export async function callGitHubApi<T>(method: string, path: string, token: OctoStsToken, body?: any): Promise<T> {
   try {
     const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
       method,
