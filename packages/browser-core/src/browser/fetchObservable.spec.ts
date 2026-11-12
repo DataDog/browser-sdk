@@ -1,9 +1,11 @@
 import type { Subscription } from '@datadog/js-core/util'
 import { noop } from '@datadog/js-core/util'
-import type { MockFetch, MockFetchManager } from '../../test'
-import { registerCleanupTask, mockFetch } from '../../test'
+import type { MockFetch, MockFetchManager, MockXhr } from '../../test'
+import { registerCleanupTask, mockFetch, mockXhr } from '../../test'
 import type { FetchResolveContext, FetchContext, FetchStartContext } from './fetchObservable'
 import { initFetchObservable, resetFetchObservable, ResponseBodyAction } from './fetchObservable'
+import type { XhrContext } from './xhrObservable'
+import { initXhrObservable } from './xhrObservable'
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -264,6 +266,79 @@ describe('fetch proxy', () => {
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(window.fetch).toBe(originalMockFetch)
     })
+  })
+})
+
+describe('fetch polyfill', () => {
+  beforeEach(() => {
+    mockFetch()
+  })
+
+  it('should observe an XHR-backed polyfill only through XHR', async () => {
+    mockXhr()
+    window.fetch = Object.assign(
+      (input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((resolve) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open(init?.method || 'GET', input as string)
+          xhr.addEventListener('load', () => resolve(new Response(xhr.responseText, { status: xhr.status })))
+          xhr.send()
+          ;(xhr as unknown as MockXhr).complete(200, 'ok')
+        }),
+      { polyfill: true }
+    )
+    const requests: Array<FetchContext | XhrContext> = []
+    const fetchSubscription = initFetchObservable().subscribe((context) => requests.push(context))
+    const xhrSubscription = initXhrObservable().subscribe((context) => requests.push(context))
+    registerCleanupTask(() => {
+      fetchSubscription.unsubscribe()
+      xhrSubscription.unsubscribe()
+    })
+
+    const response = await window.fetch('/polyfilled-request', { method: 'POST' })
+
+    expect(await response.text()).toBe('ok')
+    expect(requests).toEqual([
+      jasmine.objectContaining({ state: 'start', method: 'POST', url: `${location.origin}/polyfilled-request` }),
+      jasmine.objectContaining({ state: 'complete', status: 200, responseBody: 'ok' }),
+    ])
+  })
+
+  ;[undefined, false, 'true'].forEach((polyfill) => {
+    it(`should observe fetch when its polyfill marker is ${String(polyfill)}`, async () => {
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      Object.assign(window.fetch, { polyfill })
+      const onFetch = jasmine.createSpy()
+      const subscription = initFetchObservable().subscribe(onFetch)
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      const responsePromise = (window.fetch as MockFetch)('/request')
+      responsePromise.resolveWith({ status: 200 })
+      await responsePromise
+
+      expect(onFetch).toHaveBeenCalledWith(jasmine.objectContaining({ state: 'start' }))
+      expect(onFetch).toHaveBeenCalledWith(jasmine.objectContaining({ state: 'resolve', status: 200 }))
+    })
+  })
+
+  it('should observe a marked polyfill when XHR is unavailable', async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    Object.assign(window.fetch, { polyfill: true })
+    const originalXhr = window.XMLHttpRequest
+    delete (window as any).XMLHttpRequest
+    registerCleanupTask(() => {
+      window.XMLHttpRequest = originalXhr
+    })
+    const onFetch = jasmine.createSpy()
+    const subscription = initFetchObservable().subscribe(onFetch)
+    registerCleanupTask(() => subscription.unsubscribe())
+
+    const responsePromise = (window.fetch as MockFetch)('/request')
+    responsePromise.resolveWith({ status: 200 })
+    await responsePromise
+
+    expect(onFetch).toHaveBeenCalledWith(jasmine.objectContaining({ state: 'start' }))
+    expect(onFetch).toHaveBeenCalledWith(jasmine.objectContaining({ state: 'resolve', status: 200 }))
   })
 })
 
