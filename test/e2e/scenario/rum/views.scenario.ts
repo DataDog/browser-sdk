@@ -15,6 +15,42 @@ test.describe('rum views', () => {
       expect(viewEvent.view.load_event).toBeGreaterThan(0)
     })
 
+  createTest('collects only manual view metrics when trackViewMetricsManually is enabled')
+    .withRum({ trackViewMetricsManually: true })
+    .withRumSlim()
+    .withBody(html`<button onclick="DD_RUM.setViewLoadingTime()">Set loading time</button>`)
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startView('manual loading time')
+      })
+      await page.getByRole('button', { name: 'Set loading time' }).click()
+
+      await flushEvents()
+
+      const viewEvents = intakeRegistry.rumViewEvents
+      expect(viewEvents).toHaveLength(2)
+      expect(viewEvents[0].view.loading_time).toBeUndefined()
+      expect(viewEvents[1].view.loading_time).toBeGreaterThan(0)
+      for (const viewEvent of viewEvents) {
+        expect(viewEvent.view.time_spent).toBeGreaterThan(0)
+        for (const metric of [
+          'first_byte',
+          'dom_complete',
+          'dom_content_loaded',
+          'dom_interactive',
+          'load_event',
+          'first_contentful_paint',
+          'largest_contentful_paint',
+          'cumulative_layout_shift',
+          'interaction_to_next_paint',
+        ]) {
+          expect(viewEvent.view).not.toHaveProperty(metric)
+        }
+        expect(viewEvent.view.performance).toEqual({})
+        expect(viewEvent.display?.scroll).toBeUndefined()
+      }
+    })
+
   test.describe('loading time', () => {
     // Simple spinner to test dom mutations.
     const SPINNER = html`
