@@ -30,6 +30,13 @@ export function getGithubReleaseToken() {
   return new OctoStsToken('release')
 }
 
+/**
+ * This token is scoped to tags only.
+ */
+export function getGithubPublishToken() {
+  return new OctoStsToken('publish')
+}
+
 export function getGithubReadToken() {
   return new OctoStsToken('read')
 }
@@ -52,10 +59,6 @@ export function getOrg2AppKey(): string {
 export function getTelemetryOrgApiKey(site: string): string | undefined {
   const normalizedSite = site.replaceAll('.', '-')
   return getOptionalSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
-}
-
-export function getNpmToken(): string {
-  return getSecretKey('ci.browser-sdk.npm_token')
 }
 
 export function getChromeWebStoreClientId(): string {
