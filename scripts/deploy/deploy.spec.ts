@@ -5,7 +5,7 @@ import type { CommandDetail } from './lib/testHelpers.ts'
 import {
   mockModule,
   mockCommandImplementation,
-  replaceChunkHashes,
+  normalizeCommands,
   FAKE_AWS_ENV_CREDENTIALS,
   FAKE_CHUNK_HASH,
 } from './lib/testHelpers.ts'
@@ -23,13 +23,11 @@ describe('deploy', () => {
   let commands: CommandDetail[]
 
   function getS3Commands(): CommandDetail[] {
-    return commands.filter(({ command }) => command.includes('aws s3 cp')).map(replaceChunkHashes)
+    return normalizeCommands(commands.filter(({ command }) => command.includes('aws s3 cp')))
   }
 
   function getCloudfrontCommands(): CommandDetail[] {
-    return commands
-      .filter(({ command }) => command.includes('aws cloudfront create-invalidation'))
-      .map(replaceChunkHashes)
+    return normalizeCommands(commands.filter(({ command }) => command.includes('aws cloudfront create-invalidation')))
   }
 
   before(async () => {
@@ -50,9 +48,33 @@ describe('deploy', () => {
 
     assert.deepEqual(getS3Commands(), [
       {
+        command:
+          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-prod/datadog-debugger-v6.js',
+        env,
+      },
+      {
         // Logs bundle
         command:
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/datadog-logs-v6.js',
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-prod/datadog-rum-shopify-v6.js',
+        env,
+      },
+      // RUM slim bundle
+      {
+        command:
+          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-v6.js',
         env,
       },
       {
@@ -84,35 +106,11 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum/bundle/datadog-rum.js s3://browser-agent-artifacts-prod/datadog-rum-v6.js',
         env,
       },
-      // RUM slim bundle
-      {
-        command:
-          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-v6.js',
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-prod/datadog-debugger-v6.js',
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-prod/datadog-rum-shopify-v6.js',
-        env,
-      },
     ])
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v6.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-salesforce-v6.js,/datadog-rum-v6.js,/datadog-rum-slim-v6.js,/datadog-debugger-v6.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/datadog-rum-shopify-v6.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-debugger-v6.js,/datadog-logs-v6.js,/datadog-rum-salesforce-v6.js,/datadog-rum-shopify-v6.js,/datadog-rum-slim-v6.js,/datadog-rum-v6.js`,
         env,
       },
     ])
@@ -124,7 +122,30 @@ describe('deploy', () => {
     assert.deepEqual(getS3Commands(), [
       {
         command:
+          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-prod/us1/v6/datadog-debugger.js',
+        env,
+      },
+      {
+        command:
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/us1/v6/datadog-logs.js',
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-prod/us1/v6/datadog-rum-shopify.js',
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/us1/v6/datadog-rum-slim.js',
         env,
       },
       // RUM Profiler Chunk
@@ -154,33 +175,10 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum/bundle/datadog-rum.js s3://browser-agent-artifacts-prod/us1/v6/datadog-rum.js',
         env,
       },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/us1/v6/datadog-rum-slim.js',
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-prod/us1/v6/datadog-debugger.js',
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-prod/us1/v6/datadog-rum-shopify.js',
-        env,
-      },
     ])
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /us1/v6/datadog-logs.js,/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/datadog-rum-salesforce.js,/us1/v6/datadog-rum.js,/us1/v6/datadog-rum-slim.js,/us1/v6/datadog-debugger.js,/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/us1/v6/datadog-rum-shopify.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/datadog-debugger.js,/us1/v6/datadog-logs.js,/us1/v6/datadog-rum-salesforce.js,/us1/v6/datadog-rum-shopify.js,/us1/v6/datadog-rum-slim.js,/us1/v6/datadog-rum.js`,
         env,
       },
     ])
@@ -192,7 +190,30 @@ describe('deploy', () => {
     assert.deepEqual(getS3Commands(), [
       {
         command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-staging/datadog-debugger-staging.js',
+        env,
+      },
+      {
+        command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-staging/datadog-logs-staging.js',
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-staging/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-staging/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-staging/datadog-rum-shopify-staging.js',
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-staging/datadog-rum-slim-staging.js',
         env,
       },
       // RUM Profiler Chunk
@@ -222,34 +243,11 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/datadog-rum.js s3://browser-agent-artifacts-staging/datadog-rum-staging.js',
         env,
       },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-staging/datadog-rum-slim-staging.js',
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-staging/datadog-debugger-staging.js',
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-staging/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-staging/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-staging/datadog-rum-shopify-staging.js',
-        env,
-      },
     ])
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /datadog-logs-staging.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-salesforce-staging.js,/datadog-rum-staging.js,/datadog-rum-slim-staging.js,/datadog-debugger-staging.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/datadog-rum-shopify-staging.js`,
+        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-debugger-staging.js,/datadog-logs-staging.js,/datadog-rum-salesforce-staging.js,/datadog-rum-shopify-staging.js,/datadog-rum-slim-staging.js,/datadog-rum-staging.js`,
         env,
       },
     ])
@@ -261,7 +259,30 @@ describe('deploy', () => {
     assert.deepEqual(getS3Commands(), [
       {
         command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-prod/datadog-debugger-canary.js',
+        env,
+      },
+      {
+        command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/datadog-logs-canary.js',
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-prod/datadog-rum-shopify-canary.js',
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-canary.js',
         env,
       },
       {
@@ -290,14 +311,28 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/datadog-rum.js s3://browser-agent-artifacts-prod/datadog-rum-canary.js',
         env,
       },
+    ])
+
+    assert.deepEqual(getCloudfrontCommands(), [
+      {
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-debugger-canary.js,/datadog-logs-canary.js,/datadog-rum-canary.js,/datadog-rum-salesforce-canary.js,/datadog-rum-shopify-canary.js,/datadog-rum-slim-canary.js`,
+        env,
+      },
+    ])
+  })
+
+  it('should deploy next major canary packages', async () => {
+    await deploy('prod', 'v7-canary', ['root'])
+
+    assert.deepEqual(getS3Commands(), [
       {
         command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-canary.js',
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-prod/datadog-debugger-v7-canary.js',
         env,
       },
       {
         command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-prod/datadog-debugger-canary.js',
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/datadog-logs-v7-canary.js',
         env,
       },
       {
@@ -310,26 +345,12 @@ describe('deploy', () => {
       },
       {
         command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-prod/datadog-rum-shopify-canary.js',
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-prod/datadog-rum-shopify-v7-canary.js',
         env,
       },
-    ])
-
-    assert.deepEqual(getCloudfrontCommands(), [
-      {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-canary.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-salesforce-canary.js,/datadog-rum-canary.js,/datadog-rum-slim-canary.js,/datadog-debugger-canary.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/datadog-rum-shopify-canary.js`,
-        env,
-      },
-    ])
-  })
-
-  it('should deploy next major canary packages', async () => {
-    await deploy('prod', 'v7-canary', ['root'])
-
-    assert.deepEqual(getS3Commands(), [
       {
         command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/datadog-logs-v7-canary.js',
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-v7-canary.js',
         env,
       },
       {
@@ -358,34 +379,11 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/datadog-rum.js s3://browser-agent-artifacts-prod/datadog-rum-v7-canary.js',
         env,
       },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-v7-canary.js',
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-prod/datadog-debugger-v7-canary.js',
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-prod/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-prod/datadog-rum-shopify-v7-canary.js',
-        env,
-      },
     ])
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v7-canary.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-salesforce-v7-canary.js,/datadog-rum-v7-canary.js,/datadog-rum-slim-v7-canary.js,/datadog-debugger-v7-canary.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/datadog-rum-shopify-v7-canary.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-debugger-v7-canary.js,/datadog-logs-v7-canary.js,/datadog-rum-salesforce-v7-canary.js,/datadog-rum-shopify-v7-canary.js,/datadog-rum-slim-v7-canary.js,/datadog-rum-v7-canary.js`,
         env,
       },
     ])
@@ -400,7 +398,30 @@ describe('deploy', () => {
     assert.deepEqual(getS3Commands(), [
       {
         command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-debugger.js',
+        env,
+      },
+      {
+        command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-logs.js',
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-staging/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-staging/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-rum-shopify.js',
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-rum-slim.js',
         env,
       },
       // RUM Profiler Chunk
@@ -430,34 +451,11 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/datadog-rum.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-rum.js',
         env,
       },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-rum-slim.js',
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-debugger/bundle/datadog-debugger.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-debugger.js',
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-staging/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js s3://browser-agent-artifacts-staging/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js`,
-        env,
-      },
-      {
-        command:
-          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum-shopify/bundle/datadog-rum-shopify.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-rum-shopify.js',
-        env,
-      },
     ])
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /pull-request/123/datadog-logs.js,/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/datadog-rum-salesforce.js,/pull-request/123/datadog-rum.js,/pull-request/123/datadog-rum-slim.js,/pull-request/123/datadog-debugger.js,/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/pull-request/123/datadog-rum-shopify.js`,
+        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-salesforce.js,/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum-shopify.js,/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/datadog-debugger.js,/pull-request/123/datadog-logs.js,/pull-request/123/datadog-rum-salesforce.js,/pull-request/123/datadog-rum-shopify.js,/pull-request/123/datadog-rum-slim.js,/pull-request/123/datadog-rum.js`,
         env,
       },
     ])

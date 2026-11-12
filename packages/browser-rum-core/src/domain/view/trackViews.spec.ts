@@ -938,7 +938,7 @@ describe('view custom timings', () => {
   })
 })
 
-describe('view metrics when trackAutomaticViewMetrics is false', () => {
+describe('view metrics when trackViewMetricsManually is true', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
   let viewTest: ViewTest
@@ -947,7 +947,7 @@ describe('view metrics when trackAutomaticViewMetrics is false', () => {
   beforeEach(() => {
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackAutomaticViewMetrics: false } })
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackViewMetricsManually: true } })
 
     registerCleanupTask(() => {
       viewTest.stop()
@@ -969,8 +969,23 @@ describe('view metrics when trackAutomaticViewMetrics is false', () => {
     expect(lastUpdate.initialViewMetrics).toEqual({})
     expect(lastUpdate.commonViewMetrics).toEqual({
       loadingTime: clock.relative(500),
-      interactionToNextPaint: undefined,
     })
+  })
+
+  it('does not collect paint metrics when restoring from the BFCache', () => {
+    const { getViewUpdate, getViewUpdateCount } = viewTest
+    spyOn(window, 'requestAnimationFrame').and.callFake((callback: FrameRequestCallback) => {
+      callback(performance.now())
+      return 0
+    })
+
+    window.dispatchEvent(createNewEvent('pageshow', { persisted: true }))
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.BF_CACHE)
+    expect(lastUpdate.initialViewMetrics).toEqual({})
+    expect(lastUpdate.commonViewMetrics).toEqual({})
   })
 })
 

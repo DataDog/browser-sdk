@@ -16,7 +16,7 @@ describe('shopifyAppPixelPlugin', () => {
         trackUserInteractions: false,
         trackResources: false,
         trackLongTasks: false,
-        trackAutomaticViewMetrics: false,
+        trackViewMetricsManually: true,
         sessionReplaySampleRate: 0,
         profilingSampleRate: 0,
         sessionPersistence: 'memory',

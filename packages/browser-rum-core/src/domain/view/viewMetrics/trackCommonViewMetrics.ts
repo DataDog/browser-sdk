@@ -1,7 +1,6 @@
-import type { ClocksState, RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
-import { elapsed, timeStampNow } from '@datadog/js-core/time'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -31,11 +30,7 @@ export function trackCommonViewMetrics(
   isSoftNavigationTracked: boolean
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
-  let hasManualLoadingTime = false
-  let viewEnded = false
-  let scrollMetricsTracking: ReturnType<typeof trackScrollMetrics> | undefined
-  let clsTracking: ReturnType<typeof trackCumulativeLayoutShift> | undefined
-  let inpTracking: ReturnType<typeof trackInteractionToNextPaint> | undefined
+  let isLoadingTimeCanceled = false
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -45,61 +40,51 @@ export function trackCommonViewMetrics(
     loadingType,
     viewStart,
     (newLoadingTime) => {
-      if (!hasManualLoadingTime) {
+      if (!isLoadingTimeCanceled) {
         commonViewMetrics.loadingTime = newLoadingTime
         scheduleViewUpdate()
       }
     }
   )
-
-  // Automatic view metrics can be disabled (e.g. in a Web Worker), manual loading time is always kept
-  if (configuration.trackAutomaticViewMetrics) {
-    scrollMetricsTracking = trackScrollMetrics(viewStart, (newScrollMetrics) => {
-      commonViewMetrics.scroll = newScrollMetrics
-    })
-    clsTracking = trackCumulativeLayoutShift(
-      configuration,
-      viewStart.relative,
-      (cumulativeLayoutShift) => {
-        commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
-        scheduleViewUpdate()
-      },
-      isSoftNavigationTracked
-    )
-    inpTracking = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
-  }
+  const { stop: stopScrollMetricsTracking } = trackScrollMetrics(viewStart, (newScrollMetrics) => {
+    commonViewMetrics.scroll = newScrollMetrics
+  })
+  const { stop: stopCLSTracking, setNavigationId: setCLSNavigationId } = trackCumulativeLayoutShift(
+    configuration,
+    viewStart.relative,
+    (cumulativeLayoutShift) => {
+      commonViewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
+      scheduleViewUpdate()
+    },
+    isSoftNavigationTracked
+  )
+  const {
+    stop: stopINPTracking,
+    getInteractionToNextPaint,
+    setViewEnd,
+    setNavigationId: setINPNavigationId,
+  } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
 
   return {
     stop: () => {
       stopLoadingTimeTracking()
-      clsTracking?.stop()
-      scrollMetricsTracking?.stop()
+      stopCLSTracking()
+      stopScrollMetricsTracking()
     },
-    stopINPTracking: () => inpTracking?.stop(),
+    cancelLoadingTimeTracking: () => {
+      isLoadingTimeCanceled = true
+      stopLoadingTimeTracking()
+    },
+    stopINPTracking,
     setLoadEvent,
-    setViewEnd: (viewEndTime: RelativeTime) => {
-      viewEnded = true
-      inpTracking?.setViewEnd(viewEndTime)
-    },
+    setViewEnd,
     setNavigationId: (navigationId: number) => {
-      clsTracking?.setNavigationId(navigationId)
-      inpTracking?.setNavigationId(navigationId)
+      setCLSNavigationId(navigationId)
+      setINPNavigationId(navigationId)
     },
     getCommonViewMetrics: () => {
-      commonViewMetrics.interactionToNextPaint = inpTracking?.getInteractionToNextPaint()
+      commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics
-    },
-    setLoadingTime: (callTimestamp?: TimeStamp) => {
-      if (viewEnded) {
-        return
-      }
-      const loadingTime = elapsed(viewStart.timeStamp, callTimestamp ?? timeStampNow())
-      if (!hasManualLoadingTime) {
-        stopLoadingTimeTracking()
-      }
-      hasManualLoadingTime = true
-      commonViewMetrics.loadingTime = loadingTime
-      scheduleViewUpdate()
     },
   }
 }

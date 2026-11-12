@@ -127,7 +127,7 @@ async function afterSend(
 ) {
   const context = startContext as unknown as FetchResolveContext
 
-  let response: Response
+  let response: Response | undefined
 
   try {
     response = await responsePromise
@@ -140,6 +140,12 @@ async function afterSend(
         context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
       error: error as Error,
     })
+    return
+  }
+
+  if (!response) {
+    // `fetch` was overridden by a third party that resolved without a Response
+    observable.notify({ ...context, state: 'resolve', status: 0, isAborted: false })
     return
   }
 

@@ -2,7 +2,8 @@ import type { EnvironmentProviders } from '@angular/core'
 import { ENVIRONMENT_INITIALIZER, inject, makeEnvironmentProviders } from '@angular/core'
 import { GuardsCheckEnd, Router } from '@angular/router'
 import { filter } from 'rxjs'
-import { startAngularView } from './startAngularView'
+import { startAngularViewWhenReady } from '../angularPlugin'
+import { computeViewName } from './startAngularView'
 
 /**
  * Angular provider that subscribes to Router events and starts a new RUM view
@@ -54,8 +55,7 @@ export function provideDatadogRouter(): EnvironmentProviders {
               }
               currentPath = path
 
-              const root = event.state.root
-              startAngularView(root, url)
+              startAngularViewWhenReady({ name: computeViewName(event.state.root), url })
             })
         }
       },
