@@ -72,7 +72,7 @@ yarn json-schemas:generate  # Regenerate types only
 node scripts/json-schemas.ts --update YOUR_RUM_EVENTS_FORMAT_BRANCH --build
 ```
 
-**Fork dependency**: Uses a fork of json-schema-to-typescript (`bcaudan/json-schema-to-typescript`, pinned in `scripts/json-schemas.ts`) for `readonly` modifier support. It is not a project dependency: it is downloaded and built in `node_modules/.cache` the first time types are generated.
+**Fork dependency**: Uses a fork of json-schema-to-typescript (`bcaudan/json-schema-to-typescript`, pinned in `scripts/json-schemas.ts`) for `readonly` modifier support. Neither it nor rum-events-format is a project dependency: `scripts/json-schemas.ts` installs both from GitHub in a separate Yarn project (`node_modules/.cache/json-schemas`) when syncing or generating types.
 
 ⚠️ Never edit generated types manually.
 
