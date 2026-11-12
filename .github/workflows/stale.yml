@@ -5,11 +5,6 @@ on:
     # Runs every day at 8:00 AM CET
     - cron: '0 7 * * *'
   workflow_dispatch:
-    inputs:
-      debug-only:
-        description: 'Only log what would be done, without labelling, commenting on or closing anything'
-        type: boolean
-        default: false
 
 permissions:
   # Needed to delete and re-save the `_state` cache that lets a run resume where the previous one stopped
@@ -25,7 +20,6 @@ jobs:
         with:
           # See documentation at https://github.com/actions/stale?tab=readme-ov-file#all-options
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          debug-only: ${{ inputs.debug-only || false }}
           # The default (30) is used up before the run gets through all open issues and PRs
           operations-per-run: 300
 
