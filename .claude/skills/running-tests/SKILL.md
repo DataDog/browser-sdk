@@ -1,6 +1,6 @@
 ---
 name: running-tests
-description: Use when running tests or checks in browser-sdk, including unit (Karma/Jasmine), E2E (Playwright), script tests, TypeScript/SSR compatibility, performance benchmarks, or BrowserStack. Use when choosing a yarn test command, reproducing a flaky seed, or targeting a spec, a browser, or a pinned old browser.
+description: Use when running tests or checks in browser-sdk, including unit (Vitest Browser Mode, Jasmine API shim), E2E (Playwright), script tests, TypeScript/SSR compatibility, performance benchmarks, or BrowserStack. Use when choosing a yarn test command, reproducing a flaky seed, or targeting a spec, a browser, or a pinned old browser.
 ---
 
 # Running Tests in browser-sdk
@@ -13,10 +13,10 @@ All test entry points are root `yarn` scripts. Unit tests compile from source. L
 
 | Need                                                                                             | Command                                                                                    |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| Unit, watch mode (`localhost:9876`, `/debug.html` for devtools)                                  | `yarn test`                                                                                |
+| Unit, watch mode (`--browser.headless=false` to open the browser and its devtools)               | `yarn test`                                                                                |
 | Unit, single run                                                                                 | `yarn test:unit`                                                                           |
-| Specific specs (repeatable, quoted globs OK, also works with `yarn test`)                        | `yarn test:unit --spec 'packages/browser-rum-core/src/domain/view/**/*.spec.ts'`           |
-| Reproduce a CI order (`Randomized with seed 41027`)                                              | `yarn test:unit --seed 41027`                                                              |
+| Specific specs (paths or filename filters, also works with `yarn test`)                          | `yarn test:unit packages/browser-rum-core/src/domain/view/`                                |
+| Reproduce a CI order (`Running tests with seed "41027"`)                                         | `yarn test:unit --sequence.seed=41027`                                                     |
 | Unit on BrowserStack (`BS_USERNAME`/`BS_ACCESS_KEY` in env or `.env`)                            | `yarn test:unit:bs`                                                                        |
 | Script tests (`scripts/**/*.spec.ts`)                                                            | `yarn test:script`                                                                         |
 | One script spec (`yarn test:script <file>` still runs all of them)                               | `node --test --experimental-test-module-mocks scripts/lib/foo.spec.ts`                     |

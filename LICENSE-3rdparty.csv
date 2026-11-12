@@ -18,7 +18,6 @@ dev,@angular/core,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/platform-browser,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@angular/router,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
-dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@salesforce/cli,Apache-2.0,Copyright (c) 2026 Salesforce, Inc.
@@ -38,6 +37,11 @@ dev,@typescript-eslint/utils,MIT,Copyright (c) 2019 typescript-eslint and other 
 dev,@wxt-dev/module-react,MIT,Copyright (c) 2023 Aaron
 dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contributors
 dev,@vitejs/plugin-vue,MIT,Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
+dev,@vitest/browser,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,@vitest/browser-playwright,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,@vitest/browser-webdriverio,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,@vitest/coverage-istanbul,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,@vitest/ui,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,@microsoft/api-extractor,MIT,Copyright (c) Microsoft Corporation. All rights reserved.
 dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
 dev,@vue/compiler-dom,MIT,Copyright (c) 2018-present, Yuxi (Evan) You
@@ -64,8 +68,6 @@ dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,json-schema-to-typescript,MIT,
 dev,karma,MIT,Copyright 2011-2019 Google Inc.
 dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google, Inc.
-dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
-dev,karma-coverage-istanbul-reporter,MIT,Copyright 2017 Matt Lewis
 dev,karma-jasmine,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-junit-reporter,MIT,Copyright (C) 2011-2013 Google, Inc.
 dev,karma-sourcemap-loader,MIT,Copyright 2013 Sergey Todyshev
@@ -92,9 +94,11 @@ dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
 dev,undici,MIT,Copyright (c) Matteo Collina and Undici contributors
 dev,vite,MIT,Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
+dev,vitest,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,vue,MIT,Copyright (c) 2018-present, Yuxi (Evan) You
 dev,nuxt,MIT,Copyright (c) 2016-present Nuxt Team
 dev,vue-router,MIT,Copyright (c) 2019-present Eduardo San Martin Morote
+dev,webdriverio,MIT,Copyright (c) OpenJS Foundation and other contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
