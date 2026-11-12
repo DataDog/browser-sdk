@@ -1,0 +1,67 @@
+name: Publish npm packages
+
+# Dispatched on the release tag by the GitLab step-6_publish-npm job (scripts/deploy/dispatch-publish-npm.ts).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 7.18.0). Run on its vX.Y.Z tag.'
+        required: true
+        type: string
+      dry-run:
+        description: 'Build and pack without publishing'
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write # npm OIDC trusted publishing and provenance
+  contents: read
+
+concurrency:
+  group: publish-npm # a second dispatch waits, then no-ops thanks to --tolerate-republish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm-publish # v* tags only; the npm trusted publishers are bound to it
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/tags/v$VERSION" ]; then
+            echo "::error::Run this workflow on the v$VERSION tag (got $GITHUB_REF)"
+            exit 1
+          fi
+          if [ "$(jq -r .version package.json)" != "$VERSION" ]; then
+            echo "::error::package.json version is not $VERSION"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false # no dependency cache in a publishing job
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Publish
+        env:
+          # Unset means OIDC trusted publishing. Only set temporarily (first publish of a new package, emergency fallback).
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            node scripts/deploy/publish-npm.ts --dry-run
+          else
+            node scripts/deploy/publish-npm.ts
+          fi
