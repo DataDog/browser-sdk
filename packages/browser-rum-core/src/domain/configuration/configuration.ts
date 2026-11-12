@@ -622,7 +622,7 @@ function isViewUpdatesEnabled(
 
 export function isTrustedScriptURL(value: unknown): value is TrustedScriptURL {
   const { trustedTypes } = globalObject as typeof globalObject & Pick<TrustedTypesWindow, 'trustedTypes'>
-  return trustedTypes?.isScriptURL(value) === true
+  return typeof trustedTypes?.isScriptURL === 'function' && trustedTypes.isScriptURL(value) === true
 }
 
 export function validateAndBuildRumConfiguration(

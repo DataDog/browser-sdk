@@ -1006,6 +1006,15 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
     })
 
+    it('rejects object URLs when a Trusted Types tinyfill lacks isScriptURL', () => {
+      mockTrustedTypes(undefined, true)
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '/worker.js' })!.workerUrl
+      ).toBe('/worker.js')
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: {} as any })).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    })
+
     it('treats an empty string as absent', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '' })!.workerUrl
@@ -1028,11 +1037,11 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
-  function mockTrustedTypes(isScriptURL: ((value: unknown) => boolean) | undefined) {
+  function mockTrustedTypes(isScriptURL: ((value: unknown) => boolean) | undefined, tinyfill = false) {
     const trustedTypesDescriptor = Object.getOwnPropertyDescriptor(window, 'trustedTypes')
     Object.defineProperty(window, 'trustedTypes', {
       configurable: true,
-      value: isScriptURL && { isScriptURL },
+      value: tinyfill ? { createPolicy: () => undefined } : isScriptURL && { isScriptURL },
     })
     registerCleanupTask(() => {
       if (trustedTypesDescriptor) {

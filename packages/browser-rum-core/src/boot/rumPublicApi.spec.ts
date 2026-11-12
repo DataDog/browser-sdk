@@ -206,6 +206,19 @@ describe('rum public api', () => {
       expect(rumPublicApi.getInitConfiguration()!.workerUrl).toBe(workerUrl)
     })
 
+    for (const workerUrl of [undefined, '/worker.js']) {
+      it(`clones the configuration with workerUrl ${workerUrl} when a Trusted Types tinyfill lacks isScriptURL`, () => {
+        mockTrustedTypes(undefined, true)
+        const { rumPublicApi } = makeRumPublicApiWithDefaults()
+        const configuration = { ...DEFAULT_INIT_CONFIGURATION, workerUrl }
+
+        rumPublicApi.init(configuration)
+
+        expect(rumPublicApi.getInitConfiguration()).toEqual(configuration)
+        expect(rumPublicApi.getInitConfiguration()).not.toBe(configuration)
+      })
+    }
+
     for (const trustedTypesAvailable of [true, false]) {
       it(`clones an invalid worker URL when initialization fails with Trusted Types ${
         trustedTypesAvailable ? 'available' : 'unavailable'
@@ -229,11 +242,11 @@ describe('rum public api', () => {
       })
     }
 
-    function mockTrustedTypes(isScriptURL: ((value: unknown) => boolean) | undefined) {
+    function mockTrustedTypes(isScriptURL: ((value: unknown) => boolean) | undefined, tinyfill = false) {
       const trustedTypesDescriptor = Object.getOwnPropertyDescriptor(window, 'trustedTypes')
       Object.defineProperty(window, 'trustedTypes', {
         configurable: true,
-        value: isScriptURL && { isScriptURL },
+        value: tinyfill ? { createPolicy: () => undefined } : isScriptURL && { isScriptURL },
       })
       registerCleanupTask(() => {
         if (trustedTypesDescriptor) {
