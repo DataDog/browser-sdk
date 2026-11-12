@@ -18,7 +18,7 @@ describe('publish-npm', () => {
 
   before(async () => {
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
-    ;({ main } = (await import('./publish-npm.ts')))
+    ;({ main } = await import('./publish-npm.ts'))
   })
 
   beforeEach(() => {
