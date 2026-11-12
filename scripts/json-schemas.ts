@@ -1,5 +1,4 @@
 import * as fs from 'node:fs'
-import * as os from 'node:os'
 import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
@@ -7,22 +6,20 @@ import { parseArgs } from 'node:util'
 import type jsonSchemaToTypescriptModule from 'json-schema-to-typescript'
 import { format, resolveConfig } from 'prettier'
 
-import { printLog, printWarning, runMain, fetchHandlingError } from './lib/executionUtils.ts'
+import { printLog, runMain } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
 import { RUM_EVENTS_FORMAT_DIR, RUM_EVENTS_FORMAT_SCHEMAS_DIR, SCHEMAS } from './lib/generatedSchemaTypes.ts'
 
 const RUM_EVENTS_FORMAT_README_PATH = path.join(RUM_EVENTS_FORMAT_DIR, 'README.md')
 
-// Fork of json-schema-to-typescript adding `readonly` support. It is only needed to generate types,
-// so it is downloaded and built on demand instead of being installed with the other dependencies.
+// The packages needed to sync the schemas and generate types are installed from GitHub in this
+// separate Yarn project, so installing the main project never fetches anything from GitHub.
+const TOOLS_DIR = path.join(import.meta.dirname, '../node_modules/.cache/json-schemas')
+const RUM_EVENTS_FORMAT_REPOSITORY = 'DataDog/rum-events-format'
+// Fork of json-schema-to-typescript adding `readonly` support
 // TODO use the npm package once a released version supports the `readOnly` keyword
 const JSON2TYPE_REPOSITORY = 'bcaudan/json-schema-to-typescript'
-const JSON2TYPE_COMMIT = '406ce54242635f4a0181bd573a3cbc896707e4cc'
-const JSON2TYPE_PATH = path.join(
-  import.meta.dirname,
-  '../node_modules/.cache/json-schema-to-typescript',
-  JSON2TYPE_COMMIT
-)
+const JSON2TYPE_DEPENDENCY = `${JSON2TYPE_REPOSITORY}#commit=406ce54242635f4a0181bd573a3cbc896707e4cc`
 const prettierConfigPath = path.join(import.meta.dirname, '../.prettierrc.yml')
 
 runMain(async () => {
@@ -48,9 +45,9 @@ runMain(async () => {
   }
 
   if (branch !== undefined) {
-    await update(await resolveCommit(branch))
+    update(branch)
   } else if (shouldCheck) {
-    await update(getCurrentCommit())
+    update(getCurrentCommit())
   }
 
   if (shouldBuild) {
@@ -65,7 +62,7 @@ Usage: node scripts/json-schemas.ts [options]
 Options:
   --update <branch|commit>  Copy the rum-events-format schemas from the latest commit on <branch> (or a specific full commit hash) to rum-events-format/schemas
   --check            Copy the rum-events-format schemas again from the commit they were copied from, to restore any local change
-  --build            Build json-schema-to-typescript and regenerate TypeScript types from JSON schemas
+  --build            Install json-schema-to-typescript and regenerate TypeScript types from JSON schemas
   --help, -h         Show this help message
 
 Examples:
@@ -73,45 +70,6 @@ Examples:
   node scripts/json-schemas.ts --update <40-char-hash> --build       # Sync to a specific commit
   node scripts/json-schemas.ts --build                  # Regenerate types only (alias: yarn json-schemas:generate)
 `)
-}
-
-async function resolveCommit(branchOrCommit: string): Promise<string> {
-  let commitHash: string
-  if (/^[0-9a-f]{40}$/.test(branchOrCommit)) {
-    commitHash = branchOrCommit
-    printLog(`Using provided commit hash: ${commitHash}`)
-  } else {
-    printLog(`Resolving latest commit on ${branchOrCommit}...`)
-    // Unauthenticated GitHub API requests are limited to 60/hour per IP, which is easily exhausted
-    // behind a shared NAT. Authenticate with the user's `gh` CLI token to get the 5000/hour limit.
-    let token = ''
-    try {
-      token = command`gh auth token`.run().trim()
-    } catch {
-      printWarning(
-        'Could not get a token from `gh auth token`; issuing unauthenticated GitHub requests (limited to 60/hour per IP).'
-      )
-    }
-    const response = await fetchHandlingError(
-      `https://api.github.com/repos/DataDog/rum-events-format/branches/${branchOrCommit}`,
-      {
-        headers: {
-          ...(token ? { Authorization: `token ${token}` } : {}),
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-      }
-    )
-    const {
-      commit: { sha },
-    } = (await response.json()) as { commit: { sha: string } }
-    if (!sha) {
-      throw new Error(`Could not resolve branch ${branchOrCommit}`)
-    }
-    commitHash = sha
-    printLog(`Latest commit: ${commitHash}`)
-  }
-
-  return commitHash
 }
 
 function getCurrentCommit(): string {
@@ -124,12 +82,14 @@ function getCurrentCommit(): string {
   return match[1]
 }
 
-async function update(commitHash: string) {
+function update(branchOrCommit: string) {
+  printLog(`Installing rum-events-format at ${branchOrCommit}...`)
+  const commitHash = installTools(branchOrCommit)
   printLog(`Copying rum-events-format schemas from ${commitHash}...`)
-  const archiveDir = await downloadGitHubArchive('DataDog/rum-events-format', commitHash)
   fs.rmSync(RUM_EVENTS_FORMAT_SCHEMAS_DIR, { recursive: true, force: true })
-  fs.cpSync(path.join(archiveDir, 'schemas'), RUM_EVENTS_FORMAT_SCHEMAS_DIR, { recursive: true })
-  fs.rmSync(archiveDir, { recursive: true, force: true })
+  fs.cpSync(path.join(TOOLS_DIR, 'node_modules/@datadog/rum-events-format/schemas'), RUM_EVENTS_FORMAT_SCHEMAS_DIR, {
+    recursive: true,
+  })
   fs.writeFileSync(
     RUM_EVENTS_FORMAT_README_PATH,
     `# RUM events format
@@ -146,22 +106,69 @@ Do not modify it by hand. Run \`yarn json-schemas:sync\` instead.
 }
 
 /**
- * Download the archive of a GitHub repository at a given commit, extract it in a new temporary
- * directory created in `parentDir` and return the path of that directory.
+ * Install rum-events-format at the given branch or commit, and the json-schema-to-typescript fork, in
+ * a Yarn project separate from the main one. Return the installed rum-events-format commit.
  */
-async function downloadGitHubArchive(repository: string, commitHash: string, parentDir = os.tmpdir()): Promise<string> {
-  const response = await fetchHandlingError(`https://github.com/${repository}/archive/${commitHash}.tar.gz`)
-  fs.mkdirSync(parentDir, { recursive: true })
-  const archiveDir = fs.mkdtempSync(path.join(parentDir, 'github-archive-'))
-  const archivePath = path.join(archiveDir, 'archive.tar.gz')
-  fs.writeFileSync(archivePath, Buffer.from(await response.arrayBuffer()))
-  command`tar -xzf ${archivePath} -C ${archiveDir} --strip-components=1`.run()
-  fs.rmSync(archivePath)
-  return archiveDir
+function installTools(branchOrCommit: string): string {
+  const ref = /^[0-9a-f]{40}$/.test(branchOrCommit) ? `commit=${branchOrCommit}` : `head=${branchOrCommit}`
+  fs.mkdirSync(TOOLS_DIR, { recursive: true })
+  fs.writeFileSync(
+    path.join(TOOLS_DIR, 'package.json'),
+    `${JSON.stringify(
+      {
+        name: 'json-schemas-tools',
+        private: true,
+        dependencies: {
+          '@datadog/rum-events-format': `${RUM_EVENTS_FORMAT_REPOSITORY}#${ref}`,
+          'json-schema-to-typescript': JSON2TYPE_DEPENDENCY,
+          // Needed to build the fork
+          typescript: '5.9.3',
+        },
+      },
+      null,
+      2
+    )}\n`
+  )
+  fs.writeFileSync(
+    path.join(TOOLS_DIR, '.yarnrc.yml'),
+    `approvedGitRepositories:
+  - 'https://github.com/${RUM_EVENTS_FORMAT_REPOSITORY}.git'
+  - 'https://github.com/${JSON2TYPE_REPOSITORY}.git'
+`
+  )
+  // A yarn.lock makes this directory a project of its own. Start from an empty one so a branch is
+  // resolved to its latest commit. Pinned commits are still taken from the Yarn cache.
+  fs.writeFileSync(path.join(TOOLS_DIR, 'yarn.lock'), '')
+  command`yarn install --no-immutable`.withCurrentWorkingDirectory(TOOLS_DIR).run()
+
+  const match = /rum-events-format\.git#commit=([0-9a-f]{40})/.exec(
+    fs.readFileSync(path.join(TOOLS_DIR, 'yarn.lock'), 'utf8')
+  )
+  if (!match) {
+    throw new Error(`Could not find the installed rum-events-format commit in ${TOOLS_DIR}/yarn.lock`)
+  }
+  return match[1]
+}
+
+/**
+ * The fork is installed from its sources: build it the first time it is used.
+ */
+function importJsonSchemaToTypescript() {
+  const packageDir = path.join(TOOLS_DIR, 'node_modules/json-schema-to-typescript')
+  const entryPoint = path.join(packageDir, 'dist/src/index.js')
+  if (!fs.existsSync(entryPoint)) {
+    printLog('Building json-schema-to-typescript...')
+    const tscPath = path.join(TOOLS_DIR, 'node_modules/typescript/bin/tsc')
+    // Its type checking needs its dev dependencies, which are not installed. Its output doesn't.
+    command`node ${tscPath} --declaration --noCheck --rootDir .`.withCurrentWorkingDirectory(packageDir).run()
+  }
+  return import(pathToFileURL(entryPoint).href) as Promise<typeof jsonSchemaToTypescriptModule>
 }
 
 async function build() {
-  const { compileFromFile } = await getJsonSchemaToTypescript()
+  printLog('Installing json-schema-to-typescript...')
+  installTools(getCurrentCommit())
+  const { compileFromFile } = await importJsonSchemaToTypescript()
 
   printLog('Generating schema types...')
   const prettierConfig = await resolveConfig(prettierConfigPath)
@@ -184,29 +191,4 @@ async function build() {
   }
 
   printLog('Done.')
-}
-
-let jsonSchemaToTypescriptCache: Promise<typeof jsonSchemaToTypescriptModule> | undefined
-
-function getJsonSchemaToTypescript() {
-  if (!jsonSchemaToTypescriptCache) {
-    jsonSchemaToTypescriptCache = (async () => {
-      const entryPoint = path.join(JSON2TYPE_PATH, 'dist/src/index.js')
-      if (!fs.existsSync(entryPoint)) {
-        await buildJsonSchemaToTypescript()
-      }
-      return (await import(pathToFileURL(entryPoint).href)) as typeof jsonSchemaToTypescriptModule
-    })()
-  }
-  return jsonSchemaToTypescriptCache
-}
-
-async function buildJsonSchemaToTypescript() {
-  printLog('Building json-schema-to-typescript...')
-  // Extract next to the final location, so it can be moved there atomically once built
-  const archiveDir = await downloadGitHubArchive(JSON2TYPE_REPOSITORY, JSON2TYPE_COMMIT, path.dirname(JSON2TYPE_PATH))
-  command`npm install --ignore-scripts --no-audit --no-fund`.withCurrentWorkingDirectory(archiveDir).run()
-  command`npm run build:server`.withCurrentWorkingDirectory(archiveDir).run()
-  fs.rmSync(JSON2TYPE_PATH, { recursive: true, force: true })
-  fs.renameSync(archiveDir, JSON2TYPE_PATH)
 }

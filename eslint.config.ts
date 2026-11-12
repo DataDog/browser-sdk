@@ -232,8 +232,8 @@ export default defineConfig(
         {
           commonjs: true,
           ignore: [
-            // json-schema-to-typescript is not installed: scripts/json-schemas.ts downloads and
-            // builds it on demand, and scripts/lib/global.d.ts declares its types.
+            // json-schema-to-typescript is not a project dependency: scripts/json-schemas.ts installs
+            // it in a separate Yarn project, and scripts/lib/global.d.ts declares its types.
             'json-schema-to-typescript',
           ],
         },
