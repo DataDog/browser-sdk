@@ -92,7 +92,7 @@
     "karma-spec-reporter": "0.0.37",
     "karma-webpack": "5.0.0",
     "minimatch": "11.0.3",
-    "node-forge": "1.4.2",
+    "node-forge": "1.4.3",
     "prettier": "3.9.10",
     "puppeteer": "25.16.0",
     "swc-loader": "0.2.7",
