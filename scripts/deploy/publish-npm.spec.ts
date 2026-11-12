@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { before, beforeEach, describe, it, mock } from 'node:test'
-import { mockCommandImplementation, mockModule } from './lib/testHelpers.ts'
+import { mockModule } from './lib/testHelpers.ts'
 
 interface CommandChain {
   withEnvironment: (env: Record<string, string>) => CommandChain
@@ -11,71 +11,55 @@ interface CommandChain {
 
 describe('publish-npm', () => {
   const commandMock = mock.fn<(template: TemplateStringsArray, ...values: any[]) => CommandChain>()
-  const getNpmTokenMock = mock.fn<() => string>()
 
   let main: (args?: string[]) => void
-  let publishError: Error
+  let publishEnvironment: Record<string, string> | undefined
+  let publishError: Error | undefined
 
   before(async () => {
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
-    await mockModule(path.resolve(import.meta.dirname, '../lib/secrets.ts'), { getNpmToken: getNpmTokenMock })
-
-    const publishNpmModule: { main: (args?: string[]) => void } = await import('./publish-npm.ts')
-    ;({ main } = publishNpmModule)
+    ;({ main } = (await import('./publish-npm.ts')))
   })
 
   beforeEach(() => {
-    publishError = new Error('publish failed')
-    getNpmTokenMock.mock.mockImplementation(() => 'fake-token')
-
-    const baseCommandMock = mock.fn<(template: TemplateStringsArray, ...values: any[]) => CommandChain>()
-    mockCommandImplementation(baseCommandMock)
+    publishEnvironment = undefined
+    publishError = undefined
 
     commandMock.mock.mockImplementation((template: TemplateStringsArray, ...values: any[]): CommandChain => {
-      const chain = baseCommandMock(template, ...values)
-
-      if (isNpmPublishCommand(template, ...values)) {
-        const throwingChain: CommandChain = {
-          withEnvironment: () => throwingChain,
-          withLogs: () => throwingChain,
-          run: () => {
+      const isPublish = isNpmPublishCommand(template, ...values)
+      const chain: CommandChain = {
+        withEnvironment: (env) => {
+          if (isPublish) {
+            publishEnvironment = env
+          }
+          return chain
+        },
+        withLogs: () => chain,
+        run: () => {
+          if (isPublish && publishError) {
             throw publishError
-          },
-        }
-
-        return {
-          ...chain,
-          withEnvironment: () => throwingChain,
-          withLogs: () => throwingChain,
-          run: throwingChain.run,
-        }
+          }
+          return ''
+        },
       }
       return chain
     })
   })
 
-  it('should suggest renewing npm token when npm publish fails', () => {
-    assert.throws(
-      () => main([]),
-      (error: Error) => {
-        assert.match(error.message, /scripts\/release\/renew-token\.ts/)
-        assert.equal(error.cause, publishError)
-        return true
-      }
-    )
+  it('should publish without an npm auth token, so that yarn uses OIDC trusted publishing', () => {
+    main([])
+
+    assert.deepEqual(publishEnvironment, { BUILD_MODE: 'release' })
   })
 
-  it('should not mask npm token lookup failures as publish failures', () => {
-    const tokenError = new Error('failed to fetch npm token')
-    getNpmTokenMock.mock.mockImplementation(() => {
-      throw tokenError
-    })
+  it('should point to the trusted publisher settings when npm publish fails', () => {
+    publishError = new Error('publish failed')
 
     assert.throws(
       () => main([]),
       (error: Error) => {
-        assert.equal(error, tokenError)
-        assert.doesNotMatch(error.message, /scripts\/release\/renew-token\.ts/)
+        assert.match(error.message, /trusted publisher/)
+        assert.equal(error.cause, publishError)
         return true
       }
     )

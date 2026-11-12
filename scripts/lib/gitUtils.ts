@@ -28,6 +28,17 @@ export interface GitHubRelease {
   draft: boolean
 }
 
+interface GitHubWorkflowDispatch {
+  workflow_run_id: number
+  html_url: string
+}
+
+export interface GitHubWorkflowRun {
+  status: string
+  conclusion: string | null
+  html_url: string
+}
+
 interface GitHubReleaseParams {
   version: string
   body: string
@@ -100,6 +111,20 @@ export async function publishGitHubRelease(
     draft: false,
     make_latest: makeLatest ? 'true' : 'false',
   })
+}
+
+/**
+ * Dispatch a workflow on the given ref, and return the created run.
+ */
+export function dispatchWorkflow(workflow: string, ref: string, token: OctoStsToken): Promise<GitHubWorkflowDispatch> {
+  return callGitHubApi<GitHubWorkflowDispatch>('POST', `actions/workflows/${workflow}/dispatches`, token, {
+    ref,
+    return_run_details: true,
+  })
+}
+
+export function fetchWorkflowRun(runId: number, token: OctoStsToken): Promise<GitHubWorkflowRun> {
+  return callGitHubApi<GitHubWorkflowRun>('GET', `actions/runs/${runId}`, token)
 }
 
 export function createPullRequest(mainBranch: string, labels?: string[]) {
