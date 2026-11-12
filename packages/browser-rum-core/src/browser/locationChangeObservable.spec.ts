@@ -62,6 +62,21 @@ describe('locationChangeObservable', () => {
     expect(wrapperSpy).toHaveBeenCalled()
   })
 
+  it('should track history changes when the global History is replaced by an object without prototype', () => {
+    const originalHistoryDescriptor = Object.getOwnPropertyDescriptor(window, 'History')!
+    // Libraries like History.js replace the global `History` with a plain object
+    Object.defineProperty(window, 'History', { value: {}, configurable: true, writable: true })
+    registerCleanupTask(() => {
+      Object.defineProperty(window, 'History', originalHistoryDescriptor)
+    })
+    const observer = setup()
+
+    history.pushState({}, '', '/foo?bar=qux')
+
+    const locationChanges = observer.calls.argsFor(0)[0]
+    expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
+  })
+
   it('allow frameworks to patch History.prototype.pushState', () => {
     const wrapperSpy = setupHistoryPrototypePushStateWrapper()
     const observer = setup()

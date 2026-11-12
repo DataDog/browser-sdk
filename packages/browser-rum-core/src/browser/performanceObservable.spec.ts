@@ -1,9 +1,13 @@
 import type { Subscription } from '@datadog/js-core/util'
 import type { Duration } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
-import { RumPerformanceEntryType, createPerformanceObservable } from './performanceObservable'
+import {
+  RumPerformanceEntryType,
+  createPerformanceObservable,
+  supportPerformanceTimingEvent,
+} from './performanceObservable'
 
 describe('performanceObservable', () => {
   let performanceSubscription: Subscription | undefined
@@ -98,5 +102,21 @@ describe('performanceObservable', () => {
         }),
       }),
     ])
+  })
+})
+
+describe('supportPerformanceTimingEvent', () => {
+  it('should return false when PerformanceObserver.supportedEntryTypes is not available', () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(PerformanceObserver, 'supportedEntryTypes')
+    Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', { get: () => undefined, configurable: true })
+    registerCleanupTask(() => {
+      if (originalDescriptor) {
+        Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', originalDescriptor)
+      } else {
+        delete (PerformanceObserver as { supportedEntryTypes?: unknown }).supportedEntryTypes
+      }
+    })
+
+    expect(supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)).toBeFalse()
   })
 })
