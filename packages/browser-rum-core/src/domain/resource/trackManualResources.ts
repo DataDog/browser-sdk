@@ -23,11 +23,7 @@ export interface ResourceOptions {
   method?: string
 
   /**
-   * Resource context
-   *
-   * The reserved keys `_dd.trace_id` and `_dd.span_id` (flat keys) are not kept in the context: when both
-   * are strings (from start or stop, stop wins), they are set as the resource event `_dd.trace_id` and
-   * `_dd.span_id` to link the resource to an APM trace.
+   * Resource context. Keys `_dd.trace_id` and `_dd.span_id` link the resource to an APM trace.
    */
   context?: Context
 
@@ -54,11 +50,7 @@ export interface ResourceStopOptions {
   size?: number
 
   /**
-   * Resource context
-   *
-   * The reserved keys `_dd.trace_id` and `_dd.span_id` (flat keys) are not kept in the context: when both
-   * are strings (from start or stop, stop wins), they are set as the resource event `_dd.trace_id` and
-   * `_dd.span_id` to link the resource to an APM trace.
+   * Resource context. Keys `_dd.trace_id` and `_dd.span_id` link the resource to an APM trace.
    */
   context?: Context
 
