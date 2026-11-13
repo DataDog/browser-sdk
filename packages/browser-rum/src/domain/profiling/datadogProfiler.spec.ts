@@ -42,14 +42,14 @@ import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
 import { createFormDataEmitter } from './transport/formDataEmitter'
 import { createBridgeEmitter } from './transport/profilingBridge'
-import type { RUMProfilerConfiguration } from './types'
+import type { ProfilingPayload, RUMProfilerConfiguration } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
-import { createLongTaskHistory, type LongTaskContext } from './longTaskHistory'
-import type { ActionContext } from './actionHistory'
-import { createActionHistory } from './actionHistory'
-import type { VitalContext } from './vitalHistory'
-import { createVitalHistory } from './vitalHistory'
+import { createLongTaskHistory, type LongTaskContext } from './contexts/longTaskHistory'
+import type { ActionContext } from './contexts/actionHistory'
+import { createActionHistory } from './contexts/actionHistory'
+import type { VitalContext } from './contexts/vitalHistory'
+import { createVitalHistory } from './contexts/vitalHistory'
 
 describe('profiler', () => {
   // Store the original pathname
@@ -207,6 +207,29 @@ describe('profiler', () => {
     expect(payload.profile.session).toEqual({ id: 'session-id-1' })
     expect(payload.trace.stacks).toEqual(mockedRumProfilerTrace.stacks)
     expect(payload.trace.samples).toEqual(mockedRumProfilerTrace.samples)
+  })
+
+  it('excludes views created after stop is requested while the trace is pending', async () => {
+    const clock = mockClock()
+    const { profiler } = setupProfiler()
+    profiler.start()
+    clock.tick(100)
+    const endClocks = clocksNow()
+
+    profiler.stop()
+    clock.tick(50)
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      id: 'later-view',
+      name: 'Later page',
+      startClocks: clocksNow(),
+    })
+    await waitNextMicrotask()
+
+    expect(emitPayloadSpy.calls.count()).toBe(1)
+    const payload: ProfilingPayload = emitPayloadSpy.calls.mostRecent().args[0]
+    expect(payload.trace.views.map((view) => view.viewId)).toEqual(['view-id-1'])
+    expect(payload.trace.endClocks).toEqual(endClocks)
+    expect(payload.profile.view?.id).toEqual(['view-id-1'])
   })
 
   it('should attach debugIds resolved from the source code context for trace resources', async () => {
