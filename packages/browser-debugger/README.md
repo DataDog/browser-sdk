@@ -16,10 +16,6 @@ Upload source maps for the deployed frontend build with matching debug IDs and G
 
 Source maps must be available in the Datadog site and organization that receive the Browser Live Debugger data. You can use your existing source-map upload setup, or configure a new one during onboarding. The Browser Live Debugger uses its own configuration and does not inherit the RUM SDK's `site`. Set the debugger's `site` to the site you upload source maps to, and use a `clientToken` issued by the same organization as your source-map upload API key.
 
-### Content Security Policy
-
-Probe conditions, dynamic log-message expressions, and capture expressions use `new Function()` to evaluate JavaScript at runtime. If your page has a Content Security Policy (CSP) that restricts script execution, it must permit `'unsafe-eval'` in `script-src` to use these features.
-
 ## Limitations during Preview
 
 Browser Live Debugger is in Preview, with the following limitations:

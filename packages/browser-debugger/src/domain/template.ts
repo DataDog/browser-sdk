@@ -43,34 +43,27 @@ export function templateRequiresEvaluation(segments: TemplateSegment[] | undefin
 }
 
 /**
- * Compile template segments into executable code
+ * Compile template segments into a function that evaluates them
  *
  * @param segments - Array of segment objects with str (static) or dsl/json (dynamic)
- * @returns Compiled JavaScript code that returns an array
+ * @returns Function returning, for each segment, its string or the error its expression threw
  */
-export function compileSegments(segments: TemplateSegment[]): string {
-  let segmentsCode = '['
-  for (let i = 0; i < segments.length; i++) {
-    const { str, dsl, json } = segments[i]
-    segmentsCode +=
-      str === undefined
-        ? `(() => {
-          try {
-            const result = ${compile(json)}
-            return typeof result === 'string' ? result : $dd_inspect(result)
-          } catch (e) {
-            return { expr: ${JSON.stringify(dsl)}, message: $dd_format_error(e) }
-          }
-        })()`
-        : JSON.stringify(str)
-    if (i !== segments.length - 1) {
-      segmentsCode += ','
+export function compileSegments(segments: TemplateSegment[]): (context: Record<string, unknown>) => unknown[] {
+  const evaluators = segments.map(({ str, dsl, json }): ((context: Record<string, unknown>) => unknown) => {
+    if (str !== undefined) {
+      return () => str
     }
-  }
-  segmentsCode += ']'
-
-  // Return the compiled array code (not the function yet - that's done with context)
-  return segmentsCode
+    const evaluate = compile(json)
+    return (context) => {
+      try {
+        const result = evaluate(context)
+        return typeof result === 'string' ? result : browserInspect(result)
+      } catch (e) {
+        return { expr: dsl, message: formatUnknownError(e) }
+      }
+    }
+  })
+  return (context) => evaluators.map((evaluate) => evaluate(context))
 }
 
 /**

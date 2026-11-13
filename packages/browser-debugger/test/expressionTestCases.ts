@@ -3,7 +3,6 @@
  * Adapted from dd-trace-js/packages/dd-trace/test/debugger/devtools_client/condition-test-cases.js
  */
 
-import { globalObject } from '@datadog/js-core/util'
 import type { ExpressionNode } from '../src/domain/expression'
 
 export type VariableBindings = Record<string, unknown>
@@ -15,11 +14,11 @@ export interface TestCaseObject {
   expected?: unknown
   execute?: boolean
   before?: () => void
-  suffix?: string
 }
 export type TestCase = TestCaseTuple | TestCaseObject
 
 class CustomObject {}
+const thisObject = { this: 'object' }
 class HasInstanceSideEffect {
   static [Symbol.hasInstance](): boolean {
     throw new Error('This should never throw!')
@@ -51,8 +50,9 @@ export const references: TestCase[] = [
   [{ ref: 'foo' }, {}, new ReferenceError('foo is not defined')],
 
   // Reserved words, but we allow them as they can be useful
-  [{ ref: 'this' }, {}, globalObject], // Unless bound, `this` defaults to the global object
-  { ast: { ref: 'super' }, expected: 'super', execute: false },
+  [{ ref: 'this' }, { this: thisObject }, thisObject],
+  [{ ref: 'this' }, { this: undefined }, undefined],
+  { ast: { ref: 'super' }, execute: false },
 
   // Literals, but we allow them as they can be useful
   [{ ref: 'undefined' }, {}, undefined],
@@ -60,6 +60,13 @@ export const references: TestCase[] = [
 
   // Old standard reserved words, no need to disallow them
   [{ ref: 'abstract' }, { abstract: 42 }, 42],
+
+  // Special variables
+  [{ ref: '@return' }, { $dd_return: 42 }, 42],
+
+  // Context variables shadow globals, but not the built-ins operations rely on
+  [{ ref: 'location' }, { location: 42 }, 42],
+  [{ len: { ref: 'arr' } }, { arr: [1, 2], Array: {}, Object: {} }, 2],
 
   // Input sanitization
   {
@@ -520,6 +527,8 @@ export const stringManipulation: TestCase[] = [
     { str: new (createClassWithOverloadedMethodInPrototypeChain(String, 'substring'))('hello world') },
     'hello world'.substring(4, 7),
   ],
+  // Operands are evaluated in the probe context, so `str` is the context variable, not the string being sliced
+  [{ substring: [{ ref: 'name' }, 0, { len: { ref: 'str' } }] }, { name: 'hello', str: 'abc' }, 'hel'],
 ]
 
 export const stringComparison: TestCase[] = [
@@ -620,6 +629,29 @@ export const logicalOperators: TestCase[] = [
   [{ all: [{ ref: 'obj' }, { isEmpty: { ref: '@key' } }] }, { obj: { foo: 0 } }, false],
   [{ all: [{ ref: 'obj' }, { isEmpty: { ref: '@key' } }] }, { obj: { '': 0 } }, true],
 
+  // Nested iterations
+  [
+    { any: [{ ref: 'matrix' }, { any: [{ ref: '@it' }, { eq: [{ ref: '@it' }, 4] }] }] },
+    {
+      matrix: [
+        [1, 2],
+        [3, 4],
+      ],
+    },
+    true,
+  ],
+  [
+    { any: [{ ref: 'arr' }, { any: [{ ref: 'obj' }, { eq: [{ ref: '@value' }, { ref: '@it' }] }] }] },
+    { arr: [1, 2], obj: { foo: 2 } },
+    true,
+  ],
+  [
+    { any: [{ ref: 'obj' }, { any: [{ ref: 'arr' }, { eq: [{ ref: '@it' }, { ref: '@key' }] }] }] },
+    { obj: { foo: 0 }, arr: ['foo'] },
+    true,
+  ],
+  [{ ref: '@it' }, {}, new ReferenceError('$dd_it is not defined')],
+
   [{ or: [{ ref: 'bar' }, { ref: 'foo' }] }, { bar: 42 }, 42],
   [{ or: [{ ref: 'bar' }, { ref: 'foo' }] }, { bar: 0 }, new ReferenceError('foo is not defined')],
 
@@ -645,6 +677,11 @@ export const collectionOperations: TestCase[] = [
     { filter: [{ ref: 'obj' }, { not: { isEmpty: { ref: '@key' } } }] },
     { obj: { foo: 1, bar: 2, '': 3 } },
     { foo: 1, bar: 2 },
+  ],
+  [
+    { filter: [{ ref: 'obj' }, { eq: [{ ref: '@value' }, { ref: 'acc' }] }] },
+    { obj: { foo: 1, bar: 2 }, acc: 2 },
+    { bar: 2 },
   ],
 ]
 
@@ -772,6 +809,8 @@ export const typeAndDefinitionChecks: TestCase[] = [
   [{ instanceof: [{ ref: 'foo' }, 'undefined'] }, { foo: undefined }, true],
   [{ instanceof: [{ ref: 'foo' }, 'symbol'] }, { foo: Symbol('foo') }, true],
   [{ instanceof: [{ ref: 'foo' }, 'null'] }, { foo: null }, false], // typeof null is 'object'
+  [{ instanceof: [{ ref: 'foo' }, 'undefined'] }, {}, true], // Like `typeof`, doesn't throw on undeclared variables
+  [{ instanceof: [{ getmember: [{ ref: 'foo' }, 'bar'] }, 'undefined'] }, {}, new ReferenceError()],
 
   // Objects
   [{ instanceof: [{ ref: 'bar' }, 'Object'] }, { bar: {} }, true],
@@ -792,16 +831,7 @@ export const typeAndDefinitionChecks: TestCase[] = [
   [{ isDefined: { ref: 'foo' } }, { bar: 42 }, false],
   [{ isDefined: { ref: 'bar' } }, { bar: 42 }, true],
   [{ isDefined: { ref: 'bar' } }, { bar: undefined }, true],
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'const foo = undefined', expected: false },
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'const foo = 42', expected: false },
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'let foo', expected: false },
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'let foo = undefined', expected: false },
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'let foo = 42', expected: false },
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'var foo', expected: true }, // var is hoisted
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'var foo = undefined', expected: true }, // var is hoisted
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'var foo = 42', expected: true }, // var is hoisted
-  { ast: { isDefined: { ref: 'foo' } }, suffix: 'function foo () {}', expected: true }, // function is hoisted
-  { ast: { isDefined: { ref: 'foo' } }, suffix: '', expected: false },
+  [{ isDefined: { ref: 'Infinity' } }, {}, true],
 ]
 
 /**
