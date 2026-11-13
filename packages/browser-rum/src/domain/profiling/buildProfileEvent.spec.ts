@@ -252,6 +252,8 @@ describe('buildProfileEventAttributes', () => {
         long_task: {
           id: ['longtask-123', 'longtask-456'],
         },
+        action: undefined,
+        vital: undefined,
       }
 
       expect(result).toEqual(expected)
@@ -265,6 +267,10 @@ describe('buildProfileEventAttributes', () => {
       const expected: ProfileEventAttributes = {
         application: { id: applicationId },
         session: { id: sessionId },
+        view: undefined,
+        long_task: undefined,
+        action: undefined,
+        vital: undefined,
       }
 
       expect(result).toEqual(expected)
