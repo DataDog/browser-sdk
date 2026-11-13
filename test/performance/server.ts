@@ -70,7 +70,7 @@ function getProbesForService(service: string | undefined): object[] {
         id: 'benchmark-probe-add1',
         version: 1,
         type: 'LOG_PROBE',
-        where: { typeName: 'instrumented.ts', methodName: 'add1' },
+        where: { functionId: 'instrumented.ts;add1', typeName: 'instrumented.ts', methodName: 'add1' },
         template: 'add1 called',
         segments: [{ str: 'add1 called' }],
         captureSnapshot: false,

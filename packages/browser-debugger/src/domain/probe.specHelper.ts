@@ -5,7 +5,7 @@ export function createProbe(overrides: Partial<Probe> = {}): Probe {
     id: 'test-probe',
     version: 0,
     type: 'LOG_PROBE',
-    where: { typeName: 'test.js', methodName: 'testMethod' },
+    where: { functionId: 'test.js;testMethod', typeName: 'test.js', methodName: 'testMethod' },
     template: 'Test message',
     captureSnapshot: true,
     capture: { maxReferenceDepth: 3 },
