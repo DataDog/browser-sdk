@@ -102,6 +102,7 @@ For deeper context, see:
 
 - Test framework: Jasmine API on Vitest Browser Mode (via a shim in `test/unit-vitest/`). Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
 - Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
+- Specs are being migrated from the Jasmine API to the Vitest API. Write new specs with the Vitest API (`import { describe, expect, it, vi } from 'vitest'`), unless they depend on a test helper that still returns Jasmine spies. Convert existing specs with `node scripts/test/jasmine-to-vitest.ts <files or directories>`, fix what it reports, then add the paths to `VITEST_API_SPEC_FILES` in `eslint.config.ts`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Prefer `collectAsyncCalls(spy, n)` over `waitFor(() => spy.calls.count() > 0)` for waiting on spy calls
 - Don't destructure methods from `spy.calls` (e.g., `argsFor`, `mostRecent`) - use `calls.argsFor()` to avoid `@typescript-eslint/unbound-method` errors
