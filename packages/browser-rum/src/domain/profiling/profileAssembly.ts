@@ -1,7 +1,7 @@
 import type { ProfilerTrace } from '@datadog/js-core/util'
 import { mockable } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
-import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
+import { elapsed, clocksOrigin } from '@datadog/js-core/time'
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace } from '../../types'
 import type { ProfilingPayload, RUMProfilerConfiguration } from './types'
@@ -24,8 +24,12 @@ export function createProfileAssembly(
   const vitalHistory = mockable(createVitalHistory)(lifeCycle)
   const profilerViewHistory = mockable(createProfilerViewHistory)(lifeCycle, viewHistory)
 
-  function assemble(trace: ProfilerTrace, startClocks: ClocksState, sessionId: string | undefined) {
-    const endClocks = clocksNow()
+  function assemble(
+    trace: ProfilerTrace,
+    startClocks: ClocksState,
+    endClocks: ClocksState,
+    sessionId: string | undefined
+  ) {
     const duration = elapsed(startClocks.relative, endClocks.relative)
     const views = profilerViewHistory.findAll(startClocks.relative, duration).reverse()
     const longTasks = longTaskHistory.findAll(startClocks.relative, duration)

@@ -202,10 +202,11 @@ export function createRumProfiler(
     runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     const { startClocks, sessionId } = runningInstance
+    const endClocks = clocksNow()
     runningInstance.profiler
       .stop()
       .then((trace) => {
-        profileAssembly.assemble(trace, startClocks, sessionId)
+        profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
       })
       .catch(monitorError)
   }

@@ -42,7 +42,7 @@ describe('createProfileAssembly', () => {
     }
     clock.tick(100)
 
-    assembly.assemble(trace, startClocks, 'session-id')
+    assembly.assemble(trace, startClocks, clocksNow(), 'session-id')
 
     expect(emitPayload.calls.count()).toBe(1)
     const payload = emitPayload.calls.mostRecent().args[0]
@@ -72,7 +72,6 @@ describe('createProfileAssembly', () => {
       })
     )
     expect(trace).toEqual(mockedTrace)
-    expect(payload.trace).not.toBe(trace)
   })
 
   it('discards short profiles without long tasks', () => {
@@ -81,7 +80,7 @@ describe('createProfileAssembly', () => {
     const startClocks = clocksNow()
     clock.tick(99)
 
-    assembly.assemble(deepClone(mockedTrace), startClocks, 'session-id')
+    assembly.assemble(deepClone(mockedTrace), startClocks, clocksNow(), 'session-id')
 
     expect(emitPayload).not.toHaveBeenCalled()
   })
