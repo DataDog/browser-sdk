@@ -57,83 +57,46 @@ export function buildProfileEvent(
 
 /**
  * Builds attributes for the Profile Event.
- *
- * @param profilerTrace - Profiler trace
- * @param applicationId - application id.
- * @param sessionId - session id.
- * @returns Additional attributes.
  */
 export function buildProfileEventAttributes(
-  profilerTrace: BrowserProfilerTrace,
+  { views, longTasks, actions, vitals }: BrowserProfilerTrace,
   applicationId: string,
   sessionId: string | undefined
 ): ProfileEventAttributes {
-  // Extract view ids and names from the profiler trace and add them as attributes of the profile event.
-  // This will be used to filter the profiles by @view.id and/or @view.name.
-  const { ids, names } = extractViewIdsAndNames(profilerTrace.views)
+  const longTaskIds = longTasks.map(({ id }) => id).filter((id) => id !== undefined)
+  const actionIds = actions?.map(({ id }) => id) ?? []
 
-  const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
-
-  const actionIds: string[] =
-    profilerTrace.actions?.map((longTask) => longTask.id).filter((id) => id !== undefined) ?? []
-
-  const { ids: vitalIds, labels: vitalLabels } = extractVitalIdsAndLabels(profilerTrace.vitals)
-
-  const attributes: ProfileEventAttributes = { application: { id: applicationId } }
-
-  if (sessionId) {
-    attributes.session = { id: sessionId }
+  return {
+    application: { id: applicationId },
+    session: sessionId ? { id: sessionId } : undefined,
+    view: extractViewAttributes(views),
+    long_task: longTaskIds.length ? { id: longTaskIds } : undefined,
+    action: actionIds.length ? { id: actionIds, label: [] } : undefined,
+    vital: extractVitalAttributes(vitals),
   }
-  if (ids.length) {
-    attributes.view = { id: ids, name: names }
-  }
-  if (longTaskIds.length) {
-    attributes.long_task = { id: longTaskIds }
-  }
-  if (actionIds.length) {
-    attributes.action = { id: actionIds, label: [] }
-  }
-  if (vitalIds.length) {
-    attributes.vital = { id: vitalIds, label: vitalLabels }
-  }
-  return attributes
 }
 
-function extractViewIdsAndNames(views: RumViewEntry[]): { ids: string[]; names: string[] } {
-  const result: { ids: string[]; names: string[] } = { ids: [], names: [] }
-  for (const view of views) {
-    result.ids.push(view.viewId)
-
-    if (view.viewName) {
-      result.names.push(view.viewName)
-    }
+// This will be used to filter the profiles by @view.id and/or @view.name.
+function extractViewAttributes(views: RumViewEntry[]) {
+  if (!views.length) {
+    return
   }
 
-  // Remove duplicates
-  result.names = Array.from(new Set(result.names))
-
-  return result
+  return {
+    id: views.map(({ viewId }) => viewId),
+    name: Array.from(new Set(views.map(({ viewName }) => viewName).filter((name): name is string => !!name))),
+  }
 }
 
-function extractVitalIdsAndLabels(vitals?: RumProfilerVitalEntry[]): {
-  ids: string[]
-  labels: string[]
-} {
-  const result: { ids: string[]; labels: string[] } = { ids: [], labels: [] }
-
-  if (!vitals) {
-    return result
+function extractVitalAttributes(vitals?: RumProfilerVitalEntry[]) {
+  if (!vitals?.length) {
+    return
   }
 
-  for (const vital of vitals) {
-    result.ids.push(vital.id)
-    result.labels.push(vital.label)
+  return {
+    id: vitals.map(({ id }) => id),
+    label: Array.from(new Set(vitals.map(({ label }) => label))),
   }
-
-  // Remove duplicates
-  result.labels = Array.from(new Set(result.labels))
-
-  return result
 }
 
 function buildProfileEventTags(tags: string[]): string[] {

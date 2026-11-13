@@ -2,20 +2,22 @@ import type { ProfilerTrace } from '@datadog/js-core/util'
 import { mockable } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
-import type { LifeCycle, ViewHistory } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace } from '../../types'
-import type { RUMProfilerConfiguration } from './types'
-import { createLongTaskHistory } from './longTaskHistory'
-import { createActionHistory } from './actionHistory'
-import { createVitalHistory } from './vitalHistory'
-import { createProfilerViewHistory } from './profilerViewHistory'
+import type { ProfilingPayload, RUMProfilerConfiguration } from './types'
+import { createLongTaskHistory } from './contexts/longTaskHistory'
+import { createActionHistory } from './contexts/actionHistory'
+import { createVitalHistory } from './contexts/vitalHistory'
+import { createProfilerViewHistory } from './contexts/profilerViewHistory'
 import { buildProfilerDebugIds } from './profilerDebugIds'
+import { buildProfileEvent } from './transport/buildProfileEvent'
 
 export function createProfileAssembly(
+  configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration,
-  emitTrace: (trace: BrowserProfilerTrace, sessionId: string | undefined) => void
+  emitPayload: (payload: ProfilingPayload) => void
 ) {
   const longTaskHistory = mockable(createLongTaskHistory)(lifeCycle)
   const actionHistory = mockable(createActionHistory)(lifeCycle)
@@ -41,21 +43,23 @@ export function createProfileAssembly(
       return
     }
 
-    emitTrace(
-      // Enrich trace with time and instance data — create new object to avoid mutating the raw trace
-      Object.assign({} as BrowserProfilerTrace, trace, {
-        startClocks,
-        endClocks,
-        clocksOrigin: clocksOrigin(),
-        longTasks,
-        actions,
-        vitals,
-        views,
-        sampleInterval: profilerConfiguration.sampleIntervalMs,
-        debugIds: buildProfilerDebugIds(trace.resources),
-      }),
-      sessionId
-    )
+    // Enrich trace with time and instance data — create new object to avoid mutating the raw trace
+    const enrichedTrace: BrowserProfilerTrace = {
+      ...trace,
+      startClocks,
+      endClocks,
+      clocksOrigin: clocksOrigin(),
+      longTasks,
+      actions,
+      vitals,
+      views,
+      sampleInterval: profilerConfiguration.sampleIntervalMs,
+      debugIds: buildProfilerDebugIds(trace.resources),
+    }
+    emitPayload({
+      profile: buildProfileEvent(enrichedTrace, configuration, sessionId),
+      trace: enrichedTrace,
+    })
   }
 
   return { assemble }

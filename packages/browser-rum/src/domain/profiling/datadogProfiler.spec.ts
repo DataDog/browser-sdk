@@ -45,11 +45,11 @@ import { createBridgeEmitter } from './transport/profilingBridge'
 import type { RUMProfilerConfiguration } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
-import { createLongTaskHistory, type LongTaskContext } from './longTaskHistory'
-import type { ActionContext } from './actionHistory'
-import { createActionHistory } from './actionHistory'
-import type { VitalContext } from './vitalHistory'
-import { createVitalHistory } from './vitalHistory'
+import { createLongTaskHistory, type LongTaskContext } from './contexts/longTaskHistory'
+import type { ActionContext } from './contexts/actionHistory'
+import { createActionHistory } from './contexts/actionHistory'
+import type { VitalContext } from './contexts/vitalHistory'
+import { createVitalHistory } from './contexts/vitalHistory'
 
 describe('profiler', () => {
   // Store the original pathname

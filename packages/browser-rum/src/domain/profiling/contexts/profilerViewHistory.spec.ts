@@ -3,7 +3,7 @@ import { relativeToClocks } from '@datadog/js-core/time'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { mockViewHistory, setupLocationObserver } from '../../../../browser-rum-core/test'
+import { mockViewHistory, setupLocationObserver } from '../../../../../browser-rum-core/test'
 import { createProfilerViewHistory, getCustomOrDefaultViewName, getDefaultViewName } from './profilerViewHistory'
 
 describe('profilerViewHistory', () => {

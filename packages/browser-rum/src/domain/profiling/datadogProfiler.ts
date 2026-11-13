@@ -21,7 +21,6 @@ import type { QuotaReason } from './quotaCheck'
 import { createProfileAssembly } from './profileAssembly'
 import { createBridgeEmitter } from './transport/profilingBridge'
 import { createFormDataEmitter } from './transport/formDataEmitter'
-import { buildProfileEvent } from './transport/buildProfileEvent'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -41,12 +40,13 @@ export function createRumProfiler(
   const emitPayload = canUseEventBridge()
     ? mockable(createBridgeEmitter)()
     : mockable(createFormDataEmitter)(configuration, lifeCycle, createEncoder)
-  const profileAssembly = createProfileAssembly(lifeCycle, viewHistory, profilerConfiguration, (trace, sessionId) => {
-    emitPayload({
-      profile: buildProfileEvent(trace, configuration, sessionId),
-      trace,
-    })
-  })
+  const profileAssembly = createProfileAssembly(
+    configuration,
+    lifeCycle,
+    viewHistory,
+    profilerConfiguration,
+    emitPayload
+  )
 
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
