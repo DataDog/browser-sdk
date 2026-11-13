@@ -8,6 +8,11 @@ export interface LocationChange {
 }
 
 export function createLocationChangeObservable() {
+  // Without a window (e.g. in a Web Worker), there is no history or hash to track.
+  if (!globalObject.window) {
+    return new Observable<LocationChange>()
+  }
+
   let currentLocation = shallowClone(getLocation())
 
   return new Observable<LocationChange>((observable) => {

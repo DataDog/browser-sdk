@@ -19,6 +19,7 @@ import {
   isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import {
+  globalObject,
   mockable,
   setInterval,
   clearInterval,
@@ -228,7 +229,7 @@ function newView(
   let documentVersion = 0
   let endClocks: ClocksState | undefined
   let manualLoadingTime: Duration | undefined
-  const location = shallowClone(mockable(window.location))
+  const location = shallowClone(mockable(globalObject.location))
   const contextManager = createContextManager()
 
   let sessionIsActive = true

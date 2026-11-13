@@ -1,4 +1,5 @@
 import { monitor } from '../entries/monitor'
+import { globalObject } from '../util/globalObject'
 import { noop } from '../util/noop'
 import { Observable } from '../util/observable'
 import { getZoneJsOriginalValue } from '../util/getZoneJsOriginalValue'
@@ -69,9 +70,17 @@ export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRec
  * {@link getMutationObserverConstructor}; subscribing throws if `MutationObserver` is not
  * available.
  *
- * @returns An observable of mutation record batches, as reported by `MutationObserver`.
+ * Without a document (e.g. in a Web Worker), there is no DOM to observe: the returned observable
+ * never emits.
+ *
+ * @returns An observable of mutation record batches, as reported by `MutationObserver`, or an
+ * observable that never emits when there is no document.
  */
 export function createDOMMutationObservable() {
+  // Feature guard: no document, no DOM mutations to observe
+  if (!globalObject.document) {
+    return new Observable<MutationRecord[]>()
+  }
   const MutationObserver = getMutationObserverConstructor()
 
   return new Observable<MutationRecord[]>((observable) => {
