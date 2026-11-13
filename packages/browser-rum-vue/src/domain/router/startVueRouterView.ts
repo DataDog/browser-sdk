@@ -1,16 +1,4 @@
-import { display } from '@datadog/browser-core'
 import type { RouteLocationMatched } from 'vue-router'
-import { onRumInit } from '../vuePlugin'
-
-export function startVueRouterView(matched: RouteLocationMatched[], path: string) {
-  onRumInit((configuration, rumPublicApi) => {
-    if (!configuration.router) {
-      display.warn('`router: true` is missing from the vue plugin configuration, the view will not be tracked.')
-      return
-    }
-    rumPublicApi.startView(computeViewName(matched, path))
-  })
-}
 
 export function computeViewName(matched: RouteLocationMatched[], path: string): string {
   if (!matched || matched.length === 0) {

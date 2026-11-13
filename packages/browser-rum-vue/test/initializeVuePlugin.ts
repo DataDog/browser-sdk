@@ -7,9 +7,9 @@ import type {
 import { noop } from '@datadog/js-core/util'
 import type { VuePluginConfiguration } from '../src/domain/vuePlugin'
 import { vuePlugin, resetVuePlugin } from '../src/domain/vuePlugin'
-import { registerCleanupTask } from '../../browser-core/test'
+import { registerCleanupTask, waitNextMicrotask } from '../../browser-core/test'
 
-export function initializeVuePlugin({
+export async function initializeVuePlugin({
   configuration = {},
   initConfiguration = {},
   publicApi = {},
@@ -29,4 +29,6 @@ export function initializeVuePlugin({
   } as RumPluginOnInitOptions)
   plugin.onRumStart({ addError })
   registerCleanupTask(() => resetVuePlugin())
+  // Buffered views and errors are replayed, and new ones delivered, after a microtask
+  await waitNextMicrotask()
 }
