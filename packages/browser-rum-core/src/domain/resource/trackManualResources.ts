@@ -9,6 +9,9 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { EventTracker } from '../eventTracker'
 import { sanitizeIfLongDataUrl } from './resourceUtils'
 
+const TRACE_ID_KEY = '_dd.trace_id'
+const SPAN_ID_KEY = '_dd.span_id'
+
 export interface ResourceOptions {
   /**
    * Resource type
@@ -122,6 +125,3 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
     stopResource: stopManualResource,
   }
 }
-
-const TRACE_ID_KEY = '_dd.trace_id'
-const SPAN_ID_KEY = '_dd.span_id'
