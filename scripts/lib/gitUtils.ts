@@ -136,3 +136,41 @@ async function callGitHubApi<T>(method: string, path: string, token: OctoStsToke
     throw new Error(`Failed to call GitHub API: ${method} ${path}`, { cause: error })
   }
 }
+
+export interface WorkflowRunRef {
+  workflow_run_id: number
+  html_url: string
+}
+
+export interface WorkflowRun {
+  status: string
+  conclusion: string | null
+  html_url: string
+}
+
+/**
+ * Dispatch a `workflow_dispatch` workflow and return the run it started. The token needs the
+ * `actions: write` permission.
+ *
+ * @param workflowFile - The workflow file name, e.g. `publish-npm.yml`.
+ * @param params - The dispatch parameters.
+ * @param params.ref - The git ref to run the workflow on.
+ * @param params.inputs - The workflow inputs (all strings).
+ * @param token - The GitHub token.
+ */
+export function dispatchWorkflow(
+  workflowFile: string,
+  { ref, inputs }: { ref: string; inputs: Record<string, string> },
+  token: OctoStsToken
+): Promise<WorkflowRunRef> {
+  return callGitHubApi<WorkflowRunRef>('POST', `actions/workflows/${workflowFile}/dispatches`, token, {
+    ref,
+    inputs,
+    // Makes GitHub answer with the created run, instead of an empty 204
+    return_run_details: true,
+  })
+}
+
+export function getWorkflowRun(runId: number, token: OctoStsToken): Promise<WorkflowRun> {
+  return callGitHubApi<WorkflowRun>('GET', `actions/runs/${runId}`, token)
+}

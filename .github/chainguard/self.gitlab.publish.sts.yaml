@@ -1,0 +1,11 @@
+issuer: https://gitlab.ddbuild.io
+
+subject_pattern: 'project_path:DataDog/browser-sdk:ref_type:tag.*'
+
+claim_pattern:
+  project_path: 'DataDog/browser-sdk'
+  ref_type: 'tag'
+
+# Used by step-6_publish-npm to dispatch the publish-npm.yml workflow on the release tag and wait for its run.
+permissions:
+  actions: write
