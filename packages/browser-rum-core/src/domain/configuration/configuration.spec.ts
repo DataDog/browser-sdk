@@ -1,3 +1,4 @@
+import type { TrustedScriptURL } from 'trusted-types/lib'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { InitConfiguration } from '@datadog/browser-core'
 import {
@@ -15,6 +16,7 @@ import type {
 import {
   EXHAUSTIVE_INIT_CONFIGURATION,
   mockEventBridge,
+  registerCleanupTask,
   SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
 } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
@@ -968,6 +970,57 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('workerUrl', () => {
+    it('preserves a genuine TrustedScriptURL', () => {
+      const workerUrl = { toString: () => '/worker.js' } as TrustedScriptURL
+      mockTrustedTypes((value) => value === workerUrl)
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl })!.workerUrl).toBe(workerUrl)
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+    })
+
+    it('rejects objects that only stringify like a URL', () => {
+      const workerUrl = { toString: () => '/worker.js' }
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: workerUrl as any })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    })
+
+    it('rejects other Trusted Types', () => {
+      const workerUrl = { toString: () => '/worker.js' } as TrustedScriptURL
+      mockTrustedTypes(() => false)
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          workerUrl,
+        })
+      ).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    })
+
+    it('keeps string validation when Trusted Types are unavailable', () => {
+      mockTrustedTypes(undefined)
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '/worker.js' })!.workerUrl
+      ).toBe('/worker.js')
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: {} as any })).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    })
+
+    it('rejects object URLs when a Trusted Types tinyfill lacks isScriptURL', () => {
+      mockTrustedTypes(undefined, true)
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '/worker.js' })!.workerUrl
+      ).toBe('/worker.js')
+      expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: {} as any })).toBeUndefined()
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+    })
+
+    it('treats an empty string as absent', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, workerUrl: '' })!.workerUrl
+      ).toBeUndefined()
+    })
+
     it('defaults to undefined', () => {
       const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
       expect(configuration.workerUrl).toBeUndefined()
@@ -983,6 +1036,21 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toBe('https://example.org/worker.js')
     })
   })
+
+  function mockTrustedTypes(isScriptURL: ((value: unknown) => boolean) | undefined, tinyfill = false) {
+    const trustedTypesDescriptor = Object.getOwnPropertyDescriptor(window, 'trustedTypes')
+    Object.defineProperty(window, 'trustedTypes', {
+      configurable: true,
+      value: tinyfill ? { createPolicy: () => undefined } : isScriptURL && { isScriptURL },
+    })
+    registerCleanupTask(() => {
+      if (trustedTypesDescriptor) {
+        Object.defineProperty(window, 'trustedTypes', trustedTypesDescriptor)
+      } else {
+        delete (window as Window & { trustedTypes?: unknown }).trustedTypes
+      }
+    })
+  }
 
   describe('version parameter validation', () => {
     it('should not reject null', () => {

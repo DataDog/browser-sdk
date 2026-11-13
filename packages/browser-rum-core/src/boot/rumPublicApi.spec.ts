@@ -1,3 +1,4 @@
+import type { TrustedScriptURL } from 'trusted-types/lib'
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type { DeflateWorker } from '@datadog/browser-core'
@@ -13,6 +14,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
   mockClock,
+  registerCleanupTask,
   waitNextMicrotask,
   mockEventBridge,
   createFakeTelemetryObject,
@@ -195,6 +197,66 @@ describe('rum public api', () => {
   })
 
   describe('getInitConfiguration', () => {
+    it('preserves the worker URL Trusted Type when cloning the configuration', () => {
+      const workerUrl = { toString: () => '/worker.js' } as TrustedScriptURL
+      mockTrustedTypes((value) => value === workerUrl)
+
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, workerUrl })
+      expect(rumPublicApi.getInitConfiguration()!.workerUrl).toBe(workerUrl)
+    })
+
+    for (const workerUrl of [undefined, '/worker.js']) {
+      it(`clones the configuration with workerUrl ${workerUrl} when a Trusted Types tinyfill lacks isScriptURL`, () => {
+        mockTrustedTypes(undefined, true)
+        const { rumPublicApi } = makeRumPublicApiWithDefaults()
+        const configuration = { ...DEFAULT_INIT_CONFIGURATION, workerUrl }
+
+        rumPublicApi.init(configuration)
+
+        expect(rumPublicApi.getInitConfiguration()).toEqual(configuration)
+        expect(rumPublicApi.getInitConfiguration()).not.toBe(configuration)
+      })
+    }
+
+    for (const trustedTypesAvailable of [true, false]) {
+      it(`clones an invalid worker URL when initialization fails with Trusted Types ${
+        trustedTypesAvailable ? 'available' : 'unavailable'
+      }`, () => {
+        mockTrustedTypes(trustedTypesAvailable ? () => false : undefined)
+        const workerUrl = { nested: { value: 'original' } }
+        const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION }
+        Reflect.set(initConfiguration, 'workerUrl', workerUrl)
+        const displayErrorSpy = spyOn(display, 'error')
+        const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+        rumPublicApi.init(initConfiguration)
+
+        expect(displayErrorSpy).toHaveBeenCalledWith('"workerUrl" must be a non-empty string or a TrustedScriptURL')
+        expect(startRumSpy).not.toHaveBeenCalled()
+        const clonedWorkerUrl: unknown = rumPublicApi.getInitConfiguration()!.workerUrl
+        expect(clonedWorkerUrl).toEqual(workerUrl)
+        expect(clonedWorkerUrl).not.toBe(workerUrl)
+        workerUrl.nested.value = 'changed'
+        expect(clonedWorkerUrl).toEqual({ nested: { value: 'original' } })
+      })
+    }
+
+    function mockTrustedTypes(isScriptURL: ((value: unknown) => boolean) | undefined, tinyfill = false) {
+      const trustedTypesDescriptor = Object.getOwnPropertyDescriptor(window, 'trustedTypes')
+      Object.defineProperty(window, 'trustedTypes', {
+        configurable: true,
+        value: tinyfill ? { createPolicy: () => undefined } : isScriptURL && { isScriptURL },
+      })
+      registerCleanupTask(() => {
+        if (trustedTypesDescriptor) {
+          Object.defineProperty(window, 'trustedTypes', trustedTypesDescriptor)
+        } else {
+          delete (window as Window & { trustedTypes?: unknown }).trustedTypes
+        }
+      })
+    }
+
     it('clones the init configuration', () => {
       const { rumPublicApi } = makeRumPublicApiWithDefaults()
 
