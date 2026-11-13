@@ -91,7 +91,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     const duration = elapsed(stopped.startClocks.relative, stopClocks.relative)
 
-    const { context, traceInfo } = extractTraceInfo(stopped.context)
+    const { [TRACE_ID_KEY]: traceId, [SPAN_ID_KEY]: spanId, ...context } = stopped.context ?? {}
 
     const rawRumEvent: RawRumResourceEvent = {
       date: stopped.startClocks.timeStamp,
@@ -105,7 +105,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
         status_code: options.statusCode,
         size: options.size,
       },
-      _dd: traceInfo,
+      _dd: typeof traceId === 'string' && typeof spanId === 'string' ? { trace_id: traceId, span_id: spanId } : {},
       context,
     }
 
@@ -126,16 +126,3 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 const TRACE_ID_KEY = '_dd.trace_id'
 const SPAN_ID_KEY = '_dd.span_id'
 
-function extractTraceInfo(context: Context | undefined): {
-  context: Context | undefined
-  traceInfo: RawRumResourceEvent['_dd']
-} {
-  if (!context || !(TRACE_ID_KEY in context || SPAN_ID_KEY in context)) {
-    return { context, traceInfo: {} }
-  }
-  const { [TRACE_ID_KEY]: traceId, [SPAN_ID_KEY]: spanId, ...rest } = context
-  return {
-    context: rest,
-    traceInfo: typeof traceId === 'string' && typeof spanId === 'string' ? { trace_id: traceId, span_id: spanId } : {},
-  }
-}
