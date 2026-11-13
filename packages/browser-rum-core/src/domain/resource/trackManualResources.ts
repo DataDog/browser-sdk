@@ -125,4 +125,3 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
 const TRACE_ID_KEY = '_dd.trace_id'
 const SPAN_ID_KEY = '_dd.span_id'
-
