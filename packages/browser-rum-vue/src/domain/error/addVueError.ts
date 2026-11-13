@@ -2,7 +2,7 @@ import type { ComponentInternalInstance, ComponentPublicInstance } from 'vue'
 import { clocksNow } from '@datadog/js-core/time'
 import { callMonitored } from '@datadog/js-core/monitor'
 import { createHandlingStack } from '@datadog/browser-core'
-import { onRumStart } from '../vuePlugin'
+import { addVueErrorWhenReady } from '../vuePlugin'
 
 /**
  * Add a Vue error to the RUM session.
@@ -19,20 +19,17 @@ import { onRumStart } from '../vuePlugin'
  * ```
  */
 export function addVueError(error: unknown, instance: ComponentPublicInstance | null, info: string) {
-  const handlingStack = createHandlingStack('vue error')
-  const startClocks = clocksNow()
-  onRumStart((addError) => {
-    callMonitored(() => {
-      addError({
-        error,
-        handlingStack,
-        componentStack: buildComponentStack(instance, info),
-        startClocks,
-        context: {
-          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
-          framework: 'vue',
-        },
-      })
+  callMonitored(() => {
+    // Build the whole payload now so the buffered error does not retain the component instance
+    addVueErrorWhenReady({
+      error,
+      handlingStack: createHandlingStack('vue error'),
+      componentStack: buildComponentStack(instance, info),
+      startClocks: clocksNow(),
+      context: {
+        ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
+        framework: 'vue',
+      },
     })
   })
 }
