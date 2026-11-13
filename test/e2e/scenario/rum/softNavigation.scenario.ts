@@ -15,7 +15,7 @@ test.describe('soft navigation', () => {
   `
 
   createTest('reports LCP and FCP on a route_change view created from a user-initiated soft navigation')
-    .withRum({ enableExperimentalFeatures: ['soft_navigation'] })
+    .withRum({ betaTrackSoftNavigations: true })
     .withBody(NAV_BUTTON)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Excludes chromium-pinned (Chrome 120), which predates the Soft Navigation API (Chrome 151+).
@@ -37,7 +37,7 @@ test.describe('soft navigation', () => {
     })
 
   createTest('does not error on browsers without the soft navigation API')
-    .withRum({ enableExperimentalFeatures: ['soft_navigation'] })
+    .withRum({ betaTrackSoftNavigations: true })
     .withBody(NAV_BUTTON)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Feature-detect instead of matching project names -- chromium, chromium-pinned, and

@@ -18,6 +18,19 @@ import { setupViewTest } from './setupViewTest.specHelper'
 import { isLayoutShiftSupported } from './viewMetrics/trackCumulativeLayoutShift'
 import { isInteractionToNextPaintSupported } from './viewMetrics/trackInteractionToNextPaint'
 
+function getLatestUpdateForView(
+  viewId: string,
+  getViewUpdate: (index: number) => ViewEvent,
+  getViewUpdateCount: () => number
+) {
+  for (let i = getViewUpdateCount() - 1; i >= 0; i--) {
+    if (getViewUpdate(i).id === viewId) {
+      return getViewUpdate(i)
+    }
+  }
+  return undefined
+}
+
 function expireSession(lifeCycle: LifeCycle, endClocks: ClocksState = relativeToClocks(relativeNow())) {
   lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
 }
@@ -630,19 +643,6 @@ describe('view metrics', () => {
   })
 
   describe('route change view metrics (soft navigation)', () => {
-    function getLatestUpdateForView(
-      viewId: string,
-      getViewUpdate: (index: number) => ViewEvent,
-      getViewUpdateCount: () => number
-    ) {
-      for (let i = getViewUpdateCount() - 1; i >= 0; i--) {
-        if (getViewUpdate(i).id === viewId) {
-          return getViewUpdate(i)
-        }
-      }
-      return undefined
-    }
-
     it('does not track LCP for route_change views when the experimental feature is disabled', () => {
       const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = viewTest
       startView()
@@ -771,6 +771,57 @@ describe('view metrics', () => {
       const latestUpdateForFirstView = getLatestUpdateForView(firstRouteChangeViewId, getViewUpdate, getViewUpdateCount)
       expect(latestUpdateForFirstView!.initialViewMetrics).toEqual({})
     })
+  })
+})
+
+describe('view metrics when betaTrackSoftNavigations is true', () => {
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
+  let viewTest: ViewTest
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+
+  beforeEach(() => {
+    clock = mockClock()
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { betaTrackSoftNavigations: true } })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
+  it('tracks LCP for route_change views when betaTrackSoftNavigations is enabled and the browser supports it', () => {
+    const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = viewTest
+    startView()
+    clock.tick(0)
+
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, {
+        startTime: clock.relative(0),
+        interactionId: 7,
+        getLargestInteractionContentfulPaint: () =>
+          createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
+            interactionId: 7,
+            largestContentfulPaint: createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+              startTime: clock.relative(200),
+              size: 100,
+            }),
+          }),
+      }),
+    ])
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const routeChangeViewId = getViewCreate(getViewCreateCount() - 1).id
+    const routeChangeUpdate = getLatestUpdateForView(routeChangeViewId, getViewUpdate, getViewUpdateCount)!
+    expect(routeChangeUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+    expect(routeChangeUpdate.initialViewMetrics.largestContentfulPaint?.value).toBe(200 as RelativeTime)
+  })
+
+  it('keeps the initial_load view metrics when betaTrackSoftNavigations is enabled', () => {
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(viewTest.getViewUpdate(1).loadingType).toBe(ViewLoadingType.INITIAL_LOAD)
+    expect(viewTest.getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual(jasmine.any(Object))
   })
 })
 
