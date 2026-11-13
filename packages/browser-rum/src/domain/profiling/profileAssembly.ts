@@ -10,7 +10,7 @@ import { createActionHistory } from './contexts/actionHistory'
 import { createVitalHistory } from './contexts/vitalHistory'
 import { createProfilerViewHistory } from './contexts/profilerViewHistory'
 import { buildProfilerDebugIds } from './profilerDebugIds'
-import { buildProfileEvent } from './transport/buildProfileEvent'
+import { buildProfileEvent } from './buildProfileEvent'
 
 export function createProfileAssembly(
   configuration: RumConfiguration,
