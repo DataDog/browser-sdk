@@ -26,7 +26,6 @@
     "typecheck": "tsc -b --noEmit true",
     "dev": "yarn dev-server start",
     "dev-server": "node scripts/dev-server/index.ts",
-    "release": "node ./scripts/release/prepare-release.ts --push",
     "test": "yarn test:unit:watch",
     "test:unit": "vitest run --config test/unit-vitest/vite.config.ts",
     "test:script": "node --test --experimental-test-module-mocks './scripts/**/*.spec.*'",

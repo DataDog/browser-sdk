@@ -97,7 +97,7 @@ git show origin/main:package.json | jq -r '.devDependencies["@playwright/test"]'
 Then:
 
 - Value is main + 1 → bumped, go to b.
-- Value equals main → in a worktree (step 5), set main + 1, commit `👷 Bump CI image to <value>`, push.
+- Value equals main → in a worktree (step 5), set main + 1, commit `chore(ci): Bump CI image to <value>`, push.
 
 **Several:** order them bottom to top: a PR already at main + 1 (Chrome), then PRs with fix commits, then the oldest. Build the stack bottom-up in one worktree. The rebases rewrite the bots' signed commits, so check signing first (step 5). Each local branch must start at its remote tip, using `git branch -f <branch> origin/<branch>` if it isn't checked out elsewhere.
 
@@ -191,7 +191,7 @@ Never check out a PR in the main working copy (`gh pr checkout`): parallel work 
 git fetch origin <branch>
 git worktree add --detach "$TMPDIR/ih-<n>" FETCH_HEAD
 (cd "$TMPDIR/ih-<n>" && yarn install)
-# ...edit, test, commit (see the `writing-commits-and-prs` skill: 👷 gitmoji, signed commits)
+# ...edit, test, commit (see the `writing-commits-and-prs` skill: `chore(deps)` / `chore(ci)` type, signed commits)
 git -C "$TMPDIR/ih-<n>" push origin HEAD:refs/heads/<branch> \
   && git worktree remove --force "$TMPDIR/ih-<n>"
 ```

@@ -8,7 +8,7 @@ updates:
       interval: 'daily'
     open-pull-requests-limit: 0
     commit-message:
-      prefix: '👷'
+      prefix: 'chore(deps)'
 
   - package-ecosystem: npm
     directory: /
@@ -16,7 +16,7 @@ updates:
       interval: 'daily'
     open-pull-requests-limit: 0
     commit-message:
-      prefix: '👷'
+      prefix: 'chore(deps)'
     ignore:
       # update karma-webpack: RUM-3130
       - dependency-name: 'karma-webpack'

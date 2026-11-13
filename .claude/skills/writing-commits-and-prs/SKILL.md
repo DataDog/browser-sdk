@@ -1,27 +1,33 @@
 ---
 name: writing-commits-and-prs
-description: Use when writing a commit message or PR title in browser-sdk, choosing a gitmoji, or opening a pull request. Use when the "Lint PR title" check fails or a PR is blocked on unsigned commits.
+description: Use when writing a commit message or PR title in browser-sdk, choosing a Conventional Commits type or scope, or opening a pull request. Use when the "Lint PR title" check fails or a PR is blocked on unsigned commits.
 ---
 
 # Commits and PRs in browser-sdk
 
 ## Overview
 
-PRs are squash-merged, so **the PR title becomes the commit on `main` and the changelog line**. At release, the changelog generator files each line under Public or Internal Changes by its first emoji. Picking the gitmoji is a release-notes decision.
+PRs are squash-merged, so **the PR title becomes the commit on `main` and the changelog line**. release-please reads these commits: the type picks the changelog section and the version bump (`feat` → minor, `!` → major, anything else → patch). Picking the type is a release-notes decision.
 
 ## Format
 
 ```
-<gitmoji> [JIRA-123] Short description
+type(scope[,scope])[!]: Description
 ```
 
-- Gitmoji first. The "Lint PR title" CI check (`scripts/check-pr-title.ts`) rejects anything else, except release PRs titled `vX.Y.Z`.
-- Ticket optional, after the emoji: `✨ [RUM-16985] Report WASM debug info type`
-- Commits inside a PR follow the same convention (`👌` for review follow-ups).
+- Conventional Commits with a **mandatory scope**. The "Lint PR title" CI check (`scripts/check-pr-title.ts`) rejects anything else.
+- Examples: `feat(rum): Add view name API`, `fix(rum,logs): Drop empty context`, `ci(e2e): Quarantine flaky test`, `chore(deps): Update vite to v8.4`.
+- No Jira key in the title (CI rejects `[RUM-123]`): it would end up in the public changelog. Put `Refs: RUM-123` in the PR description and the key in the branch name.
+- Commits inside a PR are squashed away; use the same convention for consistency.
 
-## Picking the Gitmoji
+## Picking the type and scope
 
-Pick from the list in `docs/DEVELOPMENT.md`. Its "User-facing changes" are the ones that land under Public Changes. CI only checks that the title starts with one of them (`scripts/lib/gitmoji.ts`), not that you picked the right one.
+Types and scopes are listed in `docs/DEVELOPMENT.md` and defined in `scripts/lib/conventionalCommits.ts`.
+
+- **Public types** (`feat`, `fix`, `perf`, `docs`, `exp`) land in the public changelog and need **package scopes** (`rum`, `logs`, `core`, `react`, …).
+- **Internal types** (`build`, `chore`, `ci`, `refactor`, `test`, `style`) land under "Internal Changes" and accept any scope. Internal scopes (`ci`, `deps`, `e2e`, `scripts`, `release`, `repo`, …) only go with internal types.
+- Scope = the package the change is about, from a customer's point of view. Several packages: `fix(rum,logs): …`.
+- CI checks that the combination is allowed, not that you picked the right type.
 
 ## Signing
 
@@ -29,14 +35,18 @@ Every commit must be signed. `main` has a `required_signatures` ruleset, so a si
 
 ## Opening the PR
 
-- Branch `<username>/<feature>` from `main`, target `main`.
-- Fill every section of `.github/PULL_REQUEST_TEMPLATE.md`: Motivation, Changes, Test instructions, Checklist. The `manual-testing` skill produces Test instructions.
+- Branch `<username>/<JIRA-KEY>-<feature>` from `main` (or `<username>/<feature>` without a ticket), target `main`.
+- Fill every section of `.github/PULL_REQUEST_TEMPLATE.md`: Motivation (with the `Refs:` line), Changes, Test instructions, Checklist. The `manual-testing` skill produces Test instructions.
 - Don't touch `CHANGELOG.md`, it's generated at release.
 
 ## Common Mistakes
 
-| Mistake                                      | Fix                                                        |
-| -------------------------------------------- | ---------------------------------------------------------- |
-| `🔥` for removing a deprecated public API    | `💥`, otherwise the break hides under Internal Changes     |
-| Ticket before the emoji (`[RUM-123] ✨ ...`) | Emoji first, CI rejects the title otherwise                |
-| Adding a `CHANGELOG.md` entry                | Remove it, the release process generates it from PR titles |
+| Mistake                                        | Fix                                                                     |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| `refactor(rum): Remove deprecated API`         | `feat(rum)!: Remove deprecated API`, otherwise the break is hidden      |
+| `fix(e2e): Fix flaky test`                     | `test(e2e): …`: `fix` is public and needs a package scope               |
+| `feat(rum): [RUM-123] Add view name API`       | Drop the key from the title, add `Refs: RUM-123` to the description     |
+| `feat: Add view name API` (no scope)           | Add the package scope: `feat(rum): …`                                   |
+| Keeping GitHub's `Revert "feat(rum): …"` title | Retitle `revert(rum): …`                                                |
+| `feat(js-core)!: …` for a js-core-only break   | `feat(js-core): …` and describe the break: `!` would bump the SDK major |
+| Adding a `CHANGELOG.md` entry                  | Remove it, the release process generates it from PR titles              |
