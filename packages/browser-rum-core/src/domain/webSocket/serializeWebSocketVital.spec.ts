@@ -225,7 +225,7 @@ describe('serializeWebSocketVital', () => {
       expect(websocket.snapshot!.outbound.silence_before_close).toBeUndefined()
     })
 
-    it('reports no close initiator and no closing duration: both are derived from the vital stream', () => {
+    it('reports no closing duration: it is derived from the vital stream', () => {
       const { websocket } = serializeClosedOnCloseEvent()
 
       expect(fieldsOf(websocket)).toEqual([
@@ -234,12 +234,57 @@ describe('serializeWebSocketVital', () => {
         'closed_date',
         'duration',
         'tracking_end_reason',
+        'close_initiator',
         'close_code',
         'close_reason',
         'was_clean',
         'snapshot_version',
         'snapshot',
       ])
+    })
+
+    describe('close initiator', () => {
+      const UNCLEAN_CLOSE_EVENT = { code: 1006, reason: '', wasClean: false }
+
+      it('is the client when the application started the close and the close was clean', () => {
+        const { websocket } = serializeClosedOnCloseEvent({ state: closedState({ closeStartedByApplication: true }) })
+
+        expect(websocket.close_initiator).toBe('client')
+      })
+
+      it('is the client when the application started the close and the close was unclean', () => {
+        const { websocket } = serializeClosedOnCloseEvent({
+          state: closedState({ closeStartedByApplication: true, closeEvent: UNCLEAN_CLOSE_EVENT }),
+        })
+
+        expect(websocket.close_initiator).toBe('client')
+      })
+
+      it('is the client when the application started the close and tracking ended without a close event', () => {
+        const { websocket } = serializeClosedWithoutCloseEvent({ closeStartedByApplication: true })
+
+        expect(websocket.close_initiator).toBe('client')
+      })
+
+      it('is the server when the application did not start the close and the close was clean', () => {
+        const { websocket } = serializeClosedOnCloseEvent({ state: closedState({ closeStartedByApplication: false }) })
+
+        expect(websocket.close_initiator).toBe('server')
+      })
+
+      it('is unknown when the application did not start the close and the close was unclean', () => {
+        const { websocket } = serializeClosedOnCloseEvent({
+          state: closedState({ closeStartedByApplication: false, closeEvent: UNCLEAN_CLOSE_EVENT }),
+        })
+
+        expect(websocket.close_initiator).toBe('unknown')
+      })
+
+      it('is unknown when the application did not start the close and tracking ended without a close event', () => {
+        const { websocket } = serializeClosedWithoutCloseEvent()
+
+        expect(websocket.close_initiator).toBe('unknown')
+      })
     })
   })
 
@@ -403,6 +448,7 @@ describe('serializeWebSocketVital', () => {
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
+      closeStartedByApplication: false,
       bufferedAmountAtClose: 0,
       silenceBeforeClose: {},
       snapshot: snapshotOf(),
@@ -423,6 +469,7 @@ describe('serializeWebSocketVital', () => {
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 1,
+      closeStartedByApplication: false,
       bufferedAmountAtClose: 0,
       silenceBeforeClose: {},
       ...state,
@@ -481,7 +528,9 @@ describe('serializeWebSocketVital', () => {
   }
 
   /** Tracking ended on the session end, with the connection typically still open, so no close event was received. */
-  function serializeClosedWithoutCloseEvent() {
+  function serializeClosedWithoutCloseEvent({
+    closeStartedByApplication = false,
+  }: { closeStartedByApplication?: boolean } = {}) {
     const event = serializeWebSocketVital({
       phase: 'closed',
       id: 'connection-id',
@@ -489,6 +538,7 @@ describe('serializeWebSocketVital', () => {
       connectingClocks: clocksAt(0),
       endClocks: clocksAt(50),
       snapshotVersion: 2,
+      closeStartedByApplication,
       bufferedAmountAtClose: 0,
       silenceBeforeClose: {},
       snapshot: snapshotOf(),
