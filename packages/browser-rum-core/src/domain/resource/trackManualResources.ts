@@ -24,6 +24,10 @@ export interface ResourceOptions {
 
   /**
    * Resource context
+   *
+   * The reserved keys `_dd.trace_id` and `_dd.span_id` (flat keys) are not kept in the context: when both
+   * are strings (from start or stop, stop wins), they are set as the resource event `_dd.trace_id` and
+   * `_dd.span_id` to link the resource to an APM trace.
    */
   context?: Context
 
@@ -51,6 +55,10 @@ export interface ResourceStopOptions {
 
   /**
    * Resource context
+   *
+   * The reserved keys `_dd.trace_id` and `_dd.span_id` (flat keys) are not kept in the context: when both
+   * are strings (from start or stop, stop wins), they are set as the resource event `_dd.trace_id` and
+   * `_dd.span_id` to link the resource to an APM trace.
    */
   context?: Context
 
@@ -91,6 +99,8 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     const duration = elapsed(stopped.startClocks.relative, stopClocks.relative)
 
+    const { context, traceInfo } = extractTraceInfo(stopped.context)
+
     const rawRumEvent: RawRumResourceEvent = {
       date: stopped.startClocks.timeStamp,
       type: RumEventType.RESOURCE,
@@ -103,8 +113,8 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
         status_code: options.statusCode,
         size: options.size,
       },
-      _dd: {},
-      context: stopped.context,
+      _dd: traceInfo,
+      context,
     }
 
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -118,5 +128,22 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
   return {
     startResource: startManualResource,
     stopResource: stopManualResource,
+  }
+}
+
+const TRACE_ID_KEY = '_dd.trace_id'
+const SPAN_ID_KEY = '_dd.span_id'
+
+function extractTraceInfo(context: Context | undefined): {
+  context: Context | undefined
+  traceInfo: RawRumResourceEvent['_dd']
+} {
+  if (!context || !(TRACE_ID_KEY in context || SPAN_ID_KEY in context)) {
+    return { context, traceInfo: {} }
+  }
+  const { [TRACE_ID_KEY]: traceId, [SPAN_ID_KEY]: spanId, ...rest } = context
+  return {
+    context: rest,
+    traceInfo: typeof traceId === 'string' && typeof spanId === 'string' ? { trace_id: traceId, span_id: spanId } : {},
   }
 }
