@@ -322,6 +322,7 @@ export type RumErrorEvent = CommonProperties &
         | 'linux'
         | 'maui'
         | 'nodejs'
+        | 'unreal'
       /**
        * Resource properties of the error
        */
@@ -710,7 +711,18 @@ export type RumResourceEvent = CommonProperties &
        * Resource type
        */
       readonly type:
-        'document' | 'xhr' | 'beacon' | 'fetch' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other' | 'native'
+        | 'document'
+        | 'xhr'
+        | 'beacon'
+        | 'fetch'
+        | 'css'
+        | 'js'
+        | 'image'
+        | 'font'
+        | 'media'
+        | 'other'
+        | 'native'
+        | 'message'
       /**
        * HTTP method of the resource
        */
@@ -923,6 +935,28 @@ export type RumResourceEvent = CommonProperties &
         [k: string]: unknown
       }
       readonly graphql?: RumGraphql
+      /**
+       * Properties of a message between processes or threads, such as an Electron IPC call. The channel is reported in resource.url
+       */
+      readonly message?: {
+        /**
+         * UUID of the message, the same on every resource that reports it
+         */
+        readonly id: string
+        /**
+         * Side of the message reported by the resource: the sender (source) or a receiver (destination)
+         */
+        readonly role: 'source' | 'destination'
+        /**
+         * Platform API that sent or received the message
+         */
+        readonly api: 'invoke' | 'handle' | 'send' | 'send_sync' | 'on'
+        /**
+         * Whether sending or handling the message failed, as observed by the side reporting the resource
+         */
+        readonly is_error?: boolean
+        [k: string]: unknown
+      }
       [k: string]: unknown
     }
     /**
@@ -1198,7 +1232,7 @@ export type RumVitalWebsocketClosingEvent = RumVitalWebsocketCommonProperties & 
        */
       readonly closing_date: number
       /**
-       * Side that initiated the close. Only reported on this vital, and only as client, since a close observed from the application is always initiated by it. The other values are reported by the connection-level data derived from these vitals
+       * Side that initiated the close. Always client on this vital, since it is only reported when the application calls close(). The websocket_closed vital reports the initiator of every connection, server and unknown included
        */
       readonly close_initiator: 'client' | 'server' | 'unknown'
       [k: string]: unknown
@@ -1247,6 +1281,10 @@ export type RumVitalWebsocketClosedEvent = RumVitalWebsocketCommonProperties & {
        * Whether the connection closed cleanly. Reported when, and only when, the tracking end reason is close_event
        */
       readonly was_clean?: boolean
+      /**
+       * Side that initiated the close, decided when tracking ended. client when the application called close(), server when it did not and the connection closed cleanly, which means the server started the closing handshake, and unknown otherwise, for example when the connection was lost, the opening handshake failed, or tracking ended before the connection closed. Omitted by SDK versions that predate it
+       */
+      readonly close_initiator?: 'client' | 'server' | 'unknown'
       /**
        * Version of the snapshot within its connection, starting at 1 and incremented on every websocket_open vital and on the websocket_closed vital, so that they can be ordered when they are received out of sequence
        */
@@ -1345,6 +1383,7 @@ export interface CommonProperties {
     | 'electron'
     | 'cpp'
     | 'maui'
+    | 'unreal'
   /**
    * View properties
    */
@@ -1717,6 +1756,7 @@ export interface ViewContainerSchema {
       | 'electron'
       | 'cpp'
       | 'maui'
+      | 'unreal'
     [k: string]: unknown
   }
   [k: string]: unknown
