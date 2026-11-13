@@ -46,6 +46,7 @@ test.describe('rum websockets', () => {
 
         const closed = vitals.closed[0].vital.websocket
         expect(closed.tracking_end_reason).toBe('close_event')
+        expect(closed.close_initiator).toBe('client')
         expect(closed.snapshot!.outbound.message_count).toBe(1)
         expect(closed.snapshot!.outbound.message_size_total).toBe(DEFAULT_WS_OUT_MESSAGE.length)
         expect(closed.snapshot!.inbound.message_count).toBe(1)
@@ -68,6 +69,8 @@ test.describe('rum websockets', () => {
         expect(vitals.closing).toHaveLength(0)
         expect(vitals.closed).toHaveLength(1)
         expect(vitals.closed[0].vital.websocket.tracking_end_reason).toBe('close_event')
+        expect(vitals.closed[0].vital.websocket.close_initiator).toBe('server')
+        expect(vitals.closed[0].vital.websocket.was_clean).toBe(true)
       })
 
     createTest('ends tracking with session_end on the view that was active when the session expires')
@@ -86,6 +89,7 @@ test.describe('rum websockets', () => {
         const closedVital = vitals.closed[0]
         const closed = closedVital.vital.websocket
         expect(closed.tracking_end_reason).toBe('session_end')
+        expect(closed.close_initiator).toBe('unknown')
         expect(closed.close_code).toBeUndefined()
         expect(closed.close_reason).toBeUndefined()
         expect(closed.was_clean).toBeUndefined()
@@ -121,6 +125,7 @@ test.describe('rum websockets', () => {
         expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
         const closed = vitals.closed[0].vital.websocket
         expect(closed.tracking_end_reason).toBe('page_terminated')
+        expect(closed.close_initiator).toBe('unknown')
         expect(closed.close_code).toBeUndefined()
         expect(closed.close_reason).toBeUndefined()
         expect(closed.was_clean).toBeUndefined()
@@ -147,6 +152,7 @@ test.describe('rum websockets', () => {
         const vitals = getWebSocketVitals(intakeRegistry)
         expect(vitals.closed).toHaveLength(1)
         expect(vitals.closed[0].vital.websocket.tracking_end_reason).toBe('session_end')
+        expect(vitals.closed[0].vital.websocket.close_initiator).toBe('unknown')
       })
 
     createTest('does not track websocket activity after the session is renewed')
@@ -226,6 +232,7 @@ test.describe('rum websockets', () => {
         expect(vitals.closing).toHaveLength(1)
         expect(vitals.closed).toHaveLength(1)
         expect(vitals.closed[0].vital.websocket.snapshot).toBeUndefined()
+        expect(vitals.closed[0].vital.websocket.close_initiator).toBe('client')
 
         // Firefox logs connection errors for a socket closed during its handshake. They are expected,
         // but any other error must still fail the test.

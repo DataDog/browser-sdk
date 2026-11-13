@@ -439,6 +439,14 @@ export const WebSocketTrackingEndReason = {
 
 export type WebSocketTrackingEndReason = (typeof WebSocketTrackingEndReason)[keyof typeof WebSocketTrackingEndReason]
 
+export const WebSocketCloseInitiator = {
+  CLIENT: 'client',
+  SERVER: 'server',
+  UNKNOWN: 'unknown',
+} as const
+
+export type WebSocketCloseInitiator = (typeof WebSocketCloseInitiator)[keyof typeof WebSocketCloseInitiator]
+
 /** What one phase reports, which is everything a WebSocket vital does not share with the others. */
 interface RawRumWebSocketVitalPayloadOf<Name extends WebSocketVitalName, Properties> {
   name: Name
@@ -478,7 +486,7 @@ export interface RawRumWebSocketOpenVitalProperties {
 export interface RawRumWebSocketClosingVitalProperties {
   closing_date: TimeStamp
   /** Always `client`: a close the SDK observes from the application is initiated by it. */
-  close_initiator: 'client'
+  close_initiator: typeof WebSocketCloseInitiator.CLIENT
 }
 
 export interface RawRumWebSocketClosedVitalProperties {
@@ -487,6 +495,7 @@ export interface RawRumWebSocketClosedVitalProperties {
   closed_date: TimeStamp
   duration: ServerDuration
   tracking_end_reason: WebSocketTrackingEndReason
+  close_initiator: WebSocketCloseInitiator
   close_code?: number
   close_reason?: string
   was_clean?: boolean

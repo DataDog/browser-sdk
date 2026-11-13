@@ -7,7 +7,7 @@ import type {
   RawRumWebSocketVitalPayload,
   RawRumWebSocketVitalSnapshot,
 } from '../../rawRumEvent.types'
-import { RumEventType, VitalType, WebSocketVitalName } from '../../rawRumEvent.types'
+import { RumEventType, VitalType, WebSocketCloseInitiator, WebSocketVitalName } from '../../rawRumEvent.types'
 import type { MessageDirectionAggregate, TrackedConnectionState, WebSocketSnapshot } from './trackedConnection'
 
 /**
@@ -61,7 +61,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
         websocket: {
           id,
           closing_date: toPhaseDate(connectingClocks, state.closingClocks),
-          close_initiator: 'client',
+          close_initiator: WebSocketCloseInitiator.CLIENT,
         },
       })
 
@@ -74,6 +74,7 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
           closed_date: toPhaseDate(connectingClocks, state.endClocks),
           duration: toServerDuration(elapsed(connectingClocks.relative, state.endClocks.relative)),
           tracking_end_reason: state.trackingEndReason,
+          close_initiator: computeCloseInitiator(state),
           close_code: state.closeEvent?.code,
           close_reason: state.closeEvent?.reason,
           was_clean: state.closeEvent?.wasClean,
@@ -82,6 +83,23 @@ export function serializeWebSocketVital(state: TrackedConnectionState): RawRumWe
         },
       })
   }
+}
+
+/**
+ * Browsers fire no event for a Close frame the server sends, so a close the application did not
+ * start is attributed to the server only when the connection then closed cleanly.
+ *
+ * Firefox closes open sockets itself, with code 1001, when the page unloads. If the server answers
+ * before the page is gone, as it can on localhost, that close is clean and reads as the server's.
+ */
+function computeCloseInitiator({
+  closeStartedByApplication,
+  closeEvent,
+}: Extract<TrackedConnectionState, { phase: 'closed' }>): WebSocketCloseInitiator {
+  if (closeStartedByApplication) {
+    return WebSocketCloseInitiator.CLIENT
+  }
+  return closeEvent?.wasClean ? WebSocketCloseInitiator.SERVER : WebSocketCloseInitiator.UNKNOWN
 }
 
 /**

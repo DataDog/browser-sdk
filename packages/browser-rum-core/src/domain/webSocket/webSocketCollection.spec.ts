@@ -556,6 +556,34 @@ describe('webSocketCollection', () => {
       )
     })
 
+    it('reports the client as the close initiator when the application called close()', () => {
+      startTracking()
+      const socket = createOpenConnection()
+
+      callClose(socket)
+      dispatchClose(socket)
+
+      expect(single(closedPayloads()).close_initiator).toBe('client')
+    })
+
+    it('reports the server as the close initiator on a clean close the application did not request', () => {
+      startTracking()
+      const socket = createOpenConnection()
+
+      dispatchClose(socket, { wasClean: true })
+
+      expect(single(closedPayloads()).close_initiator).toBe('server')
+    })
+
+    it('reports an unknown close initiator on an unclean close the application did not request', () => {
+      startTracking()
+      const socket = createOpenConnection()
+
+      dispatchClose(socket, { code: 1006, reason: '', wasClean: false })
+
+      expect(single(closedPayloads()).close_initiator).toBe('unknown')
+    })
+
     it('reports the send queue depth the close event carried', () => {
       startTracking()
       const socket = createOpenConnection()
