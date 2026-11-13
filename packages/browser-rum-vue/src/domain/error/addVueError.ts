@@ -19,13 +19,15 @@ import { addVueErrorWhenReady } from '../vuePlugin'
  * ```
  */
 export function addVueError(error: unknown, instance: ComponentPublicInstance | null, info: string) {
+  const handlingStack = createHandlingStack('vue error')
+  const startClocks = clocksNow()
   callMonitored(() => {
     // Build the whole payload now so the buffered error does not retain the component instance
     addVueErrorWhenReady({
       error,
-      handlingStack: createHandlingStack('vue error'),
+      handlingStack,
       componentStack: buildComponentStack(instance, info),
-      startClocks: clocksNow(),
+      startClocks,
       context: {
         ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
         framework: 'vue',
