@@ -60,6 +60,7 @@ export type TrackedConnectionState = {
       url: string
       endClocks: ClocksState
       trackingEndReason: WebSocketTrackingEndReason
+      closeStartedByApplication: boolean
       /** Present exactly when tracking ended on a close event, the one source of the close outcome. */
       closeEvent?: { code: number; reason: string; wasClean: boolean }
       snapshotVersion: number
@@ -173,6 +174,7 @@ export function createTrackedConnection({
       url,
       endClocks,
       trackingEndReason,
+      closeStartedByApplication: state.phase === 'closing',
       closeEvent,
       snapshotVersion: nextSnapshotVersion(),
       snapshot: openClocks ? buildSnapshotAt(endClocks.relative) : undefined,
