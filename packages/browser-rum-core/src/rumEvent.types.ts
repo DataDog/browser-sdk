@@ -322,6 +322,7 @@ export type RumErrorEvent = CommonProperties &
         | 'linux'
         | 'maui'
         | 'nodejs'
+        | 'unreal'
       /**
        * Resource properties of the error
        */
@@ -710,7 +711,18 @@ export type RumResourceEvent = CommonProperties &
        * Resource type
        */
       readonly type:
-        'document' | 'xhr' | 'beacon' | 'fetch' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other' | 'native'
+        | 'document'
+        | 'xhr'
+        | 'beacon'
+        | 'fetch'
+        | 'css'
+        | 'js'
+        | 'image'
+        | 'font'
+        | 'media'
+        | 'other'
+        | 'native'
+        | 'message'
       /**
        * HTTP method of the resource
        */
@@ -923,6 +935,28 @@ export type RumResourceEvent = CommonProperties &
         [k: string]: unknown
       }
       readonly graphql?: RumGraphql
+      /**
+       * Properties of a message between processes or threads, such as an Electron IPC call. The channel is reported in resource.url
+       */
+      readonly message?: {
+        /**
+         * UUID of the message, the same on every resource that reports it
+         */
+        readonly id: string
+        /**
+         * Side of the message reported by the resource: the sender (source) or a receiver (destination)
+         */
+        readonly role: 'source' | 'destination'
+        /**
+         * Platform API that sent or received the message
+         */
+        readonly api: 'invoke' | 'handle' | 'send' | 'send_sync' | 'on'
+        /**
+         * Whether sending or handling the message failed, as observed by the side reporting the resource
+         */
+        readonly is_error?: boolean
+        [k: string]: unknown
+      }
       [k: string]: unknown
     }
     /**
@@ -1345,6 +1379,7 @@ export interface CommonProperties {
     | 'electron'
     | 'cpp'
     | 'maui'
+    | 'unreal'
   /**
    * View properties
    */
@@ -1717,6 +1752,7 @@ export interface ViewContainerSchema {
       | 'electron'
       | 'cpp'
       | 'maui'
+      | 'unreal'
     [k: string]: unknown
   }
   [k: string]: unknown

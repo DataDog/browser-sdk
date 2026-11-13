@@ -557,6 +557,19 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('betaTrackSoftNavigations', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaTrackSoftNavigations).toBeFalse()
+    })
+
+    it('is true when the option is enabled', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaTrackSoftNavigations: true })!
+          .betaTrackSoftNavigations
+      ).toBeTrue()
+    })
+  })
+
   describe('betaEnableViewUpdates', () => {
     it('defaults to true without a proxy', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeTrue()
@@ -1168,6 +1181,7 @@ describe('serializeRumConfiguration', () => {
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
+      betaTrackSoftNavigations: true,
       trackViewMetricsManually: true,
       sessionReplayCanvasRecording: { enable: true, quality: CanvasRecordingQuality.HIGH },
     }
@@ -1233,6 +1247,7 @@ describe('serializeRumConfiguration', () => {
       track_resource_headers: 'default_headers',
       beta_enable_view_updates: true,
       beta_track_web_sockets: false,
+      beta_track_soft_navigations: true,
       session_replay_canvas_recording: true,
       session_replay_canvas_recording_quality: 'high',
     })
