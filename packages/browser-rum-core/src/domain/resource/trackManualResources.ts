@@ -11,6 +11,7 @@ import { sanitizeIfLongDataUrl } from './resourceUtils'
 
 const TRACE_ID_KEY = '_dd.trace_id'
 const SPAN_ID_KEY = '_dd.span_id'
+const RULE_PSR_KEY = '_dd.rule_psr'
 
 export interface ResourceOptions {
   /**
@@ -26,7 +27,7 @@ export interface ResourceOptions {
   method?: string
 
   /**
-   * Resource context. Keys `_dd.trace_id` and `_dd.span_id` link the resource to an APM trace.
+   * Resource context. Keys `_dd.trace_id`, `_dd.span_id` and `_dd.rule_psr` link the resource to an APM trace.
    */
   context?: Context
 
@@ -53,7 +54,7 @@ export interface ResourceStopOptions {
   size?: number
 
   /**
-   * Resource context. Keys `_dd.trace_id` and `_dd.span_id` link the resource to an APM trace.
+   * Resource context. Keys `_dd.trace_id`, `_dd.span_id` and `_dd.rule_psr` link the resource to an APM trace.
    */
   context?: Context
 
@@ -94,7 +95,13 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     const duration = elapsed(stopped.startClocks.relative, stopClocks.relative)
 
-    const { [TRACE_ID_KEY]: traceId, [SPAN_ID_KEY]: spanId, ...context } = stopped.context ?? {}
+    const {
+      [TRACE_ID_KEY]: traceId,
+      [SPAN_ID_KEY]: spanId,
+      [RULE_PSR_KEY]: rulePsr,
+      ...context
+    } = stopped.context ?? {}
+    const isTraced = typeof traceId === 'string' && typeof spanId === 'string'
 
     const rawRumEvent: RawRumResourceEvent = {
       date: stopped.startClocks.timeStamp,
@@ -108,7 +115,9 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
         status_code: options.statusCode,
         size: options.size,
       },
-      _dd: typeof traceId === 'string' && typeof spanId === 'string' ? { trace_id: traceId, span_id: spanId } : {},
+      _dd: isTraced
+        ? { trace_id: traceId, span_id: spanId, ...(typeof rulePsr === 'number' && { rule_psr: rulePsr }) }
+        : {},
       context,
     }
 
