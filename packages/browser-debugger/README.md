@@ -51,6 +51,18 @@ If you set `version` for version-specific probe targeting, use an immutable depl
 
 When the [RUM Browser SDK][4] is loaded on the page, the first hit of each probe creates a RUM custom action named `probe: <function> (<file>)`. For probes evaluated at function entry, the action lasts until the instrumented function returns or throws. For probes evaluated at function exit, the action is a point in time at the function exit. The action's context includes the probe, the ID of the snapshot sent for that hit, and the outcome (`return` or `throw`, with the error type). Only hits that pass sampling and the probe condition count. To disable this, set `trackProbeHitsAsRumActions: false` in `init()`.
 
+## Exception Replay
+
+Exception Replay captures the arguments and `this` of the instrumented functions an error passes through, and shows them on the error's stack frames in Error Tracking, without adding probes. It requires the [RUM Browser SDK][4], at the same version as the Live Debugger SDK:
+
+1. Build your application with the Live Debugger build plugin's [`exceptionReplay`][8] option.
+2. Load the RUM Browser SDK, or its async loading snippet, before you call `DD_DEBUGGER.init()`. With npm, importing `@datadog/browser-rum` is enough. You don't need to change your RUM configuration: `DD_DEBUGGER.init()` adds Exception Replay to the RUM Browser SDK, whether or not RUM is already initialized.
+3. Initialize the Live Debugger SDK as shown in [Usage](#usage). It must send to the same Datadog site and organization as the RUM Browser SDK, or Error Tracking can't find the snapshots of RUM errors.
+
+The SDK captures the three innermost instrumented frames of an exception as it's thrown. It only sends them as snapshots once RUM sends the error, after `beforeSend` and the event rate limits. It doesn't capture anything in sessions that RUM doesn't track, or before tracking consent is granted. Snapshots are linked to frames by their position in `error.stack`, so a `beforeSend` that removes or reorders frames there can show them on the wrong frames. An error with the same type and innermost instrumented function is reported with snapshots at most once an hour. Values of variables and properties with sensitive names, such as `password` or `token`, are redacted. Local variables aren't captured.
+
+To limit the time spent on the main thread, Exception Replay captures at most 10 exceptions per second, and spends at most 25 ms per second on average capturing them. When a capture takes longer, capturing pauses until the time is made up. These limits are separate from `maxSnapshotsPerSecondGlobally`, which only applies to probes.
+
 ## Troubleshooting
 
 Need help? Contact [Datadog Support][3].
@@ -64,3 +76,4 @@ Need help? Contact [Datadog Support][3].
 [5]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger
 [6]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#source-maps
 [7]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#limitations-during-preview
+[8]: https://github.com/DataDog/build-plugins/tree/master/packages/plugins/live-debugger#livedebuggerexceptionreplay

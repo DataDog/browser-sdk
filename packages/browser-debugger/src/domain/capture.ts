@@ -1,4 +1,5 @@
 import { getConstructorName, isError } from '@datadog/browser-core'
+import { isRedactedIdentifier } from './redaction'
 
 export interface CaptureOptions {
   maxReferenceDepth?: number
@@ -26,6 +27,11 @@ export interface CapturedValue {
 export interface CaptureContext {
   deadline: number
   timedOut: boolean
+  /**
+   * Whether to redact the values of properties and map entries named after a sensitive identifier
+   * (see {@link isRedactedIdentifier}).
+   */
+  redact?: boolean
 }
 
 // Prefer replaceAll to replace because it's ~20% faster in this hot code path.
@@ -321,16 +327,10 @@ function captureObjectPropertiesFields(
     const keyName =
       typeof key === 'symbol' ? key.description || key.toString() : keyStr.includes('.') ? replaceDots(keyStr) : keyStr
 
-    fields[keyName] = captureProperty(
-      obj,
-      key,
-      depth,
-      maxReferenceDepth,
-      maxCollectionSize,
-      maxFieldCount,
-      maxLength,
-      ctx
-    )
+    fields[keyName] =
+      ctx.redact && isRedactedKey(key)
+        ? captureRedactedProperty(obj, key)
+        : captureProperty(obj, key, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   }
 
   return fields
@@ -424,7 +424,9 @@ function captureMap(
     }
     entries.push([
       captureValue(key, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
-      captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
+      ctx.redact && isRedactedKey(key)
+        ? captureRedactedValue(value)
+        : captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
     ])
     count++
   }
@@ -545,6 +547,37 @@ function captureProperty(
   } catch {
     return { notCapturedReason: 'Error accessing property' }
   }
+}
+
+// Symbol keys are captured under their description, so they're redacted by it too
+function isRedactedKey(key: unknown): boolean {
+  if (typeof key === 'symbol') {
+    return key.description !== undefined && isRedactedIdentifier(key.description)
+  }
+  return typeof key === 'string' && isRedactedIdentifier(key)
+}
+
+function captureRedactedProperty(obj: any, property: string | symbol): CapturedValue {
+  try {
+    return captureRedactedValue(obj[property])
+  } catch {
+    return { notCapturedReason: 'redactedIdent' }
+  }
+}
+
+function captureRedactedValue(value: unknown): CapturedValue {
+  let type: string
+  if (value === null) {
+    type = 'null'
+  } else if (typeof value === 'object') {
+    // Not the constructor name, which a redacted object controls, as in `{ constructor: { name } }`
+    type = Array.isArray(value) ? 'Array' : 'Object'
+  } else if (typeof value === 'function') {
+    type = 'Function'
+  } else {
+    type = typeof value
+  }
+  return { type, notCapturedReason: 'redactedIdent' }
 }
 
 function captureOptionalProperty(
