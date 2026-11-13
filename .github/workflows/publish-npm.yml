@@ -1,0 +1,50 @@
+name: Publish npm packages
+
+# Dispatched by the GitLab deploy pipeline (step-6_publish-npm) on the release tag, so that packages
+# are published with npm trusted publishing (OIDC) instead of a long-lived token.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-npm
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # Restricted to `v*` tags in the repository settings, and registered as the trusted publisher of
+    # each package on npmjs.com.
+    environment: npm-publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code at tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: 'yarn'
+
+      - name: Check version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          EXPECTED_TAG="v$(node -p "require('./package.json').version")"
+          if [ "$REF_TYPE" != tag ] || [ "$REF_NAME" != "$EXPECTED_TAG" ]; then
+            echo "Expected to run on tag $EXPECTED_TAG, got $REF_TYPE $REF_NAME"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Publish
+        env:
+          YARN_NPM_CONFIG_PROVENANCE: 'true'
+        run: node ./scripts/deploy/publish-npm.ts

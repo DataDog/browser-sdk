@@ -79,7 +79,7 @@ step-6_publish-npm:
   script:
     - yarn
     - node ./scripts/deploy/check-cordons.ts --environment prod
-    - node ./scripts/deploy/publish-npm.ts
+    - node ./scripts/deploy/publish-npm-on-github.ts
 
 step-7_publish-developer-extension:
   needs:
