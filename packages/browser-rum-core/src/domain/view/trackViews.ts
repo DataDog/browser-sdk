@@ -262,7 +262,7 @@ function newView(
   const isSoftNavigationTracked =
     loadingType === ViewLoadingType.ROUTE_CHANGE &&
     !configuration.trackViewMetricsManually &&
-    isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
+    (configuration.betaTrackSoftNavigations || isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION)) &&
     supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
 
   const commonViewMetricsTracking = !configuration.trackViewMetricsManually
