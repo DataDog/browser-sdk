@@ -10,7 +10,7 @@ import {
 } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import {
-  isWorkerEnvironment,
+  globalObject,
   mockable,
   clearInterval,
   clearTimeout,
@@ -208,7 +208,8 @@ export async function startSessionManager(
       }
     })
 
-    if (!isWorkerEnvironment) {
+    // window and document are not available in Web Workers and non-browser environments (SSR)
+    if (globalObject.window) {
       trackActivity(expandOrRenewOnActivity)
       trackVisibility(() => {
         if (!sessionExpired) {

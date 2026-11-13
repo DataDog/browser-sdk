@@ -38,7 +38,8 @@ export function initReportObservable(apis: RawReportType[]) {
 
 function createReportObservable(reportTypes: ReportType[]) {
   return new Observable<RawReportError>((observable) => {
-    if (!window.ReportingObserver) {
+    // window is not available in Web Workers and non-browser environments (SSR)
+    if (typeof window === 'undefined' || !window.ReportingObserver) {
       return
     }
 
@@ -61,7 +62,8 @@ function createReportObservable(reportTypes: ReportType[]) {
 function createCspViolationReportObservable() {
   return new Observable<RawReportError>((observable) => {
     // Salesforce does not allow to add a securitypolicyviolation event listener. https://developer.salesforce.com/tools/lws-distortion-viewer
-    if (!isEventSupported(document, DOM_EVENT.SECURITY_POLICY_VIOLATION)) {
+    // document is not available in Web Workers and non-browser environments (SSR)
+    if (typeof document === 'undefined' || !isEventSupported(document, DOM_EVENT.SECURITY_POLICY_VIOLATION)) {
       return
     }
 
