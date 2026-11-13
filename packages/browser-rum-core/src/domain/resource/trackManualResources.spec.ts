@@ -206,6 +206,27 @@ describe('trackManualResources', () => {
       expect(getEvent().context).toEqual({})
     })
 
+    it('should ignore a non-string span id', () => {
+      startResource(URL, { context: { '_dd.trace_id': '123', '_dd.span_id': 456, foo: 'bar' } })
+      stopResource(URL)
+      expect(getEvent()._dd).toEqual({})
+      expect(getEvent().context).toEqual({ foo: 'bar' })
+    })
+
+    it('should ignore a trace id without span id', () => {
+      startResource(URL, { context: { '_dd.trace_id': '123', foo: 'bar' } })
+      stopResource(URL)
+      expect(getEvent()._dd).toEqual({})
+      expect(getEvent().context).toEqual({ foo: 'bar' })
+    })
+
+    it('should ignore a span id without trace id', () => {
+      startResource(URL, { context: { '_dd.span_id': '456', foo: 'bar' } })
+      stopResource(URL)
+      expect(getEvent()._dd).toEqual({})
+      expect(getEvent().context).toEqual({ foo: 'bar' })
+    })
+
     it('should leave _dd empty without ids', () => {
       startResource(URL, { context: { foo: 'bar' } })
       stopResource(URL)
