@@ -82,7 +82,7 @@ step-7_publish-developer-extension:
     - yarn
     - node ./scripts/deploy/publish-developer-extension.ts
 
-step-8_create-github-release:
+step-8_publish-github-release:
   stage: deploy
   extends:
     - .base-configuration
@@ -90,7 +90,7 @@ step-8_create-github-release:
   allow_failure: false
   script:
     - yarn
-    - node scripts/release/create-github-release.ts
+    - node scripts/release/publish-github-release.ts
 
 # This step is used to deploy the SDK to a new datacenter.
 # the `DATACENTER` variable needs to be provided as an argument when starting the manual job
