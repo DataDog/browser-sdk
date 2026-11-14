@@ -151,6 +151,8 @@ describe('viewCollection', () => {
         load_event: (10 * 1e6) as ServerDuration,
         loading_time: (20 * 1e6) as ServerDuration,
         loading_type: ViewLoadingType.INITIAL_LOAD,
+        memory_average: undefined,
+        memory_max: undefined,
         long_task: {
           count: 10,
         },
