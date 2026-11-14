@@ -87,8 +87,16 @@ export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResou
   domContentLoadedEventEnd: RelativeTime
   domInteractive: RelativeTime
   loadEventEnd: RelativeTime
+  type?: 'navigate' | 'reload' | 'back_forward' | 'prerender'
+  notRestoredReasons?: RumNotRestoredReasons | null
 
   toJSON(): Omit<RumPerformanceNavigationTiming, 'toJSON'>
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/API/NotRestoredReasons
+export interface RumNotRestoredReasons {
+  reasons: Array<{ reason: string }> | null
+  children: RumNotRestoredReasons[] | null
 }
 
 export interface RumLargestContentfulPaintTiming {

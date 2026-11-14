@@ -48,7 +48,31 @@ describe('trackNavigationTimings', () => {
       domContentLoaded: 345 as Duration,
       domInteractive: 234 as Duration,
       loadEvent: 567 as Duration,
+      navigationType: undefined,
+      notRestoredReasons: undefined,
     })
+  })
+
+  it('reports the navigation type and why the page was not restored from the back/forward cache', () => {
+    const entry: RelevantNavigationTiming = {
+      ...FAKE_NAVIGATION_ENTRY,
+      type: 'back_forward',
+      notRestoredReasons: {
+        reasons: [{ reason: 'broadcastchannel-message' }],
+        children: [
+          { reasons: [{ reason: 'unload-listener' }, { reason: 'broadcastchannel-message' }], children: null },
+          { reasons: null, children: [{ reasons: [{ reason: 'masked' }], children: null }] },
+        ],
+      },
+    }
+    replaceMockable(getNavigationEntry, () => entry)
+    ;({ stop } = trackNavigationTimings(navigationTimingsCallback))
+
+    clock.tick(0)
+
+    const timings = navigationTimingsCallback.calls.mostRecent().args[0]
+    expect(timings.navigationType).toBe('back_forward')
+    expect(timings.notRestoredReasons).toEqual(['broadcastchannel-message', 'unload-listener', 'masked'])
   })
 
   it('does not report "firstByte" if "responseStart" is negative', () => {
