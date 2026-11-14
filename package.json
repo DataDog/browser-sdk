@@ -63,7 +63,7 @@
     "@typescript-eslint/utils": "8.72.1",
     "@vitest/browser": "4.1.10",
     "@vitest/browser-playwright": "4.1.8",
-    "@vitest/browser-webdriverio": "4.1.8",
+    "@vitest/browser-webdriverio": "5.0.0",
     "@vitest/coverage-istanbul": "4.1.8",
     "@vitest/ui": "4.1.8",
     "ajv": "8.20.0",
