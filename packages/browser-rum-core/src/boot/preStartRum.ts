@@ -1,7 +1,7 @@
 import { isWorkerEnvironment, mockable, BufferedObservable, noop } from '@datadog/js-core/util'
 import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
-import { monitorError } from '@datadog/js-core/monitor'
+import { callMonitored, monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager, InitContext } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
@@ -90,6 +90,22 @@ export function createPreStartStrategy(
   const emptyContext: Context = {}
 
   let started = false
+  const pluginCallQueues = new Set<BufferedObservable<() => void>>()
+
+  function drainPluginCallQueue(queue: BufferedObservable<() => void>) {
+    queue.subscribe((call) => callMonitored(call))
+    queue.unbuffer()
+  }
+
+  function registerCallQueue(queue: BufferedObservable<() => void>) {
+    if (pluginCallQueues.has(queue)) {
+      return
+    }
+    pluginCallQueues.add(queue)
+    if (started) {
+      drainPluginCallQueue(queue)
+    }
+  }
 
   function tryStartRum() {
     if (started || !cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
@@ -132,6 +148,8 @@ export function createPreStartStrategy(
       }
     })
     bufferApiCalls.unbuffer()
+    // Subscribed after bufferApiCalls, so the plugin calls replay after RUM's early API calls
+    pluginCallQueues.forEach(drainPluginCallQueue)
   }
 
   function doInit(
@@ -264,6 +282,7 @@ export function createPreStartStrategy(
         initConfiguration,
         publicApi,
         registerAssembleEventHook: hooks.assembleEvent.register,
+        registerCallQueue,
       })
 
       if (typeof shouldContinue === 'boolean') {

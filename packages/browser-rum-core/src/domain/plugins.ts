@@ -1,4 +1,5 @@
 import { isThenable } from '@datadog/browser-core'
+import type { BufferedObservable } from '@datadog/js-core/util'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
@@ -18,6 +19,14 @@ export interface RumPluginOnInitOptions {
    * assembled, including events buffered during the pre-start phase.
    */
   registerAssembleEventHook: AssembleHook['register']
+  /**
+   * Register a queue of calls the plugin made before RUM started. RUM runs the queued calls once it
+   * has started, right after the API calls made before start. Calls notified after that run right
+   * away. Registering the same queue again does nothing. The plugin creates and bounds the queue.
+   *
+   * @internal
+   */
+  registerCallQueue: (queue: BufferedObservable<() => void>) => void
 }
 
 /**
