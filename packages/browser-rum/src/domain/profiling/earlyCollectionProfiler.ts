@@ -16,6 +16,7 @@ interface EarlyCollectionGlobal {
   readonly version: number
   readonly startClocks: ClocksState
   readonly profiler: Profiler | undefined
+  readonly bufferFull: boolean
 }
 
 interface EarlyCollectionGlobalOwner {
@@ -26,6 +27,8 @@ interface EarlyCollectionGlobalOwner {
 export interface EarlyCollectionProfiler {
   readonly profiler: Profiler
   readonly startClocks: ClocksState
+  /** Whether the instance's sample buffer filled before the SDK could adopt it. */
+  readonly bufferFull: boolean
 }
 
 /**
@@ -47,14 +50,14 @@ export function takeEarlyCollectionProfiler(): EarlyCollectionProfiler | undefin
   if (typeof rawGlobal !== 'object' || rawGlobal === null) {
     return undefined
   }
-  const { version, profiler, startClocks } = rawGlobal as EarlyCollectionGlobal
+  const { version, profiler, startClocks, bufferFull } = rawGlobal as EarlyCollectionGlobal
   if (version !== 1 || !profiler || profiler.stopped) {
     // Unknown contract version or unusable instance: not ours to manage, the
     // global is left untouched.
     return undefined
   }
   delete (rawGlobal as { profiler?: Profiler }).profiler
-  return { profiler, startClocks }
+  return { profiler, startClocks, bufferFull: bufferFull === true }
 }
 
 /**

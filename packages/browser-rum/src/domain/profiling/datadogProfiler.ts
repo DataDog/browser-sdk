@@ -215,7 +215,17 @@ export function createRumProfiler(
       state: 'running',
       startClocks,
       profiler,
-      timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
+      // When the early collection Profiler's buffer filled before adoption, it
+      // cannot take more samples: roll it over immediately (collect it as the
+      // early collection profile, then start a fresh instance) instead of
+      // waiting for the first collection interval. The collected profile is
+      // emitted asynchronously, after the fresh instance sets
+      // collection_type to 'standard': in this rare case (the SDK loaded
+      // after ~90 s of page life) the early profile carries the standard tag.
+      timeoutId: setTimeout(
+        startNextProfilerInstance,
+        earlyProfiler?.bufferFull ? 0 : profilerConfiguration.collectIntervalMs
+      ),
       sessionId: session.findTrackedSession()?.id,
     }
 

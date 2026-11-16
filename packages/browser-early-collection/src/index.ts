@@ -24,6 +24,10 @@
  * `profiler`: the running Profiler instance, or `undefined` when the
  * JS Self-Profiling API is not available.
  *
+ * `bufferFull`: set to `true` when the Profiler sample buffer filled before the
+ * SDK takes over, so the SDK can roll the exhausted instance over immediately
+ * (collect it and start a fresh one) instead of adopting it as running.
+ *
  * Usage requirement: evaluate it as the first script of the page, before any
  * application script: the earlier it runs, the more of the pre-SDK window is
  * covered.
@@ -40,11 +44,17 @@ export interface EarlyCollectionGlobalV1 {
   version: number
   startClocks: { relative: number; timeStamp: number }
   profiler: unknown
+  bufferFull: boolean
 }
 
 /** Minimal local typing: the JS Self-Profiling API is non-standard. */
 interface ProfilerConstructor {
   new (options: { sampleInterval: number; maxBufferSize: number }): unknown
+}
+
+/** Minimal local typing for the Profiler instance listener we rely on. */
+interface ProfilerInstance {
+  addEventListener(event: 'samplebufferfull', listener: () => void): void
 }
 
 /**
@@ -65,9 +75,22 @@ export function startEarlyCollection(): void {
     profiler = undefined
   }
 
-  ;(window as { _DD_EARLY_COLLECTION?: EarlyCollectionGlobalV1 })._DD_EARLY_COLLECTION = {
+  const earlyCollection: EarlyCollectionGlobalV1 = {
     version: CONTRACT_VERSION,
     startClocks: { relative: performance.now(), timeStamp: new Date().getTime() },
     profiler,
+    bufferFull: false,
   }
+
+  if (profiler) {
+    // Keep track of the buffer state: when it fills before the Browser SDK
+    // takes over, the instance keeps `stopped: false` and nothing in its API
+    // surface reveals it. The flag lets the SDK detect an exhausted instance
+    // at adoption and roll it over immediately.
+    ;(profiler as ProfilerInstance).addEventListener('samplebufferfull', () => {
+      earlyCollection.bufferFull = true
+    })
+  }
+
+  ;(window as { _DD_EARLY_COLLECTION?: EarlyCollectionGlobalV1 })._DD_EARLY_COLLECTION = earlyCollection
 }
