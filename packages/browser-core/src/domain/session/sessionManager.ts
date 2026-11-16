@@ -45,7 +45,7 @@ export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   findTrackedSession: (
     startTime?: RelativeTime,
-    options?: { returnInactive?: boolean; maxAge?: number }
+    options?: { returnInactive?: boolean; maxAge?: number; sampleRate?: number }
   ) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
@@ -226,10 +226,13 @@ export async function startSessionManager(
   function buildSessionManager(): SessionManager {
     return {
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
-      findTrackedSession: (startTime, { returnInactive = false, maxAge = TRACKED_SESSION_MAX_AGE } = {}) => {
+      findTrackedSession: (
+        startTime,
+        { returnInactive = false, maxAge = TRACKED_SESSION_MAX_AGE, sampleRate = configuration.sessionSampleRate } = {}
+      ) => {
         const session = sessionContextHistory.find(startTime, { returnInactive })
 
-        if (!session || session.id === 'invalid' || !isSampled(session.id, configuration.sessionSampleRate)) {
+        if (!session || session.id === 'invalid' || !isSampled(session.id, sampleRate)) {
           return
         }
 
