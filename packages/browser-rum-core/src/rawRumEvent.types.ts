@@ -68,6 +68,7 @@ export interface RawRumResourceEvent {
     download?: ResourceEntryDetailsElement
     protocol?: string
     delivery_type?: DeliveryType
+    cache_mode?: CacheMode
     graphql?: GraphQlMetadata
     request?: ResourceRequest
     response?: ResourceResponse
@@ -285,6 +286,8 @@ export interface RawRumLongTaskEvent {
 }
 
 export type DeliveryType = 'cache' | 'navigational-prefetch' | 'other'
+
+export type CacheMode = 'local' | 'validated'
 
 export type InvokerType =
   'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script'

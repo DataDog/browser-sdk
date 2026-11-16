@@ -6,7 +6,7 @@ import { isIntakeUrl } from '@datadog/js-core/transport'
 
 import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
-import type { ResourceEntryDetailsElement, DeliveryType } from '../../rawRumEvent.types'
+import type { ResourceEntryDetailsElement, DeliveryType, CacheMode } from '../../rawRumEvent.types'
 
 export type ResourceLikeEntry = RumPerformanceResourceTiming | RumPerformanceNavigationTiming
 
@@ -194,6 +194,22 @@ export function computeResourceEntryProtocol(entry: ResourceLikeEntry) {
  */
 export function computeResourceEntryDeliveryType(entry: ResourceLikeEntry): DeliveryType | undefined {
   return entry.deliveryType === '' ? 'other' : entry.deliveryType
+}
+
+/**
+ * Resource Timing exposes the cache mode only through transferSize: 0 when served locally, 300 when revalidated.
+ * see: https://w3c.github.io/resource-timing/#dom-performanceresourcetiming-transfersize
+ */
+export function computeResourceEntryCacheMode(entry: ResourceLikeEntry): CacheMode | undefined {
+  if (entry.deliveryType !== 'cache') {
+    return
+  }
+  if (entry.transferSize === 0) {
+    return 'local'
+  }
+  if (entry.transferSize === 300) {
+    return 'validated'
+  }
 }
 
 export function computeResourceEntrySize(entry: ResourceLikeEntry) {

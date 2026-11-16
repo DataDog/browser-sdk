@@ -4,6 +4,7 @@ import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { createPerformanceEntry } from '../../../test'
 import {
   MAX_RESOURCE_VALUE_CHAR_LENGTH,
+  computeResourceEntryCacheMode,
   computeResourceEntryDetails,
   computeResourceEntryDuration,
   computeResourceEntryType,
@@ -375,5 +376,25 @@ describe('sanitizeIfLongDataUrl', () => {
   it('returns original string when data type match not found', () => {
     const dataTypeTooLongUrl = `data:${new Array(100).join('a')},${longString}`
     expect(sanitizeIfLongDataUrl(dataTypeTooLongUrl)).toEqual(dataTypeTooLongUrl)
+  })
+})
+
+describe('computeResourceEntryCacheMode', () => {
+  ;(
+    [
+      { deliveryType: 'cache', transferSize: 0, expected: 'local' },
+      { deliveryType: 'cache', transferSize: 300, expected: 'validated' },
+      { deliveryType: 'cache', transferSize: 500, expected: undefined },
+      { deliveryType: '', transferSize: 300, expected: undefined },
+      { deliveryType: undefined, transferSize: 0, expected: undefined },
+    ] as const
+  ).forEach(({ deliveryType, transferSize, expected }) => {
+    it(`should return ${expected} for deliveryType "${deliveryType}" and transferSize ${transferSize}`, () => {
+      expect(
+        computeResourceEntryCacheMode(
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { deliveryType, transferSize })
+        )
+      ).toBe(expected)
+    })
   })
 })

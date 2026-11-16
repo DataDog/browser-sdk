@@ -22,6 +22,7 @@ import { createRequestRegistry } from './requestRegistry'
 import type { ResourceLikeEntry } from './resourceUtils'
 import {
   computeResourceEntryDeliveryType,
+  computeResourceEntryCacheMode,
   computeResourceEntryDetails,
   computeResourceEntryDuration,
   computeResourceEntryProtocol,
@@ -127,6 +128,7 @@ function assembleResource(
         url: request ? sanitizeIfLongDataUrl(request.url) : entry.name,
         protocol: computeResourceEntryProtocol(entry),
         delivery_type: computeResourceEntryDeliveryType(entry),
+        cache_mode: computeResourceEntryCacheMode(entry),
         graphql: request && computeGraphQlMetaData(request, configuration),
         render_blocking_status: entry.renderBlockingStatus,
         ...computeResourceEntrySize(entry),
