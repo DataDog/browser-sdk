@@ -3,10 +3,12 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
-import type { CreateDeflateWorker } from './deflateWorker'
+import type { CreateDeflateWorker, WorkerName } from './deflateWorker'
 import {
   startDeflateWorker,
   resetDeflateWorkerState,
+  getDeflateWorkerStatus,
+  DeflateWorkerStatus,
   INITIALIZATION_TIME_OUT_DELAY,
   createDeflateWorker,
 } from './deflateWorker'
@@ -22,11 +24,13 @@ describe('startDeflateWorker', () => {
   function startDeflateWorkerWithDefaults({
     configuration = {},
     source = 'Session Replay',
+    name,
   }: {
     configuration?: Partial<RumConfiguration>
     source?: string
+    name?: WorkerName
   } = {}) {
-    return startDeflateWorker(configuration as RumConfiguration, source, onInitializationFailureSpy)
+    return startDeflateWorker(configuration as RumConfiguration, source, onInitializationFailureSpy, name)
   }
 
   beforeEach(() => {
@@ -65,6 +69,32 @@ describe('startDeflateWorker', () => {
 
     mockWorker.processAllMessages()
     expect(onInitializationFailureSpy).not.toHaveBeenCalled()
+  })
+
+  describe('parallel workers', () => {
+    it('creates one worker per name', () => {
+      const canvasMockWorker = new MockWorker()
+      createDeflateWorkerSpy.and.returnValues(mockWorker, canvasMockWorker)
+
+      expect(startDeflateWorkerWithDefaults()).toBe(mockWorker)
+      expect(startDeflateWorkerWithDefaults({ name: 'canvas' })).toBe(canvasMockWorker)
+      expect(startDeflateWorkerWithDefaults({ name: 'canvas' })).toBe(canvasMockWorker)
+      expect(createDeflateWorkerSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('tracks the status of each worker separately', () => {
+      const canvasMockWorker = new MockWorker()
+      createDeflateWorkerSpy.and.returnValues(mockWorker, canvasMockWorker)
+      spyOn(display, 'error')
+
+      startDeflateWorkerWithDefaults()
+      startDeflateWorkerWithDefaults({ name: 'canvas' })
+      mockWorker.processAllMessages()
+      canvasMockWorker.dispatchErrorEvent()
+
+      expect(getDeflateWorkerStatus()).toBe(DeflateWorkerStatus.Initialized)
+      expect(getDeflateWorkerStatus('canvas')).toBe(DeflateWorkerStatus.Error)
+    })
   })
 
   describe('worker CSP error', () => {
@@ -188,6 +218,20 @@ describe('startDeflateWorker', () => {
       expect(displaySpy).toHaveBeenCalledOnceWith(
         'Foo failed to start: a timeout occurred while initializing the Worker'
       )
+    })
+
+    it('ignores the timeout of a worker started before a reset', () => {
+      startDeflateWorkerWithDefaults()
+      resetDeflateWorkerState()
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY / 2)
+
+      startDeflateWorkerWithDefaults()
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY / 2)
+      expect(displaySpy).not.toHaveBeenCalled()
+      expect(getDeflateWorkerStatus()).toBe(DeflateWorkerStatus.Loading)
+
+      clock.tick(INITIALIZATION_TIME_OUT_DELAY / 2)
+      expect(displaySpy).toHaveBeenCalledTimes(1)
     })
   })
 

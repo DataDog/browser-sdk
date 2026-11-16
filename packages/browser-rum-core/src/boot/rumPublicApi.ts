@@ -1,11 +1,12 @@
 import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
-import { deepClone, mockable, generateUUID } from '@datadog/js-core/util'
+import { ConsoleApiName, deepClone, mockable, generateUUID } from '@datadog/js-core/util'
 import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
   PublicApi,
+  InitContext,
   ContextManager,
   TrackingConsent,
   User,
@@ -76,17 +77,23 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
+   * @param initContext - Context to set at initialization, such as user and account information
    * @example
    * ```ts
-   * datadogRum.init({
-   *   applicationId: '<DATADOG_APPLICATION_ID>',
-   *   clientToken: '<DATADOG_CLIENT_TOKEN>',
-   *   site: '<DATADOG_SITE>',
-   *   // ...
-   * })
+   * datadogRum.init(
+   *   {
+   *     applicationId: '<DATADOG_APPLICATION_ID>',
+   *     clientToken: '<DATADOG_CLIENT_TOKEN>',
+   *     site: '<DATADOG_SITE>',
+   *     // ...
+   *   },
+   *   {
+   *     user: { id: '<USER_ID>', name: '<USER_NAME>' },
+   *   }
+   * )
    * ```
    */
-  init: (initConfiguration: RumInitConfiguration) => void
+  init: (initConfiguration: RumInitConfiguration, initContext?: InitContext) => void
 
   /**
    * Set the tracking consent of the current user.
@@ -632,7 +639,12 @@ export interface RumPublicApiOptions {
 }
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi, errorStack?: string) => void
+  init: (
+    initConfiguration: RumInitConfiguration,
+    publicApi: RumPublicApi,
+    errorStack?: string,
+    initContext?: InitContext
+  ) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
@@ -668,7 +680,8 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedData = startBufferingData()
+  // RUM only collects console errors
+  const bufferedData = startBufferingData([ConsoleApiName.error])
   const earlyWebSocketCollection = startEarlyWebSocketCollection()
 
   let strategy = createPreStartStrategy(
@@ -762,9 +775,9 @@ export function makeRumPublicApi(
   })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: (initConfiguration) => {
+    init: (initConfiguration, initContext) => {
       const errorStack = new Error().stack
-      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack))
+      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack, initContext))
     },
 
     setTrackingConsent: monitor((trackingConsent) => {

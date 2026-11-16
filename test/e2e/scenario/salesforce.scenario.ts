@@ -60,12 +60,12 @@ for (const app of salesforceApps) {
 
       await page.getByTestId('fetch-resource').click()
       await page.getByTestId('xhr-resource').click()
-      await page.getByTestId('image-resource').click()
 
       await flushEvents()
 
       const resourceTypes = new Set(intakeRegistry.rumResourceEvents.map((e) => e.resource.type))
-      for (const resourceType of ['document', 'other', 'xhr', 'fetch', 'image'] as const) {
+      // TODO(RUM-19516): re-add 'image', quarantined because its resource event is sometimes lost on page exit
+      for (const resourceType of ['document', 'other', 'xhr', 'fetch'] as const) {
         expect(
           resourceTypes.has(resourceType),
           `missing resource type "${resourceType}", got: [${[...resourceTypes].join(', ')}]`

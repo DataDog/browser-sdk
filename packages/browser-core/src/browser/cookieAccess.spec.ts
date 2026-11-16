@@ -1,7 +1,7 @@
 import { ONE_MINUTE, dateNow } from '@datadog/js-core/time'
 import { globalObject } from '@datadog/js-core/util'
 import type { Clock } from '../../test'
-import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
+import { collectAsyncCalls, mockClock, mockUnreadableCookies, registerCleanupTask, replaceMockable } from '../../test'
 import { display } from '../tools/display'
 import { detectVersion, isChromium } from '../tools/utils/browserDetection'
 import type { CookieOptions } from './cookie'
@@ -336,6 +336,16 @@ describe('cookieAccess', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS)
       expect(result).toBe(false)
+    })
+
+    it('returns false and logs when document.cookie is not accessible', async () => {
+      const displayErrorSpy = spyOn(display, 'error')
+      mockUnreadableCookies()
+
+      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS)
+
+      expect(result).toBe(false)
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith(jasmine.any(DOMException))
     })
   })
 

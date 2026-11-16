@@ -30,7 +30,7 @@ export type ReplayIntakeRequest = {
   segment: BrowserSegment
   metadata: BrowserSegmentMetadataAndSegmentSizes
   segmentFile: {
-    filename: string
+    filename: string | undefined
     encoding: string
     mimetype: string
   }
@@ -48,7 +48,7 @@ export interface BrowserResourceEvent {
 
 export type ReplayResourceIntakeRequest = {
   intakeType: 'replay-resource'
-  hash: string
+  hash: string | undefined
   image: Buffer
   event: BrowserResourceEvent
 } & BaseIntakeRequest
@@ -58,7 +58,7 @@ export type ProfileIntakeRequest = {
   event: BrowserProfileEvent
   trace: BrowserProfilerTrace
   traceFile?: {
-    filename: string
+    filename: string | undefined
     encoding: string | null
     mimetype: string
   }
@@ -203,11 +203,11 @@ function readReplayIntakeRequest(
 
     let segmentPromise: Promise<{
       encoding: string
-      filename: string
+      filename: string | undefined
       mimetype: string
       segment: BrowserSegment
     }>
-    let imagePromise: Promise<{ hash: string; image: Buffer }>
+    let imagePromise: Promise<{ hash: string | undefined; image: Buffer }>
     let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes | BrowserResourceEvent>
 
     const busboy = createBusboy({ headers: req.headers })
@@ -284,7 +284,7 @@ function readProfileIntakeRequest(
     let tracePromise: Promise<{
       trace: BrowserProfilerTrace
       encoding: string | null
-      filename: string
+      filename: string | undefined
       mimetype: string
     }>
 

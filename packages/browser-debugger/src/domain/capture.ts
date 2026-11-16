@@ -98,7 +98,16 @@ export function captureFields(
   }: CaptureOptions,
   ctx: CaptureContext
 ): Record<string, CapturedValue> {
-  return captureObjectPropertiesFields(obj, 0, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
+  return captureObjectPropertiesFields(
+    obj,
+    getOwnKeys(obj),
+    0,
+    maxReferenceDepth,
+    maxCollectionSize,
+    maxFieldCount,
+    maxLength,
+    ctx
+  )
 }
 
 function captureValue(
@@ -288,8 +297,15 @@ function captureObject(
   )
 }
 
+function getOwnKeys(obj: object): Array<string | symbol> {
+  const keys = Object.getOwnPropertyNames(obj)
+  const symbolKeys = Object.getOwnPropertySymbols(obj)
+  return (keys as Array<string | symbol>).concat(symbolKeys)
+}
+
 function captureObjectPropertiesFields(
   obj: any,
+  allKeys: Array<string | symbol>,
   depth: number,
   maxReferenceDepth: number,
   maxCollectionSize: number,
@@ -297,10 +313,6 @@ function captureObjectPropertiesFields(
   maxLength: number,
   ctx: CaptureContext
 ): Record<string, CapturedValue> {
-  const keys = Object.getOwnPropertyNames(obj)
-  const symbolKeys = Object.getOwnPropertySymbols(obj)
-  const allKeys: Array<string | symbol> = (keys as Array<string | symbol>).concat(symbolKeys)
-
   const keysToCapture = allKeys.slice(0, maxFieldCount)
 
   const fields: Record<string, CapturedValue> = {}
@@ -334,13 +346,12 @@ function captureObjectProperties(
   maxLength: number,
   ctx: CaptureContext
 ): CapturedValue {
-  const keys = Object.getOwnPropertyNames(obj)
-  const symbolKeys = Object.getOwnPropertySymbols(obj)
-  const allKeys: Array<string | symbol> = (keys as Array<string | symbol>).concat(symbolKeys)
+  const allKeys = getOwnKeys(obj)
   const totalFields = allKeys.length
 
   const fields = captureObjectPropertiesFields(
     obj,
+    allKeys,
     depth,
     maxReferenceDepth,
     maxCollectionSize,

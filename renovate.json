@@ -33,10 +33,23 @@
       "enabled": false
     },
     {
+      "description": "react-router-dom-6 is an alias kept on v6 to test the v6 integration",
+      "matchFileNames": ["packages/browser-rum-react/package.json"],
+      "matchDepNames": ["react-router-dom-6"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "matchFileNames": ["Dockerfile"],
       "matchDepNames": ["node"],
       "matchCurrentValue": "/^20/",
       "enabled": false
+    },
+    {
+      "description": "webpack 5.112.0-5.112.2 moved internal files that @module-federation/enhanced imports (https://github.com/webpack/webpack/issues/22932)",
+      "matchFileNames": ["test/apps/microfrontend/**"],
+      "matchDepNames": ["webpack"],
+      "allowedVersions": "<5.112.0 || >5.112.2"
     }
   ],
   "toolSettings": {

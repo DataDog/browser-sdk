@@ -7,6 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
+  # Needed to delete and re-save the `_state` cache that lets a run resume where the previous one stopped
+  actions: write
   issues: write
   pull-requests: write
 
@@ -18,19 +20,21 @@ jobs:
         with:
           # See documentation at https://github.com/actions/stale?tab=readme-ov-file#all-options
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # The default (30) is used up before the run gets through all open issues and PRs
+          operations-per-run: 300
 
           stale-issue-message: |
-            This issue has been automatically marked as stale because it has not had recent activity and has the `need-info` label.
+            This issue has been automatically marked as stale because it has not had recent activity.
 
             It will be closed if no further activity occurs within 3 days.
 
           stale-pr-message: |
-            This pull request has been automatically marked as stale because it has not had recent activity and has the `need-info` label.
+            This pull request has been automatically marked as stale because it has not had recent activity.
 
-            It will be closed if no further activity occurs within 3 days.
+            It will be closed if no further activity occurs within 7 days.
 
           stale-issue-label: 'stale'
           close-issue-label: 'automatically closed'
-          only-labels: 'need-info'
+          exempt-issue-labels: 'bug,enhancement'
           days-before-issue-stale: 14
           days-before-issue-close: 3

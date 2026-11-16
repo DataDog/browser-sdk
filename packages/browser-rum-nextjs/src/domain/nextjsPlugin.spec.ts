@@ -5,6 +5,7 @@ import { appendElement } from '../../../browser-rum-core/test'
 import {
   nextjsPlugin,
   startNextjsView,
+  startAppRouterView,
   onRumInit,
   onRumStart,
   onRouterTransitionStart,
@@ -89,6 +90,45 @@ describe('nextjsPlugin', () => {
       name: '/about',
       url: `${window.location.origin}/about?foo=bar`,
     })
+  })
+
+  it('deduplicates successive App Router renders of the same pathname', () => {
+    const { startViewSpy } = initPlugin()
+
+    startAppRouterView('/user/42', '/user/[id]')
+    startAppRouterView('/user/42', '/user/[id]')
+
+    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/user/[id]', url: undefined })
+  })
+
+  it('tracks different concrete pathnames and returning to a previous pathname', () => {
+    const { startViewSpy } = initPlugin()
+
+    startAppRouterView('/user/42', '/user/[id]')
+    startAppRouterView('/user/99', '/user/[id]')
+    startAppRouterView('/user/42', '/user/[id]')
+
+    expect(startViewSpy).toHaveBeenCalledTimes(3)
+  })
+
+  it('does not deduplicate an App Router render that happened before init', () => {
+    startAppRouterView('/user/42', '/user/[id]')
+    const { startViewSpy } = initPlugin()
+
+    startAppRouterView('/user/42', '/user/[id]')
+
+    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/user/[id]', url: undefined })
+  })
+
+  it('clears App Router deduplication when the plugin resets', () => {
+    initPlugin()
+    startAppRouterView('/user/42', '/user/[id]')
+    resetNextjsPlugin()
+    const { startViewSpy } = initPlugin()
+
+    startAppRouterView('/user/42', '/user/[id]')
+
+    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/user/[id]', url: undefined })
   })
 
   it('clears onRouterTransitionStart URL after startNextjsView consumes it', () => {

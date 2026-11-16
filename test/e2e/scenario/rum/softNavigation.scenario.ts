@@ -14,7 +14,7 @@ test.describe('soft navigation', () => {
     </script>
   `
 
-  createTest('reports LCP on a route_change view created from a user-initiated soft navigation')
+  createTest('reports LCP and FCP on a route_change view created from a user-initiated soft navigation')
     .withRum({ enableExperimentalFeatures: ['soft_navigation'] })
     .withBody(NAV_BUTTON)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -33,6 +33,7 @@ test.describe('soft navigation', () => {
 
       const lastRouteChange = routeChangeViews[routeChangeViews.length - 1]
       expect(lastRouteChange.view.performance?.lcp?.timestamp).toBeGreaterThan(0)
+      expect(lastRouteChange.view.performance?.fcp?.timestamp).toBeGreaterThan(0)
     })
 
   createTest('does not error on browsers without the soft navigation API')

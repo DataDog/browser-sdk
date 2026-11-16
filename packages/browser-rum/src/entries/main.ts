@@ -18,6 +18,7 @@ import { makeProfilerApi } from '../boot/profilerApi'
 export type {
   User,
   Account,
+  InitContext,
   TraceContextInjection,
   SessionPersistence,
   TrackingConsent,

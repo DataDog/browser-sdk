@@ -20,6 +20,114 @@
 
 ---
 
+## v7.18.0
+
+**Public Changes:**
+
+- 🐛 [RUM-9941] Fix SDK sources of "Cannot read properties of null/undefined" telemetry errors ([#5246](https://github.com/DataDog/browser-sdk/pull/5246))
+- 🐛 [PANA-10015] Load the versioned replay sandbox in the developer extension ([#5251](https://github.com/DataDog/browser-sdk/pull/5251))
+- 🐛 Stop retaining Angular views and errors queued before RUM starts ([#5237](https://github.com/DataDog/browser-sdk/pull/5237))
+- ⚗️ [RUM-19390] Move canvas capture to the canvas worker ([#5209](https://github.com/DataDog/browser-sdk/pull/5209))
+
+**Internal Changes:**
+
+- ✨ Allow to opt out of automatic view metrics ([#5265](https://github.com/DataDog/browser-sdk/pull/5265))
+- 👷 Update dependency @vitest/browser to v4.1.10 [SECURITY] ([#5269](https://github.com/DataDog/browser-sdk/pull/5269))
+- 👷 Derive react-router test app versions from browser-rum-react ([#5273](https://github.com/DataDog/browser-sdk/pull/5273))
+- 👷 Fix stale workflow state persistence ([#5272](https://github.com/DataDog/browser-sdk/pull/5272))
+- 👷 Update dependency node-forge to v1.4.3 [SECURITY] ([#5270](https://github.com/DataDog/browser-sdk/pull/5270))
+- 👷 [RUM-19432] Block prod deploys when the target datacenter or environment is cordoned ([#5238](https://github.com/DataDog/browser-sdk/pull/5238))
+- 👷 [RUM-19776] Run unit tests with Vitest (Jasmine compatibility shim) instead of Karma ([#5135](https://github.com/DataDog/browser-sdk/pull/5135))
+- 👷 upload org2 source maps with a root-relative prefix ([#5224](https://github.com/DataDog/browser-sdk/pull/5224))
+- 👷 Check release telemetry errors on org2 ([#5177](https://github.com/DataDog/browser-sdk/pull/5177))
+- 👷 Update all non-major dependencies ([#5249](https://github.com/DataDog/browser-sdk/pull/5249))
+- ♻️ Simplify the profiler by extracting view history ([#5258](https://github.com/DataDog/browser-sdk/pull/5258))
+- ♻️ Reorganize RUM utility functions ([#5254](https://github.com/DataDog/browser-sdk/pull/5254))
+- ✅ Make deployment assertions independent of chunk order ([#5266](https://github.com/DataDog/browser-sdk/pull/5266))
+- ✅ Fix flaky Session Replay worker initialization timeout in unit tests ([#5212](https://github.com/DataDog/browser-sdk/pull/5212))
+
+## v7.17.1
+
+**Public Changes:**
+
+- 🐛 [PANA-9575] Ensure that stylesheets are always assigned the same id ([#5157](https://github.com/DataDog/browser-sdk/pull/5157))
+- 🐛 [RUM-19676] Keep a separate retry queue per intake when dual shipping ([#5244](https://github.com/DataDog/browser-sdk/pull/5244))
+- 🐛 [RUM-19671] Handle remote configuration body read failures like fetch failures ([#5241](https://github.com/DataDog/browser-sdk/pull/5241))
+
+**Internal Changes:**
+
+- 👷 Apply stale workflow to all issues and PRs ([#5243](https://github.com/DataDog/browser-sdk/pull/5243))
+
+## v7.17.0
+
+**Public Changes:**
+
+- ✨ [DEBUG-6328] Default the Live Debugger service to the build plugin's ([#5148](https://github.com/DataDog/browser-sdk/pull/5148))
+- ✨ [RUM-18974] Allow setting user and account at init ([#5176](https://github.com/DataDog/browser-sdk/pull/5176))
+- 🐛 Round clocksOrigin timestamp when the time origin is fractional ([#5208](https://github.com/DataDog/browser-sdk/pull/5208))
+- 🐛 [RUM-19299] Only instrument the console APIs that are collected ([#5182](https://github.com/DataDog/browser-sdk/pull/5182))
+- 🐛 Don't break SDK init when document.cookie is not accessible ([#5178](https://github.com/DataDog/browser-sdk/pull/5178))
+- 🐛 [RUM-19391] Send oversized page-exit batches as several beacons ([#5218](https://github.com/DataDog/browser-sdk/pull/5218))
+- 🐛 Keep WebSocket constants when the page subclasses WebSocket before RUM loads ([#5170](https://github.com/DataDog/browser-sdk/pull/5170))
+- ⚡️ Halve the Live Debugger's capture time for objects with many keys ([#5217](https://github.com/DataDog/browser-sdk/pull/5217))
+- ⚗️ [RUM-17885] Use the Soft Navigation API for `route_change` FCP, CLS and INP ([#5167](https://github.com/DataDog/browser-sdk/pull/5167))
+- ⚗️ [RUM-19388] Hash and encode canvas captures in the worker ([#5201](https://github.com/DataDog/browser-sdk/pull/5201))
+- ⚗️ [RUM-19387] Support running parallel Session Replay workers ([#5200](https://github.com/DataDog/browser-sdk/pull/5200))
+- ⚗️ Collect masked click-target attributes in composed_path_selector ([#5073](https://github.com/DataDog/browser-sdk/pull/5073))
+
+**Internal Changes:**
+
+- 👷 Update dependency minimatch to v11 [SECURITY] ([#5223](https://github.com/DataDog/browser-sdk/pull/5223))
+- 👷 Update dependency nuxt to v4.6.3 [SECURITY] ([#5222](https://github.com/DataDog/browser-sdk/pull/5222))
+- 👷 Update dependency node-forge to v1.4.1 [SECURITY] ([#5221](https://github.com/DataDog/browser-sdk/pull/5221))
+- 👷 Update dependency eslint-plugin-unicorn to v79 ([#5216](https://github.com/DataDog/browser-sdk/pull/5216))
+- 👷 Update all non-major dependencies ([#5215](https://github.com/DataDog/browser-sdk/pull/5215))
+- 👷 Fix handling-dependency-prs skill name and apply review follow-ups ([#5203](https://github.com/DataDog/browser-sdk/pull/5203))
+- 👷 Add handling-dependency-prs skill ([#5190](https://github.com/DataDog/browser-sdk/pull/5190))
+- 👷 move the pipeline category when closing or reopening a ticket in the triage skill ([#5191](https://github.com/DataDog/browser-sdk/pull/5191))
+- 👷 Update dependency @playwright/test to v1.64.1 ([#5151](https://github.com/DataDog/browser-sdk/pull/5151))
+- 👷 add triaging-telemetry-errors skill ([#5169](https://github.com/DataDog/browser-sdk/pull/5169))
+- 👷 Update all non-major dependencies ([#5152](https://github.com/DataDog/browser-sdk/pull/5152))
+- 👷 Bump chrome to 156.0.8078.47-1 ([#5162](https://github.com/DataDog/browser-sdk/pull/5162))
+- 👷 Update dependency undici to v8.12.2 [SECURITY] ([#5174](https://github.com/DataDog/browser-sdk/pull/5174))
+- 👷 Update dependency next to v16.4.1 [SECURITY] ([#5173](https://github.com/DataDog/browser-sdk/pull/5173))
+- 👷 Update dependency nuxt to v4.6.2 [SECURITY] ([#5175](https://github.com/DataDog/browser-sdk/pull/5175))
+- ✅ [RUM-19516] Quarantine flaky image resource check in salesforce e2e ([#5236](https://github.com/DataDog/browser-sdk/pull/5236))
+- ✅ Ignore Shopify checkout OTLP requests in Shopify e2e console checks ([#5228](https://github.com/DataDog/browser-sdk/pull/5228))
+- ✅ [RUM-19391] Make flushEvents fire beforeunload in WebKit ([#5204](https://github.com/DataDog/browser-sdk/pull/5204))
+- 🔥 Remove CLAUDE.md stubs and outdated Cursor rules ([#5219](https://github.com/DataDog/browser-sdk/pull/5219))
+
+## v7.16.2
+
+**Public Changes:**
+
+- 🐛 Deduplicate Next.js views across discarded mount renders ([#5111](https://github.com/DataDog/browser-sdk/pull/5111))
+- 📝 Hide sessionReplayCanvasRecording from generated docs ([#5187](https://github.com/DataDog/browser-sdk/pull/5187))
+
+**Internal Changes:**
+
+- 👷 Report bundle sizes as a single metric tagged by bundle name ([#5171](https://github.com/DataDog/browser-sdk/pull/5171))
+- 👷 Update dependency vite to v8.3.3 [SECURITY] ([#5164](https://github.com/DataDog/browser-sdk/pull/5164))
+- 👷 Update dependency eslint-plugin-unicorn to v78 ([#5172](https://github.com/DataDog/browser-sdk/pull/5172))
+- 🔊 Report canvas recording in configuration telemetry ([#5168](https://github.com/DataDog/browser-sdk/pull/5168))
+
+## v7.16.1
+
+**Public Changes:**
+
+- 🐛 Avoid adding an undefined argument to fetch calls ([#5159](https://github.com/DataDog/browser-sdk/pull/5159))
+- 🐛 [RUMS-6434] Do not mask `<slot>` name attribute in session replay ([#5141](https://github.com/DataDog/browser-sdk/pull/5141))
+- ⚡️ Use rest parameters in instrumentMethod and instrumentConstructor ([#5153](https://github.com/DataDog/browser-sdk/pull/5153))
+- 📝 Document Browser Live Debugger Preview limitations ([#5145](https://github.com/DataDog/browser-sdk/pull/5145))
+- 📝 document all @datadog/js-core exports ([#5115](https://github.com/DataDog/browser-sdk/pull/5115))
+- 📝 Document browser Live Debugger requirements ([#5139](https://github.com/DataDog/browser-sdk/pull/5139))
+
+**Internal Changes:**
+
+- 👷 add running-tests and writing-commits-and-prs skills ([#5120](https://github.com/DataDog/browser-sdk/pull/5120))
+- ♻️ move generateUUID and throttle to @datadog/js-core/util ([#4843](https://github.com/DataDog/browser-sdk/pull/4843))
+- ♻️ move DOM and timer utilities to @datadog/js-core ([#5022](https://github.com/DataDog/browser-sdk/pull/5022))
+
 ## v7.16.0
 
 **Public Changes:**

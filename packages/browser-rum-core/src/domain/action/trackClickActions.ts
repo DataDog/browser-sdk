@@ -15,7 +15,7 @@ import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import { startEventTracker } from '../eventTracker'
 import type { StoppedEvent, DiscardedEvent, EventTracker } from '../eventTracker'
-import { getComposedPathSelector } from '../getComposedPathSelector'
+import { getComposedPathSelector } from './getComposedPathSelector'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -255,7 +255,7 @@ function computeClickActionBase(
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
+  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)

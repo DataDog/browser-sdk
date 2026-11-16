@@ -2,7 +2,7 @@ import type { Context } from '@datadog/js-core/util'
 import { clocksNow } from '@datadog/js-core/time'
 import { callMonitored } from '@datadog/js-core/monitor'
 import { createHandlingStack } from '@datadog/browser-core'
-import { onRumStart } from '../angularPlugin'
+import { addAngularErrorWhenReady } from '../angularPlugin'
 
 /**
  * Add an Angular error to the RUM session.
@@ -25,17 +25,15 @@ import { onRumStart } from '../angularPlugin'
 export function addAngularError(error: unknown) {
   const handlingStack = createHandlingStack('angular error')
   const startClocks = clocksNow()
-  onRumStart((addError) => {
-    callMonitored(() => {
-      addError({
-        error,
-        handlingStack,
-        startClocks,
-        context: {
-          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: Context }).dd_context : undefined),
-          framework: 'angular',
-        },
-      })
+  callMonitored(() => {
+    addAngularErrorWhenReady({
+      error,
+      handlingStack,
+      startClocks,
+      context: {
+        ...(typeof error === 'object' && error !== null ? (error as { dd_context?: Context }).dd_context : undefined),
+        framework: 'angular',
+      },
     })
   })
 }
