@@ -20,6 +20,32 @@
 
 ---
 
+## v7.18.0
+
+**Public Changes:**
+
+- 🐛 [RUM-9941] Fix SDK sources of "Cannot read properties of null/undefined" telemetry errors ([#5246](https://github.com/DataDog/browser-sdk/pull/5246))
+- 🐛 [PANA-10015] Load the versioned replay sandbox in the developer extension ([#5251](https://github.com/DataDog/browser-sdk/pull/5251))
+- 🐛 Stop retaining Angular views and errors queued before RUM starts ([#5237](https://github.com/DataDog/browser-sdk/pull/5237))
+- ⚗️ [RUM-19390] Move canvas capture to the canvas worker ([#5209](https://github.com/DataDog/browser-sdk/pull/5209))
+
+**Internal Changes:**
+
+- ✨ Allow to opt out of automatic view metrics ([#5265](https://github.com/DataDog/browser-sdk/pull/5265))
+- 👷 Update dependency @vitest/browser to v4.1.10 [SECURITY] ([#5269](https://github.com/DataDog/browser-sdk/pull/5269))
+- 👷 Derive react-router test app versions from browser-rum-react ([#5273](https://github.com/DataDog/browser-sdk/pull/5273))
+- 👷 Fix stale workflow state persistence ([#5272](https://github.com/DataDog/browser-sdk/pull/5272))
+- 👷 Update dependency node-forge to v1.4.3 [SECURITY] ([#5270](https://github.com/DataDog/browser-sdk/pull/5270))
+- 👷 [RUM-19432] Block prod deploys when the target datacenter or environment is cordoned ([#5238](https://github.com/DataDog/browser-sdk/pull/5238))
+- 👷 [RUM-19776] Run unit tests with Vitest (Jasmine compatibility shim) instead of Karma ([#5135](https://github.com/DataDog/browser-sdk/pull/5135))
+- 👷 upload org2 source maps with a root-relative prefix ([#5224](https://github.com/DataDog/browser-sdk/pull/5224))
+- 👷 Check release telemetry errors on org2 ([#5177](https://github.com/DataDog/browser-sdk/pull/5177))
+- 👷 Update all non-major dependencies ([#5249](https://github.com/DataDog/browser-sdk/pull/5249))
+- ♻️ Simplify the profiler by extracting view history ([#5258](https://github.com/DataDog/browser-sdk/pull/5258))
+- ♻️ Reorganize RUM utility functions ([#5254](https://github.com/DataDog/browser-sdk/pull/5254))
+- ✅ Make deployment assertions independent of chunk order ([#5266](https://github.com/DataDog/browser-sdk/pull/5266))
+- ✅ Fix flaky Session Replay worker initialization timeout in unit tests ([#5212](https://github.com/DataDog/browser-sdk/pull/5212))
+
 ## v7.17.1
 
 **Public Changes:**
