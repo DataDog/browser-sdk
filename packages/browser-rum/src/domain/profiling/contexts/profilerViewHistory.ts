@@ -2,7 +2,7 @@ import { globalObject, mockable } from '@datadog/js-core/util'
 import { createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { RumViewEntry } from '../../types'
+import type { RumViewEntry } from '../../../types'
 
 export function createProfilerViewHistory(lifeCycle: LifeCycle, viewHistory: ViewHistory) {
   const history = createValueHistory<RumViewEntry>({ expireDelay: SESSION_TIME_OUT_DELAY })
