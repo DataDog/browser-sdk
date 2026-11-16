@@ -1,4 +1,4 @@
-import { setInterval, clearInterval } from '@datadog/js-core/util'
+import { clearInterval, noop, setInterval } from '@datadog/js-core/util'
 
 export const MEMORY_SAMPLING_INTERVAL = 10_000
 
@@ -8,21 +8,29 @@ export interface MemoryMetrics {
 }
 
 interface PerformanceWithMemory {
-  memory?: { usedJSHeapSize: number }
+  memory?: { usedJSHeapSize?: unknown }
 }
 
-// shortcut: `performance.memory` is Chromium-only and coarse; switch to `measureUserAgentSpecificMemory()` for
-// cross-origin isolated pages if precision matters.
+// `performance.memory` is Chromium-only and quantized, so consecutive samples may repeat the same value.
+// Each access returns a new snapshot, hence the read on every sample. The type check guards against
+// polyfilled or faked `performance` objects exposing `memory` as something else.
+function getUsedJSHeapSize() {
+  const used = (performance as PerformanceWithMemory).memory?.usedJSHeapSize
+  return typeof used === 'number' ? used : undefined
+}
+
 export function trackMemory(callback: (memory: MemoryMetrics) => void) {
-  const memory = (performance as PerformanceWithMemory).memory
-  if (!memory) {
-    return { stop: () => undefined }
+  if (getUsedJSHeapSize() === undefined) {
+    return { stop: noop }
   }
   let count = 0
   let sum = 0
   let max = 0
-  const sample = () => {
-    const used = memory.usedJSHeapSize
+  function sample() {
+    const used = getUsedJSHeapSize()
+    if (used === undefined) {
+      return
+    }
     count += 1
     sum += used
     max = Math.max(max, used)

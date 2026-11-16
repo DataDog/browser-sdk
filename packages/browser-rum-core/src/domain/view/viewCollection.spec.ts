@@ -219,6 +219,18 @@ describe('viewCollection', () => {
     expect(rawRumViewEvent.display?.scroll).toBeUndefined()
   })
 
+  it('should include memory metrics', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...VIEW,
+      commonViewMetrics: { memory: { average: 100, max: 300 } },
+    })
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+
+    expect(rawRumViewEvent.view.memory_average).toBe(100)
+    expect(rawRumViewEvent.view.memory_max).toBe(300)
+  })
+
   describe('with configuration.start_session_replay_recording_manually set', () => {
     it('should include startSessionReplayRecordingManually false', () => {
       // when configured to false

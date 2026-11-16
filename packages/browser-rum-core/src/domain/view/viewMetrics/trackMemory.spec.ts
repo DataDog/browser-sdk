@@ -6,10 +6,12 @@ import { MEMORY_SAMPLING_INTERVAL, trackMemory } from './trackMemory'
 describe('trackMemory', () => {
   let clock: Clock
   let callback: jasmine.Spy<(memory: MemoryMetrics) => void>
+  let usedJSHeapSize: unknown
 
-  function mockMemory(memory: { usedJSHeapSize: number } | undefined) {
+  // Chromium returns a new snapshot on each `performance.memory` access
+  function mockMemory(getMemory: () => unknown = () => ({ usedJSHeapSize })) {
     const original = Object.getOwnPropertyDescriptor(performance, 'memory')
-    Object.defineProperty(performance, 'memory', { configurable: true, get: () => memory })
+    Object.defineProperty(performance, 'memory', { configurable: true, get: getMemory })
     registerCleanupTask(() => {
       if (original) {
         Object.defineProperty(performance, 'memory', original)
@@ -25,22 +27,23 @@ describe('trackMemory', () => {
   })
 
   it('reports the average and the peak of the sampled JS heap size', () => {
-    const memory = { usedJSHeapSize: 100 }
-    mockMemory(memory)
+    usedJSHeapSize = 100
+    mockMemory()
     const { stop } = trackMemory(callback)
     registerCleanupTask(stop)
 
     expect(callback).toHaveBeenCalledWith({ average: 100, max: 100 })
-    memory.usedJSHeapSize = 300
+    usedJSHeapSize = 300
     clock.tick(MEMORY_SAMPLING_INTERVAL)
     expect(callback).toHaveBeenCalledWith({ average: 200, max: 300 })
-    memory.usedJSHeapSize = 50
+    usedJSHeapSize = 50
     clock.tick(MEMORY_SAMPLING_INTERVAL)
     expect(callback).toHaveBeenCalledWith({ average: 150, max: 300 })
   })
 
   it('stops sampling when stopped', () => {
-    mockMemory({ usedJSHeapSize: 100 })
+    usedJSHeapSize = 100
+    mockMemory()
     const { stop } = trackMemory(callback)
     stop()
     clock.tick(MEMORY_SAMPLING_INTERVAL * 3)
@@ -48,10 +51,30 @@ describe('trackMemory', () => {
   })
 
   it('does nothing when the browser does not expose the JS heap size', () => {
-    mockMemory(undefined)
+    mockMemory(() => undefined)
     const { stop } = trackMemory(callback)
     registerCleanupTask(stop)
     clock.tick(MEMORY_SAMPLING_INTERVAL)
     expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('does nothing when `performance.memory` does not expose a numeric JS heap size', () => {
+    mockMemory(() => () => undefined)
+    const { stop } = trackMemory(callback)
+    registerCleanupTask(stop)
+    clock.tick(MEMORY_SAMPLING_INTERVAL)
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('skips samples where the JS heap size is not a number', () => {
+    usedJSHeapSize = 100
+    mockMemory()
+    const { stop } = trackMemory(callback)
+    registerCleanupTask(stop)
+
+    usedJSHeapSize = undefined
+    clock.tick(MEMORY_SAMPLING_INTERVAL)
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(callback).toHaveBeenCalledWith({ average: 100, max: 100 })
   })
 })
