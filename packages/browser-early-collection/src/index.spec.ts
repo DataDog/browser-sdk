@@ -25,7 +25,6 @@ describe('early collection', () => {
     class MockProfiler {
       readonly sampleInterval: number
       readonly initOptions: ProfilerInitOptions
-      readonly sampleBufferFullListeners: Array<() => void> = []
       stopped = false
 
       constructor(initOptions: ProfilerInitOptions) {
@@ -34,10 +33,6 @@ describe('early collection', () => {
         }
         this.sampleInterval = initOptions.sampleInterval
         this.initOptions = initOptions
-      }
-
-      addEventListener(_event: 'samplebufferfull', listener: () => void) {
-        this.sampleBufferFullListeners.push(listener)
       }
 
       stop(): Promise<unknown> {
@@ -70,19 +65,6 @@ describe('early collection', () => {
     expect(profiler).toBeInstanceOf(ProfilerConstructor)
     expect(profiler.initOptions).toEqual({ sampleInterval: 10, maxBufferSize: 9000 })
     expect(profiler.stopped).toBe(false)
-  })
-
-  it('sets bufferFull when the Profiler sample buffer fills', () => {
-    mockProfilerConstructor()
-    const earlyCollection = startAndCleanup()
-
-    const profiler = earlyCollection.profiler as { sampleBufferFullListeners: Array<() => void> }
-    expect(earlyCollection.bufferFull).toBe(false)
-
-    // Chromium fires samplebufferfull when the buffer fills: the listener
-    // registered by the early collection package flips the flag.
-    profiler.sampleBufferFullListeners[0]()
-    expect(earlyCollection.bufferFull).toBe(true)
   })
 
   it('fails silently when the Profiler API is not available', () => {

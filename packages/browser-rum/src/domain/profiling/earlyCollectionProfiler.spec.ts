@@ -35,14 +35,11 @@ describe('earlyCollectionProfiler', () => {
     return profiler
   }
 
-  function setEarlyCollection(
-    overrides: Partial<{ version: unknown; profiler: MockProfilerInstance; bufferFull: unknown }> = {}
-  ) {
+  function setEarlyCollection(overrides: Partial<{ version: unknown; profiler: MockProfilerInstance }> = {}) {
     const earlyCollection = {
       version: 1,
       startClocks: { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
       profiler: createMockProfiler(),
-      bufferFull: false,
       ...overrides,
     }
     ;(globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME] = earlyCollection
@@ -65,7 +62,6 @@ describe('earlyCollectionProfiler', () => {
     expect(earlyProfiler).toEqual({
       profiler: earlyProfilerInstance,
       startClocks: { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
-      bufferFull: false,
     })
     // The global remains, with only the consumed field removed, so the
     // remaining fields stay consumable independently (e.g. by the buffered
@@ -73,22 +69,9 @@ describe('earlyCollectionProfiler', () => {
     expect(readEarlyCollection()).toEqual({
       version: 1,
       startClocks: { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
-      bufferFull: false,
     })
     // The instance can be taken only once.
     expect(takeEarlyCollectionProfiler()).toBeUndefined()
-  })
-
-  it('takes the buffer-full state along with the instance', () => {
-    setEarlyCollection({ bufferFull: true })
-
-    const earlyProfiler = takeEarlyCollectionProfiler()
-
-    expect(earlyProfiler).toEqual({
-      profiler: jasmine.any(Object),
-      startClocks: { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
-      bufferFull: true,
-    })
   })
 
   it('returns undefined when the early collection package did not run', () => {
@@ -123,7 +106,6 @@ describe('earlyCollectionProfiler', () => {
       expect(readEarlyCollection()).toEqual({
         version: 1,
         startClocks: { relative: 1 as RelativeTime, timeStamp: 2 as TimeStamp },
-        bufferFull: false,
       })
     })
 

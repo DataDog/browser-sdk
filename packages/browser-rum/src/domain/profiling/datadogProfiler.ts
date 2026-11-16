@@ -206,22 +206,21 @@ export function createRumProfiler(
       collection_type: earlyProfiler ? 'early' : 'standard',
     })
 
-    // Kick-off the new instance
+    // Kick-off the new instance. Caveat for the early collection adoption: the
+    // early Profiler's buffer (~9,000 samples, ~90 s at the 10 ms interval,
+    // ~144 s if the browser clamps to a coarser one) can fill before the SDK
+    // takes over. An exhausted instance is undetectable at adoption: it keeps
+    // `stopped: false` and nothing in its API surface reveals it. We do not
+    // track buffer exhaustion in the early collection contract; the instance
+    // is adopted as running and the normal collection interval does the
+    // rollover. In that rare case (the SDK evaluated more than ~90 s after
+    // page load), the buffered samples are preserved and emitted, but no new
+    // sample is taken until adoption + collectIntervalMs (~60 s later).
     instance = {
       state: 'running',
       startClocks,
       profiler,
-      // When the early collection Profiler's buffer filled before adoption, it
-      // cannot take more samples: roll it over immediately (collect it as the
-      // early collection profile, then start a fresh instance) instead of
-      // waiting for the first collection interval. The collected profile is
-      // emitted asynchronously, after the fresh instance sets
-      // collection_type to 'standard': in this rare case (the SDK loaded
-      // after ~90 s of page life) the early profile carries the standard tag.
-      timeoutId: setTimeout(
-        startNextProfilerInstance,
-        earlyProfiler?.bufferFull ? 0 : profilerConfiguration.collectIntervalMs
-      ),
+      timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       sessionId: session.findTrackedSession()?.id,
     }
 

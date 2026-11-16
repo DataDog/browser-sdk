@@ -80,7 +80,7 @@ describe('profiler', () => {
     currentView?: ViewHistoryEntry,
     profilerConfigOverrides?: Partial<RUMProfilerConfiguration>,
     traceOverrides?: Partial<ProfilerTrace>,
-    earlyCollection?: { startClocks?: ClocksState; bufferFull?: boolean }
+    earlyCollection?: { startClocks?: ClocksState }
   ) {
     const sessionManager = createSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
@@ -139,7 +139,6 @@ describe('profiler', () => {
         version: 1,
         startClocks,
         profiler: earlyProfiler,
-        bufferFull: earlyCollection.bufferFull ?? false,
       }
     }
 
@@ -1171,39 +1170,6 @@ describe('profiler', () => {
       const payload = emitPayloadSpy.calls.argsFor(0)[0]
       expect(payload.trace.startClocks).toBe(earlyStartClocks)
       // A new instance was started to continue collection periodically.
-      expect(instances.size).toBe(2)
-
-      profiler.stop()
-    })
-
-    it('rolls an exhausted early Profiler instance over immediately instead of waiting for the collection interval', async () => {
-      const clock = mockClock()
-      const earlyStartClocks = clocksNow()
-      // Simulate the early Profiler filling its buffer: the SDK only loads
-      // after ~90 s of page life.
-      clock.tick(90000)
-      const { profiler, instances, profilingContextManager } = setupProfiler(undefined, undefined, undefined, {
-        startClocks: earlyStartClocks,
-        bufferFull: true,
-      })
-
-      profiler.start()
-
-      expect(profiler.isRunning()).toBe(true)
-      // The exhausted early instance is adopted as the first instance...
-      expect(profilingContextManager.get()?.collection_type).toBe('early')
-      expect(instances.size).toBe(1)
-
-      // ...but rolled over immediately (setTimeout 0, not the collection
-      // interval): the early samples are collected as the first profile and a
-      // fresh instance resumes sampling right away.
-      clock.tick(0)
-      await waitNextMicrotask()
-      await waitNextMicrotask()
-
-      expect(emitPayloadSpy.calls.count()).toBe(1)
-      const payload = emitPayloadSpy.calls.argsFor(0)[0]
-      expect(payload.trace.startClocks).toBe(earlyStartClocks)
       expect(instances.size).toBe(2)
 
       profiler.stop()
