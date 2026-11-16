@@ -106,6 +106,22 @@ export function createPreStartStrategy(
   const emptyContext: Context = {}
 
   let started = false
+  const pluginCallQueues = new Set<BufferedObservable<() => void>>()
+
+  function drainPluginCallQueue(queue: BufferedObservable<() => void>) {
+    queue.subscribe((call) => callMonitored(call))
+    queue.unbuffer()
+  }
+
+  function registerCallQueue(queue: BufferedObservable<() => void>) {
+    if (pluginCallQueues.has(queue)) {
+      return
+    }
+    pluginCallQueues.add(queue)
+    if (started) {
+      drainPluginCallQueue(queue)
+    }
+  }
 
   function tryStartRum() {
     if (
@@ -160,6 +176,8 @@ export function createPreStartStrategy(
       }
     })
     bufferApiCalls.unbuffer()
+    // Subscribed after bufferApiCalls, so the plugin calls replay after RUM's early API calls
+    pluginCallQueues.forEach(drainPluginCallQueue)
   }
 
   function doInit(
@@ -323,7 +341,11 @@ export function createPreStartStrategy(
 
   function callAddedPluginOnRumStart(plugin: RumPlugin, startRumResult: StartRumResult) {
     callMonitored(() =>
-      callPluginsOnRumStart([plugin], { addEvent: startRumResult.addEvent, addError: startRumResult.addError })
+      callPluginsOnRumStart([plugin], {
+        addEvent: startRumResult.addEvent,
+        addError: startRumResult.addError,
+        sessionManager: startRumResult.sessionManager,
+      })
     )
   }
 
@@ -370,6 +392,7 @@ export function createPreStartStrategy(
         registerAssembleEventHook: hooks.assembleEvent.register,
         registerEventCollectedHook: hooks.eventCollected.register,
         isTrackingConsentGranted: trackingConsentState.isGranted,
+        registerCallQueue,
       }
       const shouldContinue = callPluginsOnInit(initConfiguration.plugins, onInitOptions)
 
