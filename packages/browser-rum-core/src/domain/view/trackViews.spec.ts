@@ -16,6 +16,7 @@ import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, KEEP_TRACKING
 import type { ViewTest } from './setupViewTest.specHelper'
 import { setupViewTest } from './setupViewTest.specHelper'
 import { isLayoutShiftSupported } from './viewMetrics/trackCumulativeLayoutShift'
+import { isInteractionToNextPaintSupported } from './viewMetrics/trackInteractionToNextPaint'
 
 function expireSession(lifeCycle: LifeCycle, endClocks: ClocksState = relativeToClocks(relativeNow())) {
   lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks })
@@ -693,6 +694,40 @@ describe('view metrics', () => {
       expect(routeChangeUpdate.initialViewMetrics.largestContentfulPaint?.value).toBe(200 as RelativeTime)
     })
 
+    it('only counts layout shifts and interactions from the soft navigation onward for route_change views', () => {
+      if (!isLayoutShiftSupported() || !isInteractionToNextPaintSupported()) {
+        pending('CLS or INP web vital not supported')
+      }
+      addExperimentalFeatures([ExperimentalFeature.SOFT_NAVIGATION])
+      const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = viewTest
+      startView()
+      clock.tick(0)
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, navigationId: 1 }),
+        createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.2, navigationId: 2 }),
+        createPerformanceEntry(RumPerformanceEntryType.EVENT, {
+          interactionId: 1,
+          startTime: clock.relative(10),
+          duration: 300 as Duration,
+          navigationId: 1,
+        }),
+        createPerformanceEntry(RumPerformanceEntryType.EVENT, {
+          interactionId: 2,
+          startTime: clock.relative(20),
+          duration: 100 as Duration,
+          navigationId: 2,
+        }),
+      ])
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, { navigationId: 2 })])
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      const routeChangeViewId = getViewCreate(getViewCreateCount() - 1).id
+      const routeChangeUpdate = getLatestUpdateForView(routeChangeViewId, getViewUpdate, getViewUpdateCount)!
+      expect(routeChangeUpdate.commonViewMetrics.cumulativeLayoutShift?.value).toBe(0.2)
+      expect(routeChangeUpdate.commonViewMetrics.interactionToNextPaint?.value).toBe(100 as Duration)
+    })
+
     it('does not track LCP for route_change views when the browser does not support the soft navigation API', () => {
       addExperimentalFeatures([ExperimentalFeature.SOFT_NAVIGATION])
       // Remove soft_navigation from the mocked supported entry types to simulate unsupported browser
@@ -900,6 +935,57 @@ describe('view custom timings', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewUpdateCount()).toBe(2)
+  })
+})
+
+describe('view metrics when trackViewMetricsManually is true', () => {
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
+  let viewTest: ViewTest
+  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+
+  beforeEach(() => {
+    clock = mockClock()
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackViewMetricsManually: true } })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
+  it('does not collect automatic view metrics but keeps the manual loading time', () => {
+    const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
+
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT),
+      createPerformanceEntry(RumPerformanceEntryType.PAINT),
+    ])
+    clock.tick(500)
+    setLoadingTime()
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.initialViewMetrics).toEqual({})
+    expect(lastUpdate.commonViewMetrics).toEqual({
+      loadingTime: clock.relative(500),
+    })
+  })
+
+  it('does not collect paint metrics when restoring from the BFCache', () => {
+    const { getViewUpdate, getViewUpdateCount } = viewTest
+    spyOn(window, 'requestAnimationFrame').and.callFake((callback: FrameRequestCallback) => {
+      callback(performance.now())
+      return 0
+    })
+
+    window.dispatchEvent(createNewEvent('pageshow', { persisted: true }))
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.BF_CACHE)
+    expect(lastUpdate.initialViewMetrics).toEqual({})
+    expect(lastUpdate.commonViewMetrics).toEqual({})
   })
 })
 

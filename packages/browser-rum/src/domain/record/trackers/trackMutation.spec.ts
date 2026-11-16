@@ -1,6 +1,6 @@
 import { noop } from '@datadog/js-core/util'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
@@ -299,6 +299,45 @@ describe('trackMutation', () => {
       ])
     })
 
+    it('reuses the stylesheet id of a <link> moved with moveBefore()', async () => {
+      if (!('moveBefore' in Element.prototype)) {
+        pending('No moveBefore support.')
+      }
+
+      const cssText = 'div { color: green; }'
+      const href = `data:text/css,${encodeURIComponent(cssText)}`
+      let keptStyleSheet = false
+
+      const { fullSnapshot, mutation, stats } = await recordMutationOf(
+        `<div><link rel="stylesheet" href="${href}"><a></a></div>`,
+        (sandbox: HTMLElement): void => {
+          // Moves the <link> after 'a'. Unlike appendChild(), this can keep its stylesheet.
+          const link = sandbox.firstElementChild as HTMLLinkElement
+          const sheet = link.sheet
+          sandbox.moveBefore(link, null)
+          keptStyleSheet = link.sheet === sheet
+        }
+      )
+      if (!keptStyleSheet) {
+        // Firefox and older Chromium versions can reload the stylesheet instead.
+        pending('The browser reloaded the stylesheet of the moved <link>.')
+      }
+      expect(fullSnapshot.data).toEqual([
+        [ChangeType.AddNode, [null, 'DIV'], [1, 'LINK', ['rel', 'stylesheet'], ['href', href]], [0, 'A']],
+        [ChangeType.AddStyleSheet, [cssText]],
+        [ChangeType.AttachedStyleSheets, [1, 0]],
+      ])
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddNode, [3, 'LINK', ['rel', 'stylesheet'], ['href', href]]],
+        [ChangeType.RemoveNode, 1],
+        [ChangeType.AttachedStyleSheets, [3, 0]],
+      ])
+      expect(stats).toEqual({
+        cssText: { count: 1, max: 21, sum: 21 },
+        serializationDuration: jasmine.anything(),
+      })
+    })
+
     it('emits only one remove when removing a node from multiple places', async () => {
       const { mutation } = await recordMutationOf(
         '<div><span></span><a></a><b></b></div>',
@@ -368,6 +407,42 @@ describe('trackMutation', () => {
         expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'DIV'], [1, '#shadow-root'], [1, 'SPAN']]])
         expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot, jasmine.anything())
         expect(removeShadowRootSpy).not.toHaveBeenCalled()
+      })
+
+      it('reuses the id of an adopted stylesheet that has already been serialized', async () => {
+        if (!isAdoptedStyleSheetsSupported()) {
+          pending('No adoptedStyleSheets support.')
+        }
+
+        const cssText = 'div { color: green; }'
+        let sheet!: CSSStyleSheet
+
+        const { fullSnapshot, mutation } = await recordMutationOf(
+          '<div><x-a></x-a></div>',
+          (sandbox: HTMLElement): void => {
+            const host = sandbox.ownerDocument.createElement('x-a')
+            sandbox.appendChild(host)
+            host.attachShadow({ mode: 'open' }).adoptedStyleSheets = [sheet]
+          },
+          {
+            scope,
+            beforeFullSnapshot(sandbox: HTMLElement): void {
+              sheet = new sandbox.ownerDocument.defaultView!.CSSStyleSheet()
+              sheet.insertRule(cssText)
+              sandbox.querySelector('x-a')!.attachShadow({ mode: 'open' }).adoptedStyleSheets = [sheet]
+            },
+          }
+        )
+
+        expect(fullSnapshot.data).toEqual([
+          [ChangeType.AddNode, [null, 'DIV'], [1, 'X-A'], [1, '#shadow-root']],
+          [ChangeType.AddStyleSheet, [[cssText]]],
+          [ChangeType.AttachedStyleSheets, [2, 0]],
+        ])
+        expect(mutation?.data).toEqual([
+          [ChangeType.AddNode, [3, 'X-A'], [1, '#shadow-root']],
+          [ChangeType.AttachedStyleSheets, [4, 0]],
+        ])
       })
 
       it('should call removeShadowRoot when host is removed', async () => {

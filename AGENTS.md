@@ -21,11 +21,11 @@ yarn build:apps
 # Run unit tests
 yarn test:unit
 
-# Run specific test file
-yarn test:unit --spec packages/browser-core/src/path/to/feature.spec.ts
+# Run specific test files (paths or filename filters)
+yarn test:unit packages/browser-core/src/path/to/feature.spec.ts
 
-# Run tests on a specific seed
-yarn test:unit --seed 123
+# Run tests on a specific seed (printed as "Running tests with seed ...")
+yarn test:unit --sequence.seed=123
 
 # setup E2E tests (installs Playwright and builds test apps)
 yarn test:e2e:setup
@@ -78,7 +78,8 @@ test/
 ├── apps/            # Test apps for E2E and performance testing
 ├── e2e/             # Playwright E2E test scenarios
 ├── performance/     # Performance benchmarking tests
-└── unit/            # Karma/Jasmine unit test configuration
+├── unit/            # Karma configuration for BrowserStack unit tests
+└── unit-vitest/     # Vitest unit test configuration (Jasmine compatibility shim)
 
 scripts/             # Build, deploy, release automation
 ```
@@ -99,7 +100,7 @@ For deeper context, see:
 
 ### Unit Tests
 
-- Test framework: Jasmine + Karma. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
+- Test framework: Jasmine API on Vitest Browser Mode (via a shim in `test/unit-vitest/`), Karma for BrowserStack. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
 - Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Prefer `collectAsyncCalls(spy, n)` over `waitFor(() => spy.calls.count() > 0)` for waiting on spy calls

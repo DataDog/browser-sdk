@@ -9,7 +9,7 @@ import { monitorError } from '@datadog/js-core/monitor'
 
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
+import type { BrowserProfilerTrace } from '../../types'
 import type {
   RumProfilerInstance,
   RumProfilerRunningInstance,
@@ -18,16 +18,16 @@ import type {
   RumProfilerStoppedInstance,
   ProfilingPayload,
 } from './types'
+import type { ProfilingContextManager } from './profilingContext'
 import { takeEarlyCollectionProfiler } from './earlyCollectionProfiler'
 import type { EarlyCollectionProfiler } from './earlyCollectionProfiler'
-import type { ProfilingContextManager } from './profilingContext'
 import { createBridgeEmitter } from './transport/profilingBridge'
 import { createFormDataEmitter } from './transport/formDataEmitter'
-import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { buildProfileEvent } from './transport/buildProfileEvent'
 import { createLongTaskHistory } from './longTaskHistory'
 import { createActionHistory } from './actionHistory'
 import { createVitalHistory } from './vitalHistory'
+import { createProfilerViewHistory } from './profilerViewHistory'
 import { checkProfilingQuota } from './quotaCheck'
 import type { QuotaReason } from './quotaCheck'
 import { buildProfilerDebugIds } from './profilerDebugIds'
@@ -51,13 +51,12 @@ export function createRumProfiler(
     ? mockable(createBridgeEmitter)()
     : mockable(createFormDataEmitter)(configuration, lifeCycle, createEncoder)
 
-  let lastViewEntry: RumViewEntry | undefined
-
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
   const longTaskHistory = mockable(createLongTaskHistory)(lifeCycle)
   const actionHistory = mockable(createActionHistory)(lifeCycle)
   const vitalHistory = mockable(createVitalHistory)(lifeCycle)
+  const profilerViewHistory = mockable(createProfilerViewHistory)(lifeCycle, viewHistory)
 
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
   let quotaCheckGeneration = 0
@@ -93,18 +92,6 @@ export function createRumProfiler(
       return
     }
 
-    const viewEntry = viewHistory.findView()
-
-    // Add initial view
-    // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
-    lastViewEntry = viewEntry
-      ? {
-          startClocks: viewEntry.startClocks,
-          viewId: viewEntry.id,
-          viewName: getCustomOrDefaultViewName(viewEntry.name, document.location.pathname),
-        }
-      : undefined
-
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
     globalCleanupTasks.push(
       addEventListener(window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
@@ -114,7 +101,7 @@ export function createRumProfiler(
     // Start profiler instance. When collection was started by the early
     // collection package (a standalone snippet evaluated before the SDK
     // bundle), adopt its running Profiler instance as the first instance, so
-    // the first collected profile covers the early collection period too.
+    // the first collected profile covers the early collection period.
     startNextProfilerInstance(takeEarlyCollectionProfiler())
     triggerQuotaCheck()
   }
@@ -163,49 +150,21 @@ export function createRumProfiler(
     profilingContextManager.set({ status: 'stopped', error_reason: undefined, quota_reason: quotaReason })
   }
 
-  /**
-   * Whenever a new Profiler instance is started, we need to add event listeners to surroundings (RUM Events, Long Tasks, etc) to enrich the Profiler data.
-   * If the instance is already running, we can keep the same event listeners.
-   */
-  function addEventListeners(existingInstance: RumProfilerInstance) {
-    if (existingInstance.state === 'running') {
-      // Instance is already running, so we can keep same event listeners.
-      return {
-        cleanupTasks: existingInstance.cleanupTasks,
-      }
-    }
-
-    // Store clean-up tasks for this instance (tasks to be executed when the Profiler is stopped or paused.)
-    const cleanupTasks = []
-
-    // Whenever the View is updated, we add a views entry to the profiler instance.
-    const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-      const viewEntry = {
-        viewId: view.id,
-        // Note: `viewName` is only filled when users use manual view creation via `startView` method.
-        viewName: getCustomOrDefaultViewName(view.name, document.location.pathname),
-        startClocks: view.startClocks,
-      }
-
-      collectViewEntry(viewEntry)
-
-      // Update last view entry
-      lastViewEntry = viewEntry
-    })
-    cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
-
-    return {
-      cleanupTasks,
-    }
-  }
-
   function startNextProfilerInstance(earlyProfiler?: EarlyCollectionProfiler): void {
+    // These APIs might be unavailable in some browsers. When adopting an
+    // early collection Profiler instance, the constructor was necessarily
+    // available (the early collection package used it), so the check holds.
+    const profilerConstructor = globalObject.Profiler
+
+    if (!profilerConstructor) {
+      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
+      throw new Error('RUM Profiler is not supported in this browser.')
+    }
+
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
       collectProfilerInstance(instance)
     }
-
-    const { cleanupTasks } = addEventListeners(instance)
 
     let profiler: Profiler
     let startClocks: ClocksState
@@ -215,14 +174,6 @@ export function createRumProfiler(
       profiler = earlyProfiler.profiler
       startClocks = earlyProfiler.startClocks
     } else {
-      // These APIs might be unavailable in some browsers
-      const profilerConstructor = globalObject.Profiler
-
-      if (!profilerConstructor) {
-        profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
-        throw new Error('RUM Profiler is not supported in this browser.')
-      }
-
       try {
         // We have to create new Profiler each time we start a new instance
         profiler = new profilerConstructor({
@@ -265,14 +216,8 @@ export function createRumProfiler(
       startClocks,
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
-      views: [],
-      cleanupTasks,
-      longTasks: [],
       sessionId: session.findTrackedSession()?.id,
     }
-
-    // Add last view entry
-    collectViewEntry(lastViewEntry)
 
     // Add event handler case we overflow the buffer
     // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
@@ -286,7 +231,11 @@ export function createRumProfiler(
     runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startClocks, views, sessionId } = runningInstance
+    const { startClocks, sessionId } = runningInstance
+    // Snapshot views before stop() resolves so later navigation cannot change this recording's views.
+    const views = profilerViewHistory
+      .findAll(startClocks.relative, elapsed(startClocks.relative, clocksNow().relative))
+      .reverse()
 
     // Stop current profiler to get trace
     runningInstance.profiler
@@ -349,9 +298,6 @@ export function createRumProfiler(
     // Update state synchronously so SESSION_RENEWED check works immediately
     instance = { state: 'stopped', stateReason }
 
-    // Cleanup instance-specific tasks (e.g., view listener)
-    runningInstance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
-
     if (stateReason === 'quota_ko') {
       // Discard data — quota denied means we should not send anything
       clearTimeout(runningInstance.timeoutId)
@@ -375,20 +321,8 @@ export function createRumProfiler(
     // Update state synchronously
     instance = { state: 'paused' }
 
-    // Cleanup instance-specific tasks
-    runningInstance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
-
     // Collect and send profile data in background
     collectProfilerInstance(runningInstance)
-  }
-
-  function collectViewEntry(viewEntry: RumViewEntry | undefined): void {
-    if (instance.state !== 'running' || !viewEntry) {
-      return
-    }
-
-    // Add entry to views
-    instance.views.push(viewEntry)
   }
 
   function handleProfilerTrace(trace: BrowserProfilerTrace, sessionId: string | undefined): void {

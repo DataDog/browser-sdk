@@ -1,4 +1,6 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import type { SdkWorkerAction, SdkWorkerResponse } from '@datadog/browser-core'
+import { collectAsyncCalls } from '@datadog/browser-core/test'
+import { createAction } from '../domain/canvas.specHelper'
 import type { WorkerScope } from './startWorker'
 import { startWorker } from './startWorker'
 
@@ -44,7 +46,7 @@ describe('startWorker', () => {
     startWorker(workerScope)
   })
 
-  function emulateAction(message: DeflateWorkerAction): DeflateWorkerResponse {
+  function emulateAction(message: SdkWorkerAction): SdkWorkerResponse {
     workerScope.postMessage.calls.reset()
     workerScope.addEventListener.calls.allArgs().forEach(([eventName, listener]) => {
       if (eventName === 'message') {
@@ -199,6 +201,26 @@ describe('startWorker', () => {
       type: 'errored',
       error: jasmine.stringContaining('TypeError'),
       streamId: undefined,
+    })
+  })
+
+  describe('captureCanvas', () => {
+    beforeEach(() => {
+      if (typeof OffscreenCanvas === 'undefined') {
+        pending('OffscreenCanvas not supported')
+      }
+    })
+
+    it('responds asynchronously with the capture result', async () => {
+      expect(emulateAction(createAction('red', { id: 3 }))).toBeUndefined()
+
+      const calls = await collectAsyncCalls(workerScope.postMessage, 1)
+      expect(calls.argsFor(0)[0]).toEqual({
+        type: 'canvasCaptured',
+        id: 3,
+        hash: jasmine.any(String),
+        image: jasmine.any(Blob),
+      })
     })
   })
 })

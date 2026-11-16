@@ -44,6 +44,38 @@ test.describe('transport', () => {
         expect(penultimateBatch.transport).toBe('beacon')
         expect(finalBatch.transport).toBe('beacon')
       })
+
+    createTest('use sendBeacon when the final view update pushes the batch over the size limit')
+      // The final view update replaces the view already in the batch. When it grows the view
+      // enough, the batch flushed on beforeunload goes over 16 KiB, too big for a single beacon.
+      // Without splitting it, the SDK sends it with fetch, which WebKit cancels as soon as the
+      // navigation starts, so the whole batch is lost.
+      .withRum({ telemetrySampleRate: 0 })
+      .run(async ({ page, flushEvents, intakeRegistry }) => {
+        // View updates are throttled for 3s. Wait for any update scheduled during page load, so
+        // the next one only happens when the page exits.
+        await page.waitForTimeout(3500)
+
+        await page.evaluate(() => {
+          // About 8 KB: with the view and resources already in the batch (about 5 KB), the batch
+          // stays under the 16 KiB limit and isn't flushed yet.
+          window.DD_RUM!.addAction('x'.repeat(8000))
+          // The view update that adds this context is throttled until the page exits. It then
+          // grows the view in the batch by about 9 KB, which pushes the batch over the limit.
+          window.DD_RUM!.setViewContextProperty('padding', 'y'.repeat(9000))
+        })
+
+        await flushEvents()
+
+        const actionRequest = intakeRegistry.rumRequests.find((request) =>
+          request.events.some((event) => event.type === 'action')
+        )
+        const paddedViewRequest = intakeRegistry.rumRequests.find((request) =>
+          request.events.some((event) => event.type === 'view' && event.context?.padding)
+        )
+        expect(actionRequest?.transport).toBe('beacon')
+        expect(paddedViewRequest?.transport).toBe('beacon')
+      })
   })
 
   test.describe('data compression', () => {

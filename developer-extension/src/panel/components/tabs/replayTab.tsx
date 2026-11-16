@@ -1,7 +1,7 @@
 import { Button, Flex, Checkbox, Badge } from '@mantine/core'
 import React, { useEffect, useRef, useState } from 'react'
 import { TabBase } from '../tabBase'
-import type { SessionReplayPlayerState } from '../../sessionReplayPlayer/startSessionReplayPlayer'
+import type { SessionReplayPlayer, SessionReplayPlayerState } from '../../sessionReplayPlayer/startSessionReplayPlayer'
 import { startSessionReplayPlayer } from '../../sessionReplayPlayer/startSessionReplayPlayer'
 import { evalInWindow } from '../../evalInWindow'
 import { createLogger } from '../../../common/logger'
@@ -43,11 +43,26 @@ function Player() {
     recordCount: 0,
     excludeMouseMovements: false,
   })
-  const playerRef = useRef<ReturnType<typeof startSessionReplayPlayer>>(null)
+  const playerRef = useRef<SessionReplayPlayer>(undefined)
+  const excludeMouseMovementsRef = useRef(false)
 
   useEffect(() => {
-    playerRef.current = startSessionReplayPlayer(frameRef.current!, setPlayerState, useDevReplaySandbox)
-    return () => playerRef.current?.stop()
+    const iframe = frameRef.current
+    if (!iframe) {
+      return
+    }
+    const abortController = new AbortController()
+    playerRef.current = startSessionReplayPlayer({
+      iframe,
+      setPlayerState,
+      useDevReplaySandbox,
+      excludeMouseMovements: excludeMouseMovementsRef.current,
+      signal: abortController.signal,
+    })
+    return () => {
+      abortController.abort()
+      playerRef.current = undefined
+    }
   }, [useDevReplaySandbox])
 
   const downloadRecords = () => {
@@ -56,8 +71,14 @@ function Player() {
     }
 
     const records = playerRef.current.getRecords()
-    // Create a segment that contains enough information to be compatible with the Replay Playground Static App
-    const segment = { records, source: 'browser', records_count: records.length, view: { id: 'xxx' } }
+
+    // Create a segment with the metadata the sandbox requires.
+    const segment = {
+      records,
+      source: 'browser',
+      records_count: records.length,
+      view: { id: 'xxx' },
+    }
     const segmentStr = JSON.stringify(segment, null, 2)
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(segmentStr)}`
 
@@ -81,7 +102,10 @@ function Player() {
               <Checkbox
                 label="Exclude mouse movements"
                 checked={playerState.excludeMouseMovements}
-                onChange={(event) => playerRef.current?.setExcludeMouseMovements(event.currentTarget.checked)}
+                onChange={(event) => {
+                  excludeMouseMovementsRef.current = event.currentTarget.checked
+                  playerRef.current?.setExcludeMouseMovements(excludeMouseMovementsRef.current)
+                }}
               />
             </Flex>
             <Flex align="center" gap="xs">
@@ -103,6 +127,7 @@ function Player() {
     >
       <iframe ref={frameRef} className={classes.iframe} data-status={playerState.status} />
       {playerState.status === 'waiting-for-full-snapshot' && <WaitingForFullSnapshot />}
+      {playerState.status === 'error' && <Alert level="error" message="Unable to load the replay sandbox." />}
     </TabBase>
   )
 }

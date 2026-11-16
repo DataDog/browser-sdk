@@ -1168,6 +1168,7 @@ describe('serializeRumConfiguration', () => {
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
+      trackViewMetricsManually: true,
       sessionReplayCanvasRecording: { enable: true, quality: CanvasRecordingQuality.HIGH },
     }
 
@@ -1186,7 +1187,8 @@ describe('serializeRumConfiguration', () => {
             // The `remoteConfiguration` init option is covered by the legacy `remote_configuration_id`
             // field. The `remote_configuration` telemetry field is unrelated: it carries the sync
             // metadata of the applied version, which does not come from the init configuration.
-            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration'
+            // `trackViewMetricsManually` is an internal option, not serialized as configuration telemetry.
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'trackViewMetricsManually'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an

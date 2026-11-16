@@ -1,10 +1,17 @@
 import { jsonStringify } from './jsonStringify'
 
 describe('jsonStringify', () => {
-  afterEach(() => {
-    delete (Array.prototype as any).toJSON
-    delete (Object.prototype as any).toJSON
-  })
+  // Vitest sends messages from the page to its server, serialized with `JSON.stringify`: while
+  // `Object.prototype` or `Array.prototype` has a `toJSON` method, they are garbled, which can stall
+  // the test run. Only define one synchronously, for the time of the callback.
+  function withPrototypeToJSON(prototype: object, callback: () => void) {
+    ;(prototype as any).toJSON = () => '42'
+    try {
+      callback()
+    } finally {
+      delete (prototype as any).toJSON
+    }
+  }
 
   it('should jsonStringify a value with toJSON directly defined', () => {
     const value = { 1: 'a' }
@@ -31,9 +38,10 @@ describe('jsonStringify', () => {
     const expectedJson = JSON.stringify(value)
 
     expect(jsonStringify(value)).toEqual(expectedJson)
-    ;(Object.prototype as any).toJSON = () => '42'
-    expect(jsonStringify(value)).toEqual(expectedJson)
-    expect(JSON.stringify(value)).toEqual('"42"')
+    withPrototypeToJSON(Object.prototype, () => {
+      expect(jsonStringify(value)).toEqual(expectedJson)
+      expect(JSON.stringify(value)).toEqual('"42"')
+    })
   })
 
   it('should jsonStringify a value when toJSON is defined on Array prototype', () => {
@@ -41,16 +49,18 @@ describe('jsonStringify', () => {
     const expectedJson = JSON.stringify(value)
 
     expect(jsonStringify(value)).toEqual(expectedJson)
-    ;(Array.prototype as any).toJSON = () => '42'
-    expect(jsonStringify(value)).toEqual(expectedJson)
-    expect(JSON.stringify(value)).toEqual('{"value":"42"}')
+    withPrototypeToJSON(Array.prototype, () => {
+      expect(jsonStringify(value)).toEqual(expectedJson)
+      expect(JSON.stringify(value)).toEqual('{"value":"42"}')
+    })
   })
 
   it('should not restore the toJSON method on the wrong prototype', () => {
     const value = [{ 1: 'a' }]
-    ;(Object.prototype as any).toJSON = () => '42'
-    jsonStringify(value)
-    expect(Object.prototype.hasOwnProperty.call(Array.prototype, 'toJSON')).toBe(false)
+    withPrototypeToJSON(Object.prototype, () => {
+      jsonStringify(value)
+      expect(Object.prototype.hasOwnProperty.call(Array.prototype, 'toJSON')).toBe(false)
+    })
   })
 
   it('should jsonStringify edge cases', () => {

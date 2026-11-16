@@ -388,6 +388,14 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Beta
    */
   betaTrackWebSockets?: boolean | undefined
+
+  /**
+   * [Internal option] Disable automatic view metrics (FCP, LCP, CLS, INP, scroll, loading time, …).
+   * Manual view loading time (`setViewLoadingTime()`) is always collected.
+   *
+   * @internal
+   */
+  trackViewMetricsManually?: boolean | undefined
 }
 
 /**
@@ -504,6 +512,7 @@ export const RUM_SCHEMA = {
   trackViewsManually: { type: 'boolean', default: false, strict: false },
   betaEnableViewUpdates: { type: 'boolean' },
   betaTrackWebSockets: { type: 'boolean', default: false, strict: false },
+  trackViewMetricsManually: { type: 'boolean', default: false, strict: false },
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
   startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },

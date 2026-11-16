@@ -24,7 +24,6 @@ import {
   clearInterval,
   setTimeout,
   Observable,
-  noop,
   generateUUID,
   throttle,
 } from '@datadog/js-core/util'
@@ -105,6 +104,12 @@ export interface ViewOptions {
   context?: Context
   handlingStack?: string
   url?: string
+}
+
+interface ViewMetricsTracking {
+  initialViewMetrics: InitialViewMetrics
+  stop: () => void
+  setViewEnd?: () => void
 }
 
 export function trackViews(
@@ -222,6 +227,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
+  let manualLoadingTime: Duration | undefined
   const location = shallowClone(mockable(window.location))
   const contextManager = createContextManager()
 
@@ -253,45 +259,51 @@ function newView(
     leading: false,
   })
 
-  const {
-    setLoadEvent,
-    setViewEnd,
-    stop: stopCommonViewMetricsTracking,
-    stopINPTracking,
-    getCommonViewMetrics,
-    setLoadingTime,
-  } = trackCommonViewMetrics(
-    lifeCycle,
-    domMutationObservable,
-    windowOpenObservable,
-    configuration,
-    scheduleViewUpdate,
-    loadingType,
-    startClocks
-  )
-
-  let viewMetricsTracking =
-    loadingType === ViewLoadingType.INITIAL_LOAD
-      ? { ...trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate), setViewEnd: noop }
-      : { stop: noop, initialViewMetrics: {} as InitialViewMetrics, setViewEnd: noop }
-
-  if (
+  const isSoftNavigationTracked =
     loadingType === ViewLoadingType.ROUTE_CHANGE &&
+    !configuration.trackViewMetricsManually &&
     isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
     supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
-  ) {
-    viewMetricsTracking = trackRouteChangeViewMetrics(configuration, scheduleViewUpdate)
-  }
 
-  const {
-    stop: stopInitialViewMetricsTracking,
-    initialViewMetrics,
-    setViewEnd: setRouteChangeViewEnd,
-  } = viewMetricsTracking
+  const commonViewMetricsTracking = !configuration.trackViewMetricsManually
+    ? trackCommonViewMetrics(
+        lifeCycle,
+        domMutationObservable,
+        windowOpenObservable,
+        configuration,
+        scheduleViewUpdate,
+        loadingType,
+        startClocks,
+        isSoftNavigationTracked
+      )
+    : undefined
 
-  // Start BFCache-specific metrics when restoring from BFCache
-  if (loadingType === ViewLoadingType.BF_CACHE) {
-    trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
+  let viewMetricsTracking: ViewMetricsTracking | undefined
+  if (commonViewMetricsTracking) {
+    switch (loadingType) {
+      case ViewLoadingType.INITIAL_LOAD:
+        viewMetricsTracking = trackInitialViewMetrics(
+          configuration,
+          startClocks,
+          commonViewMetricsTracking.setLoadEvent,
+          scheduleViewUpdate
+        )
+        break
+
+      case ViewLoadingType.ROUTE_CHANGE:
+        if (isSoftNavigationTracked) {
+          viewMetricsTracking = trackRouteChangeViewMetrics(
+            configuration,
+            scheduleViewUpdate,
+            commonViewMetricsTracking.setNavigationId
+          )
+        }
+        break
+
+      case ViewLoadingType.BF_CACHE:
+        viewMetricsTracking = trackBfcacheMetrics(startClocks, scheduleViewUpdate)
+        break
+    }
   }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
@@ -332,6 +344,10 @@ function newView(
 
     documentVersion += 1
     const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
+    const commonViewMetrics = commonViewMetricsTracking?.getCommonViewMetrics() ?? {}
+    if (manualLoadingTime !== undefined) {
+      commonViewMetrics.loadingTime = manualLoadingTime
+    }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       customTimings,
       documentVersion,
@@ -344,8 +360,8 @@ function newView(
       location,
       handlingStack,
       startClocks,
-      commonViewMetrics: getCommonViewMetrics(),
-      initialViewMetrics,
+      commonViewMetrics,
+      initialViewMetrics: viewMetricsTracking?.initialViewMetrics ?? {},
       duration: elapsed(startClocks.timeStamp, currentEnd),
       isActive: endClocks === undefined,
       sessionIsActive,
@@ -372,9 +388,11 @@ function newView(
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })
       clearInterval(keepAliveIntervalId)
-      setViewEnd(endClocks.relative)
-      setRouteChangeViewEnd()
-      stopCommonViewMetricsTracking()
+      viewMetricsTracking?.setViewEnd?.()
+      if (commonViewMetricsTracking) {
+        commonViewMetricsTracking.stop()
+        commonViewMetricsTracking.setViewEnd(endClocks.relative)
+      }
       pageMayExitSubscription.unsubscribe()
       triggerViewUpdate()
       setTimeout(() => {
@@ -382,9 +400,9 @@ function newView(
       }, KEEP_TRACKING_AFTER_VIEW_DELAY)
     },
     stop() {
-      stopInitialViewMetricsTracking()
+      viewMetricsTracking?.stop()
       stopEventCountsTracking()
-      stopINPTracking()
+      commonViewMetricsTracking?.stopINPTracking()
       stopObservable.notify()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
@@ -395,7 +413,16 @@ function newView(
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
     },
-    setLoadingTime,
+    setLoadingTime(callTimestamp: TimeStamp = timeStampNow()) {
+      if (endClocks) {
+        return
+      }
+      if (manualLoadingTime === undefined && commonViewMetricsTracking) {
+        commonViewMetricsTracking.cancelLoadingTimeTracking()
+      }
+      manualLoadingTime = elapsed(startClocks.timeStamp, callTimestamp)
+      scheduleViewUpdate()
+    },
     setViewName(updatedName: string) {
       name = updatedName
       triggerViewUpdate()

@@ -102,7 +102,6 @@ export function serializeVirtualAttributes(
   if (tagName === 'link') {
     const cssText = getCssRulesString((element as HTMLLinkElement).sheet)
     if (cssText) {
-      transaction.addMetric('cssText', cssText.length)
       attrs._cssText = cssText
     }
   }
@@ -111,7 +110,6 @@ export function serializeVirtualAttributes(
   if (tagName === 'style' && (element as HTMLStyleElement).sheet) {
     const cssText = getCssRulesString((element as HTMLStyleElement).sheet)
     if (cssText) {
-      transaction.addMetric('cssText', cssText.length)
       attrs._cssText = cssText
     }
   }

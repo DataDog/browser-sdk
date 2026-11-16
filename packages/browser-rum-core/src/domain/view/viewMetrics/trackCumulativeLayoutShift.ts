@@ -14,6 +14,7 @@ import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { RumConfiguration } from '../../configuration'
 import type { RumRect } from '../../../rumEvent.types'
 import { getClsAttributionImpactedArea } from './getClsAttributionImpactedArea'
+import { createSoftNavigationEntryFilter } from './softNavigationEntryFilter'
 
 declare const WeakRef: WeakRefConstructor
 
@@ -54,29 +55,34 @@ interface LayoutShiftInstance {
 export function trackCumulativeLayoutShift(
   configuration: RumConfiguration,
   viewStart: RelativeTime,
-  callback: (cumulativeLayoutShift: CumulativeLayoutShift) => void
+  callback: (cumulativeLayoutShift: CumulativeLayoutShift) => void,
+  isSoftNavigationTracked: boolean
 ) {
   if (!isLayoutShiftSupported()) {
     return {
       stop: noop,
+      setNavigationId: noop,
     }
   }
 
   let maxClsValue = 0
   let biggestShift: LayoutShiftInstance | undefined
+  const softNavigationEntryFilter = createSoftNavigationEntryFilter<RumLayoutShiftTiming>(isSoftNavigationTracked)
 
   // if no layout shift happen the value should be reported as 0
   callback({
     value: 0,
   })
 
-  const slidingWindow = slidingSessionWindow()
+  let slidingWindow = slidingSessionWindow()
   const performanceSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.LAYOUT_SHIFT,
     buffered: true,
-  }).subscribe((entries) => {
+  }).subscribe(handleEntries)
+
+  function handleEntries(entries: RumLayoutShiftTiming[]) {
     for (const entry of entries) {
-      if (entry.hadRecentInput || entry.startTime < viewStart) {
+      if (entry.hadRecentInput || entry.startTime < viewStart || !softNavigationEntryFilter.accept(entry)) {
         continue
       }
 
@@ -107,11 +113,20 @@ export function trackCumulativeLayoutShift(
         })
       }
     }
-  })
+  }
 
   return {
     stop: () => {
       performanceSubscription.unsubscribe()
+    },
+    setNavigationId: (navigationId: number) => {
+      softNavigationEntryFilter.setNavigationId(navigationId, (entries) => {
+        maxClsValue = 0
+        biggestShift = undefined
+        slidingWindow = slidingSessionWindow()
+        callback({ value: 0 })
+        handleEntries(entries)
+      })
     },
   }
 }

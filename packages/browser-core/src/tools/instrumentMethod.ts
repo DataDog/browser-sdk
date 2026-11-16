@@ -1,5 +1,6 @@
 import { callMonitored } from '@datadog/js-core/monitor'
 import { setTimeout, noop } from '@datadog/js-core/util'
+import type { HandlingStackType } from './stackTrace/handlingStack'
 import { createHandlingStack } from './stackTrace/handlingStack'
 
 /**
@@ -101,7 +102,10 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   targetPrototype: TARGET,
   method: METHOD,
   onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
-  { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
+  {
+    computeHandlingStack,
+    handlingStackType = 'instrumented method',
+  }: { computeHandlingStack?: boolean; handlingStackType?: HandlingStackType } = {}
 ) {
   let original = targetPrototype[method]
 
@@ -129,7 +133,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
       {
         target: this,
         parameters,
-        handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
+        handlingStack: computeHandlingStack ? createHandlingStack(handlingStackType) : undefined,
       },
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call -- TARGET[METHOD] is any under the index signature; value is verified as a function above
       () => original.apply(this, parameters)
@@ -157,10 +161,9 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
  *
  * The wrapper preserves the original prototype (so `instanceof` keeps working), the original
  * `new.target` (so constructors that inspect it behave as if not instrumented), the original
- * static members (e.g. `WebSocket.OPEN`), and `instance.constructor ===` so checks like
- * `new WebSocket(url).constructor === WebSocket` stay true.
+ * static members including ones it inherits (e.g. `WebSocket.OPEN`), and `instance.constructor ===`
+ * so checks like `new WebSocket(url).constructor === WebSocket` stay true.
  *
- * @see {@link preserveConstructorShape} for limitations on static members preservation.
  * @example
  *
  *  instrumentConstructor(window, 'WebSocket', ({ parameters, onPostCall }) => {
@@ -312,14 +315,6 @@ interface InstrumentationCallbacks<RESULT> {
  * before restoring the global property in `stop()`.
  */
 function preserveConstructorShape(instrumentation: AnyConstructor, original: AnyConstructor): () => void {
-  /**
-   * Limitation: Only the original's *own* static members are copied. Statics inherited through the
-   * constructor's prototype chain (e.g. `class Child extends Parent` where `Parent` defines statics)
-   * are not preserved, since the instrumentation still inherits from `Function.prototype`. This is
-   * acceptable for the globals we instrument (e.g. `WebSocket`, whose own statics are the only ones
-   * that matter), but we would need to delegate the static prototype chain to support subclassed
-   * constructors with meaningful inherited statics.
-   */
   for (const key of ([] as PropertyKey[]).concat(
     Object.getOwnPropertyNames(original),
     Object.getOwnPropertySymbols(original)
@@ -327,6 +322,10 @@ function preserveConstructorShape(instrumentation: AnyConstructor, original: Any
     const descriptor = Object.getOwnPropertyDescriptor(original, key) as PropertyDescriptor
     Object.defineProperty(instrumentation, key, descriptor)
   }
+
+  // The original can inherit its statics, as with Playwright's routeWebSocket mock
+  // (`class WebSocket extends WebSocketMock`).
+  Object.setPrototypeOf(instrumentation, Object.getPrototypeOf(original))
 
   /*
    * Limitation: Repointing `constructor` on this shared prototype affects every instance whose

@@ -34,9 +34,13 @@ export function trackFirstContentfulPaint(firstHidden: FirstHidden, callback: (f
  * rendered just after the pageshow event, using two nested requestAnimationFrame calls.
  */
 export function trackRestoredFirstContentfulPaint(viewStartRelative: RelativeTime, callback: (fcp: Duration) => void) {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
+  let animationFrameId = requestAnimationFrame(() => {
+    animationFrameId = requestAnimationFrame(() => {
       callback(elapsed(viewStartRelative, relativeNow()))
     })
   })
+
+  return {
+    stop: () => cancelAnimationFrame(animationFrameId),
+  }
 }

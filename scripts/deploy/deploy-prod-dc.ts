@@ -3,7 +3,8 @@ import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { DatacenterType, getAllDatacentersMetadata } from '../lib/datacenter.ts'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
-import { checkTelemetryErrors, hasTelemetryCredentials } from './lib/checkTelemetryErrors.ts'
+import { checkTelemetryErrors } from './lib/checkTelemetryErrors.ts'
+import { checkCordons, datacenterToCordonTargets } from './lib/checkCordons.ts'
 
 /**
  * Orchestrate the deployments of the artifacts for specific DCs
@@ -48,14 +49,12 @@ export async function main(...args: string[]): Promise<void> {
     return
   }
 
+  // Make sure no target datacenter is cordoned (infra freeze) before deploying
+  await checkCordons(datacenters.flatMap(datacenterToCordonTargets))
+
   // Skip all telemetry error checks for gov datacenter deployments
   const isGovOnly = datacenters.every((dc) => dc === 'gov')
-  let shouldCheckTelemetryErrors = checkTelemetryErrorsFlag && !isGovOnly
-
-  if (shouldCheckTelemetryErrors && !(await hasTelemetryCredentials(datacenters))) {
-    printLog('No telemetry credentials found for any datacenter, skipping telemetry error checks.')
-    shouldCheckTelemetryErrors = false
-  }
+  const shouldCheckTelemetryErrors = checkTelemetryErrorsFlag && !isGovOnly
 
   if (shouldCheckTelemetryErrors) {
     // Make sure system is in a good state before deploying
