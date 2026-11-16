@@ -9,6 +9,7 @@ export const packages: Package[] = [
   { packageName: 'browser-rum-slim', service: 'browser-rum-sdk' },
   { packageName: 'browser-debugger', service: 'browser-debugger-sdk' },
   { packageName: 'browser-rum-shopify', service: 'browser-rum-sdk' },
+  { packageName: 'browser-early-collection', service: 'browser-rum-sdk' },
 ]
 
 // ex: datadog-rum-v4.js, chunks/datadogRecorder-8d8a8dfab6958424038f-datadog-rum.js
