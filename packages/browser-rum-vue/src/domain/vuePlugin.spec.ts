@@ -46,10 +46,11 @@ describe('vuePlugin', () => {
   })
 
   it('starts each view once when onInit is called several times', async () => {
-    initPlugin({ router: true })
+    const firstStartView = initPlugin({ router: true })
     const startView = initPlugin({ router: true })
     await waitNextMicrotask()
     startVueViewWhenReady('/a')
+    expect(firstStartView).not.toHaveBeenCalled()
     expect(startView).toHaveBeenCalledOnceWith('/a')
   })
 
