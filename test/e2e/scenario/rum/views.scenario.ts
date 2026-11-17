@@ -15,6 +15,28 @@ test.describe('rum views', () => {
       expect(viewEvent.view.load_event).toBeGreaterThan(0)
     })
 
+  createTest('refreshes view.time_spent when the page becomes hidden')
+    .withRum()
+    .run(async ({ intakeRegistry, page }) => {
+      await page.waitForTimeout(1000)
+
+      // Simulate the page going to the background without `beforeunload`, as in mobile in-app browsers
+      const elapsedMs = await page.evaluate(() => {
+        const elapsed = performance.now()
+        Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+        document.dispatchEvent(new Event('visibilitychange'))
+        return elapsed
+      })
+
+      // Don't use flushEvents(): its navigation fires `beforeunload`, which would refresh the view by itself.
+      // Poll on the max `time_spent`, as requests can reach the intake out of order.
+      // The view starts at the time origin, so its duration must cover the time elapsed until the page was hidden
+      // (minus a tolerance for the clock differences between `performance.now()` and the view clock).
+      await expect
+        .poll(() => Math.max(0, ...intakeRegistry.rumViewEvents.map((viewEvent) => viewEvent.view.time_spent)))
+        .toBeGreaterThanOrEqual((elapsedMs - 100) * 1e6)
+    })
+
   createTest('collects only manual view metrics when trackViewMetricsManually is enabled')
     .withRum({ trackViewMetricsManually: true })
     .withRumSlim()
