@@ -180,6 +180,11 @@ export function startRumEventCollection(
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
 
+  // Must start before the view collection: on page exit, pending resources must be collected
+  // before the final view update, so the view resource count includes them.
+  const resourceCollection = startResourceCollection(lifeCycle, configuration)
+  cleanupTasks.push(resourceCollection.stop)
+
   const {
     addTiming,
     setLoadingTime,
@@ -204,9 +209,6 @@ export function startRumEventCollection(
   startSourceCodeMfeContext(assembleHook)
 
   cleanupTasks.push(stopViewCollection)
-
-  const resourceCollection = startResourceCollection(lifeCycle, configuration)
-  cleanupTasks.push(resourceCollection.stop)
 
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)

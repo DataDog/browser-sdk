@@ -1,4 +1,5 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
+import { callMonitored } from '@datadog/js-core/monitor'
 import { requestIdleCallback } from './requestIdleCallback'
 
 /**
@@ -20,6 +21,11 @@ export const MAX_EXECUTION_TIME_ON_TIMEOUT = 30
 
 export interface TaskQueue {
   push(task: Task): void
+  /**
+   * Run all pending tasks synchronously, ignoring the idle time budget. Use it when the page may
+   * exit, so pending tasks get a chance to run before the page goes away.
+   */
+  flush(): void
   stop(): void
 }
 
@@ -56,6 +62,13 @@ export function createTaskQueue(): TaskQueue {
     push(task) {
       if (pendingTasks.push(task) === 1) {
         scheduleNextRun()
+      }
+    },
+    flush() {
+      while (pendingTasks.length) {
+        // Unlike the idle callback, the caller isn't monitored: report errors so a failing task
+        // doesn't prevent the remaining tasks (and the caller, ex: the page exit flush) from running.
+        callMonitored(pendingTasks.shift()!)
       }
     },
     stop() {
