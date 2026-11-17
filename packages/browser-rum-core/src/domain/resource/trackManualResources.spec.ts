@@ -222,6 +222,18 @@ describe('trackManualResources', () => {
       expect(getEvent()._dd).toEqual({})
     })
 
+    it('should ignore non-string ids', () => {
+      startResource(URL, { traceId: 123 as unknown as string, spanId: 456 as unknown as string })
+      stopResource(URL)
+      expect(getEvent()._dd).toEqual({})
+    })
+
+    it('should ignore a non-number rule_psr', () => {
+      startResource(URL, { traceId: '1', spanId: '2', rulePsr: '0.5' as unknown as number })
+      stopResource(URL)
+      expect(getEvent()._dd).toEqual({ trace_id: '1', span_id: '2' })
+    })
+
     it('should leave _dd empty without ids', () => {
       startResource(URL, { context: { foo: 'bar' } })
       stopResource(URL)

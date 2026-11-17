@@ -121,8 +121,8 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
         size: options.size,
       },
       _dd:
-        traceId && spanId
-          ? { trace_id: traceId, span_id: spanId, ...(rulePsr !== undefined && { rule_psr: rulePsr }) }
+        typeof traceId === 'string' && traceId && typeof spanId === 'string' && spanId
+          ? { trace_id: traceId, span_id: spanId, ...(typeof rulePsr === 'number' && { rule_psr: rulePsr }) }
           : {},
       context: stopped.context,
     }
