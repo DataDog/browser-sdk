@@ -520,12 +520,14 @@ test.describe('manual resources with startResource/stopResource', () => {
       expect(resourceEvents[0].resource.id).toBeDefined()
     })
 
-  createTest('track a manual resource with trace and span ids from context')
+  createTest('track a manual resource with trace and span ids')
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startResource('https://api.example.com/traced', {
-          context: { '_dd.trace_id': '1234567890', '_dd.span_id': '987654321', foo: 'bar' },
+          traceId: '1234567890',
+          spanId: '987654321',
+          context: { foo: 'bar' },
         })
         window.DD_RUM!.stopResource('https://api.example.com/traced')
       })
@@ -538,8 +540,6 @@ test.describe('manual resources with startResource/stopResource', () => {
       expect(resourceEvents[0]._dd.trace_id).toBe('1234567890')
       expect(resourceEvents[0]._dd.span_id).toBe('987654321')
       expect(resourceEvents[0].context).toEqual(expect.objectContaining({ foo: 'bar' }))
-      expect(resourceEvents[0].context).not.toHaveProperty(['_dd.trace_id'])
-      expect(resourceEvents[0].context).not.toHaveProperty(['_dd.span_id'])
     })
 
   createTest('track a manual resource with type and method')
