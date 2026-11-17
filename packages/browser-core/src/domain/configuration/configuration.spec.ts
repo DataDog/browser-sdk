@@ -1,12 +1,18 @@
 import { validateAndBuildConfiguration as _validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { RumEvent } from '../../../../browser-rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
-import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
+import type {
+  ExtractTelemetryConfiguration,
+  ExtractTelemetryInitContext,
+  MapInitConfigurationKey,
+  MapInitContextKey,
+} from '../../../test'
 import { display } from '../../tools/display'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { TrackingConsent } from '../trackingConsent'
+import type { InitContext } from '../../boot/init'
 import type { InitConfiguration } from './configuration'
-import { BROWSER_CORE_SCHEMA, serializeConfiguration } from './configuration'
+import { BROWSER_CORE_SCHEMA, serializeConfiguration, serializeInitContext } from './configuration'
 
 describe('BROWSER_CORE_SCHEMA', () => {
   const validateAndBuildConfiguration = (initConfiguration: InitConfiguration) =>
@@ -251,6 +257,50 @@ describe('BROWSER_CORE_SCHEMA', () => {
         serializeConfiguration(EXHAUSTIVE_INIT_CONFIGURATION)
 
       expect(serializedConfiguration).toEqual(SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION)
+    })
+  })
+
+  describe('serializeInitContext', () => {
+    const EXHAUSTIVE_INIT_CONTEXT: Required<InitContext> = {
+      user: { id: 'user-id', name: 'John Doe', email: 'john@doe.com' },
+      account: { id: 'account-id', name: 'Acme' },
+    }
+
+    it('should serialize every property', () => {
+      const serializedInitContext: ExtractTelemetryInitContext<MapInitContextKey<keyof InitContext>> =
+        serializeInitContext(EXHAUSTIVE_INIT_CONTEXT)
+
+      expect(serializedInitContext).toEqual({ has_user: true, has_account: true })
+    })
+
+    it('should only flag the provided properties', () => {
+      expect(serializeInitContext({ user: EXHAUSTIVE_INIT_CONTEXT.user })).toEqual({
+        has_user: true,
+        has_account: false,
+      })
+      expect(serializeInitContext({ account: EXHAUSTIVE_INIT_CONTEXT.account })).toEqual({
+        has_user: false,
+        has_account: true,
+      })
+    })
+
+    it('should not flag any property when no init context is provided', () => {
+      expect(serializeInitContext(undefined)).toEqual({ has_user: false, has_account: false })
+      expect(serializeInitContext({})).toEqual({ has_user: false, has_account: false })
+    })
+
+    it('should not flag empty properties', () => {
+      expect(serializeInitContext({ user: undefined, account: null as any })).toEqual({
+        has_user: false,
+        has_account: false,
+      })
+    })
+
+    it('should ignore unknown properties', () => {
+      expect(serializeInitContext({ user: EXHAUSTIVE_INIT_CONTEXT.user, foo: 'bar' } as InitContext)).toEqual({
+        has_user: true,
+        has_account: false,
+      })
     })
   })
 })

@@ -10,6 +10,7 @@ import {
   CustomerContextKey,
   bufferContextCalls,
   addTelemetryConfiguration,
+  serializeInitContext,
   addTelemetryDebug,
   buildGlobalContextManager,
   buildUserContextManager,
@@ -134,7 +135,10 @@ export function createPreStartStrategy(
         const onSessionManagerReady = (newSessionManager: SessionManager) => {
           sessionManager = newSessionManager
           startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
-          addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
+          addTelemetryConfiguration({
+            ...serializeLogsConfiguration(initConfiguration),
+            init_context: serializeInitContext(initContext),
+          })
           tryStartLogs()
         }
 
