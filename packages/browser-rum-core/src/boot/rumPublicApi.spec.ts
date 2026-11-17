@@ -1,8 +1,11 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
+import { BufferedObservable } from '@datadog/js-core/util'
 import type { DeflateWorker } from '@datadog/browser-core'
 import {
   BufferedDataType,
+  buildAccountContextManager,
+  buildUserContextManager,
   display,
   DefaultPrivacyLevel,
   ResourceType,
@@ -14,6 +17,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
   mockClock,
+  wait,
   waitNextMicrotask,
   mockEventBridge,
   createFakeTelemetryObject,
@@ -1393,6 +1397,106 @@ describe('rum public api', () => {
       const calls = await collectAsyncCalls(startRumSpy, 1)
       const sdkName = calls.argsFor(0)[9]
       expect(sdkName).toBe('rum-slim')
+    })
+  })
+
+  describe('plugin call queues', () => {
+    function createPluginWithQueue() {
+      const queue = new BufferedObservable<() => void>(500)
+      const plugin: RumPlugin = { name: 'test-plugin', onInit: ({ registerCallQueue }) => registerCallQueue(queue) }
+      return { plugin, queue }
+    }
+
+    it('runs plugin calls after the user and account set before start', async () => {
+      const calls: string[] = []
+      const { plugin, queue } = createPluginWithQueue()
+      const pluginCallSpy = jasmine.createSpy().and.callFake(() => {
+        calls.push('plugin')
+        return { user: rumPublicApi.getUser(), account: rumPublicApi.getAccount() }
+      })
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          addAction: () => calls.push('rum:addAction'),
+          userContext: buildUserContextManager(),
+          accountContext: buildAccountContextManager(),
+        },
+      })
+      rumPublicApi.setUser({ id: 'u1' })
+      rumPublicApi.setAccount({ id: 'a1' })
+      rumPublicApi.addAction('x')
+      queue.notify(pluginCallSpy)
+
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] })
+      await collectAsyncCalls(startRumSpy, 1)
+      await collectAsyncCalls(pluginCallSpy, 1)
+
+      expect(pluginCallSpy.calls.mostRecent().returnValue).toEqual({ user: { id: 'u1' }, account: { id: 'a1' } })
+      expect(calls).toEqual(['rum:addAction', 'plugin'])
+    })
+
+    it('runs plugin calls after tracking consent is granted, and after the API calls made before start', async () => {
+      const calls: string[] = []
+      const { plugin, queue } = createPluginWithQueue()
+      const pluginCallSpy = jasmine.createSpy().and.callFake(() => calls.push('plugin'))
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+        startRumResult: { addAction: () => calls.push('rum:addAction') },
+      })
+      queue.notify(pluginCallSpy)
+      rumPublicApi.addAction('x')
+
+      rumPublicApi.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackingConsent: TrackingConsent.NOT_GRANTED,
+        plugins: [plugin],
+      })
+      await wait(20)
+
+      expect(startRumSpy).not.toHaveBeenCalled()
+      expect(calls).toEqual([])
+
+      rumPublicApi.setTrackingConsent(TrackingConsent.GRANTED)
+      await collectAsyncCalls(pluginCallSpy, 1)
+
+      expect(calls).toEqual(['rum:addAction', 'plugin'])
+    })
+
+    it('runs plugin calls after the first startView() when views are tracked manually', async () => {
+      const calls: string[] = []
+      const { plugin, queue } = createPluginWithQueue()
+      const pluginCallSpy = jasmine.createSpy().and.callFake(() => calls.push('plugin'))
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+        startRumResult: { addAction: () => calls.push('rum:addAction') },
+      })
+      queue.notify(pluginCallSpy)
+      rumPublicApi.addAction('x')
+
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: true, plugins: [plugin] })
+      await wait(20)
+
+      expect(startRumSpy).not.toHaveBeenCalled()
+      expect(calls).toEqual([])
+
+      rumPublicApi.startView('home')
+      await collectAsyncCalls(pluginCallSpy, 1)
+
+      expect(calls).toEqual(['rum:addAction', 'plugin'])
+    })
+
+    it('runs plugin calls after the API calls made before start when the event bridge is present', async () => {
+      mockEventBridge()
+      const calls: string[] = []
+      const { plugin, queue } = createPluginWithQueue()
+      const pluginCallSpy = jasmine.createSpy().and.callFake(() => calls.push('plugin'))
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: { addAction: () => calls.push('rum:addAction') },
+      })
+      rumPublicApi.addAction('x')
+      queue.notify(pluginCallSpy)
+
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] })
+      await collectAsyncCalls(pluginCallSpy, 1)
+
+      expect(calls).toEqual(['rum:addAction', 'plugin'])
     })
   })
 })
