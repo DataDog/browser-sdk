@@ -9,7 +9,6 @@ import {
   EARLY_PHASES_BUFFER_CAPACITY,
   WEBSOCKET_PERIODIC_REPORT_INTERVAL,
 } from '@datadog/browser-rum-core/src/domain/webSocket/webSocketCollection'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import type { IntakeRegistry } from '../../lib/framework'
@@ -20,7 +19,6 @@ import { DEFAULT_WS_OUT_MESSAGE, expectedWsEchoMessage, WebSocketPage } from '..
 declare global {
   interface Window {
     dismissedVitalNames?: string[]
-    deferredRumInit?: () => void
   }
 }
 
@@ -474,10 +472,11 @@ test.describe('rum websockets', () => {
       })
   })
 
-  test.describe('before init', () => {
-    createTest('reports a connection opened and closed before init once RUM starts')
-      .withRum(RUM_CONFIGURATION)
-      .withRumInit(deferRumInit)
+  // `withRum` calls init right away: the pending tracking consent holds RUM start, so that the test
+  // can open connections before it, then start RUM with `grantTrackingConsent`.
+  test.describe('before RUM starts', () => {
+    createTest('reports a connection that opened and closed before RUM started')
+      .withRum({ ...RUM_CONFIGURATION, trackingConsent: 'not-granted' })
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const ws = new WebSocketPage(page)
@@ -485,7 +484,7 @@ test.describe('rum websockets', () => {
         await ws.open()
         await ws.sendAndExpectEcho()
         await ws.close()
-        await initRum(page)
+        await grantTrackingConsent(page)
 
         await flushEvents()
 
@@ -502,23 +501,22 @@ test.describe('rum websockets', () => {
         expect(closed.snapshot!.inbound.message_count).toBe(1)
       })
 
-    createTest('keeps tracking a connection opened before init once RUM starts')
-      .withRum(RUM_CONFIGURATION)
-      .withRumInit(deferRumInit)
+    createTest('keeps tracking a connection opened before RUM starts')
+      .withRum({ ...RUM_CONFIGURATION, trackingConsent: 'not-granted' })
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const ws = new WebSocketPage(page)
 
         await ws.open()
         await ws.sendAndExpectEcho()
-        await initRum(page)
+        await grantTrackingConsent(page)
         await ws.sendAndExpectEcho()
         await ws.close()
 
         await flushEvents()
 
         // the open report RUM makes as it starts, the connecting and open vitals collected before
-        // init, replayed right after, then the closing and closed vitals reported live
+        // RUM started, replayed right after, then the closing and closed vitals reported live
         const vitals = getWebSocketVitals(intakeRegistry)
         expect(vitals.connecting).toHaveLength(1)
         expect(vitals.open).toHaveLength(2)
@@ -526,22 +524,21 @@ test.describe('rum websockets', () => {
         expect(vitals.closed).toHaveLength(1)
         expect(getConnectionIds(vitals.all)).toEqual([vitals.connecting[0].vital.websocket.id])
 
-        // what was exchanged on either side of init adds up on the one connection
+        // what was exchanged on either side of RUM start adds up on the one connection
         const closed = vitals.closed[0].vital.websocket
         expect(closed.snapshot!.outbound.message_count).toBe(2)
         expect(closed.snapshot!.inbound.message_count).toBe(2)
       })
 
-    createTest('attributes the vitals collected before init to the initial view and its URL')
-      .withRum(RUM_CONFIGURATION)
-      .withRumInit(deferRumInit)
+    createTest('attributes the vitals collected before RUM starts to the initial view and its URL')
+      .withRum({ ...RUM_CONFIGURATION, trackingConsent: 'not-granted' })
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const ws = new WebSocketPage(page)
 
-        // kept open across init, so that RUM reports it as it starts
+        // kept open across RUM start, so that RUM reports it as it starts
         await ws.open()
-        await initRum(page)
+        await grantTrackingConsent(page)
         await ws.close()
 
         await flushEvents()
@@ -549,7 +546,7 @@ test.describe('rum websockets', () => {
         // the open report RUM makes as it starts is emitted as soon as startWebSocketCollection runs:
         // were it moved above startViewCollection in startRumEventCollection, assembly would find
         // neither the initial view nor its URL in the histories, and would discard that report. The
-        // vitals collected before init are replayed in the following microtask, once the view exists.
+        // vitals collected before RUM starts are replayed in the following microtask, once the view exists.
         const initialView = intakeRegistry.rumViewEvents[0].view
         const vitals = getWebSocketVitals(intakeRegistry)
         expect(sortByDate(vitals.open).map((vital) => vital.vital.websocket.snapshot_version)).toEqual([1, 2])
@@ -559,9 +556,8 @@ test.describe('rum websockets', () => {
         }
       })
 
-    createTest('never reports a connection opened before init whose phases the early buffer dropped')
-      .withRum(RUM_CONFIGURATION)
-      .withRumInit(deferRumInit)
+    createTest('never reports a connection opened before RUM starts whose phases the early buffer dropped')
+      .withRum({ ...RUM_CONFIGURATION, trackingConsent: 'not-granted' })
       .withBody(WebSocketPage.testBody())
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const ws = new WebSocketPage(page)
@@ -572,7 +568,7 @@ test.describe('rum websockets', () => {
         for (let i = 0; i < connectionCount; i++) {
           await ws.open()
         }
-        await initRum(page)
+        await grantTrackingConsent(page)
         // send and close act on the connection opened last
         await ws.sendAndExpectEcho()
         await ws.close()
@@ -588,16 +584,15 @@ test.describe('rum websockets', () => {
         expect(vitals.closing).toHaveLength(1)
       })
 
-    createTest('reports a connection opened before init as soon as RUM starts, then periodically')
-      .withRum(RUM_CONFIGURATION)
-      .withRumInit(deferRumInit)
+    createTest('reports a connection opened before RUM starts as soon as it starts, then periodically')
+      .withRum({ ...RUM_CONFIGURATION, trackingConsent: 'not-granted' })
       .withBody(WebSocketPage.testBody())
       .withMockClock()
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const ws = new WebSocketPage(page)
 
         await ws.open()
-        await initRum(page)
+        await grantTrackingConsent(page)
         await page.clock.runFor(WEBSOCKET_PERIODIC_REPORT_INTERVAL)
         await ws.close()
 
@@ -655,19 +650,11 @@ function sortByDate<T extends WebSocketVital>(vitals: T[]) {
 }
 
 /**
- * Replaces the init call `withRumInit` makes, so that the test can open connections between the SDK
- * load and init, and then call init itself with `initRum`.
+ * Grants the tracking consent that `trackingConsent: 'not-granted'` withheld, and waits for RUM to
+ * start. It starts once the session is resolved, which is when the connections collected so far are
+ * reported and the collection takes over their tracking.
  */
-function deferRumInit(configuration: RumInitConfiguration) {
-  window.deferredRumInit = () => window.DD_RUM!.init(configuration)
-}
-
-/**
- * Calls the deferred init and waits for RUM to start. It starts once the session is resolved, after
- * init returns, which is when the connections collected before init are reported and the collection
- * takes over their tracking.
- */
-async function initRum(page: Page) {
-  await page.evaluate(() => window.deferredRumInit!())
+async function grantTrackingConsent(page: Page) {
+  await page.evaluate(() => window.DD_RUM!.setTrackingConsent('granted'))
   await expect.poll(() => page.evaluate(() => window.DD_RUM!.getInternalContext())).toBeDefined()
 }
