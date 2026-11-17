@@ -15,8 +15,8 @@ test.describe('rum views', () => {
       expect(viewEvent.view.load_event).toBeGreaterThan(0)
     })
 
-  createTest('refreshes view.time_spent when the page becomes hidden')
-    .withRum()
+  createTest('refreshes view.time_spent when the page becomes hidden, with the experimental feature')
+    .withRum({ enableExperimentalFeatures: ['update_view_on_hidden'] })
     .run(async ({ intakeRegistry, page }) => {
       await page.waitForTimeout(1000)
 

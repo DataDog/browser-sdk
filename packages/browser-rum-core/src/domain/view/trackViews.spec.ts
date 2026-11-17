@@ -1,6 +1,6 @@
 import type { RelativeTime, Duration, ClocksState } from '@datadog/js-core/time'
 import { timeStampNow, relativeToClocks, relativeNow } from '@datadog/js-core/time'
-import { PageExitReason, display } from '@datadog/browser-core'
+import { PageExitReason, display, addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
@@ -377,45 +377,14 @@ describe('view lifecycle', () => {
       })
     })
 
-    ;[{ exitReason: PageExitReason.UNLOADING }, { exitReason: PageExitReason.HIDDEN }].forEach(({ exitReason }) => {
-      it(`should trigger a view update when the page is exiting for reason ${exitReason}`, () => {
-        const { getViewUpdateCount } = viewTest
-
-        expect(getViewUpdateCount()).toEqual(1)
-
-        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, exitReason)
-
-        expect(getViewUpdateCount()).toEqual(2)
-      })
-    })
-
-    it('should update only once when the page is exiting on unloading then hidden', () => {
+    it('should trigger a view update on unloading', () => {
       const { getViewUpdateCount } = viewTest
 
+      expect(getViewUpdateCount()).toEqual(1)
+
       lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
-      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
 
       expect(getViewUpdateCount()).toEqual(2)
-    })
-
-    it('should update on a later hidden once the unloading update has been taken into account', () => {
-      const { getViewUpdateCount } = viewTest
-
-      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
-      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
-      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
-
-      expect(getViewUpdateCount()).toEqual(3)
-    })
-
-    it('should update on hidden when the view was updated since the unloading', () => {
-      const { getViewUpdateCount, setViewName } = viewTest
-
-      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
-      setViewName('foo')
-      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
-
-      expect(getViewUpdateCount()).toEqual(4)
     })
 
     it('should not create a new view when ending the view on unloading', () => {
@@ -449,6 +418,70 @@ describe('view lifecycle', () => {
 
     expect(notifySpy.calls.argsFor(callsCount)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
     expect(notifySpy.calls.argsFor(callsCount + 1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
+  })
+})
+
+describe('view update on page hidden', () => {
+  const lifeCycle = new LifeCycle()
+
+  beforeEach(() => {
+    mockClock()
+  })
+
+  function startViewTest(isFeatureEnabled: boolean) {
+    if (isFeatureEnabled) {
+      addExperimentalFeatures([ExperimentalFeature.UPDATE_VIEW_ON_HIDDEN])
+    }
+    const viewTest = setupViewTest({ lifeCycle })
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+    return viewTest
+  }
+
+  it('should not trigger a view update without the experimental feature', () => {
+    const { getViewUpdateCount } = startViewTest(false)
+
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+    expect(getViewUpdateCount()).toEqual(1)
+  })
+
+  it('should trigger a view update with the experimental feature', () => {
+    const { getViewUpdateCount } = startViewTest(true)
+
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+    expect(getViewUpdateCount()).toEqual(2)
+  })
+
+  it('should update only once when the page is exiting on unloading then hidden', () => {
+    const { getViewUpdateCount } = startViewTest(true)
+
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+    expect(getViewUpdateCount()).toEqual(2)
+  })
+
+  it('should update on a later hidden once the unloading update has been taken into account', () => {
+    const { getViewUpdateCount } = startViewTest(true)
+
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+    expect(getViewUpdateCount()).toEqual(3)
+  })
+
+  it('should update on hidden when the view was updated since the unloading', () => {
+    const { getViewUpdateCount, setViewName } = startViewTest(true)
+
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
+    setViewName('foo')
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
+
+    expect(getViewUpdateCount()).toEqual(4)
   })
 })
 

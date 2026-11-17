@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   TRACK_WEBSOCKETS = 'track_websockets',
   COMPOSED_PATH_SELECTOR_ATTRIBUTES = 'composed_path_selector_attributes',
+  UPDATE_VIEW_ON_HIDDEN = 'update_view_on_hidden',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

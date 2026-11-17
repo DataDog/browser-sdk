@@ -10,7 +10,14 @@ import {
 import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { Subscription, Context, ContextValue } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
-import { PageExitReason, shallowClone, display, createContextManager } from '@datadog/browser-core'
+import {
+  PageExitReason,
+  shallowClone,
+  display,
+  createContextManager,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import {
   mockable,
   setInterval,
@@ -305,13 +312,17 @@ function newView(
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
 
   // `beforeunload` is not reliably fired on mobile (e.g. in-app browsers), so also update on
-  // `visibilitychange:hidden`. When both fire for the same exit (`beforeunload` comes first), update only once.
+  // `visibilitychange:hidden`, behind an experimental feature.
+  // When both fire for the same exit (`beforeunload` comes first), update only once.
   let hasUpdatedOnUnloading = false
   const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
     if (reason === PageExitReason.UNLOADING) {
       triggerViewUpdate()
       hasUpdatedOnUnloading = true
-    } else if (reason === PageExitReason.HIDDEN) {
+    } else if (
+      reason === PageExitReason.HIDDEN &&
+      isExperimentalFeatureEnabled(ExperimentalFeature.UPDATE_VIEW_ON_HIDDEN)
+    ) {
       if (hasUpdatedOnUnloading) {
         hasUpdatedOnUnloading = false
       } else {
