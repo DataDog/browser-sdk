@@ -304,9 +304,19 @@ function newView(
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
 
+  // `beforeunload` is not reliably fired on mobile (e.g. in-app browsers), so also update on
+  // `visibilitychange:hidden`. When both fire for the same exit (`beforeunload` comes first), update only once.
+  let hasUpdatedOnUnloading = false
   const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
     if (reason === PageExitReason.UNLOADING) {
       triggerViewUpdate()
+      hasUpdatedOnUnloading = true
+    } else if (reason === PageExitReason.HIDDEN) {
+      if (hasUpdatedOnUnloading) {
+        hasUpdatedOnUnloading = false
+      } else {
+        triggerViewUpdate()
+      }
     }
   })
 
@@ -332,6 +342,7 @@ function newView(
   }
 
   function triggerViewUpdate() {
+    hasUpdatedOnUnloading = false
     cancelScheduleViewUpdate()
     triggerBeforeViewUpdate()
 
