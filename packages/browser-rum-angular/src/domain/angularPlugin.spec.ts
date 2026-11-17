@@ -3,6 +3,7 @@ import { display, toMajorVersionIntegration } from '@datadog/browser-core'
 import type {
   RumInitConfiguration,
   RumPluginOnInitOptions,
+  OnRumStartOptions,
   RumPublicApi,
   StartRumResult,
 } from '@datadog/browser-rum-core'
@@ -101,7 +102,7 @@ describe('angularPlugin', () => {
     addAngularErrorWhenReady(fakeError(1))
     const addErrorSpy = jasmine.createSpy()
 
-    angularPlugin().onRumStart!({ addError: addErrorSpy })
+    angularPlugin().onRumStart!({ addError: addErrorSpy } as unknown as OnRumStartOptions)
     await waitNextMicrotask()
     addAngularErrorWhenReady(fakeError(2))
 
@@ -114,7 +115,7 @@ describe('angularPlugin', () => {
     }
     const addErrorSpy = jasmine.createSpy()
 
-    angularPlugin().onRumStart!({ addError: addErrorSpy })
+    angularPlugin().onRumStart!({ addError: addErrorSpy } as unknown as OnRumStartOptions)
     await waitNextMicrotask()
 
     expect(addErrorSpy).toHaveBeenCalledTimes(500)

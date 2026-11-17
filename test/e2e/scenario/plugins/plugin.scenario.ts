@@ -1,6 +1,6 @@
 import type { ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import { test, expect } from '@playwright/test'
-import type { RumPlugin, AllowedRawRumEvent } from '@datadog/browser-rum-core'
+import type { RumPlugin, AllowedRawRumEvent, OnRumStartOptions } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType } from '@datadog/browser-rum-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { generateUUID } from '@datadog/js-core/util'
@@ -16,7 +16,7 @@ function createPlugin(): RumPlugin {
   return {
     name: 'test-plugin',
     onRumStart: ({ addEvent }) => {
-      window.TEST_PLUGIN = { addEvent }
+      window.TEST_PLUGIN = { addEvent } as OnRumStartOptions
     },
   }
 }

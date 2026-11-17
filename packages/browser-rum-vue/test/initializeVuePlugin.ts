@@ -3,6 +3,7 @@ import type {
   RumPublicApi,
   StartRumResult,
   RumPluginOnInitOptions,
+  OnRumStartOptions,
 } from '@datadog/browser-rum-core'
 import { noop } from '@datadog/js-core/util'
 import type { VuePluginConfiguration } from '../src/domain/vuePlugin'
@@ -27,6 +28,6 @@ export function initializeVuePlugin({
     publicApi,
     initConfiguration,
   } as RumPluginOnInitOptions)
-  plugin.onRumStart({ addError })
+  plugin.onRumStart({ addError } as OnRumStartOptions)
   registerCleanupTask(() => resetVuePlugin())
 }

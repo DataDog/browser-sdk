@@ -1,5 +1,5 @@
 import type { RumInitConfiguration } from './configuration'
-import type { RumPluginOnInitOptions, RumPlugin } from './plugins'
+import type { RumPluginOnInitOptions, RumPlugin, OnRumStartOptions } from './plugins'
 import { callPluginsOnInit, callPluginsOnRumStart } from './plugins'
 
 describe('callPluginsOnInit', () => {
@@ -96,7 +96,7 @@ describe('callPluginsOnRumStart', () => {
   it('calls onRumStart on each plugin', () => {
     const plugin1 = { name: 'a', onRumStart: jasmine.createSpy() } satisfies RumPlugin
     const plugin2 = { name: 'b', onRumStart: jasmine.createSpy() } satisfies RumPlugin
-    const options = { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() }
+    const options = { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() } as unknown as OnRumStartOptions
 
     callPluginsOnRumStart([plugin1, plugin2], options)
 
@@ -107,7 +107,7 @@ describe('callPluginsOnRumStart', () => {
   it('does not call onRumStart if the plugin does not have it', () => {
     const plugin1 = { name: 'a', onRumStart: jasmine.createSpy() } satisfies RumPlugin
     const plugin2 = { name: 'b' } satisfies RumPlugin
-    const options = { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() }
+    const options = { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() } as unknown as OnRumStartOptions
 
     expect(() => callPluginsOnRumStart([plugin1, plugin2], options)).not.toThrow()
     expect(plugin1.onRumStart).toHaveBeenCalledWith(options)
@@ -115,7 +115,10 @@ describe('callPluginsOnRumStart', () => {
 
   it('does nothing when there are no plugins', () => {
     expect(() =>
-      callPluginsOnRumStart(undefined, { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() })
+      callPluginsOnRumStart(undefined, {
+        addEvent: jasmine.createSpy(),
+        addError: jasmine.createSpy(),
+      } as unknown as OnRumStartOptions)
     ).not.toThrow()
   })
 })

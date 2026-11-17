@@ -8,6 +8,7 @@ import {
   ResourceType,
   startTelemetry,
   startSessionManager,
+  TrackingConsent,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -20,6 +21,7 @@ import {
   replaceMockableWithSpy,
   createStartSessionManagerMock,
 } from '@datadog/browser-core/test'
+import type { RumPlugin } from '../domain/plugins'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
@@ -145,6 +147,19 @@ describe('rum public api', () => {
         await collectAsyncCalls(recorderApiOnRumStartSpy, 1)
         expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
       })
+    })
+
+    it('passes the tracking consent state and the session manager to plugins on rum start', async () => {
+      const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy<NonNullable<RumPlugin['onRumStart']>>() }
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] })
+      await collectAsyncCalls(plugin.onRumStart, 1)
+      const { trackingConsentState, sessionManager } = plugin.onRumStart.calls.mostRecent().args[0]
+      rumPublicApi.setTrackingConsent(TrackingConsent.NOT_GRANTED)
+
+      expect(sessionManager).toBe(startRumSpy.calls.mostRecent().args[1])
+      expect(trackingConsentState.isGranted()).toBeFalse()
     })
 
     it('sets the user and account provided as init context', () => {
