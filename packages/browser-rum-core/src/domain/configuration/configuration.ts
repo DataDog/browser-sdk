@@ -380,6 +380,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    * open connections report a `websocket_open` vital periodically. The url is reported on the
    * `websocket_connecting` and `websocket_closed` vitals.
    *
+   * The Datadog backend uses these vitals to generate a RUM resource event (`resource.type: 'websocket'`)
+   * for each WebSocket connection. The SDK does not send this resource event, so it does not go through
+   * the `beforeSend` hook.
+   * See [WebSocket attributes](https://docs.datadoghq.com/real_user_monitoring/application_monitoring/browser/data_collected/#websocket-attributes) for further information.
+   *
    * Warning: enabling this option introduces WebSocket vital events to the `beforeSend` hook. They
    * cannot be dismissed, and only their `vital.websocket.url`, `vital.websocket.requested_protocols`,
    * `vital.websocket.selected_protocol` and `vital.websocket.close_reason` fields can be modified,
