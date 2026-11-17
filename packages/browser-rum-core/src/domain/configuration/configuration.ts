@@ -380,6 +380,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    * open connections report a `websocket_open` vital periodically. The url is reported on the
    * `websocket_connecting` and `websocket_closed` vitals.
    *
+   * The Datadog backend uses these vitals to generate a RUM resource event (`resource.type: 'websocket'`)
+   * for each WebSocket connection. The SDK does not send this resource event, so it does not go through
+   * the `beforeSend` hook.
+   * See [WebSocket attributes](https://docs.datadoghq.com/real_user_monitoring/application_monitoring/browser/data_collected/#websocket-attributes) for further information.
+   *
    * Warning: enabling this option introduces WebSocket vital events to the `beforeSend` hook. They
    * cannot be dismissed, and only their `vital.websocket.url`, `vital.websocket.requested_protocols`,
    * `vital.websocket.selected_protocol` and `vital.websocket.close_reason` fields can be modified,
@@ -388,6 +393,19 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Beta
    */
   betaTrackWebSockets?: boolean | undefined
+
+  /**
+   * Use the Soft Navigation API to measure `route_change` views. FCP and LCP are reported for these
+   * views, and CLS and INP only count layout shifts and interactions from the soft navigation onward.
+   *
+   * Requires a browser that supports the Soft Navigation API (Chrome 151 and later). Other browsers
+   * keep the current behavior.
+   *
+   * Warning: enabling this option changes the CLS and INP values of `route_change` views.
+   *
+   * @category Beta
+   */
+  betaTrackSoftNavigations?: boolean | undefined
 
   /**
    * [Internal option] Disable automatic view metrics (FCP, LCP, CLS, INP, scroll, loading time, …).
@@ -512,6 +530,7 @@ export const RUM_SCHEMA = {
   trackViewsManually: { type: 'boolean', default: false, strict: false },
   betaEnableViewUpdates: { type: 'boolean' },
   betaTrackWebSockets: { type: 'boolean', default: false, strict: false },
+  betaTrackSoftNavigations: { type: 'boolean', default: false, strict: false },
   trackViewMetricsManually: { type: 'boolean', default: false, strict: false },
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
@@ -861,6 +880,7 @@ export function serializeRumConfiguration(
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
     beta_enable_view_updates: isViewUpdatesEnabled(configuration.betaEnableViewUpdates, configuration.proxy, sdkName),
     beta_track_web_sockets: configuration.betaTrackWebSockets,
+    beta_track_soft_navigations: configuration.betaTrackSoftNavigations,
     session_replay_canvas_recording: configuration.sessionReplayCanvasRecording?.enable,
     session_replay_canvas_recording_quality: configuration.sessionReplayCanvasRecording?.quality,
     ...baseSerializedConfiguration,

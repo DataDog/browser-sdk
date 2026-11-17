@@ -538,6 +538,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       beta_track_web_sockets?: boolean
       /**
+       * Whether the beta track soft navigations feature is enabled
+       */
+      beta_track_soft_navigations?: boolean
+      /**
        * Whether tracing feature's client-side-stats generation is enabled
        */
       use_client_side_stats?: boolean
