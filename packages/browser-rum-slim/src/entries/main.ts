@@ -33,6 +33,7 @@ export type {
   AddDurationVitalOptions,
   DurationVitalOptions,
   OperationOptions,
+  StartOperationOptions,
   FeatureOperationOptions,
   FailureReason,
   ActionOptions,

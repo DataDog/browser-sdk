@@ -216,6 +216,7 @@ export function startRumEventCollection(
   startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext, bufferedDataObservable)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
+  cleanupTasks.push(vitalCollection.stop)
 
   const webSocketCollection = startWebSocketCollection(lifeCycle, configuration)
   cleanupTasks.push(webSocketCollection.stop)

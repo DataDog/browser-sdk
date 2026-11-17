@@ -1,5 +1,6 @@
 import type { Duration } from '@datadog/js-core/time'
-import { mockClock, type Clock } from '@datadog/browser-core/test'
+import { addExperimentalFeatures, ExperimentalFeature, PageExitReason } from '@datadog/browser-core'
+import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/js-core/time'
 import { generateUUID } from '@datadog/js-core/util'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
@@ -22,6 +23,7 @@ describe('vitalCollection', () => {
     clock = mockClock()
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
     vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
+    registerCleanupTask(vitalCollection.stop)
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   })
@@ -276,6 +278,78 @@ describe('vitalCollection', () => {
           context: { foo: 'bar' },
         })
       )
+    })
+  })
+
+  describe('abandoned operations on page exit', () => {
+    function terminatePage() {
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
+    }
+
+    it('does not abandon operations when the experimental feature is disabled', () => {
+      vitalCollection.addOperationStepVital('foo', 'start', { abandonOnPageExit: true })
+
+      terminatePage()
+
+      expect(rawRumEvents.length).toBe(1)
+    })
+
+    describe('with the experimental feature enabled', () => {
+      beforeEach(() => {
+        addExperimentalFeatures([ExperimentalFeature.ABANDON_OPERATIONS_ON_PAGE_EXIT])
+        vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
+        registerCleanupTask(vitalCollection.stop)
+      })
+
+      it('does not abandon operations started without abandonOnPageExit', () => {
+        vitalCollection.addOperationStepVital('foo', 'start')
+
+        terminatePage()
+
+        expect(rawRumEvents.length).toBe(1)
+      })
+
+      it('sends an abandoned end step for an open operation when the page is terminated', () => {
+        vitalCollection.addOperationStepVital('foo', 'start', {
+          operationKey: 'key',
+          abandonOnPageExit: true,
+          context: { foo: 'bar' },
+          description: 'baz',
+          handlingStack: 'Error\n    at foo',
+        })
+        clock.tick(50)
+        const exitTimeStamp = clocksNow().timeStamp
+
+        terminatePage()
+
+        expect(rawRumEvents.length).toBe(2)
+        expect(rawRumEvents[1].rawRumEvent).toEqual({
+          date: exitTimeStamp,
+          vital: {
+            id: jasmine.any(String),
+            type: VitalType.OPERATION_STEP,
+            name: 'foo',
+            step_type: 'end',
+            operation_key: 'key',
+            failure_reason: 'abandoned',
+            description: undefined,
+          },
+          context: undefined,
+          type: RumEventType.VITAL,
+        })
+        expect(rawRumEvents[1].domainContext).toEqual({})
+      })
+
+      it('does not abandon operations that already ended', () => {
+        vitalCollection.addOperationStepVital('foo', 'start', { abandonOnPageExit: true })
+        vitalCollection.addOperationStepVital('foo', 'end')
+        vitalCollection.addOperationStepVital('bar', 'start', { abandonOnPageExit: true })
+        vitalCollection.addOperationStepVital('bar', 'end', undefined, 'error')
+
+        terminatePage()
+
+        expect(rawRumEvents.length).toBe(4)
+      })
     })
   })
 })

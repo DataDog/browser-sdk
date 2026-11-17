@@ -64,6 +64,7 @@ export type {
   AddDurationVitalOptions,
   DurationVitalOptions,
   OperationOptions,
+  StartOperationOptions,
   FeatureOperationOptions,
   FailureReason,
 } from './domain/vital/vitalCollection'

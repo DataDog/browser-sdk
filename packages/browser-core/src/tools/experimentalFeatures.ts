@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   TRACK_WEBSOCKETS = 'track_websockets',
   COMPOSED_PATH_SELECTOR_ATTRIBUTES = 'composed_path_selector_attributes',
+  ABANDON_OPERATIONS_ON_PAGE_EXIT = 'abandon_operations_on_page_exit',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
