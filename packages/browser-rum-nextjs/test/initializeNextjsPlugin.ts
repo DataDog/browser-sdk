@@ -3,6 +3,7 @@ import type {
   RumPublicApi,
   StartRumResult,
   RumPluginOnInitOptions,
+  OnRumStartOptions,
 } from '@datadog/browser-rum-core'
 import { noop } from '@datadog/js-core/util'
 import { nextjsPlugin, resetNextjsPlugin } from '../src/domain/nextjsPlugin'
@@ -25,9 +26,7 @@ export function initializeNextjsPlugin({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
   } as RumPluginOnInitOptions)
-  plugin.onRumStart({
-    addError,
-  })
+  plugin.onRumStart({ addError } as OnRumStartOptions)
 
   registerCleanupTask(() => {
     resetNextjsPlugin()

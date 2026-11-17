@@ -759,6 +759,8 @@ export function makeRumPublicApi(
       callPluginsOnRumStart(configuration.plugins, {
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
+        trackingConsentState,
+        sessionManager,
       })
 
       return startRumResult
