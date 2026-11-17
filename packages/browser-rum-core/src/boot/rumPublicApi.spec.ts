@@ -1038,18 +1038,14 @@ describe('rum public api', () => {
         type: ResourceType.FETCH,
         method: 'POST',
         context: { requestId: 'abc' },
-        traceId: '123',
-        spanId: '456',
-        rulePsr: 1,
+        tracing: { traceId: '123', spanId: '456', rulePsr: 1 },
       })
       rumPublicApi.stopResource('https://api.example.com/data', {
         type: ResourceType.XHR,
         statusCode: 200,
         size: 1024,
         context: { requestId: 'abc' },
-        traceId: '789',
-        spanId: '012',
-        rulePsr: 0.5,
+        tracing: { traceId: '789', spanId: '012', rulePsr: 0.5 },
       })
       await collectAsyncCalls(stopResourceSpy, 1)
 
@@ -1060,9 +1056,7 @@ describe('rum public api', () => {
           method: 'POST',
           context: { requestId: 'abc' },
           resourceKey: undefined,
-          traceId: '123',
-          spanId: '456',
-          rulePsr: 1,
+          tracing: { traceId: '123', spanId: '456', rulePsr: 1 },
         }),
         { relative: clock.relative(0), timeStamp: clock.timeStamp(0) }
       )
@@ -1074,9 +1068,7 @@ describe('rum public api', () => {
           size: 1024,
           context: { requestId: 'abc' },
           resourceKey: undefined,
-          traceId: '789',
-          spanId: '012',
-          rulePsr: 0.5,
+          tracing: { traceId: '789', spanId: '012', rulePsr: 0.5 },
         }),
         { relative: clock.relative(0), timeStamp: clock.timeStamp(0) }
       )

@@ -21,25 +21,15 @@ interface ResourceOptionsBase {
   resourceKey?: string
 
   /**
-   * [Internal option] APM trace id of the resource
+   * [Internal option] APM trace info of the resource
    *
    * @internal
    */
-  traceId?: string
-
-  /**
-   * [Internal option] APM span id of the resource
-   *
-   * @internal
-   */
-  spanId?: string
-
-  /**
-   * [Internal option] APM trace sampling rate of the resource
-   *
-   * @internal
-   */
-  rulePsr?: number
+  tracing?: {
+    traceId: string
+    spanId: string
+    rulePsr?: number
+  }
 }
 
 export interface ResourceOptions extends ResourceOptionsBase {
@@ -94,9 +84,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     const stopped = resourceTracker.stop(lookupKey, stopClocks, {
       context: options.context,
-      traceId: options.traceId,
-      spanId: options.spanId,
-      rulePsr: options.rulePsr,
+      tracing: options.tracing,
       type: options.type,
     })
 
@@ -106,7 +94,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     const duration = elapsed(stopped.startClocks.relative, stopClocks.relative)
 
-    const { traceId, spanId, rulePsr } = stopped
+    const { tracing } = stopped
 
     const rawRumEvent: RawRumResourceEvent = {
       date: stopped.startClocks.timeStamp,
@@ -120,10 +108,11 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
         status_code: options.statusCode,
         size: options.size,
       },
-      _dd:
-        typeof traceId === 'string' && traceId && typeof spanId === 'string' && spanId
-          ? { trace_id: traceId, span_id: spanId, ...(typeof rulePsr === 'number' && { rule_psr: rulePsr }) }
-          : {},
+      _dd: {
+        trace_id: tracing?.traceId,
+        span_id: tracing?.spanId,
+        rule_psr: tracing?.rulePsr,
+      },
       context: stopped.context,
     }
 

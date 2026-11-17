@@ -845,9 +845,7 @@ export function makeRumPublicApi(
         method: sanitize(options?.method) as string | undefined,
         context: sanitize(options?.context) as Context,
         resourceKey: options?.resourceKey,
-        traceId: options?.traceId,
-        spanId: options?.spanId,
-        rulePsr: options?.rulePsr,
+        tracing: options?.tracing,
       })
     }),
 
@@ -859,9 +857,7 @@ export function makeRumPublicApi(
         size: options?.size,
         context: sanitize(options?.context) as Context,
         resourceKey: options?.resourceKey,
-        traceId: options?.traceId,
-        spanId: options?.spanId,
-        rulePsr: options?.rulePsr,
+        tracing: options?.tracing,
       })
     }),
 

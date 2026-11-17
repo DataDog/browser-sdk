@@ -525,8 +525,7 @@ test.describe('manual resources with startResource/stopResource', () => {
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startResource('https://api.example.com/traced', {
-          traceId: '1234567890',
-          spanId: '987654321',
+          tracing: { traceId: '1234567890', spanId: '987654321' },
           context: { foo: 'bar' },
         })
         window.DD_RUM!.stopResource('https://api.example.com/traced')
