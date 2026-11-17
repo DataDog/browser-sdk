@@ -5,7 +5,7 @@ import { createRouter } from './vueRouter'
 describe('createRouter (wrapped)', () => {
   it('calls startView on navigation', (done) => {
     const startViewSpy = jasmine.createSpy()
-    initializeVuePlugin({
+    void initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
     })
@@ -33,7 +33,7 @@ describe('createRouter (wrapped)', () => {
 
   it('does not call startView when navigation is duplicated', (done) => {
     const startViewSpy = jasmine.createSpy()
-    initializeVuePlugin({
+    void initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
     })
@@ -58,7 +58,7 @@ describe('createRouter (wrapped)', () => {
 
   it('does not call startView when only query params change', (done) => {
     const startViewSpy = jasmine.createSpy()
-    initializeVuePlugin({
+    void initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
     })
@@ -83,7 +83,7 @@ describe('createRouter (wrapped)', () => {
 
   it('calls startView on initial navigation to /', (done) => {
     const startViewSpy = jasmine.createSpy()
-    initializeVuePlugin({
+    void initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
     })
@@ -104,7 +104,7 @@ describe('createRouter (wrapped)', () => {
 
   it('substitutes catch-all pattern with the actual path', (done) => {
     const startViewSpy = jasmine.createSpy()
-    initializeVuePlugin({
+    void initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
     })
@@ -128,7 +128,7 @@ describe('createRouter (wrapped)', () => {
 
   it('does not call startView when navigation is blocked', (done) => {
     const startViewSpy = jasmine.createSpy()
-    initializeVuePlugin({
+    void initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
     })
