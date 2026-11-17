@@ -37,6 +37,12 @@ export const enum LifeCycleEventType {
   // on the same domain.
   SESSION_EXPIRED,
   SESSION_RENEWED,
+  // Page exit happens in two phases, both notified synchronously right before the batch is flushed:
+  // * COLLECT_PENDING_EVENTS: collections emit the events they are still processing (ex: pending
+  //   resources), so they are part of the flushed batch.
+  // * PREPARE_URGENT_FLUSH: collections finalize their ongoing events (ex: final view update), which
+  //   then include the events collected in the first phase (ex: view resource count).
+  COLLECT_PENDING_EVENTS,
   PREPARE_URGENT_FLUSH,
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
@@ -71,6 +77,7 @@ declare const LifeCycleEventTypeAsConst: {
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
   SESSION_RENEWED: LifeCycleEventType.SESSION_RENEWED
+  COLLECT_PENDING_EVENTS: LifeCycleEventType.COLLECT_PENDING_EVENTS
   PREPARE_URGENT_FLUSH: LifeCycleEventType.PREPARE_URGENT_FLUSH
   RAW_RUM_EVENT_COLLECTED: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED
   RUM_EVENT_COLLECTED: LifeCycleEventType.RUM_EVENT_COLLECTED
@@ -93,6 +100,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: SessionExpiredEvent
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
+  [LifeCycleEventTypeAsConst.COLLECT_PENDING_EVENTS]: UrgentFlushReason
   [LifeCycleEventTypeAsConst.PREPARE_URGENT_FLUSH]: UrgentFlushReason
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
   [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: AssembledRumEvent

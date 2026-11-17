@@ -58,6 +58,41 @@ describe('createTaskQueue', () => {
     expect(task3).not.toHaveBeenCalled()
   })
 
+  it('runs all pending tasks synchronously on flush', () => {
+    const clock = mockClock()
+    const requestIdleCallbackMock = mockRequestIdleCallback()
+    const taskQueue = createTaskQueue()
+
+    // Tasks take longer than the time budget of an idle callback timeout
+    const task1 = jasmine.createSpy().and.callFake(() => clock.tick(MAX_EXECUTION_TIME_ON_TIMEOUT))
+    const task2 = jasmine.createSpy().and.callFake(() => clock.tick(MAX_EXECUTION_TIME_ON_TIMEOUT))
+
+    taskQueue.push(task1)
+    taskQueue.push(task2)
+
+    taskQueue.flush()
+    expect(task1).toHaveBeenCalledTimes(1)
+    expect(task2).toHaveBeenCalledTimes(1)
+
+    requestIdleCallbackMock.idle()
+    expect(task1).toHaveBeenCalledTimes(1)
+    expect(task2).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps running pending tasks on flush when a task throws', () => {
+    mockRequestIdleCallback()
+    const taskQueue = createTaskQueue()
+    const task = jasmine.createSpy('task')
+
+    taskQueue.push(() => {
+      throw new Error('task error')
+    })
+    taskQueue.push(task)
+
+    expect(() => taskQueue.flush()).not.toThrow()
+    expect(task).toHaveBeenCalledTimes(1)
+  })
+
   it('runs pending tasks when requestIdleCallback invokes the callback with no deadline', () => {
     const clock = mockClock()
     replaceRequestIdleCallbackWithPolyfillShim()

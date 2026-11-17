@@ -1,4 +1,11 @@
-import type { DeflateEncoderStreamId, Encoder, BufferedData, Telemetry, SessionManager } from '@datadog/browser-core'
+import type {
+  DeflateEncoderStreamId,
+  Encoder,
+  BufferedData,
+  Telemetry,
+  SessionManager,
+  UrgentFlushReason,
+} from '@datadog/browser-core'
 import type { Observable, BufferedObservable } from '@datadog/js-core/util'
 import {
   sendToExtension,
@@ -80,20 +87,21 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
+  function notifyPageMayExit(reason: UrgentFlushReason) {
+    lifeCycle.notify(LifeCycleEventType.COLLECT_PENDING_EVENTS, reason)
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
+  }
+
   if (!canUseEventBridge()) {
     const batch = startRumBatch(configuration, lifeCycle, reportError, sessionManager.expireObservable, createEncoder)
-    const preparePageExitSubscription = batch.prepareUrgentFlushObservable.subscribe((reason) => {
-      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
-    })
+    const preparePageExitSubscription = batch.prepareUrgentFlushObservable.subscribe(notifyPageMayExit)
     cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
     startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
     const pageMayExitObservable = createPageMayExitObservable()
-    const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, event.reason)
-    })
+    const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => notifyPageMayExit(event.reason))
     cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
 
