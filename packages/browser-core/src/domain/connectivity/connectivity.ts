@@ -10,10 +10,13 @@ export interface Connectivity {
 
 export function getConnectivity(): Connectivity {
   const { navigator } = globalObject
+  // Read `navigator.connection` only once: some environments expose it through a getter that does
+  // not always return the same value (it can return `null` on a later read).
+  const connection = navigator?.connection
 
   return {
     status: navigator?.onLine ? 'connected' : 'not_connected',
-    interfaces: navigator?.connection?.type ? [navigator.connection.type] : undefined,
-    effective_type: navigator?.connection?.effectiveType,
+    interfaces: connection?.type ? [connection.type] : undefined,
+    effective_type: connection?.effectiveType,
   }
 }

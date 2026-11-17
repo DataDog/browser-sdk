@@ -1,8 +1,8 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { appendElement, mockRumConfiguration } from '../../test'
+import { appendElement, mockRumConfiguration } from '../../../test'
+import type { BrowserWindow } from '../privacy'
+import { NodePrivacyLevel } from '../privacyConstants'
 import { getComposedPathSelector, CHARACTER_LIMIT, ATTRIBUTE_VALUE_LIMIT } from './getComposedPathSelector'
-import type { BrowserWindow } from './privacy'
-import { NodePrivacyLevel } from './privacyConstants'
 
 const configuration = mockRumConfiguration()
 

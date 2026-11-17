@@ -33,6 +33,13 @@
       "enabled": false
     },
     {
+      "description": "react-router-dom-6 is an alias kept on v6 to test the v6 integration",
+      "matchFileNames": ["packages/browser-rum-react/package.json"],
+      "matchDepNames": ["react-router-dom-6"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "matchFileNames": ["Dockerfile"],
       "matchDepNames": ["node"],
       "matchCurrentValue": "/^20/",

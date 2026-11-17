@@ -24,6 +24,10 @@ test.describe('recorder canvas resource upload', () => {
           !!process.env.CI && browserName === 'firefox' && contextType !== '2d',
           'Headless Firefox cannot create WebGL/WebGL2 contexts in our Linux CI image'
         )
+        test.skip(
+          !(await page.evaluate(() => 'OffscreenCanvas' in window)),
+          "Canvas recording needs OffscreenCanvas, which Playwright's Linux WebKit 17.4 build lacks"
+        )
 
         await page.evaluate(drawCanvas, { contextType, preserveDrawingBuffer })
 
@@ -54,6 +58,34 @@ test.describe('recorder canvas resource upload', () => {
         expect(imageContentChanges[0][1]).toBe(hash)
       })
   }
+
+  createTest('keeps recording without canvases when OffscreenCanvas is not supported')
+    .withRum({
+      enableExperimentalFeatures: ['session_replay_record_canvas'],
+      sessionReplayCanvasRecording: { enable: true, quality: 'low' },
+    })
+    // Emulates Firefox < 105 and Safari < 16.4
+    .withHead(
+      html`<script>
+        delete window.OffscreenCanvas
+      </script>`
+    )
+    .withBody(html`<canvas id="canvas" width="10" height="10"></canvas>`)
+    .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+      await page.evaluate(drawCanvas, { contextType: '2d' as const })
+      await flushEvents()
+
+      expect(intakeRegistry.replayResourceRequests).toHaveLength(0)
+      expect(intakeRegistry.replaySegments).toHaveLength(1)
+      withBrowserLogs((logs) => {
+        expect(logs).toContainEqual(
+          expect.objectContaining({
+            level: 'warning',
+            message: expect.stringContaining('Session Replay canvas recording is not supported by this browser.'),
+          })
+        )
+      })
+    })
 })
 
 function drawCanvas({

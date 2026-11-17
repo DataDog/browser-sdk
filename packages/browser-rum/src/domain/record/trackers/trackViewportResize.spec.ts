@@ -61,3 +61,19 @@ describe('trackViewportResize', () => {
     })
   })
 })
+
+describe('trackVisualViewportResize with a visualViewport that is not an EventTarget', () => {
+  it('does not throw', () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'visualViewport')
+    Object.defineProperty(window, 'visualViewport', { value: { width: 100, height: 100 }, configurable: true })
+    registerCleanupTask(() => {
+      if (originalDescriptor) {
+        Object.defineProperty(window, 'visualViewport', originalDescriptor)
+      } else {
+        delete (window as { visualViewport?: unknown }).visualViewport
+      }
+    })
+
+    expect(() => trackVisualViewportResize(jasmine.createSpy()).stop()).not.toThrow()
+  })
+})

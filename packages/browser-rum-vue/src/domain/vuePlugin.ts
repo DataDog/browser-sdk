@@ -1,16 +1,29 @@
 import { version as vueVersion } from 'vue'
-import { toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import { callMonitored } from '@datadog/js-core/monitor'
+import { BufferedObservable } from '@datadog/js-core/util'
+import type { Subscription } from '@datadog/js-core/util'
+import { display, toIntegrations, toMajorVersionIntegration } from '@datadog/browser-core'
+import type { RumPlugin, StartRumResult } from '@datadog/browser-rum-core'
 
-let globalPublicApi: RumPublicApi | undefined
-let globalConfiguration: VuePluginConfiguration | undefined
-let globalAddError: StartRumResult['addError'] | undefined
+export type VueErrorPayload = Parameters<NonNullable<StartRumResult['addError']>>[0]
 
-type InitSubscriber = (configuration: VuePluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addError: StartRumResult['addError']) => void
+// RUM may start late, or never (e.g. during server-side rendering). Until then, buffer plain data
+// rather than callbacks, which would retain the scope they were created in (router, component
+// instances...), and cap the buffers like the core SDK pre-start buffer.
+const BUFFER_LIMIT = 500
 
-const onRumInitSubscribers: InitSubscriber[] = []
-const onRumStartSubscribers: StartSubscriber[] = []
+let viewNames: BufferedObservable<string> | undefined
+let errors: BufferedObservable<VueErrorPayload> | undefined
+// onInit may run several times (e.g. init retried after an invalid configuration): keep a single view subscriber
+let viewSubscription: Subscription | undefined
+
+function getViewNames() {
+  return (viewNames ??= new BufferedObservable(BUFFER_LIMIT))
+}
+
+function getErrors() {
+  return (errors ??= new BufferedObservable(BUFFER_LIMIT))
+}
 
 export interface VuePluginConfiguration {
   router?: boolean
@@ -22,21 +35,23 @@ export function vuePlugin(configuration: VuePluginConfiguration = {}): VuePlugin
   return {
     name: 'vue',
     onInit({ publicApi, initConfiguration }) {
-      globalPublicApi = publicApi
-      globalConfiguration = configuration
-      for (const subscriber of onRumInitSubscribers) {
-        subscriber(globalConfiguration, globalPublicApi)
-      }
+      viewSubscription?.unsubscribe()
+      viewSubscription = getViewNames().subscribe((viewName) => {
+        if (!configuration.router) {
+          display.warn('`router: true` is missing from the vue plugin configuration, the view will not be tracked.')
+          return
+        }
+        publicApi.startView(viewName)
+      })
+      getViewNames().unbuffer()
       if (configuration.router) {
         initConfiguration.trackViewsManually = true
       }
     },
     onRumStart({ addError }) {
-      globalAddError = addError
       if (addError) {
-        for (const subscriber of onRumStartSubscribers) {
-          subscriber(addError)
-        }
+        getErrors().subscribe((error) => callMonitored(() => addError(error)))
+        getErrors().unbuffer()
       }
     },
     getConfigurationTelemetry() {
@@ -49,26 +64,17 @@ export function vuePlugin(configuration: VuePluginConfiguration = {}): VuePlugin
   } satisfies RumPlugin
 }
 
-export function onRumInit(callback: InitSubscriber) {
-  if (globalConfiguration && globalPublicApi) {
-    callback(globalConfiguration, globalPublicApi)
-  } else {
-    onRumInitSubscribers.push(callback)
-  }
+export function startVueViewWhenReady(viewName: string) {
+  getViewNames().notify(viewName)
 }
 
-export function onRumStart(callback: StartSubscriber) {
-  if (globalAddError) {
-    callback(globalAddError)
-  } else {
-    onRumStartSubscribers.push(callback)
-  }
+export function addVueErrorWhenReady(error: VueErrorPayload) {
+  getErrors().notify(error)
 }
 
 export function resetVuePlugin() {
-  globalPublicApi = undefined
-  globalConfiguration = undefined
-  globalAddError = undefined
-  onRumInitSubscribers.length = 0
-  onRumStartSubscribers.length = 0
+  viewSubscription?.unsubscribe()
+  viewSubscription = undefined
+  viewNames = undefined
+  errors = undefined
 }

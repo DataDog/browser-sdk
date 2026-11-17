@@ -108,6 +108,7 @@ export interface RumFirstInputTiming {
   duration: Duration
   target?: Node
   interactionId?: number
+  navigationId?: number
   toJSON(): Omit<RumFirstInputTiming, 'toJSON'>
 }
 
@@ -118,6 +119,7 @@ export interface RumPerformanceEventTiming {
   processingEnd: RelativeTime
   duration: Duration
   interactionId?: number
+  navigationId?: number
   target?: Node
   name: string
   toJSON(): Omit<RumPerformanceEventTiming, 'toJSON'>
@@ -135,6 +137,7 @@ export interface RumLayoutShiftTiming {
   value: number
   hadRecentInput: boolean
   sources: RumLayoutShiftAttribution[]
+  navigationId?: number
   toJSON(): Omit<RumLayoutShiftTiming, 'toJSON'>
 }
 
@@ -181,7 +184,10 @@ export interface RumSoftNavigationEntry {
   entryType: RumPerformanceEntryType.SOFT_NAVIGATION
   name: string
   startTime: RelativeTime
+  navigationId: number
   interactionId: number
+  paintTime: RelativeTime
+  presentationTime: RelativeTime | null
   getLargestInteractionContentfulPaint(): RumInteractionContentfulPaintTiming | null
   toJSON(): Omit<RumSoftNavigationEntry, 'toJSON' | 'getLargestInteractionContentfulPaint'>
 }
@@ -282,7 +288,9 @@ function supportPerformanceObject() {
 }
 
 export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
-  return PerformanceObserver.supportedEntryTypes.includes(entryType)
+  // `supportedEntryTypes` is missing in older browsers and in some PerformanceObserver polyfills
+  const supportedEntryTypes = PerformanceObserver.supportedEntryTypes as readonly string[] | undefined
+  return !!supportedEntryTypes && supportedEntryTypes.includes(entryType)
 }
 
 function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(entries: Array<EntryTypeToReturnType[T]>) {

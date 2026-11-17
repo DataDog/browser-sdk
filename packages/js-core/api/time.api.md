@@ -32,6 +32,9 @@ export interface ClocksState {
 export function dateNow(): number;
 
 // @public
+export function discardNegativeDuration(duration: ServerDuration | undefined): ServerDuration | undefined;
+
+// @public
 export type Duration = number & {
     d: 'Duration in ms';
 };
@@ -75,6 +78,9 @@ export type RelativeTime = number & {
 
 // @public
 export function relativeToClocks(relative: RelativeTime): ClocksState;
+
+// @internal
+export function resetTimeOrigin(): void;
 
 // @public
 export type ServerDuration = number & {

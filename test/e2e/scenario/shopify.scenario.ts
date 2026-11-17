@@ -27,6 +27,9 @@ const KNOWN_STORE_NOISE_URLS = [
   '/.well-known/shopify/monorail/unstable/produce_batch',
   '/private_access_tokens',
   'cloudfunctions.net/telemetry',
+  // Shopify checkout's own OpenTelemetry logs/metrics (otlp-http-production[-edge].shopifysvc.com).
+  // The CI egress proxy refuses the -edge host, so Chromium logs net::ERR_TUNNEL_CONNECTION_FAILED.
+  'shopifysvc.com/v1/',
   // Synthetic Chromium error document for a blocked cross-origin frame
   'chrome-error://chromewebdata/',
 ]

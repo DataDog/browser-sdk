@@ -2,9 +2,9 @@ import { initializeAngularPlugin } from '../../../test/initializeAngularPlugin'
 import { addAngularError } from './addAngularError'
 
 describe('addAngularError', () => {
-  it('delegates the error to addError', () => {
+  it('delegates the error to addError', async () => {
     const addErrorSpy = jasmine.createSpy()
-    initializeAngularPlugin({
+    await initializeAngularPlugin({
       addError: addErrorSpy,
     })
     const originalError = new Error('error message')
@@ -21,9 +21,9 @@ describe('addAngularError', () => {
     })
   })
 
-  it('should merge dd_context from the original error with angular error context', () => {
+  it('should merge dd_context from the original error with angular error context', async () => {
     const addErrorSpy = jasmine.createSpy()
-    initializeAngularPlugin({
+    await initializeAngularPlugin({
       addError: addErrorSpy,
     })
     const originalError = new Error('error message')
@@ -43,9 +43,9 @@ describe('addAngularError', () => {
     )
   })
 
-  it('handles non-Error values', () => {
+  it('handles non-Error values', async () => {
     const addErrorSpy = jasmine.createSpy()
-    initializeAngularPlugin({
+    await initializeAngularPlugin({
       addError: addErrorSpy,
     })
 
@@ -59,5 +59,21 @@ describe('addAngularError', () => {
         context: { framework: 'angular' },
       })
     )
+  })
+
+  it('does not throw when reading dd_context throws', async () => {
+    const addErrorSpy = jasmine.createSpy()
+    await initializeAngularPlugin({
+      addError: addErrorSpy,
+    })
+    const originalError = new Error('error message')
+    Object.defineProperty(originalError, 'dd_context', {
+      get() {
+        throw new Error('dd_context getter error')
+      },
+    })
+
+    expect(() => addAngularError(originalError)).not.toThrow()
+    expect(addErrorSpy).not.toHaveBeenCalled()
   })
 })

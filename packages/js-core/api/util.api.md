@@ -154,6 +154,9 @@ export interface Display {
 export const DOCS_ORIGIN = "https://docs.datadoghq.com";
 
 // @public
+export function extractRegexMatch(candidate: string, extractor: RegExp): string | undefined;
+
+// @public
 export function generateUUID(): string;
 
 // @public

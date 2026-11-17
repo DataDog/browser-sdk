@@ -1,7 +1,7 @@
-// Some browsers (e.g. older Firefox/Safari versions) don't support encoding canvases as WebP and
-// silently fall back to PNG, as mandated by the spec for unsupported `toBlob`/`toDataURL` types.
-export function supportsWebPEncoding(): boolean {
-  return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp')
+export function bitmapPixels(bitmap: ImageBitmap): number[] {
+  const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext('2d')!
+  context.drawImage(bitmap, 0, 0)
+  return Array.from(context.getImageData(0, 0, bitmap.width, bitmap.height).data)
 }
 
 // Lossy WebP encoding can shift channel values by a few units, so compare with a tolerance instead
