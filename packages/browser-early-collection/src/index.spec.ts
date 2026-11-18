@@ -23,6 +23,7 @@ describe('early collection', () => {
   /** Local Profiler mock: the package must stay standalone, so it cannot rely on other packages' test utils. */
   function mockProfilerConstructor(options: { throws?: boolean } = {}) {
     class MockProfiler {
+      static instances: MockProfiler[] = []
       readonly sampleInterval: number
       readonly initOptions: ProfilerInitOptions
       stopped = false
@@ -31,6 +32,7 @@ describe('early collection', () => {
         if (options.throws) {
           throw new Error('disabled by Document Policy')
         }
+        MockProfiler.instances.push(this)
         this.sampleInterval = initOptions.sampleInterval
         this.initOptions = initOptions
       }
@@ -65,6 +67,27 @@ describe('early collection', () => {
     expect(profiler).toBeInstanceOf(ProfilerConstructor)
     expect(profiler.initOptions).toEqual({ sampleInterval: 10, maxBufferSize: 9000 })
     expect(profiler.stopped).toBe(false)
+  })
+
+  it('keeps the first session when the script is evaluated twice', () => {
+    const ProfilerConstructor = mockProfilerConstructor()
+    const first = startAndCleanup()
+    const firstProfiler = first.profiler
+    const firstClocks = first.startClocks
+
+    // A shared layout plus a page template, or a tag manager, can evaluate
+    // the script twice: the earliest session wins, the global is not
+    // overwritten (which would orphan the first running Profiler instance).
+    startEarlyCollection()
+
+    const second = readEarlyCollection()
+    expect(second).toBe(first)
+    expect(second?.profiler).toBe(firstProfiler)
+    expect(second?.startClocks).toBe(firstClocks)
+    // Only the first evaluation instantiated a Profiler: no second instance
+    // was created (it would keep sampling until its buffer fills, with no
+    // reference left to stop it).
+    expect(ProfilerConstructor.instances.length).toBe(1)
   })
 
   it('fails silently when the Profiler API is not available', () => {

@@ -52,6 +52,16 @@ interface ProfilerConstructor {
  * the earlier it runs, the more of the pre-SDK window is covered.
  */
 export function startEarlyCollection(): void {
+  const globalOwner = window as { _DD_EARLY_COLLECTION?: unknown }
+  if (globalOwner._DD_EARLY_COLLECTION !== undefined) {
+    // Already evaluated (a shared layout plus a page template, or a tag
+    // manager can evaluate the script twice). The earliest session wins:
+    // overwriting the global would orphan its running Profiler instance,
+    // which would keep sampling until its buffer fills and nothing could
+    // stop it.
+    return
+  }
+
   // Start the Profiler when available. The constructor throws when the API or
   // the `Document-Policy: js-profiling` response header is unavailable: fail
   // silently, the global is still published so the SDK knows we ran.
@@ -65,7 +75,7 @@ export function startEarlyCollection(): void {
     profiler = undefined
   }
 
-  ;(window as { _DD_EARLY_COLLECTION?: EarlyCollectionGlobalV1 })._DD_EARLY_COLLECTION = {
+  ;(globalOwner as { _DD_EARLY_COLLECTION?: EarlyCollectionGlobalV1 })._DD_EARLY_COLLECTION = {
     version: CONTRACT_VERSION,
     startClocks: { relative: performance.now(), timeStamp: new Date().getTime() },
     profiler,
