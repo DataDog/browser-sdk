@@ -1,6 +1,6 @@
 import { dateNow } from '@datadog/js-core/time'
 import { monitor } from '@datadog/js-core/monitor'
-import { setTimeout, clearTimeout } from '@datadog/js-core/util'
+import { globalObject, setTimeout, clearTimeout } from '@datadog/js-core/util'
 
 // This type is not yet supported in TS 3.8. Imported from the TS source until we upgrade the
 // minimum supported TS version.
@@ -15,9 +15,9 @@ export interface IdleDeadline {
  */
 export function requestIdleCallback(callback: (deadline: IdleDeadline) => void, opts?: { timeout?: number }) {
   // Note: check both 'requestIdleCallback' and 'cancelIdleCallback' existence because some polyfills only implement 'requestIdleCallback'.
-  if (window.requestIdleCallback && window.cancelIdleCallback) {
-    const id = window.requestIdleCallback(monitor(callback), opts)
-    return () => window.cancelIdleCallback(id)
+  if (globalObject.requestIdleCallback && globalObject.cancelIdleCallback) {
+    const id = globalObject.requestIdleCallback(monitor(callback), opts)
+    return () => globalObject.cancelIdleCallback(id)
   }
   return requestIdleCallbackShim(callback)
 }
