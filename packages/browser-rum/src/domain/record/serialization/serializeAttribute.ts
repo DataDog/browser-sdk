@@ -43,6 +43,15 @@ export function serializeAttribute(
     if (tagName === 'SOURCE') {
       return CENSORED_IMG_MARK
     }
+    // The `poster` is the image shown in the video's box before playback; replace it with a
+    // placeholder sized to the video so the replay keeps the same layout and rendering.
+    if (tagName === 'VIDEO' && attributeName === 'poster') {
+      const { width, height } = element.getBoundingClientRect()
+      if (width > 0 || height > 0) {
+        return censoredImageForSize(width, height)
+      }
+      return CENSORED_IMG_MARK
+    }
 
     return CENSORED_STRING_MARK
   }
