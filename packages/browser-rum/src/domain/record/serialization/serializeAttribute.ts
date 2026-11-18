@@ -46,7 +46,21 @@ export function serializeAttribute(
     // The `poster` is the image shown in the video's box before playback; replace it with a
     // placeholder sized to the video so the replay keeps the same layout and rendering.
     if (tagName === 'VIDEO' && attributeName === 'poster') {
-      const { width, height } = element.getBoundingClientRect()
+      const style = getComputedStyle(element)
+      let width = parseFloat(style.width)
+      let height = parseFloat(style.height)
+      if (style.boxSizing === 'border-box') {
+        width -=
+          parseFloat(style.borderLeftWidth) +
+          parseFloat(style.borderRightWidth) +
+          parseFloat(style.paddingLeft) +
+          parseFloat(style.paddingRight)
+        height -=
+          parseFloat(style.borderTopWidth) +
+          parseFloat(style.borderBottomWidth) +
+          parseFloat(style.paddingTop) +
+          parseFloat(style.paddingBottom)
+      }
       if (width > 0 || height > 0) {
         return censoredImageForSize(width, height)
       }
