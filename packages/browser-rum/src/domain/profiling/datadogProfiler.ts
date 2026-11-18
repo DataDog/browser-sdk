@@ -200,10 +200,10 @@ export function createRumProfiler(
       status: 'running',
       error_reason: undefined,
       // `early` when adopting the Profiler instance started by the early
-      // collection package (the first profile covers the early collection
-      // period), `standard` when starting a new Profiler instance from
-      // scratch.
-      collection_type: earlyProfiler ? 'early' : 'standard',
+      // collection package: the first profile covers the early collection
+      // period. The field is absent for instances the SDK starts itself, so
+      // only early collection is reported in `_dd.profiling`.
+      ...(earlyProfiler ? { collection_type: 'early' as const } : {}),
     })
 
     // Kick-off the new instance. Caveat for the early collection adoption: the

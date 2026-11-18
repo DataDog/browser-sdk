@@ -1171,6 +1171,9 @@ describe('profiler', () => {
       expect(payload.trace.startClocks).toBe(earlyStartClocks)
       // A new instance was started to continue collection periodically.
       expect(instances.size).toBe(2)
+      // The continuation instance is not early collection: the field is
+      // absent, not `standard`.
+      expect(profilingContextManager.get()?.collection_type).toBeUndefined()
 
       profiler.stop()
     })
@@ -1182,8 +1185,9 @@ describe('profiler', () => {
       profiler.start()
 
       expect(profiler.isRunning()).toBe(true)
-      expect(profilingContextManager.get()?.collection_type).toBe('standard')
-      // No early Profiler to take over: the chunk started its own.
+      // No early Profiler to take over: no `collection_type`, the chunk
+      // started its own instance.
+      expect(profilingContextManager.get()?.collection_type).toBeUndefined()
       expect(instances.size).toBe(1)
 
       clock.tick(60000)
@@ -1231,8 +1235,9 @@ describe('profiler', () => {
 
       profiler.start()
 
-      expect(profilingContextManager.get()?.collection_type).toBe('standard')
-      // The stopped early instance is skipped: the chunk started its own.
+      // The stopped early instance is skipped: the chunk started its own,
+      // with no `collection_type`.
+      expect(profilingContextManager.get()?.collection_type).toBeUndefined()
       expect(instances.size).toBe(2)
 
       profiler.stop()
