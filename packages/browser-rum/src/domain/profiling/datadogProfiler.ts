@@ -151,7 +151,7 @@ export function createRumProfiler(
 
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
-      collectProfilerInstance(instance)
+      stopRunningProfiler(instance)
     }
 
     let profiler: Profiler
@@ -195,7 +195,7 @@ export function createRumProfiler(
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  function collectProfilerInstance(runningInstance: RumProfilerRunningInstance) {
+  function stopRunningProfiler(runningInstance: RumProfilerRunningInstance, { discard = false } = {}) {
     // Cleanup instance
     clearTimeout(runningInstance.timeoutId)
     // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
@@ -206,41 +206,24 @@ export function createRumProfiler(
     runningInstance.profiler
       .stop()
       .then((trace) => {
-        profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
+        if (!discard) {
+          profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
+        }
       })
       .catch(monitorError)
   }
 
   function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
-    if (instance.state !== 'running') {
-      if (
-        // If paused, profiler data was already collected during pause, just update state
-        instance.state === 'paused' ||
-        // Update stateReason when already stopped and the user explicitly stops the profiler,
-        // so that SESSION_RENEWED does not override the user's intent.
-        (instance.state === 'stopped' && stateReason === 'stopped-by-user')
-      ) {
-        instance = { state: 'stopped', stateReason }
-      }
-
+    // Preserve the stop reason unless the user explicitly stops the profiler.
+    if (instance.state === 'stopped' && stateReason !== 'stopped-by-user') {
       return
     }
 
-    // Capture the running instance before changing state
-    const runningInstance = instance
-
-    // Update state synchronously so SESSION_RENEWED check works immediately
+    const previousInstance = instance
     instance = { state: 'stopped', stateReason }
 
-    if (stateReason === 'quota_ko') {
-      // Discard data — quota denied means we should not send anything
-      clearTimeout(runningInstance.timeoutId)
-      // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
-      runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
-      void runningInstance.profiler.stop().catch(monitorError)
-    } else {
-      // Collect and send profile data in background - doesn't block state transitions
-      collectProfilerInstance(runningInstance)
+    if (previousInstance.state === 'running') {
+      stopRunningProfiler(previousInstance, { discard: stateReason === 'quota_ko' })
     }
   }
 
@@ -256,7 +239,7 @@ export function createRumProfiler(
     instance = { state: 'paused' }
 
     // Collect and send profile data in background
-    collectProfilerInstance(runningInstance)
+    stopRunningProfiler(runningInstance)
   }
 
   function handleSampleBufferFull(): void {
