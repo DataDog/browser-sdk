@@ -45,7 +45,15 @@ export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   findTrackedSession: (
     startTime?: RelativeTime,
-    options?: { returnInactive?: boolean; maxAge?: number; sampleRate?: number }
+    options?: {
+      returnInactive?: boolean
+      maxAge?: number
+      /**
+       * Sampling percentage (0 to 100). Replaces `configuration.sessionSampleRate` when passed, `0` included.
+       * `startSessionManagerStub` ignores it.
+       */
+      sampleRate?: number
+    }
   ) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
