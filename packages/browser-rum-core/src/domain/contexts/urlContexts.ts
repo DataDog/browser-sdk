@@ -42,7 +42,7 @@ export function startUrlContexts(
     urlContextHistory.add(
       buildUrlContext({
         url: viewUrl,
-        referrer: !previousViewUrl ? document.referrer : previousViewUrl,
+        referrer: previousViewUrl || globalObject.document?.referrer || '',
       }),
       startClocks.relative
     )
