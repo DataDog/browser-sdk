@@ -496,7 +496,7 @@ function shouldTrackProbeHitsAsRumActions(): boolean {
 }
 
 function isSnapshotProducingProbe(probe: InitializedProbe): boolean {
-  return probe.captureSnapshot || (probe.compiledCaptureExpressions?.expressions.length ?? 0) > 0
+  return probe.captureSnapshot || (probe.compiledCaptureExpressions?.length ?? 0) > 0
 }
 
 declare const ServiceWorkerGlobalScope: typeof EventTarget
