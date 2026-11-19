@@ -191,4 +191,40 @@
 
     globalThis.AggregateError = AggregateErrorPolyfill
   }
+
+  // Chrome/Edge < 84, Firefox < 79. Vitest's spy module reads `WeakRef.prototype.deref` and
+  // `FinalizationRegistry.prototype.register` when it is loaded, to track dirty mocks. Nothing is ever
+  // collected here, which is fine for a test run. The SDK feature-detects WeakRef (see
+  // `isLayoutShiftSupported`), so `vitestBsSetup.js` removes the global once Vitest has loaded.
+  if (typeof WeakRef === 'undefined') {
+    class WeakRefPolyfill {
+      constructor(target) {
+        if (target === null || (typeof target !== 'object' && typeof target !== 'function')) {
+          throw new TypeError('WeakRef: target must be an object')
+        }
+        this.target = target
+      }
+
+      deref() {
+        return this.target
+      }
+    }
+
+    globalThis.WeakRef = WeakRefPolyfill
+    globalThis.__polyfilledWeakRef__ = WeakRefPolyfill
+  }
+
+  if (typeof FinalizationRegistry === 'undefined') {
+    class FinalizationRegistryPolyfill {
+      register() {
+        // Nothing is ever collected
+      }
+
+      unregister() {
+        return false
+      }
+    }
+
+    globalThis.FinalizationRegistry = FinalizationRegistryPolyfill
+  }
 })()

@@ -173,6 +173,8 @@ const config = mergeConfig(
       testTimeout: 30_000,
       hookTimeout: 30_000,
       coverage: { enabled: false },
+      // Runs after Vitest has loaded: removes the WeakRef polyfill, which the SDK feature-detects
+      setupFiles: [resolve(import.meta.dirname, 'vitestBsSetup.js')],
       api: { host: configurations.some(({ name }) => name === 'Safari') ? 'bs-local.com' : 'localhost' },
       browser: {
         headless: false,
