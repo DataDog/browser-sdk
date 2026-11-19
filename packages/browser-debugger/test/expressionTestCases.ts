@@ -13,7 +13,7 @@ export interface TestCaseObject {
   vars?: VariableBindings
   expected?: unknown
   execute?: boolean
-  before?: () => void
+  skip?: boolean
 }
 export type TestCase = TestCaseTuple | TestCaseObject
 
@@ -798,11 +798,7 @@ export const typeAndDefinitionChecks: TestCase[] = [
     ast: { instanceof: [{ ref: 'foo' }, 'bigint'] },
     vars: { foo: typeof BigInt !== 'undefined' ? BigInt(42) : undefined },
     expected: typeof BigInt !== 'undefined' ? true : undefined,
-    before: () => {
-      if (typeof BigInt === 'undefined') {
-        pending('BigInt is not supported in this browser')
-      }
-    },
+    skip: typeof BigInt === 'undefined', // BigInt is not supported in this browser
   },
   [{ instanceof: [{ ref: 'foo' }, 'boolean'] }, { foo: false }, true],
   [{ instanceof: [{ ref: 'foo' }, 'boolean'] }, { foo: 0 }, false],

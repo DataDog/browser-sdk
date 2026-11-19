@@ -761,7 +761,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView('foo')
       const calls = await collectAsyncCalls(startViewSpy, 1)
-      expect(calls.argsFor(0)[0]).toEqual({
+      expect(calls[0][0]).toEqual({
         name: 'foo',
         service: undefined,
         version: undefined,
@@ -779,7 +779,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView({ name: 'foo', service: 'bar', version: 'baz', context: { foo: 'bar' } })
       const calls = await collectAsyncCalls(startViewSpy, 1)
-      expect(calls.argsFor(0)[0]).toEqual({
+      expect(calls[0][0]).toEqual({
         name: 'foo',
         service: 'bar',
         version: 'baz',
@@ -799,7 +799,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView({ name: { name: 'test' } } as any)
       const calls = await collectAsyncCalls(startViewSpy, 1)
-      expect(calls.argsFor(0)[0].name).toBeUndefined()
+      expect(calls[0][0].name).toBeUndefined()
       expect(displaySpy).toHaveBeenCalled()
     })
 
@@ -814,7 +814,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView({ name: 123 } as any)
       const calls = await collectAsyncCalls(startViewSpy, 1)
-      expect(calls.argsFor(0)[0].name).toBeUndefined()
+      expect(calls[0][0].name).toBeUndefined()
       expect(displaySpy).toHaveBeenCalled()
     })
 
@@ -829,7 +829,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView({ name: null } as any)
       const calls = await collectAsyncCalls(startViewSpy, 1)
-      expect(calls.argsFor(0)[0].name).toBeUndefined()
+      expect(calls[0][0].name).toBeUndefined()
       expect(displaySpy).toHaveBeenCalled()
     })
   })
@@ -857,7 +857,7 @@ describe('rum public api', () => {
     it('is started with the default defaultPrivacyLevel', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
+      expect(calls[calls.length - 1][1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
 
     it('is started with the configured defaultPrivacyLevel', async () => {
@@ -882,7 +882,7 @@ describe('rum public api', () => {
     it('is started with the default startSessionReplayRecordingManually', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
+      expect(calls[calls.length - 1][1].startSessionReplayRecordingManually).toBe(false)
     })
 
     it('is started with the configured startSessionReplayRecordingManually', async () => {
@@ -891,7 +891,7 @@ describe('rum public api', () => {
         startSessionReplayRecordingManually: false,
       })
       const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
+      expect(calls[calls.length - 1][1].startSessionReplayRecordingManually).toBe(false)
     })
   })
 
@@ -1376,7 +1376,7 @@ describe('rum public api', () => {
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(startRumSpy, 1)
-      const sdkName = calls.argsFor(0)[9]
+      const sdkName = calls[0][9]
       expect(sdkName).toBe('rum-slim')
     })
   })

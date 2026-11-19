@@ -1,6 +1,8 @@
+import type { TestContext } from 'vitest'
+
 // Canvas recording needs OffscreenCanvas, which is missing on Firefox < 105 and Safari < 16.4.
-export function skipIfOffscreenCanvasIsNotSupported() {
+export function skipIfOffscreenCanvasIsNotSupported(context: Pick<TestContext, 'skip'>) {
   if (typeof OffscreenCanvas === 'undefined') {
-    pending('OffscreenCanvas is not supported')
+    context.skip('OffscreenCanvas is not supported')
   }
 }

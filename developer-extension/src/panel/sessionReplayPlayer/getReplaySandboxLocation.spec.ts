@@ -53,7 +53,7 @@ describe('getReplaySandboxLocation', () => {
   it('rejects when the version response is not JSON', async () => {
     mockFetch(new Response('not json'))
 
-    await expect(getReplaySandboxLocation(false, new AbortController().signal)).toBeRejected()
+    await expect(getReplaySandboxLocation(false, new AbortController().signal)).rejects.toThrow()
   })
 
   for (const body of [null, {}, { version: '' }, { version: 35 }]) {

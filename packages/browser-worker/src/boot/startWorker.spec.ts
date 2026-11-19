@@ -48,7 +48,7 @@ describe('startWorker', () => {
     startWorker(workerScope)
   })
 
-  function emulateAction(message: SdkWorkerAction): SdkWorkerResponse {
+  function emulateAction(message: SdkWorkerAction): SdkWorkerResponse | undefined {
     workerScope.postMessage.mockClear()
     workerScope.addEventListener.mock.calls.forEach(([eventName, listener]) => {
       if (eventName === 'message') {
@@ -217,7 +217,7 @@ describe('startWorker', () => {
       expect(emulateAction(createAction('red', { id: 3 }))).toBeUndefined()
 
       const calls = await collectAsyncCalls(workerScope.postMessage, 1)
-      expect(calls.argsFor(0)[0]).toEqual({
+      expect(calls[0][0]).toEqual({
         type: 'canvasCaptured',
         id: 3,
         hash: expect.any(String),

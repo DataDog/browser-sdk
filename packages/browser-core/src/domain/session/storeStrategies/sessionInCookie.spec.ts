@@ -188,13 +188,10 @@ describe('session in cookie strategy', () => {
       expect(mockCookie.getStoredValues()[0]).toContain('id=second')
     })
 
-    describe('web lock teardown errors', () => {
+    describe.skipIf(!navigator.locks)('web lock teardown errors', () => {
       function stubLocksRequest(error: Error) {
-        if (!navigator.locks) {
-          pending('Web Locks API not available')
-        }
-        // Reject inside callFake so Firefox 78 (no Web Locks) can pending() without creating an
-        // unhandled rejection from Promise.reject() evaluated as a stub argument.
+        // Reject inside the implementation to avoid an unhandled rejection from a
+        // Promise.reject() evaluated eagerly.
         vi.spyOn(navigator.locks, 'request').mockImplementation(() => Promise.reject(error))
       }
 

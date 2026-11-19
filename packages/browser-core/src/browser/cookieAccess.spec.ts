@@ -38,9 +38,10 @@ interface setupResult {
 }
 
 describe('cookieAccess', () => {
-  const setups = [
+  const setups: Array<{ title: string; isSupported: boolean; setup: () => setupResult }> = [
     {
       title: 'document.cookie fallback',
+      isSupported: true,
       setup: () => {
         disableCookieStore()
         const clock = mockClock()
@@ -68,13 +69,9 @@ describe('cookieAccess', () => {
     },
     {
       title: 'CookieStore API',
+      isSupported: !!globalObject.cookieStore,
       setup: () => {
         const clock = mockClock()
-
-        if (!globalObject.cookieStore) {
-          pending('CookieStore API not available')
-          return {} as setupResult
-        }
 
         return {
           clock,
@@ -114,8 +111,8 @@ describe('cookieAccess', () => {
     },
   ]
 
-  for (const { title, setup } of setups) {
-    describe(title, () => {
+  for (const { title, isSupported, setup } of setups) {
+    describe.skipIf(!isSupported)(title, () => {
       describe('getAllAndSet', () => {
         it('should pass current cookie values to callback', async () => {
           const { createCookieAccess, setCookieWithCleanup } = setup()

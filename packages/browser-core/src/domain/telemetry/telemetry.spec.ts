@@ -546,7 +546,7 @@ describe('scrubCustomerFrames', () => {
       const candidate: Partial<StackTrace> = {
         stack: [{ url }],
       }
-      expect(scrubCustomerFrames(candidate as StackTrace).stack.length).toBe(scrub ? 0 : 1, `for url: ${url!}`)
+      expect(scrubCustomerFrames(candidate as StackTrace).stack.length, `for url: ${url!}`).toBe(scrub ? 0 : 1)
     })
   })
 })

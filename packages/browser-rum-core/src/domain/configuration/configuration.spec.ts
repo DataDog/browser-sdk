@@ -935,8 +935,8 @@ describe('validateAndBuildRumConfiguration', () => {
             { match: 'final', propagatorTypes: ['b3multi'] },
           ],
         }
-        expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_propagators).toEqual(
-          jasmine.arrayWithExactContents(['datadog', 'b3', 'b3multi', 'tracecontext'])
+        expect([...serializeRumConfiguration(complexTracingConfig).selected_tracing_propagators].sort()).toEqual(
+          ['datadog', 'b3', 'b3multi', 'tracecontext'].sort()
         )
       })
 

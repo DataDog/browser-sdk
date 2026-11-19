@@ -288,7 +288,7 @@ describe('oauth', () => {
       await storeTokens({ accessToken: 'old', refreshToken: 'r1', expiresAt: Date.now() - 1 })
       vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(new Response('server error', { status: 503 })))
 
-      await expect(getValidAccessToken('datad0g.com')).toBeRejected()
+      await expect(getValidAccessToken('datad0g.com')).rejects.toThrow()
       expect((await loadStoredTokens())?.refreshToken).toBe('r1')
     })
 
@@ -296,7 +296,7 @@ describe('oauth', () => {
       await storeTokens({ accessToken: 'old', refreshToken: 'r1', expiresAt: Date.now() - 1 })
       vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.reject(new TypeError('Failed to fetch')))
 
-      await expect(getValidAccessToken('datad0g.com')).toBeRejected()
+      await expect(getValidAccessToken('datad0g.com')).rejects.toThrow()
       expect((await loadStoredTokens())?.refreshToken).toBe('r1')
     })
 

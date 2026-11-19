@@ -37,7 +37,7 @@ describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
   let recorderApi: RecorderApi
   let startRecordingSpy: Mock
-  let importRecorderSpy: Mock<() => Promise<StartRecording>>
+  let importRecorderSpy: Mock<() => Promise<StartRecording | undefined>>
   let stopRecordingSpy: Mock<() => void>
   let mockWorker: MockWorker
   let createDeflateWorkerSpy: Mock<CreateDeflateWorker>

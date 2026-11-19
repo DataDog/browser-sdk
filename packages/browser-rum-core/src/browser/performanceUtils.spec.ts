@@ -10,7 +10,7 @@ describe('getNavigationEntry', () => {
   it('returns the navigation entry', () => {
     // Declare the expected value here, so TypeScript can make sure all expected fields are covered,
     // even though the actual value contains more fields.
-    const expectation: jasmine.Expected<RumPerformanceNavigationTiming> = {
+    const expectation: { [K in keyof RumPerformanceNavigationTiming]: unknown } = {
       entryType: RumPerformanceEntryType.NAVIGATION,
       initiatorType: 'navigation',
       name: expect.any(String),
@@ -20,7 +20,7 @@ describe('getNavigationEntry', () => {
       domInteractive: expect.any(Number),
       loadEventEnd: expect.any(Number),
 
-      startTime: 0 as RelativeTime,
+      startTime: 0,
       duration: expect.any(Number),
 
       fetchStart: expect.any(Number),

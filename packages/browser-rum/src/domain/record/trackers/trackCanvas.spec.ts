@@ -54,8 +54,8 @@ describe('trackCanvas', () => {
     return Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value !== originalFillRect
   }
 
-  it('instruments canvas drawing in a canvas worker when canvas recording is enabled', () => {
-    skipIfOffscreenCanvasIsNotSupported()
+  it('instruments canvas drawing in a canvas worker when canvas recording is enabled', (context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
 
     startTracking(CANVAS_RECORDING_CONFIGURATION)
 
@@ -63,8 +63,8 @@ describe('trackCanvas', () => {
     expect(getDeflateWorkerStatus('canvas')).toBe(DeflateWorkerStatus.Loading)
   })
 
-  it('stops instrumenting canvas drawing when stopped', () => {
-    skipIfOffscreenCanvasIsNotSupported()
+  it('stops instrumenting canvas drawing when stopped', (context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
 
     startTracking(CANVAS_RECORDING_CONFIGURATION).stop()
 
@@ -106,8 +106,8 @@ describe('trackCanvas', () => {
     expect(await telemetry.getEvents()).toEqual([expect.objectContaining({ message: 'Canvas recording unsupported' })])
   })
 
-  it('stops the canvas trackers when the canvas worker fails to start', () => {
-    skipIfOffscreenCanvasIsNotSupported()
+  it('stops the canvas trackers when the canvas worker fails to start', (context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
     vi.spyOn(display, 'error').mockReturnValue(undefined)
     startTracking(CANVAS_RECORDING_CONFIGURATION)
 
@@ -116,8 +116,8 @@ describe('trackCanvas', () => {
     expect(isFillRectInstrumented()).toBe(false)
   })
 
-  it('does not start the canvas trackers when the canvas worker already failed', () => {
-    skipIfOffscreenCanvasIsNotSupported()
+  it('does not start the canvas trackers when the canvas worker already failed', (context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
     vi.spyOn(display, 'error').mockReturnValue(undefined)
     createDeflateWorkerSpy.mockImplementation(() => {
       throw new Error('CSP')

@@ -111,7 +111,7 @@ describe('instrumentMethod', () => {
 
     object.method()
 
-    expect(instrumentationSpy).toHaveBeenCalledBefore(originalSpy)
+    expect(instrumentationSpy.mock.invocationCallOrder[0]).toBeLessThan(originalSpy.mock.invocationCallOrder[0])
   })
 
   it('does not set a method originally undefined', () => {

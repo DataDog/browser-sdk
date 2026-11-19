@@ -288,7 +288,13 @@ describe('instrumentUnhandledRejection', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnUnhandledRejection = async (callback: () => void) => {
-    const onUnhandledRejectionSpy = vi.spyOn(window as any, 'onunhandledrejection').mockReturnValue(undefined)
+    // Replace the handler instead of spying on it, as in `spyViaInstrumentOnError`
+    const onUnhandledRejectionSpy = vi.fn()
+    const originalOnUnhandledRejection = window.onunhandledrejection
+    window.onunhandledrejection = onUnhandledRejectionSpy
+    registerCleanupTask(() => {
+      window.onunhandledrejection = originalOnUnhandledRejection
+    })
     const callbackSpy = vi.fn<UnhandledErrorCallback>()
     const { stop } = instrumentUnhandledRejection(callbackSpy)
 

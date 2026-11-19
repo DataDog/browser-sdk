@@ -1,3 +1,4 @@
+import { expect } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { Context } from '@datadog/js-core/util'
 import { combine } from '@datadog/js-core/util'
@@ -88,7 +89,7 @@ function validateRumFormat(rumEvent: Context) {
         return `  event${error.instancePath || ''} ${message}`
       })
       .join('\n')
-    fail(`Invalid RUM event format:\n${errors}`)
+    expect.unreachable(`Invalid RUM event format:\n${errors}`)
   }
 }
 

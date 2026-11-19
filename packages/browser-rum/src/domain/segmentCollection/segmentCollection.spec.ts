@@ -62,7 +62,7 @@ describe('startSegmentCollection', () => {
     lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
   }
 
-  function readMostRecentMetadata(spy: Mock<HttpRequest['send']>) {
+  function readMostRecentMetadata(spy: Mock<HttpRequest<ReplayPayload>['send']>) {
     return readMetadataFromReplayPayload(spy.mock.lastCall![0])
   }
 
