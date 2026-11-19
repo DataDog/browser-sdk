@@ -47,8 +47,16 @@ export function serializeAttribute(
     // placeholder sized to the video so the replay keeps the same layout and rendering.
     if (tagName === 'VIDEO' && attributeName === 'poster') {
       const video = element as HTMLVideoElement
-      if (image.videoWidth > 0) {
-        return censoredImageForSize(image.videoWidth, image.videoHeight)
+      // `videoWidth`/`videoHeight` are the intrinsic size of the loaded media stream, which is
+      // 0 until metadata loads (poster-only videos, `preload="none"`, or a stream that hasn't
+      // produced a frame yet). Fall back to the rendered box like the IMG branch does above so
+      // the placeholder keeps the video's layout instead of collapsing to the 1x1 mark.
+      if (video.videoWidth > 0) {
+        return censoredImageForSize(video.videoWidth, video.videoHeight)
+      }
+      const { width, height } = element.getBoundingClientRect()
+      if (width > 0 || height > 0) {
+        return censoredImageForSize(width, height)
       }
       return CENSORED_IMG_MARK
     }
