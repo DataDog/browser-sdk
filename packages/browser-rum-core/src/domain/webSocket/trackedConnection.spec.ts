@@ -3,6 +3,7 @@ import { mockClock } from '@datadog/browser-core/test'
 import type { ClocksState, Duration } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
 import type {
+  WebSocketClosedContext,
   WebSocketClosingContext,
   WebSocketConnectingContext,
   WebSocketMessageInContext,
@@ -220,6 +221,51 @@ describe('trackedConnection', () => {
       connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
 
       expect(getStateIn(connection, 'closed').url).toBe('wss://example.com:8443/path/socket%3Froom')
+    })
+
+    describe('close started by the application', () => {
+      it('is true when a close event ends tracking from the closing phase', () => {
+        const connection = createClosingConnection()
+
+        connection.recordClose(closedContext(clocksAt(40)))
+
+        expect(getStateIn(connection, 'closed').closeStartedByApplication).toBeTrue()
+      })
+
+      it('is true when tracking ends without a close event from the closing phase', () => {
+        const connection = createClosingConnection()
+
+        connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
+
+        expect(getStateIn(connection, 'closed').closeStartedByApplication).toBeTrue()
+      })
+
+      it('is false when a close event ends tracking from the open phase', () => {
+        const connection = createOpenConnection()
+
+        connection.recordClose(closedContext(clocksAt(40)))
+
+        expect(getStateIn(connection, 'closed').closeStartedByApplication).toBeFalse()
+      })
+
+      it('is false when a close event ends tracking from the connecting phase', () => {
+        const connection = createConnectingConnection()
+
+        connection.recordClose(closedContext(clocksAt(40)))
+
+        expect(getStateIn(connection, 'closed').closeStartedByApplication).toBeFalse()
+      })
+
+      it('is false when tracking ends without a close event from the open or connecting phase', () => {
+        const open = createOpenConnection()
+        const connecting = createConnectingConnection()
+
+        open.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
+        connecting.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
+
+        expect(getStateIn(open, 'closed').closeStartedByApplication).toBeFalse()
+        expect(getStateIn(connecting, 'closed').closeStartedByApplication).toBeFalse()
+      })
     })
 
     it('holds no close event when tracking ends without one', () => {
@@ -560,6 +606,18 @@ describe('trackedConnection', () => {
 
   function closingContext(at: ClocksState): WebSocketClosingContext {
     return { state: 'closing', instance: INSTANCE, at }
+  }
+
+  function closedContext(at: ClocksState): WebSocketClosedContext {
+    return {
+      state: 'closed',
+      instance: INSTANCE,
+      code: 1000,
+      reason: 'bye',
+      wasClean: true,
+      bufferedAmountAtClose: 0,
+      at,
+    }
   }
 
   // ---------------------------------------------------------------------------
