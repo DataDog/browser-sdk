@@ -142,6 +142,11 @@ export function onCatch(functionId: string, error: unknown, self: unknown, args:
       return
     }
 
+    // Tracking can stop while the exception propagates, or before it's rethrown
+    if (!isSessionTracked()) {
+      return
+    }
+
     const start = performance.now()
     const budgetMs = refillCaptureBudget(start)
     if (budgetMs <= 0) {

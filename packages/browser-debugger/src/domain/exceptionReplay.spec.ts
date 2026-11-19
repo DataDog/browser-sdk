@@ -418,6 +418,25 @@ describe('exceptionReplay', () => {
     expect(reportError(catchError(() => throwingFunction(1)))).toBeUndefined()
   })
 
+  it('should stop capturing frames once RUM stops tracking the session', () => {
+    let tracked = true
+    resetExceptionReplay()
+    registerExceptionReplayPlugin(() => tracked)
+    startExceptionReplay()
+
+    function withdrawingFunction() {
+      try {
+        throwingFunction(1)
+      } catch (e) {
+        tracked = false
+        onCatch('src/withdrawing.ts;withdrawingFunction', e, undefined, {})
+        throw e
+      }
+    }
+
+    expect(reportError(catchError(withdrawingFunction))!.frames.length).toBe(1)
+  })
+
   it('should reuse the same snapshots when an error is reported twice', () => {
     const error = catchError(() => callingFunction(1, 2))
 
