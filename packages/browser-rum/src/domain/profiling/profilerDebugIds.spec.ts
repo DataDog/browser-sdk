@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { mockSourceCodeContext } from '@datadog/browser-core/test'
 import { buildProfilerDebugIds } from './profilerDebugIds'
 

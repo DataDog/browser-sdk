@@ -1,17 +1,19 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { Clock } from '../../../browser-core/test'
 import { mockClock } from '../../../browser-core/test'
 import { throttle } from './functionUtils'
 
 describe('functionUtils', () => {
   describe('throttle', () => {
-    let spy: jasmine.Spy
+    let spy: Mock
     let throttled: () => void
     let cancel: () => void
     let clock: Clock
 
     beforeEach(() => {
       clock = mockClock()
-      spy = jasmine.createSpy()
+      spy = vi.fn()
     })
 
     describe('when {leading: false, trailing:false}', () => {
@@ -223,7 +225,7 @@ describe('functionUtils', () => {
       throttled(2)
       throttled(3)
       clock.tick(2)
-      expect(spy.calls.allArgs()).toEqual([[1], [3]])
+      expect(spy.mock.calls).toEqual([[1], [3]])
     })
   })
 })

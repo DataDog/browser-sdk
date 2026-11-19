@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import {
   literals,
   references,
@@ -58,7 +59,7 @@ describe('Expression language', () => {
 
         if (execute === false) {
           if (expected instanceof Error) {
-            expect(() => compile(ast)).toThrowError(expected.constructor as new (...args: any[]) => Error)
+            expect(() => compile(ast)).toThrowError(expected.constructor)
           } else {
             expect(() => compile(ast)).not.toThrow()
           }
@@ -68,7 +69,7 @@ describe('Expression language', () => {
         const evaluate = compile(ast)
 
         if (expected instanceof Error) {
-          expect(() => evaluate(vars)).toThrowError(expected.constructor as new (...args: any[]) => Error)
+          expect(() => evaluate(vars)).toThrowError(expected.constructor)
         } else {
           const result = evaluate(vars)
           if (expected !== null && typeof expected === 'object') {

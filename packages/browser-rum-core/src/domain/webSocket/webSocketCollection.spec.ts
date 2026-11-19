@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { addExperimentalFeatures, ExperimentalFeature, PageExitReason } from '@datadog/browser-core'
 import { resetAllowUntrustedEvents, setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import {
@@ -105,7 +106,7 @@ describe('webSocketCollection', () => {
       dispatchClose(socket)
       tickPeriodicReport()
 
-      expect(emittedVitals()).toHaveSize(0)
+      expect(emittedVitals()).toHaveLength(0)
     })
   })
 
@@ -334,7 +335,7 @@ describe('webSocketCollection', () => {
 
       expect(openPayloads()[1].snapshot.inbound.message_count).toBe(0)
       expect(openPayloads()[2].snapshot.inbound).toEqual(
-        jasmine.objectContaining({ message_count: 1, message_size_total: 30 })
+        expect.objectContaining({ message_count: 1, message_size_total: 30 })
       )
     })
 
@@ -392,7 +393,7 @@ describe('webSocketCollection', () => {
 
       tickPeriodicReport(2)
 
-      expect(openPayloads()).toHaveSize(0)
+      expect(openPayloads()).toHaveLength(0)
     })
 
     it('stops emitting reports for a connection once close() started the closing handshake', () => {
@@ -403,7 +404,7 @@ describe('webSocketCollection', () => {
       callClose(socket)
       tickPeriodicReport(2)
 
-      expect(openPayloads()).toHaveSize(2)
+      expect(openPayloads()).toHaveLength(2)
     })
 
     it('stops emitting reports once the last open connection closed', () => {
@@ -413,7 +414,7 @@ describe('webSocketCollection', () => {
       dispatchClose(socket)
       tickPeriodicReport(3)
 
-      expect(openPayloads()).toHaveSize(1)
+      expect(openPayloads()).toHaveLength(1)
     })
 
     it('keeps emitting reports for the connections still open when one of them closes', () => {
@@ -425,8 +426,8 @@ describe('webSocketCollection', () => {
       tickPeriodicReport()
 
       const [, idB] = connectingPayloads().map((payload) => payload.id)
-      expect(openPayloads().filter((payload) => payload.id === idB)).toHaveSize(2)
-      expect(openPayloads()).toHaveSize(3)
+      expect(openPayloads().filter((payload) => payload.id === idB)).toHaveLength(2)
+      expect(openPayloads()).toHaveLength(3)
     })
 
     it('stops emitting reports for the connections a flush finalized', () => {
@@ -436,7 +437,7 @@ describe('webSocketCollection', () => {
       tracker.flushOpenConnections()
       tickPeriodicReport(3)
 
-      expect(openPayloads()).toHaveSize(1)
+      expect(openPayloads()).toHaveLength(1)
     })
 
     it('stops emitting reports after stop()', () => {
@@ -446,7 +447,7 @@ describe('webSocketCollection', () => {
       tracker.stop()
       tickPeriodicReport(3)
 
-      expect(openPayloads()).toHaveSize(1)
+      expect(openPayloads()).toHaveLength(1)
     })
 
     // Expected rather than guarded against: one shared timer serves every connection, and both
@@ -516,7 +517,7 @@ describe('webSocketCollection', () => {
 
       expect(single(closingPayloads()).closing_date).toBe(clock.timeStamp(5))
       expect(single(closedPayloads()).was_clean).toBe(false)
-      expect(openPayloads()).toHaveSize(0)
+      expect(openPayloads()).toHaveLength(0)
     })
   })
 
@@ -546,7 +547,7 @@ describe('webSocketCollection', () => {
       dispatchClose(socket, { at: 40, code: 1001, reason: 'going away', wasClean: false })
 
       expect(single(closedPayloads())).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           tracking_end_reason: WebSocketTrackingEndReason.CLOSE_EVENT,
           close_code: 1001,
           close_reason: 'going away',
@@ -574,7 +575,7 @@ describe('webSocketCollection', () => {
       tracker.flushOpenConnections()
 
       expect(single(closedPayloads())).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           tracking_end_reason: WebSocketTrackingEndReason.SESSION_END,
           closed_date: clock.timeStamp(40),
         })
@@ -621,7 +622,7 @@ describe('webSocketCollection', () => {
 
       const { snapshot } = single(closedPayloads())
       expect(snapshot!.inbound).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           message_count: 1,
           message_size_total: 30,
           time_to_first_message: toServerDuration(10 as Duration),
@@ -629,7 +630,7 @@ describe('webSocketCollection', () => {
         })
       )
       expect(snapshot!.outbound).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           message_count: 1,
           message_size_total: 10,
           time_to_first_message: toServerDuration(15 as Duration),
@@ -648,7 +649,7 @@ describe('webSocketCollection', () => {
       dispatchClose(socket)
 
       expect(single(closedPayloads()).snapshot!.outbound).toEqual(
-        jasmine.objectContaining({ message_count: 1, message_size_total: 10, message_size_max: 10 })
+        expect.objectContaining({ message_count: 1, message_size_total: 10, message_size_max: 10 })
       )
     })
   })
@@ -666,7 +667,7 @@ describe('webSocketCollection', () => {
 
       tickPeriodicReport()
       const openVitals = emittedVitals(WebSocketVitalName.OPEN)
-      expect(openVitals).toHaveSize(2)
+      expect(openVitals).toHaveLength(2)
       expect(webSocketOf(openVitals[1])).toBe(socket)
 
       callClose(socket)
@@ -718,7 +719,7 @@ describe('webSocketCollection', () => {
       expect(open.connecting_duration).toBe(toServerDuration(10 as Duration))
       expect(closed.duration).toBe(toServerDuration(40 as Duration))
       expect(closed.snapshot!.inbound).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           time_to_first_message: toServerDuration(10 as Duration),
           silence_before_close: toServerDuration(20 as Duration),
         })
@@ -741,7 +742,7 @@ describe('webSocketCollection', () => {
       tracker.flushOpenConnections()
       dispatchClose(socket)
 
-      expect(closedPayloads()).toHaveSize(1)
+      expect(closedPayloads()).toHaveLength(1)
     })
 
     it('reports nothing more once stopped', () => {
@@ -751,7 +752,7 @@ describe('webSocketCollection', () => {
       tracker.stop()
       dispatchClose(socket)
 
-      expect(closedPayloads()).toHaveSize(0)
+      expect(closedPayloads()).toHaveLength(0)
     })
   })
 
@@ -780,7 +781,7 @@ describe('webSocketCollection', () => {
           startCollection(mockRumConfiguration({ trackResources, betaTrackWebSockets }))
           dispatchClose(createOpenConnection())
 
-          expect(emittedVitals()).toHaveSize(collects ? 3 : 0)
+          expect(emittedVitals()).toHaveLength(collects ? 3 : 0)
         })
       })
     })
@@ -809,7 +810,7 @@ describe('webSocketCollection', () => {
 
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
 
-        expect(openPayloads()).toHaveSize(0)
+        expect(openPayloads()).toHaveLength(0)
       })
 
       it('stops emitting reports after stop()', () => {
@@ -819,7 +820,7 @@ describe('webSocketCollection', () => {
         collection.stop()
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
 
-        expect(openPayloads()).toHaveSize(1)
+        expect(openPayloads()).toHaveLength(1)
       })
     })
 
@@ -832,7 +833,7 @@ describe('webSocketCollection', () => {
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
 
         expect(single(closedPayloads())).toEqual(
-          jasmine.objectContaining({
+          expect.objectContaining({
             tracking_end_reason: WebSocketTrackingEndReason.PAGE_TERMINATED,
             closed_date: clock.timeStamp(40),
           })
@@ -862,7 +863,7 @@ describe('webSocketCollection', () => {
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
 
         const payload = single(closedPayloads())
-        expect(payload).toEqual(jasmine.objectContaining({ snapshot_version: 2 }))
+        expect(payload).toEqual(expect.objectContaining({ snapshot_version: 2 }))
         expect(payload.snapshot?.outbound.buffered_amount_at_close).toBe(12)
         expect(payload.close_code).toBeUndefined()
         expect(payload.close_reason).toBeUndefined()
@@ -895,8 +896,8 @@ describe('webSocketCollection', () => {
         lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.PAGE_TERMINATED)
         tickPeriodicReport()
 
-        expect(openPayloads()).toHaveSize(1)
-        expect(closedPayloads()).toHaveSize(1)
+        expect(openPayloads()).toHaveLength(1)
+        expect(closedPayloads()).toHaveLength(1)
       })
     })
 
@@ -908,7 +909,7 @@ describe('webSocketCollection', () => {
       expireSession()
 
       expect(single(closedPayloads())).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           tracking_end_reason: WebSocketTrackingEndReason.SESSION_END,
           closed_date: clock.timeStamp(40),
         })
@@ -922,12 +923,12 @@ describe('webSocketCollection', () => {
 
       expireSession()
 
-      expect(closedPayloads()).toHaveSize(1)
+      expect(closedPayloads()).toHaveLength(1)
 
       sendMessage(socket, 7)
       dispatchClose(socket)
 
-      expect(closedPayloads()).toHaveSize(1)
+      expect(closedPayloads()).toHaveLength(1)
     })
 
     it('finalizes open connections on stop(), then ignores their events', () => {
@@ -939,7 +940,7 @@ describe('webSocketCollection', () => {
       dispatchClose(socket)
 
       expect(single(closedPayloads())).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           tracking_end_reason: WebSocketTrackingEndReason.SESSION_END,
           closed_date: clock.timeStamp(40),
         })
@@ -1073,7 +1074,7 @@ describe('webSocketCollection', () => {
 
   /** The one item of a list the spec expects to hold exactly one. */
   function single<T>(items: T[]): T {
-    expect(items).toHaveSize(1)
+    expect(items).toHaveLength(1)
     return items[0]
   }
 

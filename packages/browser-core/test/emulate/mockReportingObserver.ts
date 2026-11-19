@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { noop } from '@datadog/js-core/util'
 import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
 import { registerCleanupTask } from '../registerCleanupTask'
@@ -52,7 +53,7 @@ export type MockCspEventListener = ReturnType<typeof mockCspEventListener>
 export function mockCspEventListener() {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalAddEventListener = EventTarget.prototype.addEventListener
-  EventTarget.prototype.addEventListener = jasmine.createSpy().and.callFake(function (this: any, type, listener) {
+  EventTarget.prototype.addEventListener = vi.fn().mockImplementation(function (this: any, type, listener) {
     if (type === 'securitypolicyviolation') {
       listeners.push(listener)
     } else {

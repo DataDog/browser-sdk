@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { ErrorHandling, ErrorSource, type RawError } from '@datadog/browser-core'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'

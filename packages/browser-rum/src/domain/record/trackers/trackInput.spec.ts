@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { noop } from '@datadog/js-core/util'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
@@ -378,7 +380,7 @@ async function recordInputIn(
   changes: BrowserChangeRecord[]
   nodeIdOf: (node: Node) => NodeId
   sandbox: HTMLElement
-  emitStats: jasmine.Spy
+  emitStats: Mock
 }> {
   const { sandbox, scope, decoder } = await createSandbox(html, configuration)
 
@@ -388,7 +390,7 @@ async function recordInputIn(
   const emitRecord = (record: BrowserRecord): void => {
     changes.push(decoder.decode(record as BrowserChangeRecord))
   }
-  const emitStats = jasmine.createSpy('emitStats')
+  const emitStats = vi.fn()
 
   const inputTracker = trackInput(sandbox.ownerDocument, emitRecord, emitStats, scope)
   registerCleanupTask(() => {

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { BridgeCapability, createIdentityEncoder } from '@datadog/browser-core'
 import { deepClone, globalObject } from '@datadog/js-core/util'
 import {
@@ -41,12 +43,10 @@ describe('profilerApi', () => {
   })
 
   describe('bridge mode', () => {
-    let createRumProfilerSpy: jasmine.Spy
+    let createRumProfilerSpy: Mock
 
     beforeEach(() => {
-      createRumProfilerSpy = jasmine
-        .createSpy('createRumProfiler')
-        .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
+      createRumProfilerSpy = vi.fn().mockReturnValue({ start: vi.fn(), stop: vi.fn() })
       replaceMockable(isProfilingSupported, () => true)
       replaceMockable(lazyLoadProfiler, () => Promise.resolve(createRumProfilerSpy))
     })
@@ -103,9 +103,9 @@ describe('profilerApi', () => {
       stopped: boolean
     }
 
-    let createRumProfilerSpy: jasmine.Spy
-    let lazyLoadProfilerSpy: jasmine.Spy
-    let isProfilingSupportedSpy: jasmine.Spy
+    let createRumProfilerSpy: Mock
+    let lazyLoadProfilerSpy: Mock
+    let isProfilingSupportedSpy: Mock
     let instances: Set<unknown>
 
     /**
@@ -145,13 +145,11 @@ describe('profilerApi', () => {
         delete (globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]
         takeEarlyCollectionProfiler() // clear any takeover left by a test
       })
-      createRumProfilerSpy = jasmine
-        .createSpy('createRumProfiler')
-        .and.returnValue({ start: jasmine.createSpy(), stop: jasmine.createSpy() })
+      createRumProfilerSpy = vi.fn().mockReturnValue({ start: vi.fn(), stop: vi.fn() })
       lazyLoadProfilerSpy = replaceMockableWithSpy(lazyLoadProfiler)
-      lazyLoadProfilerSpy.and.returnValue(Promise.resolve(createRumProfilerSpy))
+      lazyLoadProfilerSpy.mockReturnValue(Promise.resolve(createRumProfilerSpy))
       isProfilingSupportedSpy = replaceMockableWithSpy(isProfilingSupported)
-      isProfilingSupportedSpy.and.returnValue(true)
+      isProfilingSupportedSpy.mockReturnValue(true)
     })
 
     it('loads the profiler chunk when the session is sampled for profiling, without stopping the early Profiler', async () => {
@@ -175,13 +173,13 @@ describe('profilerApi', () => {
     })
 
     it('does not load the profiler chunk and stops the early Profiler when the browser does not support the Profiler API', () => {
-      isProfilingSupportedSpy.and.returnValue(false)
+      isProfilingSupportedSpy.mockReturnValue(false)
       const earlyProfiler = seedEarlyCollectionProfiler()
 
       startApi()
 
       expect(lazyLoadProfilerSpy).not.toHaveBeenCalled()
-      expect(earlyProfiler.stopped).toBeTrue()
+      expect(earlyProfiler.stopped).toBe(true)
       expect(takeEarlyCollectionProfiler()).toBeUndefined()
     })
 
@@ -192,7 +190,7 @@ describe('profilerApi', () => {
       startApi(sessionManager)
 
       expect(lazyLoadProfilerSpy).not.toHaveBeenCalled()
-      expect(earlyProfiler.stopped).toBeTrue()
+      expect(earlyProfiler.stopped).toBe(true)
       expect(takeEarlyCollectionProfiler()).toBeUndefined()
     })
 
@@ -210,32 +208,32 @@ describe('profilerApi', () => {
       )
 
       expect(lazyLoadProfilerSpy).not.toHaveBeenCalled()
-      expect(earlyProfiler.stopped).toBeTrue()
+      expect(earlyProfiler.stopped).toBe(true)
       expect(takeEarlyCollectionProfiler()).toBeUndefined()
     })
 
     it('stops the early Profiler when the profiler chunk fails to load', async () => {
       const earlyProfiler = seedEarlyCollectionProfiler()
-      lazyLoadProfilerSpy.and.returnValue(Promise.resolve(undefined))
+      lazyLoadProfilerSpy.mockReturnValue(Promise.resolve(undefined))
 
       startApi()
       await waitNextMicrotask() // let lazyLoadProfiler().then() run
 
       expect(createRumProfilerSpy).not.toHaveBeenCalled()
-      expect(earlyProfiler.stopped).toBeTrue()
+      expect(earlyProfiler.stopped).toBe(true)
       expect(takeEarlyCollectionProfiler()).toBeUndefined()
     })
 
     it('stops the early Profiler when loading the profiler chunk throws', async () => {
       const earlyProfiler = seedEarlyCollectionProfiler()
-      lazyLoadProfilerSpy.and.returnValue(Promise.reject(new Error('load error')))
+      lazyLoadProfilerSpy.mockReturnValue(Promise.reject(new Error('load error')))
 
       startApi()
       // The rejection propagates through the `.then().catch()` chain: two microtasks.
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(earlyProfiler.stopped).toBeTrue()
+      expect(earlyProfiler.stopped).toBe(true)
       expect(takeEarlyCollectionProfiler()).toBeUndefined()
     })
 
@@ -245,7 +243,7 @@ describe('profilerApi', () => {
       const api = startApi()
       api.stop()
 
-      expect(earlyProfiler.stopped).toBeTrue()
+      expect(earlyProfiler.stopped).toBe(true)
       expect(takeEarlyCollectionProfiler()).toBeUndefined()
     })
   })

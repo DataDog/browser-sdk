@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { BufferedData, FetchResolveContext } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { BufferedDataType, ErrorSource } from '@datadog/browser-core'
@@ -67,7 +68,7 @@ describe('network error collection', () => {
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
       message: 'Fetch error GET http://fake.com/',
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       status: StatusType.error,
       origin: ErrorSource.NETWORK,
       error: {

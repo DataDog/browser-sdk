@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
 import { elapsed, relativeNow } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
@@ -60,9 +61,9 @@ describe('trackInteractionToNextPaint', () => {
     })
   }
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isInteractionToNextPaintSupported()) {
-      pending('No INP support')
+      ctx.skip('No INP support')
     }
   })
 
@@ -132,7 +133,7 @@ describe('trackInteractionToNextPaint', () => {
     setNavigationId(2)
 
     expect(getInteractionToNextPaint()).toEqual(
-      jasmine.objectContaining({ value: 100 as Duration, time: 2 as RelativeTime })
+      expect.objectContaining({ value: 100 as Duration, time: 2 as RelativeTime })
     )
   })
 

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import {
   elapsed,
   timeStampNow,
@@ -53,13 +55,13 @@ import type { VitalContext } from './contexts/vitalHistory'
 import { createVitalHistory } from './contexts/vitalHistory'
 
 describe('profiler', () => {
-  let emitPayloadSpy: jasmine.Spy
-  let checkProfilingQuotaSpy: jasmine.Spy
+  let emitPayloadSpy: Mock
+  let checkProfilingQuotaSpy: Mock
 
   beforeEach(() => {
     // Default: quota always ok. Individual quota-check tests can reconfigure via spy.and.callFake(...)
     checkProfilingQuotaSpy = replaceMockableWithSpy(checkProfilingQuota)
-    checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' }))
+    checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' }))
   })
 
   // The page URL changed by some tests is restored by `forEach.ts`. Don't restore it here as well:
@@ -155,7 +157,7 @@ describe('profiler', () => {
     })
     replaceMockable(createVitalHistory, () => vitalHistory)
 
-    emitPayloadSpy = jasmine.createSpy('emitPayload')
+    emitPayloadSpy = vi.fn()
     replaceMockable(createFormDataEmitter, () => emitPayloadSpy)
 
     // Start collection of profile.
@@ -224,10 +226,10 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
-    expect(emitPayloadSpy.calls.count()).toBe(1)
-    const payload = emitPayloadSpy.calls.argsFor(0)[0]
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
+    const payload = emitPayloadSpy.mock.calls[0][0]
     expect(payload.profile.session).toEqual({ id: 'session-id-1' })
     expect(payload.trace.stacks).toEqual(mockedRumProfilerTrace.stacks)
     expect(payload.trace.samples).toEqual(mockedRumProfilerTrace.samples)
@@ -249,8 +251,8 @@ describe('profiler', () => {
     })
     await waitNextMicrotask()
 
-    expect(emitPayloadSpy.calls.count()).toBe(1)
-    const payload: ProfilingPayload = emitPayloadSpy.calls.mostRecent().args[0]
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
+    const payload: ProfilingPayload = emitPayloadSpy.mock.lastCall![0]
     expect(payload.trace.views.map((view) => view.viewId)).toEqual(['view-id-1'])
     expect(payload.trace.endClocks).toEqual(endClocks)
     expect(payload.profile.view?.id).toEqual(['view-id-1'])
@@ -265,9 +267,9 @@ describe('profiler', () => {
     profiler.start()
     await waitForBoolean(() => profiler.isRunning())
     profiler.stop()
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
-    const payload = emitPayloadSpy.calls.argsFor(0)[0]
+    const payload = emitPayloadSpy.mock.calls[0][0]
     expect(payload.trace.debugIds).toEqual([{ resourceId: 0, debugId: 'debug-id-1' }])
   })
 
@@ -277,9 +279,9 @@ describe('profiler', () => {
     profiler.start()
     await waitForBoolean(() => profiler.isRunning())
     profiler.stop()
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
-    const payload = emitPayloadSpy.calls.argsFor(0)[0]
+    const payload = emitPayloadSpy.mock.calls[0][0]
     expect(payload.trace.debugIds).toBeUndefined()
   })
 
@@ -302,10 +304,10 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
     // Assert that the profiler has collected data on pause.
-    expect(emitPayloadSpy.calls.count()).toBe(1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
 
     // Change back to visible
     setVisibilityState('visible')
@@ -322,12 +324,12 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 2)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 2)
 
-    expect(emitPayloadSpy.calls.count()).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
     // Check the emitPayloadSpy was called with the mocked trace
-    const payload = emitPayloadSpy.calls.argsFor(1)[0]
+    const payload = emitPayloadSpy.mock.calls[1][0]
     expect(payload.profile.session).toEqual({ id: 'session-id-1' })
     expect(payload.trace.stacks).toEqual(mockedRumProfilerTrace.stacks)
     expect(payload.trace.samples).toEqual(mockedRumProfilerTrace.samples)
@@ -389,22 +391,22 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(emitPayloadSpy.calls.count()).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    const payloadOne = emitPayloadSpy.calls.argsFor(0)[0]
-    const payloadTwo = emitPayloadSpy.calls.argsFor(1)[0]
+    const payloadOne = emitPayloadSpy.mock.calls[0][0]
+    const payloadTwo = emitPayloadSpy.mock.calls[1][0]
 
     expect(payloadOne.profile.long_task?.id.length).toBe(2)
     expect(payloadOne.trace.longTasks).toEqual([
       {
         id: 'long-task-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
       {
         id: 'long-task-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
@@ -414,7 +416,7 @@ describe('profiler', () => {
     expect(payloadTwo.trace.longTasks).toEqual([
       {
         id: 'long-task-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
@@ -477,22 +479,22 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(emitPayloadSpy.calls.count()).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    const payloadOne = emitPayloadSpy.calls.argsFor(0)[0]
-    const payloadTwo = emitPayloadSpy.calls.argsFor(1)[0]
+    const payloadOne = emitPayloadSpy.mock.calls[0][0]
+    const payloadTwo = emitPayloadSpy.mock.calls[1][0]
 
     expect(payloadOne.profile.action?.id.length).toBe(2)
     expect(payloadOne.trace.actions).toEqual([
       {
         id: 'action-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'action-label-2',
       },
       {
         id: 'action-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         label: 'action-label-1',
       },
@@ -502,7 +504,7 @@ describe('profiler', () => {
     expect(payloadTwo.trace.actions).toEqual([
       {
         id: 'action-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'action-label-3',
       },
@@ -568,22 +570,22 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(emitPayloadSpy.calls.count()).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    const payloadOne = emitPayloadSpy.calls.argsFor(0)[0]
-    const payloadTwo = emitPayloadSpy.calls.argsFor(1)[0]
+    const payloadOne = emitPayloadSpy.mock.calls[0][0]
+    const payloadTwo = emitPayloadSpy.mock.calls[1][0]
 
     expect(payloadOne.profile.vital?.id.length).toBe(2)
     expect(payloadOne.trace.vitals).toEqual([
       {
         id: 'vital-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'vital-label-2',
       },
       {
         id: 'vital-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         label: 'vital-label-1',
       },
@@ -593,7 +595,7 @@ describe('profiler', () => {
     expect(payloadTwo.trace.vitals).toEqual([
       {
         id: 'vital-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'vital-label-3',
       },
@@ -643,21 +645,21 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(emitPayloadSpy.calls.count()).toBe(3)
+    expect(emitPayloadSpy.mock.calls.length).toBe(3)
 
-    const vitals1 = emitPayloadSpy.calls.argsFor(0)[0].trace.vitals as BrowserProfilerTrace['vitals']
-    const vitals2 = emitPayloadSpy.calls.argsFor(1)[0].trace.vitals as BrowserProfilerTrace['vitals']
-    const vitals3 = emitPayloadSpy.calls.argsFor(2)[0].trace.vitals as BrowserProfilerTrace['vitals']
+    const vitals1 = emitPayloadSpy.mock.calls[0][0].trace.vitals as BrowserProfilerTrace['vitals']
+    const vitals2 = emitPayloadSpy.mock.calls[1][0].trace.vitals as BrowserProfilerTrace['vitals']
+    const vitals3 = emitPayloadSpy.mock.calls[2][0].trace.vitals as BrowserProfilerTrace['vitals']
 
     // Profile 1: all three operations present, only op1 has a duration
-    expect(vitals1?.map((v) => v.id)).toEqual(jasmine.arrayContaining(['op-id-1', 'op-id-2', 'op-id-3']))
+    expect(vitals1?.map((v) => v.id)).toEqual(expect.arrayContaining(['op-id-1', 'op-id-2', 'op-id-3']))
     expect(vitals1?.find((v) => v.id === 'op-id-1')?.duration).toBe(30 as Duration)
     expect(vitals1?.find((v) => v.id === 'op-id-2')?.duration).toBeUndefined()
     expect(vitals1?.find((v) => v.id === 'op-id-3')?.duration).toBeUndefined()
 
     // Profile 2: op1 is gone (ended before profile 2 started), op2 and op3 present, only op2 has a duration
     expect(vitals2?.map((v) => v.id)).not.toContain('op-id-1')
-    expect(vitals2?.map((v) => v.id)).toEqual(jasmine.arrayContaining(['op-id-2', 'op-id-3']))
+    expect(vitals2?.map((v) => v.id)).toEqual(expect.arrayContaining(['op-id-2', 'op-id-3']))
     expect(vitals2?.find((v) => v.id === 'op-id-2')?.duration).toBe(140 as Duration)
     expect(vitals2?.find((v) => v.id === 'op-id-3')?.duration).toBeUndefined()
 
@@ -709,9 +711,9 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
-    const views = emitPayloadSpy.calls.argsFor(0)[0].trace.views
+    const views = emitPayloadSpy.mock.calls[0][0].trace.views
 
     expect(views.length).toBe(2)
     expect(views[0].viewId).toBe('view-user')
@@ -762,12 +764,12 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isPaused())
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
     // Assert that the profiler has collected data on pause.
-    expect(emitPayloadSpy.calls.count()).toBe(1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
 
-    const payload = emitPayloadSpy.calls.argsFor(0)[0]
+    const payload = emitPayloadSpy.mock.calls[0][0]
     expect(payload.profile.session).toEqual({ id: 'session-id-1' })
     expect(payload.trace.views).toEqual([
       {
@@ -797,11 +799,11 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 2)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 2)
 
-    expect(emitPayloadSpy.calls.count()).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    const payload2 = emitPayloadSpy.calls.argsFor(1)[0]
+    const payload2 = emitPayloadSpy.mock.calls[1][0]
     expect(payload2.profile.session).toEqual({ id: 'session-id-1' })
     expect(payload2.trace.stacks).toEqual(mockedRumProfilerTrace.stacks)
     expect(payload2.trace.samples).toEqual(mockedRumProfilerTrace.samples)
@@ -824,10 +826,10 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
     // Verify that profiler collected data before stopping
-    expect(emitPayloadSpy.calls.count()).toBe(1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
   })
 
   it('should not restart profiling after session expiration when visibility changes', async () => {
@@ -876,10 +878,10 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
     // Verify that profiler collected data before stopping
-    expect(emitPayloadSpy.calls.count()).toBe(1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
 
     // Notify that the session has been renewed
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -895,10 +897,10 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 2)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 2)
 
     // Should have collected data from both sessions (before expiration and after renewal)
-    expect(emitPayloadSpy.calls.count()).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
   })
 
   it('should handle multiple session expiration and renewal cycles', async () => {
@@ -916,8 +918,8 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
-    expect(emitPayloadSpy.calls.count()).toBe(1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
     await waitForBoolean(() => profiler.isRunning())
@@ -928,8 +930,8 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 2)
-    expect(emitPayloadSpy.calls.count()).toBe(2)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
     await waitForBoolean(() => profiler.isRunning())
@@ -940,8 +942,8 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
 
     // Should have collected data from: initial session + first renewal + second renewal = 3 profiles
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 3)
-    expect(emitPayloadSpy.calls.count()).toBe(3)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 3)
+    expect(emitPayloadSpy.mock.calls.length).toBe(3)
   })
 
   it('should not restart profiling on session renewal if profiler was manually stopped', async () => {
@@ -1059,7 +1061,7 @@ describe('profiler', () => {
 
     // Session expires
     testLifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, { endClocks: clocksNow() })
-    expect(profiler.isStopped()).toBeTrue()
+    expect(profiler.isStopped()).toBe(true)
 
     // Session renews with HIGH_HASH_UUID, which is not sampled at profilingSampleRate: 50
     sessionManager.setId(HIGH_HASH_UUID)
@@ -1067,7 +1069,7 @@ describe('profiler', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 100))
 
-    expect(profiler.isStopped()).toBeTrue()
+    expect(profiler.isStopped()).toBe(true)
 
     profiler.stop()
   })
@@ -1103,7 +1105,7 @@ describe('profiler', () => {
 
     // Simulate clock drift: Date.now() drifted 1000ms ahead of performance.now()
     // This mimics NTP sync or system clock adjustments in production
-    ;(performance.now as jasmine.Spy).and.callFake(() => Date.now() - timeOrigin - 1000)
+    ;(performance.now as Mock).mockImplementation(() => Date.now() - timeOrigin - 1000)
 
     // Stop profiler — state changes synchronously, data collection is async via Promise
     profiler.stop()
@@ -1113,8 +1115,8 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(emitPayloadSpy.calls.count()).toBe(1)
-    const trace = emitPayloadSpy.calls.argsFor(0)[0].trace
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
+    const trace = emitPayloadSpy.mock.calls[0][0].trace
 
     // Should only include the long task that occurred during the actual profiling window.
     // Without the fix (using timeStamp for duration), both long tasks would be included
@@ -1134,9 +1136,9 @@ describe('profiler', () => {
 
     profiler.stop()
 
-    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
-    expect(emitPayloadSpy.calls.argsFor(0)[0].profile.session).toEqual({ id: 'session-id-1' })
+    expect(emitPayloadSpy.mock.calls[0][0].profile.session).toEqual({ id: 'session-id-1' })
   })
 
   describe('early collection takeover', () => {
@@ -1164,8 +1166,8 @@ describe('profiler', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(emitPayloadSpy.calls.count()).toBe(1)
-      const payload = emitPayloadSpy.calls.argsFor(0)[0]
+      expect(emitPayloadSpy.mock.calls.length).toBe(1)
+      const payload = emitPayloadSpy.mock.calls[0][0]
       expect(payload.trace.startClocks).toBe(earlyStartClocks)
       // A new instance was started to continue collection periodically.
       expect(instances.size).toBe(2)
@@ -1192,7 +1194,7 @@ describe('profiler', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(emitPayloadSpy.calls.count()).toBe(1)
+      expect(emitPayloadSpy.mock.calls.length).toBe(1)
       expect(instances.size).toBe(2)
 
       profiler.stop()
@@ -1257,7 +1259,7 @@ describe('profiler', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(emitPayloadSpy.calls.count()).toBe(0)
+      expect(emitPayloadSpy.mock.calls.length).toBe(0)
     })
 
     it('should send profile when below duration threshold if a long task is present', async () => {
@@ -1281,7 +1283,7 @@ describe('profiler', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(emitPayloadSpy.calls.count()).toBe(1)
+      expect(emitPayloadSpy.mock.calls.length).toBe(1)
     })
 
     it('should send profile when duration threshold is met', async () => {
@@ -1298,7 +1300,7 @@ describe('profiler', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(emitPayloadSpy.calls.count()).toBe(1)
+      expect(emitPayloadSpy.mock.calls.length).toBe(1)
     })
   })
 
@@ -1338,7 +1340,7 @@ describe('profiler', () => {
 
   describe('quota check', () => {
     it('should stop profiler and set quota_exceeded context when quota check returns quota_exceeded', async () => {
-      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'quota_exceeded' }))
+      checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ko', reason: 'quota_exceeded' }))
       const { profiler, profilingContextManager } = setupProfiler()
 
       profiler.start()
@@ -1349,11 +1351,11 @@ describe('profiler', () => {
         error_reason: undefined,
         quota_reason: 'quota_exceeded',
       } as any)
-      expect(emitPayloadSpy.calls.count()).toBe(0) // no data sent
+      expect(emitPayloadSpy.mock.calls.length).toBe(0) // no data sent
     })
 
     it('should stop profiler and set org_disabled context when quota check returns org_disabled', async () => {
-      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'org_disabled' }))
+      checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ko', reason: 'org_disabled' }))
       const { profiler, profilingContextManager } = setupProfiler()
 
       profiler.start()
@@ -1364,11 +1366,11 @@ describe('profiler', () => {
         error_reason: undefined,
         quota_reason: 'org_disabled',
       } as any)
-      expect(emitPayloadSpy.calls.count()).toBe(0) // no data sent
+      expect(emitPayloadSpy.mock.calls.length).toBe(0) // no data sent
     })
 
     it('should stop profiler and set unknown_reason context when quota check returns unknown_reason', async () => {
-      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'unknown_reason' }))
+      checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ko', reason: 'unknown_reason' }))
       const { profiler, profilingContextManager } = setupProfiler()
 
       profiler.start()
@@ -1379,7 +1381,7 @@ describe('profiler', () => {
         error_reason: undefined,
         quota_reason: 'unknown_reason',
       } as any)
-      expect(emitPayloadSpy.calls.count()).toBe(0) // no data sent
+      expect(emitPayloadSpy.mock.calls.length).toBe(0) // no data sent
     })
 
     it('should keep profiler running when quota check returns quota-ok', async () => {
@@ -1401,7 +1403,7 @@ describe('profiler', () => {
       const hooks = createHooks()
       const profilingContextManager = startProfilingContext(hooks)
       const noSessionManager = createSessionManagerMock()
-      spyOn(noSessionManager, 'findTrackedSession').and.returnValue(undefined)
+      vi.spyOn(noSessionManager, 'findTrackedSession').mockReturnValue(undefined)
       const profilerNoSession = createRumProfiler(
         mockRumConfiguration({ profilingSampleRate: 100 }),
         new LifeCycle(),
@@ -1423,7 +1425,7 @@ describe('profiler', () => {
 
     it('should discard quota-exceeded result when profiler was already stopped by user', async () => {
       let resolveQuota!: (result: { decision: string; reason: string }) => void
-      checkProfilingQuotaSpy.and.callFake(
+      checkProfilingQuotaSpy.mockImplementation(
         () =>
           new Promise((resolve) => {
             resolveQuota = resolve
@@ -1447,7 +1449,7 @@ describe('profiler', () => {
 
     it('should discard quota-exceeded result when SESSION_EXPIRED fired before quota resolved', async () => {
       let resolveQuota!: (result: { decision: string; reason: string }) => void
-      checkProfilingQuotaSpy.and.callFake(
+      checkProfilingQuotaSpy.mockImplementation(
         () =>
           new Promise((resolve) => {
             resolveQuota = resolve
@@ -1467,13 +1469,13 @@ describe('profiler', () => {
       expect(profilingContextManager.get()?.error_reason).toBeUndefined()
 
       // data IS sent (normal session-expired collection happens)
-      await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
-      expect(emitPayloadSpy.calls.count()).toBeGreaterThanOrEqual(1)
+      await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
+      expect(emitPayloadSpy.mock.calls.length).toBeGreaterThanOrEqual(1)
     })
 
     it('should stop profiler and not resume when quota-exceeded resolves while paused', async () => {
       let resolveQuota!: (result: { decision: string; reason: string }) => void
-      checkProfilingQuotaSpy.and.callFake(
+      checkProfilingQuotaSpy.mockImplementation(
         () =>
           new Promise((resolve) => {
             resolveQuota = resolve
@@ -1506,7 +1508,7 @@ describe('profiler', () => {
     it('should discard stale quota result when SESSION_RENEWED restarts the profiler', async () => {
       let resolveOldQuota!: (result: { decision: string; reason: string }) => void
       let callCount = 0
-      checkProfilingQuotaSpy.and.callFake(() => {
+      checkProfilingQuotaSpy.mockImplementation(() => {
         callCount++
         if (callCount === 1) {
           return new Promise((resolve) => {
@@ -1535,7 +1537,7 @@ describe('profiler', () => {
 
     it('should restart profiler and re-check quota on SESSION_RENEWED after quota_exceeded or org_disabled', async () => {
       let callCount = 0
-      checkProfilingQuotaSpy.and.callFake(() => {
+      checkProfilingQuotaSpy.mockImplementation(() => {
         callCount++
         return Promise.resolve(
           callCount === 1

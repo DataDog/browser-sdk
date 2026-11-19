@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from 'vitest'
 import { getDebugMode, setDebugMode } from './debug'
 
 describe('debug mode', () => {

@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { waitAfterNextPaint } from '../../../browser-core/test'
 import { getScrollX, getScrollY } from './scroll'
 

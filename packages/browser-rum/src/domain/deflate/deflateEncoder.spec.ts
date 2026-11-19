@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EncoderResult } from '@datadog/browser-core'
 import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import { noop } from '@datadog/js-core/util'
@@ -21,7 +22,7 @@ describe('createDeflateEncoder', () => {
   describe('write()', () => {
     it('invokes write callbacks', () => {
       const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-      const writeCallbackSpy = jasmine.createSpy()
+      const writeCallbackSpy = vi.fn()
       encoder.write('foo', writeCallbackSpy)
       encoder.write('bar', writeCallbackSpy)
 
@@ -30,8 +31,8 @@ describe('createDeflateEncoder', () => {
       worker.processAllMessages()
 
       expect(writeCallbackSpy).toHaveBeenCalledTimes(2)
-      expect(writeCallbackSpy.calls.argsFor(0)).toEqual([3])
-      expect(writeCallbackSpy.calls.argsFor(1)).toEqual([3])
+      expect(writeCallbackSpy.mock.calls[0]).toEqual([3])
+      expect(writeCallbackSpy.mock.calls[1]).toEqual([3])
     })
 
     it('marks the encoder as not empty', () => {
@@ -44,14 +45,14 @@ describe('createDeflateEncoder', () => {
   describe('finish()', () => {
     it('invokes the callback with the encoded data', () => {
       const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
+      const finishCallbackSpy = vi.fn<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.write('bar')
       encoder.finish(finishCallbackSpy)
 
       worker.processAllMessages()
 
-      expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
+      expect(finishCallbackSpy).toHaveBeenCalledExactlyOnceWith({
         output: new Uint8Array([...ENCODED_FOO, ...ENCODED_BAR, ...TRAILER]),
         outputBytesCount: 7,
         rawBytesCount: 6,
@@ -61,10 +62,10 @@ describe('createDeflateEncoder', () => {
 
     it('invokes the callback even if nothing has been written', () => {
       const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
+      const finishCallbackSpy = vi.fn<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.finish(finishCallbackSpy)
 
-      expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
+      expect(finishCallbackSpy).toHaveBeenCalledExactlyOnceWith({
         output: new Uint8Array(0),
         outputBytesCount: 0,
         rawBytesCount: 0,
@@ -74,7 +75,7 @@ describe('createDeflateEncoder', () => {
 
     it('cancels pending write callbacks', () => {
       const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-      const writeCallbackSpy = jasmine.createSpy()
+      const writeCallbackSpy = vi.fn()
       encoder.write('foo', writeCallbackSpy)
       encoder.write('bar', writeCallbackSpy)
       encoder.finish(noop)
@@ -93,7 +94,7 @@ describe('createDeflateEncoder', () => {
 
     it('supports calling finish() while another finish() call is pending', () => {
       const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
+      const finishCallbackSpy = vi.fn<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.finish(finishCallbackSpy)
       encoder.write('bar')
@@ -102,7 +103,7 @@ describe('createDeflateEncoder', () => {
       worker.processAllMessages()
 
       expect(finishCallbackSpy).toHaveBeenCalledTimes(2)
-      expect(finishCallbackSpy.calls.allArgs()).toEqual([
+      expect(finishCallbackSpy.mock.calls).toEqual([
         [
           {
             output: new Uint8Array([...ENCODED_FOO, ...TRAILER]),
@@ -142,7 +143,7 @@ describe('createDeflateEncoder', () => {
 
     it('cancels pending write callbacks', () => {
       const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-      const writeCallbackSpy = jasmine.createSpy()
+      const writeCallbackSpy = vi.fn()
       encoder.write('foo', writeCallbackSpy)
       encoder.write('bar', writeCallbackSpy)
       encoder.finishSync()
@@ -161,7 +162,7 @@ describe('createDeflateEncoder', () => {
 
     it('supports calling finishSync() while another finish() call is pending', () => {
       const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
+      const finishCallbackSpy = vi.fn<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.finish(finishCallbackSpy)
       encoder.write('bar')
@@ -184,7 +185,7 @@ describe('createDeflateEncoder', () => {
     createDeflateEncoder(worker, OTHER_STREAM_ID).write('foo', noop)
 
     const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-    const writeCallbackSpy = jasmine.createSpy()
+    const writeCallbackSpy = vi.fn()
     encoder.write('foo', writeCallbackSpy)
 
     // Process the first write action only
@@ -206,7 +207,7 @@ describe('createDeflateEncoder', () => {
 
   it('do not notify data twice when calling finishSync() then finish()', () => {
     const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
-    const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
+    const finishCallbackSpy = vi.fn<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
 
     encoder.write('foo')
     encoder.finishSync()
@@ -216,7 +217,7 @@ describe('createDeflateEncoder', () => {
 
     worker.processAllMessages()
 
-    expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
+    expect(finishCallbackSpy).toHaveBeenCalledExactlyOnceWith({
       rawBytesCount: 3,
       output: new Uint8Array([...ENCODED_BAR, ...TRAILER]),
       outputBytesCount: 4,

@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { noop } from '@datadog/js-core/util'
 import { createSoftNavigationEntryFilter } from './softNavigationEntryFilter'
 
@@ -5,22 +6,22 @@ describe('createSoftNavigationEntryFilter', () => {
   it('should accept every entry until the navigationId is set', () => {
     const filter = createSoftNavigationEntryFilter(true)
 
-    expect(filter.accept({ navigationId: 1 })).toBeTrue()
-    expect(filter.accept({ navigationId: 2 })).toBeTrue()
+    expect(filter.accept({ navigationId: 1 })).toBe(true)
+    expect(filter.accept({ navigationId: 2 })).toBe(true)
   })
 
   it('should only accept entries from the soft navigation onward once the navigationId is set', () => {
     const filter = createSoftNavigationEntryFilter(true)
     filter.setNavigationId(2, noop)
 
-    expect(filter.accept({ navigationId: 1 })).toBeFalse()
-    expect(filter.accept({ navigationId: 2 })).toBeTrue()
-    expect(filter.accept({ navigationId: 3 })).toBeTrue()
+    expect(filter.accept({ navigationId: 1 })).toBe(false)
+    expect(filter.accept({ navigationId: 2 })).toBe(true)
+    expect(filter.accept({ navigationId: 3 })).toBe(true)
   })
 
   it('should recompute from the accepted entries of the soft navigation onward', () => {
     const filter = createSoftNavigationEntryFilter(true)
-    const recompute = jasmine.createSpy()
+    const recompute = vi.fn()
     const previousNavigationEntry = { navigationId: 1 }
     const softNavigationEntry = { navigationId: 2 }
     const nextNavigationEntry = { navigationId: 3 }
@@ -30,23 +31,23 @@ describe('createSoftNavigationEntryFilter', () => {
 
     filter.setNavigationId(2, recompute)
 
-    expect(recompute).toHaveBeenCalledOnceWith([softNavigationEntry, nextNavigationEntry])
+    expect(recompute).toHaveBeenCalledExactlyOnceWith([softNavigationEntry, nextNavigationEntry])
   })
 
   it('should recompute from no entries when every accepted entry is from before the soft navigation', () => {
     const filter = createSoftNavigationEntryFilter(true)
-    const recompute = jasmine.createSpy()
+    const recompute = vi.fn()
     filter.accept({ navigationId: 1 })
     filter.accept({ navigationId: 1 })
 
     filter.setNavigationId(2, recompute)
 
-    expect(recompute).toHaveBeenCalledOnceWith([])
+    expect(recompute).toHaveBeenCalledExactlyOnceWith([])
   })
 
   it('should not recompute when every accepted entry is from the soft navigation onward', () => {
     const filter = createSoftNavigationEntryFilter(true)
-    const recompute = jasmine.createSpy()
+    const recompute = vi.fn()
     filter.accept({ navigationId: 2 })
     filter.accept({ navigationId: 3 })
 
@@ -59,18 +60,18 @@ describe('createSoftNavigationEntryFilter', () => {
     const filter = createSoftNavigationEntryFilter(true)
     filter.setNavigationId(2, noop)
 
-    expect(filter.accept({})).toBeTrue()
+    expect(filter.accept({})).toBe(true)
   })
 
   it('should neither filter nor recompute when soft navigation is not tracked', () => {
     const filter = createSoftNavigationEntryFilter(false)
-    const recompute = jasmine.createSpy()
+    const recompute = vi.fn()
     filter.accept({ navigationId: 1 })
     filter.accept({ navigationId: 2 })
 
     filter.setNavigationId(2, recompute)
 
     expect(recompute).not.toHaveBeenCalled()
-    expect(filter.accept({ navigationId: 1 })).toBeTrue()
+    expect(filter.accept({ navigationId: 1 })).toBe(true)
   })
 })

@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { BufferedData, ConsoleLog, RawError } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { ConsoleApiName, Observable, noop } from '@datadog/js-core/util'
@@ -64,7 +65,7 @@ describe('console collection', () => {
       } as ConsoleLog)
 
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         message: 'foo bar',
         status,
         origin: ErrorSource.CONSOLE,
@@ -73,7 +74,7 @@ describe('console collection', () => {
       })
 
       expect(rawLogsEvents[0].domainContext).toEqual({
-        handlingStack: jasmine.any(String),
+        handlingStack: expect.any(String),
       })
     })
 
@@ -151,7 +152,7 @@ describe('console collection', () => {
       error: makeRawError({ context: { foo: 'bar' } }),
     })
 
-    expect(rawLogsEvents[0].rawLogsEvent).toEqual(jasmine.objectContaining({ foo: 'bar' }))
+    expect(rawLogsEvents[0].rawLogsEvent).toEqual(expect.objectContaining({ foo: 'bar' }))
   })
 })
 

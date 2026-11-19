@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { Subscription } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { ONE_SECOND } from '@datadog/js-core/time'
@@ -239,11 +241,11 @@ describe('createPageActivityObservable', () => {
 
 describe('waitPageActivityEnd', () => {
   let clock: Clock
-  let idlPageActivityCallbackSpy: jasmine.Spy<(event: PageActivityEndEvent) => void>
+  let idlPageActivityCallbackSpy: Mock<(event: PageActivityEndEvent) => void>
   let activityObservable: Observable<PageActivityEvent>
 
   beforeEach(() => {
-    idlPageActivityCallbackSpy = jasmine.createSpy()
+    idlPageActivityCallbackSpy = vi.fn()
     clock = mockClock()
     activityObservable = new Observable<PageActivityEvent>()
     replaceMockable(createPageActivityObservable, () => activityObservable)
@@ -260,7 +262,7 @@ describe('waitPageActivityEnd', () => {
 
     clock.tick(EXPIRE_DELAY)
 
-    expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
+    expect(idlPageActivityCallbackSpy).toHaveBeenCalledExactlyOnceWith({
       hadActivity: false,
     })
   })
@@ -279,7 +281,7 @@ describe('waitPageActivityEnd', () => {
 
     clock.tick(EXPIRE_DELAY)
 
-    expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
+    expect(idlPageActivityCallbackSpy).toHaveBeenCalledExactlyOnceWith({
       hadActivity: true,
       end: clock.timeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY),
     })
@@ -305,7 +307,7 @@ describe('waitPageActivityEnd', () => {
 
       clock.tick(EXPIRE_DELAY)
 
-      expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
+      expect(idlPageActivityCallbackSpy).toHaveBeenCalledExactlyOnceWith({
         hadActivity: true,
         end: clock.timeStamp(extendCount * BEFORE_PAGE_ACTIVITY_END_DELAY),
       })
@@ -317,7 +319,7 @@ describe('waitPageActivityEnd', () => {
       // Extend the action until it's more than MAX_DURATION
       const extendCount = Math.ceil(MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
 
-      idlPageActivityCallbackSpy.and.callFake(() => {
+      idlPageActivityCallbackSpy.mockImplementation(() => {
         stop = true
       })
       waitPageActivityEnd(
@@ -336,7 +338,7 @@ describe('waitPageActivityEnd', () => {
 
       clock.tick(EXPIRE_DELAY)
 
-      expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
+      expect(idlPageActivityCallbackSpy).toHaveBeenCalledExactlyOnceWith({
         hadActivity: true,
         end: clock.timeStamp(MAX_DURATION),
       })
@@ -361,7 +363,7 @@ describe('waitPageActivityEnd', () => {
 
       clock.tick(EXPIRE_DELAY)
 
-      expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
+      expect(idlPageActivityCallbackSpy).toHaveBeenCalledExactlyOnceWith({
         hadActivity: true,
         end: clock.timeStamp(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2),
       })
@@ -382,7 +384,7 @@ describe('waitPageActivityEnd', () => {
 
       clock.tick(EXPIRE_DELAY)
 
-      expect(idlPageActivityCallbackSpy).toHaveBeenCalledOnceWith({
+      expect(idlPageActivityCallbackSpy).toHaveBeenCalledExactlyOnceWith({
         hadActivity: true,
         end: clock.timeStamp(MAX_DURATION),
       })

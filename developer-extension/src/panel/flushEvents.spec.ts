@@ -1,13 +1,15 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { registerCleanupTask } from '../../../packages/browser-core/test'
 import type { PageMayExitEvent } from '../../../packages/browser-core/src/browser/pageMayExitObservable'
 import { createPageMayExitObservable } from '../../../packages/browser-core/src/browser/pageMayExitObservable'
 import { flushScript } from './flushEvents'
 
 describe('flushEvents', () => {
-  let onExitSpy: jasmine.Spy<(event: PageMayExitEvent) => void>
+  let onExitSpy: Mock<(event: PageMayExitEvent) => void>
 
   beforeEach(() => {
-    onExitSpy = jasmine.createSpy()
+    onExitSpy = vi.fn()
     registerCleanupTask(createPageMayExitObservable().subscribe(onExitSpy).unsubscribe)
   })
 

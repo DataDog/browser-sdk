@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from './urlPolyfill'
 
 describe('normalize url', () => {
@@ -27,7 +28,7 @@ describe('normalize url', () => {
     // In some cases, Mobile Safari also have this issue.
     // As we should follow the browser behavior, having one or the other doesn't matter too much, so
     // let's check for both.
-    expect(['file:///my/path', 'file://foo.com/my/path']).toContain(normalizeUrl('file://foo.com/my/path'))
+    expect(['file:///my/path', 'file://foo.com/my/path']).toContainEqual(normalizeUrl('file://foo.com/my/path'))
   })
 
   describe('with a <base href> differing from the current path', () => {
@@ -72,7 +73,9 @@ describe('isValidUrl', () => {
 
   it('should return the same result if the URL has been wrongfully overridden between calls', () => {
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
-    spyOn(window, 'URL').and.throwError('wrong URL override')
+    vi.spyOn(window, 'URL').mockImplementation(() => {
+      throw new Error('wrong URL override')
+    })
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
   })
 })
@@ -92,7 +95,7 @@ describe('buildUrl', () => {
     expect(buildUrl('http://foo.com:80').href).toBe('http://foo.com/')
     expect(buildUrl('https://foo.com:443').href).toBe('https://foo.com/')
 
-    expect(['file:///my/path', 'file://foo.com/my/path']).toContain(buildUrl('file://foo.com/my/path').href)
+    expect(['file:///my/path', 'file://foo.com/my/path']).toContainEqual(buildUrl('file://foo.com/my/path').href)
   })
 
   it('should normalize href for relative URLs', () => {
@@ -105,8 +108,8 @@ describe('buildUrl', () => {
     expect(buildUrl('./bar', 'http://foo.com/foo/').href).toBe('http://foo.com/foo/bar')
     expect(buildUrl('/bar', 'http://foo.com/foo/').href).toBe('http://foo.com/bar')
 
-    expect(['file:///bar', 'file://foo.com/bar']).toContain(buildUrl('./bar', 'file://foo.com/faa').href)
-    expect(['file:///bar', 'file://foo.com/bar']).toContain(buildUrl('/bar', 'file://foo.com/faa').href)
+    expect(['file:///bar', 'file://foo.com/bar']).toContainEqual(buildUrl('./bar', 'file://foo.com/faa').href)
+    expect(['file:///bar', 'file://foo.com/bar']).toContainEqual(buildUrl('/bar', 'file://foo.com/faa').href)
   })
 })
 

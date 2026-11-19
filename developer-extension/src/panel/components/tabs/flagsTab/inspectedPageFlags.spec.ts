@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerCleanupTask } from '../../../../../../packages/browser-core/test'
 import {
   DEVTOOLS_MARKER_KEY,
@@ -72,7 +73,7 @@ describe('inspectedPageFlags read/write against page localStorage', () => {
 
   it('returns null on an eval failure so the caller keeps its last good state', async () => {
     // Suppress the expected error log so the CI unexpected-error-log reporter doesn't flag it.
-    spyOn(console, 'error')
+    vi.spyOn(console, 'error').mockReturnValue(undefined)
     // Simulate the inspected window rejecting the eval (e.g. mid-navigation), which must NOT read as
     // "no overrides / no wrapper".
     ;(globalThis as any).chrome.devtools.inspectedWindow.eval = (

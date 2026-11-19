@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { RouteLocationMatched } from 'vue-router'
 import { computeViewName } from './startVueRouterView'
 
