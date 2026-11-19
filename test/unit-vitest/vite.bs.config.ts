@@ -175,8 +175,10 @@ const config = mergeConfig(
       coverage: { enabled: false },
       browser: {
         headless: false,
-        // BrowserStack queues sessions when all parallel sessions are busy, which can take minutes
-        connectTimeout: 5 * 60_000,
+        // BrowserStack queues sessions when all parallel sessions are busy, which can take minutes.
+        // Stay under the BrowserStack wrapper's 5-minute no-output timeout (`NO_OUTPUT_TIMEOUT` in
+        // scripts/test/bs-wrapper.ts) so Vitest reports the failed connection instead of being killed.
+        connectTimeout: 4 * 60_000,
         // BrowserStack rewrites localhost to bs-local.com for Safari: serve from that host directly
         // (it resolves to 127.0.0.1) so the page is reachable and cookies match the page host. Other
         // browsers keep `localhost`, which is a secure context (needed e.g. for `secure` cookies).
@@ -265,6 +267,8 @@ config.test.browser.instances = configurations.map((configuration) => ({
         buildName: getBuildInfos(),
         sessionName: `${configuration.sessionName} (vitest webdriverio spike)`,
         consoleLogs: 'info',
+        // BrowserStack records a video by default; the former Karma setup turned it off too
+        video: false,
         idleTimeout: 300,
         // BrowserStack defaults to Selenium 2.53 (legacy JSON Wire protocol) for old desktop
         // browsers; webdriverio needs a W3C endpoint (e.g. `POST /window/rect`)

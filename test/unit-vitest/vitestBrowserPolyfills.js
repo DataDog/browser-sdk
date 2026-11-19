@@ -70,6 +70,28 @@
     })
   }
 
+  // Used by Vitest's pretty-format (diffs of failing assertions); missing in Chrome/Edge 80
+  if (typeof String.prototype.replaceAll !== 'function') {
+    Object.defineProperty(String.prototype, 'replaceAll', {
+      configurable: true,
+      enumerable: false,
+      writable: true,
+      value: function replaceAll(pattern, replacement) {
+        if (this === null || this === undefined) {
+          throw new TypeError('String.prototype.replaceAll called on null or undefined')
+        }
+        if (pattern instanceof RegExp) {
+          if (!pattern.global) {
+            throw new TypeError('replaceAll must be called with a global RegExp')
+          }
+          return String(this).replace(pattern, replacement)
+        }
+        const escapedPattern = String(pattern).replace(/[$()*+.?[\\\]^{|}]/g, '\\$&')
+        return String(this).replace(new RegExp(escapedPattern, 'g'), replacement)
+      },
+    })
+  }
+
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID !== 'function') {
     Object.defineProperty(crypto, 'randomUUID', {
       configurable: true,
