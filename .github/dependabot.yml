@@ -17,6 +17,3 @@ updates:
     open-pull-requests-limit: 0
     commit-message:
       prefix: '👷'
-    ignore:
-      # update karma-webpack: RUM-3130
-      - dependency-name: 'karma-webpack'

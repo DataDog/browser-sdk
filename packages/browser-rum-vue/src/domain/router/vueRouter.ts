@@ -1,6 +1,7 @@
 import { createRouter as originalCreateRouter } from 'vue-router'
 import type { RouterOptions, Router } from 'vue-router'
-import { startVueRouterView } from './startVueRouterView'
+import { startVueViewWhenReady } from '../vuePlugin'
+import { computeViewName } from './startVueRouterView'
 
 export function createRouter(options: RouterOptions): Router {
   const router = originalCreateRouter(options)
@@ -19,7 +20,8 @@ export function createRouter(options: RouterOptions): Router {
     if (from.matched.length > 0 && to.path === from.path) {
       return
     }
-    startVueRouterView(to.matched, to.path)
+    // Compute the view name now so the buffered view does not retain route records
+    startVueViewWhenReady(computeViewName(to.matched, to.path))
   })
 
   return router

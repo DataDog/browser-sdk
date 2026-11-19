@@ -13,6 +13,7 @@ import {
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,
+  serializeInitContext,
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
@@ -189,7 +190,8 @@ export function createPreStartStrategy(
       startTrackingConsentContext(assembleTelemetryHook, trackingConsentState)
       telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, assembleTelemetryHook, sdkName)
 
-      if (isWorkerEnvironment) {
+      // The Shopify app pixel plugin configures RUM to run in a Web Worker
+      if (isWorkerEnvironment && !configuration.plugins.some((plugin) => plugin.name === 'shopify-app-pixel')) {
         display.warn('The RUM SDK is not supported in a web or service worker environment.')
         return
       }
@@ -199,7 +201,10 @@ export function createPreStartStrategy(
         startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
           application: { id: configuration.applicationId },
         })
-        addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata))
+        addTelemetryConfiguration({
+          ...serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata),
+          init_context: serializeInitContext(initContext),
+        })
 
         tryStartRum()
       }

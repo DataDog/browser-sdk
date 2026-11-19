@@ -3,6 +3,7 @@ export {
   DefaultPrivacyLevel,
   TraceContextInjection,
   serializeConfiguration,
+  serializeInitContext,
   BROWSER_CORE_SCHEMA,
 } from './configuration'
 export { buildCookieOptions } from '../../browser/cookie'
