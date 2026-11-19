@@ -204,6 +204,36 @@ describe('transformJasmineToVitest', () => {
       )
     })
 
+    it('converts toContain to toContainEqual when the values are not strings', () => {
+      assertTransform(
+        'expect(list).toContain({ a: 1 })\nexpect(list).not.toContain([1])\nexpect(list).toContain(jasmine.objectContaining({ a: 1 }))\nexpect([a, b]).toContain(c)\n',
+        "import { expect } from 'vitest'\nexpect(list).toContainEqual({ a: 1 })\nexpect(list).not.toContainEqual([1])\nexpect(list).toContainEqual(expect.objectContaining({ a: 1 }))\nexpect([a, b]).toContainEqual(c)\n"
+      )
+    })
+
+    it('keeps toContain when the values may be strings', () => {
+      assertTransform(
+        "expect(text).toContain('a')\nexpect(list).toContain(item)\n",
+        "import { expect } from 'vitest'\nexpect(text).toContain('a')\nexpect(list).toContain(item)\n"
+      )
+    })
+
+    it('converts toMatch with a regular expression string', () => {
+      assertTransform(
+        // eslint-disable-next-line no-template-curly-in-string
+        "expect(a).toMatch('b.*c')\nexpect(a).toMatch(`\\\\?b=${c}`)\nexpect(a).toMatch('b' + '(.*)')\n",
+        // eslint-disable-next-line no-template-curly-in-string
+        "import { expect } from 'vitest'\nexpect(a).toMatch(new RegExp('b.*c'))\nexpect(a).toMatch(new RegExp(`\\\\?b=${c}`))\nexpect(a).toMatch(new RegExp('b' + '(.*)'))\n"
+      )
+    })
+
+    it('keeps toMatch with a plain string or a regular expression', () => {
+      assertTransform(
+        "expect(a).toMatch('b')\nexpect(a).toMatch(/b.*/)\nexpect(a).toMatch(pattern)\n",
+        "import { expect } from 'vitest'\nexpect(a).toMatch('b')\nexpect(a).toMatch(/b.*/)\nexpect(a).toMatch(pattern)\n"
+      )
+    })
+
     it('reports matchers without equivalent', () => {
       assertUnsupported('expect(a).toHaveBeenCalledBefore(b)\n', /toHaveBeenCalledBefore/)
     })
@@ -228,6 +258,13 @@ describe('transformJasmineToVitest', () => {
       assertTransform(
         "it('a', (done) => promise.then(done))\n",
         "import { it } from 'vitest'\nit('a', () => new Promise<void>((done) => {\npromise.then(done)\n}))\n"
+      )
+    })
+
+    it('converts done callbacks built by a factory', () => {
+      assertTransform(
+        'function spec() {\n  return (done: DoneFn) => {\n    setTimeout(done)\n  }\n}\n',
+        'function spec() {\n  return () => {\nreturn new Promise<void>((done) => {\n    setTimeout(done)\n  })\n}\n}\n'
       )
     })
 
