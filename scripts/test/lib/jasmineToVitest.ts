@@ -58,6 +58,8 @@ const RENAMED_STRATEGIES: Record<string, string> = {
   rejectWith: 'mockRejectedValue',
 }
 const JASMINE_CALLS_METHODS = ['count', 'argsFor', 'allArgs', 'reset', 'mostRecent', 'first', 'all', 'any', 'thisFor']
+// Jasmine's clock only fakes these timers, not `Date`
+const JASMINE_CLOCK_TIMERS = "['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval']"
 const SPY_TYPES: Record<string, string> = {
   Spy: 'Mock',
   SpyObj: 'Mocked',
@@ -78,6 +80,12 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
   const usedVitestTypes = new Set<string>()
 
   const isGlobal = (name: string) => !declaredNames.has(name)
+  // Name of the test context parameter added to callbacks, avoiding names declared in the file
+  const contextName = ['ctx', 'context', 'testContext'].find(isGlobal) ?? 'vitestContext'
+  // Nodes removed or rewritten as a whole, not to be visited
+  const handledNodes = new Set<ts.Node>()
+  // Callbacks that already received a test context parameter
+  const callbacksWithContext = new Set<ts.Node>()
 
   function report(node: ts.Node, reason: string) {
     const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart())
@@ -93,6 +101,12 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
   }
 
   function visit(node: ts.Node): void {
+    if (handledNodes.has(node)) {
+      return
+    }
+    if (ts.isCallExpression(node) && transformDescribeTimeout(node)) {
+      return
+    }
     if (ts.isCallExpression(node) && transformCall(node)) {
       return
     }
@@ -151,12 +165,26 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
 
     if (isJasmineMember(callee, 'createSpy')) {
       addEdit(callee.getStart(), callee.end, 'vi.fn')
-      // The spy name (and original function, only used for typing) are dropped
-      if (node.arguments.length) {
+      const strategy = getSpyStrategy(node)
+      const implementation = node.arguments[1]
+      if (strategy?.name === 'callThrough') {
+        // jasmine.createSpy(name, fn).and.callThrough() -> vi.fn(fn)
+        addEdit(node.arguments.pos, node.arguments.end, implementation ? implementation.getText() : '')
+        addEdit(node.end, strategy.call.end, '')
+      } else if (node.arguments.length) {
+        // The spy name (and original function, only used for typing) are dropped
         addEdit(node.arguments.pos, node.arguments.end, '')
       }
       usedVitestValues.add('vi')
       return true
+    }
+
+    if (isJasmineMember(callee, 'createSpyObj')) {
+      return transformCreateSpyObj(node)
+    }
+
+    if (isJasmineClockCall(callee)) {
+      return transformClock(node, callee)
     }
 
     if (isJasmineMember(callee, 'isSpy')) {
@@ -179,6 +207,164 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
     }
 
     return false
+  }
+
+  // jasmine.createSpyObj<T>('name', ['a', 'b']) -> ({ a: vi.fn<T['a']>(), b: vi.fn<T['b']>() })
+  function transformCreateSpyObj(node: ts.CallExpression): boolean {
+    const methods = node.arguments[1]
+    if (
+      !methods ||
+      !ts.isArrayLiteralExpression(methods) ||
+      !methods.elements.every((element) => ts.isStringLiteral(element))
+    ) {
+      report(node, 'jasmine.createSpyObj() without a list of method names')
+      return true
+    }
+    const type = node.typeArguments?.[0]?.getText()
+    const properties = methods.elements.map((element) => {
+      const name = (element as ts.StringLiteral).text
+      return `${name}: vi.fn${type ? `<${type}['${name}']>` : ''}()`
+    })
+    replaceNode(node, `({ ${properties.join(', ')} })`)
+    usedVitestValues.add('vi')
+    return true
+  }
+
+  // jasmine.clock().xxx() -> vi.xxx()
+  function transformClock(node: ts.CallExpression, callee: ts.PropertyAccessExpression): boolean {
+    const args = node.arguments.map((argument) => argument.getText()).join(', ')
+    const replacements: Record<string, string> = {
+      install: `vi.useFakeTimers({ toFake: ${JASMINE_CLOCK_TIMERS} })`,
+      uninstall: 'vi.useRealTimers()',
+      tick: `vi.advanceTimersByTime(${args})`,
+    }
+    const replacement = replacements[callee.name.text]
+    if (replacement === undefined) {
+      report(node, `unsupported jasmine.clock().${callee.name.text}()`)
+      return true
+    }
+    // Jasmine's clock methods return nothing, keep it that way, e.g. for `act(() => clock.tick(1))`
+    const isArrowBody = ts.isArrowFunction(node.parent) && node.parent.body === node
+    replaceNode(node, isArrowBody ? `{\n${replacement}\n}` : replacement)
+    usedVitestValues.add('vi')
+    return true
+  }
+
+  // describe('...', () => {
+  //   let originalTimeout: number
+  //   beforeAll(() => {
+  //     originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
+  //     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
+  //   })
+  //   afterAll(() => {
+  //     jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
+  //   })
+  // })
+  // -> describe('...', { timeout: 10000 }, () => {})
+  function transformDescribeTimeout(node: ts.CallExpression): boolean {
+    if (!ts.isIdentifier(node.expression) || node.expression.text !== 'describe' || !isGlobal('describe')) {
+      return false
+    }
+    const callback = node.arguments[1]
+    if (node.arguments.length !== 2 || !callback || !isFunctionLike(callback) || !ts.isBlock(callback.body)) {
+      return false
+    }
+    const statements = callback.body.statements
+    const beforeAll = statements.find((statement) => isHookStatement(statement, 'beforeAll'))
+    const afterAll = statements.find((statement) => isHookStatement(statement, 'afterAll'))
+    if (!beforeAll || !afterAll) {
+      return false
+    }
+    const [save, set] = getHookStatements(beforeAll)
+    const [restore, ...otherRestores] = getHookStatements(afterAll)
+    const savedName = save && getAssignment(save, (right) => isDefaultTimeoutInterval(right))
+    const timeout = set && getTimeoutAssignment(set)
+    const restoredName = restore && getTimeoutAssignment(restore)
+    if (
+      getHookStatements(beforeAll).length !== 2 ||
+      otherRestores.length ||
+      !savedName ||
+      !timeout ||
+      !restoredName ||
+      !ts.isIdentifier(restoredName) ||
+      restoredName.text !== savedName.text
+    ) {
+      return false
+    }
+    const declaration = statements.find(
+      (statement) =>
+        ts.isVariableStatement(statement) &&
+        statement.declarationList.declarations.length === 1 &&
+        ts.isIdentifier(statement.declarationList.declarations[0].name) &&
+        statement.declarationList.declarations[0].name.text === savedName.text &&
+        !statement.declarationList.declarations[0].initializer
+    )
+    for (const statement of [declaration, beforeAll, afterAll]) {
+      if (statement) {
+        addEdit(statement.getFullStart(), statement.end, '')
+        handledNodes.add(statement)
+      }
+    }
+    addEdit(callback.getStart(), callback.getStart(), `{ timeout: ${timeout.getText()} }, `)
+    visit(node.expression)
+    visit(node.arguments[0])
+    visit(callback)
+    return true
+  }
+
+  function isHookStatement(statement: ts.Statement, hook: string) {
+    return (
+      ts.isExpressionStatement(statement) &&
+      ts.isCallExpression(statement.expression) &&
+      ts.isIdentifier(statement.expression.expression) &&
+      statement.expression.expression.text === hook &&
+      statement.expression.arguments.length === 1 &&
+      isFunctionLike(statement.expression.arguments[0]) &&
+      ts.isBlock(statement.expression.arguments[0].body)
+    )
+  }
+
+  function getHookStatements(statement: ts.Statement) {
+    const callback = ((statement as ts.ExpressionStatement).expression as ts.CallExpression).arguments[0] as
+      ts.ArrowFunction | ts.FunctionExpression
+    return (callback.body as ts.Block).statements
+  }
+
+  // `left = right` statement where `right` matches: returns `left` when it is an identifier
+  function getAssignment(statement: ts.Statement, matchRight: (right: ts.Expression) => boolean) {
+    if (
+      ts.isExpressionStatement(statement) &&
+      ts.isBinaryExpression(statement.expression) &&
+      statement.expression.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isIdentifier(statement.expression.left) &&
+      matchRight(statement.expression.right)
+    ) {
+      return statement.expression.left
+    }
+  }
+
+  // `jasmine.DEFAULT_TIMEOUT_INTERVAL = value` statement: returns `value`
+  function getTimeoutAssignment(statement: ts.Statement) {
+    if (
+      ts.isExpressionStatement(statement) &&
+      ts.isBinaryExpression(statement.expression) &&
+      statement.expression.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      isDefaultTimeoutInterval(statement.expression.left)
+    ) {
+      return statement.expression.right
+    }
+  }
+
+  function isDefaultTimeoutInterval(node: ts.Node) {
+    return isJasmineMember(node, 'DEFAULT_TIMEOUT_INTERVAL')
+  }
+
+  function isJasmineClockCall(node: ts.Expression): node is ts.PropertyAccessExpression {
+    return (
+      ts.isPropertyAccessExpression(node) &&
+      ts.isCallExpression(node.expression) &&
+      isJasmineMember(node.expression.expression, 'clock')
+    )
   }
 
   function transformSpyOn(node: ts.CallExpression, callee: ts.Identifier) {
@@ -221,16 +407,25 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
 
   function transformPending(node: ts.CallExpression, callee: ts.Identifier) {
     const callback = getEnclosingFunction(node)
-    if (!callback || !isTestCallback(callback, ['it', 'fit', 'xit'])) {
+    if (!callback || !isTestCallback(callback, ['it', 'fit', 'xit', 'beforeEach'])) {
       report(node, 'pending() outside of a test callback: use the test context `skip()`')
       return
     }
-    if (callback.parameters.length > 0) {
-      report(node, 'pending() in a test callback that already has parameters')
+    const parameter = callback.parameters[0]
+    if (parameter && (!ts.isIdentifier(parameter.name) || parameter.name.text === 'done')) {
+      report(node, 'pending() in a test callback with a done or destructured parameter')
       return
     }
-    addEdit(callback.parameters.pos, callback.parameters.pos, 'ctx')
-    replaceNode(callee, 'ctx.skip')
+    if (parameter) {
+      replaceNode(callee, `${(parameter.name as ts.Identifier).text}.skip`)
+      return
+    }
+    if (!callbacksWithContext.has(callback)) {
+      callbacksWithContext.add(callback)
+      const hasParentheses = sourceFile.text[callback.parameters.pos - 1] === '('
+      addEdit(callback.parameters.pos, callback.parameters.pos, hasParentheses ? contextName : `(${contextName})`)
+    }
+    replaceNode(callee, `${contextName}.skip`)
   }
 
   function transformMatcher(node: ts.CallExpression, callee: ts.PropertyAccessExpression): boolean {
@@ -294,7 +489,10 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
       return transformCalls(node)
     }
     if (node.name.text === 'and') {
-      if (isSpyOnCall(node.expression) && getSpyStrategy(node.expression)?.name === 'callThrough') {
+      if (
+        (isSpyOnCall(node.expression) || isJasmineCreateSpyCall(node.expression)) &&
+        getSpyStrategy(node.expression)?.name === 'callThrough'
+      ) {
         return false
       }
       return transformSpyStrategy(node)
@@ -380,7 +578,8 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
           (ts.isStringLiteral(error) || ts.isNoSubstitutionTemplateLiteral(error) || ts.isTemplateExpression(error))
         ) {
           replacement = `.mockImplementation(() => {\n  throw new Error(${error.getText()})\n})`
-        } else if (error && ts.isNewExpression(error)) {
+        } else if (error) {
+          // Jasmine throws non-string values as is, assume a value that isn't a string literal is an error
           replacement = `.mockImplementation(() => {\n  throw ${error.getText()}\n})`
         }
         break
@@ -443,7 +642,11 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
     if (!hasParentheses) {
       addEdit(parameter.getStart(), parameter.getStart(), '()')
     }
-    if (ts.isBlock(node.body)) {
+    if (ts.isBlock(node.body) && ts.isArrowFunction(node)) {
+      // () => { ... } -> () => new Promise<void>((done) => { ... })
+      addEdit(node.body.getStart(), node.body.getStart(), `new Promise<void>((${executorParameters}) => `)
+      addEdit(node.body.end, node.body.end, ')')
+    } else if (ts.isBlock(node.body)) {
       addEdit(
         node.body.getStart() + 1,
         node.body.getStart() + 1,
@@ -536,7 +739,11 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
   }
 
   function isHandledJasmineMember(node: ts.PropertyAccessExpression) {
-    return ['createSpy', 'isSpy', ...ASYMMETRIC_MATCHERS].includes(node.name.text)
+    return ['createSpy', 'createSpyObj', 'isSpy', 'clock', ...ASYMMETRIC_MATCHERS].includes(node.name.text)
+  }
+
+  function isJasmineCreateSpyCall(node: ts.Node) {
+    return ts.isCallExpression(node) && isJasmineMember(node.expression, 'createSpy')
   }
 
   function isSpyOnCall(node: ts.Node) {
