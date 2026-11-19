@@ -5,7 +5,7 @@ import type { Hook } from '@datadog/js-core/assembly'
 import { Observable } from '@datadog/js-core/util'
 import type { RecursivePartial } from '@datadog/js-core/util'
 import type { RumEvent } from '../rumEvent.types'
-import type { AssembledRumEvent, RawRumEvent } from '../rawRumEvent.types'
+import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEventDomainContext } from '../domainContext.types'
 
 // Define a partial RUM event type.
@@ -34,7 +34,6 @@ export type AssembleTelemetryHook = Hook<{ startTime: RelativeTime }, DefaultTel
 // through the DOM types it holds, which the declaration build rejects as excessively deep.
 export interface EventCollectedHookParams {
   readonly eventType: RumEvent['type']
-  readonly event: Readonly<AssembledRumEvent>
   readonly domainContext: RumEventDomainContext<RawRumEvent['type']>
 }
 

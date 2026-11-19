@@ -792,8 +792,8 @@ describe('rum assembly', () => {
   })
 
   describe('eventCollected hook', () => {
-    it('is triggered with the collected event and its domain context', () => {
-      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
+    it('is triggered with the event type and domain context', () => {
+      const { lifeCycle, hooks } = setupAssemblyTestWithDefaults()
       const eventCollectedSpy = jasmine.createSpy('eventCollected')
       hooks.eventCollected.register(eventCollectedSpy)
       const domainContext = { error: new Error('boom') } as RumEventDomainContext
@@ -802,7 +802,6 @@ describe('rum assembly', () => {
 
       expect(eventCollectedSpy).toHaveBeenCalledOnceWith({
         eventType: RumEventType.ERROR,
-        event: serverRumEvents[0],
         domainContext,
       })
     })
