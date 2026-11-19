@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "pako": "3.0.3",
-    "vitest": "4.1.8"
+    "vitest": "4.1.11"
   },
   "volta": {
     "extends": "../../package.json"
