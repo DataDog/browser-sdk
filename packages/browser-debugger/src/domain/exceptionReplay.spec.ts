@@ -520,6 +520,43 @@ describe('exceptionReplay', () => {
     expect(reportError(undefined)).toBeUndefined()
   })
 
+  it('should ignore exceptions thrown by instrumented code that runs while capturing a frame', () => {
+    let nestedArgumentReads = 0
+    function rethrowingFunction(error: unknown) {
+      try {
+        throw error
+      } catch (e) {
+        onCatch('src/rethrowing.ts;rethrowingFunction', e, undefined, {
+          get value() {
+            nestedArgumentReads++
+            return 1
+          },
+        })
+        throw e
+      }
+    }
+    function throwingFunctionWithGetter() {
+      const error = new Error('boom')
+      try {
+        throw error
+      } catch (e) {
+        // Capturing this argument runs instrumented code that throws the same error again
+        onCatch('src/getter.ts;throwingFunctionWithGetter', e, undefined, {
+          get value() {
+            catchError(() => rethrowingFunction(error))
+            return 1
+          },
+        })
+        throw e
+      }
+    }
+
+    const error = catchError(throwingFunctionWithGetter)
+
+    expect(nestedArgumentReads).toBe(0)
+    expect(reportError(error)!.frames.length).toBe(1)
+  })
+
   it('should not capture thrown objects that are not errors', () => {
     // RUM doesn't report the stack of an object that isn't an `Error`, even if it has one
     const thrown = { message: 'boom', stack: new Error('boom').stack }

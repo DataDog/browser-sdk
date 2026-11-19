@@ -66,6 +66,7 @@ let captureBudgetMs = CAPTURE_BUDGET_MS_PER_SECOND
 let captureBudgetUpdatedAt = -Infinity
 let pluginRegistered = false
 let debuggerStarted = false
+let catchInProgress = false
 let isSessionTracked: () => boolean = () => true
 
 /**
@@ -126,6 +127,12 @@ function installCatchHook(): void {
  * @param args - Function arguments
  */
 export function onCatch(functionId: string, error: unknown, self: unknown, args: Record<string, unknown> = {}): void {
+  // Capturing reads application values, whose getters can run instrumented code that throws. Those
+  // exceptions come from the capture itself, so they're ignored.
+  if (catchInProgress) {
+    return
+  }
+  catchInProgress = true
   try {
     // RUM only reports the stack of errors, which their snapshots are linked to
     if (!isError(error)) {
@@ -172,6 +179,8 @@ export function onCatch(functionId: string, error: unknown, self: unknown, args:
     }
   } catch (e) {
     monitorError(e)
+  } finally {
+    catchInProgress = false
   }
 }
 
