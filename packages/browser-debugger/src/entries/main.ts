@@ -13,6 +13,9 @@ import type { Site } from '@datadog/js-core/transport'
 import { initDebuggerTransport, onEntry, onReturn, onThrow } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'
+import type { onCatch } from '../domain/exceptionReplay'
+import { startExceptionReplay } from '../domain/exceptionReplay'
+import { addExceptionReplayPluginToRum } from '../domain/exceptionReplayPlugin'
 import { getProbes } from '../domain/probes'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 
@@ -182,6 +185,7 @@ export interface BrowserWindow {
   $dd_return?: typeof onReturn
   $dd_throw?: typeof onThrow
   $dd_probes?: typeof getProbes
+  $dd_catch?: typeof onCatch
 }
 
 function getBuildMetadataString(key: keyof DebuggerBuildMetadata): string | undefined {
@@ -232,6 +236,8 @@ function makeDebuggerPublicApi(): DatadogDebugger {
       debuggerGlobal.$dd_return = onReturn
       debuggerGlobal.$dd_throw = onThrow
       debuggerGlobal.$dd_probes = getProbes
+      mockable(startExceptionReplay)()
+      mockable(addExceptionReplayPluginToRum)()
 
       mockable(startDeliveryApiPolling)({
         service: resolvedConfiguration.service,
