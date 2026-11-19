@@ -46,7 +46,7 @@
     "woke": "scripts/cli woke"
   },
   "devDependencies": {
-    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=8fa83bc429d461bd9e8a28c1d10b71af2038dac4",
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=79c264a627e2ebba7182e5d088aad84124de23c8",
     "@eslint/js": "10.0.1",
     "@microsoft/api-extractor": "7.60.1",
     "@oxc-project/runtime": "0.152.0",
