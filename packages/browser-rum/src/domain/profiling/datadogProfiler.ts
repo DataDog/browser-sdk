@@ -137,9 +137,6 @@ export function createRumProfiler(
     const result = createBrowserProfiler(profilerConfiguration, startNextProfilerInstance)
     if (result.status === 'error') {
       profilingContextManager.set({ status: 'error', error_reason: result.reason })
-      if (result.reason === 'not-supported-by-browser') {
-        throw new Error('RUM Profiler is not supported in this browser.')
-      }
       return
     }
 

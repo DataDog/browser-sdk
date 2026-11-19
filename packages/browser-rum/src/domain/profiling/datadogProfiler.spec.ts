@@ -9,7 +9,7 @@ import {
   relativeNow,
 } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
-import { deepClone } from '@datadog/js-core/util'
+import { deepClone, globalObject } from '@datadog/js-core/util'
 
 import { BridgeCapability, createIdentityEncoder, createValueHistory } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
@@ -33,6 +33,7 @@ import {
   HIGH_HASH_UUID,
   LOW_HASH_UUID,
   mockSourceCodeContext,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
@@ -180,6 +181,20 @@ describe('profiler', () => {
       },
     }
   }
+
+  it('reports unsupported browsers without throwing', () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+    registerCleanupTask(() => profiler.stop())
+    globalObject.Profiler = undefined
+
+    expect(() => profiler.start()).not.toThrow()
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()).toEqual({
+      status: 'error',
+      error_reason: 'not-supported-by-browser',
+    })
+  })
 
   it('should start profiling collection and collect data on stop', async () => {
     const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler()
