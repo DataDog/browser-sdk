@@ -1,5 +1,5 @@
 import { display } from '../src/tools/display'
-import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
+import { getCurrentTest } from './currentTest'
 import { registerCleanupTask } from './registerCleanupTask'
 
 export function startLeakDetection() {
@@ -34,7 +34,7 @@ export function startLeakDetection() {
 }
 
 function withLeakDetection(eventName: string, listener: EventListener) {
-  const specWhenAdded = getCurrentJasmineSpec()
+  const specWhenAdded = getCurrentTest()
   const stackWhenAdded = new Error().stack
   if (
     !specWhenAdded ||
@@ -45,7 +45,7 @@ function withLeakDetection(eventName: string, listener: EventListener) {
   }
 
   return (event: Event) => {
-    const currentSpec = getCurrentJasmineSpec()
+    const currentSpec = getCurrentTest()
     if (specWhenAdded.fullName !== currentSpec?.fullName) {
       display.error(`Leaked listener
   event names: "${eventName}"

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import React, { act } from 'react'
 
-import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../browser-core/test'
+import { disableUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../browser-core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
@@ -15,7 +15,7 @@ describe('ErrorBoundary', () => {
     // Prevent React from displaying the error in the console
     ignoreConsoleLogs('error', 'Error: error')
 
-    disableJasmineUncaughtExceptionTracking()
+    disableUncaughtExceptionTracking()
     initReactOldBrowsersSupport()
   })
 

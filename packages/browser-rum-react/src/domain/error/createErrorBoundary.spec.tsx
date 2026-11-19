@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import React, { act } from 'react'
 
-import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../browser-core/test'
+import { disableUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../browser-core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import type { ErrorBoundaryFallback } from './errorBoundary'
@@ -12,7 +12,7 @@ type FallbackFunctionComponent = Extract<ErrorBoundaryFallback, (...args: any[])
 describe('createErrorBoundary', () => {
   beforeEach(() => {
     ignoreConsoleLogs('error', 'Error: error')
-    disableJasmineUncaughtExceptionTracking()
+    disableUncaughtExceptionTracking()
     initReactOldBrowsersSupport()
   })
 

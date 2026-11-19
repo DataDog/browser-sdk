@@ -1,5 +1,5 @@
 import { expect } from 'vitest'
-import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
+import { getCurrentTest } from './currentTest'
 
 interface Spy<Args extends unknown[]> {
   mock: { calls: Args[] }
@@ -7,7 +7,7 @@ interface Spy<Args extends unknown[]> {
 
 export function collectAsyncCalls<Args extends unknown[]>(spy: Spy<Args>, expectedCallsCount = 1): Promise<Args[]> {
   return new Promise((resolve, reject) => {
-    const currentSpec = getCurrentJasmineSpec()
+    const currentSpec = getCurrentTest()
     if (!currentSpec) {
       reject(new Error('collectAsyncCalls should be called within a test'))
       return

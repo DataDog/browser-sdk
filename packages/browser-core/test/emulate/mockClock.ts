@@ -5,7 +5,8 @@ import { registerCleanupTask } from '../registerCleanupTask'
 export type Clock = ReturnType<typeof mockClock>
 
 export function mockClock() {
-  // Fake the same APIs as Jasmine's clock did; `performance.now()` is mocked below
+  // Only fake the timers and `Date` (not `queueMicrotask`, `requestAnimationFrame`, …);
+  // `performance.now()` is mocked below
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] })
 
   const timeOrigin = performance.timing.navigationStart // @see getTimeOrigin() in @datadog/js-core/time

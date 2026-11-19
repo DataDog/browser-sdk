@@ -20,20 +20,6 @@ function getTsconfigPathsAliases() {
 }
 
 const config: ViteUserConfig = {
-  plugins: [
-    {
-      // Karma serves files under `/base/`, and some specs load fixtures from there
-      name: 'karma-base-path',
-      configureServer(server) {
-        server.middlewares.use((req, _res, next) => {
-          if (req.url?.startsWith('/base/')) {
-            req.url = req.url.slice('/base'.length)
-          }
-          next()
-        })
-      },
-    },
-  ],
   test: {
     include: ['packages/*/@(src|test)/**/*.spec.@(ts|tsx)', 'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)'],
 
@@ -48,22 +34,20 @@ const config: ViteUserConfig = {
       screenshotFailures: false,
     },
 
-    // forEach.ts is loaded as a separate setup file (instead of a top-level await import) so it
-    // runs after the Jasmine globals are defined.
     setupFiles: [
       resolve(import.meta.dirname, 'vitest.setup.ts'),
       resolve(ROOT, 'packages/browser-core/test/forEach.ts'),
     ],
     restoreMocks: true,
 
-    // Run all test files in the same page, like Karma did. Tests are kept independent by the global
+    // Run all test files in the same page. Tests are kept independent by the global
     // cleanup in forEach.ts and `registerCleanupTask()`, and reloading the page for each file is
     // what makes isolated runs slow.
     isolate: false,
 
-    // Run files and tests in random order (like Jasmine's `random: true`). Reproduce an order
-    // with `--sequence.seed=<seed>`. Run the setup files in order (Vitest runs them in parallel by
-    // default): forEach.ts uses the Jasmine globals defined by vitest.setup.ts.
+    // Run files and tests in random order. Reproduce an order with `--sequence.seed=<seed>`. Run the
+    // setup files in order (Vitest runs them in parallel by default): the hooks of vitest.setup.ts
+    // must be registered before the ones of forEach.ts.
     sequence: { shuffle: { files: true, tests: true }, setupFiles: 'list' },
 
     provide: {
@@ -88,25 +72,7 @@ const config: ViteUserConfig = {
     // Pre-bundle dependencies the scanner can't see, so Vite doesn't discover them mid-run and reload
     // the page, which breaks all the following test files when they share the page (`isolate: false`).
     // `react/jsx-dev-runtime` is injected by the JSX transform.
-    include: ['jasmine-core/lib/jasmine-core/jasmine.js', 'pako', 'react/jsx-dev-runtime'],
-    rolldownOptions: {
-      plugins: [
-        {
-          name: 'fix-jasmine-strict-mode',
-          // jasmine-core 3.99.1 uses undeclared `i` in asymmetricEqualityTesterArgCompatShim.
-          // This works in non-strict mode but fails when Vite converts CJS to strict ESM.
-          transform: {
-            filter: { id: { include: [/jasmine\.js$/] } },
-            handler(code) {
-              return code.replace(
-                'for (i = 0; i < customEqualityTesters.length; i++)',
-                'for (var i = 0; i < customEqualityTesters.length; i++)'
-              )
-            },
-          },
-        },
-      ],
-    },
+    include: ['pako', 'react/jsx-dev-runtime'],
   },
 
   oxc: {
@@ -122,10 +88,6 @@ const config: ViteUserConfig = {
     ],
   },
   define: {
-    // jasmine-core uses `global` in its CJS module detection; without this, it falls back to an
-    // empty object as the "global", causing the mock clock to patch {} instead of window.
-    global: 'globalThis',
-
     ...getBuildEnvDefines({ setup: 'cdn', version: 'test', workerString: true }),
   },
 }
