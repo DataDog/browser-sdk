@@ -7,7 +7,7 @@
     "moduleResolution": "bundler",
     "jsx": "react",
     "lib": ["ES2022", "DOM"],
-    "types": ["chrome", "react", "react-dom", "jasmine"],
+    "types": ["chrome", "react", "react-dom"],
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "noEmit": true

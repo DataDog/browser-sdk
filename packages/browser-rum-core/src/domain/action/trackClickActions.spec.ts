@@ -664,7 +664,7 @@ describe('trackClickActions', () => {
       if (activity && (activity.on ?? 'click') === event) {
         const delay = activity.delay ?? BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
         if (delay < 0) {
-          // Do not use `.tick()` here because negative clock tick does not work since jasmine 4: https://github.com/jasmine/jasmine/pull/1948
+          // Do not use `.tick()` here because fake timers can't tick back in time
           clock!.setDate(new Date(Date.now() + delay))
         } else {
           clock!.tick(delay)

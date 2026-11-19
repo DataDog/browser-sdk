@@ -194,7 +194,7 @@ describe('view events', () => {
   }
 
   // The initial view starts at the time origin: move the clock to `duration` after it, back in time
-  // if needed, without running the timers (like a negative Jasmine clock tick did)
+  // if needed (fake timers can't tick back in time), without running the timers
   function setViewDuration(duration: Duration) {
     clock.setDate(new Date(Date.now() - relativeNow() + duration))
   }

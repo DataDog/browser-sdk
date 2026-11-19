@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Subscription } from '@datadog/js-core/util'
-import { disableJasmineUncaughtExceptionTracking, registerCleanupTask, wait } from '../../../test'
+import { disableUncaughtExceptionTracking, registerCleanupTask, wait } from '../../../test'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
@@ -9,7 +9,7 @@ describe('trackRuntimeError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const errorViaTrackRuntimeError = async (callback: () => void): Promise<RawError> => {
-    disableJasmineUncaughtExceptionTracking()
+    disableUncaughtExceptionTracking()
 
     const errorObservable = trackRuntimeError()
     let subscription: Subscription | undefined
@@ -34,14 +34,7 @@ describe('trackRuntimeError', () => {
 
   it('should collect unhandled rejection', async () => {
     const error = await errorViaTrackRuntimeError(() => {
-      // Reject with a string instead of an Error here because Jasmine forwards the
-      // unhandled rejection to the onerror handler with the wrong argument structure if
-      // you use an Error. (It uses the argument structure you'd use for
-      // addEventListener('error'). We could make our error processing code robust to
-      // that, but since it's a Jasmine-specific issue with a simple workaround, it makes
-      // sense to just work around it here.
-      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-      void Promise.reject(ERROR_MESSAGE)
+      void Promise.reject(new Error(ERROR_MESSAGE))
     })
     expect(error.message).toEqual(expect.stringContaining(ERROR_MESSAGE))
   })
@@ -53,9 +46,7 @@ describe('instrumentOnError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnError = async (callback: () => void) => {
-    // Replace the handler instead of spying on it: with Karma, `disableJasmineUncaughtExceptionTracking`
-    // restores Jasmine's handler in a cleanup task, which runs before Jasmine restores its spies (it
-    // would then put back the disabled handler)
+    // Replace the handler instead of spying on it, and put the original one back after the test
     const onErrorSpy = vi.fn()
     const originalOnError = window.onerror
     window.onerror = onErrorSpy
@@ -74,7 +65,7 @@ describe('instrumentOnError', () => {
     }
   }
 
-  beforeEach(disableJasmineUncaughtExceptionTracking)
+  beforeEach(disableUncaughtExceptionTracking)
 
   it('should call original error handler', async () => {
     // withInstrumentOnError() asserts that the original error handler has been called for
@@ -307,7 +298,7 @@ describe('instrumentUnhandledRejection', () => {
     }
   }
 
-  beforeEach(disableJasmineUncaughtExceptionTracking)
+  beforeEach(disableUncaughtExceptionTracking)
 
   it('should call original unhandled rejection handler', async () => {
     // withInstrumentOnUnhandledRejection() asserts that the original unhandled
