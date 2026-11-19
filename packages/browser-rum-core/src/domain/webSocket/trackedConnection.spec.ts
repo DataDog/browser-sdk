@@ -3,6 +3,7 @@ import { mockClock } from '@datadog/browser-core/test'
 import type { ClocksState, Duration } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
 import type {
+  WebSocketClosedContext,
   WebSocketClosingContext,
   WebSocketConnectingContext,
   WebSocketMessageInContext,
@@ -168,15 +169,7 @@ describe('trackedConnection', () => {
     it('keeps the close event when tracking ends on a real close', () => {
       const connection = createOpenConnection()
 
-      connection.recordClose({
-        state: 'closed',
-        instance: INSTANCE,
-        code: 1000,
-        reason: 'bye',
-        wasClean: true,
-        bufferedAmountAtClose: 0,
-        at: clocksAt(40),
-      })
+      connection.recordClose(closedContext(clocksAt(40), { code: 1000, reason: 'bye', wasClean: true }))
 
       const state = getStateIn(connection, 'closed')
       expect(state.endClocks).toEqual(clocksAt(40))
@@ -187,15 +180,7 @@ describe('trackedConnection', () => {
     it('keeps the url when tracking ends on a real close', () => {
       const connection = createOpenConnection()
 
-      connection.recordClose({
-        state: 'closed',
-        instance: INSTANCE,
-        code: 1000,
-        reason: 'bye',
-        wasClean: true,
-        bufferedAmountAtClose: 0,
-        at: clocksAt(40),
-      })
+      connection.recordClose(closedContext(clocksAt(40)))
 
       expect(getStateIn(connection, 'closed').url).toBe('wss://example.com/socket')
     })
@@ -508,15 +493,7 @@ describe('trackedConnection', () => {
     it('reports the queue depth the close event carried', () => {
       const connection = createOpenConnection()
 
-      connection.recordClose({
-        state: 'closed',
-        instance: INSTANCE,
-        code: 1000,
-        reason: 'bye',
-        wasClean: true,
-        bufferedAmountAtClose: 64,
-        at: clocksAt(50),
-      })
+      connection.recordClose(closedContext(clocksAt(50), { bufferedAmountAtClose: 64 }))
 
       expect(getStateIn(connection, 'closed').bufferedAmountAtClose).toBe(64)
     })
@@ -560,6 +537,19 @@ describe('trackedConnection', () => {
 
   function closingContext(at: ClocksState): WebSocketClosingContext {
     return { state: 'closing', instance: INSTANCE, at }
+  }
+
+  function closedContext(at: ClocksState, context: Partial<WebSocketClosedContext> = {}): WebSocketClosedContext {
+    return {
+      state: 'closed',
+      instance: INSTANCE,
+      code: 1000,
+      reason: '',
+      wasClean: true,
+      bufferedAmountAtClose: 0,
+      at,
+      ...context,
+    }
   }
 
   // ---------------------------------------------------------------------------

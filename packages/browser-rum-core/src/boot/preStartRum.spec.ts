@@ -7,6 +7,7 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
+  ExperimentalFeature,
   startTelemetry,
   startSessionManager,
   setCookie,
@@ -30,6 +31,8 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
 import type { ManualAction } from '../domain/action/trackManualActions'
+import type { EarlyWebSocketCollection } from '../domain/webSocket/webSocketCollection'
+import { noopEarlyWebSocketCollection } from '../../test'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import type { DoStartRum } from './preStartRum'
@@ -297,6 +300,34 @@ describe('preStartRum', () => {
           await collectAsyncCalls(doStartRumSpy, 1)
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+        })
+      })
+    })
+
+    describe('early WebSocket collection', () => {
+      ;(
+        [
+          { trackResources: true, betaTrackWebSockets: true, experimentalFeature: false, stops: false },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: true, stops: false },
+          { trackResources: true, betaTrackWebSockets: false, experimentalFeature: false, stops: true },
+          { trackResources: false, betaTrackWebSockets: true, experimentalFeature: false, stops: true },
+        ] as const
+      ).forEach(({ trackResources, betaTrackWebSockets, experimentalFeature, stops }) => {
+        it(`${stops ? 'stops' : 'does not stop'} with trackResources=${trackResources}, betaTrackWebSockets=${betaTrackWebSockets}, TRACK_WEBSOCKETS=${experimentalFeature}`, () => {
+          const earlyWebSocketCollection = { ...noopEarlyWebSocketCollection, stop: jasmine.createSpy('stop') }
+          const { strategy } = createPreStartStrategyWithDefaults({ earlyWebSocketCollection })
+
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              trackResources,
+              betaTrackWebSockets,
+              enableExperimentalFeatures: experimentalFeature ? [ExperimentalFeature.TRACK_WEBSOCKETS] : [],
+            },
+            PUBLIC_API
+          )
+
+          expect(earlyWebSocketCollection.stop).toHaveBeenCalledTimes(stops ? 1 : 0)
         })
       })
     })
@@ -1226,16 +1257,23 @@ function createPreStartStrategyWithDefaults({
   rumPublicApiOptions = {},
   trackingConsentState = createTrackingConsentState(),
   startSessionManagerMock = createStartSessionManagerMock(),
+  earlyWebSocketCollection = noopEarlyWebSocketCollection,
 }: {
   rumPublicApiOptions?: RumPublicApiOptions
   trackingConsentState?: TrackingConsentState
   startSessionManagerMock?: typeof startSessionManager
+  earlyWebSocketCollection?: EarlyWebSocketCollection
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   replaceMockable(startSessionManager, startSessionManagerMock)
   return {
-    strategy: createPreStartStrategy(rumPublicApiOptions, trackingConsentState, doStartRumSpy),
+    strategy: createPreStartStrategy(
+      rumPublicApiOptions,
+      trackingConsentState,
+      earlyWebSocketCollection,
+      doStartRumSpy
+    ),
     doStartRumSpy,
     startTelemetrySpy,
   }

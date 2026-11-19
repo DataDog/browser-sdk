@@ -7,6 +7,7 @@
 // @public
 export class BufferedObservable<T> extends Observable<T> {
     constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
+    get items(): readonly T[];
     notify(data: T): void;
     subscribe(observer: Observer<T>): Subscription;
     unbuffer(): void;
