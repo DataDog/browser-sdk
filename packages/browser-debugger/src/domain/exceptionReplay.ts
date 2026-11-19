@@ -231,6 +231,13 @@ export function collectExceptionReplay(error: unknown): ExceptionReplayAttribute
       return
     }
 
+    // Tracking can stop after the exception is captured, and the event bridge's session stays
+    // tracked, so RUM can still report the error. Its captures are then discarded.
+    if (!isSessionTracked()) {
+      capturedExceptions.set(error, false)
+      return
+    }
+
     // The error was assembled before but RUM dropped it, and another exception with the same
     // fingerprint has been reported since
     if (exception.pendingSnapshots && isCoolingDown(exception.fingerprint, performance.now())) {
@@ -259,6 +266,12 @@ export function sendExceptionReplay(error: unknown): void {
 
     const exception = capturedExceptions.get(error)
     if (!exception || !exception.pendingSnapshots) {
+      return
+    }
+
+    // Tracking can also stop once the event is assembled, as in `beforeSend`
+    if (!isSessionTracked()) {
+      capturedExceptions.set(error, false)
       return
     }
 

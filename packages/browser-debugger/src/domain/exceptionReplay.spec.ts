@@ -434,7 +434,33 @@ describe('exceptionReplay', () => {
       }
     }
 
-    expect(reportError(catchError(withdrawingFunction))!.frames.length).toBe(1)
+    const error = catchError(withdrawingFunction)
+    tracked = true
+
+    expect(reportError(error)!.frames.length).toBe(1)
+  })
+
+  it('should discard the snapshots of errors reported once RUM stops tracking the session', () => {
+    let tracked = true
+    resetExceptionReplay()
+    registerExceptionReplayPlugin(() => tracked)
+    startExceptionReplay()
+    const assembledError = catchError(() => throwingFunction(1))
+    const reassembledError = catchError(() => throwingFunction(2))
+    const capturedError = catchError(() => throwingFunction(3))
+    expect(collectExceptionReplay(assembledError)).toBeDefined()
+    expect(collectExceptionReplay(reassembledError)).toBeDefined()
+
+    tracked = false
+    expect(collectExceptionReplay(reassembledError)).toBeUndefined()
+    expect(collectExceptionReplay(capturedError)).toBeUndefined()
+    sendExceptionReplay(assembledError)
+
+    tracked = true
+    sendExceptionReplay(reassembledError)
+    expect(reportError(assembledError)).toBeUndefined()
+    expect(reportError(capturedError)).toBeUndefined()
+    expect(mockBatchAdd).not.toHaveBeenCalled()
   })
 
   it('should not link a frame to another function called from the same call site', () => {
