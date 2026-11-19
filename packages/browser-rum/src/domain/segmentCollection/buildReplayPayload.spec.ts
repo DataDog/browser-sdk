@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { deflate } from 'pako'
 import type { BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { readReplayPayload } from '../../../test'

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -6,11 +8,11 @@ import { startEventCollection } from './eventCollection'
 
 describe('eventCollection', () => {
   let lifeCycle: LifeCycle
-  let notifySpy: jasmine.Spy
+  let notifySpy: Mock
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    notifySpy = spyOn(lifeCycle, 'notify')
+    notifySpy = vi.spyOn(lifeCycle, 'notify').mockReturnValue(undefined)
   })
 
   it('should notify lifecycle with raw rum event when adding an event', () => {
@@ -33,7 +35,7 @@ describe('eventCollection', () => {
     eventCollection.addEvent(startTime, event, domainContext, duration)
 
     expect(notifySpy).toHaveBeenCalledWith(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      startClocks: { relative: startTime, timeStamp: jasmine.any(Number) },
+      startClocks: { relative: startTime, timeStamp: expect.any(Number) },
       rawRumEvent: event,
       domainContext,
       duration,

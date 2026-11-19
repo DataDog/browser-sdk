@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { EndpointBuilder } from '@datadog/js-core/transport'
 import { noop } from '@datadog/js-core/util'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
@@ -79,32 +80,35 @@ describe('httpRequest', () => {
   })
 
   describe('fetchStrategy onResponse', () => {
-    it('should be called with intake response', (done) => {
-      interceptor.withFetch(DEFAULT_FETCH_MOCK)
+    it('should be called with intake response', () =>
+      new Promise<void>((done) => {
+        interceptor.withFetch(DEFAULT_FETCH_MOCK)
 
-      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
-        expect(response).toEqual({ status: 200, type: 'cors' })
-        done()
-      })
-    })
+        fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
+          expect(response).toEqual({ status: 200, type: 'cors' })
+          done()
+        })
+      }))
 
-    it('should be called with status 0 when fetch fails', (done) => {
-      interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK)
+    it('should be called with status 0 when fetch fails', () =>
+      new Promise<void>((done) => {
+        interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK)
 
-      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
-        expect(response).toEqual({ status: 0 })
-        done()
-      })
-    })
+        fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
+          expect(response).toEqual({ status: 0 })
+          done()
+        })
+      }))
 
-    it('should be called with status 0 when fetch resolves without a Response', (done) => {
-      interceptor.withFetch(() => Promise.resolve(undefined))
+    it('should be called with status 0 when fetch resolves without a Response', () =>
+      new Promise<void>((done) => {
+        interceptor.withFetch(() => Promise.resolve(undefined))
 
-      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
-        expect(response).toEqual({ status: 0 })
-        done()
-      })
-    })
+        fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
+          expect(response).toEqual({ status: 0 })
+          done()
+        })
+      }))
   })
 
   describe('sendOnExit', () => {
@@ -325,7 +329,7 @@ describe('httpRequest with several endpoints', () => {
     fetchCalls = []
     interceptRequests()
       .withFetch()
-      .and.callFake(
+      .mockImplementation(
         (url, config) =>
           new Promise<Response>((resolve) => {
             fetchCalls.push({

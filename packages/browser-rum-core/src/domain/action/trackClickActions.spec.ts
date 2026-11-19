@@ -1,3 +1,4 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { timeStampNow, addDuration, clocksNow, relativeNow } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { DefaultPrivacyLevel, PageExitReason } from '@datadog/browser-core'
@@ -106,14 +107,14 @@ describe('trackClickActions', () => {
     clock.tick(EXPIRE_DELAY)
     const domEvent = createNewEvent('pointerup', { target: document.createElement('button') })
     expect(events).toEqual([
-      jasmine.objectContaining({
-        counts: jasmine.objectContaining({
+      expect.objectContaining({
+        counts: expect.objectContaining({
           errorCount: 0,
           longTaskCount: 0,
           resourceCount: 0,
         }),
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
-        id: jasmine.any(String),
+        id: expect.any(String),
         name: 'Click me',
         nameSource: ActionNameSource.TEXT_CONTENT,
         startClocks: {
@@ -127,7 +128,7 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
-          composedPathSelector: jasmine.any(String),
+          composedPathSelector: expect.any(String),
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
@@ -159,7 +160,7 @@ describe('trackClickActions', () => {
     expect(events.length).toBe(1)
     const clickAction = events[0]
     expect(clickAction.counts).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         errorCount: 2,
         longTaskCount: 0,
         resourceCount: 0,
@@ -395,7 +396,7 @@ describe('trackClickActions', () => {
       button.removeAttribute('data-dd-ignore-frustration')
 
       clock.tick(EXPIRE_DELAY)
-      expect(events).toHaveSize(3)
+      expect(events).toHaveLength(3)
       events.forEach((event) => expect(event.frustrationTypes).not.toContain(FrustrationType.RAGE_CLICK))
     })
 
@@ -409,8 +410,8 @@ describe('trackClickActions', () => {
 
       clock.tick(EXPIRE_DELAY)
       const rageActions = events.filter((event) => event.frustrationTypes.includes(FrustrationType.RAGE_CLICK))
-      expect(rageActions).toHaveSize(1)
-      expect(rageActions[0].events).toHaveSize(3)
+      expect(rageActions).toHaveLength(1)
+      expect(rageActions[0].events).toHaveLength(3)
     })
   })
 
@@ -434,7 +435,7 @@ describe('trackClickActions', () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
       clock.tick(EXPIRE_DELAY)
-      expect(events).toHaveSize(1)
+      expect(events).toHaveLength(1)
       expect(events[0].frustrationTypes).not.toContain(FrustrationType.ERROR_CLICK)
     })
 
@@ -449,7 +450,7 @@ describe('trackClickActions', () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeErrorEvent())
 
       clock.tick(EXPIRE_DELAY)
-      expect(events).toHaveSize(1)
+      expect(events).toHaveLength(1)
       expect(events[0].frustrationTypes).not.toContain(FrustrationType.ERROR_CLICK)
     })
 
@@ -751,11 +752,11 @@ describe('trackClickActions', () => {
       emulateShadowClick(contributingButton)
 
       clock.tick(EXPIRE_DELAY)
-      expect(events).toHaveSize(2)
+      expect(events).toHaveLength(2)
       expect(events[0].frustrationTypes).not.toContain(FrustrationType.RAGE_CLICK)
       expect(events[1].frustrationTypes).toContain(FrustrationType.RAGE_CLICK)
       expect(events[1].name).toBe('Contributing Button')
-      expect(events[1].events).toHaveSize(3)
+      expect(events[1].events).toHaveLength(3)
 
       function emulateShadowClick(target: HTMLButtonElement) {
         emulateClick({

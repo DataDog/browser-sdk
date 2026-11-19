@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
 import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import { DISCARDED, SKIPPED } from '@datadog/js-core/assembly'
@@ -579,7 +580,7 @@ describe('rum assembly', () => {
           },
         })
 
-        const displaySpy = spyOn(display, 'warn')
+        const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
             view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
@@ -599,7 +600,7 @@ describe('rum assembly', () => {
           },
         })
 
-        const displaySpy = spyOn(display, 'warn')
+        const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
         const webSocketVitalNames = [
           WebSocketVitalName.CONNECTING,
           WebSocketVitalName.OPEN,
@@ -756,7 +757,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect((serverRumEvents[0] as any).tab.id).toEqual(jasmine.any(String))
+      expect((serverRumEvents[0] as any).tab.id).toEqual(expect.any(String))
     })
   })
 
@@ -879,7 +880,7 @@ describe('rum assembly', () => {
 
     it('should get session state from event start', () => {
       const sessionManager = createSessionManagerMock()
-      spyOn(sessionManager, 'findTrackedSession').and.callThrough()
+      vi.spyOn(sessionManager, 'findTrackedSession')
       const { lifeCycle } = setupAssemblyTestWithDefaults({ sessionManager })
 
       notifyRawRumEvent(lifeCycle, {
@@ -1011,7 +1012,7 @@ function setupAssemblyTestWithDefaults({
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
-  const reportErrorSpy = jasmine.createSpy('reportError')
+  const reportErrorSpy = vi.fn()
   const rumSessionManager = sessionManager ?? createSessionManagerMock().setId('1234')
   const serverRumEvents: RumEvent[] = []
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {

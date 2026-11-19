@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { ChangeType, StringRole } from '../../../types'
 import { createString } from '../encoding'
 import { serializeHtml } from '../test/serializeHtml.specHelper'

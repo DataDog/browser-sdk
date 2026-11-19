@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { globalObject } from '@datadog/js-core/util'
 import type { Subscription } from '@datadog/js-core/util'
 import { ONE_MINUTE } from '@datadog/js-core/time'

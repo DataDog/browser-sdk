@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { Subscription } from '@datadog/js-core/util'
 import type { Duration } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
@@ -13,11 +15,11 @@ describe('performanceObservable', () => {
   let performanceSubscription: Subscription | undefined
   const forbiddenUrl = 'https://forbidden.url/abce?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
   const allowedUrl = 'https://allowed.url'
-  let observableCallback: jasmine.Spy
+  let observableCallback: Mock
   let clock: Clock
 
   beforeEach(() => {
-    observableCallback = jasmine.createSpy()
+    observableCallback = vi.fn()
     clock = mockClock()
   })
 
@@ -33,7 +35,7 @@ describe('performanceObservable', () => {
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
-    expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
+    expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
   })
 
   it('should not notify performance resources with intake url', () => {
@@ -69,7 +71,7 @@ describe('performanceObservable', () => {
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
     expect(observableCallback).not.toHaveBeenCalled()
     clock.tick(0)
-    expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
+    expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
   })
 
   it('should notify soft navigation entries', () => {
@@ -81,7 +83,7 @@ describe('performanceObservable', () => {
 
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION)])
     expect(observableCallback).toHaveBeenCalledWith([
-      jasmine.objectContaining({ entryType: RumPerformanceEntryType.SOFT_NAVIGATION, interactionId: 42 }),
+      expect.objectContaining({ entryType: RumPerformanceEntryType.SOFT_NAVIGATION, interactionId: 42 }),
     ])
   })
 
@@ -94,10 +96,10 @@ describe('performanceObservable', () => {
 
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT)])
     expect(observableCallback).toHaveBeenCalledWith([
-      jasmine.objectContaining({
+      expect.objectContaining({
         entryType: RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT,
         interactionId: 42,
-        largestContentfulPaint: jasmine.objectContaining({
+        largestContentfulPaint: expect.objectContaining({
           entryType: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
         }),
       }),
@@ -117,6 +119,6 @@ describe('supportPerformanceTimingEvent', () => {
       }
     })
 
-    expect(supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)).toBeFalse()
+    expect(supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)).toBe(false)
   })
 })

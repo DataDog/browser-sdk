@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { dateNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'

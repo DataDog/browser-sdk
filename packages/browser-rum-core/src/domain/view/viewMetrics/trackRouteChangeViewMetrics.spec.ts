@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
@@ -6,8 +8,8 @@ import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { trackRouteChangeViewMetrics } from './trackRouteChangeViewMetrics'
 
 describe('trackRouteChangeViewMetrics', () => {
-  let scheduleViewUpdate: jasmine.Spy<() => void>
-  let setNavigationId: jasmine.Spy<(navigationId: number) => void>
+  let scheduleViewUpdate: Mock<() => void>
+  let setNavigationId: Mock<(navigationId: number) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let activeObserverCount: (entryType: RumPerformanceEntryType) => number
 
@@ -19,8 +21,8 @@ describe('trackRouteChangeViewMetrics', () => {
   }
 
   beforeEach(() => {
-    scheduleViewUpdate = jasmine.createSpy()
-    setNavigationId = jasmine.createSpy()
+    scheduleViewUpdate = vi.fn()
+    setNavigationId = vi.fn()
   })
 
   it('should report FCP from the soft-navigation entry presentation time', () => {
@@ -57,7 +59,7 @@ describe('trackRouteChangeViewMetrics', () => {
 
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.SOFT_NAVIGATION, { navigationId: 4220 })])
 
-    expect(setNavigationId).toHaveBeenCalledOnceWith(4220)
+    expect(setNavigationId).toHaveBeenCalledExactlyOnceWith(4220)
   })
 
   it('should report LCP from the soft-navigation entry seeded ICP', () => {
@@ -127,7 +129,7 @@ describe('trackRouteChangeViewMetrics', () => {
         getLargestInteractionContentfulPaint: () => null,
       }),
     ])
-    scheduleViewUpdate.calls.reset()
+    scheduleViewUpdate.mockClear()
 
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
@@ -163,7 +165,7 @@ describe('trackRouteChangeViewMetrics', () => {
         getLargestInteractionContentfulPaint: () => null,
       }),
     ])
-    scheduleViewUpdate.calls.reset()
+    scheduleViewUpdate.mockClear()
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
         interactionId: 7,
@@ -197,7 +199,7 @@ describe('trackRouteChangeViewMetrics', () => {
         getLargestInteractionContentfulPaint: () => null,
       }),
     ])
-    scheduleViewUpdate.calls.reset()
+    scheduleViewUpdate.mockClear()
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.INTERACTION_CONTENTFUL_PAINT, {
         interactionId: 99,

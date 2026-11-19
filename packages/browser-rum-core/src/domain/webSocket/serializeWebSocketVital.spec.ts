@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { ClocksState, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import type {
   RawRumEvent,

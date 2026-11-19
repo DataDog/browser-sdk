@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TrustableEvent } from '@datadog/js-core/dom'
 import { registerCleanupTask } from '../../../../test'
 import type { SessionState } from '../sessionState'
@@ -47,19 +48,19 @@ describe('LocalStorage SessionStoreStrategy', () => {
     })
 
     it('should notify sessionObservable after write', async () => {
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
+      expect(spy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: 'test-id' }))
     })
   })
 
   describe('sessionObservable', () => {
     it('should emit on storage event from other tabs', () => {
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
@@ -72,11 +73,11 @@ describe('LocalStorage SessionStoreStrategy', () => {
       ;(event as TrustableEvent).__ddIsTrusted = true
       window.dispatchEvent(event)
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'from-other-tab' }))
+      expect(spy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: 'from-other-tab' }))
     })
 
     it('should ignore storage events for other keys', () => {
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 

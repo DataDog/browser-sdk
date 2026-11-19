@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { display } from '../../tools/display'
 import type { PropertiesConfig } from './contextManager'
 import { createContextManager } from './contextManager'
@@ -75,7 +76,7 @@ describe('createContextManager', () => {
   })
 
   it('should prevent setting non object values', () => {
-    spyOn(display, 'error')
+    vi.spyOn(display, 'error').mockReturnValue(undefined)
     const manager = createContextManagerWithDefaults()
     manager.setContext(null)
     expect(manager.getContext()).toEqual({})
@@ -112,7 +113,7 @@ describe('createContextManager', () => {
 
     NULLISH_VALUES.forEach((value) => {
       it(`should warn when required property is  ${value}`, () => {
-        const displaySpy = spyOn(display, 'warn')
+        const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
         const manager = createContextManagerWithDefaults({
           id: { required: true },
@@ -120,7 +121,7 @@ describe('createContextManager', () => {
 
         manager.setContext({ id: value })
 
-        expect(displaySpy).toHaveBeenCalledOnceWith(
+        expect(displaySpy).toHaveBeenCalledExactlyOnceWith(
           'The property id of test is required; context will not be sent to the intake.'
         )
       })
@@ -129,7 +130,7 @@ describe('createContextManager', () => {
 
   describe('changeObservable', () => {
     it('should notify on context changes', () => {
-      const changeSpy = jasmine.createSpy('change')
+      const changeSpy = vi.fn()
       const manager = createContextManagerWithDefaults()
       manager.changeObservable.subscribe(changeSpy)
 

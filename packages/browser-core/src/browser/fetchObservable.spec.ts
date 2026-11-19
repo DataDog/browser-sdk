@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { Subscription } from '@datadog/js-core/util'
 import { noop } from '@datadog/js-core/util'
 import type { MockFetch, MockFetchManager } from '../../test'
@@ -37,226 +39,240 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should track server error', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
-
-    mockFetchManager.whenAllComplete(() => {
-      const request = requests[0]
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(500)
-      expect(request.isAborted).toBe(false)
-      expect(request.handlingStack).toBeDefined()
-      done()
-    })
-  })
-
-  it('should track refused fetch', (done) => {
-    fetch(FAKE_URL).rejectWith(new Error('fetch error'))
-
-    mockFetchManager.whenAllComplete(() => {
-      const request = requests[0]
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(0)
-      expect(request.isAborted).toBe(false)
-      expect(request.error).toEqual(new Error('fetch error'))
-      expect(request.handlingStack).toBeDefined()
-      done()
-    })
-  })
-
-  it('should track aborted fetch', (done) => {
-    fetch(FAKE_URL).abort()
-
-    mockFetchManager.whenAllComplete(() => {
-      const request = requests[0]
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(0)
-      expect(request.isAborted).toBe(true)
-      expect(request.error).toEqual(new DOMException('The user aborted a request', 'AbortError'))
-      expect(request.handlingStack).toBeDefined()
-      done()
-    })
-  })
-
-  it('should track fetch aborted by AbortController', (done) => {
-    const controller = new AbortController()
-    void fetch(FAKE_URL, { signal: controller.signal })
-    controller.abort('AbortError')
-
-    mockFetchManager.whenAllComplete(() => {
-      const request = requests[0]
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(0)
-      expect(request.isAborted).toBe(true)
-      expect(request.error).toEqual(controller.signal.reason)
-      expect(request.handlingStack).toBeDefined()
-      done()
-    })
-  })
-
-  it('should track opaque fetch', (done) => {
-    // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
-    fetch(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
-
-    mockFetchManager.whenAllComplete(() => {
-      const request = requests[0]
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(0)
-      expect(request.isAborted).toBe(false)
-      done()
-    })
-  })
-
-  it('should track client error', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
-
-    mockFetchManager.whenAllComplete(() => {
-      const request = requests[0]
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(400)
-      expect(request.isAborted).toBe(false)
-      done()
-    })
-  })
-
-  it('should get method from input', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 500 })
-    fetch(new Request(FAKE_URL)).resolveWith({ status: 500 })
-    fetch(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
-    fetch(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
-    fetch(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
-    fetch(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
-    fetch(FAKE_URL, { method: 'post' }).resolveWith({ status: 500 })
-    fetch(null as any).resolveWith({ status: 500 })
-    fetch({ method: 'POST' } as any).resolveWith({ status: 500 })
-    fetch(FAKE_URL, { method: null as any }).resolveWith({ status: 500 })
-    fetch(FAKE_URL, { method: undefined }).resolveWith({ status: 500 })
-
-    mockFetchManager.whenAllComplete(() => {
-      expect(requests[0].method).toEqual('GET')
-      expect(requests[1].method).toEqual('GET')
-      expect(requests[2].method).toEqual('PUT')
-      expect(requests[3].method).toEqual('POST')
-      expect(requests[4].method).toEqual('POST')
-      expect(requests[5].method).toEqual('POST')
-      expect(requests[6].method).toEqual('POST')
-      expect(requests[7].method).toEqual('GET')
-      expect(requests[8].method).toEqual('GET')
-      expect(requests[9].method).toEqual('NULL')
-      expect(requests[10].method).toEqual('GET')
-
-      done()
-    })
-  })
-
-  it('should get the normalized url from input', (done) => {
-    fetch(FAKE_URL).rejectWith(new Error('fetch error'))
-    fetch(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
-    fetch(null as any).rejectWith(new Error('fetch error'))
-    fetch({
-      toString() {
-        return FAKE_RELATIVE_URL
-      },
-    } as any).rejectWith(new Error('fetch error'))
-    fetch(FAKE_RELATIVE_URL).rejectWith(new Error('fetch error'))
-    fetch(new Request(FAKE_RELATIVE_URL)).rejectWith(new Error('fetch error'))
-
-    mockFetchManager.whenAllComplete(() => {
-      expect(requests[0].url).toEqual(FAKE_URL)
-      expect(requests[1].url).toEqual(FAKE_URL)
-      expect(requests[2].url).toMatch(/\/null$/)
-      expect(requests[3].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
-      expect(requests[4].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
-      expect(requests[5].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
-      done()
-    })
-  })
-
-  it('should keep promise resolved behavior for Response', (done) => {
-    const mockFetchPromise = fetch(FAKE_URL)
-    const spy = jasmine.createSpy()
-    mockFetchPromise.then(spy).catch(() => {
-      fail('Should not have thrown an error!')
-    })
-    mockFetchPromise.resolveWith({ status: 500 })
-
-    setTimeout(() => {
-      expect(spy).toHaveBeenCalled()
-      done()
-    })
-  })
-
-  it('should keep promise resolved behavior for any other type', (done) => {
-    const mockFetchPromise = fetch(FAKE_URL)
-    const spy = jasmine.createSpy()
-    mockFetchPromise.then(spy).catch(() => {
-      fail('Should not have thrown an error!')
-    })
-    mockFetchPromise.resolveWith('response' as any)
-
-    setTimeout(() => {
-      expect(spy).toHaveBeenCalled()
-      done()
-    })
-  })
-
-  it('should keep promise rejected behavior for Error', (done) => {
-    const mockFetchPromise = fetch(FAKE_URL)
-    const spy = jasmine.createSpy()
-    mockFetchPromise.catch(spy)
-    mockFetchPromise.rejectWith(new Error('fetch error'))
-
-    setTimeout(() => {
-      expect(spy).toHaveBeenCalled()
-      done()
-    })
-  })
-
-  it('should keep promise rejected behavior for any other type', (done) => {
-    const mockFetchPromise = fetch(FAKE_URL)
-    const spy = jasmine.createSpy()
-    mockFetchPromise.catch(spy)
-    mockFetchPromise.rejectWith('fetch error' as any)
-
-    setTimeout(() => {
-      expect(spy).toHaveBeenCalled()
-      done()
-    })
-  })
-
-  it('should allow to enhance the context', (done) => {
-    type CustomContext = FetchContext & { foo: string }
-    contextEditionSubscription = initFetchObservable().subscribe((rawContext) => {
-      const context = rawContext as CustomContext
-      if (context.state === 'start') {
-        context.foo = 'bar'
-      }
-    })
-    fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
-
-    mockFetchManager.whenAllComplete(() => {
-      expect((requests[0] as CustomContext).foo).toBe('bar')
-      done()
-    })
-  })
-
-  describe('when unsubscribing', () => {
-    it('should stop tracking requests', (done) => {
-      requestsTrackingSubscription.unsubscribe()
-
-      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+  it('should track server error', () =>
+    new Promise<void>((done) => {
+      fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
       mockFetchManager.whenAllComplete(() => {
-        expect(requests).toEqual([])
+        const request = requests[0]
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(500)
+        expect(request.isAborted).toBe(false)
+        expect(request.handlingStack).toBeDefined()
         done()
       })
-    })
+    }))
+
+  it('should track refused fetch', () =>
+    new Promise<void>((done) => {
+      fetch(FAKE_URL).rejectWith(new Error('fetch error'))
+
+      mockFetchManager.whenAllComplete(() => {
+        const request = requests[0]
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(0)
+        expect(request.isAborted).toBe(false)
+        expect(request.error).toEqual(new Error('fetch error'))
+        expect(request.handlingStack).toBeDefined()
+        done()
+      })
+    }))
+
+  it('should track aborted fetch', () =>
+    new Promise<void>((done) => {
+      fetch(FAKE_URL).abort()
+
+      mockFetchManager.whenAllComplete(() => {
+        const request = requests[0]
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(0)
+        expect(request.isAborted).toBe(true)
+        expect(request.error).toEqual(new DOMException('The user aborted a request', 'AbortError'))
+        expect(request.handlingStack).toBeDefined()
+        done()
+      })
+    }))
+
+  it('should track fetch aborted by AbortController', () =>
+    new Promise<void>((done) => {
+      const controller = new AbortController()
+      void fetch(FAKE_URL, { signal: controller.signal })
+      controller.abort('AbortError')
+
+      mockFetchManager.whenAllComplete(() => {
+        const request = requests[0]
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(0)
+        expect(request.isAborted).toBe(true)
+        expect(request.error).toEqual(controller.signal.reason)
+        expect(request.handlingStack).toBeDefined()
+        done()
+      })
+    }))
+
+  it('should track opaque fetch', () =>
+    new Promise<void>((done) => {
+      // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
+      fetch(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
+
+      mockFetchManager.whenAllComplete(() => {
+        const request = requests[0]
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(0)
+        expect(request.isAborted).toBe(false)
+        done()
+      })
+    }))
+
+  it('should track client error', () =>
+    new Promise<void>((done) => {
+      fetch(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
+
+      mockFetchManager.whenAllComplete(() => {
+        const request = requests[0]
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(400)
+        expect(request.isAborted).toBe(false)
+        done()
+      })
+    }))
+
+  it('should get method from input', () =>
+    new Promise<void>((done) => {
+      fetch(FAKE_URL).resolveWith({ status: 500 })
+      fetch(new Request(FAKE_URL)).resolveWith({ status: 500 })
+      fetch(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
+      fetch(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
+      fetch(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
+      fetch(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
+      fetch(FAKE_URL, { method: 'post' }).resolveWith({ status: 500 })
+      fetch(null as any).resolveWith({ status: 500 })
+      fetch({ method: 'POST' } as any).resolveWith({ status: 500 })
+      fetch(FAKE_URL, { method: null as any }).resolveWith({ status: 500 })
+      fetch(FAKE_URL, { method: undefined }).resolveWith({ status: 500 })
+
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].method).toEqual('GET')
+        expect(requests[1].method).toEqual('GET')
+        expect(requests[2].method).toEqual('PUT')
+        expect(requests[3].method).toEqual('POST')
+        expect(requests[4].method).toEqual('POST')
+        expect(requests[5].method).toEqual('POST')
+        expect(requests[6].method).toEqual('POST')
+        expect(requests[7].method).toEqual('GET')
+        expect(requests[8].method).toEqual('GET')
+        expect(requests[9].method).toEqual('NULL')
+        expect(requests[10].method).toEqual('GET')
+
+        done()
+      })
+    }))
+
+  it('should get the normalized url from input', () =>
+    new Promise<void>((done) => {
+      fetch(FAKE_URL).rejectWith(new Error('fetch error'))
+      fetch(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
+      fetch(null as any).rejectWith(new Error('fetch error'))
+      fetch({
+        toString() {
+          return FAKE_RELATIVE_URL
+        },
+      } as any).rejectWith(new Error('fetch error'))
+      fetch(FAKE_RELATIVE_URL).rejectWith(new Error('fetch error'))
+      fetch(new Request(FAKE_RELATIVE_URL)).rejectWith(new Error('fetch error'))
+
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].url).toEqual(FAKE_URL)
+        expect(requests[1].url).toEqual(FAKE_URL)
+        expect(requests[2].url).toMatch(/\/null$/)
+        expect(requests[3].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
+        expect(requests[4].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
+        expect(requests[5].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
+        done()
+      })
+    }))
+
+  it('should keep promise resolved behavior for Response', () =>
+    new Promise<void>((done) => {
+      const mockFetchPromise = fetch(FAKE_URL)
+      const spy = vi.fn()
+      mockFetchPromise.then(spy).catch(() => {
+        expect.unreachable('Should not have thrown an error!')
+      })
+      mockFetchPromise.resolveWith({ status: 500 })
+
+      setTimeout(() => {
+        expect(spy).toHaveBeenCalled()
+        done()
+      })
+    }))
+
+  it('should keep promise resolved behavior for any other type', () =>
+    new Promise<void>((done) => {
+      const mockFetchPromise = fetch(FAKE_URL)
+      const spy = vi.fn()
+      mockFetchPromise.then(spy).catch(() => {
+        expect.unreachable('Should not have thrown an error!')
+      })
+      mockFetchPromise.resolveWith('response' as any)
+
+      setTimeout(() => {
+        expect(spy).toHaveBeenCalled()
+        done()
+      })
+    }))
+
+  it('should keep promise rejected behavior for Error', () =>
+    new Promise<void>((done) => {
+      const mockFetchPromise = fetch(FAKE_URL)
+      const spy = vi.fn()
+      mockFetchPromise.catch(spy)
+      mockFetchPromise.rejectWith(new Error('fetch error'))
+
+      setTimeout(() => {
+        expect(spy).toHaveBeenCalled()
+        done()
+      })
+    }))
+
+  it('should keep promise rejected behavior for any other type', () =>
+    new Promise<void>((done) => {
+      const mockFetchPromise = fetch(FAKE_URL)
+      const spy = vi.fn()
+      mockFetchPromise.catch(spy)
+      mockFetchPromise.rejectWith('fetch error' as any)
+
+      setTimeout(() => {
+        expect(spy).toHaveBeenCalled()
+        done()
+      })
+    }))
+
+  it('should allow to enhance the context', () =>
+    new Promise<void>((done) => {
+      type CustomContext = FetchContext & { foo: string }
+      contextEditionSubscription = initFetchObservable().subscribe((rawContext) => {
+        const context = rawContext as CustomContext
+        if (context.state === 'start') {
+          context.foo = 'bar'
+        }
+      })
+      fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+
+      mockFetchManager.whenAllComplete(() => {
+        expect((requests[0] as CustomContext).foo).toBe('bar')
+        done()
+      })
+    }))
+
+  describe('when unsubscribing', () => {
+    it('should stop tracking requests', () =>
+      new Promise<void>((done) => {
+        requestsTrackingSubscription.unsubscribe()
+
+        fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+
+        mockFetchManager.whenAllComplete(() => {
+          expect(requests).toEqual([])
+          done()
+        })
+      }))
 
     it('should restore original window.fetch', () => {
       requestsTrackingSubscription.unsubscribe()
@@ -291,79 +307,84 @@ describe('fetch proxy with ResponseBodyAction', () => {
     resetFetchObservable()
   })
 
-  it('should collect response body with COLLECT action', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.COLLECT)
+  it('should collect response body with COLLECT action', () =>
+    new Promise<void>((done) => {
+      setupFetchTracking(() => ResponseBodyAction.COLLECT)
 
-    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
+      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
-    mockFetchManager.whenAllComplete(() => {
-      expect(requests[0].responseBody).toBe('response body content')
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].responseBody).toBe('response body content')
+        done()
+      })
+    }))
 
-  it('should not collect response body with IGNORE action', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.IGNORE)
+  it('should not collect response body with IGNORE action', () =>
+    new Promise<void>((done) => {
+      setupFetchTracking(() => ResponseBodyAction.IGNORE)
 
-    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
+      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
-    mockFetchManager.whenAllComplete(() => {
-      expect(requests[0].responseBody).toBeUndefined()
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].responseBody).toBeUndefined()
+        done()
+      })
+    }))
 
-  it('should not collect response body when body is already used', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.COLLECT)
+  it('should not collect response body when body is already used', () =>
+    new Promise<void>((done) => {
+      setupFetchTracking(() => ResponseBodyAction.COLLECT)
 
-    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyUsed: true })
+      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyUsed: true })
 
-    mockFetchManager.whenAllComplete(() => {
-      expect(requests[0].responseBody).toBeUndefined()
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].responseBody).toBeUndefined()
+        done()
+      })
+    }))
 
-  it('should not collect response body when body is disturbed', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.COLLECT)
+  it('should not collect response body when body is disturbed', () =>
+    new Promise<void>((done) => {
+      setupFetchTracking(() => ResponseBodyAction.COLLECT)
 
-    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyDisturbed: true })
+      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyDisturbed: true })
 
-    mockFetchManager.whenAllComplete(() => {
-      expect(requests[0].responseBody).toBeUndefined()
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].responseBody).toBeUndefined()
+        done()
+      })
+    }))
 
-  it('should use the highest priority action when multiple getters are registered', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.IGNORE)
+  it('should use the highest priority action when multiple getters are registered', () =>
+    new Promise<void>((done) => {
+      setupFetchTracking(() => ResponseBodyAction.IGNORE)
 
-    initFetchObservable({
-      responseBodyAction: () => ResponseBodyAction.COLLECT,
-    })
+      initFetchObservable({
+        responseBodyAction: () => ResponseBodyAction.COLLECT,
+      })
 
-    registerCleanupTask(() => {
-      requestsTrackingSubscription.unsubscribe()
-    })
+      registerCleanupTask(() => {
+        requestsTrackingSubscription.unsubscribe()
+      })
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    fetch = window.fetch as MockFetch
-    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      fetch = window.fetch as MockFetch
+      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
-    mockFetchManager.whenAllComplete(() => {
-      expect(requests[0].responseBody).toBe('response body content')
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].responseBody).toBe('response body content')
+        done()
+      })
+    }))
 })
 
 describe('fetch proxy arguments', () => {
   const FAKE_URL = 'http://fake-url/'
   const REPLACED_URL = 'http://replaced-url/'
-  let originalFetchSpy: jasmine.Spy
+  let originalFetchSpy: Mock
 
   function setupFetchTracking(onStart: (context: FetchStartContext) => void = noop) {
-    originalFetchSpy = spyOn(window, 'fetch').and.returnValue(Promise.resolve(new Response()))
+    originalFetchSpy = vi.spyOn(window, 'fetch').mockReturnValue(Promise.resolve(new Response()))
     const subscription = initFetchObservable().subscribe((context) => {
       if (context.state === 'start') {
         onStart(context)
@@ -380,7 +401,7 @@ describe('fetch proxy arguments', () => {
 
     void window.fetch(FAKE_URL)
 
-    expect(originalFetchSpy).toHaveBeenCalledOnceWith(FAKE_URL)
+    expect(originalFetchSpy).toHaveBeenCalledExactlyOnceWith(FAKE_URL)
   })
 
   it('should pass the input replaced by a subscriber to the original fetch', () => {
@@ -390,7 +411,7 @@ describe('fetch proxy arguments', () => {
 
     void window.fetch(FAKE_URL)
 
-    expect(originalFetchSpy).toHaveBeenCalledOnceWith(REPLACED_URL)
+    expect(originalFetchSpy).toHaveBeenCalledExactlyOnceWith(REPLACED_URL)
   })
 
   it('should pass the init replaced by a subscriber to the original fetch', () => {
@@ -401,14 +422,14 @@ describe('fetch proxy arguments', () => {
 
     void window.fetch(FAKE_URL)
 
-    expect(originalFetchSpy).toHaveBeenCalledOnceWith(FAKE_URL, replacedInit)
+    expect(originalFetchSpy).toHaveBeenCalledExactlyOnceWith(FAKE_URL, replacedInit)
   })
 })
 
 describe('fetch proxy with a fetch override resolving without a Response', () => {
   it('should track the request with a status 0', async () => {
-    spyOn(window, 'fetch').and.returnValue(Promise.resolve(undefined as unknown as Response))
-    const resolveSpy = jasmine.createSpy<(context: FetchResolveContext) => void>()
+    vi.spyOn(window, 'fetch').mockReturnValue(Promise.resolve(undefined as unknown as Response))
+    const resolveSpy = vi.fn<(context: FetchResolveContext) => void>()
     const subscription = initFetchObservable().subscribe((context) => {
       if (context.state === 'resolve') {
         resolveSpy(context)
@@ -422,6 +443,6 @@ describe('fetch proxy with a fetch override resolving without a Response', () =>
     await window.fetch('http://fake-url/')
 
     await collectAsyncCalls(resolveSpy, 1)
-    expect(resolveSpy.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ status: 0, isAborted: false }))
+    expect(resolveSpy.mock.lastCall![0]).toEqual(expect.objectContaining({ status: 0, isAborted: false }))
   })
 })

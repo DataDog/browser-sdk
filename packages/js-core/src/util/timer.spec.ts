@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { startMonitorErrorCollection } from '../entries/monitor'
 import { mockClock, mockZoneJs } from '../../../browser-core/test'
 import type { Clock, MockZoneJs } from '../../../browser-core/test'
@@ -24,23 +25,23 @@ import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'
     })
 
     it('executes the callback asynchronously', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       setTimer(spy)
       expect(spy).not.toHaveBeenCalled()
       clock.tick(0)
-      expect(spy).toHaveBeenCalledOnceWith()
+      expect(spy).toHaveBeenCalledExactlyOnceWith()
     })
 
     it('schedules an asynchronous task', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       setTimer(spy)
       expect(spy).not.toHaveBeenCalled()
       clock.tick(0)
-      expect(spy).toHaveBeenCalledOnceWith()
+      expect(spy).toHaveBeenCalledExactlyOnceWith()
     })
 
     it('does not use the Zone.js function', () => {
-      const zoneJsSetTimerSpy = jasmine.createSpy()
+      const zoneJsSetTimerSpy = vi.fn()
       zoneJs.replaceProperty(window, name, zoneJsSetTimerSpy)
 
       setTimer(() => {
@@ -52,7 +53,7 @@ import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'
     })
 
     it('monitors the callback', () => {
-      const onMonitorErrorCollectedSpy = jasmine.createSpy()
+      const onMonitorErrorCollectedSpy = vi.fn()
       startMonitorErrorCollection(onMonitorErrorCollectedSpy)
 
       setTimer(() => {
@@ -60,11 +61,11 @@ import { setTimeout, clearTimeout, setInterval, clearInterval } from './timer'
       })
       clock.tick(0)
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('foo'))
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledExactlyOnceWith(new Error('foo'))
     })
 
     it('can be canceled', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       const timerId = setTimer(spy)
       clearTimer(timerId)
       clock.tick(0)

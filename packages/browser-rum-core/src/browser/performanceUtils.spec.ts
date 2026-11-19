@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { type RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
@@ -12,44 +13,44 @@ describe('getNavigationEntry', () => {
     const expectation: jasmine.Expected<RumPerformanceNavigationTiming> = {
       entryType: RumPerformanceEntryType.NAVIGATION,
       initiatorType: 'navigation',
-      name: jasmine.any(String),
+      name: expect.any(String),
 
-      domComplete: jasmine.any(Number),
-      domContentLoadedEventEnd: jasmine.any(Number),
-      domInteractive: jasmine.any(Number),
-      loadEventEnd: jasmine.any(Number),
+      domComplete: expect.any(Number),
+      domContentLoadedEventEnd: expect.any(Number),
+      domInteractive: expect.any(Number),
+      loadEventEnd: expect.any(Number),
 
       startTime: 0 as RelativeTime,
-      duration: jasmine.any(Number),
+      duration: expect.any(Number),
 
-      fetchStart: jasmine.any(Number),
-      workerStart: jasmine.any(Number),
-      domainLookupStart: jasmine.any(Number),
-      domainLookupEnd: jasmine.any(Number),
-      connectStart: jasmine.any(Number),
-      secureConnectionStart: jasmine.any(Number),
-      connectEnd: jasmine.any(Number),
-      requestStart: jasmine.any(Number),
-      responseStart: jasmine.any(Number),
-      responseEnd: jasmine.any(Number),
-      redirectStart: jasmine.any(Number),
-      redirectEnd: jasmine.any(Number),
+      fetchStart: expect.any(Number),
+      workerStart: expect.any(Number),
+      domainLookupStart: expect.any(Number),
+      domainLookupEnd: expect.any(Number),
+      connectStart: expect.any(Number),
+      secureConnectionStart: expect.any(Number),
+      connectEnd: expect.any(Number),
+      requestStart: expect.any(Number),
+      responseStart: expect.any(Number),
+      responseEnd: expect.any(Number),
+      redirectStart: expect.any(Number),
+      redirectEnd: expect.any(Number),
 
-      toJSON: jasmine.any(Function),
+      toJSON: expect.any(Function),
     }
 
     const navigationEntry = getNavigationEntry()
 
-    expect(navigationEntry).toEqual(jasmine.objectContaining(expectation))
+    expect(navigationEntry).toEqual(expect.objectContaining(expectation))
 
     if (navigationEntry.decodedBodySize) {
-      expect(navigationEntry.decodedBodySize).toEqual(jasmine.any(Number))
+      expect(navigationEntry.decodedBodySize).toEqual(expect.any(Number))
     }
     if (navigationEntry.encodedBodySize) {
-      expect(navigationEntry.encodedBodySize).toEqual(jasmine.any(Number))
+      expect(navigationEntry.encodedBodySize).toEqual(expect.any(Number))
     }
     if (navigationEntry.transferSize) {
-      expect(navigationEntry.transferSize).toEqual(jasmine.any(Number))
+      expect(navigationEntry.transferSize).toEqual(expect.any(Number))
     }
   })
 

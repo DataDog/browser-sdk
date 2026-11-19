@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { globalObject, noop } from '@datadog/js-core/util'
 import { display } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
@@ -29,12 +31,12 @@ describe('trackCanvas', () => {
     },
   }
   let mockWorker: MockWorker
-  let createDeflateWorkerSpy: jasmine.Spy
+  let createDeflateWorkerSpy: Mock
   let originalFillRect: unknown
 
   beforeEach(() => {
     mockWorker = new MockWorker()
-    createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).and.callFake(() => mockWorker)
+    createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).mockImplementation(() => mockWorker)
     originalFillRect = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillRect')!.value
     registerCleanupTask(() => {
       resetDeflateWorkerState()
@@ -90,7 +92,7 @@ describe('trackCanvas', () => {
 
   it('does not record canvases when OffscreenCanvas is not supported', async () => {
     replaceMockable(globalObject.OffscreenCanvas, undefined as unknown as typeof OffscreenCanvas)
-    const displayWarnSpy = spyOn(display, 'warn')
+    const displayWarnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
     const telemetry = startMockTelemetry()
 
     startTracking(CANVAS_RECORDING_CONFIGURATION).stop()
@@ -98,13 +100,15 @@ describe('trackCanvas', () => {
 
     expect(isFillRectInstrumented()).toBe(false)
     expect(createDeflateWorkerSpy).not.toHaveBeenCalled()
-    expect(displayWarnSpy).toHaveBeenCalledOnceWith('Session Replay canvas recording is not supported by this browser.')
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining({ message: 'Canvas recording unsupported' })])
+    expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith(
+      'Session Replay canvas recording is not supported by this browser.'
+    )
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining({ message: 'Canvas recording unsupported' })])
   })
 
   it('stops the canvas trackers when the canvas worker fails to start', () => {
     skipIfOffscreenCanvasIsNotSupported()
-    spyOn(display, 'error')
+    vi.spyOn(display, 'error').mockReturnValue(undefined)
     startTracking(CANVAS_RECORDING_CONFIGURATION)
 
     mockWorker.dispatchErrorEvent()
@@ -114,8 +118,10 @@ describe('trackCanvas', () => {
 
   it('does not start the canvas trackers when the canvas worker already failed', () => {
     skipIfOffscreenCanvasIsNotSupported()
-    spyOn(display, 'error')
-    createDeflateWorkerSpy.and.throwError(new Error('CSP'))
+    vi.spyOn(display, 'error').mockReturnValue(undefined)
+    createDeflateWorkerSpy.mockImplementation(() => {
+      throw new Error('CSP')
+    })
 
     startTracking(CANVAS_RECORDING_CONFIGURATION)
 

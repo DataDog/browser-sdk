@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { setNavigatorOnLine, setNavigatorConnection, registerCleanupTask } from '../../../test'
 import { getConnectivity } from './connectivity'
 
@@ -40,7 +41,7 @@ describe('connectivity', () => {
         delete (navigator as any).connection
       })
 
-      expect(getConnectivity()).toEqual({ status: jasmine.any(String), interfaces: ['wifi'], effective_type: '4g' })
+      expect(getConnectivity()).toEqual({ status: expect.any(String), interfaces: ['wifi'], effective_type: '4g' })
     })
   })
 

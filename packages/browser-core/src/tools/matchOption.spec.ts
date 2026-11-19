@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { display } from './display'
 import { matchList } from './matchOption'
 
@@ -36,7 +37,7 @@ describe('matchList', () => {
   })
 
   it('should catch error from provided function', () => {
-    spyOn(display, 'error')
+    vi.spyOn(display, 'error').mockReturnValue(undefined)
     const list = [
       (_: string) => {
         throw new Error('oops')

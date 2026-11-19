@@ -1,3 +1,5 @@
+import { vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { mockableReplacements } from '@datadog/js-core/util'
 import { registerCleanupTask } from './registerCleanupTask'
 
@@ -42,8 +44,8 @@ export function replaceMockable<T>(value: T, replacement: T): void {
  *   expect(spy).toHaveBeenCalled()
  * })
  */
-export function replaceMockableWithSpy<T extends (...args: any[]) => any>(value: T): jasmine.Spy<T> {
-  const spy = jasmine.createSpy<T>()
+export function replaceMockableWithSpy<T extends (...args: any[]) => any>(value: T): Mock<T> {
+  const spy = vi.fn<T>()
   replaceMockable(value, spy as unknown as T)
   return spy
 }

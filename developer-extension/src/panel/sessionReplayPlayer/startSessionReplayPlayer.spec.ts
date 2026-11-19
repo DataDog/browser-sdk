@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
 import type { BrowserRecord, BrowserSegmentMetadata } from '@datadog/browser-rum/src/types'
 import { registerCleanupTask } from '../../../../packages/browser-core/test'
@@ -29,7 +31,7 @@ const MOUSE_MOVE_RECORD: BrowserRecord = {
 describe('startSessionReplayPlayer', () => {
   let iframe: HTMLIFrameElement
   let sandboxUrls: string[]
-  let postMessageSpy: jasmine.Spy
+  let postMessageSpy: Mock
   let playerStates: SessionReplayPlayerState[]
   let abortController: AbortController
 
@@ -38,10 +40,10 @@ describe('startSessionReplayPlayer', () => {
     document.body.appendChild(iframe)
     sandboxUrls = []
     // Record the sandbox URL instead of loading the sandbox.
-    spyOnProperty(iframe, 'src', 'set').and.callFake((url: string) => {
+    vi.spyOn(iframe, 'src', 'set').mockImplementation((url: string) => {
       sandboxUrls.push(url)
     })
-    postMessageSpy = spyOn(iframe.contentWindow!, 'postMessage')
+    postMessageSpy = vi.spyOn(iframe.contentWindow!, 'postMessage').mockReturnValue(undefined)
     playerStates = []
     abortController = new AbortController()
 
@@ -91,7 +93,7 @@ describe('startSessionReplayPlayer', () => {
   }
 
   function getSentRecords() {
-    return postMessageSpy.calls.allArgs().map(([message]) => (message as MessageBridgeDownRecords).record)
+    return postMessageSpy.mock.calls.map(([message]) => (message as MessageBridgeDownRecords).record)
   }
 
   it('loads the sandbox with its static context', async () => {
@@ -101,7 +103,7 @@ describe('startSessionReplayPlayer', () => {
     const url = new URL(sandboxUrls.at(-1)!)
     expect(`${url.origin}${url.pathname}`).toBe(DEV_REPLAY_SANDBOX_URL)
     expect(JSON.parse(url.searchParams.get('staticContext')!)).toEqual({
-      sandboxId: jasmine.any(String),
+      sandboxId: expect.any(String),
       origin: location.origin,
       featureFlags: { rum_session_replay_iframe_interactive: true, rum_session_replay_disregard_origin: true },
     })
@@ -122,7 +124,7 @@ describe('startSessionReplayPlayer', () => {
 
     receiveRecord(META_RECORD)
     expect(playerStates.at(-1)!.status).toBe('ready')
-    expect(getSentRecords()).toEqual([jasmine.objectContaining({ type: RecordType.Meta, orderId: 1 })])
+    expect(getSentRecords()).toEqual([expect.objectContaining({ type: RecordType.Meta, orderId: 1 })])
   })
 
   it('sends the records received while the sandbox loads once it is ready', async () => {
@@ -136,10 +138,10 @@ describe('startSessionReplayPlayer', () => {
     await waitForNextTask()
 
     expect(getSentRecords()).toEqual([
-      jasmine.objectContaining({ type: RecordType.Meta, orderId: 1 }),
-      jasmine.objectContaining({ type: RecordType.IncrementalSnapshot, orderId: 2 }),
+      expect.objectContaining({ type: RecordType.Meta, orderId: 1 }),
+      expect.objectContaining({ type: RecordType.IncrementalSnapshot, orderId: 2 }),
     ])
-    expect(postMessageSpy.calls.argsFor(0)[1]).toBe(DEV_REPLAY_SANDBOX_ORIGIN)
+    expect(postMessageSpy.mock.calls[0][1]).toBe(DEV_REPLAY_SANDBOX_ORIGIN)
     expect(playerStates.at(-1)).toEqual({ status: 'ready', recordCount: 2, excludeMouseMovements: false })
   })
 
@@ -155,10 +157,10 @@ describe('startSessionReplayPlayer', () => {
     receiveRecord(SCROLL_RECORD)
 
     expect(getSentRecords()).toEqual([
-      jasmine.objectContaining({ type: RecordType.Meta, orderId: 1 }),
-      jasmine.objectContaining({ type: RecordType.IncrementalSnapshot, orderId: 2 }),
-      jasmine.objectContaining({ type: RecordType.Meta, orderId: 3 }),
-      jasmine.objectContaining({ type: RecordType.IncrementalSnapshot, orderId: 4 }),
+      expect.objectContaining({ type: RecordType.Meta, orderId: 1 }),
+      expect.objectContaining({ type: RecordType.IncrementalSnapshot, orderId: 2 }),
+      expect.objectContaining({ type: RecordType.Meta, orderId: 3 }),
+      expect.objectContaining({ type: RecordType.IncrementalSnapshot, orderId: 4 }),
     ])
     expect(playerStates.at(-1)).toEqual({ status: 'ready', recordCount: 2, excludeMouseMovements: false })
   })
@@ -197,7 +199,7 @@ describe('startSessionReplayPlayer', () => {
   })
 
   it('relays the sandbox logs until the signal is aborted', async () => {
-    const consoleLogSpy = spyOn(console, 'log')
+    const consoleLogSpy = vi.spyOn(console, 'log').mockReturnValue(undefined)
     startPlayer()
     await waitForNextTask()
     const log: MessageBridgeUp = {
@@ -208,7 +210,7 @@ describe('startSessionReplayPlayer', () => {
     }
 
     receiveSandboxMessage(log)
-    expect(consoleLogSpy).toHaveBeenCalledOnceWith(jasmine.any(String), '[sandbox]', 'hello')
+    expect(consoleLogSpy).toHaveBeenCalledExactlyOnceWith(expect.any(String), '[sandbox]', 'hello')
 
     abortController.abort()
     receiveSandboxMessage(log)
@@ -216,18 +218,18 @@ describe('startSessionReplayPlayer', () => {
   })
 
   it('reports an error, and keeps buffering the records, when the sandbox cannot be located', async () => {
-    spyOn(globalThis, 'fetch').and.resolveTo(new Response('', { status: 503 }))
-    const consoleErrorSpy = spyOn(console, 'error')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 503 }))
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockReturnValue(undefined)
 
     const player = startPlayer({ useDevReplaySandbox: false })
     await waitForNextTask()
 
     expect(playerStates.at(-1)!.status).toBe('error')
-    expect(consoleErrorSpy).toHaveBeenCalledOnceWith(
-      jasmine.any(String),
+    expect(consoleErrorSpy).toHaveBeenCalledExactlyOnceWith(
+      expect.any(String),
       '[startSessionReplayPlayer]',
       'While loading the replay sandbox:',
-      jasmine.any(Error)
+      expect.any(Error)
     )
     expect(sandboxUrls).toEqual([])
 
@@ -237,7 +239,7 @@ describe('startSessionReplayPlayer', () => {
   })
 
   it('does not load the sandbox when aborted while locating it', async () => {
-    spyOn(globalThis, 'fetch').and.callFake(
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
       (_input, init) =>
         new Promise<Response>((_resolve, reject) => {
           init!.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))

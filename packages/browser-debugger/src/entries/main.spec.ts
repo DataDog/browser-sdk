@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Observable } from '@datadog/js-core/util'
 import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { initDebuggerTransport } from '../domain/api'
@@ -41,9 +42,9 @@ describe('datadogDebugger', () => {
 
   it('should only expose init, version, and onReady', () => {
     expect(datadogDebugger).toEqual({
-      init: jasmine.any(Function),
-      version: jasmine.any(String),
-      onReady: jasmine.any(Function),
+      init: expect.any(Function),
+      version: expect.any(String),
+      onReady: expect.any(Function),
     })
   })
 
@@ -84,10 +85,10 @@ describe('datadogDebugger', () => {
     await flushPromises()
 
     expect(initTransportSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({ version: 'build-version' }),
-      jasmine.anything()
+      expect.objectContaining({ version: 'build-version' }),
+      expect.anything()
     )
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'build-version' }))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ version: 'build-version' }))
     expect(browserWindow.$dd_entry).toBeDefined()
     expect(browserWindow.$dd_return).toBeDefined()
     expect(browserWindow.$dd_throw).toBeDefined()
@@ -97,36 +98,36 @@ describe('datadogDebugger', () => {
   it('should warn when the explicit init version mismatches build-plugin metadata', async () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version' }
     const { startDeliveryApiPollingSpy } = mockInitDependencies()
-    const warnSpy = spyOn(display, 'warn')
+    const warnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     datadogDebugger.init({ ...INIT_CONFIGURATION, version: 'runtime-version' })
 
     await flushPromises()
 
-    expect(warnSpy).toHaveBeenCalledWith(jasmine.stringMatching(/does not match the build-plugin version/))
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'runtime-version' }))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/does not match the build-plugin version/))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ version: 'runtime-version' }))
   })
 
   it('should leave the version unset when neither init nor build-plugin metadata define it', () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { debugId: DEBUG_ID }
     const { initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
-    const warnSpy = spyOn(display, 'warn')
+    const warnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     datadogDebugger.init(INIT_CONFIGURATION)
 
-    expect(initTransportSpy.calls.mostRecent().args[0].version).toBeUndefined()
-    expect(startDeliveryApiPollingSpy.calls.mostRecent().args[0].version).toBeUndefined()
+    expect(initTransportSpy.mock.lastCall![0].version).toBeUndefined()
+    expect(startDeliveryApiPollingSpy.mock.lastCall![0].version).toBeUndefined()
     expect(warnSpy).not.toHaveBeenCalled()
   })
 
   it('should use the init version without warning when build-plugin metadata has no version', () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { debugId: DEBUG_ID }
     const { startDeliveryApiPollingSpy } = mockInitDependencies()
-    const warnSpy = spyOn(display, 'warn')
+    const warnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     datadogDebugger.init({ ...INIT_CONFIGURATION, version: 'runtime-version' })
 
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'runtime-version' }))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ version: 'runtime-version' }))
     expect(warnSpy).not.toHaveBeenCalled()
   })
 
@@ -137,40 +138,40 @@ describe('datadogDebugger', () => {
 
     datadogDebugger.init(INIT_CONFIGURATION)
 
-    expect(startDeliveryApiPollingSpy.calls.mostRecent().args[0].version).toBeUndefined()
+    expect(startDeliveryApiPollingSpy.mock.lastCall![0].version).toBeUndefined()
   })
 
   it('should default the init service from build-plugin metadata', () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { service: 'build-service' }
     const { startDebuggerBatchSpy, initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
-    const warnSpy = spyOn(display, 'warn')
+    const warnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     datadogDebugger.init(INIT_CONFIGURATION_WITHOUT_SERVICE)
 
-    expect(startDebuggerBatchSpy).toHaveBeenCalledWith(jasmine.objectContaining({ service: 'build-service' }))
+    expect(startDebuggerBatchSpy).toHaveBeenCalledWith(expect.objectContaining({ service: 'build-service' }))
     expect(initTransportSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({ service: 'build-service' }),
-      jasmine.anything()
+      expect.objectContaining({ service: 'build-service' }),
+      expect.anything()
     )
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ service: 'build-service' }))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ service: 'build-service' }))
     expect(warnSpy).not.toHaveBeenCalled()
   })
 
   it('should use the explicit init service and warn when it mismatches build-plugin metadata', () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { service: 'build-service' }
     const { initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
-    const warnSpy = spyOn(display, 'warn')
+    const warnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     datadogDebugger.init({ ...INIT_CONFIGURATION, service: 'runtime-service' })
 
-    expect(warnSpy).toHaveBeenCalledOnceWith(
+    expect(warnSpy).toHaveBeenCalledExactlyOnceWith(
       'init service "runtime-service" does not match the build-plugin service "build-service". Using the init service.'
     )
     expect(initTransportSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({ service: 'runtime-service' }),
-      jasmine.anything()
+      expect.objectContaining({ service: 'runtime-service' }),
+      expect.anything()
     )
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ service: 'runtime-service' }))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ service: 'runtime-service' }))
   })
 
   const invalidBuildServiceCases: Array<{ description: string; metadata: unknown }> = [
@@ -183,22 +184,22 @@ describe('datadogDebugger', () => {
     it(`should use the init service without warning when ${description}`, () => {
       browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = metadata as DebuggerBuildMetadata | undefined
       const { startDeliveryApiPollingSpy } = mockInitDependencies()
-      const warnSpy = spyOn(display, 'warn')
+      const warnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
       datadogDebugger.init(INIT_CONFIGURATION)
 
-      expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ service: 'service-name' }))
+      expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ service: 'service-name' }))
       expect(warnSpy).not.toHaveBeenCalled()
     })
 
     it(`should report a missing service and not start when init has no service and ${description}`, () => {
       browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = metadata as DebuggerBuildMetadata | undefined
       const { startDebuggerBatchSpy, initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
-      const errorSpy = spyOn(display, 'error')
+      const errorSpy = vi.spyOn(display, 'error').mockReturnValue(undefined)
 
       datadogDebugger.init(INIT_CONFIGURATION_WITHOUT_SERVICE)
 
-      expect(errorSpy).toHaveBeenCalledOnceWith(
+      expect(errorSpy).toHaveBeenCalledExactlyOnceWith(
         '"service" is required. Set it in init() or with the `metadata.service` option of the Datadog build plugin.'
       )
       expect(startDebuggerBatchSpy).not.toHaveBeenCalled()
@@ -214,7 +215,7 @@ describe('datadogDebugger', () => {
 
     datadogDebugger.init(INIT_CONFIGURATION)
 
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ debugId: DEBUG_ID }))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ debugId: DEBUG_ID }))
   })
 
   const invalidDebugIdCases: Array<{ description: string; metadata: unknown }> = [
@@ -231,13 +232,13 @@ describe('datadogDebugger', () => {
       datadogDebugger.init(INIT_CONFIGURATION)
 
       expect(startDeliveryApiPollingSpy).toHaveBeenCalledTimes(1)
-      expect(startDeliveryApiPollingSpy.calls.mostRecent().args[0].debugId).toBeUndefined()
+      expect(startDeliveryApiPollingSpy.mock.lastCall![0].debugId).toBeUndefined()
     })
   })
 })
 
 function mockInitDependencies() {
-  const startDebuggerBatchSpy = replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
+  const startDebuggerBatchSpy = replaceMockableWithSpy(startDebuggerBatch).mockImplementation(() => ({
     flushObservable: new Observable(),
     prepareUrgentFlushObservable: new Observable(),
     isEmpty: false,
