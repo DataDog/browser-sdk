@@ -121,7 +121,7 @@ export function createRumProfiler(
 
   function stopProfiling(reason: RumProfilerStoppedInstance['stateReason'], quotaReason?: QuotaReason) {
     // Stop current profiler instance (data collection happens async in background)
-    stopAndCollectProfilerInstance(reason)
+    stopProfilerInstance(reason)
 
     // Cleanup global listeners and reset the array to prevent accumulation across start/stop cycles
     globalCleanupTasks.forEach((task) => task())
@@ -134,7 +134,7 @@ export function createRumProfiler(
   function startNextProfilerInstance(earlyProfiler?: EarlyCollectionProfiler): void {
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
-      stopRunningProfiler(instance)
+      stopAndCollectProfilerInstance(instance)
     }
 
     const result = createBrowserProfiler(
@@ -144,9 +144,6 @@ export function createRumProfiler(
     )
     if (result.status === 'error') {
       profilingContextManager.set({ status: 'error', error_reason: result.reason })
-      if (result.reason === 'not-supported-by-browser') {
-        throw new Error('RUM Profiler is not supported in this browser.')
-      }
       return
     }
 
@@ -179,7 +176,7 @@ export function createRumProfiler(
     }
   }
 
-  function stopRunningProfiler(
+  function stopAndCollectProfilerInstance(
     { timeoutId, startClocks, sessionId, browserProfiler }: RumProfilerRunningInstance,
     { discard = false } = {}
   ) {
@@ -195,7 +192,7 @@ export function createRumProfiler(
       .catch(monitorError)
   }
 
-  function stopAndCollectProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
+  function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
     // Preserve the stop reason unless the user explicitly stops the profiler.
     if (instance.state === 'stopped' && stateReason !== 'stopped-by-user') {
       return
@@ -205,7 +202,7 @@ export function createRumProfiler(
     instance = { state: 'stopped', stateReason }
 
     if (previousInstance.state === 'running') {
-      stopRunningProfiler(previousInstance, { discard: stateReason === 'quota_ko' })
+      stopAndCollectProfilerInstance(previousInstance, { discard: stateReason === 'quota_ko' })
     }
   }
 
@@ -215,7 +212,7 @@ export function createRumProfiler(
     }
     const runningInstance = instance
     instance = { state: 'paused' }
-    stopRunningProfiler(runningInstance)
+    stopAndCollectProfilerInstance(runningInstance)
   }
 
   function handleVisibilityChange(): void {

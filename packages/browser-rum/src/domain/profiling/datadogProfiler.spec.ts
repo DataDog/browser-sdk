@@ -205,6 +205,20 @@ describe('profiler', () => {
     }
   }
 
+  it('reports unsupported browsers without throwing', () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+    registerCleanupTask(() => profiler.stop())
+    globalObject.Profiler = undefined
+
+    expect(() => profiler.start()).not.toThrow()
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()).toEqual({
+      status: 'error',
+      error_reason: 'not-supported-by-browser',
+    })
+  })
+
   it('should start profiling collection and collect data on stop', async () => {
     const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler()
 

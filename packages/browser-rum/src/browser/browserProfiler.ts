@@ -25,11 +25,13 @@ export function createBrowserProfiler(
 
   let profiler: Profiler
   try {
-    profiler = existingProfiler ?? new profilerConstructor({
-      sampleInterval: configuration.sampleIntervalMs,
-      // Allow 1.5 collection intervals of samples before the buffer fills.
-      maxBufferSize: Math.round((configuration.collectIntervalMs * 1.5) / configuration.sampleIntervalMs),
-    })
+    profiler =
+      existingProfiler ??
+      new profilerConstructor({
+        sampleInterval: configuration.sampleIntervalMs,
+        // Allow 1.5 collection intervals of samples before the buffer fills.
+        maxBufferSize: Math.round((configuration.collectIntervalMs * 1.5) / configuration.sampleIntervalMs),
+      })
   } catch (error) {
     if (error instanceof Error && error.message.includes('disabled by Document Policy')) {
       display.warn(
