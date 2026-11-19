@@ -290,7 +290,7 @@ test.describe('microfrontend', () => {
     })
 
     test.describe('with source code bundler plugin', () => {
-      createTest('automatic clicks use element stacks registered after init')
+      createTest('automatic clicks should have service and version from source code context')
         .withRum({ ...RUM_CONFIG, trackUserInteractions: true })
         .withSetup(microfrontendSetup)
         .run(async ({ intakeRegistry, flushEvents, page }) => {

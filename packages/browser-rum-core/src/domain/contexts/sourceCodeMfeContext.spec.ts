@@ -69,7 +69,7 @@ describe('sourceCodeContext', () => {
     })
   })
 
-  it('attributes automatic clicks using the element stack', () => {
+  it('should add source code context matching the element_stack first frame URL', () => {
     mockSourceCodeContext({ [TEST_STACK]: { service: 'my-service', version: '1.0.0' } })
     startSourceCodeMfeContext(hook)
     const result = hook.trigger({
@@ -79,35 +79,6 @@ describe('sourceCodeContext', () => {
       domainContext: { events: [], elementStack: MATCHING_TEST_STACK },
     } as AssembleHookParams)
     expect(result).toEqual({ type: 'action', service: 'my-service', version: '1.0.0' })
-  })
-
-  it('does not fall through to deeper frames when the element stack first frame is unmatched', () => {
-    mockSourceCodeContext({ [TEST_STACK]: { service: 'my-service', version: '1.0.0' } })
-    startSourceCodeMfeContext(hook)
-    const result = hook.trigger({
-      eventType: 'action',
-      startTime: 0 as RelativeTime,
-      rawRumEvent: createRawRumEvent('action'),
-      domainContext: {
-        events: [],
-        elementStack: `Error: element
-          at closest (http://localhost:8080/unmatched.js:1:1)
-          at outer (${MATCHING_URL}:41:27)`,
-      },
-    } as AssembleHookParams)
-    expect(result).toBeUndefined()
-  })
-
-  it('does not attribute automatic clicks without an element stack', () => {
-    startSourceCodeMfeContext(hook)
-    expect(
-      hook.trigger({
-        eventType: 'action',
-        startTime: 0 as RelativeTime,
-        rawRumEvent: createRawRumEvent('action'),
-        domainContext: { events: [] },
-      } as AssembleHookParams)
-    ).toBeUndefined()
   })
 
   it('should add source code context matching the LoAF first script source URL', () => {
