@@ -927,6 +927,49 @@ describe('preStartRum', () => {
       hooks.assembleEvent.trigger({ eventType: 'error' } as AssembleHookParams)
       expect(assembleCallback).toHaveBeenCalledTimes(1)
     })
+
+    it('ignores a plugin with the name of a plugin already added', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      const duplicatePlugin = { name: 'a', onInit: jasmine.createSpy() }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.addPlugin(plugin)
+      strategy.addPlugin(duplicatePlugin)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(plugin.onInit).toHaveBeenCalledTimes(1)
+      expect(duplicatePlugin.onInit).not.toHaveBeenCalled()
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith('The "a" plugin is already added, so it\'s ignored.')
+    })
+
+    it('ignores a plugin added before init() with the name of a plugin passed to init()', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+      const initPlugin = { name: 'a', onInit: jasmine.createSpy() }
+      const addedPlugin = { name: 'a', onInit: jasmine.createSpy() }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.addPlugin(addedPlugin)
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [initPlugin] }, PUBLIC_API)
+
+      expect(initPlugin.onInit).toHaveBeenCalledTimes(1)
+      expect(addedPlugin.onInit).not.toHaveBeenCalled()
+      expect(displayWarnSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('ignores a plugin added after init() with the name of a plugin passed to init()', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+      const initPlugin = { name: 'a', onInit: jasmine.createSpy() }
+      const addedPlugin = { name: 'a', onInit: jasmine.createSpy() }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [initPlugin] }, PUBLIC_API)
+      strategy.addPlugin(addedPlugin)
+
+      expect(initPlugin.onInit).toHaveBeenCalledTimes(1)
+      expect(addedPlugin.onInit).not.toHaveBeenCalled()
+      expect(displayWarnSpy).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('getInternalContext', () => {

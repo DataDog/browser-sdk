@@ -175,6 +175,8 @@ export interface RumPublicApi extends PublicApi {
    * its `onInit` before starting, as for the plugins passed to init().
    * - If it's added after that, RUM doesn't wait for it, so it misses the events assembled before
    * its hooks are registered.
+   * - It's ignored, with a warning, if a plugin with the same name was already added or passed to
+   * init().
    *
    * The plugins API is unstable and experimental, and may change without notice. Please use only
    * plugins provided by Datadog matching the version of the SDK you are using.

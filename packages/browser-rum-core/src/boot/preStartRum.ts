@@ -91,6 +91,8 @@ export function createPreStartStrategy(
   // Set once init() has accepted the configuration. Plugins added before that wait for it.
   let pluginOnInitOptions: RumPluginOnInitOptions | undefined
   const pluginsAddedBeforeInit: RumPlugin[] = []
+  // A plugin can't be added twice, e.g. by an SDK that adds itself while it's also passed to init()
+  const addedPluginNames = new Set<string>()
   // Like for the init() plugins, RUM waits for the onInit of the plugins added before init() accepted
   // the configuration, so their hooks are registered before any event is assembled
   let waitingForAddedPluginInits = false
@@ -283,6 +285,11 @@ export function createPreStartStrategy(
    * Returns a promise that settles once an asynchronous onInit has, so init() can wait for it.
    */
   function startAddedPlugin(plugin: RumPlugin, onInitOptions: RumPluginOnInitOptions): PromiseLike<void> | undefined {
+    if (onInitOptions.initConfiguration.plugins?.some(({ name }) => name === plugin.name)) {
+      warnPluginAlreadyAdded(plugin)
+      return
+    }
+
     // The init() plugins have already let init() continue, so this one can't abort it. If its onInit
     // returns false or fails, skip its onRumStart, as RUM doesn't start when the onInit of an init()
     // plugin does, and report the error, which can't stop init() or the other plugins.
@@ -418,6 +425,12 @@ export function createPreStartStrategy(
     },
 
     addPlugin(plugin) {
+      if (addedPluginNames.has(plugin.name)) {
+        warnPluginAlreadyAdded(plugin)
+        return
+      }
+      addedPluginNames.add(plugin.name)
+
       if (pluginOnInitOptions) {
         startAddedPlugin(plugin, pluginOnInitOptions)
       } else {
@@ -531,4 +544,8 @@ function overrideInitConfigurationForBridge(initConfiguration: RumInitConfigurat
     sessionSampleRate: 100,
     defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
   }
+}
+
+function warnPluginAlreadyAdded(plugin: RumPlugin) {
+  display.warn(`The "${plugin.name}" plugin is already added, so it's ignored.`)
 }
