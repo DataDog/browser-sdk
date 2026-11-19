@@ -249,6 +249,19 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
       replaceNode(callee.name, RENAMED_MATCHERS[name])
       return false
     }
+    // Jasmine's toContain compares items with deep equality, Vitest's with `===`. Only switch to
+    // toContainEqual when the values are obviously not strings (Vitest's toContainEqual rejects them).
+    if (name === 'toContain' && isDeepContain(expectCall.arguments[0], node.arguments[0])) {
+      replaceNode(callee.name, 'toContainEqual')
+      return false
+    }
+    // Jasmine's toMatch treats a string as a regular expression, Vitest's as a substring
+    if (name === 'toMatch' && node.arguments[0] && isRegExpLikeString(node.arguments[0])) {
+      const pattern = node.arguments[0]
+      addEdit(pattern.getStart(), pattern.getStart(), 'new RegExp(')
+      addEdit(pattern.end, pattern.end, ')')
+      return false
+    }
     if (name === 'withContext') {
       // expect(x).withContext(message).matcher() -> expect(x, message).matcher()
       const message = node.arguments[0]
@@ -404,12 +417,17 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
   }
 
   // it('...', (done) => { ... }) -> it('...', () => new Promise<void>((done) => { ... }))
+  // Also converts functions with a `DoneFn` parameter, like test callbacks built by a factory.
   function transformDoneCallback(node: ts.ArrowFunction | ts.FunctionExpression) {
-    if (node.parameters.length !== 1 || !isTestCallback(node, CALLBACK_FUNCTIONS)) {
+    if (node.parameters.length !== 1) {
       return
     }
     const parameter = node.parameters[0]
-    if (!ts.isIdentifier(parameter.name) || parameter.name.text !== 'done') {
+    if (!ts.isIdentifier(parameter.name)) {
+      return
+    }
+    const isDoneFn = isDoneFnType(parameter.type)
+    if (!isDoneFn && (parameter.name.text !== 'done' || !isTestCallback(node, CALLBACK_FUNCTIONS))) {
       return
     }
     if (node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword)) {
@@ -465,6 +483,38 @@ export function transformJasmineToVitest(source: string, fileName: string): Tran
     }
     const next = argsAccess.parent
     return ts.isElementAccessExpression(next) && next.expression === argsAccess ? '?.' : ''
+  }
+
+  function isDoneFnType(type: ts.TypeNode | undefined) {
+    return (
+      type !== undefined &&
+      ts.isTypeReferenceNode(type) &&
+      ts.isIdentifier(type.typeName) &&
+      type.typeName.text === 'DoneFn' &&
+      isGlobal('DoneFn')
+    )
+  }
+
+  function isDeepContain(actual: ts.Expression | undefined, expected: ts.Expression | undefined) {
+    if (actual && ts.isArrayLiteralExpression(actual)) {
+      return true
+    }
+    return (
+      expected !== undefined &&
+      (ts.isArrayLiteralExpression(expected) ||
+        ts.isObjectLiteralExpression(expected) ||
+        isAsymmetricMatcherCall(expected))
+    )
+  }
+
+  function isAsymmetricMatcherCall(node: ts.Expression) {
+    return (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      ['expect', 'jasmine'].includes(node.expression.expression.text) &&
+      ASYMMETRIC_MATCHERS.includes(node.expression.name.text)
+    )
   }
 
   function isJasmineCallsMethod(node: ts.PropertyAccessExpression) {
@@ -619,6 +669,24 @@ function collectDeclaredNames(sourceFile: ts.SourceFile) {
   }
   visit(sourceFile)
   return names
+}
+
+// A string literal or template containing regular expression syntax
+function isRegExpLikeString(node: ts.Expression): boolean {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return hasRegExpSyntax(node.text)
+  }
+  if (ts.isTemplateExpression(node)) {
+    return [node.head, ...node.templateSpans.map((span) => span.literal)].some((part) => hasRegExpSyntax(part.text))
+  }
+  if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+    return isRegExpLikeString(node.left) || isRegExpLikeString(node.right)
+  }
+  return false
+}
+
+function hasRegExpSyntax(text: string) {
+  return /[$()*+.?[\\\]^{|}]/.test(text)
 }
 
 // Jasmine treats objects with an `asymmetricMatch` method as matchers, Vitest doesn't
