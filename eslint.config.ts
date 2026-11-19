@@ -11,7 +11,7 @@ import eslintLocalRules from './eslint-local-rules/index.ts'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
-// Files using the Vitest API, migrated from the Jasmine API with scripts/test/jasmine-to-vitest.ts
+// Files using the Vitest API: keep the Jasmine API from coming back (ex: when rebasing an old branch)
 const VITEST_API_FILES = [SPEC_FILES, '**/test/**/*.{ts,tsx}']
 const JASMINE_GLOBALS = [
   'jasmine',
