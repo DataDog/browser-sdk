@@ -345,7 +345,8 @@ function recordReport(fingerprint: string): void {
  * `callFrames` is the stack captured in `onCatch`: `onCatch` itself, then the instrumented
  * function, then its callers. The callers are still paused at the call sites they were at when the
  * exception was thrown, so they're the frames that follow the function in the error's stack. The
- * function's own frame differs, as it has moved to its catch block, so only its URL is compared.
+ * function's own frame differs, as it has moved to its catch block, so only its URL is compared, and
+ * its name when both frames have one: functions called from the same call site have the same callers.
  *
  * Both stacks can be truncated (V8 keeps 10 frames by default), so only the callers present in both
  * are compared. A function without callers has nothing to compare, so its frame in the error's stack
@@ -363,9 +364,14 @@ function findFrameIndex(
     return
   }
 
+  const functionName = getFunctionName(functionFrame)
   const callers = callFrames.slice(2)
   for (let index = fromIndex; index < errorFrames.length; index++) {
-    if (errorFrames[index].url !== functionFrame.url) {
+    const errorFunctionName = getFunctionName(errorFrames[index])
+    if (
+      errorFrames[index].url !== functionFrame.url ||
+      (errorFunctionName !== undefined && functionName !== undefined && errorFunctionName !== functionName)
+    ) {
       continue
     }
 

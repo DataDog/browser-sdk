@@ -437,6 +437,30 @@ describe('exceptionReplay', () => {
     expect(reportError(catchError(withdrawingFunction))!.frames.length).toBe(1)
   })
 
+  it('should not link a frame to another function called from the same call site', () => {
+    let created: Error | undefined
+    function createError() {
+      created = new Error('boom')
+    }
+    function rethrowError() {
+      try {
+        throw created!
+      } catch (e) {
+        onCatch('src/rethrow.ts;rethrowError', e, undefined, {})
+        throw e
+      }
+    }
+
+    const error = catchError(() => {
+      // Both functions have the same callers
+      for (const fn of [createError, rethrowError]) {
+        fn()
+      }
+    })
+
+    expect(reportError(error)).toBeUndefined()
+  })
+
   it('should reuse the same snapshots when an error is reported twice', () => {
     const error = catchError(() => callingFunction(1, 2))
 
