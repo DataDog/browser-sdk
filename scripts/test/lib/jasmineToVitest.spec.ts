@@ -96,6 +96,24 @@ describe('transformJasmineToVitest', () => {
       )
     })
 
+    it('converts jasmine.createSpy with callThrough', () => {
+      assertTransform(
+        "const spy = jasmine.createSpy('name', () => 1).and.callThrough()\n",
+        "import { vi } from 'vitest'\nconst spy = vi.fn(() => 1)\n"
+      )
+    })
+
+    it('converts jasmine.createSpyObj', () => {
+      assertTransform(
+        "const a = jasmine.createSpyObj<Display>('display', ['log', 'warn'])\nconst b = jasmine.createSpyObj('b', ['c'])\n",
+        "import { vi } from 'vitest'\nconst a = ({ log: vi.fn<Display['log']>(), warn: vi.fn<Display['warn']>() })\nconst b = ({ c: vi.fn() })\n"
+      )
+    })
+
+    it('reports jasmine.createSpyObj with property values', () => {
+      assertUnsupported("jasmine.createSpyObj('a', { b: 1 })\n", /createSpyObj/)
+    })
+
     it('converts jasmine.isSpy', () => {
       assertTransform('jasmine.isSpy(foo)\n', "import { vi } from 'vitest'\nvi.isMockFunction(foo)\n")
     })
@@ -134,8 +152,8 @@ describe('transformJasmineToVitest', () => {
       )
     })
 
-    it('reports throwError with a value of unknown type', () => {
-      assertUnsupported('spy.and.throwError(error)\n', /throwError/)
+    it('converts throwError with a value, thrown as is', () => {
+      assertTransform('spy.and.throwError(error)\n', 'spy.mockImplementation(() => {\n  throw error\n})\n')
     })
   })
 
@@ -243,14 +261,21 @@ describe('transformJasmineToVitest', () => {
     it('converts done callbacks', () => {
       assertTransform(
         "it('a', (done) => {\n  setTimeout(done)\n})\n",
-        "import { it } from 'vitest'\nit('a', () => {\nreturn new Promise<void>((done) => {\n  setTimeout(done)\n})\n})\n"
+        "import { it } from 'vitest'\nit('a', () => new Promise<void>((done) => {\n  setTimeout(done)\n}))\n"
+      )
+    })
+
+    it('converts done callbacks of function expressions', () => {
+      assertTransform(
+        "it('a', function (done) {\n  setTimeout(done)\n})\n",
+        "import { it } from 'vitest'\nit('a', function () {\nreturn new Promise<void>((done) => {\n  setTimeout(done)\n})\n})\n"
       )
     })
 
     it('converts done.fail', () => {
       assertTransform(
         'beforeEach((done) => {\n  promise.then(done, done.fail)\n})\n',
-        "import { beforeEach } from 'vitest'\nbeforeEach(() => {\nreturn new Promise<void>((done, reject) => {\n  promise.then(done, reject)\n})\n})\n"
+        "import { beforeEach } from 'vitest'\nbeforeEach(() => new Promise<void>((done, reject) => {\n  promise.then(done, reject)\n}))\n"
       )
     })
 
@@ -264,7 +289,7 @@ describe('transformJasmineToVitest', () => {
     it('converts done callbacks built by a factory', () => {
       assertTransform(
         'function spec() {\n  return (done: DoneFn) => {\n    setTimeout(done)\n  }\n}\n',
-        'function spec() {\n  return () => {\nreturn new Promise<void>((done) => {\n    setTimeout(done)\n  })\n}\n}\n'
+        'function spec() {\n  return () => new Promise<void>((done) => {\n    setTimeout(done)\n  })\n}\n'
       )
     })
 
@@ -277,6 +302,60 @@ describe('transformJasmineToVitest', () => {
         "it('a', () => {\n  if (!supported) {\n    pending('not supported')\n  }\n})\n",
         "import { it } from 'vitest'\nit('a', (ctx) => {\n  if (!supported) {\n    ctx.skip('not supported')\n  }\n})\n"
       )
+    })
+
+    it('converts pending in a beforeEach callback', () => {
+      assertTransform(
+        "beforeEach(() => {\n  pending('not supported')\n})\n",
+        "import { beforeEach } from 'vitest'\nbeforeEach((ctx) => {\n  ctx.skip('not supported')\n})\n"
+      )
+    })
+
+    it('adds the test context parameter once', () => {
+      assertTransform(
+        "it('a', () => {\n  if (a) pending()\n  if (b) pending()\n})\n",
+        "import { it } from 'vitest'\nit('a', (ctx) => {\n  if (a) ctx.skip()\n  if (b) ctx.skip()\n})\n"
+      )
+    })
+
+    it('names the test context after the names declared in the file', () => {
+      assertTransform(
+        "const ctx = 1\nit('a', () => {\n  pending()\n})\n",
+        "import { it } from 'vitest'\nconst ctx = 1\nit('a', (context) => {\n  context.skip()\n})\n"
+      )
+    })
+
+    it('reports pending in a done callback', () => {
+      assertUnsupported("it('a', (done) => {\n  pending()\n})\n", /pending/)
+    })
+
+    it('converts jasmine.clock()', () => {
+      assertTransform(
+        'jasmine.clock().install()\njasmine.clock().tick(10)\njasmine.clock().uninstall()\n',
+        "import { vi } from 'vitest'\nvi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] })\nvi.advanceTimersByTime(10)\nvi.useRealTimers()\n"
+      )
+    })
+
+    it('keeps jasmine.clock() arrow functions returning nothing', () => {
+      assertTransform(
+        'act(() => jasmine.clock().tick(10))\n',
+        "import { vi } from 'vitest'\nact(() => {\nvi.advanceTimersByTime(10)\n})\n"
+      )
+    })
+
+    it('reports jasmine.clock().mockDate()', () => {
+      assertUnsupported('jasmine.clock().mockDate()\n', /mockDate/)
+    })
+
+    it('converts a describe timeout set in beforeAll and restored in afterAll', () => {
+      assertTransform(
+        "describe('a', () => {\n  let originalTimeout: number\n\n  beforeAll(() => {\n    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL\n    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000\n  })\n\n  afterAll(() => {\n    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout\n  })\n\n  it('b', () => {})\n})\n",
+        "import { describe, it } from 'vitest'\ndescribe('a', { timeout: 10000 }, () => {\n\n  it('b', () => {})\n})\n"
+      )
+    })
+
+    it('reports other uses of jasmine.DEFAULT_TIMEOUT_INTERVAL', () => {
+      assertUnsupported('jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000\n', /DEFAULT_TIMEOUT_INTERVAL/)
     })
 
     it('reports pending outside of a test callback', () => {
@@ -306,6 +385,6 @@ describe('transformJasmineToVitest', () => {
   })
 
   it('reports unsupported jasmine APIs', () => {
-    assertUnsupported('jasmine.clock().install()\n', /jasmine\.clock/)
+    assertUnsupported('jasmine.getEnv()\n', /jasmine\.getEnv/)
   })
 })
