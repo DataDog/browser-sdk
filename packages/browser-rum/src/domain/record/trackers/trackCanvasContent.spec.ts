@@ -19,8 +19,8 @@ describe('trackCanvasContent', () => {
   let canvasManager: CanvasManager
   let tracker: Tracker | undefined
 
-  beforeEach(() => {
-    skipIfOffscreenCanvasIsNotSupported()
+  beforeEach((testContext) => {
+    skipIfOffscreenCanvasIsNotSupported(testContext)
     canvas = document.createElement('canvas')
     context = canvas.getContext('2d')!
     markCanvasDirtySpy = vi.fn()

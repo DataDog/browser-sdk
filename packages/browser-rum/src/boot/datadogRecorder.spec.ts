@@ -96,7 +96,7 @@ describe('startRecording', () => {
         id: 'app-id',
       },
       creation_reason: 'init',
-      end: expect.stringMatching(/^\d{13}$/),
+      end: expect.any(Number),
       has_full_snapshot: true,
       records_count: recordsPerFullSnapshot(),
       session: {
@@ -111,6 +111,7 @@ describe('startRecording', () => {
       index_in_view: 0,
       source: 'browser',
     })
+    expect(String(requests[0].event.end)).toMatch(/^\d{13}$/)
   })
 
   it('flushes the segment when its compressed data reaches the segment bytes limit', async () => {
@@ -200,8 +201,8 @@ describe('startRecording', () => {
     expect(requests[0].segment.records[2].type).toBe(RecordType.FullSnapshot)
   })
 
-  it('flushes queued canvas content before an urgent exit', async () => {
-    skipIfOffscreenCanvasIsNotSupported()
+  it('flushes queued canvas content before an urgent exit', async (context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     // the canvas must exist before recording starts so the initial full snapshot assigns it a node id
@@ -237,8 +238,8 @@ describe('startRecording', () => {
     expect(canvasSendOnExitSpy).toHaveBeenCalledTimes(1)
   })
 
-  it('does not flush queued canvas content when the page is terminated', async () => {
-    skipIfOffscreenCanvasIsNotSupported()
+  it('does not flush queued canvas content when the page is terminated', async (context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
@@ -274,8 +275,8 @@ describe('startRecording', () => {
   })
 
   describe('when calling stop()', () => {
-    it('flushes queued canvas content before stopping collectors', async () => {
-      skipIfOffscreenCanvasIsNotSupported()
+    it('flushes queued canvas content before stopping collectors', async (context) => {
+      skipIfOffscreenCanvasIsNotSupported(context)
       const clock = mockClock()
       const requestIdleCallbackMock = mockRequestIdleCallback()
       const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
@@ -389,7 +390,7 @@ describe('startRecording', () => {
 
   async function readSentRequests(expectedSentRequestCount: number) {
     const calls = await collectAsyncCalls(requestSendSpy, expectedSentRequestCount)
-    return Promise.all(calls.all().map((call) => readReplayPayload(call.args[0])))
+    return Promise.all(calls.map((call) => readReplayPayload(call[0])))
   }
 })
 

@@ -47,8 +47,8 @@ describe('trackCanvasCapture', () => {
     ([privacyLevel]) => privacyLevel !== NodePrivacyLevel.IGNORE
   )
 
-  beforeEach(() => {
-    skipIfOffscreenCanvasIsNotSupported()
+  beforeEach((context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
     clock = mockClock()
     worker = new MockWorker()
     canvas = document.createElement('canvas')

@@ -193,6 +193,12 @@ describe('view events', () => {
     interceptor = interceptRequests()
   }
 
+  // The initial view starts at the time origin: move the clock to `duration` after it, back in time
+  // if needed, without running the timers (like a negative Jasmine clock tick did)
+  function setViewDuration(duration: Duration) {
+    clock.setDate(new Date(Date.now() - relativeNow() + duration))
+  }
+
   beforeEach(() => {
     clock = mockClock()
 
@@ -210,7 +216,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    setViewDuration(VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
@@ -232,7 +238,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    setViewDuration(VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastBridgeMessage = JSON.parse(sendSpy.mock.lastCall![0]) as {
@@ -249,7 +255,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    setViewDuration(VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body

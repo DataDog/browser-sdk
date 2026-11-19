@@ -377,12 +377,8 @@ describe('trackClickActions', () => {
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
-      expect(events[0].frustrationTypes).toEqual(
-        jasmine.arrayWithExactContents([
-          FrustrationType.DEAD_CLICK,
-          FrustrationType.ERROR_CLICK,
-          FrustrationType.RAGE_CLICK,
-        ])
+      expect([...events[0].frustrationTypes].sort()).toEqual(
+        [FrustrationType.DEAD_CLICK, FrustrationType.ERROR_CLICK, FrustrationType.RAGE_CLICK].sort()
       )
     })
 
@@ -462,8 +458,8 @@ describe('trackClickActions', () => {
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
-      expect(events[0].frustrationTypes).toEqual(
-        jasmine.arrayWithExactContents([FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK])
+      expect([...events[0].frustrationTypes].sort()).toEqual(
+        [FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK].sort()
       )
     })
   })

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DeflateEncoder } from '@datadog/browser-core'
-import type { Uint8ArrayBuffer } from '@datadog/js-core/util'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { DeflateEncoderStreamId } from '@datadog/browser-core'
 import { setDebugMode, noop } from '@datadog/js-core/util'

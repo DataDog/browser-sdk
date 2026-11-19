@@ -69,7 +69,7 @@ describe('console collection', () => {
         message: 'foo bar',
         status,
         origin: ErrorSource.CONSOLE,
-        error: whatever(),
+        error: undefined,
         _dd: undefined,
       })
 
@@ -155,10 +155,3 @@ describe('console collection', () => {
     expect(rawLogsEvents[0].rawLogsEvent).toEqual(expect.objectContaining({ foo: 'bar' }))
   })
 })
-
-function whatever() {
-  return {
-    asymmetricMatch: () => true,
-    jasmineToString: () => '<whatever>',
-  }
-}

@@ -148,7 +148,7 @@ describe('preStartLogs', () => {
     strategy.init(DEFAULT_INIT_CONFIGURATION, {} as LogsPublicApi)
     await collectAsyncCalls(handleLogSpy, 1)
 
-    expect(handleLogSpy.calls.all().length).toBe(1)
+    expect(handleLogSpy).toHaveBeenCalledTimes(1)
     expect(getLoggedMessage(0).message.message).toBe('message')
   })
 

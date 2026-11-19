@@ -57,7 +57,11 @@ describe('useOverriddenFlags', () => {
     await flush()
 
     expect(fetchSpy).toHaveBeenCalledTimes(2)
-    expect(get().flags.map((flag) => flag.key)).toEqual(jasmine.arrayWithExactContents(['flag-a', 'flag-b']))
+    expect(
+      get()
+        .flags.map((flag) => flag.key)
+        .sort()
+    ).toEqual(['flag-a', 'flag-b'])
     expect(get().missingKeys.size).toBe(0)
   })
 

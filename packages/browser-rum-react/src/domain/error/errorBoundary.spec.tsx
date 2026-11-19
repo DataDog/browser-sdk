@@ -36,7 +36,7 @@ describe('ErrorBoundary', () => {
     )
     expect(fallbackSpy).toHaveBeenCalled()
     // React calls the component multiple times while rendering
-    fallbackSpy.calls.all().forEach(({ args }) => {
+    fallbackSpy.mock.calls.forEach((args) => {
       expect(args[0]).toEqual({
         error: new Error('error'),
         resetError: expect.any(Function),

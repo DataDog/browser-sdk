@@ -559,8 +559,9 @@ describe('api', () => {
       onThrow(invocation, error, thisArg)
 
       const payload = mockBatchAdd.mock.lastCall![0]
+      expect(payload._dd.debug_ids).toHaveLength(2)
       expect(payload._dd.debug_ids).toEqual(
-        jasmine.arrayWithExactContents([
+        expect.arrayContaining([
           { url: throwableUrl, id: 'throwable-id' },
           { url: entryUrl, id: 'entry-id' },
         ])

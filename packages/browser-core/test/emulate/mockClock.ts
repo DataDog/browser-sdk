@@ -15,7 +15,13 @@ export function mockClock() {
   // how far the system clock was moved away from the monotonic clock by `jumpSystemClock()`
   let systemClockShift = 0
 
-  vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - timeOrigin - systemClockShift)
+  // Vitest's fake `Date.now()` only advances by whole milliseconds, while `tick()` accepts fractional
+  // durations: keep the sub-millisecond part, so `performance.now()` stays precise like a real one.
+  let tickedDuration = 0
+
+  vi.spyOn(performance, 'now').mockImplementation(
+    () => Date.now() - timeOrigin - systemClockShift + (tickedDuration % 1)
+  )
 
   registerCleanupTask(() => vi.useRealTimers())
 
@@ -31,6 +37,7 @@ export function mockClock() {
      */
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
     tick: (ms: number) => {
+      tickedDuration += ms
       vi.advanceTimersByTime(ms)
     },
     setDate: (date: Date) => vi.setSystemTime(date),

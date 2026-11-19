@@ -6,8 +6,8 @@ import { copyCanvasSnapshot, createCanvasSnapshot } from './canvasSnapshot'
 import { bitmapPixels } from './canvasImage.specHelper'
 
 describe('createCanvasSnapshot', () => {
-  beforeEach(() => {
-    skipIfOffscreenCanvasIsNotSupported()
+  beforeEach((context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
   })
 
   it('downscales the snapshot to the configured maximum dimension', () => {
@@ -55,8 +55,8 @@ describe('createCanvasSnapshot', () => {
 })
 
 describe('copyCanvasSnapshot', () => {
-  beforeEach(() => {
-    skipIfOffscreenCanvasIsNotSupported()
+  beforeEach((context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
   })
 
   it('copies the pixels and the canvas dimensions into a new bitmap', () => {

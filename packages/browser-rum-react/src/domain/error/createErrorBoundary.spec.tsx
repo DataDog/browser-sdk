@@ -36,7 +36,7 @@ describe('createErrorBoundary', () => {
     )
 
     expect(fallbackSpy).toHaveBeenCalled()
-    fallbackSpy.calls.all().forEach(({ args }) => {
+    fallbackSpy.mock.calls.forEach((args) => {
       expect(args[0]).toEqual({
         error: new Error('error'),
         resetError: expect.any(Function),
