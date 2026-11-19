@@ -60,7 +60,6 @@ export function startRum(
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
   hooks: Hooks,
-  elementStacks: WeakMap<Element, string>,
   sdkName?: SdkName
 ) {
   const cleanupTasks: Array<() => void> = []
@@ -107,8 +106,7 @@ export function startRum(
     initialViewOptions,
     bufferedDataObservable,
     sdkName,
-    reportError,
-    elementStacks
+    reportError
   )
   cleanupTasks.push(stopRumEventCollection)
   bufferedDataObservable.unbuffer()
@@ -138,8 +136,7 @@ export function startRumEventCollection(
   initialViewOptions: ViewOptions | undefined,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
-  reportError: (message: string) => void,
-  elementStacks: WeakMap<Element, string>
+  reportError: (message: string) => void
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -169,8 +166,7 @@ export function startRumEventCollection(
     hooks,
     domMutationObservable,
     windowOpenObservable,
-    configuration,
-    elementStacks
+    configuration
   )
   cleanupTasks.push(actionCollection.stop)
 
@@ -233,6 +229,7 @@ export function startRumEventCollection(
   )
 
   return {
+    attachElementStack: actionCollection.attachElementStack,
     addAction: actionCollection.addAction,
     startAction: actionCollection.startAction,
     stopAction: actionCollection.stopAction,

@@ -31,8 +31,7 @@ describe('trackManualActions', () => {
       hooks,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(),
-      new WeakMap()
+      mockRumConfiguration()
     )
     registerCleanupTask(actionCollection.stop)
     startAction = actionCollection.startAction

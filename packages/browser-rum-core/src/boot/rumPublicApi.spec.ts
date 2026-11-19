@@ -1,6 +1,6 @@
 import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
-import type { DeflateWorker } from '@datadog/browser-core'
+import type { DeflateWorker, WeakRefConstructor } from '@datadog/browser-core'
 import {
   BufferedDataType,
   display,
@@ -13,6 +13,7 @@ import {
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
+  registerCleanupTask,
   mockClock,
   waitNextMicrotask,
   mockEventBridge,
@@ -29,7 +30,10 @@ import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
 import { startRum } from './startRum'
 
+declare const WeakRef: WeakRefConstructor
+
 const noopStartRum = (): ReturnType<StartRum> => ({
+  attachElementStack: () => undefined,
   addAction: () => undefined,
   addError: () => undefined,
   addEvent: () => undefined,
@@ -107,6 +111,12 @@ describe('rum public api', () => {
   })
 
   describe('attachElementStack', () => {
+    beforeEach(() => {
+      if (typeof WeakRef === 'undefined') {
+        pending('No WeakRef support')
+      }
+    })
+
     it('warns when the element is null', () => {
       const { rumPublicApi } = makeRumPublicApiWithDefaults()
       const warnSpy = spyOn(display, 'warn')
@@ -125,50 +135,84 @@ describe('rum public api', () => {
       expect(await telemetry.getEvents()).toEqual([{ type: 'usage', usage: { feature: 'attach-element-stack' } }])
     })
 
-    it('registers before init without warning and preserves the caller stack at startup', async () => {
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+    it('buffers a weak reference before init and preserves the caller stack at startup', async () => {
+      const attachElementStackSpy = jasmine.createSpy<ReturnType<StartRum>['attachElementStack']>()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: { attachElementStack: attachElementStackSpy },
+      })
       const element = document.createElement('section')
-      const warnSpy = spyOn(display, 'warn')
       function registerFromMfe() {
         rumPublicApi.attachElementStack(element)
       }
       registerFromMfe()
-      expect(warnSpy).not.toHaveBeenCalled()
+      expect(attachElementStackSpy).not.toHaveBeenCalled()
+
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(startRumSpy, 1)
-      const stack = startRumSpy.calls.argsFor(0)[9].get(element)
-      expect(stack).toBeDefined()
+      await collectAsyncCalls(attachElementStackSpy, 1)
+
+      const [elementRef, stack] = attachElementStackSpy.calls.argsFor(0)
+      expect(elementRef instanceof WeakRef).toBeTrue()
+      expect(elementRef.deref()).toBe(element)
       expect(computeStackTrace({ stack }).stack[0].func).toBe('registerFromMfe')
     })
 
-    it('replaces registration after init in the same registry', async () => {
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+    it('captures a new caller stack when registering again after startup', async () => {
+      const attachElementStackSpy = jasmine.createSpy<ReturnType<StartRum>['attachElementStack']>()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: { attachElementStack: attachElementStackSpy },
+      })
       const element = document.createElement('section')
       rumPublicApi.attachElementStack(element)
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(startRumSpy, 1)
-      const registry = startRumSpy.calls.argsFor(0)[9]
-      const firstStack = registry.get(element)
+      await collectAsyncCalls(attachElementStackSpy, 1)
+
       function registerAgain() {
         rumPublicApi.attachElementStack(element)
       }
+      const nextCalls = collectAsyncCalls(attachElementStackSpy, 2)
       registerAgain()
-      expect(registry.get(element)).not.toBe(firstStack)
-      expect(computeStackTrace({ stack: registry.get(element) }).stack[0].func).toBe('registerAgain')
+      await nextCalls
+
+      expect(attachElementStackSpy).toHaveBeenCalledTimes(2)
+      const [elementRef, stack] = attachElementStackSpy.calls.argsFor(1)
+      expect(elementRef.deref()).toBe(element)
+      expect(computeStackTrace({ stack }).stack[0].func).toBe('registerAgain')
     })
 
-    it('preserves a valid registration when stack capture is unavailable', async () => {
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
-      const element = document.createElement('section')
-      rumPublicApi.attachElementStack(element)
+    it('skips stack capture and registration when WeakRef is unavailable', async () => {
+      const attachElementStackSpy = jasmine.createSpy<ReturnType<StartRum>['attachElementStack']>()
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+        startRumResult: { attachElementStack: attachElementStackSpy },
+      })
+      const descriptor = Object.getOwnPropertyDescriptor(window, 'WeakRef')!
+      registerCleanupTask(() => Object.defineProperty(window, 'WeakRef', descriptor))
+      Object.defineProperty(window, 'WeakRef', { value: undefined })
+      const errorSpy = spyOn(window, 'Error').and.callThrough()
+
+      rumPublicApi.attachElementStack(document.createElement('section'))
+      expect(errorSpy).not.toHaveBeenCalled()
+
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       await collectAsyncCalls(startRumSpy, 1)
-      const registry = startRumSpy.calls.argsFor(0)[9]
-      const firstStack = registry.get(element)
+      await waitNextMicrotask()
+
+      expect(attachElementStackSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not forward a registration when stack capture is unavailable', async () => {
+      const attachElementStackSpy = jasmine.createSpy<ReturnType<StartRum>['attachElementStack']>()
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+        startRumResult: { attachElementStack: attachElementStackSpy },
+      })
       const errorSpy = spyOn(window, 'Error').and.returnValue({ name: 'Error', message: '' })
-      rumPublicApi.attachElementStack(element)
+      rumPublicApi.attachElementStack(document.createElement('section'))
       errorSpy.and.callThrough()
-      expect(registry.get(element)).toBe(firstStack)
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      await waitNextMicrotask()
+
+      expect(attachElementStackSpy).not.toHaveBeenCalled()
     })
   })
 
@@ -1440,7 +1484,7 @@ describe('rum public api', () => {
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(startRumSpy, 1)
-      const sdkName = calls.argsFor(0)[10]
+      const sdkName = calls.argsFor(0)[9]
       expect(sdkName).toBe('rum-slim')
     })
   })

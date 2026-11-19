@@ -16,6 +16,7 @@ import type {
   Encoder,
   ResourceType,
   SessionManager,
+  WeakRefConstructor,
 } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
@@ -57,6 +58,8 @@ import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/tr
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRumResult } from './startRum'
 import { startRum } from './startRum'
+
+declare const WeakRef: WeakRefConstructor
 
 export interface StartRecordingOptions {
   force: boolean
@@ -711,6 +714,7 @@ export interface Strategy {
   userContext: ContextManager
   accountContext: ContextManager
 
+  attachElementStack: StartRumResult['attachElementStack']
   addAction: StartRumResult['addAction']
   startAction: StartRumResult['startAction']
   stopAction: StartRumResult['stopAction']
@@ -729,7 +733,6 @@ export function makeRumPublicApi(
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
-  const elementStacks = new WeakMap<Element, string>()
   const trackingConsentState = createTrackingConsentState()
   // RUM only collects console errors
   const bufferedData = startBufferingData([ConsoleApiName.error])
@@ -753,7 +756,6 @@ export function makeRumPublicApi(
         bufferedData.observable,
         telemetry,
         hooks,
-        elementStacks,
         options.sdkName
       )
 
@@ -861,6 +863,9 @@ export function makeRumPublicApi(
     addPlugin: monitor((plugin: RumPlugin) => strategy.addPlugin(plugin)),
 
     attachElementStack: (element) => {
+      if (typeof WeakRef === 'undefined') {
+        return
+      }
       const stack = createHandlingStack('element')
       callMonitored(() => {
         addTelemetryUsage({ feature: 'attach-element-stack' })
@@ -869,7 +874,7 @@ export function makeRumPublicApi(
           return
         }
         if (stack?.includes('\n')) {
-          elementStacks.set(element, stack)
+          strategy.attachElementStack(new WeakRef(element), stack)
         }
       })
     },
