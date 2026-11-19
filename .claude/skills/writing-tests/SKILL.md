@@ -15,7 +15,7 @@ description: Use when you write or change unit tests or end-to-end tests in brow
 
 ## Unit Tests
 
-- Test framework: Jasmine API on Vitest Browser Mode (via a shim in `test/unit-vitest/`), Karma for BrowserStack. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
+- Test framework: Jasmine API on Vitest Browser Mode (via a shim in `test/unit-vitest/`). Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
 - Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Prefer `collectAsyncCalls(spy, n)` over `waitFor(() => spy.calls.count() > 0)` for waiting on spy calls

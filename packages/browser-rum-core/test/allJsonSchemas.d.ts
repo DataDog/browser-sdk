@@ -1,1 +1,0 @@
-export const allJsonSchemas: object[]
