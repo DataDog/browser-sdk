@@ -81,7 +81,7 @@ A Chrome window opens automatically with the extension loaded, DevTools open, an
 
 1. In Chrome, navigate to [chrome://extensions](chrome://extensions) and enable _Developer Mode_.
 2. Click _Load unpacked_ and select the `dist/chrome-mv3/` folder.
-3. Open DevTools — the extension is available in the **Browser SDK** panel.
+3. Open DevTools — the extension is available in the **Datadog Browser SDK** panel.
 
 > **Tip:** You can also load the `dist/chrome-mv3-dev/` folder for a development build with hot reload.
 

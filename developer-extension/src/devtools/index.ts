@@ -1,1 +1,1 @@
-void chrome.devtools.panels.create('Browser SDK', 'icon.png', 'panel.html')
+void chrome.devtools.panels.create('Datadog Browser SDK', 'icon.png', 'panel.html')
