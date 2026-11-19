@@ -386,8 +386,9 @@ function findFrameIndex(
 }
 
 // After an `await`, the stack shows a caller as an async frame located at the `await` instead of the
-// call, as in `async main` (Chrome) or `async*main` (Firefox), so only its line can be compared.
-const ASYNC_FRAME_PREFIX = /^async[ *]/
+// call, as in `async main` (Chrome) or `async*main` (Firefox), so only its line can be compared. An
+// anonymous caller is just `async` in Chrome.
+const ASYNC_FRAME_PREFIX = /^async(?:[ *]|$)/
 
 function isSameLocation(a: StackFrame, b: StackFrame): boolean {
   if (a.url !== b.url || a.line !== b.line) {
