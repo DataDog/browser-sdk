@@ -97,9 +97,10 @@ export function exceptionReplayPlugin(): ExceptionReplayPlugin {
       }
 
       // Until RUM starts, its session isn't known yet, and RUM reports the errors it buffered once
-      // it starts, so they're captured, unless RUM is waiting for tracking consent
-      registerExceptionReplayPlugin(() =>
-        rumStarted ? publicApi.getInternalContext() !== undefined : isTrackingConsentGranted()
+      // it starts, so they're captured, unless RUM is waiting for tracking consent. Consent is
+      // still checked once RUM starts: the event bridge's session outlives it.
+      registerExceptionReplayPlugin(
+        () => isTrackingConsentGranted() && (!rumStarted || publicApi.getInternalContext() !== undefined)
       )
 
       registerAssembleEventHook(({ eventType, domainContext }) => {

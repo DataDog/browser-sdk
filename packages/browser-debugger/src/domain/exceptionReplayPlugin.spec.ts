@@ -142,6 +142,14 @@ describe('exceptionReplayPlugin', () => {
     expect(assemble('error', error)).toBe(SKIPPED)
   })
 
+  it('should not capture errors once tracking consent is withdrawn, even if the session is still tracked', () => {
+    // The event bridge's session stays tracked when consent is withdrawn
+    initPlugin({ isTrackingConsentGranted: false })
+    const error = catchError(throwingFunction)
+
+    expect(assemble('error', error)).toBe(SKIPPED)
+  })
+
   it('should not start with a RUM Browser SDK that does not tell whether tracking consent is granted', () => {
     const displaySpy = spyOn(display, 'warn')
 
