@@ -10,15 +10,9 @@ import {
 import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { Subscription, Context, ContextValue } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
+import { PageExitReason, shallowClone, display, createContextManager } from '@datadog/browser-core'
 import {
-  PageExitReason,
-  shallowClone,
-  display,
-  createContextManager,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-} from '@datadog/browser-core'
-import {
+  globalObject,
   mockable,
   setInterval,
   clearInterval,
@@ -228,7 +222,7 @@ function newView(
   let documentVersion = 0
   let endClocks: ClocksState | undefined
   let manualLoadingTime: Duration | undefined
-  const location = shallowClone(mockable(window.location))
+  const location = shallowClone(mockable(globalObject.location))
   const contextManager = createContextManager()
 
   let sessionIsActive = true
@@ -262,7 +256,7 @@ function newView(
   const isSoftNavigationTracked =
     loadingType === ViewLoadingType.ROUTE_CHANGE &&
     !configuration.trackViewMetricsManually &&
-    isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION) &&
+    configuration.betaTrackSoftNavigations &&
     supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION)
 
   const commonViewMetricsTracking = !configuration.trackViewMetricsManually
