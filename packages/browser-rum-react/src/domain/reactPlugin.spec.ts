@@ -1,6 +1,11 @@
 import { version as reactVersion } from 'react'
 import { toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
+import type {
+  OnRumStartOptions,
+  RumInitConfiguration,
+  RumPluginOnInitOptions,
+  RumPublicApi,
+} from '@datadog/browser-rum-core'
 import { onRumInit, onRumStart, reactPlugin, resetReactPlugin, setReactRouterType } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
@@ -98,14 +103,14 @@ describe('reactPlugin', () => {
     const addErrorSpy = jasmine.createSpy()
     onRumStart(callbackSpy)
 
-    reactPlugin().onRumStart({ addError: addErrorSpy })
+    reactPlugin().onRumStart({ addError: addErrorSpy } as unknown as OnRumStartOptions)
 
     expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
   })
 
   it('calls onRumStart subscribers immediately if already started', () => {
     const addErrorSpy = jasmine.createSpy()
-    reactPlugin().onRumStart({ addError: addErrorSpy })
+    reactPlugin().onRumStart({ addError: addErrorSpy } as unknown as OnRumStartOptions)
 
     const callbackSpy = jasmine.createSpy()
     onRumStart(callbackSpy)

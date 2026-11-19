@@ -1,6 +1,7 @@
 import type {
   RumInitConfiguration,
   RumPluginOnInitOptions,
+  OnRumStartOptions,
   RumPublicApi,
   StartRumResult,
 } from '@datadog/browser-rum-core'
@@ -28,9 +29,7 @@ export function initializeReactPlugin({
     publicApi: publicApi as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
   } as RumPluginOnInitOptions)
-  plugin.onRumStart({
-    addError,
-  })
+  plugin.onRumStart({ addError } as OnRumStartOptions)
 
   registerCleanupTask(() => {
     resetReactPlugin()

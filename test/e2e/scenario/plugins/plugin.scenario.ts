@@ -15,8 +15,8 @@ declare global {
 function createPlugin(): RumPlugin {
   return {
     name: 'test-plugin',
-    onRumStart: ({ addEvent }) => {
-      window.TEST_PLUGIN = { addEvent }
+    onRumStart: (options) => {
+      window.TEST_PLUGIN = options
     },
   }
 }
