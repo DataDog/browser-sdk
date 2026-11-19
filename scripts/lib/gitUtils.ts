@@ -71,7 +71,7 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
 }
 
 /**
- * Find a GitHub release by its tag, including draft releases. Only the 100 most recent releases are
+ * Find a GitHub release by its tag, including draft releases. Only the 10 most recent releases are
  * considered, which is enough to find the release being deployed.
  *
  * @param tag - The tag of the release, e.g. `v1.2.3`.
@@ -80,7 +80,7 @@ export async function findGitHubRelease(tag: string): Promise<GitHubRelease | un
   // Draft releases are only listed for tokens with push access, and `GET releases/tags/{tag}`
   // ignores them.
   using releaseToken = getGithubReleaseToken()
-  const releases = await callGitHubApi<GitHubRelease[]>('GET', 'releases?per_page=100', releaseToken)
+  const releases = await callGitHubApi<GitHubRelease[]>('GET', 'releases?per_page=10', releaseToken)
   return releases.find((release) => release.tag_name === tag)
 }
 
