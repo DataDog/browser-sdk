@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
 import rumReactPackageJson from '../../packages/browser-rum-react/package.json' with { type: 'json' }
+import rumAngularPackageJson from '../../packages/browser-rum-angular/package.json' with { type: 'json' }
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
@@ -24,6 +25,7 @@ type AppBuilderOptions = Record<string, unknown>
 interface TestAppPackageJson {
   name: string
   dependencies: Record<string, string>
+  devDependencies: Record<string, string>
 }
 
 const APPS: AppConfig[] = [
@@ -32,7 +34,6 @@ const APPS: AppConfig[] = [
   { name: 'react-shopist-like' },
   { name: 'microfrontend' },
   { name: 'nextjs' },
-  { name: 'angular-app' },
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
   { name: 'instrumentation-overhead' },
@@ -42,6 +43,10 @@ const APPS: AppConfig[] = [
   { name: 'tanstack-router-app' },
   { name: 'react-router-v6-app', builderFn: buildReactRouterV6App, deps: ['react-router-app'] },
   { name: 'react-router-v7-app', builderFn: buildReactRouterV7App, deps: ['react-router-app'] },
+
+  // Angular apps
+  { name: 'angular-app' },
+  { name: 'angular-v15-app', builderFn: buildAngularV15App, deps: ['angular-app'] },
 
   // Vue Router apps
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
@@ -304,6 +309,33 @@ async function buildNuxtVueRouterV4App() {
       packageJson.dependencies.nuxt = '3.21.6'
       packageJson.dependencies['vue-router'] = '4.6.4'
     })
+  })
+}
+
+async function buildAngularV15App() {
+  const angularVersion = rumAngularPackageJson.devDependencies['@angular/core-15'].replace(/^npm:.*@/, '')
+
+  await buildGeneratedApp('angular-app', 'angular-v15-app', async (appPath) => {
+    await modifyPackageJson(appPath, (packageJson) => {
+      packageJson.name = 'angular-v15-app'
+      for (const name of Object.keys(packageJson.dependencies)) {
+        if (name.startsWith('@angular/')) {
+          packageJson.dependencies[name] = angularVersion
+        }
+      }
+      packageJson.devDependencies['@ngtools/webpack'] = angularVersion
+      // Angular 15 supports TypeScript >=4.8.2 <5.0
+      packageJson.devDependencies.typescript = '4.9.5'
+    })
+
+    // TypeScript 4.9 doesn't support the 'bundler' module resolution
+    await modifyFile(path.join(appPath, 'tsconfig.json'), (content: string) =>
+      content.replace('"moduleResolution": "bundler"', '"moduleResolution": "node"')
+    )
+
+    await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
+      content.replaceAll('angular-app.js', 'angular-v15-app.js')
+    )
   })
 }
 
