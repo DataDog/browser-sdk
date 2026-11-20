@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/mutation-payload-schema.json",
+  "title": "BrowserMutationPayload",
+  "type": "object",
+  "description": "Browser-specific. Schema of a MutationPayload.",
+  "allOf": [
+    {
+      "required": ["adds", "removes", "texts", "attributes"],
+      "properties": {
+        "adds": {
+          "type": "array",
+          "items": {
+            "$ref": "node-added-mutation-schema.json"
+          },
+          "description": "Contains the newly added nodes."
+        },
+        "removes": {
+          "type": "array",
+          "items": {
+            "$ref": "node-removed-mutation-schema.json"
+          },
+          "description": "Contains the removed nodes."
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "attribute-mutation-schema.json"
+          },
+          "description": "Contains the updated attribute mutations."
+        },
+        "texts": {
+          "type": "array",
+          "items": {
+            "$ref": "text-mutation-schema.json"
+          },
+          "description": "Contains the updated text mutations."
+        }
+      }
+    }
+  ]
+}

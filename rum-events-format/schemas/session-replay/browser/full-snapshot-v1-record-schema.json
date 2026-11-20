@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/full-snapshot-v1-record-schema.json",
+  "title": "BrowserFullSnapshotV1Record",
+  "type": "object",
+  "description": "Browser-specific. Schema of a Record type which contains a full snapshot of a document in V1 format.",
+  "allOf": [
+    {
+      "$ref": "../common/_slot-supported-common-record-schema.json"
+    },
+    {
+      "required": ["data", "type"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 2,
+          "readOnly": true
+        },
+        "format": {
+          "title": "SnapshotFormatV1",
+          "description": "The V1 snapshot format.",
+          "const": 0,
+          "readOnly": true
+        },
+        "data": {
+          "$ref": "node-schema.json"
+        }
+      }
+    }
+  ]
+}

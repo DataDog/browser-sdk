@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/visual-viewport-change-schema.json",
+  "title": "VisualViewportChange",
+  "description": "Browser-specific. Schema representing a change to the visual viewport, defined in terms of the web platform VisualViewport API.",
+  "type": "array",
+  "minItems": 7,
+  "items": [
+    {
+      "title": "VisualViewportOffsetLeft",
+      "description": "The offset of the left edge of the visual viewport from the left edge of the layout viewport in CSS pixels.",
+      "type": "number"
+    },
+    {
+      "title": "VisualViewportOffsetTop",
+      "description": "The offset of the top edge of the visual viewport from the top edge of the layout viewport in CSS pixels.",
+      "type": "number"
+    },
+    {
+      "title": "VisualViewportPageLeft",
+      "description": "The x coordinate of the visual viewport relative to the initial containing block origin of the top edge in CSS pixels.",
+      "type": "number"
+    },
+    {
+      "title": "VisualViewportPageTop",
+      "description": "The y coordinate of the visual viewport relative to the initial containing block origin of the top edge in CSS pixels.",
+      "type": "number"
+    },
+    {
+      "title": "VisualViewportWidth",
+      "description": "The width of the visual viewport in CSS pixels.",
+      "type": "number"
+    },
+    {
+      "title": "VisualViewportHeight",
+      "description": "The height of the visual viewport in CSS pixels.",
+      "type": "number"
+    },
+    {
+      "title": "VisualViewportScale",
+      "description": "The pinch-zoom scaling factor applied to the visual viewport.",
+      "type": "number"
+    }
+  ],
+  "additionalItems": false
+}

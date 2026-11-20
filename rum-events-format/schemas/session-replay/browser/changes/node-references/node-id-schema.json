@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/node-references/node-id-schema.json",
+  "title": "NodeId",
+  "description": "Browser-specific. Schema representing the ID of a DOM node.",
+  "type": "integer",
+  "minimum": 0
+}

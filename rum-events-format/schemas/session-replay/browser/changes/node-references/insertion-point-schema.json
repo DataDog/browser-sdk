@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/node-references/insertion-point-schema.json",
+  "title": "InsertionPoint",
+  "description": "Browser-specific. Schema representing the insertion point of a node which is being added to the document.",
+  "oneOf": [
+    { "$ref": "append-child-insertion-point-schema.json" },
+    { "$ref": "insert-after-previous-insertion-point-schema.json" },
+    { "$ref": "insert-before-insertion-point-schema.json" },
+    { "$ref": "root-insertion-point-schema.json" }
+  ]
+}

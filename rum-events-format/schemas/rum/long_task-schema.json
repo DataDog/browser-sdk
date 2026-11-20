@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/long_task-schema.json",
+  "$comment": "Long animation frames are ingested as long tasks",
+  "title": "RumLongTaskEvent",
+  "type": "object",
+  "description": "Schema of all properties of a Long Task event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "$ref": "_action-child-schema.json"
+    },
+    {
+      "$ref": "_view-container-schema.json"
+    },
+    {
+      "required": ["type", "view", "long_task"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "long_task",
+          "readOnly": true
+        },
+        "view": {
+          "type": "object",
+          "readOnly": true
+        },
+        "long_task": {
+          "type": "object",
+          "description": "Long Task properties",
+          "required": ["duration"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "UUID of the long task or long animation frame",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            },
+            "start_time": {
+              "type": "number",
+              "description": "Start time of the long animation frame",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "entry_type": {
+              "type": "string",
+              "description": "Type of the event: long task or long animation frame",
+              "enum": ["long-task", "long-animation-frame"],
+              "readOnly": true
+            },
+            "duration": {
+              "type": "integer",
+              "description": "Duration in ns of the long task or long animation frame",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "blocking_duration": {
+              "type": "integer",
+              "description": "Duration in ns for which the animation frame was being blocked",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "render_start": {
+              "type": "number",
+              "description": "Time difference (in ns) between the timeOrigin and the start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "style_and_layout_start": {
+              "type": "number",
+              "description": "Time difference (in ns) between the timeOrigin and the start time of the time period spent in style and layout calculations",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "first_ui_event_timestamp": {
+              "type": "number",
+              "description": "Time difference (in ns) between the timeOrigin and the start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "is_frozen_frame": {
+              "type": "boolean",
+              "description": "Whether this long task is considered a frozen frame",
+              "readOnly": true
+            },
+            "scripts": {
+              "type": "array",
+              "description": "A list of long scripts that were executed over the course of the long frame",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "duration": {
+                    "type": "integer",
+                    "description": "Duration in ns between startTime and when the subsequent microtask queue has finished processing",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "pause_duration": {
+                    "type": "integer",
+                    "description": "Duration in ns of the total time spent in 'pausing' synchronous operations (alert, synchronous XHR)",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "forced_style_and_layout_duration": {
+                    "type": "integer",
+                    "description": "Duration in ns of the the total time spent processing forced layout and style inside this function",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "start_time": {
+                    "type": "number",
+                    "description": "Time the entry function was invoked",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "execution_start": {
+                    "type": "number",
+                    "description": "Time after compilation",
+                    "minimum": 0,
+                    "readOnly": true
+                  },
+                  "source_url": {
+                    "type": "string",
+                    "description": "The script resource name where available (or empty if not found)"
+                  },
+                  "source_function_name": {
+                    "type": "string",
+                    "description": "The script function name where available (or empty if not found)",
+                    "readOnly": true
+                  },
+                  "source_char_position": {
+                    "type": "integer",
+                    "description": "The script character position where available (or -1 if not found)",
+                    "readOnly": true
+                  },
+                  "invoker": {
+                    "type": "string",
+                    "description": "Information about the invoker of the script"
+                  },
+                  "invoker_type": {
+                    "type": "string",
+                    "description": "Type of the invoker of the script",
+                    "enum": [
+                      "user-callback",
+                      "event-listener",
+                      "resolve-promise",
+                      "reject-promise",
+                      "classic-script",
+                      "module-script"
+                    ],
+                    "readOnly": true
+                  },
+                  "window_attribution": {
+                    "type": "string",
+                    "description": "The container (the top-level document, or an <iframe>) the long animation frame occurred in",
+                    "readOnly": true
+                  }
+                }
+              },
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "_dd": {
+          "type": "object",
+          "description": "Internal properties",
+          "properties": {
+            "discarded": {
+              "type": "boolean",
+              "description": "Whether the long task should be discarded or indexed",
+              "readOnly": true
+            },
+            "profiling": {
+              "type": "object",
+              "description": "Profiling context",
+              "allOf": [{ "$ref": "./_profiling-internal-context-schema.json" }]
+            },
+            "debug_ids": {
+              "type": "array",
+              "description": "Mapping of source file URLs to their debug IDs for source map deobfuscation",
+              "items": {
+                "type": "object",
+                "description": "Association between a source file URL and its debug ID",
+                "required": ["url", "id"],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "URL of the source file"
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Debug ID (UUID) for the source file",
+                    "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+                  }
+                }
+              }
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

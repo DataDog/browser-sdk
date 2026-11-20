@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/record-schema.json",
+  "title": "Record",
+  "description": "Schema of a Session Replay Record.",
+  "oneOf": [
+    {
+      "$ref": "browser/record-schema.json"
+    },
+    {
+      "$ref": "mobile/record-schema.json"
+    }
+  ]
+}

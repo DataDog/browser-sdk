@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "telemetry/debug-schema.json",
+  "title": "TelemetryDebugEvent",
+  "type": "object",
+  "description": "Schema of all properties of a telemetry debug event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "required": ["telemetry"],
+      "properties": {
+        "telemetry": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "The telemetry log information",
+          "required": ["status", "message"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Telemetry type",
+              "const": "log"
+            },
+            "status": {
+              "type": "string",
+              "description": "Level/severity of the log",
+              "const": "debug"
+            },
+            "message": {
+              "type": "string",
+              "description": "Body of the log"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "profiling/mobile/profile-event-schema.json",
+  "title": "MobileProfileEvent",
+  "description": "Schema of the Mobile SDK Profile Event metadata.",
+  "allOf": [
+    {
+      "$ref": "../_common-schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "_dd": {
+          "type": "object",
+          "description": "Datadog internal metadata.",
+          "properties": {
+            "boot_ntp": {
+              "type": "integer",
+              "description": "NTP-corrected device boot timestamp, in nanoseconds.",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "error": {
+          "type": "object",
+          "description": "Error properties.",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of error IDs.",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/vital-websocket-open-schema.json",
+  "title": "RumVitalWebsocketOpenEvent",
+  "type": "object",
+  "description": "Schema for the vital reported when a WebSocket connection opens, then repeatedly as a heartbeat while it stays open. Reported with vital.name websocket_open",
+  "allOf": [
+    {
+      "$ref": "_vital-websocket-common-schema.json"
+    },
+    {
+      "required": ["vital"],
+      "properties": {
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["websocket"],
+          "properties": {
+            "websocket": {
+              "type": "object",
+              "description": "WebSocket properties",
+              "required": ["connecting_duration", "open_date", "snapshot_version", "snapshot"],
+              "properties": {
+                "connecting_duration": {
+                  "type": "integer",
+                  "description": "Interval between the connecting date and the open date of the connection, in nanoseconds",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "open_date": {
+                  "type": "integer",
+                  "description": "Date the connection opened, in ms from epoch. Computed from the connecting date and the time elapsed since, measured on a monotonic clock",
+                  "minimum": 0,
+                  "readOnly": true
+                },
+                "selected_protocol": {
+                  "type": "string",
+                  "description": "Subprotocol the server selected. Omitted when the server selected none",
+                  "readOnly": false
+                },
+                "selected_extensions": {
+                  "type": "string",
+                  "description": "Extensions the server negotiated, as the single string the connection exposes them as. Omitted when none was negotiated",
+                  "readOnly": true
+                },
+                "snapshot_version": {
+                  "type": "integer",
+                  "description": "Version of the snapshot within its connection, starting at 1 and incremented on every websocket_open vital and on the websocket_closed vital, so that they can be ordered when they are received out of sequence",
+                  "minimum": 1,
+                  "readOnly": true
+                },
+                "snapshot": {
+                  "type": "object",
+                  "description": "Values of the connection at the time the vital was reported",
+                  "allOf": [
+                    {
+                      "$ref": "_vital-websocket-snapshot-schema.json"
+                    }
+                  ],
+                  "readOnly": true
+                }
+              },
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

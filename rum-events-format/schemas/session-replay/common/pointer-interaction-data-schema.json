@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/pointer-interaction-data-schema.json",
+  "title": "PointerInteractionData",
+  "type": "object",
+  "description": "Schema of a PointerInteractionData.",
+  "allOf": [
+    {
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 9,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        }
+      }
+    },
+    {
+      "$ref": "pointer-interaction-schema.json"
+    }
+  ]
+}

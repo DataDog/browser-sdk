@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/view-end-record-schema.json",
+  "title": "ViewEndRecord",
+  "type": "object",
+  "description": "Schema of a Record which signifies that view lifecycle ended.",
+  "allOf": [
+    {
+      "$ref": "_slot-supported-common-record-schema.json"
+    },
+    {
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 7,
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

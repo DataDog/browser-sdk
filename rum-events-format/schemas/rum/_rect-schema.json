@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_rect-schema.json",
+  "title": "RumRect",
+  "type": "object",
+  "description": "Schema for DOMRect-like rectangles describing an element's bounding client rect",
+  "required": ["x", "y", "width", "height"],
+  "properties": {
+    "x": {
+      "type": "number",
+      "description": "The x coordinate of the element's origin",
+      "readOnly": true
+    },
+    "y": {
+      "type": "number",
+      "description": "The y coordinate of the element's origin",
+      "readOnly": true
+    },
+    "width": {
+      "type": "number",
+      "description": "The element's width",
+      "readOnly": true
+    },
+    "height": {
+      "type": "number",
+      "description": "The element's height",
+      "readOnly": true
+    }
+  }
+}

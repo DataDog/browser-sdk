@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_vital-common-schema.json",
+  "title": "RumVitalEventCommonProperties",
+  "type": "object",
+  "description": "Schema of common properties for a Vital event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "$ref": "_view-container-schema.json"
+    },
+    {
+      "required": ["type", "view", "vital"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "vital",
+          "readOnly": true
+        },
+        "view": {
+          "type": "object",
+          "readOnly": true
+        },
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "UUID of the vital",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $",
+              "readOnly": true
+            },
+            "description": {
+              "type": "string",
+              "description": "Description of the vital. It can be used as a secondary identifier (URL, React component name...)",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "_dd": {
+          "type": "object",
+          "description": "Internal properties",
+          "properties": {
+            "profiling": {
+              "type": "object",
+              "description": "Profiling context",
+              "allOf": [{ "$ref": "./_profiling-internal-context-schema.json" }]
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

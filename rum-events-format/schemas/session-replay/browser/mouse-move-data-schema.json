@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/mouse-move-data-schema.json",
+  "title": "MousemoveData",
+  "type": "object",
+  "description": "Browser-specific. Schema of a MousemoveData.",
+  "required": ["source", "positions"],
+  "properties": {
+    "source": {
+      "type": "integer",
+      "enum": [1, 6],
+      "description": "The source of this type of incremental data.",
+      "readOnly": true
+    },
+    "positions": {
+      "type": "array",
+      "description": "Positions reported for this MousemoveData.",
+      "items": {
+        "$ref": "mouse-position-schema.json"
+      }
+    }
+  }
+}

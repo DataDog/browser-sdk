@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/vital-duration-schema.json",
+  "title": "RumVitalDurationEvent",
+  "type": "object",
+  "description": "Schema for a duration vital event.",
+  "allOf": [
+    {
+      "$ref": "_vital-common-schema.json"
+    },
+    {
+      "properties": {
+        "vital": {
+          "type": "object",
+          "description": "Vital properties",
+          "required": ["type", "duration"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of the vital.",
+              "const": "duration",
+              "readOnly": true
+            },
+            "duration": {
+              "type": "number",
+              "description": "Duration of the vital in nanoseconds.",
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

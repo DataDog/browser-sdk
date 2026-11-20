@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/scroll-data-schema.json",
+  "title": "ScrollData",
+  "type": "object",
+  "description": "Browser-specific. Schema of a ScrollData.",
+  "allOf": [
+    {
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 3,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        }
+      }
+    },
+    {
+      "$ref": "scroll-position-schema.json"
+    }
+  ]
+}

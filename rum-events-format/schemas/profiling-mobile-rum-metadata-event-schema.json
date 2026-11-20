@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "profiling-mobile-rum-metadata-event-schema.json",
+  "title": "MobileProfileRumMetadataEvent",
+  "description": "Schema of the Mobile SDK RUM Metadata event(s) attached as auxiliary array to Profile Event.",
+  "$ref": "profiling/mobile/profile-rum-metadata-event-schema.json"
+}

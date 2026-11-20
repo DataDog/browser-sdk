@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/remove-node-change-schema.json",
+  "title": "RemoveNodeChange",
+  "description": "Browser-specific. Schema representing the removal of a node from the document.",
+  "$ref": "node-references/node-id-schema.json"
+}

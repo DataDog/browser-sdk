@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "profiling/_common-schema.json",
+  "title": "ProfileCommonProperties",
+  "type": "object",
+  "description": "Schema of a Profile Event metadata. Contains attributes shared by all profiles.",
+  "required": ["application", "attachments", "start", "end", "family", "runtime", "version", "tags_profiler"],
+  "properties": {
+    "application": {
+      "type": "object",
+      "description": "Application properties.",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Application ID.",
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    },
+    "session": {
+      "type": "object",
+      "description": "Session properties.",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Session ID.",
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    },
+    "view": {
+      "type": "object",
+      "description": "View properties.",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of view IDs.",
+          "readOnly": true
+        },
+        "name": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of view names.",
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    },
+    "long_task": {
+      "type": "object",
+      "description": "Long task properties.",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of long task IDs.",
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    },
+    "vital": {
+      "type": "object",
+      "description": "Vital properties.",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of vital IDs.",
+          "readOnly": true
+        },
+        "label": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of vital labels.",
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "readOnly": true
+      },
+      "description": "List of attachment filenames.",
+      "readOnly": true
+    },
+    "start": {
+      "type": "string",
+      "description": "Start time as ISO 8601 date string (yyyy-MM-dd'T'HH:mm:ss.SSS'Z').",
+      "readOnly": true
+    },
+    "end": {
+      "type": "string",
+      "description": "End time marking when the profile ended, as ISO 8601 date string (yyyy-MM-dd'T'HH:mm:ss.SSS'Z').",
+      "readOnly": true
+    },
+    "family": {
+      "type": "string",
+      "enum": ["android", "chrome", "ios"],
+      "description": "Profiler family.",
+      "readOnly": true
+    },
+    "runtime": {
+      "type": "string",
+      "enum": ["android", "chrome", "ios"],
+      "description": "Runtime environment.",
+      "readOnly": true
+    },
+    "version": {
+      "type": "integer",
+      "description": "Profile ingestion event version.",
+      "readOnly": true
+    },
+    "tags_profiler": {
+      "type": "string",
+      "description": "Comma-separated profiler tags.",
+      "readOnly": true
+    }
+  }
+}

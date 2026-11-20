@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/text-style-schema.json",
+  "title": "TextStyle",
+  "type": "object",
+  "description": "Schema of all properties of a TextStyle.",
+  "allOf": [
+    {
+      "required": ["color", "family", "size"],
+      "properties": {
+        "family": {
+          "type": "string",
+          "description": "The preferred font family collection, ordered by preference and formatted as a String list: e.g. Century Gothic, Verdana, sans-serif",
+          "readOnly": true
+        },
+        "size": {
+          "type": "integer",
+          "description": "The font size in pixels.",
+          "readOnly": true
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[A-Fa-f0-9]{6}([A-Fa-f0-9]{2})?$",
+          "description": "The font color as a string hexadecimal. Follows the #RRGGBBAA color format with the alpha value as optional.",
+          "readOnly": true
+        },
+        "truncationMode": {
+          "type": "string",
+          "description": "Defines how text should be truncated when it exceeds the wireframe bounds. If omitted, text wraps naturally.",
+          "enum": ["clip", "head", "tail", "middle"],
+          "readOnly": true
+        }
+      },
+      "readOnly": true
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/wireframe-update-mutation-schema.json",
+  "title": "WireframeUpdateMutation",
+  "type": "object",
+  "description": "Schema of a WireframeUpdateMutation type.",
+  "oneOf": [
+    {
+      "$ref": "text-wireframe-update-schema.json"
+    },
+    {
+      "$ref": "shape-wireframe-update-schema.json"
+    },
+    {
+      "$ref": "image-wireframe-update-schema.json"
+    },
+    {
+      "$ref": "placeholder-wireframe-update-schema.json"
+    },
+    {
+      "$ref": "webview-wireframe-update-schema.json"
+    },
+    {
+      "$ref": "embedded-content-wireframe-update-schema.json"
+    }
+  ]
+}

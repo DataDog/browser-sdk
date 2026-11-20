@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-opacity-modifier-schema.json",
+  "title": "CompositionLayerOpacityModifier",
+  "type": "object",
+  "description": "Opacity applied to the composed layer output at this point in the modifier order.",
+  "required": ["type", "value"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "opacity",
+      "description": "The type of the modifier.",
+      "readOnly": true
+    },
+    "value": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Opacity value from 0 to 1.",
+      "readOnly": true
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_vital-websocket-message-direction-schema.json",
+  "title": "RumVitalWebsocketMessageDirection",
+  "type": "object",
+  "description": "Schema of the messages observed in one direction of a WebSocket connection",
+  "required": ["message_count", "message_size_total", "message_size_max", "longest_silence"],
+  "properties": {
+    "message_count": {
+      "type": "integer",
+      "description": "Number of messages observed in this direction since the connection opened",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "message_size_total": {
+      "type": "integer",
+      "description": "Sum of the payload sizes of the messages observed in this direction, in bytes",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "message_size_max": {
+      "type": "integer",
+      "description": "Size of the largest single payload observed in this direction, in bytes. 0 while no message has been observed",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "longest_silence": {
+      "type": "integer",
+      "description": "Longest interval between two consecutive messages observed in this direction, in nanoseconds, including the still-open interval since the last message.",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "time_to_first_message": {
+      "type": "integer",
+      "description": "Interval between the open date of the connection and the first message observed in this direction, in nanoseconds. Omitted until a first message has been observed",
+      "minimum": 0,
+      "readOnly": true
+    },
+    "silence_before_close": {
+      "type": "integer",
+      "description": "Interval between the last message observed in this direction and the closed date of the connection, in nanoseconds. Set on the websocket_closed vital only, and only when at least one message has been observed in this direction",
+      "minimum": 0,
+      "readOnly": true
+    }
+  },
+  "readOnly": true
+}

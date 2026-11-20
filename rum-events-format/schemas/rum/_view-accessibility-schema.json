@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_view-accessibility-schema.json",
+  "title": "ViewAccessibilityProperties",
+  "type": "object",
+  "description": "Compact representation of accessibility features for a view",
+  "readOnly": true,
+  "properties": {
+    "text_size": {
+      "type": "string",
+      "description": "User’s preferred text scale relative to the default system size.",
+      "readOnly": true
+    },
+    "screen_reader_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether a screen reader is currently active.",
+      "readOnly": true
+    },
+    "bold_text_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the system-wide bold text accessibility setting is enabled.",
+      "readOnly": true
+    },
+    "reduce_transparency_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the system-wide reduce transparency setting is enabled.",
+      "readOnly": true
+    },
+    "reduce_motion_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the system-wide reduce motion setting is enabled.",
+      "readOnly": true
+    },
+    "button_shapes_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the system-wide button shapes setting is enabled.",
+      "readOnly": true
+    },
+    "invert_colors_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the system-wide color inversion setting is enabled.",
+      "readOnly": true
+    },
+    "increase_contrast_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the system-wide increase contrast setting is enabled.",
+      "readOnly": true
+    },
+    "assistive_switch_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether an alternative input method like Switch Control or Switch Access is currently enabled.",
+      "readOnly": true
+    },
+    "assistive_touch_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the system-wide AssistiveTouch feature is currently enabled.",
+      "readOnly": true
+    },
+    "video_autoplay_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the video autoplay setting is enabled in the system or application.",
+      "readOnly": true
+    },
+    "closed_captioning_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether closed captioning is enabled for media playback.",
+      "readOnly": true
+    },
+    "mono_audio_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the system-wide mono audio setting is enabled.",
+      "readOnly": true
+    },
+    "shake_to_undo_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the Shake to Undo feature is enabled.",
+      "readOnly": true
+    },
+    "reduced_animations_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the user prefers reduced animations or cross-fade transitions.",
+      "readOnly": true
+    },
+    "should_differentiate_without_color": {
+      "type": "boolean",
+      "description": "Indicates whether the system should differentiate interface elements without relying solely on color.",
+      "readOnly": true
+    },
+    "grayscale_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the device display is currently using grayscale mode.",
+      "readOnly": true
+    },
+    "single_app_mode_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the device is currently locked to a single app through Guided Access or Screen Pinning.",
+      "readOnly": true
+    },
+    "on_off_switch_labels_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether on/off switch labels are enabled in the system settings.",
+      "readOnly": true
+    },
+    "speak_screen_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the Speak Screen feature is enabled.",
+      "readOnly": true
+    },
+    "speak_selection_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the text-to-speech selection feature is enabled.",
+      "readOnly": true
+    },
+    "rtl_enabled": {
+      "type": "boolean",
+      "description": "Indicates whether the right-to-left support is enabled.",
+      "readOnly": true
+    }
+  }
+}

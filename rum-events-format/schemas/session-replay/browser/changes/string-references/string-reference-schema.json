@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/string-references/string-reference-schema.json",
+  "title": "StringReference",
+  "description": "Browser-specific. Schema representing a string, expressed as an index into the string table.",
+  "type": "integer",
+  "minimum": 0
+}

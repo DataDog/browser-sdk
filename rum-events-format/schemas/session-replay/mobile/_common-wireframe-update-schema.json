@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/_common-wireframe-update-schema.json",
+  "title": "CommonWireframeUpdate",
+  "type": "object",
+  "description": "Schema of common properties for WireframeUpdate events type.",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Defines the unique ID of the wireframe. This is persistent throughout the view lifetime.",
+      "readOnly": true
+    },
+    "x": {
+      "type": "integer",
+      "description": "The position in pixels on X axis of the UI element in absolute coordinates. The anchor point is always the top-left corner of the wireframe.",
+      "readOnly": true
+    },
+    "y": {
+      "type": "integer",
+      "description": "The position in pixels on Y axis of the UI element in absolute coordinates. The anchor point is always the top-left corner of the wireframe.",
+      "readOnly": true
+    },
+    "width": {
+      "type": "integer",
+      "description": "The width in pixels of the UI element, normalized based on the device pixels per inch density (DPI). Example: if a device has a DPI = 2, the width of all UI elements is divided by 2 to get a normalized width.",
+      "readOnly": true
+    },
+    "height": {
+      "type": "integer",
+      "description": "The height in pixels of the UI element, normalized based on the device pixels per inch density (DPI). Example: if a device has a DPI = 2, the height of all UI elements is divided by 2 to get a normalized height.",
+      "readOnly": true
+    },
+    "clip": {
+      "$ref": "wireframe-clip-schema.json"
+    }
+  }
+}

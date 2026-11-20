@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/stylesheets/stylesheet-id-schema.json",
+  "title": "StyleSheetId",
+  "description": "Browser-specific. Schema representing the ID of a stylesheet.",
+  "type": "integer",
+  "minimum": 0
+}

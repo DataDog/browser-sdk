@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/shape-gradient-point-schema.json",
+  "title": "ShapeGradientPoint",
+  "type": "object",
+  "description": "A point in the wireframe's normalized coordinate space. The top-left corner is (0, 0), the bottom-right corner is (1, 1), and values outside this range place the point outside the wireframe bounds.",
+  "required": ["x", "y"],
+  "properties": {
+    "x": {
+      "type": "number",
+      "description": "Horizontal position, where 0 is the left edge and 1 is the right edge.",
+      "readOnly": true
+    },
+    "y": {
+      "type": "number",
+      "description": "Vertical position, where 0 is the top edge and 1 is the bottom edge.",
+      "readOnly": true
+    }
+  }
+}

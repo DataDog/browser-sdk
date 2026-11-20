@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/media-interaction-data-schema.json",
+  "title": "MediaInteractionData",
+  "type": "object",
+  "description": "Browser-specific. Schema of a MediaInteractionData.",
+  "allOf": [
+    {
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "const": 7,
+          "description": "The source of this type of incremental data.",
+          "readOnly": true
+        }
+      }
+    },
+    {
+      "$ref": "media-interaction-schema.json"
+    }
+  ]
+}
