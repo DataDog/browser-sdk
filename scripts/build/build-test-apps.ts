@@ -315,8 +315,9 @@ async function buildNextjsV13App() {
     // cleaning it.
     fs.rmSync(path.join(appPath, '.next'), { recursive: true, force: true })
 
-    // The `turbopack` option doesn't exist in Next.js 13
-    fs.writeFileSync(path.join(appPath, 'next.config.js'), 'module.exports = {}\n')
+    // The `turbopack` option doesn't exist in Next.js 13. Build traces are only needed for standalone deployments, and
+    // collecting them intermittently fails on Next.js 13 ("File .next/server/pages/....js does not exist").
+    fs.writeFileSync(path.join(appPath, 'next.config.js'), 'module.exports = { outputFileTracing: false }\n')
 
     await modifyPackageJson(appPath, (packageJson) => {
       packageJson.name = 'nextjs-v13-app'
