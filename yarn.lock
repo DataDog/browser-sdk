@@ -374,6 +374,7 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   languageName: unknown
   linkType: soft
 
@@ -383,6 +384,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@datadog/browser-rum": "workspace:*"
   peerDependenciesMeta:
@@ -399,6 +401,7 @@ __metadata:
     "@datadog/browser-logs": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-logs": "workspace:*"
@@ -425,6 +428,7 @@ __metadata:
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
     rxjs: "npm:7.8.2"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@angular/core": ">=15 <=22"
     "@angular/router": ">=15 <=22"
@@ -439,6 +443,7 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
     ajv: "npm:8.20.0"
+    vitest: "npm:5.1.1"
   languageName: unknown
   linkType: soft
 
@@ -453,7 +458,8 @@ __metadata:
     "@types/react": "npm:19.3.0"
     next: "npm:16.4.5"
     react: "npm:19.3.1"
-    react-dom: "npm:19.3.1"
+    react-dom: "npm:19.3.0"
+    vitest: "npm:5.1.1"
   peerDependencies:
     next: ">=13.0.0"
     react: ">=18.0.0"
@@ -472,6 +478,7 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
     vue: "npm:3.5.45"
     vue-router: "npm:5.5.0"
   peerDependencies:
@@ -507,6 +514,7 @@ __metadata:
     react-router: "npm:8.5.1"
     react-router-dom: "npm:7.18.5"
     react-router-dom-6: "npm:react-router-dom@6.30.6"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@tanstack/react-router": ">=1.64.0 <2"
     react: 18 || 19
@@ -536,6 +544,7 @@ __metadata:
     "@datadog/browser-rum": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   languageName: unknown
   linkType: soft
 
@@ -546,6 +555,7 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@datadog/browser-logs": "workspace:*"
   peerDependenciesMeta:
@@ -563,6 +573,7 @@ __metadata:
     "@datadog/js-core": "workspace:*"
     "@vue/compiler-dom": "npm:3.5.45"
     "@vue/test-utils": "npm:2.5.1"
+    vitest: "npm:5.1.1"
     vue: "npm:3.5.45"
     vue-router: "npm:5.5.0"
   peerDependencies:
@@ -589,6 +600,7 @@ __metadata:
     "@datadog/browser-worker": "workspace:*"
     "@datadog/js-core": "workspace:*"
     pako: "npm:3.0.3"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@datadog/browser-logs": "workspace:*"
   peerDependenciesMeta:
@@ -618,6 +630,7 @@ __metadata:
     react-dom: "npm:19.3.1"
     typescript: "npm:6.0.3"
     vite: "npm:8.3.8"
+    vitest: "npm:5.1.1"
     wxt: "npm:0.21.5"
   languageName: unknown
   linkType: soft
@@ -628,6 +641,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
     webpack: "npm:5.112.2"
   languageName: unknown
   linkType: soft
@@ -635,6 +649,8 @@ __metadata:
 "@datadog/js-core@workspace:*, @datadog/js-core@workspace:packages/js-core":
   version: 0.0.0-use.local
   resolution: "@datadog/js-core@workspace:packages/js-core"
+  dependencies:
+    vitest: "npm:5.1.1"
   languageName: unknown
   linkType: soft
 
@@ -13462,6 +13478,17 @@ __metadata:
     defu: "npm:^6.1.6"
     destr: "npm:^2.0.5"
   checksum: 10c0/f952f80a6008b1be8b89f06cfec83ecc948aceb4ec4fabc25144bc0fa88aa601beb838d86720ae2c623971c4643cfea272535d6df15e40055082a4b6e4a24277
+  languageName: node
+  linkType: hard
+
+"react-dom@npm:19.3.0":
+  version: 19.3.0
+  resolution: "react-dom@npm:19.3.0"
+  dependencies:
+    scheduler: "npm:^0.28.0"
+  peerDependencies:
+    react: ^19.3.0
+  checksum: 10c0/c513044b724dd6bfe9500a9682d60973e7f8a48cffba00b6b16d3e910e27dcc459bf71bf0a5c33d7d62a3843ca30de1bd1e2098058aa4ed71f618a24b6061da5
   languageName: node
   linkType: hard
 

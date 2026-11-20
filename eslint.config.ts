@@ -1,5 +1,6 @@
 import eslint from '@eslint/js'
 import { defineConfig } from 'eslint/config'
+import type { Linter } from 'eslint'
 import * as tseslint from 'typescript-eslint'
 import { importX } from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
@@ -12,6 +13,28 @@ import eslintLocalRules from './eslint-local-rules/index.ts'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
+// Spec files migrated from the Jasmine API to the Vitest API (see scripts/test/jasmine-to-vitest.ts).
+// Add the migrated paths here so the Jasmine API doesn't come back.
+const VITEST_API_SPEC_FILES: string[] = []
+const JASMINE_GLOBALS = [
+  'jasmine',
+  'spyOn',
+  'spyOnProperty',
+  'fail',
+  'pending',
+  'expectAsync',
+  'fdescribe',
+  'fit',
+  'xdescribe',
+  'xit',
+]
+// Provided as globals by the Jasmine compatibility shim: migrated files import them from 'vitest'
+const SHIM_TEST_GLOBALS = ['describe', 'it', 'expect', 'beforeEach', 'afterEach', 'beforeAll', 'afterAll']
+const NO_JASMINE_GLOBALS_RULE: Linter.RuleEntry = [
+  'error',
+  ...JASMINE_GLOBALS.map((name) => ({ name, message: 'Use the Vitest API instead of the Jasmine API.' })),
+  ...SHIM_TEST_GLOBALS.map((name) => ({ name, message: `Import \`${name}\` from 'vitest'.` })),
+]
 const PUBLIC_PACKAGE_ENTRIES = 'packages/{browser-rum,browser-logs,browser-rum-slim}/src/entries/*.ts'
 const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
   (process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL as 'warn' | 'error' | undefined) || 'warn'
@@ -524,5 +547,16 @@ export default defineConfig(
         },
       ],
     },
-  }
+  },
+
+  ...(VITEST_API_SPEC_FILES.length
+    ? [
+        {
+          files: VITEST_API_SPEC_FILES,
+          rules: {
+            'no-restricted-globals': NO_JASMINE_GLOBALS_RULE,
+          },
+        },
+      ]
+    : [])
 )
