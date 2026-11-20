@@ -40,7 +40,6 @@
       "enabled": false
     },
     {
-      "description": "angular-app tests the oldest supported Angular version (15, with TypeScript 4.9)",
       "matchFileNames": ["test/apps/angular-app/**"],
       "matchPackageNames": ["@angular/**", "@angular-devkit/**", "@ngtools/**", "typescript"],
       "matchUpdateTypes": ["major"],
