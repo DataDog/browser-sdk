@@ -16,6 +16,7 @@ import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import {
   NEXTJS_APP_ROUTER_PORT,
+  NEXTJS_V13_APP_PORT,
   NUXT_APP_PORT,
   NUXT_VUE_ROUTER_V4_APP_PORT,
   VUE_ROUTER_APP_PORT,
@@ -207,10 +208,10 @@ class TestBuilder {
     return this
   }
 
-  withNextjsApp(router: 'app' | 'pages') {
+  withNextjsApp(router: 'app' | 'pages', nextjsVersion: 'v13' | 'v16' = 'v16') {
     const basePath = router === 'pages' ? '/pages-router' : ''
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      baseUrl.port = NEXTJS_APP_ROUTER_PORT
+      baseUrl.port = nextjsVersion === 'v13' ? NEXTJS_V13_APP_PORT : NEXTJS_APP_ROUTER_PORT
       if (basePath) {
         baseUrl.pathname = basePath + (baseUrl.pathname === '/' ? '' : baseUrl.pathname)
       }

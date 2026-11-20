@@ -53,6 +53,13 @@
       "enabled": false
     },
     {
+      "description": "next-13, react-18 and react-dom-18 are aliases kept on their major to test the oldest supported Next.js version",
+      "matchFileNames": ["packages/browser-rum-nextjs/package.json"],
+      "matchDepNames": ["next-13", "react-18", "react-dom-18"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "The Node 20 Dockerfile stage installs the browsers of the Playwright version pinned for old-browser e2e jobs",
       "matchFileNames": ["Dockerfile"],
       "matchDepNames": ["node"],
