@@ -43,6 +43,11 @@
       "import": "./esm/entries/dom.mjs",
       "require": "./cjs/entries/dom.js",
       "types": "./cjs/entries/dom.d.ts"
+    },
+    "./runtime": {
+      "import": "./esm/entries/runtime.mjs",
+      "require": "./cjs/entries/runtime.js",
+      "types": "./cjs/entries/runtime.d.ts"
     }
   },
   "files": [
@@ -57,6 +62,7 @@
     "sample",
     "configuration",
     "dom",
+    "runtime",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],
