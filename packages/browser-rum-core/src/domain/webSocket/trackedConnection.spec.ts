@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { ClocksState, Duration } from '@datadog/js-core/time'
@@ -90,7 +91,7 @@ describe('trackedConnection', () => {
 
       connection.recordOpen(openContext())
 
-      expect('url' in connection.getState()).toBeFalse()
+      expect('url' in connection.getState()).toBe(false)
     })
 
     it('turns closing when the application closes the socket', () => {
@@ -116,14 +117,14 @@ describe('trackedConnection', () => {
 
       connection.recordClosing(closingContext(clocksAt(30)))
 
-      expect('url' in connection.getState()).toBeFalse()
+      expect('url' in connection.getState()).toBe(false)
     })
 
     it('is open from the open event until the socket closes or tracking ends', () => {
-      expect(createConnectingConnection().isOpen()).toBeFalse()
-      expect(createOpenConnection().isOpen()).toBeTrue()
-      expect(createClosingConnection().isOpen()).toBeFalse()
-      expect(createClosedConnection().isOpen()).toBeFalse()
+      expect(createConnectingConnection().isOpen()).toBe(false)
+      expect(createOpenConnection().isOpen()).toBe(true)
+      expect(createClosingConnection().isOpen()).toBe(false)
+      expect(createClosedConnection().isOpen()).toBe(false)
     })
 
     const PHASES_TRACKING_CAN_END_FROM = [
@@ -153,7 +154,7 @@ describe('trackedConnection', () => {
 
         connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
 
-        expect(getStateIn(connection, 'closed').snapshot).toEqual(hasOpened ? jasmine.any(Object) : undefined)
+        expect(getStateIn(connection, 'closed').snapshot).toEqual(hasOpened ? expect.any(Object) : undefined)
       })
 
       it(`keeps the url it was created with when tracking ends from ${from}`, () => {
@@ -236,16 +237,16 @@ describe('trackedConnection', () => {
       const connection = createConnectingConnection()
 
       connection.recordOpen(openContext())
-      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 1 }))
+      expect(connection.getState()).toEqual(expect.objectContaining({ phase: 'open', snapshotVersion: 1 }))
 
       connection.recordReport(clocksAt(20))
-      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 2 }))
+      expect(connection.getState()).toEqual(expect.objectContaining({ phase: 'open', snapshotVersion: 2 }))
 
       connection.recordReport(clocksAt(30))
-      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'open', snapshotVersion: 3 }))
+      expect(connection.getState()).toEqual(expect.objectContaining({ phase: 'open', snapshotVersion: 3 }))
 
       connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
-      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 4 }))
+      expect(connection.getState()).toEqual(expect.objectContaining({ phase: 'closed', snapshotVersion: 4 }))
     })
 
     it('is not consumed by reading the state', () => {
@@ -254,7 +255,7 @@ describe('trackedConnection', () => {
       connection.getState()
       connection.getState()
 
-      expect(connection.getState()).toEqual(jasmine.objectContaining({ snapshotVersion: 1 }))
+      expect(connection.getState()).toEqual(expect.objectContaining({ snapshotVersion: 1 }))
     })
 
     it('bumps on tracking end even when the connection never opened', () => {
@@ -262,7 +263,7 @@ describe('trackedConnection', () => {
 
       connection.recordTrackingEnd(clocksAt(40), SESSION_END, 0)
 
-      expect(connection.getState()).toEqual(jasmine.objectContaining({ phase: 'closed', snapshotVersion: 1 }))
+      expect(connection.getState()).toEqual(expect.objectContaining({ phase: 'closed', snapshotVersion: 1 }))
     })
   })
 

@@ -1,5 +1,15 @@
+import { describe, expect, it } from 'vitest'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 import { compile } from './expression'
+
+function getThrownError(fn: () => unknown): unknown {
+  try {
+    fn()
+  } catch (error) {
+    return error
+  }
+  throw new Error('Expected function to throw')
+}
 
 describe('condition', () => {
   describe('evaluateProbeCondition', () => {
@@ -87,13 +97,11 @@ describe('condition', () => {
         condition: compile({ getmember: [{ ref: 'nonExistent' }, 'property'] }),
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'nonExistent.property',
-          message: jasmine.stringMatching(/^ReferenceError: /),
-        })
-        return true
+      const error = getThrownError(() => evaluateProbeCondition(probe, {}))
+      expect(isConditionEvaluationError(error)).toBe(true)
+      expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+        expr: 'nonExistent.property',
+        message: expect.stringMatching(/^ReferenceError: /),
       })
     })
 
@@ -105,13 +113,11 @@ describe('condition', () => {
         condition: compile({ len: { ref: 'x' } }),
       }
 
-      expect(() => evaluateProbeCondition(probe, { x: 42 })).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'len(x)',
-          message: 'TypeError: Cannot get length of variable',
-        })
-        return true
+      const error = getThrownError(() => evaluateProbeCondition(probe, { x: 42 }))
+      expect(isConditionEvaluationError(error)).toBe(true)
+      expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+        expr: 'len(x)',
+        message: 'TypeError: Cannot get length of variable',
       })
     })
 
@@ -123,13 +129,11 @@ describe('condition', () => {
         condition: compile({ matches: [{ ref: 's' }, '['] }),
       }
 
-      expect(() => evaluateProbeCondition(probe, { s: 'foo' })).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'matches(s, "[")',
-          message: jasmine.stringMatching(/^SyntaxError: /),
-        })
-        return true
+      const error = getThrownError(() => evaluateProbeCondition(probe, { s: 'foo' }))
+      expect(isConditionEvaluationError(error)).toBe(true)
+      expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+        expr: 'matches(s, "[")',
+        message: expect.stringMatching(/^SyntaxError: /),
       })
     })
 
@@ -148,13 +152,11 @@ describe('condition', () => {
         },
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'throw iframe error',
-          message: 'Error: Iframe error',
-        })
-        return true
+      const error = getThrownError(() => evaluateProbeCondition(probe, {}))
+      expect(isConditionEvaluationError(error)).toBe(true)
+      expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+        expr: 'throw iframe error',
+        message: 'Error: Iframe error',
       })
     })
 
@@ -173,13 +175,11 @@ describe('condition', () => {
         },
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'throw non-coercible value',
-          message: '<error: unable to stringify error>',
-        })
-        return true
+      const error = getThrownError(() => evaluateProbeCondition(probe, {}))
+      expect(isConditionEvaluationError(error)).toBe(true)
+      expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+        expr: 'throw non-coercible value',
+        message: '<error: unable to stringify error>',
       })
     })
 
@@ -202,13 +202,11 @@ describe('condition', () => {
         },
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'throw hostile error-like value',
-          message: '[object Error]',
-        })
-        return true
+      const error = getThrownError(() => evaluateProbeCondition(probe, {}))
+      expect(isConditionEvaluationError(error)).toBe(true)
+      expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+        expr: 'throw hostile error-like value',
+        message: '[object Error]',
       })
     })
 

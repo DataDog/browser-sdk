@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mockClock, interceptRequests, NETWORK_ERROR_FETCH_MOCK } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import { checkProfilingQuota } from './quotaCheck'

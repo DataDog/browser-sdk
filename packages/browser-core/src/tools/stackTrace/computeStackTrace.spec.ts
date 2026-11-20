@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { isSafari } from '../utils/browserDetection'
 import * as CapturedExceptions from './capturedExceptions.specHelper'
 import { CHROME_141_HTML_ANONYMOUS_LISTENER } from './capturedExceptions.specHelper'
@@ -108,9 +109,9 @@ Error: foo
     expect(computeStackTrace(null).message).toBeUndefined()
   })
 
-  it('should get the order of functions called right', () => {
+  it('should get the order of functions called right', (ctx) => {
     if (isSafari()) {
-      pending()
+      ctx.skip()
     }
     function foo() {
       return bar()

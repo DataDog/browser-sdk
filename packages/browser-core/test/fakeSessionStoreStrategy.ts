@@ -1,9 +1,11 @@
+import { vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { Observable } from '@datadog/js-core/util'
 import type { SessionState } from '../src/domain/session/sessionState'
 import type { SessionStoreStrategy } from '../src/domain/session/storeStrategies/sessionStoreStrategy'
 
 export type FakeSessionStoreStrategy = SessionStoreStrategy & {
-  setSessionState: jasmine.Spy<(fn: (state: SessionState) => SessionState) => Promise<void>>
+  setSessionState: Mock<(fn: (state: SessionState) => SessionState) => Promise<void>>
   getInternalState: () => SessionState
   simulateExternalChange: (state: SessionState) => void
 }
@@ -15,13 +17,11 @@ export function createFakeSessionStoreStrategy({
   const sessionObservable = new Observable<SessionState>()
 
   return {
-    setSessionState: jasmine
-      .createSpy('setSessionState')
-      .and.callFake(async (fn: (state: SessionState) => SessionState): Promise<void> => {
-        session = fn({ ...session })
-        await Promise.resolve()
-        sessionObservable.notify({ ...session })
-      }),
+    setSessionState: vi.fn().mockImplementation(async (fn: (state: SessionState) => SessionState): Promise<void> => {
+      session = fn({ ...session })
+      await Promise.resolve()
+      sessionObservable.notify({ ...session })
+    }),
     sessionObservable,
 
     // Test helpers

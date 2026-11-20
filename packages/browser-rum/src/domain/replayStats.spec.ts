@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { getReplayStats, MAX_STATS_HISTORY, addSegment, addRecord, addResource, addWroteData } from './replayStats'
 
 describe('replayStats', () => {

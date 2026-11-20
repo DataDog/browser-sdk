@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { PageExitReason, DefaultPrivacyLevel, DeflateEncoderStreamId } from '@datadog/browser-core'
@@ -33,7 +35,7 @@ describe('startRecording', () => {
   let sessionManager: SessionManagerMock
   let viewId: string
   let textField: HTMLInputElement
-  let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
+  let requestSendSpy: Mock<HttpRequest['sendOnExit']>
   let stopRecording: () => void
 
   function setupStartRecording(
@@ -43,7 +45,7 @@ describe('startRecording', () => {
     const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW, ...configOverrides })
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
-    requestSendSpy = jasmine.createSpy()
+    requestSendSpy = vi.fn()
     const httpRequest = {
       observable: new Observable<HttpRequestEvent<ReplayPayload>>(),
       send: requestSendSpy,
@@ -88,27 +90,28 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
-    expect(requests[0].segment).toEqual(jasmine.any(Object))
+    expect(requests[0].segment).toEqual(expect.any(Object))
     expect(requests[0].event).toEqual({
       application: {
         id: 'app-id',
       },
       creation_reason: 'init',
-      end: jasmine.stringMatching(/^\d{13}$/),
+      end: expect.any(Number),
       has_full_snapshot: true,
       records_count: recordsPerFullSnapshot(),
       session: {
         id: MOCK_SESSION_ID,
       },
-      start: jasmine.any(Number),
-      raw_segment_size: jasmine.any(Number),
-      compressed_segment_size: jasmine.any(Number),
+      start: expect.any(Number),
+      raw_segment_size: expect.any(Number),
+      compressed_segment_size: expect.any(Number),
       view: {
         id: 'view-id',
       },
       index_in_view: 0,
       source: 'browser',
     })
+    expect(String(requests[0].event.end)).toMatch(/^\d{13}$/)
   })
 
   it('flushes the segment when its compressed data reaches the segment bytes limit', async () => {
@@ -198,15 +201,15 @@ describe('startRecording', () => {
     expect(requests[0].segment.records[2].type).toBe(RecordType.FullSnapshot)
   })
 
-  it('flushes queued canvas content before an urgent exit', async () => {
-    skipIfOffscreenCanvasIsNotSupported()
+  it('flushes queued canvas content before an urgent exit', async (context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     // the canvas must exist before recording starts so the initial full snapshot assigns it a node id
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
 
-    const canvasSendSpy = jasmine.createSpy()
-    const canvasSendOnExitSpy = jasmine.createSpy()
+    const canvasSendSpy = vi.fn()
+    const canvasSendOnExitSpy = vi.fn()
     const resourceHttpRequest = {
       observable: new Observable<HttpRequestEvent<ResourcePayload>>(),
       send: canvasSendSpy,
@@ -235,14 +238,14 @@ describe('startRecording', () => {
     expect(canvasSendOnExitSpy).toHaveBeenCalledTimes(1)
   })
 
-  it('does not flush queued canvas content when the page is terminated', async () => {
-    skipIfOffscreenCanvasIsNotSupported()
+  it('does not flush queued canvas content when the page is terminated', async (context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
     const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
 
-    const canvasSendSpy = jasmine.createSpy()
-    const canvasSendOnExitSpy = jasmine.createSpy()
+    const canvasSendSpy = vi.fn()
+    const canvasSendOnExitSpy = vi.fn()
     const resourceHttpRequest = {
       observable: new Observable<HttpRequestEvent<ResourcePayload>>(),
       send: canvasSendSpy,
@@ -272,17 +275,17 @@ describe('startRecording', () => {
   })
 
   describe('when calling stop()', () => {
-    it('flushes queued canvas content before stopping collectors', async () => {
-      skipIfOffscreenCanvasIsNotSupported()
+    it('flushes queued canvas content before stopping collectors', async (context) => {
+      skipIfOffscreenCanvasIsNotSupported(context)
       const clock = mockClock()
       const requestIdleCallbackMock = mockRequestIdleCallback()
       const canvas = appendElement('<canvas width="2" height="2"></canvas>') as HTMLCanvasElement
 
-      const canvasSendSpy = jasmine.createSpy()
+      const canvasSendSpy = vi.fn()
       const resourceHttpRequest = {
         observable: new Observable<HttpRequestEvent<ResourcePayload>>(),
         send: canvasSendSpy,
-        sendOnExit: jasmine.createSpy(),
+        sendOnExit: vi.fn(),
       }
 
       setupStartRecording(
@@ -335,7 +338,7 @@ describe('startRecording', () => {
   it('should send records through the bridge when it is present', () => {
     const eventBridge = mockEventBridge()
     setupStartRecording()
-    const sendSpy = spyOn(eventBridge, 'send')
+    const sendSpy = vi.spyOn(eventBridge, 'send').mockReturnValue(undefined)
 
     // send click record
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
@@ -343,25 +346,25 @@ describe('startRecording', () => {
     // send view end record and meta record
     changeView(lifeCycle)
 
-    const record1 = JSON.parse(sendSpy.calls.argsFor(0)[0])
-    const record2 = JSON.parse(sendSpy.calls.argsFor(1)[0])
-    const record3 = JSON.parse(sendSpy.calls.argsFor(2)[0])
+    const record1 = JSON.parse(sendSpy.mock.calls[0][0])
+    const record2 = JSON.parse(sendSpy.mock.calls[1][0])
+    const record3 = JSON.parse(sendSpy.mock.calls[2][0])
 
     expect(record1).toEqual({
       eventType: 'record',
-      event: jasmine.objectContaining({ type: RecordType.IncrementalSnapshot }),
+      event: expect.objectContaining({ type: RecordType.IncrementalSnapshot }),
       view: { id: 'view-id' },
     })
 
     expect(record2).toEqual({
       eventType: 'record',
-      event: jasmine.objectContaining({ type: RecordType.ViewEnd }),
+      event: expect.objectContaining({ type: RecordType.ViewEnd }),
       view: { id: 'view-id' },
     })
 
     expect(record3).toEqual({
       eventType: 'record',
-      event: jasmine.objectContaining({ type: RecordType.Meta }),
+      event: expect.objectContaining({ type: RecordType.Meta }),
       view: { id: 'view-id-2' },
     })
   })
@@ -387,7 +390,7 @@ describe('startRecording', () => {
 
   async function readSentRequests(expectedSentRequestCount: number) {
     const calls = await collectAsyncCalls(requestSendSpy, expectedSentRequestCount)
-    return Promise.all(calls.all().map((call) => readReplayPayload(call.args[0])))
+    return Promise.all(calls.map((call) => readReplayPayload(call[0])))
   }
 })
 

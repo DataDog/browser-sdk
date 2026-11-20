@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Subscription } from '@datadog/js-core/util'
 import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { createMockWebSocket, mockWebSocket, MockWebSocket, registerCleanupTask } from '@datadog/browser-core/test'
@@ -44,7 +45,7 @@ describe('webSocketObservable', () => {
         expect(connectingContexts.length).toBe(1)
         expect(connectingContexts[0].url).toBe(url)
         expect(connectingContexts[0].instance).toBe(ws as unknown as WebSocket)
-        expect(connectingContexts[0].startClocks.timeStamp).toEqual(jasmine.any(Number))
+        expect(connectingContexts[0].startClocks.timeStamp).toEqual(expect.any(Number))
       })
 
       it('reports the resolved instance.url rather than the raw constructor argument', () => {
@@ -81,7 +82,7 @@ describe('webSocketObservable', () => {
     describe('preservation of native behavior', () => {
       it('does not clobber a customer-set onmessage handler', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
-        const customerHandler = jasmine.createSpy()
+        const customerHandler = vi.fn()
         ws.onmessage = customerHandler
 
         ws.simulateIncomingMessage('hello')
@@ -92,7 +93,7 @@ describe('webSocketObservable', () => {
 
       it('does not clobber a customer-set onopen handler', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
-        const customerHandler = jasmine.createSpy()
+        const customerHandler = vi.fn()
         ws.onopen = customerHandler
 
         ws.simulateOpen()
@@ -103,7 +104,7 @@ describe('webSocketObservable', () => {
 
       it('does not clobber a customer-set onclose handler', () => {
         const ws = createMockWebSocket('wss://example.com/socket')
-        const customerHandler = jasmine.createSpy()
+        const customerHandler = vi.fn()
         ws.onclose = customerHandler
 
         ws.simulateClose(1000, 'bye', true)
@@ -145,7 +146,7 @@ describe('webSocketObservable', () => {
         expect(openContexts.length).toBe(1)
         expect(openContexts[0].protocol).toBe(negotiatedProtocol)
         expect(openContexts[0].instance).toBe(ws as unknown as WebSocket)
-        expect(openContexts[0].openClocks.timeStamp).toEqual(jasmine.any(Number))
+        expect(openContexts[0].openClocks.timeStamp).toEqual(expect.any(Number))
       })
 
       it('emits an "open" context with empty protocol when no sub-protocol negotiated', () => {
@@ -237,7 +238,7 @@ describe('webSocketObservable', () => {
         expect(messageOutContexts.length).toBe(1)
         expect(messageOutContexts[0].size).toBe(payload.length)
         expect(messageOutContexts[0].bufferedAmountPreSend).toBe(bufferedAmountPreSend)
-        expect(messageOutContexts[0].at.timeStamp).toEqual(jasmine.any(Number))
+        expect(messageOutContexts[0].at.timeStamp).toEqual(expect.any(Number))
       })
 
       it('emits "message-out" with byteLength for ArrayBuffer payloads', () => {
@@ -308,7 +309,7 @@ describe('webSocketObservable', () => {
         const closingContexts = getContexts('closing')
         expect(closingContexts.length).toBe(1)
         expect(closingContexts[0].instance).toBe(ws as unknown as WebSocket)
-        expect(closingContexts[0].at.timeStamp).toEqual(jasmine.any(Number))
+        expect(closingContexts[0].at.timeStamp).toEqual(expect.any(Number))
       })
 
       it('emits a "closing" context when close() is called on an open socket', () => {
@@ -357,7 +358,7 @@ describe('webSocketObservable', () => {
         expect(closeContexts[0].code).toBe(closeCode)
         expect(closeContexts[0].reason).toBe(closeReason)
         expect(closeContexts[0].wasClean).toBe(wasClean)
-        expect(closeContexts[0].at.timeStamp).toEqual(jasmine.any(Number))
+        expect(closeContexts[0].at.timeStamp).toEqual(expect.any(Number))
       })
 
       it('reports the bytes still queued in the send buffer at close', () => {

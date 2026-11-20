@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { globalObject, Observable } from '@datadog/js-core/util'
 import {
   registerCleanupTask,
@@ -135,38 +136,38 @@ describe('session in cookie strategy', () => {
 
     it('should strip c from state emitted via observable', async () => {
       const { strategy, mockCookie } = setupCookieStrategy()
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       mockCookie.simulateExternalChange('id=test&c=0')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0].c).toBeUndefined()
+      expect(spy.mock.lastCall![0].c).toBeUndefined()
     })
 
     it('should notify observable when cookie is cleared', async () => {
       const { strategy, mockCookie } = setupCookieStrategy()
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       mockCookie.simulateExternalChange('')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0]).toEqual({})
+      expect(spy.mock.lastCall![0]).toEqual({})
     })
 
     it('should notify sessionObservable after write', async () => {
       const { strategy } = setupCookieStrategy()
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       await strategy.setSessionState(() => ({ id: '123' }), 'updateState')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0]).toEqual({ id: '123' })
+      expect(spy.mock.lastCall![0]).toEqual({ id: '123' })
     })
 
     it('should queue setSessionState calls and process them sequentially', async () => {
@@ -187,14 +188,11 @@ describe('session in cookie strategy', () => {
       expect(mockCookie.getStoredValues()[0]).toContain('id=second')
     })
 
-    describe('web lock teardown errors', () => {
+    describe.skipIf(!navigator.locks)('web lock teardown errors', () => {
       function stubLocksRequest(error: Error) {
-        if (!navigator.locks) {
-          pending('Web Locks API not available')
-        }
-        // Reject inside callFake so Firefox 78 (no Web Locks) can pending() without creating an
-        // unhandled rejection from Promise.reject() evaluated as a stub argument.
-        spyOn(navigator.locks, 'request').and.callFake(() => Promise.reject(error))
+        // Reject inside the implementation to avoid an unhandled rejection from a
+        // Promise.reject() evaluated eagerly.
+        vi.spyOn(navigator.locks, 'request').mockImplementation(() => Promise.reject(error))
       }
 
       it('should swallow InvalidStateError when the responsible document is not fully active', async () => {
@@ -219,9 +217,9 @@ describe('session in cookie strategy', () => {
         stubLocksRequest(new Error('boom'))
         const { strategy } = setupCookieStrategy()
 
-        await expectAsync(
-          strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')
-        ).toBeRejectedWithError('boom')
+        await expect(strategy.setSessionState((state) => ({ ...state, id: 'abc' }), 'updateState')).rejects.toThrow(
+          'boom'
+        )
       })
     })
   })
@@ -278,23 +276,23 @@ describe('session in cookie strategy', () => {
     }
 
     function disableDocumentCookie() {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
     }
 
-    it('returns cookieStore strategy when both APIs are available', async () => {
+    it('returns cookieStore strategy when both APIs are available', async (ctx) => {
       if (!globalObject.cookieStore) {
-        pending('CookieStore API not available')
+        ctx.skip('CookieStore API not available')
       }
       mockCookies()
       const strategy = await selectCookieStrategy(mockBaseConfiguration())
-      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.COOKIE_STORE }))
+      expect(strategy).toEqual(expect.objectContaining({ cookieApi: CookieApi.COOKIE_STORE }))
     })
 
     it('falls back to document.cookie when CookieStore is unavailable', async () => {
       disableCookieStore()
       mockCookies()
       const strategy = await selectCookieStrategy(mockBaseConfiguration())
-      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.DOCUMENT_COOKIE }))
+      expect(strategy).toEqual(expect.objectContaining({ cookieApi: CookieApi.DOCUMENT_COOKIE }))
     })
 
     it('returns undefined when both APIs are unavailable', async () => {

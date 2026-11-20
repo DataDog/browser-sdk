@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { mockSourceCodeContext, startMockTelemetry } from '../../test'
 import { buildDebugIdByUrl, getSourceCodeContext } from './sourceCodeContext'
 
@@ -103,7 +104,7 @@ describe('source code context telemetry usage', () => {
 
     const events = await telemetry.getEvents()
     expect(events).toEqual([
-      jasmine.objectContaining({
+      expect.objectContaining({
         type: 'usage',
         usage: { feature: 'source-code-context', use_debug_id: true, use_service: true, use_version: false },
       }),

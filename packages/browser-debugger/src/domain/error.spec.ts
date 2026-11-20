@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { formatThrowable, formatUnknownError, safeReadErrorProperty } from './error'
 
@@ -7,7 +8,7 @@ describe('error', () => {
       const result = formatThrowable(new Error('boom'))
 
       expect(result.message).toBe('boom')
-      expect(result.stacktrace).toEqual(jasmine.any(Array))
+      expect(result.stacktrace).toEqual(expect.any(Array))
     })
 
     it('should format cross-realm Error values', () => {
@@ -19,7 +20,7 @@ describe('error', () => {
       const result = formatThrowable(new iframeWindow.Error('iframe error'))
 
       expect(result.message).toBe('iframe error')
-      expect(result.stacktrace).toEqual(jasmine.any(Array))
+      expect(result.stacktrace).toEqual(expect.any(Array))
     })
 
     it('should pass non-Error string values through unchanged', () => {

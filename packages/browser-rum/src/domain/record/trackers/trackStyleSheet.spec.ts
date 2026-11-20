@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { isFirefox, registerCleanupTask } from '@datadog/browser-core/test'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
@@ -10,7 +12,7 @@ import type { Tracker } from './tracker.types'
 describe('trackStyleSheet', () => {
   let scope: RecordingScope
   let styleSheetTracker: Tracker
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitRecordCallback: Mock<EmitRecordCallback>
   let styleElement: HTMLStyleElement
   let styleSheet: CSSStyleSheet
   const styleRule = '.selector-1 { color: #fff }'
@@ -20,7 +22,7 @@ describe('trackStyleSheet', () => {
     document.head.appendChild(styleElement)
     styleSheet = styleElement.sheet!
 
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     scope = createRecordingScopeForTesting()
     takeFullSnapshotForTesting(scope)
 
@@ -38,11 +40,11 @@ describe('trackStyleSheet', () => {
 
         expect(emitRecordCallback).toHaveBeenCalledWith({
           type: RecordType.IncrementalSnapshot,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
           data: {
-            id: jasmine.any(Number),
+            id: expect.any(Number),
             source: IncrementalSource.StyleSheetRule,
-            adds: [jasmine.objectContaining({ index: undefined })],
+            adds: [expect.objectContaining({ index: undefined })],
           },
         })
       })
@@ -55,11 +57,11 @@ describe('trackStyleSheet', () => {
 
         expect(emitRecordCallback).toHaveBeenCalledWith({
           type: RecordType.IncrementalSnapshot,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
           data: {
-            id: jasmine.any(Number),
+            id: expect.any(Number),
             source: IncrementalSource.StyleSheetRule,
-            adds: [jasmine.objectContaining({ index })],
+            adds: [expect.objectContaining({ index })],
           },
         })
       })
@@ -75,11 +77,11 @@ describe('trackStyleSheet', () => {
 
         expect(emitRecordCallback).toHaveBeenCalledWith({
           type: RecordType.IncrementalSnapshot,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
           data: {
-            id: jasmine.any(Number),
+            id: expect.any(Number),
             source: IncrementalSource.StyleSheetRule,
-            removes: [jasmine.objectContaining({ index })],
+            removes: [expect.objectContaining({ index })],
           },
         })
       })
@@ -98,18 +100,18 @@ describe('trackStyleSheet', () => {
 
         expect(emitRecordCallback).toHaveBeenCalledWith({
           type: RecordType.IncrementalSnapshot,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
           data: {
-            id: jasmine.any(Number),
+            id: expect.any(Number),
             source: IncrementalSource.StyleSheetRule,
-            adds: [jasmine.objectContaining({ index: [1, 0, 1] })],
+            adds: [expect.objectContaining({ index: [1, 0, 1] })],
           },
         })
       })
 
-      it('should not create record when inserting into a detached CSSGroupingRule', () => {
+      it('should not create record when inserting into a detached CSSGroupingRule', (ctx) => {
         if (isFirefox()) {
-          pending('Firefox does not support inserting rules in detached group')
+          ctx.skip('Firefox does not support inserting rules in detached group')
         }
 
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
@@ -136,18 +138,18 @@ describe('trackStyleSheet', () => {
 
         expect(emitRecordCallback).toHaveBeenCalledWith({
           type: RecordType.IncrementalSnapshot,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
           data: {
-            id: jasmine.any(Number),
+            id: expect.any(Number),
             source: IncrementalSource.StyleSheetRule,
-            removes: [jasmine.objectContaining({ index: [1, 0, 0] })],
+            removes: [expect.objectContaining({ index: [1, 0, 0] })],
           },
         })
       })
 
-      it('should not create record when removing from a detached CSSGroupingRule', () => {
+      it('should not create record when removing from a detached CSSGroupingRule', (ctx) => {
         if (isFirefox()) {
-          pending('Firefox does not support inserting rules in detached group')
+          ctx.skip('Firefox does not support inserting rules in detached group')
         }
 
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')

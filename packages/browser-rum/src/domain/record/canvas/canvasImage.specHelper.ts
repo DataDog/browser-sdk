@@ -1,3 +1,4 @@
+import { expect } from 'vitest'
 export function bitmapPixels(bitmap: ImageBitmap): number[] {
   const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext('2d')!
   context.drawImage(bitmap, 0, 0)

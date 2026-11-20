@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { registerCleanupTask, waitNextMicrotask } from '@datadog/browser-core/test'
 import { CanvasStatus, createCanvasManager } from './canvasManager'
 import type { CanvasSnapshot } from './canvasSnapshot'
@@ -144,7 +145,7 @@ describe('CanvasManager', () => {
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
 
     expect(canvasManager.takeCapturableCanvases()).toEqual([])
-    expect(canvasManager.takeCanvasContentMutations()).toHaveSize(1)
+    expect(canvasManager.takeCanvasContentMutations()).toHaveLength(1)
     expect(canvasManager.takeCapturableCanvases()).toEqual([canvas])
   })
 
@@ -166,7 +167,7 @@ describe('CanvasManager', () => {
   it('closes the bitmap of a replaced snapshot', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
-    const closeSpy = jasmine.createSpy()
+    const closeSpy = vi.fn()
     canvasManager.setCanvasSnapshot(canvas, createFakeSnapshot(closeSpy))
 
     canvasManager.setCanvasSnapshot(canvas, createFakeSnapshot())
@@ -177,7 +178,7 @@ describe('CanvasManager', () => {
   it('forgets per-node capture state and its latest snapshot', () => {
     const canvasManager = createCanvasManager()
     const canvas = appendCanvas()
-    const closeSpy = jasmine.createSpy()
+    const closeSpy = vi.fn()
 
     canvasManager.markCanvas(canvas, CanvasStatus.Dirty)
     const captureAttempt = canvasManager.startCaptureAttempt(canvas)
@@ -269,6 +270,6 @@ function appendCanvas(): HTMLCanvasElement {
   return canvas
 }
 
-function createFakeSnapshot(close = jasmine.createSpy()): CanvasSnapshot {
+function createFakeSnapshot(close = vi.fn()): CanvasSnapshot {
   return { canvasWidth: 1, canvasHeight: 1, bitmap: { close } as unknown as ImageBitmap }
 }

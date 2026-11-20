@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { noop } from '@datadog/js-core/util'
 import { createIdentityEncoder } from './encoder'
 
@@ -27,11 +28,11 @@ describe('createIdentityEncoder', () => {
     it('calls the callback when writing data with a callback', () => {
       const encoder = createIdentityEncoder()
       const data = 'Callback test'
-      const callbackSpy = jasmine.createSpy()
+      const callbackSpy = vi.fn()
 
       encoder.write(data, callbackSpy)
 
-      expect(callbackSpy).toHaveBeenCalledOnceWith(data.length)
+      expect(callbackSpy).toHaveBeenCalledExactlyOnceWith(data.length)
     })
   })
 
@@ -40,7 +41,7 @@ describe('createIdentityEncoder', () => {
       const encoder = createIdentityEncoder()
       const data = 'Final data'
       encoder.write(data)
-      const callbackSpy = jasmine.createSpy()
+      const callbackSpy = vi.fn()
 
       encoder.finish(callbackSpy)
 

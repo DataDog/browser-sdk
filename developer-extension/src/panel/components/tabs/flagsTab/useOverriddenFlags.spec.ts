@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { registerCleanupTask } from '../../../../../../packages/browser-core/test'
@@ -45,7 +46,7 @@ describe('useOverriddenFlags', () => {
   }
 
   it('fetches each overridden key by exact key and returns the resolved flags', async () => {
-    const fetchSpy = spyOn(globalThis, 'fetch').and.callFake((input: RequestInfo | URL) => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation((input: RequestInfo | URL) => {
       const key = new URL(input as string).searchParams.get('key')
       return Promise.resolve(
         new Response(JSON.stringify({ data: [{ attributes: { key, name: `Name ${key}`, value_type: 'STRING' } }] }))
@@ -56,12 +57,16 @@ describe('useOverriddenFlags', () => {
     await flush()
 
     expect(fetchSpy).toHaveBeenCalledTimes(2)
-    expect(get().flags.map((flag) => flag.key)).toEqual(jasmine.arrayWithExactContents(['flag-a', 'flag-b']))
+    expect(
+      get()
+        .flags.map((flag) => flag.key)
+        .sort()
+    ).toEqual(['flag-a', 'flag-b'])
     expect(get().missingKeys.size).toBe(0)
   })
 
   it('reports a key the catalog has no match for as missing', async () => {
-    spyOn(globalThis, 'fetch').and.callFake((input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input: RequestInfo | URL) => {
       const key = new URL(input as string).searchParams.get('key')
       const data = key === 'gone' ? [] : [{ attributes: { key, name: `Name ${key}`, value_type: 'STRING' } }]
       return Promise.resolve(new Response(JSON.stringify({ data })))
@@ -75,7 +80,7 @@ describe('useOverriddenFlags', () => {
   })
 
   it('does not fetch when there are no overridden keys', async () => {
-    const fetchSpy = spyOn(globalThis, 'fetch')
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockReturnValue(undefined as never)
     const get = mountHook([])
     await flush()
     expect(fetchSpy).not.toHaveBeenCalled()
@@ -83,7 +88,7 @@ describe('useOverriddenFlags', () => {
   })
 
   it('does not report a key as missing when its lookup failed', async () => {
-    spyOn(globalThis, 'fetch').and.returnValue(
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(
       Promise.resolve(new Response('nope', { status: 500, statusText: 'Server Error' }))
     )
     const get = mountHook(['flag-a'])

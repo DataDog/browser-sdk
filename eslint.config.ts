@@ -13,9 +13,9 @@ import eslintLocalRules from './eslint-local-rules/index.ts'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
-// Spec files migrated from the Jasmine API to the Vitest API (see scripts/test/jasmine-to-vitest.ts).
-// Add the migrated paths here so the Jasmine API doesn't come back.
-const VITEST_API_SPEC_FILES: string[] = []
+// Spec files migrated from the Jasmine API to the Vitest API (see scripts/test/jasmine-to-vitest.ts):
+// all of them, so the Jasmine API doesn't come back.
+const VITEST_API_SPEC_FILES: string[] = [SPEC_FILES, '**/test/**/*.{ts,tsx}']
 const JASMINE_GLOBALS = [
   'jasmine',
   'spyOn',

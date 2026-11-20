@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
 import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import { DISCARDED, SKIPPED } from '@datadog/js-core/assembly'
@@ -579,7 +580,7 @@ describe('rum assembly', () => {
           },
         })
 
-        const displaySpy = spyOn(display, 'warn')
+        const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
             view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
@@ -599,7 +600,7 @@ describe('rum assembly', () => {
           },
         })
 
-        const displaySpy = spyOn(display, 'warn')
+        const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
         const webSocketVitalNames = [
           WebSocketVitalName.CONNECTING,
           WebSocketVitalName.OPEN,
@@ -756,7 +757,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect((serverRumEvents[0] as any).tab.id).toEqual(jasmine.any(String))
+      expect((serverRumEvents[0] as any).tab.id).toEqual(expect.any(String))
     })
   })
 
@@ -794,13 +795,13 @@ describe('rum assembly', () => {
   describe('eventCollected hook', () => {
     it('is triggered with the event type and domain context', () => {
       const { lifeCycle, hooks } = setupAssemblyTestWithDefaults()
-      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      const eventCollectedSpy = vi.fn()
       hooks.eventCollected.register(eventCollectedSpy)
       const domainContext = { error: new Error('boom') } as RumEventDomainContext
 
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR), domainContext })
 
-      expect(eventCollectedSpy).toHaveBeenCalledOnceWith({
+      expect(eventCollectedSpy).toHaveBeenCalledExactlyOnceWith({
         eventType: RumEventType.ERROR,
         domainContext,
       })
@@ -824,7 +825,7 @@ describe('rum assembly', () => {
 
     it('calls every callback, even after one returns DISCARDED', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
-      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      const eventCollectedSpy = vi.fn()
       hooks.eventCollected.register(() => DISCARDED)
       hooks.eventCollected.register(eventCollectedSpy)
 
@@ -838,7 +839,7 @@ describe('rum assembly', () => {
       const { lifeCycle, hooks } = setupAssemblyTestWithDefaults({
         partialConfiguration: { beforeSend: () => false },
       })
-      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      const eventCollectedSpy = vi.fn()
       hooks.eventCollected.register(eventCollectedSpy)
 
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
@@ -848,7 +849,7 @@ describe('rum assembly', () => {
 
     it('is not triggered for events over the rate limit', () => {
       const { lifeCycle, hooks } = setupAssemblyTestWithDefaults({ eventRateLimit: 1 })
-      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      const eventCollectedSpy = vi.fn()
       hooks.eventCollected.register(eventCollectedSpy)
 
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
@@ -879,7 +880,7 @@ describe('rum assembly', () => {
 
     it('should get session state from event start', () => {
       const sessionManager = createSessionManagerMock()
-      spyOn(sessionManager, 'findTrackedSession').and.callThrough()
+      vi.spyOn(sessionManager, 'findTrackedSession')
       const { lifeCycle } = setupAssemblyTestWithDefaults({ sessionManager })
 
       notifyRawRumEvent(lifeCycle, {
@@ -1011,7 +1012,7 @@ function setupAssemblyTestWithDefaults({
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
-  const reportErrorSpy = jasmine.createSpy('reportError')
+  const reportErrorSpy = vi.fn()
   const rumSessionManager = sessionManager ?? createSessionManagerMock().setId('1234')
   const serverRumEvents: RumEvent[] = []
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {

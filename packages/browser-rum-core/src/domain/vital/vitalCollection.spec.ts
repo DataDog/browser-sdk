@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { Duration } from '@datadog/js-core/time'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/js-core/time'
@@ -16,11 +18,13 @@ describe('vitalCollection', () => {
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let clock: Clock
   let vitalCollection: ReturnType<typeof startVitalCollection>
-  let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
+  let wasInPageStateDuringPeriodSpy: Mock<(...args: any[]) => any>
 
   beforeEach(() => {
     clock = mockClock()
-    wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
+    wasInPageStateDuringPeriodSpy = vi
+      .spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
+      .mockReturnValue(undefined as never)
     vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -39,8 +43,8 @@ describe('vitalCollection', () => {
 
       expect(rawRumEvents.length).toBe(1)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          vital: jasmine.objectContaining({ duration: 100000000, description: 'baz' }),
+        expect.objectContaining({
+          vital: expect.objectContaining({ duration: 100000000, description: 'baz' }),
           context: { foo: 'bar' },
         })
       )
@@ -59,8 +63,8 @@ describe('vitalCollection', () => {
 
       expect(rawRumEvents.length).toBe(1)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          vital: jasmine.objectContaining({ duration: 100000000, description: 'baz' }),
+        expect.objectContaining({
+          vital: expect.objectContaining({ duration: 100000000, description: 'baz' }),
           context: { foo: 'bar' },
         })
       )
@@ -75,7 +79,7 @@ describe('vitalCollection', () => {
 
       expect(rawRumEvents.length).toBe(1)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({ vital: jasmine.objectContaining({ duration: 100000000 }) })
+        expect.objectContaining({ vital: expect.objectContaining({ duration: 100000000 }) })
       )
     })
 
@@ -90,13 +94,13 @@ describe('vitalCollection', () => {
 
       expect(rawRumEvents.length).toBe(2)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          vital: jasmine.objectContaining({ description: 'component 2', duration: 100000000 }),
+        expect.objectContaining({
+          vital: expect.objectContaining({ description: 'component 2', duration: 100000000 }),
         })
       )
       expect(rawRumEvents[1].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          vital: jasmine.objectContaining({ description: 'component 1', duration: 300000000 }),
+        expect.objectContaining({
+          vital: expect.objectContaining({ description: 'component 1', duration: 300000000 }),
         })
       )
     })
@@ -146,7 +150,7 @@ describe('vitalCollection', () => {
     })
 
     it('should discard a vital for which a frozen state happened', () => {
-      wasInPageStateDuringPeriodSpy.and.returnValue(true)
+      wasInPageStateDuringPeriodSpy.mockReturnValue(true)
 
       vitalCollection.addDurationVital({
         id: generateUUID(),
@@ -163,11 +167,11 @@ describe('vitalCollection', () => {
       vitalCollection.startDurationVital('foo')
       vitalCollection.stopDurationVital('foo')
 
-      expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
+      expect(rawRumEvents[0].startClocks.relative).toEqual(expect.any(Number))
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         vital: {
-          id: jasmine.any(String),
+          id: expect.any(String),
           type: VitalType.DURATION,
           name: 'foo',
           duration: 0,
@@ -203,20 +207,20 @@ describe('vitalCollection', () => {
 
       expect(rawRumEvents.length).toBe(1)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          vital: jasmine.objectContaining({ duration: 100000000, description: 'baz' }),
+        expect.objectContaining({
+          vital: expect.objectContaining({ duration: 100000000, description: 'baz' }),
           context: { foo: 'bar' },
         })
       )
     })
 
     it('should notify lifecycle with vital started event when starting a duration vital', () => {
-      const subscriberSpy = jasmine.createSpy()
+      const subscriberSpy = vi.fn()
       lifeCycle.subscribe(LifeCycleEventType.DURATION_VITAL_STARTED, subscriberSpy)
 
       vitalCollection.startDurationVital('foo')
 
-      expect(subscriberSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo' }))
+      expect(subscriberSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ name: 'foo' }))
     })
   })
 
@@ -224,11 +228,11 @@ describe('vitalCollection', () => {
     it('should collect raw rum event from operation step vital', () => {
       vitalCollection.addOperationStepVital('foo', 'start')
 
-      expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
+      expect(rawRumEvents[0].startClocks.relative).toEqual(expect.any(Number))
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         vital: {
-          id: jasmine.any(String),
+          id: expect.any(String),
           type: VitalType.OPERATION_STEP,
           name: 'foo',
           step_type: 'start',
@@ -266,8 +270,8 @@ describe('vitalCollection', () => {
 
       expect(rawRumEvents.length).toBe(1)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          vital: jasmine.objectContaining({
+        expect.objectContaining({
+          vital: expect.objectContaining({
             step_type: 'end',
             operation_key: '00000000-0000-0000-0000-000000000000',
             failure_reason: 'error',

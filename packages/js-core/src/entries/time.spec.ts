@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '../../../browser-core/test'
 import type { TimeStamp } from './time'
 import { getTimeOrigin, resetTimeOrigin } from './time'

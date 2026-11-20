@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { Duration } from '@datadog/js-core/time'
 import { clocksOrigin } from '@datadog/js-core/time'
 import { Observable } from '@datadog/js-core/util'
@@ -18,14 +20,14 @@ describe('trackCommonViewMetrics', () => {
   let clock: Clock
   let domMutationObservable: Observable<MutationRecord[]>
   let windowOpenObservable: Observable<void>
-  let scheduleViewUpdateSpy: jasmine.Spy
+  let scheduleViewUpdateSpy: Mock
 
   beforeEach(() => {
     mockGlobalPerformanceBuffer()
     clock = mockClock()
     domMutationObservable = new Observable()
     windowOpenObservable = new Observable()
-    scheduleViewUpdateSpy = jasmine.createSpy('scheduleViewUpdate')
+    scheduleViewUpdateSpy = vi.fn()
   })
 
   it('does not collect loading time from a pending load event after loading time tracking is canceled', () => {
@@ -46,7 +48,7 @@ describe('trackCommonViewMetrics', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
     cancelLoadingTimeTracking()
-    scheduleViewUpdateSpy.calls.reset()
+    scheduleViewUpdateSpy.mockClear()
     setLoadEvent(200 as Duration)
 
     expect(getCommonViewMetrics().loadingTime).toBeUndefined()

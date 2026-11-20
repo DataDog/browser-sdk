@@ -1,9 +1,10 @@
+import { describe, expect, it, vi } from 'vitest'
 import { DEV_REPLAY_SANDBOX_ORIGIN, DEV_REPLAY_SANDBOX_URL } from '../../common/packagesUrlConstants'
 import { getReplaySandboxLocation } from './getReplaySandboxLocation'
 
 describe('getReplaySandboxLocation', () => {
   function mockFetch(response: Response) {
-    return spyOn(globalThis, 'fetch').and.returnValue(Promise.resolve(response))
+    return vi.spyOn(globalThis, 'fetch').mockReturnValue(Promise.resolve(response))
   }
 
   function jsonResponse(body: unknown) {
@@ -11,7 +12,7 @@ describe('getReplaySandboxLocation', () => {
   }
 
   it('returns the local development sandbox without any request', async () => {
-    const fetchSpy = spyOn(globalThis, 'fetch')
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockReturnValue(undefined as never)
 
     const sandboxLocation = await getReplaySandboxLocation(true, new AbortController().signal)
 
@@ -29,7 +30,7 @@ describe('getReplaySandboxLocation', () => {
       origin: 'https://session-replay-datadoghq.com',
       url: 'https://session-replay-datadoghq.com/static-app/v/35.150903814/index.html',
     })
-    const [requestUrl, requestInit] = fetchSpy.calls.argsFor(0) as [string, RequestInit]
+    const [requestUrl, requestInit] = fetchSpy.mock.calls[0] as [string, RequestInit]
     expect(requestUrl).toBe('https://app.datadoghq.com/api/ui/session-replay-sandbox/version')
     expect(requestInit.credentials).toBe('omit')
     expect(requestInit.signal).toBe(abortController.signal)
@@ -46,22 +47,20 @@ describe('getReplaySandboxLocation', () => {
   it('rejects when the version request fails', async () => {
     mockFetch(new Response('', { status: 503 }))
 
-    await expectAsync(getReplaySandboxLocation(false, new AbortController().signal)).toBeRejectedWithError(/503/)
+    await expect(getReplaySandboxLocation(false, new AbortController().signal)).rejects.toThrow(/503/)
   })
 
   it('rejects when the version response is not JSON', async () => {
     mockFetch(new Response('not json'))
 
-    await expectAsync(getReplaySandboxLocation(false, new AbortController().signal)).toBeRejected()
+    await expect(getReplaySandboxLocation(false, new AbortController().signal)).rejects.toThrow()
   })
 
   for (const body of [null, {}, { version: '' }, { version: 35 }]) {
     it(`rejects when the version response is ${JSON.stringify(body)}`, async () => {
       mockFetch(jsonResponse(body))
 
-      await expectAsync(getReplaySandboxLocation(false, new AbortController().signal)).toBeRejectedWithError(
-        /no version/
-      )
+      await expect(getReplaySandboxLocation(false, new AbortController().signal)).rejects.toThrow(/no version/)
     })
   }
 })

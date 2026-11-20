@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, registerCleanupTask, waitAfterNextPaint } from '@datadog/browser-core/test'
@@ -17,7 +18,7 @@ describe('trackBfcacheMetrics', () => {
   it('should compute FCP and LCP from the next frame after BFCache restore', async () => {
     const pageshow = createPageshowEvent() as PageTransitionEvent
 
-    const scheduleSpy = jasmine.createSpy('schedule')
+    const scheduleSpy = vi.fn()
 
     clock.tick(50)
 
@@ -36,7 +37,7 @@ describe('trackBfcacheMetrics', () => {
   })
 
   it('does not collect paint metrics when stopped before the first animation frame', async () => {
-    const scheduleSpy = jasmine.createSpy('schedule')
+    const scheduleSpy = vi.fn()
     const { initialViewMetrics, stop } = trackBfcacheMetrics(
       { relative: clock.relative(0), timeStamp: clock.timeStamp(0) },
       scheduleSpy
@@ -51,7 +52,7 @@ describe('trackBfcacheMetrics', () => {
   })
 
   it('does not collect paint metrics when stopped before the second animation frame', async () => {
-    const scheduleSpy = jasmine.createSpy('schedule')
+    const scheduleSpy = vi.fn()
     const { initialViewMetrics, stop } = trackBfcacheMetrics(
       { relative: clock.relative(0), timeStamp: clock.timeStamp(0) },
       scheduleSpy

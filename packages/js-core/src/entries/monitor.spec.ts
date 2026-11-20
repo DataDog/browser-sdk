@@ -1,26 +1,28 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { setDebugMode, getDebugMode } from './util'
 import type { Display } from './util'
 import type { Monitor } from './monitor'
 import { createMonitor, startMonitorErrorCollection, stopMonitorErrorCollection, callMonitored } from './monitor'
 
 describe('monitor', () => {
-  let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
-  let displayErrorSpy: jasmine.Spy
+  let onMonitorErrorCollectedSpy: Mock<(error: unknown) => void>
+  let displayErrorSpy: Mock
   let currentMonitor: Monitor
 
   function createFakeDisplay(): Display {
-    displayErrorSpy = jasmine.createSpy('display.error')
+    displayErrorSpy = vi.fn()
     return {
-      debug: jasmine.createSpy(),
-      log: jasmine.createSpy(),
-      info: jasmine.createSpy(),
-      warn: jasmine.createSpy(),
+      debug: vi.fn(),
+      log: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
       error: displayErrorSpy,
     }
   }
 
   beforeEach(() => {
-    onMonitorErrorCollectedSpy = jasmine.createSpy()
+    onMonitorErrorCollectedSpy = vi.fn()
     currentMonitor = createMonitor(createFakeDisplay(), onMonitorErrorCollectedSpy)
   })
 
@@ -81,19 +83,19 @@ describe('monitor', () => {
     it('should report error', () => {
       candidate.monitoredThrowing()
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('monitored'))
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledExactlyOnceWith(new Error('monitored'))
     })
 
     it('should report string error', () => {
       candidate.monitoredStringErrorThrowing()
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith('string error')
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledExactlyOnceWith('string error')
     })
 
     it('should report object error', () => {
       candidate.monitoredObjectErrorThrowing()
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledExactlyOnceWith({ foo: 'bar' })
     })
   })
 
@@ -115,7 +117,7 @@ describe('monitor', () => {
       it('should report error', () => {
         currentMonitor.callMonitored(throwing)
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledExactlyOnceWith(new Error('error'))
       })
     })
 
@@ -133,7 +135,7 @@ describe('monitor', () => {
       it('should report error', () => {
         currentMonitor.monitor(throwing)()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledExactlyOnceWith(new Error('error'))
       })
     })
   })
@@ -163,7 +165,9 @@ describe('monitor', () => {
 
     it('logs errors thrown by the onMonitorErrorCollected callback when debug mode is enabled', () => {
       setDebugMode(true)
-      onMonitorErrorCollectedSpy.and.throwError(new Error('unexpected'))
+      onMonitorErrorCollectedSpy.mockImplementation(() => {
+        throw new Error('unexpected')
+      })
 
       currentMonitor.callMonitored(() => {
         throw new Error('message')
@@ -188,7 +192,7 @@ describe('global monitor', () => {
     it('registers the callback and returns true on first call', () => {
       const result = startMonitorErrorCollection((e) => collectedErrors.push(e))
 
-      expect(result).toBeTrue()
+      expect(result).toBe(true)
 
       callMonitored(() => {
         throw new Error('boom')
@@ -203,8 +207,8 @@ describe('global monitor', () => {
         collectedErrors.push('should not be called')
       })
 
-      expect(first).toBeTrue()
-      expect(second).toBeFalse()
+      expect(first).toBe(true)
+      expect(second).toBe(false)
 
       callMonitored(() => {
         throw new Error('boom')
@@ -234,7 +238,7 @@ describe('global monitor', () => {
       })
       stopMonitorErrorCollection()
 
-      expect(getDebugMode()).toBeTrue()
+      expect(getDebugMode()).toBe(true)
     })
 
     it('allows a new callback to be registered after stopping', () => {
@@ -244,8 +248,8 @@ describe('global monitor', () => {
       stopMonitorErrorCollection()
       const second = startMonitorErrorCollection((e) => collectedErrors.push(e))
 
-      expect(first).toBeTrue()
-      expect(second).toBeTrue()
+      expect(first).toBe(true)
+      expect(second).toBe(true)
 
       callMonitored(() => {
         throw new Error('after stop')

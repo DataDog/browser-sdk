@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { BrowserChangeRecord, Change } from '../../../types'
 import { ChangeType, RecordType, StringRole } from '../../../types'
 import { createChangeDecoder } from './changeDecoder'

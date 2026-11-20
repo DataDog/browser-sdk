@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { globalObject } from '@datadog/js-core/util'
 import { mockClock, mockSourceCodeContext, registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
@@ -11,8 +13,8 @@ const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
 const thisArg = {}
 
 describe('api', () => {
-  let mockBatchAdd: jasmine.Spy
-  let warnSpy: jasmine.Spy
+  let mockBatchAdd: Mock
+  let warnSpy: Mock
 
   function initTransport(overrides: Record<string, unknown> = {}) {
     resetDebuggerTransport()
@@ -27,8 +29,8 @@ describe('api', () => {
   beforeEach(() => {
     clearProbes()
 
-    warnSpy = spyOn(display, 'warn')
-    mockBatchAdd = jasmine.createSpy('batchAdd')
+    warnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
+    mockBatchAdd = vi.fn()
     initTransport()
     ;(window as any).DD_DEBUGGER = {
       version: '0.0.1',
@@ -51,7 +53,7 @@ describe('api', () => {
       const invocation = onEntry(probes, self, args)!
       onReturn(invocation, 'result', self, args)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
 
       // Verify entry.arguments structure - now flat
@@ -93,7 +95,7 @@ describe('api', () => {
       const invocation = onEntry(probes, globalObject, args)!
       onReturn(invocation, 'result', globalObject, args)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
 
       expect(snapshot.captures.entry.arguments).toEqual({
@@ -117,10 +119,10 @@ describe('api', () => {
       expect(result).toBe('returnValue')
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       expect(payload.message).toBe('Test message')
       expect(payload.debugger.snapshot).toEqual(
-        jasmine.objectContaining({ id: jasmine.any(String), captures: jasmine.any(Object) })
+        expect.objectContaining({ id: expect.any(String), captures: expect.any(Object) })
       )
     })
 
@@ -130,7 +132,7 @@ describe('api', () => {
       const probes = getProbes('src/utils.js;add')!
       onReturn(onEntry(probes, thisArg)!, null, thisArg)
 
-      expect(mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.probe.location).toEqual({
+      expect(mockBatchAdd.mock.lastCall![0].debugger.snapshot.probe.location).toEqual({
         method: 'add',
         type: 'src/utils.js',
       })
@@ -214,7 +216,7 @@ describe('api', () => {
 
       clearProbes()
       addProbe(probe)
-      mockBatchAdd.calls.reset()
+      mockBatchAdd.mockClear()
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should not fire when condition fails
@@ -238,7 +240,7 @@ describe('api', () => {
 
       clearProbes()
       addProbe(probe)
-      mockBatchAdd.calls.reset()
+      mockBatchAdd.mockClear()
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should not fire when return value <= 10
@@ -263,7 +265,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg, { arg: { value: 42 }, longString: 'abcdef' })!
       onReturn(invocation, null, thisArg, { arg: { value: 42 }, longString: 'abcdef' })
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures).toEqual({
         entry: {
@@ -292,7 +294,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg)!
       onReturn(invocation, { nested: 'return' }, thisArg, {}, { local: { value: 'data' } })
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures).toEqual({
         entry: undefined,
@@ -325,7 +327,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg, { existing: 'value' })!
       onReturn(invocation, null, thisArg, { existing: 'value' })
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.entry.captureExpressions).toEqual({
         existing: { type: 'string', value: 'value' },
@@ -333,7 +335,7 @@ describe('api', () => {
       expect(snapshot.evaluationErrors).toEqual([
         {
           expr: 'missing.value',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         },
       ])
     })
@@ -345,7 +347,7 @@ describe('api', () => {
       const invocation = onEntry(probes, { name: 'obj' }, { arg: 'value' })!
       onReturn(invocation, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures).toEqual({
         entry: {
@@ -374,7 +376,7 @@ describe('api', () => {
       const invocation = onEntry(probes, { name: 'obj' }, { arg: 'value' })!
       onReturn(invocation, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures).toEqual({
         entry: {
@@ -410,7 +412,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg, { arg: 'value' })!
       onReturn(invocation, true, thisArg, { arg: 'value' })
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.entry).toBeUndefined()
       expect(snapshot.captures.return).toBeDefined()
@@ -428,7 +430,7 @@ describe('api', () => {
 
       onReturn(invocation, null, thisArg)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.duration).toBe(10_000_000) // Should be in nanoseconds (10ms)
     })
@@ -449,13 +451,13 @@ describe('api', () => {
       expect(onEntry(probes, thisArg)).toBeUndefined()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(payload.message).toBeUndefined()
       expect(snapshot.evaluationErrors).toEqual([
         {
           expr: 'missing.value',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         },
       ])
       expect(snapshot.duration).toBeUndefined()
@@ -479,13 +481,13 @@ describe('api', () => {
       onReturn(invocation, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(payload.message).toBeUndefined()
       expect(snapshot.evaluationErrors).toEqual([
         {
           expr: 'missing.value',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         },
       ])
       expect(snapshot.captures).toBeUndefined()
@@ -535,7 +537,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg)!
       onReturn(invocation, null, thisArg)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       expect(payload._dd).toEqual({ debug_ids: [{ url: entryUrl, id: 'entry-id' }] })
     })
 
@@ -556,9 +558,10 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg)!
       onThrow(invocation, error, thisArg)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
+      expect(payload._dd.debug_ids).toHaveLength(2)
       expect(payload._dd.debug_ids).toEqual(
-        jasmine.arrayWithExactContents([
+        expect.arrayContaining([
           { url: throwableUrl, id: 'throwable-id' },
           { url: entryUrl, id: 'entry-id' },
         ])
@@ -575,7 +578,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg)!
       onReturn(invocation, null, thisArg)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       expect(payload._dd).toBeUndefined()
     })
   })
@@ -591,7 +594,7 @@ describe('api', () => {
       const invocation = onEntry(probes, self, args)!
       onThrow(invocation, error, self, args)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
 
       // Verify return.arguments structure - now flat
@@ -609,15 +612,15 @@ describe('api', () => {
       // Verify throwable is still present
       expect(snapshot.captures.return.throwable).toEqual({
         message: 'Test error',
-        stacktrace: jasmine.any(Array),
+        stacktrace: expect.any(Array),
       })
       for (const frame of snapshot.captures.return.throwable.stacktrace) {
         expect(frame).toEqual(
-          jasmine.objectContaining({
-            fileName: jasmine.any(String),
-            function: jasmine.any(String),
-            lineNumber: jasmine.any(Number),
-            columnNumber: jasmine.any(Number),
+          expect.objectContaining({
+            fileName: expect.any(String),
+            function: expect.any(String),
+            lineNumber: expect.any(Number),
+            columnNumber: expect.any(Number),
           })
         )
       }
@@ -631,7 +634,7 @@ describe('api', () => {
       const invocation = onEntry(probes, globalObject, args)!
       onThrow(invocation, new Error('Test error'), globalObject, args)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
 
       expect(snapshot.captures.return.arguments).toEqual({
@@ -639,7 +642,7 @@ describe('api', () => {
       })
       expect(snapshot.captures.return.throwable).toEqual({
         message: 'Test error',
-        stacktrace: jasmine.any(Array),
+        stacktrace: expect.any(Array),
       })
     })
 
@@ -653,19 +656,19 @@ describe('api', () => {
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.return.throwable).toEqual({
         message: 'Test error',
-        stacktrace: jasmine.any(Array),
+        stacktrace: expect.any(Array),
       })
       for (const frame of snapshot.captures.return.throwable.stacktrace) {
         expect(frame).toEqual(
-          jasmine.objectContaining({
-            fileName: jasmine.any(String),
-            function: jasmine.any(String),
-            lineNumber: jasmine.any(Number),
-            columnNumber: jasmine.any(Number),
+          expect.objectContaining({
+            fileName: expect.any(String),
+            function: expect.any(String),
+            lineNumber: expect.any(Number),
+            columnNumber: expect.any(Number),
           })
         )
       }
@@ -678,7 +681,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg)!
       onThrow(invocation, 'Test error', thisArg)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.return.throwable).toEqual({
         message: 'Test error',
@@ -699,11 +702,11 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg)!
       onThrow(invocation, error, thisArg)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.return.throwable).toEqual({
         message: 'Iframe error',
-        stacktrace: jasmine.any(Array),
+        stacktrace: expect.any(Array),
       })
     })
 
@@ -714,7 +717,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg)!
       expect(() => onThrow(invocation, Object.create(null), thisArg)).not.toThrow()
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.return.throwable).toEqual({
         message: '{}',
@@ -737,7 +740,7 @@ describe('api', () => {
       const invocation = onEntry(probes, {}, {})!
       expect(() => onThrow(invocation, error, {}, {})).not.toThrow()
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.return.throwable).toEqual({
         message: '<error: unable to stringify thrown value>',
@@ -758,7 +761,7 @@ describe('api', () => {
       const invocation = onEntry(probes, {}, {})!
       expect(() => onThrow(invocation, error, {}, {})).not.toThrow()
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.return.throwable).toEqual({
         message: '[object Error]',
@@ -804,7 +807,7 @@ describe('api', () => {
       const invocation = onEntry(probes, thisArg)!
       onThrow(invocation, new Error('Test error'), thisArg)
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures).toEqual({
         entry: undefined,
@@ -814,7 +817,7 @@ describe('api', () => {
           },
           throwable: {
             message: 'Test error',
-            stacktrace: jasmine.any(Array),
+            stacktrace: expect.any(Array),
           },
         },
       })
@@ -836,13 +839,13 @@ describe('api', () => {
       onThrow(invocation, new Error('Test error'), thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(payload.message).toBeUndefined()
       expect(snapshot.evaluationErrors).toEqual([
         {
           expr: 'missing.value',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         },
       ])
       expect(snapshot.captures).toBeUndefined()
@@ -998,7 +1001,7 @@ describe('api', () => {
     it('should skip snapshot collection once the lifetime budget is exhausted', () => {
       initTransport({ maxSnapshotsPerProbeLifetime: 1 })
 
-      const getterSpy = jasmine.createSpy('argGetter').and.returnValue('value')
+      const getterSpy = vi.fn().mockReturnValue('value')
       const args = {}
       Object.defineProperty(args, 'arg', {
         enumerable: true,
@@ -1140,15 +1143,15 @@ describe('api', () => {
       // Second invocation: probeA's pre-call check now fails and it is queued for
       // removal. probeB must still be processed in the same iteration even though
       // probeA gets spliced out of the probes array.
-      mockBatchAdd.calls.reset()
+      mockBatchAdd.mockClear()
       const probesAfterFirst = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const invocation2 = onEntry(probesAfterFirst, thisArg)!
       onReturn(invocation2, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([jasmine.objectContaining({ id: 'sibling-probe-b' })])
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([expect.objectContaining({ id: 'sibling-probe-b' })])
 
       // probeB's entry must not leak: exiting the same invocation again is a no-op.
-      mockBatchAdd.calls.reset()
+      mockBatchAdd.mockClear()
       onReturn(invocation2, null, thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
@@ -1183,10 +1186,10 @@ describe('api', () => {
       // replacement does not inherit it.
       onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      expect(mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.probe.version).toBe(probe.version)
+      expect(mockBatchAdd.mock.lastCall![0].debugger.snapshot.probe.version).toBe(probe.version)
 
       // The replacement starts from a clean slate: its own invocation is independent.
-      mockBatchAdd.calls.reset()
+      mockBatchAdd.mockClear()
       const newProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onReturn(onEntry(newProbes, thisArg)!, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -1216,7 +1219,7 @@ describe('api', () => {
       onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      mockBatchAdd.calls.reset()
+      mockBatchAdd.mockClear()
 
       onReturn(invocation, null, thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
@@ -1230,7 +1233,7 @@ describe('api', () => {
       onThrow(invocation, new Error('test'), thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      mockBatchAdd.calls.reset()
+      mockBatchAdd.mockClear()
 
       onThrow(invocation, new Error('test'), thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
@@ -1244,7 +1247,7 @@ describe('api', () => {
       onReturn(invocation, 'value', thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      mockBatchAdd.calls.reset()
+      mockBatchAdd.mockClear()
 
       onThrow(invocation, new Error('test'), thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
@@ -1254,7 +1257,7 @@ describe('api', () => {
     // invocation: entry state, duration, arguments, return value, locals and exception.
     describe('overlapping invocations', () => {
       function getSnapshots(): Array<Record<string, any>> {
-        return mockBatchAdd.calls.allArgs().map(([payload]) => payload.debugger.snapshot as Record<string, any>)
+        return mockBatchAdd.mock.calls.map(([payload]) => payload.debugger.snapshot as Record<string, any>)
       }
 
       it('should pair each snapshot with its own entry state when invocations exit in entry order', () => {
@@ -1445,7 +1448,7 @@ describe('api', () => {
 
       let callCount = 0
       const realNow = performance.now.bind(performance)
-      spyOn(performance, 'now').and.callFake(() => {
+      vi.spyOn(performance, 'now').mockImplementation(() => {
         callCount++
         // Let the first few calls (start time, deadline creation) use real time,
         // then jump past the deadline to simulate slow capture.
@@ -1461,7 +1464,7 @@ describe('api', () => {
       onReturn(invocation, null, thisArg, { arg: deepObj })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(hasTimeoutMarker(snapshot.captures.entry)).toBe(true)
     })
@@ -1477,7 +1480,7 @@ describe('api', () => {
       // Now make performance.now jump forward so the return capture times out
       let callCount = 0
       const realNow = performance.now.bind(performance)
-      spyOn(performance, 'now').and.callFake(() => {
+      vi.spyOn(performance, 'now').mockImplementation(() => {
         callCount++
         if (callCount <= 2) {
           return realNow()
@@ -1488,7 +1491,7 @@ describe('api', () => {
       onReturn(invocation, null, thisArg, { x: 1 }, { local: 'value' })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(hasTimeoutMarker(snapshot.captures.return)).toBe(true)
     })
@@ -1504,7 +1507,7 @@ describe('api', () => {
       // Now make performance.now jump forward so the throw capture times out
       let callCount = 0
       const realNow = performance.now.bind(performance)
-      spyOn(performance, 'now').and.callFake(() => {
+      vi.spyOn(performance, 'now').mockImplementation(() => {
         callCount++
         if (callCount <= 2) {
           return realNow()
@@ -1515,7 +1518,7 @@ describe('api', () => {
       onThrow(invocation, new Error('test'), thisArg, { x: 1 })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(hasTimeoutMarker(snapshot.captures.return.arguments)).toBe(true)
       expect(snapshot.captures.return.throwable.message).toBe('test')
@@ -1532,7 +1535,7 @@ describe('api', () => {
       // Spike performance.now to simulate slow execution
       let callCount = 0
       const realNow = performance.now.bind(performance)
-      spyOn(performance, 'now').and.callFake(() => {
+      vi.spyOn(performance, 'now').mockImplementation(() => {
         callCount++
         if (callCount <= 2) {
           return realNow()
@@ -1553,7 +1556,7 @@ describe('api', () => {
       let shouldTimeout = true
       let callCount = 0
       const realNow = performance.now.bind(performance)
-      spyOn(performance, 'now').and.callFake(() => {
+      vi.spyOn(performance, 'now').mockImplementation(() => {
         callCount++
         if (!shouldTimeout || callCount <= 3) {
           return realNow()
@@ -1593,7 +1596,7 @@ describe('api', () => {
 
       let callCount = 0
       const realNow = performance.now.bind(performance)
-      spyOn(performance, 'now').and.callFake(() => {
+      vi.spyOn(performance, 'now').mockImplementation(() => {
         callCount++
         if (callCount <= 3) {
           return realNow()
@@ -1606,7 +1609,7 @@ describe('api', () => {
       onReturn(invocation, null, thisArg, { x: { nested: 'value' } })
 
       // All probes should still send, with snapshot probes marked as timed out
-      const calls = mockBatchAdd.calls.allArgs()
+      const calls = mockBatchAdd.mock.calls
       expect(calls.length).toBe(3)
       expect(calls[1][0].debugger.snapshot.probe.id).toBe(nonSnapshotProbe.id)
       expect(calls[2][0].debugger.snapshot.captures.entry.arguments).toEqual({
@@ -1631,7 +1634,7 @@ describe('api', () => {
 
       let callCount = 0
       const realNow = performance.now.bind(performance)
-      spyOn(performance, 'now').and.callFake(() => {
+      vi.spyOn(performance, 'now').mockImplementation(() => {
         callCount++
         if (callCount <= 3) {
           return realNow()
@@ -1644,7 +1647,7 @@ describe('api', () => {
       onReturn(invocation, null, thisArg, { x: { nested: 'value' } })
 
       // Both snapshot probes share the deadline, so the second probe should send a timeout marker immediately.
-      const calls = mockBatchAdd.calls.allArgs()
+      const calls = mockBatchAdd.mock.calls
       expect(calls.length).toBe(2)
       expect(calls[1][0].debugger.snapshot.captures.entry.arguments).toEqual({
         x: { type: 'Object', notCapturedReason: 'timeout' },
@@ -1654,18 +1657,18 @@ describe('api', () => {
   })
 
   describe('RUM actions', () => {
-    let addActionSpy: jasmine.Spy
-    let startActionSpy: jasmine.Spy
-    let stopActionSpy: jasmine.Spy
+    let addActionSpy: Mock
+    let startActionSpy: Mock
+    let stopActionSpy: Mock
 
     function installRum() {
       ;(window as any).DD_RUM = { addAction: addActionSpy, startAction: startActionSpy, stopAction: stopActionSpy }
     }
 
     beforeEach(() => {
-      addActionSpy = jasmine.createSpy('addAction')
-      startActionSpy = jasmine.createSpy('startAction')
-      stopActionSpy = jasmine.createSpy('stopAction')
+      addActionSpy = vi.fn()
+      startActionSpy = vi.fn()
+      stopActionSpy = vi.fn()
       installRum()
 
       registerCleanupTask(() => {
@@ -1691,12 +1694,12 @@ describe('api', () => {
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const invocation = onEntry(probes, thisArg)!
 
-      expect(startActionSpy).toHaveBeenCalledOnceWith('probe: testMethod (test.js)', {
-        actionKey: jasmine.any(String),
+      expect(startActionSpy).toHaveBeenCalledExactlyOnceWith('probe: testMethod (test.js)', {
+        actionKey: expect.any(String),
         context: {
           debugger: {
             probe: { id: 'probe-1', version: 2, location: { method: 'testMethod', type: 'test.js' } },
-            snapshot: { id: jasmine.any(String) },
+            snapshot: { id: expect.any(String) },
           },
         },
       })
@@ -1704,8 +1707,8 @@ describe('api', () => {
 
       onReturn(invocation, null, thisArg)
 
-      const { actionKey } = startActionSpy.calls.argsFor(0)[1]
-      expect(stopActionSpy).toHaveBeenCalledOnceWith('probe: testMethod (test.js)', {
+      const { actionKey } = startActionSpy.mock.calls[0][1]
+      expect(stopActionSpy).toHaveBeenCalledExactlyOnceWith('probe: testMethod (test.js)', {
         actionKey,
         context: { debugger: { outcome: 'return', error: undefined } },
       })
@@ -1717,8 +1720,8 @@ describe('api', () => {
 
       callProbedFunction()
 
-      const snapshotId = mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.id
-      expect(startActionSpy.calls.argsFor(0)[1].context.debugger.snapshot.id).toBe(snapshotId)
+      const snapshotId = mockBatchAdd.mock.lastCall![0].debugger.snapshot.id
+      expect(startActionSpy.mock.calls[0][1].context.debugger.snapshot.id).toBe(snapshotId)
     })
 
     it('should stop the action with the error type when the function throws', () => {
@@ -1727,8 +1730,8 @@ describe('api', () => {
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onThrow(onEntry(probes, thisArg)!, new TypeError('secret message'), thisArg)
 
-      expect(stopActionSpy).toHaveBeenCalledOnceWith(jasmine.any(String), {
-        actionKey: jasmine.any(String),
+      expect(stopActionSpy).toHaveBeenCalledExactlyOnceWith(expect.any(String), {
+        actionKey: expect.any(String),
         context: { debugger: { outcome: 'throw', error: { type: 'TypeError' } } },
       })
     })
@@ -1739,7 +1742,7 @@ describe('api', () => {
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onThrow(onEntry(probes, thisArg)!, 'not an error', thisArg)
 
-      expect(stopActionSpy.calls.argsFor(0)[1].context).toEqual({
+      expect(stopActionSpy.mock.calls[0][1].context).toEqual({
         debugger: { outcome: 'throw', error: undefined },
       })
     })
@@ -1818,7 +1821,7 @@ describe('api', () => {
       callProbedFunction()
 
       expect(startActionSpy).toHaveBeenCalledTimes(2)
-      expect(startActionSpy.calls.argsFor(1)[1].context.debugger.probe.version).toBe(1)
+      expect(startActionSpy.mock.calls[1][1].context.debugger.probe.version).toBe(1)
     })
 
     it('should give each action its own key so a replacement probe cannot stop an in-flight action', () => {
@@ -1831,8 +1834,8 @@ describe('api', () => {
       callProbedFunction()
       onReturn(invocation, null, thisArg)
 
-      const startKeys = startActionSpy.calls.allArgs().map(([, options]) => options.actionKey as string)
-      const stopKeys = stopActionSpy.calls.allArgs().map(([, options]) => options.actionKey as string)
+      const startKeys = startActionSpy.mock.calls.map(([, options]) => options.actionKey as string)
+      const stopKeys = stopActionSpy.mock.calls.map(([, options]) => options.actionKey as string)
       expect(startKeys[0]).not.toBe(startKeys[1])
       expect(stopKeys).toEqual([startKeys[1], startKeys[0]])
     })
@@ -1883,8 +1886,12 @@ describe('api', () => {
     })
 
     it('should still send the snapshot when the RUM API throws', () => {
-      startActionSpy.and.throwError('start failed')
-      stopActionSpy.and.throwError('stop failed')
+      startActionSpy.mockImplementation(() => {
+        throw new Error('start failed')
+      })
+      stopActionSpy.mockImplementation(() => {
+        throw new Error('stop failed')
+      })
       addProbe(createEntryProbe())
 
       expect(() => callProbedFunction()).not.toThrow()
@@ -1904,10 +1911,10 @@ describe('api', () => {
 
         onReturn(invocation, null, thisArg)
 
-        expect(addActionSpy).toHaveBeenCalledOnceWith('probe: testMethod (test.js)', {
+        expect(addActionSpy).toHaveBeenCalledExactlyOnceWith('probe: testMethod (test.js)', {
           debugger: {
             probe: { id: 'probe-1', version: 2, location: { method: 'testMethod', type: 'test.js' } },
-            snapshot: { id: jasmine.any(String) },
+            snapshot: { id: expect.any(String) },
             outcome: 'return',
             error: undefined,
           },
@@ -1921,8 +1928,8 @@ describe('api', () => {
 
         callProbedFunction()
 
-        const snapshotId = mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.id
-        expect(addActionSpy.calls.argsFor(0)[1].debugger.snapshot.id).toBe(snapshotId)
+        const snapshotId = mockBatchAdd.mock.lastCall![0].debugger.snapshot.id
+        expect(addActionSpy.mock.calls[0][1].debugger.snapshot.id).toBe(snapshotId)
       })
 
       it('should add the action with the error type when the function throws', () => {
@@ -1930,10 +1937,10 @@ describe('api', () => {
 
         onThrow(onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg)!, new TypeError('secret message'), thisArg)
 
-        const context = addActionSpy.calls.argsFor(0)[1]
+        const context = addActionSpy.mock.calls[0][1]
         expect(context.debugger.outcome).toBe('throw')
         expect(context.debugger.error).toEqual({ type: 'TypeError' })
-        expect(context.debugger.snapshot.id).toBe(mockBatchAdd.calls.mostRecent().args[0].debugger.snapshot.id)
+        expect(context.debugger.snapshot.id).toBe(mockBatchAdd.mock.lastCall![0].debugger.snapshot.id)
       })
 
       it('should only add an action on the first hit of a probe', () => {
@@ -2003,7 +2010,9 @@ describe('api', () => {
       })
 
       it('should still send the snapshot when the RUM API throws', () => {
-        addActionSpy.and.throwError('add failed')
+        addActionSpy.mockImplementation(() => {
+          throw new Error('add failed')
+        })
         addProbe(createExitProbe())
 
         expect(() => callProbedFunction()).not.toThrow()

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { skipIfOffscreenCanvasIsNotSupported } from '../../../../test'
 import type { CanvasSnapshot } from './canvasSnapshot'
@@ -5,8 +6,8 @@ import { copyCanvasSnapshot, createCanvasSnapshot } from './canvasSnapshot'
 import { bitmapPixels } from './canvasImage.specHelper'
 
 describe('createCanvasSnapshot', () => {
-  beforeEach(() => {
-    skipIfOffscreenCanvasIsNotSupported()
+  beforeEach((context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
   })
 
   it('downscales the snapshot to the configured maximum dimension', () => {
@@ -29,7 +30,7 @@ describe('createCanvasSnapshot', () => {
 
   it('does not take a snapshot when no 2d context is available', () => {
     const canvas = createCanvas(2, 2)
-    spyOn(OffscreenCanvas.prototype, 'getContext').and.returnValue(null)
+    vi.spyOn(OffscreenCanvas.prototype, 'getContext').mockReturnValue(null)
 
     expect(createCanvasSnapshot(canvas, 1000)).toBeUndefined()
   })
@@ -54,8 +55,8 @@ describe('createCanvasSnapshot', () => {
 })
 
 describe('copyCanvasSnapshot', () => {
-  beforeEach(() => {
-    skipIfOffscreenCanvasIsNotSupported()
+  beforeEach((context) => {
+    skipIfOffscreenCanvasIsNotSupported(context)
   })
 
   it('copies the pixels and the canvas dimensions into a new bitmap', () => {

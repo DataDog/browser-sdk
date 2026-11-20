@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { generateUUID } from './stringUtils'
 
 describe('generateUUID', () => {

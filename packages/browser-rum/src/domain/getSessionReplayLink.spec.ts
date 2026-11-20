@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { ViewHistory } from '@datadog/browser-rum-core'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../browser-rum-core/test'

@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
 import { PageExitReason } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
@@ -10,8 +11,8 @@ describe('replayResourceCollection', () => {
 
   function createHttpRequestSpy() {
     const observable = new Observable<HttpRequestEvent<ResourcePayload>>()
-    const send = jasmine.createSpy('send')
-    const sendOnExit = jasmine.createSpy('sendOnExit')
+    const send = vi.fn()
+    const sendOnExit = vi.fn()
     const httpRequest = { observable, send, sendOnExit } as HttpRequest<ResourcePayload>
     return { httpRequest, observable, send, sendOnExit }
   }
@@ -35,18 +36,18 @@ describe('replayResourceCollection', () => {
   it('retries a hash whose upload was discarded because the queue was full', () => {
     const { httpRequest, observable, send } = createHttpRequestSpy()
     const { emitResource } = startCollection(httpRequest)
-    const onDiscard = jasmine.createSpy()
-    const secondOnDiscard = jasmine.createSpy()
+    const onDiscard = vi.fn()
+    const secondOnDiscard = vi.fn()
 
     emitResource('hash1', CONTENT, onDiscard)
     emitResource('hash1', CONTENT, secondOnDiscard)
-    const [payload] = send.calls.argsFor(0) as [ResourcePayload]
+    const [payload] = send.mock.calls[0] as [ResourcePayload]
     observable.notify({ type: 'queue-full', payload, bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 } })
 
     emitResource('hash1', CONTENT)
 
-    expect(onDiscard).toHaveBeenCalledOnceWith()
-    expect(secondOnDiscard).toHaveBeenCalledOnceWith()
+    expect(onDiscard).toHaveBeenCalledExactlyOnceWith()
+    expect(secondOnDiscard).toHaveBeenCalledExactlyOnceWith()
     expect(send).toHaveBeenCalledTimes(2)
   })
 
@@ -75,7 +76,7 @@ describe('replayResourceCollection', () => {
     const { emitResource, lifeCycle } = startCollection(httpRequest)
 
     emitResource('hash1', CONTENT)
-    const [payload] = send.calls.argsFor(0) as [ResourcePayload]
+    const [payload] = send.mock.calls[0] as [ResourcePayload]
     observable.notify({ type: 'success', payload, bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 } })
     lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { Hook } from '@datadog/js-core/assembly'
 import { createHook } from '@datadog/js-core/assembly'
@@ -10,12 +12,12 @@ import { startAccountContext } from './accountContext'
 
 describe('account context', () => {
   let accountContext: ContextManager
-  let displaySpy: jasmine.Spy
+  let displaySpy: Mock
   let hook: Hook<any, any>
 
   beforeEach(() => {
     hook = createHook()
-    displaySpy = spyOn(display, 'warn')
+    displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     accountContext = startAccountContext(hook, mockRumConfiguration(), 'some_product_key')
   })

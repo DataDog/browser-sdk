@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
 
@@ -41,18 +42,18 @@ describe('capture', () => {
       expect(result).toEqual({ type: 'string', value: 'hello' })
     })
 
-    it('should capture bigint', () => {
+    it('should capture bigint', (context) => {
       if (typeof BigInt === 'undefined') {
-        pending('BigInt is not supported in this browser')
+        context.skip('BigInt is not supported in this browser')
         return
       }
       const result = capture(BigInt(123), defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'bigint', value: '123' })
     })
 
-    it('should capture symbol', () => {
+    it('should capture symbol', (context) => {
       if (!('description' in Symbol.prototype)) {
-        pending('Symbol.description is not supported in this browser')
+        context.skip('Symbol.description is not supported in this browser')
         return
       }
       const sym = Symbol('test')
@@ -114,7 +115,7 @@ describe('capture', () => {
         fields: {
           message: { type: 'string', value: 'test error' },
           name: { type: 'string', value: 'Error' },
-          stack: { type: 'string', value: jasmine.any(String), truncated: true, size: error.stack!.length },
+          stack: { type: 'string', value: expect.any(String), truncated: true, size: error.stack!.length },
         },
       })
     })
@@ -133,12 +134,12 @@ describe('capture', () => {
       expect(result.fields.name).toEqual({ type: 'string', value: 'CustomError' })
     })
 
-    it('should capture Error with cause', () => {
+    it('should capture Error with cause', (context) => {
       const cause = new Error('cause error')
       // @ts-expect-error - cause is not a valid argument for Error constructor
       const error = new Error('main error', { cause })
       if ((error as any).cause === undefined) {
-        pending('Error cause is not supported in this browser')
+        context.skip('Error cause is not supported in this browser')
         return
       }
       const result = capture(error, defaultOpts, noTimeout()) as any
@@ -148,7 +149,7 @@ describe('capture', () => {
         fields: {
           message: { type: 'string', value: 'cause error' },
           name: { type: 'string', value: 'Error' },
-          stack: { type: 'string', value: jasmine.any(String), truncated: true, size: cause.stack!.length },
+          stack: { type: 'string', value: expect.any(String), truncated: true, size: cause.stack!.length },
         },
       })
     })
@@ -404,9 +405,9 @@ describe('capture', () => {
       expect(result.size).toBe(30)
     })
 
-    it('should handle objects with symbol keys', () => {
+    it('should handle objects with symbol keys', (context) => {
       if (!('description' in Symbol.prototype)) {
-        pending('Symbol.description is not supported in this browser')
+        context.skip('Symbol.description is not supported in this browser')
         return
       }
       const sym = Symbol('test')
@@ -628,9 +629,9 @@ describe('captureFields', () => {
     expect(result['some_property']).toEqual({ type: 'string', value: 'value' })
   })
 
-  it('should handle symbol keys', () => {
+  it('should handle symbol keys', (context) => {
     if (!('description' in Symbol.prototype)) {
-      pending('Symbol.description is not supported in this browser')
+      context.skip('Symbol.description is not supported in this browser')
       return
     }
     const sym = Symbol('test')
@@ -687,7 +688,7 @@ describe('capture timeout', () => {
   it('should preserve object fields and mark nested values when the deadline is exceeded', () => {
     let callCount = 0
     const originalNow = performance.now.bind(performance)
-    spyOn(performance, 'now').and.callFake(() => {
+    vi.spyOn(performance, 'now').mockImplementation(() => {
       callCount++
       // The first call sets the deadline, the second checks the root object, and
       // the third allows the first nested object to be captured.
@@ -723,7 +724,7 @@ describe('capture timeout', () => {
 
   it('should stop traversing array elements when deadline is exceeded', () => {
     let callCount = 0
-    spyOn(performance, 'now').and.callFake(() => {
+    vi.spyOn(performance, 'now').mockImplementation(() => {
       callCount++
       if (callCount <= 4) {
         return 100
@@ -742,7 +743,7 @@ describe('capture timeout', () => {
 
   it('should mark maps as timed out when the traversal deadline is exceeded', () => {
     let callCount = 0
-    spyOn(performance, 'now').and.callFake(() => {
+    vi.spyOn(performance, 'now').mockImplementation(() => {
       callCount++
       if (callCount <= 4) {
         return 100
@@ -765,7 +766,7 @@ describe('capture timeout', () => {
 
   it('should preserve field names and mark nested values when the deadline is exceeded', () => {
     let callCount = 0
-    spyOn(performance, 'now').and.callFake(() => {
+    vi.spyOn(performance, 'now').mockImplementation(() => {
       callCount++
       if (callCount <= 2) {
         return 100
@@ -859,7 +860,7 @@ describe('capture redaction', () => {
       name: { type: 'string', value: 'alice' },
     })
     expect(capture(new Map([[tokenKey, 'abc']]), defaultOpts, redactingContext()).entries).toEqual([
-      [jasmine.objectContaining({ type: 'symbol' }), { type: 'string', notCapturedReason: 'redactedIdent' }],
+      [expect.objectContaining({ type: 'symbol' }), { type: 'string', notCapturedReason: 'redactedIdent' }],
     ])
   })
 
@@ -870,7 +871,7 @@ describe('capture redaction', () => {
   })
 
   it('should not read a redacted field twice', () => {
-    const getter = jasmine.createSpy('getter').and.returnValue('hunter2')
+    const getter = vi.fn().mockReturnValue('hunter2')
     const obj = {}
     Object.defineProperty(obj, 'password', { get: getter, enumerable: true })
 

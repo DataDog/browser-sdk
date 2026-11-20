@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { computeViewName } from './startAngularView'
 import type { RouteSnapshot } from './types'
 

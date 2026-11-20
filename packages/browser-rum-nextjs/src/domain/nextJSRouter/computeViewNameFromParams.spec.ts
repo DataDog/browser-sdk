@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { useParams } from 'next/navigation'
 import { computeViewNameFromParams } from './computeViewNameFromParams'
 

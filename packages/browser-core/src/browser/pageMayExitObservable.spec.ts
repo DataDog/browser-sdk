@@ -1,12 +1,14 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { createNewEvent, restorePageVisibility, setPageVisibility, registerCleanupTask } from '../../test'
 import type { PageMayExitEvent } from './pageMayExitObservable'
 import { PageExitReason, createPageMayExitObservable } from './pageMayExitObservable'
 
 describe('createPageMayExitObservable', () => {
-  let onExitSpy: jasmine.Spy<(event: PageMayExitEvent) => void>
+  let onExitSpy: Mock<(event: PageMayExitEvent) => void>
 
   beforeEach(() => {
-    onExitSpy = jasmine.createSpy()
+    onExitSpy = vi.fn()
     registerCleanupTask(createPageMayExitObservable().subscribe(onExitSpy).unsubscribe)
   })
 
@@ -17,19 +19,19 @@ describe('createPageMayExitObservable', () => {
   it('notifies when the page fires beforeunload', () => {
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.UNLOADING })
+    expect(onExitSpy).toHaveBeenCalledExactlyOnceWith({ reason: PageExitReason.UNLOADING })
   })
 
   it('notifies when the page becomes hidden', () => {
     emulatePageVisibilityChange('hidden')
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.HIDDEN })
+    expect(onExitSpy).toHaveBeenCalledExactlyOnceWith({ reason: PageExitReason.HIDDEN })
   })
 
   it('notifies when the page becomes frozen', () => {
     window.dispatchEvent(createNewEvent('freeze'))
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.FROZEN })
+    expect(onExitSpy).toHaveBeenCalledExactlyOnceWith({ reason: PageExitReason.FROZEN })
   })
 
   it('notifies multiple times', () => {
@@ -49,7 +51,7 @@ describe('createPageMayExitObservable', () => {
   it('notifies page_terminated when pagehide fires without bfcache', () => {
     window.dispatchEvent(createNewEvent('pagehide', { persisted: false }))
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.PAGE_TERMINATED })
+    expect(onExitSpy).toHaveBeenCalledExactlyOnceWith({ reason: PageExitReason.PAGE_TERMINATED })
   })
 
   it('does not notify when pagehide fires for bfcache', () => {

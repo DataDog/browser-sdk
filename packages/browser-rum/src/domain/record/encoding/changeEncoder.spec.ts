@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { ChangeType, StringRole } from '../../../types'
 import { createString } from './roles'
 import type { StringId, StringIds } from './stringIds'
@@ -44,7 +45,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'Hello World']],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
       ])
     })
 
@@ -56,7 +57,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'foo', 'bar']],
-        [ChangeType.Text, [0, 0 as StringId], [1, 1 as StringId], [2, 0 as StringId]],
+        [ChangeType.Text, [0, 0], [1, 1], [2, 0]],
       ])
     })
 
@@ -66,7 +67,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'div', 'class', 'container', 'span', 'text']],
-        [ChangeType.AddNode, [null, 0 as StringId, [1 as StringId, 2 as StringId], [3 as StringId, 4 as StringId]]],
+        [ChangeType.AddNode, [null, 0, [1 as StringId, 2 as StringId], [3 as StringId, 4 as StringId]]],
       ])
     })
 
@@ -108,7 +109,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, '']],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
       ])
     })
 
@@ -123,7 +124,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'new-string']], // Only the new string is added.
-        [ChangeType.Text, [0, 0 as StringId], [1, 1 as StringId]],
+        [ChangeType.Text, [0, 0], [1, 1]],
       ])
     })
 
@@ -135,7 +136,7 @@ describe('ChangeEncoder', () => {
       const changes = encoder.flush()
 
       // The second flush should not define 'persistent' again.
-      expect(changes).toEqual([[ChangeType.Text, [1, 0 as StringId]]])
+      expect(changes).toEqual([[ChangeType.Text, [1, 0]]])
     })
   })
 
@@ -146,7 +147,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'Hello World']],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
       ])
     })
 
@@ -180,7 +181,7 @@ describe('ChangeEncoder', () => {
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'shared'], [StringRole.AttributeName, 'shared']],
         [ChangeType.Attribute, [1, [1 as StringId]]],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
       ])
     })
 
@@ -193,7 +194,7 @@ describe('ChangeEncoder', () => {
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'text'], [StringRole.AttributeName, 'class']],
         [ChangeType.Attribute, [1, [1 as StringId]]],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
       ])
     })
   })
@@ -210,7 +211,7 @@ describe('ChangeEncoder', () => {
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.AttributeName, 'class'], [StringRole.TextContent, 'text']],
         [ChangeType.Attribute, [1, [0 as StringId]], [2, [0 as StringId]]],
-        [ChangeType.Text, [0, 1 as StringId]],
+        [ChangeType.Text, [0, 1]],
       ])
     })
 
@@ -225,7 +226,7 @@ describe('ChangeEncoder', () => {
       // 'once' within the run.
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.TextContent, 'once', 'thrice']],
-        [ChangeType.Text, [0, 0 as StringId], [1, 1 as StringId], [2, 1 as StringId], [3, 1 as StringId]],
+        [ChangeType.Text, [0, 0], [1, 1], [2, 1], [3, 1]],
       ])
     })
   })
@@ -265,7 +266,7 @@ describe('ChangeEncoder', () => {
       // afterwards, once the changes that refer to its entries have been played back.
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'new-string']],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
         [ChangeType.ClearStrings],
       ])
     })
@@ -278,7 +279,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'new-string']],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
       ])
     })
 
@@ -292,7 +293,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'first', 'second']],
-        [ChangeType.Text, [0, 0 as StringId], [1, 1 as StringId]],
+        [ChangeType.Text, [0, 0], [1, 1]],
         [ChangeType.ClearStrings],
       ])
     })
@@ -307,7 +308,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'repeated']],
-        [ChangeType.Text, [0, 0 as StringId], [1, 0 as StringId]],
+        [ChangeType.Text, [0, 0], [1, 0]],
       ])
     })
 
@@ -323,10 +324,10 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'before the clear']],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
         [ChangeType.ClearStrings],
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'div', 'class', 'container']],
-        [ChangeType.AddNode, [null, 0 as StringId, [1 as StringId, 2 as StringId]]],
+        [ChangeType.AddNode, [null, 0, [1 as StringId, 2 as StringId]]],
       ])
     })
 
@@ -342,7 +343,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'div']],
-        [ChangeType.AddNode, [null, 0 as StringId]],
+        [ChangeType.AddNode, [null, 0]],
         [ChangeType.ClearStrings],
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'class', 'container']],
         [ChangeType.Attribute, [0, [0 as StringId, 1 as StringId]]],
@@ -361,7 +362,7 @@ describe('ChangeEncoder', () => {
       // first id now that the table is empty.
       expect(changes).toEqual([
         [ChangeType.AddRoleAnnotatedStrings, [StringRole.Default, 'discarded']],
-        [ChangeType.Text, [1, 0 as StringId]],
+        [ChangeType.Text, [1, 0]],
       ])
     })
   })
