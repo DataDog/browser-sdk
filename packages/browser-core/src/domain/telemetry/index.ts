@@ -4,6 +4,8 @@ export {
   TelemetryMetrics,
   addTelemetryDebug,
   addTelemetryError,
+  addCrossPlatformTelemetryDebug,
+  addCrossPlatformTelemetryError,
   resetTelemetry,
   startTelemetry,
   addTelemetryConfiguration,

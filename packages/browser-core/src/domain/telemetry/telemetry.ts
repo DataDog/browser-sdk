@@ -79,7 +79,8 @@ const METRIC_SAMPLE_RATE = 1
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED]
 const MAX_TELEMETRY_EVENTS_PER_PAGE = 15
 
-let telemetryObservable: BufferedObservable<{ rawEvent: RawTelemetryEvent; metricName?: string }> | undefined
+let telemetryObservable:
+  BufferedObservable<{ rawEvent: RawTelemetryEvent; metricName?: string; isCrossPlatform?: boolean }> | undefined
 
 export function getTelemetryObservable() {
   if (!telemetryObservable) {
@@ -134,7 +135,7 @@ export function startTelemetryCollection(
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   const telemetryObservable = getTelemetryObservable()
-  telemetryObservable.subscribe(({ rawEvent, metricName }) => {
+  telemetryObservable.subscribe(({ rawEvent, metricName, isCrossPlatform }) => {
     if ((metricName && !telemetryEnabledPerType['metric']) || !telemetryEnabledPerType[rawEvent.type!]) {
       return
     }
@@ -165,7 +166,8 @@ export function startTelemetryCollection(
       defaultTelemetryEventAttributes as RecursivePartial<TelemetryEvent>,
       telemetryService,
       rawEvent,
-      runtimeEnvInfo
+      runtimeEnvInfo,
+      isCrossPlatform
     )
     observable.notify(event)
     sendToExtension('telemetry', event)
@@ -184,7 +186,8 @@ export function startTelemetryCollection(
     defaultTelemetryEventAttributes: RecursivePartial<TelemetryEvent>,
     telemetryService: TelemetryService,
     rawEvent: RawTelemetryEvent,
-    runtimeEnvInfo: RuntimeEnvInfo
+    runtimeEnvInfo: RuntimeEnvInfo,
+    isCrossPlatform?: boolean
   ): TelemetryEvent & Context {
     const clockNow = clocksNow()
 
@@ -192,8 +195,9 @@ export function startTelemetryCollection(
       type: 'telemetry' as const,
       date: clockNow.timeStamp,
       service: telemetryService,
-      version: __BUILD_ENV__SDK_VERSION__,
-      source: 'browser' as const,
+      // Telemetry sent by a cross-platform SDK (Flutter, Unity) is attributed to that SDK
+      version: (isCrossPlatform && configuration.sdkVersion) || __BUILD_ENV__SDK_VERSION__,
+      source: isCrossPlatform ? configuration.source : ('browser' as const),
       _dd: {
         format_version: 2 as const,
       },
@@ -282,6 +286,42 @@ export function addTelemetryError(e: unknown, context?: Context) {
       ...formatError(e),
       ...context,
     },
+  })
+}
+
+/**
+ * Debug telemetry sent by a cross-platform SDK (Flutter, Unity) through the plugin API.
+ */
+export function addCrossPlatformTelemetryDebug(message: string, context?: Context) {
+  getTelemetryObservable().notify({
+    rawEvent: {
+      type: TelemetryType.LOG,
+      message,
+      status: StatusType.debug,
+      ...context,
+    },
+    isCrossPlatform: true,
+  })
+}
+
+/**
+ * Error telemetry sent by a cross-platform SDK (Flutter, Unity) through the plugin API.
+ * The stack comes from the cross-platform SDK and is sent as is, like on mobile platforms:
+ * scrubCustomerFrames would drop all of its frames, as none are served from the Datadog CDN.
+ */
+export function addCrossPlatformTelemetryError(
+  { message, stack, kind }: { message: string; stack?: string; kind?: string },
+  context?: Context
+) {
+  getTelemetryObservable().notify({
+    rawEvent: {
+      type: TelemetryType.LOG,
+      status: StatusType.error,
+      message,
+      error: { stack, kind },
+      ...context,
+    },
+    isCrossPlatform: true,
   })
 }
 

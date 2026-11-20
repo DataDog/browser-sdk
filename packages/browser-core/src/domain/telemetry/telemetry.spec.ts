@@ -26,6 +26,8 @@ import {
   startTelemetryCollection,
   addTelemetryMetrics,
   addTelemetryDebug,
+  addCrossPlatformTelemetryDebug,
+  addCrossPlatformTelemetryError,
   TelemetryMetrics,
   startTelemetryTransport,
 } from './telemetry'
@@ -269,6 +271,65 @@ describe('telemetry', () => {
     addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
     expect((await getTelemetryEvents())[0].ddtags).toEqual('sdk_version:test,env:bar,service:foo,version:123')
+  })
+
+  describe('cross-platform telemetry', () => {
+    const CROSS_PLATFORM_CONFIGURATION: Partial<Configuration> = { source: 'flutter', sdkVersion: '3.0.0' }
+
+    it('attributes debug events to the cross-platform SDK', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
+      addCrossPlatformTelemetryDebug('message', { foo: 'bar' })
+
+      expect(await getTelemetryEvents()).toEqual([
+        jasmine.objectContaining({
+          source: 'flutter',
+          version: '3.0.0',
+          telemetry: jasmine.objectContaining({
+            type: TelemetryType.LOG,
+            status: StatusType.debug,
+            message: 'message',
+            foo: 'bar',
+          }),
+        }),
+      ])
+    })
+
+    it('attributes error events to the cross-platform SDK and keeps the stack as is', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
+      addCrossPlatformTelemetryError({ message: 'message', stack: 'at main.dart:1', kind: 'StateError' })
+
+      expect(await getTelemetryEvents()).toEqual([
+        jasmine.objectContaining({
+          source: 'flutter',
+          version: '3.0.0',
+          telemetry: jasmine.objectContaining({
+            type: TelemetryType.LOG,
+            status: StatusType.error,
+            message: 'message',
+            error: { stack: 'at main.dart:1', kind: 'StateError' },
+          }),
+        }),
+      ])
+    })
+
+    it('falls back to the browser SDK version when no sdkVersion is configured', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ source: 'unity' })
+      addTelemetryDebug('browser message')
+      addCrossPlatformTelemetryDebug('unity message')
+
+      const [browserEvent, crossPlatformEvent] = await getTelemetryEvents()
+      expect(crossPlatformEvent.source).toBe('unity')
+      expect(crossPlatformEvent.version).toBe(browserEvent.version)
+    })
+
+    it('keeps the browser SDK telemetry attributed to the browser SDK', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
+      addTelemetryDebug('message')
+
+      const [event] = await getTelemetryEvents()
+      expect(event.source).toBe('browser')
+      expect(event.version).not.toBe('3.0.0')
+    })
   })
 
   describe('assemble telemetry hook', () => {

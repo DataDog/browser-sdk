@@ -8,6 +8,8 @@ import {
   ResourceType,
   startTelemetry,
   startSessionManager,
+  addCrossPlatformTelemetryDebug,
+  addCrossPlatformTelemetryError,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -119,6 +121,23 @@ describe('rum public api', () => {
             startDeflateWorker: () => FAKE_WORKER,
           },
         }))
+      })
+
+      it('passes telemetry functions to plugins on rum start', async () => {
+        const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy() }
+
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          plugins: [plugin],
+        })
+
+        await collectAsyncCalls(plugin.onRumStart, 1)
+        expect(plugin.onRumStart).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            addTelemetryDebug: addCrossPlatformTelemetryDebug,
+            addTelemetryError: addCrossPlatformTelemetryError,
+          })
+        )
       })
 
       it('passes addError to plugins on rum start', async () => {

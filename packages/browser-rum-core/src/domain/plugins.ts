@@ -1,4 +1,5 @@
 import { isThenable } from '@datadog/browser-core'
+import type { addCrossPlatformTelemetryDebug, addCrossPlatformTelemetryError } from '@datadog/browser-core'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
@@ -34,6 +35,16 @@ export interface OnRumStartOptions {
    * Add a custom error to the RUM browser SDK.
    */
   addError?: StartRumResult['addError']
+  /**
+   * Send a debug telemetry event on behalf of a cross-platform SDK (Flutter, Unity). The event is
+   * attributed to the `source` and `sdkVersion` init options.
+   */
+  addTelemetryDebug?: typeof addCrossPlatformTelemetryDebug
+  /**
+   * Send an error telemetry event on behalf of a cross-platform SDK (Flutter, Unity). The event is
+   * attributed to the `source` and `sdkVersion` init options. The stack is sent as is.
+   */
+  addTelemetryError?: typeof addCrossPlatformTelemetryError
 }
 
 /**
