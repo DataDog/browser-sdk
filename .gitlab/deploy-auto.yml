@@ -92,7 +92,7 @@ step-7_publish-developer-extension:
     - yarn
     - node ./scripts/deploy/publish-developer-extension.ts
 
-step-8_create-github-release:
+step-8_publish-github-release:
   needs:
     - step-7_publish-developer-extension
   stage: deploy
@@ -101,7 +101,7 @@ step-8_create-github-release:
   allow_failure: false
   script:
     - yarn
-    - node scripts/release/create-github-release.ts
+    - node scripts/release/publish-github-release.ts
 
 ########################################################################################################################
 # Notify
@@ -127,7 +127,7 @@ notify-deploy-ready:
 notify-deploy-success:
   stage: post-notify
   needs:
-    - step-8_create-github-release
+    - step-8_publish-github-release
   extends:
     - .prepare_notification
   script:
