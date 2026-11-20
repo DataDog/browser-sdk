@@ -8,6 +8,7 @@ import {
   ResourceType,
   startTelemetry,
   startSessionManager,
+  addPluginTelemetry,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -119,6 +120,22 @@ describe('rum public api', () => {
             startDeflateWorker: () => FAKE_WORKER,
           },
         }))
+      })
+
+      it('passes the telemetry function to plugins on rum start', async () => {
+        const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy() }
+
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          plugins: [plugin],
+        })
+
+        await collectAsyncCalls(plugin.onRumStart, 1)
+        expect(plugin.onRumStart).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            addTelemetry: addPluginTelemetry,
+          })
+        )
       })
 
       it('passes addError to plugins on rum start', async () => {

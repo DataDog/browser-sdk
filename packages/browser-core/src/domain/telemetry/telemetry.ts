@@ -79,7 +79,8 @@ const METRIC_SAMPLE_RATE = 1
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED]
 const MAX_TELEMETRY_EVENTS_PER_PAGE = 15
 
-let telemetryObservable: BufferedObservable<{ rawEvent: RawTelemetryEvent; metricName?: string }> | undefined
+let telemetryObservable:
+  BufferedObservable<{ rawEvent: RawTelemetryEvent; metricName?: string; isCrossPlatform?: boolean }> | undefined
 
 export function getTelemetryObservable() {
   if (!telemetryObservable) {
@@ -134,7 +135,7 @@ export function startTelemetryCollection(
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   const telemetryObservable = getTelemetryObservable()
-  telemetryObservable.subscribe(({ rawEvent, metricName }) => {
+  telemetryObservable.subscribe(({ rawEvent, metricName, isCrossPlatform }) => {
     if ((metricName && !telemetryEnabledPerType['metric']) || !telemetryEnabledPerType[rawEvent.type!]) {
       return
     }
@@ -165,7 +166,8 @@ export function startTelemetryCollection(
       defaultTelemetryEventAttributes as RecursivePartial<TelemetryEvent>,
       telemetryService,
       rawEvent,
-      runtimeEnvInfo
+      runtimeEnvInfo,
+      isCrossPlatform
     )
     observable.notify(event)
     sendToExtension('telemetry', event)
@@ -184,7 +186,8 @@ export function startTelemetryCollection(
     defaultTelemetryEventAttributes: RecursivePartial<TelemetryEvent>,
     telemetryService: TelemetryService,
     rawEvent: RawTelemetryEvent,
-    runtimeEnvInfo: RuntimeEnvInfo
+    runtimeEnvInfo: RuntimeEnvInfo,
+    isCrossPlatform?: boolean
   ): TelemetryEvent & Context {
     const clockNow = clocksNow()
 
@@ -192,8 +195,9 @@ export function startTelemetryCollection(
       type: 'telemetry' as const,
       date: clockNow.timeStamp,
       service: telemetryService,
-      version: __BUILD_ENV__SDK_VERSION__,
-      source: 'browser' as const,
+      // Telemetry sent by a cross-platform SDK (Flutter, Unity) is attributed to that SDK
+      version: (isCrossPlatform && configuration.sdkVersion) || __BUILD_ENV__SDK_VERSION__,
+      source: isCrossPlatform ? configuration.source : ('browser' as const),
       _dd: {
         format_version: 2 as const,
       },
@@ -283,6 +287,61 @@ export function addTelemetryError(e: unknown, context?: Context) {
       ...context,
     },
   })
+}
+
+/**
+ * Telemetry event sent through the plugin API.
+ *
+ * New event kinds can be added to this union without changing the plugin API signature: the
+ * browser SDK drops kinds it doesn't know about, so SDKs relying on newer kinds keep working with
+ * older browser SDK versions.
+ */
+export type PluginTelemetryEvent =
+  | { type: 'debug'; message: string; context?: Context }
+  | { type: 'error'; message: string; stack?: string; kind?: string; context?: Context }
+
+export interface AddPluginTelemetryOptions {
+  /**
+   * The event is sent on behalf of a cross-platform SDK (Flutter, Unity) running the browser SDK:
+   * it is attributed to the `source` and `sdkVersion` init options instead of the browser SDK.
+   */
+  crossPlatformSdk?: boolean
+}
+
+/**
+ * Send a telemetry event through the plugin API. The error stack is sent as is (no frame
+ * scrubbing), like on mobile platforms: scrubCustomerFrames would drop all of the frames of a
+ * cross-platform SDK stack, as none are served from the Datadog CDN.
+ */
+export function addPluginTelemetry(event: PluginTelemetryEvent, options?: AddPluginTelemetryOptions) {
+  const rawEvent = toPluginRawEvent(event)
+  if (!rawEvent) {
+    return
+  }
+  getTelemetryObservable().notify({ rawEvent, isCrossPlatform: options?.crossPlatformSdk })
+}
+
+function toPluginRawEvent(event: PluginTelemetryEvent): RawTelemetryEvent | undefined {
+  switch (event.type) {
+    case 'debug':
+      return {
+        type: TelemetryType.LOG,
+        message: event.message,
+        status: StatusType.debug,
+        ...event.context,
+      }
+    case 'error':
+      return {
+        type: TelemetryType.LOG,
+        status: StatusType.error,
+        message: event.message,
+        error: { stack: event.stack, kind: event.kind },
+        ...event.context,
+      }
+  }
+  // The union is closed at compile time, so this is only reachable with an event kind unknown to
+  // this SDK version, sent by an SDK built against a newer browser SDK.
+  return undefined
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
