@@ -1,7 +1,6 @@
-import type { ClocksState, RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
-import { elapsed, timeStampNow } from '@datadog/js-core/time'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -31,8 +30,7 @@ export function trackCommonViewMetrics(
   isSoftNavigationTracked: boolean
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
-  let hasManualLoadingTime = false
-  let viewEnded = false
+  let isLoadingTimeCanceled = false
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -42,17 +40,15 @@ export function trackCommonViewMetrics(
     loadingType,
     viewStart,
     (newLoadingTime) => {
-      if (!hasManualLoadingTime) {
+      if (!isLoadingTimeCanceled) {
         commonViewMetrics.loadingTime = newLoadingTime
         scheduleViewUpdate()
       }
     }
   )
-
   const { stop: stopScrollMetricsTracking } = trackScrollMetrics(viewStart, (newScrollMetrics) => {
     commonViewMetrics.scroll = newScrollMetrics
   })
-
   const { stop: stopCLSTracking, setNavigationId: setCLSNavigationId } = trackCumulativeLayoutShift(
     configuration,
     viewStart.relative,
@@ -62,11 +58,10 @@ export function trackCommonViewMetrics(
     },
     isSoftNavigationTracked
   )
-
   const {
     stop: stopINPTracking,
     getInteractionToNextPaint,
-    setViewEnd: setINPViewEnd,
+    setViewEnd,
     setNavigationId: setINPNavigationId,
   } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType, isSoftNavigationTracked)
 
@@ -76,12 +71,13 @@ export function trackCommonViewMetrics(
       stopCLSTracking()
       stopScrollMetricsTracking()
     },
+    cancelLoadingTimeTracking: () => {
+      isLoadingTimeCanceled = true
+      stopLoadingTimeTracking()
+    },
     stopINPTracking,
     setLoadEvent,
-    setViewEnd: (viewEndTime: RelativeTime) => {
-      viewEnded = true
-      setINPViewEnd(viewEndTime)
-    },
+    setViewEnd,
     setNavigationId: (navigationId: number) => {
       setCLSNavigationId(navigationId)
       setINPNavigationId(navigationId)
@@ -89,18 +85,6 @@ export function trackCommonViewMetrics(
     getCommonViewMetrics: () => {
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics
-    },
-    setLoadingTime: (callTimestamp?: TimeStamp) => {
-      if (viewEnded) {
-        return
-      }
-      const loadingTime = elapsed(viewStart.timeStamp, callTimestamp ?? timeStampNow())
-      if (!hasManualLoadingTime) {
-        stopLoadingTimeTracking()
-      }
-      hasManualLoadingTime = true
-      commonViewMetrics.loadingTime = loadingTime
-      scheduleViewUpdate()
     },
   }
 }

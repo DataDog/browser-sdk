@@ -71,7 +71,21 @@ test.describe('telemetry', () => {
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.sdk_name).toBe('logs')
       expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
+      expect(event.telemetry.configuration.init_context).toEqual({ has_user: false, has_account: false })
       expect(event.session!.id).toEqual(expect.any(String))
+    })
+
+  createTest('send init context usage for logs')
+    .withLogs()
+    .withLogsInit((configuration) => {
+      window.DD_LOGS!.init(configuration, { user: { id: '123', email: 'user@example.com' } })
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.telemetryConfigurationEvents).toHaveLength(1)
+      const event = intakeRegistry.telemetryConfigurationEvents[0]
+      expect(event.telemetry.configuration.init_context).toEqual({ has_user: true, has_account: false })
+      expect(JSON.stringify(event)).not.toContain('user@example.com')
     })
 
   createTest('send init configuration for RUM')
@@ -85,8 +99,25 @@ test.describe('telemetry', () => {
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.sdk_name).toBe('rum')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
+      expect(event.telemetry.configuration.init_context).toEqual({ has_user: false, has_account: false })
       expect(event.session!.id).toEqual(expect.any(String))
       expect(event.application!.id).toEqual(expect.any(String))
+    })
+
+  createTest('send init context usage for RUM')
+    .withRum()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration, {
+        user: { id: '123', email: 'user@example.com' },
+        account: { id: '456', name: 'Acme' },
+      })
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.telemetryConfigurationEvents).toHaveLength(1)
+      const event = intakeRegistry.telemetryConfigurationEvents[0]
+      expect(event.telemetry.configuration.init_context).toEqual({ has_user: true, has_account: true })
+      expect(JSON.stringify(event)).not.toContain('user@example.com')
     })
 
   createTest('send usage telemetry for RUM')

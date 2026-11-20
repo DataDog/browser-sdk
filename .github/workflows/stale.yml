@@ -7,6 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
+  # Needed to delete and re-save the `_state` cache that lets a run resume where the previous one stopped
+  actions: write
   issues: write
   pull-requests: write
 
@@ -18,6 +20,8 @@ jobs:
         with:
           # See documentation at https://github.com/actions/stale?tab=readme-ov-file#all-options
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # The default (30) is used up before the run gets through all open issues and PRs
+          operations-per-run: 300
 
           stale-issue-message: |
             This issue has been automatically marked as stale because it has not had recent activity.

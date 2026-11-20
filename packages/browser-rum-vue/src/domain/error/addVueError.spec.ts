@@ -3,9 +3,9 @@ import { initializeVuePlugin } from '../../../test/initializeVuePlugin'
 import { addVueError } from './addVueError'
 
 describe('addVueError', () => {
-  it('reports the error to the SDK with info as first line of component_stack', () => {
+  it('reports the error to the SDK with info as first line of component_stack', async () => {
     const addErrorSpy = jasmine.createSpy()
-    initializeVuePlugin({ addError: addErrorSpy })
+    await initializeVuePlugin({ addError: addErrorSpy })
 
     const error = new Error('something broke')
     addVueError(error, null, 'mounted hook')
@@ -21,9 +21,9 @@ describe('addVueError', () => {
     )
   })
 
-  it('includes component hierarchy in component_stack when instance is provided', () => {
+  it('includes component hierarchy in component_stack when instance is provided', async () => {
     const addErrorSpy = jasmine.createSpy()
-    initializeVuePlugin({ addError: addErrorSpy })
+    await initializeVuePlugin({ addError: addErrorSpy })
 
     // Build a mock instance chain without @vue/test-utils to avoid
     // Object.fromEntries compatibility issues on older browsers
@@ -42,17 +42,17 @@ describe('addVueError', () => {
     expect(componentStack).toContain('at <ParentComponent>')
   })
 
-  it('handles empty info gracefully', () => {
+  it('handles empty info gracefully', async () => {
     const addErrorSpy = jasmine.createSpy()
-    initializeVuePlugin({ addError: addErrorSpy })
+    await initializeVuePlugin({ addError: addErrorSpy })
     addVueError(new Error('oops'), null, '')
     expect(addErrorSpy).toHaveBeenCalledTimes(1)
     expect(addErrorSpy.calls.mostRecent().args[0].componentStack).toBeUndefined()
   })
 
-  it('should merge dd_context from the original error with vue error context', () => {
+  it('should merge dd_context from the original error with vue error context', async () => {
     const addErrorSpy = jasmine.createSpy()
-    initializeVuePlugin({ addError: addErrorSpy })
+    await initializeVuePlugin({ addError: addErrorSpy })
     const originalError = new Error('error message')
     ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
 
@@ -63,5 +63,17 @@ describe('addVueError', () => {
       component: 'Menu',
       param: 123,
     })
+  })
+
+  it('does not throw when reading dd_context throws', async () => {
+    const addErrorSpy = jasmine.createSpy()
+    await initializeVuePlugin({ addError: addErrorSpy })
+    const error = new Error('oops')
+    Object.defineProperty(error, 'dd_context', {
+      get() {
+        throw new Error('getter failed')
+      },
+    })
+    expect(() => addVueError(error, null, '')).not.toThrow()
   })
 })

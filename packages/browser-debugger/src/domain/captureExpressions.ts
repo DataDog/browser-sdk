@@ -21,9 +21,9 @@ export function evaluateCaptureExpressions(
   const values: Record<string, CapturedValue> = {}
   const evaluationErrors: EvaluationError[] = []
 
-  for (const { name, expression, capture: captureOptions } of compiledCaptureExpressions.expressions) {
+  for (const { name, evaluate, capture: captureOptions } of compiledCaptureExpressions) {
     try {
-      const value = compiledCaptureExpressions.evaluateExpression(expression, context)
+      const value = evaluate(context)
       values[name] = capture(value, captureOptions, captureCtx)
     } catch (error) {
       evaluationErrors.push({

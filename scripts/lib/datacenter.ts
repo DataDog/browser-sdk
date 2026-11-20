@@ -1,4 +1,4 @@
-import { fetchHandlingError } from './executionUtils.ts'
+import { fetchRuntimeMetadataService } from './runtimeMetadataService.ts'
 
 export const DatacenterType = {
   // Minor DCs are the ones that are deployed first, all at once.
@@ -28,9 +28,6 @@ interface DatacentersResponse {
 }
 
 const MAJOR_DCS = ['gov', 'us1', 'eu1']
-
-const VAULT_ADDR = process.env.VAULT_ADDR || 'https://vault.us1.ddbuild.io'
-const RUNTIME_METADATA_SERVICE_URL = 'https://runtime-metadata-service.us1.ddbuild.io/v2/datacenters'
 
 export async function getDatacenterMetadata(name: string): Promise<Datacenter | undefined> {
   const datacentersMetadata = await getAllDatacentersMetadata()
@@ -73,35 +70,14 @@ export function getAllDatacentersMetadata(): Promise<Datacenter[]> {
 }
 
 async function fetchDatacentersFromRuntimeMetadataService(): Promise<DatacentersResponse['datacenters']> {
-  const token = await getVaultToken()
-
   // Filter for production environment and site flavor only
   const selector =
     'datacenter.environment == "prod" && datacenter.flavor == "site" && datacenter.status != "deprecated"'
 
-  const response = await fetchHandlingError(
-    `${RUNTIME_METADATA_SERVICE_URL}?selector=${encodeURIComponent(selector)}`,
-    {
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    }
+  const data = await fetchRuntimeMetadataService<DatacentersResponse>(
+    `/v2/datacenters?selector=${encodeURIComponent(selector)}`
   )
-
-  const data = (await response.json()) as DatacentersResponse
   return data.datacenters
-}
-
-async function getVaultToken(): Promise<string> {
-  const response = await fetchHandlingError(`${VAULT_ADDR}/v1/identity/oidc/token/runtime-metadata-service`, {
-    headers: {
-      'X-Vault-Request': 'true',
-    },
-  })
-
-  const data = (await response.json()) as { data: { token: string } }
-  return data.data.token
 }
 
 function getDatacenterType(name: string): DatacenterType {

@@ -4,8 +4,12 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi, makeProfilerApi } from '@datadog/browser-rum/internal'
 import { shopifyPlugin } from '../domain/shopifyPlugin'
+import { shopifyAppPixelPlugin } from '../domain/shopifyAppPixelPlugin'
 
-type ShopifyRumPublicApi = RumPublicApi & { shopifyPlugin: typeof shopifyPlugin }
+type ShopifyRumPublicApi = RumPublicApi & {
+  shopifyPlugin: typeof shopifyPlugin
+  shopifyAppPixelPlugin: typeof shopifyAppPixelPlugin
+}
 
 interface BrowserWindow {
   DD_RUM?: ShopifyRumPublicApi
@@ -18,5 +22,6 @@ const datadogRum = makeRumPublicApi(makeRecorderApi(), makeProfilerApi(), {
 }) as ShopifyRumPublicApi
 
 datadogRum.shopifyPlugin = shopifyPlugin
+datadogRum.shopifyAppPixelPlugin = shopifyAppPixelPlugin
 
 defineGlobal(global, 'DD_RUM', datadogRum)

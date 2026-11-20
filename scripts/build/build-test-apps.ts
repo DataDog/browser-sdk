@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
+import rumReactPackageJson from '../../packages/browser-rum-react/package.json' with { type: 'json' }
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
@@ -231,7 +232,10 @@ async function buildReactRouterV6App() {
     await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
       content
         .replace(/"name": "react-router-app"/, '"name": "react-router-v6-app"')
-        .replace(/"react-router": "[^"]*"/, '"react-router-dom": "6.30.0"')
+        .replace(
+          /"react-router": "[^"]*"/,
+          `"react-router-dom": "${rumReactPackageJson.devDependencies['react-router-dom-6'].replace(/^npm:.*@/, '')}"`
+        )
     )
 
     await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
@@ -266,7 +270,10 @@ async function buildReactRouterV7App() {
     await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
       content
         .replace(/"name": "react-router-app"/, '"name": "react-router-v7-app"')
-        .replace(/"react-router": "[^"]*"/, '"react-router": "7.18.1"')
+        .replace(
+          /"react-router": "[^"]*"/,
+          `"react-router": "${rumReactPackageJson.devDependencies['react-router-dom']}"`
+        )
     )
 
     await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
