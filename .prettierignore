@@ -23,3 +23,6 @@ yarn.lock
 
 # Symlinks (prettier would otherwise resolve and overwrite the target file or replace the symlink with a regular file)
 /packages/browser-rum-slim/BROWSER_SUPPORT.md
+
+# Written by release-please (`*` bullets)
+**/CHANGELOG.md
