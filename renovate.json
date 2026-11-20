@@ -40,8 +40,9 @@
       "enabled": false
     },
     {
-      "matchFileNames": ["test/apps/angular-app/**"],
-      "matchPackageNames": ["@angular/**", "@angular-devkit/**", "@ngtools/**", "typescript"],
+      "description": "@angular/core-15 is an alias kept on v15 to test the oldest supported Angular version",
+      "matchFileNames": ["packages/browser-rum-angular/package.json"],
+      "matchDepNames": ["@angular/core-15"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },

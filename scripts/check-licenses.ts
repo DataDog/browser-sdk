@@ -40,7 +40,10 @@ function retrievePackageDependencies(packageJsonFile: { content: any }): string[
       if (typeof version === 'string' && version.startsWith('npm:')) {
         // Extract the original dependency name from the npm protocol version string. Example:
         // npm:react@17  ->  react
-        return version.slice(4).split('@')[0]
+        // npm:@angular/core@15  ->  @angular/core
+        const aliasedDependency = version.slice(4)
+        const versionSeparatorIndex = aliasedDependency.lastIndexOf('@')
+        return versionSeparatorIndex > 0 ? aliasedDependency.slice(0, versionSeparatorIndex) : aliasedDependency
       }
       return dependency
     })
