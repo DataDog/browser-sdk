@@ -2,6 +2,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
 import rumReactPackageJson from '../../packages/browser-rum-react/package.json' with { type: 'json' }
+import rumVuePackageJson from '../../packages/browser-rum-vue/package.json' with { type: 'json' }
+import rumNuxtPackageJson from '../../packages/browser-rum-nuxt/package.json' with { type: 'json' }
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
@@ -234,7 +236,7 @@ async function buildReactRouterV6App() {
         .replace(/"name": "react-router-app"/, '"name": "react-router-v6-app"')
         .replace(
           /"react-router": "[^"]*"/,
-          `"react-router-dom": "${rumReactPackageJson.devDependencies['react-router-dom-6'].replace(/^npm:.*@/, '')}"`
+          `"react-router-dom": "${aliasVersion(rumReactPackageJson.devDependencies['react-router-dom-6'])}"`
         )
     )
 
@@ -292,7 +294,7 @@ async function buildVueRouterV4App() {
   await buildGeneratedApp('vue-router-app', 'vue-router-v4-app', async (appPath) => {
     await modifyPackageJson(appPath, (packageJson) => {
       packageJson.name = 'vue-router-v4-app'
-      packageJson.dependencies['vue-router'] = '4.6.4'
+      packageJson.dependencies['vue-router'] = aliasVersion(rumVuePackageJson.devDependencies['vue-router-4'])
     })
   })
 }
@@ -301,10 +303,17 @@ async function buildNuxtVueRouterV4App() {
   await buildGeneratedApp('nuxt-app', 'nuxt-vue-router-v4-app', async (appPath) => {
     await modifyPackageJson(appPath, (packageJson) => {
       packageJson.name = 'nuxt-vue-router-v4-app'
-      packageJson.dependencies.nuxt = '3.21.6'
-      packageJson.dependencies['vue-router'] = '4.6.4'
+      packageJson.dependencies.nuxt = aliasVersion(rumNuxtPackageJson.devDependencies['nuxt-3'])
+      packageJson.dependencies['vue-router'] = aliasVersion(rumNuxtPackageJson.devDependencies['vue-router-4'])
     })
   })
+}
+
+/**
+ * Extract the version from a package alias, e.g. `npm:vue-router@4.6.4` -> `4.6.4`
+ */
+function aliasVersion(alias: string) {
+  return alias.replace(/^npm:.*@/, '')
 }
 
 async function buildGeneratedApp(baseAppName: string, appName: string, modifyApp: (appPath: string) => Promise<void>) {
