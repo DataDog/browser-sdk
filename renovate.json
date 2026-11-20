@@ -53,6 +53,13 @@
       "enabled": false
     },
     {
+      "description": "next-15 is an alias kept on the oldest supported Next.js version (15.3, the first with instrumentation-client) to test it",
+      "matchFileNames": ["packages/browser-rum-nextjs/package.json"],
+      "matchDepNames": ["next-15"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    },
+    {
       "description": "The Node 20 Dockerfile stage installs the browsers of the Playwright version pinned for old-browser e2e jobs",
       "matchFileNames": ["Dockerfile"],
       "matchDepNames": ["node"],

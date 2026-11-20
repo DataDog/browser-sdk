@@ -48,6 +48,7 @@ export default defineConfig(
       'test/apps/react-shopist-like',
       'test/apps/microfrontend',
       'test/apps/nextjs',
+      'test/apps/nextjs-v15-app',
       'test/apps/angular-app',
       'test/apps/vue-router-app',
       'test/apps/vue-router-v4-app',

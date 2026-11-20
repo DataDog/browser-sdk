@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
 import rumReactPackageJson from '../../packages/browser-rum-react/package.json' with { type: 'json' }
+import rumNextjsPackageJson from '../../packages/browser-rum-nextjs/package.json' with { type: 'json' }
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
@@ -32,6 +33,7 @@ const APPS: AppConfig[] = [
   { name: 'react-shopist-like' },
   { name: 'microfrontend' },
   { name: 'nextjs' },
+  { name: 'nextjs-v15-app', builderFn: buildNextjsV15App, deps: ['nextjs'] },
   { name: 'angular-app' },
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
@@ -303,6 +305,18 @@ async function buildNuxtVueRouterV4App() {
       packageJson.name = 'nuxt-vue-router-v4-app'
       packageJson.dependencies.nuxt = '3.21.6'
       packageJson.dependencies['vue-router'] = '4.6.4'
+    })
+  })
+}
+
+async function buildNextjsV15App() {
+  await buildGeneratedApp('nextjs', 'nextjs-v15-app', async (appPath) => {
+    // Drop the base app build output: it holds symlinks to node_modules packages, which `next build` empties when
+    // cleaning it.
+    fs.rmSync(path.join(appPath, '.next'), { recursive: true, force: true })
+    await modifyPackageJson(appPath, (packageJson) => {
+      packageJson.name = 'nextjs-v15-app'
+      packageJson.dependencies.next = rumNextjsPackageJson.devDependencies['next-15'].replace(/^npm:.*@/, '')
     })
   })
 }
