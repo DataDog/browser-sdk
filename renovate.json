@@ -28,11 +28,19 @@
       "groupSlug": "ci-image"
     },
     {
+      "description": "Test apps resolve SDK packages to local package.tgz builds, and some (e.g. browser-debugger) are not published on npm",
+      "matchFileNames": ["test/apps/**"],
+      "matchPackageNames": ["@datadog/browser-*"],
+      "enabled": false
+    },
+    {
+      "description": "The vanilla app's typescript is replaced by each check of scripts/check-typescript-compatibility.ts, so its committed version doesn't matter",
       "matchFileNames": ["test/apps/vanilla/**"],
       "matchDepNames": ["typescript"],
       "enabled": false
     },
     {
+      "description": "angular-app tests the oldest supported Angular version (15, with TypeScript 4.9)",
       "matchFileNames": ["test/apps/angular-app/**"],
       "matchPackageNames": ["@angular/**", "@angular-devkit/**", "@ngtools/**", "typescript"],
       "matchUpdateTypes": ["major"],
@@ -46,6 +54,7 @@
       "enabled": false
     },
     {
+      "description": "The Node 20 Dockerfile stage installs the browsers of the Playwright version pinned for old-browser e2e jobs",
       "matchFileNames": ["Dockerfile"],
       "matchDepNames": ["node"],
       "matchCurrentValue": "/^20/",
