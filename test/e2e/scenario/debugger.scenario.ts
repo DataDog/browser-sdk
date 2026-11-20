@@ -7,9 +7,12 @@ const DEBUGGER_POLL_INTERVAL = 1_000
 const PROBE_WAIT_TIMEOUT = 30_000
 const DEBUG_ID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i
 const DEBUG_ID_URL_PATH_PATTERN = /^\/microfrontend\/(?:chunks\/)?[^/]+\.m?js$/
+// Must be a UUID: the intake proxy forwards these snapshots to Datadog, whose
+// backend only accepts UUID probe IDs.
+const TEST_PROBE_ID = '691a8396-9575-41e8-8821-1d16f3c1afcf'
 
 function makeProbe({
-  id = 'test-probe-1',
+  id = TEST_PROBE_ID,
   version = 1,
   typeName = 'TestModule',
   methodName = 'testFunction',
@@ -215,7 +218,7 @@ test.describe('debugger', () => {
       expect(event.service).toBe('browser-sdk-e2e-test')
 
       const snapshot = (event.debugger as any).snapshot
-      expect(snapshot.probe.id).toBe('test-probe-1')
+      expect(snapshot.probe.id).toBe(TEST_PROBE_ID)
       expect(snapshot.language).toBe('javascript')
       expect(snapshot.duration).toBeGreaterThanOrEqual(0)
       expect(snapshot.captures.entry.arguments.this).toBeUndefined()
@@ -637,7 +640,7 @@ test.describe('debugger', () => {
       expect(probeActions).toHaveLength(1)
       expect(probeActions[0].action.target!.name).toBe('probe: testFunction (TestModule)')
       expect(probeActions[0].context!.debugger).toEqual({
-        probe: { id: 'test-probe-1', version: 1, location: { method: 'testFunction', type: 'TestModule' } },
+        probe: { id: TEST_PROBE_ID, version: 1, location: { method: 'testFunction', type: 'TestModule' } },
         snapshot: { id: (intakeRegistry.debuggerEvents[0].debugger as any).snapshot.id },
         outcome: 'return',
       })
@@ -667,7 +670,7 @@ test.describe('debugger', () => {
       expect(probeActions[0].action.target!.name).toBe('probe: testFunction (TestModule)')
       expect(probeActions[0].action.loading_time).toBeUndefined()
       expect(probeActions[0].context!.debugger).toEqual({
-        probe: { id: 'test-probe-1', version: 1, location: { method: 'testFunction', type: 'TestModule' } },
+        probe: { id: TEST_PROBE_ID, version: 1, location: { method: 'testFunction', type: 'TestModule' } },
         snapshot: { id: (intakeRegistry.debuggerEvents[0].debugger as any).snapshot.id },
         outcome: 'return',
       })
