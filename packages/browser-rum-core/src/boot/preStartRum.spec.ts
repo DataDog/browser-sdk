@@ -619,17 +619,17 @@ describe('preStartRum', () => {
 
     describe('plugins', () => {
       it('tells plugins whether tracking consent is granted, including when it was set before init()', () => {
-        const plugin = { name: 'a', onInit: jasmine.createSpy() }
+        const plugin = { name: 'a', onInit: vi.fn() }
         const trackingConsentState = createTrackingConsentState()
         const { strategy } = createPreStartStrategyWithDefaults({ trackingConsentState })
 
         trackingConsentState.update(TrackingConsent.NOT_GRANTED)
         strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
-        const { isTrackingConsentGranted } = plugin.onInit.calls.mostRecent().args[0] as RumPluginOnInitOptions
-        expect(isTrackingConsentGranted()).toBeFalse()
+        const { isTrackingConsentGranted } = plugin.onInit.mock.lastCall![0] as RumPluginOnInitOptions
+        expect(isTrackingConsentGranted()).toBe(false)
 
         trackingConsentState.update(TrackingConsent.GRANTED)
-        expect(isTrackingConsentGranted()).toBeTrue()
+        expect(isTrackingConsentGranted()).toBe(true)
       })
 
       it('calls the onInit method on provided plugins', () => {
@@ -642,8 +642,8 @@ describe('preStartRum', () => {
           expect.objectContaining({
             initConfiguration,
             publicApi: PUBLIC_API,
-            registerAssembleEventHook: jasmine.any(Function),
-            registerEventCollectedHook: jasmine.any(Function),
+            registerAssembleEventHook: expect.any(Function),
+            registerEventCollectedHook: expect.any(Function),
           })
         )
       })
@@ -712,18 +712,18 @@ describe('preStartRum', () => {
 
   describe('addPlugin', () => {
     it('calls onInit with the options given to the init plugins', () => {
-      const initPlugin = { name: 'init', onInit: jasmine.createSpy() }
-      const addedPlugin = { name: 'added', onInit: jasmine.createSpy() }
+      const initPlugin = { name: 'init', onInit: vi.fn() }
+      const addedPlugin = { name: 'added', onInit: vi.fn() }
       const { strategy } = createPreStartStrategyWithDefaults()
 
       strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [initPlugin] }, PUBLIC_API)
       strategy.addPlugin(addedPlugin)
 
-      expect(addedPlugin.onInit).toHaveBeenCalledOnceWith(initPlugin.onInit.calls.mostRecent().args[0])
+      expect(addedPlugin.onInit).toHaveBeenCalledExactlyOnceWith(initPlugin.onInit.mock.lastCall![0])
     })
 
     it('waits for init() when the plugin is added before it', () => {
-      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      const plugin = { name: 'a', onInit: vi.fn() }
       const { strategy } = createPreStartStrategyWithDefaults()
 
       strategy.addPlugin(plugin)
@@ -744,10 +744,10 @@ describe('preStartRum', () => {
     })
 
     it('does not call onRumStart when the onInit of an added plugin returns false', async () => {
-      const syncPlugin = { name: 'a', onInit: () => false as const, onRumStart: jasmine.createSpy() }
-      const asyncPlugin = { name: 'b', onInit: () => Promise.resolve(false as const), onRumStart: jasmine.createSpy() }
+      const syncPlugin = { name: 'a', onInit: () => false as const, onRumStart: vi.fn() }
+      const asyncPlugin = { name: 'b', onInit: () => Promise.resolve(false as const), onRumStart: vi.fn() }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.mockReturnValue({} as StartRumResult)
 
       strategy.addPlugin(syncPlugin)
       strategy.addPlugin(asyncPlugin)
@@ -760,7 +760,7 @@ describe('preStartRum', () => {
     })
 
     it('starts a plugin added before an aborted init() at the next init()', () => {
-      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      const plugin = { name: 'a', onInit: vi.fn() }
       const { strategy } = createPreStartStrategyWithDefaults()
 
       strategy.addPlugin(plugin)
@@ -772,8 +772,8 @@ describe('preStartRum', () => {
     })
 
     it('starts a plugin added before an init() with an invalid configuration at the next init()', () => {
-      spyOn(display, 'error')
-      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      vi.spyOn(display, 'error').mockReturnValue(undefined)
+      const plugin = { name: 'a', onInit: vi.fn() }
       const { strategy } = createPreStartStrategyWithDefaults()
 
       strategy.addPlugin(plugin)
@@ -781,14 +781,14 @@ describe('preStartRum', () => {
       expect(plugin.onInit).not.toHaveBeenCalled()
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(plugin.onInit).toHaveBeenCalledOnceWith(
-        jasmine.objectContaining({ initConfiguration: DEFAULT_INIT_CONFIGURATION })
+      expect(plugin.onInit).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ initConfiguration: DEFAULT_INIT_CONFIGURATION })
       )
     })
 
     it('starts a plugin added while the init() plugins run once they let init() continue', async () => {
       let resolveInitPlugin!: () => void
-      const plugin = { name: 'a', onInit: jasmine.createSpy() }
+      const plugin = { name: 'a', onInit: vi.fn() }
       const { strategy } = createPreStartStrategyWithDefaults()
 
       strategy.init(
@@ -819,15 +819,15 @@ describe('preStartRum', () => {
         onInit: () => {
           throw new Error('boom')
         },
-        onRumStart: jasmine.createSpy(),
+        onRumStart: vi.fn(),
       }
       const rejectingPlugin = {
         name: 'b',
         onInit: () => Promise.reject(new Error('boom')),
-        onRumStart: jasmine.createSpy(),
+        onRumStart: vi.fn(),
       }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.mockReturnValue({} as StartRumResult)
 
       strategy.addPlugin(throwingPlugin)
       strategy.addPlugin(rejectingPlugin)
@@ -866,10 +866,10 @@ describe('preStartRum', () => {
           new Promise<void>((resolve) => {
             resolveOnInit = resolve
           }),
-        onRumStart: jasmine.createSpy(),
+        onRumStart: vi.fn(),
       }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.mockReturnValue({} as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       strategy.addPlugin(plugin)
@@ -882,9 +882,9 @@ describe('preStartRum', () => {
     })
 
     it('calls onRumStart even when the API calls made before RUM starts overflow their buffer', async () => {
-      const plugin = { name: 'a', onRumStart: jasmine.createSpy() }
+      const plugin = { name: 'a', onRumStart: vi.fn() }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({ addTiming: noop } as unknown as StartRumResult)
+      doStartRumSpy.mockReturnValue({ addTiming: noop } as unknown as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       strategy.addPlugin(plugin)
@@ -897,10 +897,10 @@ describe('preStartRum', () => {
     })
 
     it('calls onRumStart once RUM starts', async () => {
-      const plugin = { name: 'a', onRumStart: jasmine.createSpy() }
+      const plugin = { name: 'a', onRumStart: vi.fn() }
       const startRumResult = { addEvent: noop, addError: noop } as unknown as StartRumResult
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue(startRumResult)
+      doStartRumSpy.mockReturnValue(startRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       strategy.addPlugin(plugin)
@@ -908,16 +908,16 @@ describe('preStartRum', () => {
 
       await collectAsyncCalls(plugin.onRumStart, 1)
       expect(doStartRumSpy).toHaveBeenCalled()
-      expect(plugin.onRumStart).toHaveBeenCalledOnceWith({
+      expect(plugin.onRumStart).toHaveBeenCalledExactlyOnceWith({
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
       })
     })
 
     it('starts the plugin when RUM has already started', async () => {
-      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const plugin = { name: 'a', onInit: vi.fn(), onRumStart: vi.fn() }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.mockReturnValue({} as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(doStartRumSpy, 1)
@@ -928,9 +928,9 @@ describe('preStartRum', () => {
     })
 
     it('registers assemble hooks on the hooks RUM uses', async () => {
-      const assembleCallback = jasmine.createSpy()
+      const assembleCallback = vi.fn()
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.mockReturnValue({} as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(doStartRumSpy, 1)
@@ -941,15 +941,15 @@ describe('preStartRum', () => {
         },
       })
 
-      const hooks = doStartRumSpy.calls.mostRecent().args[5]
+      const hooks = doStartRumSpy.mock.lastCall![5]
       hooks.assembleEvent.trigger({ eventType: 'error' } as AssembleHookParams)
       expect(assembleCallback).toHaveBeenCalledTimes(1)
     })
 
     it('ignores a plugin with the name of a plugin already added', () => {
-      const displayWarnSpy = spyOn(display, 'warn')
-      const plugin = { name: 'a', onInit: jasmine.createSpy() }
-      const duplicatePlugin = { name: 'a', onInit: jasmine.createSpy() }
+      const displayWarnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
+      const plugin = { name: 'a', onInit: vi.fn() }
+      const duplicatePlugin = { name: 'a', onInit: vi.fn() }
       const { strategy } = createPreStartStrategyWithDefaults()
 
       strategy.addPlugin(plugin)
@@ -958,13 +958,13 @@ describe('preStartRum', () => {
 
       expect(plugin.onInit).toHaveBeenCalledTimes(1)
       expect(duplicatePlugin.onInit).not.toHaveBeenCalled()
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith('The "a" plugin is already added, so it\'s ignored.')
+      expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith('The "a" plugin is already added, so it\'s ignored.')
     })
 
     it('ignores a plugin added before init() with the name of a plugin passed to init()', () => {
-      const displayWarnSpy = spyOn(display, 'warn')
-      const initPlugin = { name: 'a', onInit: jasmine.createSpy() }
-      const addedPlugin = { name: 'a', onInit: jasmine.createSpy() }
+      const displayWarnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
+      const initPlugin = { name: 'a', onInit: vi.fn() }
+      const addedPlugin = { name: 'a', onInit: vi.fn() }
       const { strategy } = createPreStartStrategyWithDefaults()
 
       strategy.addPlugin(addedPlugin)
@@ -976,9 +976,9 @@ describe('preStartRum', () => {
     })
 
     it('ignores a plugin added after init() with the name of a plugin passed to init()', () => {
-      const displayWarnSpy = spyOn(display, 'warn')
-      const initPlugin = { name: 'a', onInit: jasmine.createSpy() }
-      const addedPlugin = { name: 'a', onInit: jasmine.createSpy() }
+      const displayWarnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
+      const initPlugin = { name: 'a', onInit: vi.fn() }
+      const addedPlugin = { name: 'a', onInit: vi.fn() }
       const { strategy } = createPreStartStrategyWithDefaults()
 
       strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [initPlugin] }, PUBLIC_API)

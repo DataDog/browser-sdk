@@ -209,19 +209,21 @@ describe('rum public api', () => {
 
   describe('addPlugin', () => {
     it('starts a plugin added after init()', async () => {
-      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const plugin = { name: 'a', onInit: vi.fn(), onRumStart: vi.fn() }
       const { rumPublicApi } = makeRumPublicApiWithDefaults()
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.addPlugin(plugin)
 
-      expect(plugin.onInit).toHaveBeenCalledOnceWith(jasmine.objectContaining({ publicApi: rumPublicApi }))
+      expect(plugin.onInit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ publicApi: rumPublicApi }))
       await collectAsyncCalls(plugin.onRumStart, 1)
-      expect(plugin.onRumStart).toHaveBeenCalledOnceWith(jasmine.objectContaining({ addError: jasmine.any(Function) }))
+      expect(plugin.onRumStart).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ addError: expect.any(Function) })
+      )
     })
 
     it('starts a plugin added after RUM has started', async () => {
-      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const plugin = { name: 'a', onInit: vi.fn(), onRumStart: vi.fn() }
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)

@@ -43,7 +43,7 @@ describe('probes', () => {
         })
       )
 
-      expect(getProbes('src/utils.js;<anonymous>@1:11:0')).toEqual([jasmine.objectContaining({ id: 'test-probe' })])
+      expect(getProbes('src/utils.js;<anonymous>@1:11:0')).toEqual([expect.objectContaining({ id: 'test-probe' })])
     })
 
     it('should return undefined for non-existent probe', () => {

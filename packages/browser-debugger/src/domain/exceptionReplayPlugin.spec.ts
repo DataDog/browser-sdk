@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { SKIPPED } from '@datadog/js-core/assembly'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPlugin, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
@@ -15,15 +17,15 @@ type EventCollectedHook = Parameters<RumPluginOnInitOptions['registerEventCollec
 describe('exceptionReplayPlugin', () => {
   let assembleHook: AssembleHook
   let eventCollectedHook: EventCollectedHook
-  let batchAdd: jasmine.Spy
+  let batchAdd: Mock
 
   function initPlugin({
     isSessionTracked = true,
     rumStarted = true,
     isTrackingConsentGranted = true,
   }: { isSessionTracked?: boolean; rumStarted?: boolean; isTrackingConsentGranted?: boolean } = {}) {
-    const registerAssembleEventHook = jasmine.createSpy('registerAssembleEventHook')
-    const registerEventCollectedHook = jasmine.createSpy('registerEventCollectedHook')
+    const registerAssembleEventHook = vi.fn()
+    const registerEventCollectedHook = vi.fn()
     const plugin = exceptionReplayPlugin()
     plugin.onInit({
       publicApi: { getInternalContext: () => (isSessionTracked ? {} : undefined) },
@@ -34,8 +36,8 @@ describe('exceptionReplayPlugin', () => {
     if (rumStarted) {
       plugin.onRumStart()
     }
-    assembleHook = registerAssembleEventHook.calls.mostRecent().args[0]
-    eventCollectedHook = registerEventCollectedHook.calls.mostRecent().args[0]
+    assembleHook = registerAssembleEventHook.mock.lastCall![0]
+    eventCollectedHook = registerEventCollectedHook.mock.lastCall![0]
   }
 
   function assemble(eventType: string, error: unknown) {
@@ -67,7 +69,7 @@ describe('exceptionReplayPlugin', () => {
 
   beforeEach(() => {
     clearProbes()
-    batchAdd = jasmine.createSpy('batchAdd')
+    batchAdd = vi.fn()
     initDebuggerTransport({ service: 'test-service' } as any, { add: batchAdd } as any)
     ;(window as any).DD_DEBUGGER = { version: '0.0.1' }
     startExceptionReplay()
@@ -103,8 +105,8 @@ describe('exceptionReplayPlugin', () => {
       error: { debug_info_captured: 'true' },
       _dd: {
         exception_replay: {
-          exception_id: jasmine.any(String),
-          frames: [{ index: 0, snapshot_id: jasmine.any(String) }],
+          exception_id: expect.any(String),
+          frames: [{ index: 0, snapshot_id: expect.any(String) }],
         },
       },
     })
@@ -151,12 +153,12 @@ describe('exceptionReplayPlugin', () => {
   })
 
   it('should not start with a RUM Browser SDK that does not tell whether tracking consent is granted', () => {
-    const displaySpy = spyOn(display, 'warn')
+    const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     exceptionReplayPlugin().onInit({
       publicApi: { getInternalContext: () => ({}) },
-      registerAssembleEventHook: jasmine.createSpy('registerAssembleEventHook'),
-      registerEventCollectedHook: jasmine.createSpy('registerEventCollectedHook'),
+      registerAssembleEventHook: vi.fn(),
+      registerEventCollectedHook: vi.fn(),
     })
 
     expect(displaySpy).toHaveBeenCalled()
@@ -164,11 +166,11 @@ describe('exceptionReplayPlugin', () => {
   })
 
   it('should not start with a RUM Browser SDK that lacks the event collected hook', () => {
-    const displaySpy = spyOn(display, 'warn')
+    const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     exceptionReplayPlugin().onInit({
       publicApi: { getInternalContext: () => ({}) },
-      registerAssembleEventHook: jasmine.createSpy('registerAssembleEventHook'),
+      registerAssembleEventHook: vi.fn(),
       isTrackingConsentGranted: () => true,
     })
 
@@ -206,16 +208,16 @@ describe('addExceptionReplayPluginToRum', () => {
     // Fails to compile if the RUM Browser SDK's public API stops matching what the plugin uses
     const isCompatible: RumPublicApi extends Required<RumGlobal> ? true : false = true
 
-    expect(isCompatible).toBeTrue()
+    expect(isCompatible).toBe(true)
   })
 
   it('should add the plugin to RUM', () => {
-    const addPlugin = jasmine.createSpy('addPlugin')
+    const addPlugin = vi.fn()
     rumWindow.DD_RUM = { onReady: (callback) => callback(), addPlugin }
 
     addExceptionReplayPluginToRum()
 
-    expect(addPlugin).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'exception-replay' }))
+    expect(addPlugin).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ name: 'exception-replay' }))
   })
 
   it('should wait for RUM to load when it uses the async loading snippet', () => {
@@ -228,7 +230,7 @@ describe('addExceptionReplayPluginToRum', () => {
     addExceptionReplayPluginToRum()
 
     // Like the RUM Browser SDK when it loads: replace the snippet, then run its queued callbacks
-    const addPlugin = jasmine.createSpy('addPlugin')
+    const addPlugin = vi.fn()
     rumWindow.DD_RUM = { onReady: (callback) => callback(), addPlugin }
     queuedCallbacks.forEach((callback) => callback())
 
@@ -236,7 +238,7 @@ describe('addExceptionReplayPluginToRum', () => {
   })
 
   it('should warn when the RUM Browser SDK is too old to add plugins after init', () => {
-    const displaySpy = spyOn(display, 'warn')
+    const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
     rumWindow.DD_RUM = { onReady: (callback) => callback() }
 
     addExceptionReplayPluginToRum()
@@ -245,7 +247,7 @@ describe('addExceptionReplayPluginToRum', () => {
   })
 
   it('should do nothing without the RUM Browser SDK', () => {
-    const displaySpy = spyOn(display, 'warn')
+    const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     addExceptionReplayPluginToRum()
 

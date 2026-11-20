@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { ProfilerInitOptions } from '@datadog/js-core/util'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { EarlyCollectionGlobalV1 } from './index'

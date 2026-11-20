@@ -337,9 +337,9 @@ describe('instrumentUnhandledRejection', () => {
       ;(window.onunhandledrejection as () => void)()
     })
 
-    const [originalError] = spy.calls.mostRecent().args
+    const [originalError] = spy.mock.lastCall!
     expect(originalError).toBe('Empty reason')
-    expect(await telemetry.hasEvents()).toBeFalse()
+    expect(await telemetry.hasEvents()).toBe(false)
   })
 })
 

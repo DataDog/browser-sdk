@@ -224,7 +224,7 @@ describe('deliveryApi', () => {
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
 
-      expect(getProbes('src/utils.js;<anonymous>@1:11:0')).toEqual([jasmine.objectContaining({ id: 'test-probe' })])
+      expect(getProbes('src/utils.js;<anonymous>@1:11:0')).toEqual([expect.objectContaining({ id: 'test-probe' })])
     })
 
     const invalidFunctionIdCases = [

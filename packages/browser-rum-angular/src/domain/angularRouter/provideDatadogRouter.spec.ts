@@ -1,4 +1,6 @@
 // Must load before the other Angular imports (see createTestApplication)
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import '@angular/compiler'
 import type { EnvironmentProviders } from '@angular/core'
 import { provideLocationMocks } from '@angular/common/testing'
@@ -8,10 +10,10 @@ import { initializeAngularPlugin } from '../../../test/initializeAngularPlugin'
 import { provideDatadogRouter, provideNoopDatadogRouter } from './provideDatadogRouter'
 
 describe('provideDatadogRouter', () => {
-  let startViewSpy: jasmine.Spy
+  let startViewSpy: Mock
 
   beforeEach(async () => {
-    startViewSpy = jasmine.createSpy()
+    startViewSpy = vi.fn()
     await initializeAngularPlugin({
       configuration: {
         router: true,
@@ -39,7 +41,7 @@ describe('provideDatadogRouter', () => {
 
     await router.navigateByUrl('/user/42?tab=1')
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/user/:id', url: '/user/42?tab=1' })
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith({ name: '/user/:id', url: '/user/42?tab=1' })
   })
 
   it('does not create a new view when only the query string changes', async () => {

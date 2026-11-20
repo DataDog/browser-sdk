@@ -148,10 +148,10 @@ describe('api', () => {
       const probes = getProbes('src/utils.js;<anonymous>@1:11:0')!
       onReturn(onEntry(probes, thisArg)!, null, thisArg)
 
-      expect(mockBatchAdd).toHaveBeenCalledOnceWith(
-        jasmine.objectContaining({
-          debugger: jasmine.objectContaining({
-            snapshot: jasmine.objectContaining({ probe: jasmine.objectContaining({ id: 'test-probe' }) }),
+      expect(mockBatchAdd).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          debugger: expect.objectContaining({
+            snapshot: expect.objectContaining({ probe: expect.objectContaining({ id: 'test-probe' }) }),
           }),
         })
       )
@@ -1739,7 +1739,7 @@ describe('api', () => {
 
       onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg)
 
-      expect(startActionSpy).toHaveBeenCalledOnceWith(`probe: ${DEFAULT_PROBE_FUNCTION_ID}`, jasmine.any(Object))
+      expect(startActionSpy).toHaveBeenCalledExactlyOnceWith(`probe: ${DEFAULT_PROBE_FUNCTION_ID}`, expect.any(Object))
     })
 
     it('should link the action to the snapshot sent for the same hit', () => {
