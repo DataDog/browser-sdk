@@ -860,7 +860,7 @@ describe('capture redaction', () => {
       name: { type: 'string', value: 'alice' },
     })
     expect(capture(new Map([[tokenKey, 'abc']]), defaultOpts, redactingContext()).entries).toEqual([
-      [jasmine.objectContaining({ type: 'symbol' }), { type: 'string', notCapturedReason: 'redactedIdent' }],
+      [expect.objectContaining({ type: 'symbol' }), { type: 'string', notCapturedReason: 'redactedIdent' }],
     ])
   })
 
@@ -871,7 +871,7 @@ describe('capture redaction', () => {
   })
 
   it('should not read a redacted field twice', () => {
-    const getter = jasmine.createSpy('getter').and.returnValue('hunter2')
+    const getter = vi.fn().mockReturnValue('hunter2')
     const obj = {}
     Object.defineProperty(obj, 'password', { get: getter, enumerable: true })
 

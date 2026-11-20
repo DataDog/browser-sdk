@@ -795,13 +795,13 @@ describe('rum assembly', () => {
   describe('eventCollected hook', () => {
     it('is triggered with the event type and domain context', () => {
       const { lifeCycle, hooks } = setupAssemblyTestWithDefaults()
-      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      const eventCollectedSpy = vi.fn()
       hooks.eventCollected.register(eventCollectedSpy)
       const domainContext = { error: new Error('boom') } as RumEventDomainContext
 
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR), domainContext })
 
-      expect(eventCollectedSpy).toHaveBeenCalledOnceWith({
+      expect(eventCollectedSpy).toHaveBeenCalledExactlyOnceWith({
         eventType: RumEventType.ERROR,
         domainContext,
       })
@@ -825,7 +825,7 @@ describe('rum assembly', () => {
 
     it('calls every callback, even after one returns DISCARDED', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
-      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      const eventCollectedSpy = vi.fn()
       hooks.eventCollected.register(() => DISCARDED)
       hooks.eventCollected.register(eventCollectedSpy)
 
@@ -839,7 +839,7 @@ describe('rum assembly', () => {
       const { lifeCycle, hooks } = setupAssemblyTestWithDefaults({
         partialConfiguration: { beforeSend: () => false },
       })
-      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      const eventCollectedSpy = vi.fn()
       hooks.eventCollected.register(eventCollectedSpy)
 
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })
@@ -849,7 +849,7 @@ describe('rum assembly', () => {
 
     it('is not triggered for events over the rate limit', () => {
       const { lifeCycle, hooks } = setupAssemblyTestWithDefaults({ eventRateLimit: 1 })
-      const eventCollectedSpy = jasmine.createSpy('eventCollected')
+      const eventCollectedSpy = vi.fn()
       hooks.eventCollected.register(eventCollectedSpy)
 
       notifyRawRumEvent(lifeCycle, { rawRumEvent: createRawRumEvent(RumEventType.ERROR) })

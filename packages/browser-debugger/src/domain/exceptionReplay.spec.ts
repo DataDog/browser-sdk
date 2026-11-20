@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { computeStackTrace } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
@@ -23,7 +25,7 @@ interface SentSnapshot {
 }
 
 describe('exceptionReplay', () => {
-  let mockBatchAdd: jasmine.Spy
+  let mockBatchAdd: Mock
 
   function initTransport(overrides: Record<string, unknown> = {}) {
     resetDebuggerTransport()
@@ -130,14 +132,14 @@ describe('exceptionReplay', () => {
   }
 
   function sentSnapshots(): SentSnapshot[] {
-    return mockBatchAdd.calls
-      .allArgs()
-      .map(([payload]) => (payload as { debugger: { snapshot: SentSnapshot } }).debugger.snapshot)
+    return mockBatchAdd.mock.calls.map(
+      ([payload]) => (payload as { debugger: { snapshot: SentSnapshot } }).debugger.snapshot
+    )
   }
 
   beforeEach(() => {
     clearProbes()
-    mockBatchAdd = jasmine.createSpy('batchAdd')
+    mockBatchAdd = vi.fn()
     initTransport()
     ;(window as any).DD_DEBUGGER = { version: '0.0.1' }
     registerExceptionReplayPlugin(() => true)
@@ -198,7 +200,7 @@ describe('exceptionReplay', () => {
     expect(throwingSnapshot.captures.return.throwable.message).toBe('boom 3')
     expect(callingSnapshot.probe.location).toEqual({ type: 'src/calling.ts', method: 'callingFunction' })
     expect(callingSnapshot.captures.return.arguments).toEqual(
-      jasmine.objectContaining({ a: { type: 'number', value: '1' }, b: { type: 'number', value: '2' } })
+      expect.objectContaining({ a: { type: 'number', value: '1' }, b: { type: 'number', value: '2' } })
     )
   })
 
@@ -207,21 +209,21 @@ describe('exceptionReplay', () => {
 
     reportError(error)
 
-    const payload = mockBatchAdd.calls.mostRecent().args[0]
+    const payload = mockBatchAdd.mock.lastCall![0]
     expect(payload).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         message: 'Error: boom 1',
         service: 'test-service',
-        ddtags: jasmine.stringContaining('env:test-env'),
-        logger: jasmine.objectContaining({ name: 'src/throwing.ts', method: 'throwingFunction', version: '0.0.1' }),
+        ddtags: expect.stringContaining('env:test-env'),
+        logger: expect.objectContaining({ name: 'src/throwing.ts', method: 'throwingFunction', version: '0.0.1' }),
       })
     )
     expect(payload.debugger.snapshot).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         language: 'javascript',
-        probe: { id: jasmine.any(String), version: 0, location: jasmine.any(Object) },
-        stack: jasmine.arrayContaining([
-          jasmine.objectContaining({ function: jasmine.stringContaining('throwingFunction') }),
+        probe: { id: expect.any(String), version: 0, location: expect.any(Object) },
+        stack: expect.arrayContaining([
+          expect.objectContaining({ function: expect.stringContaining('throwingFunction') }),
         ]),
       })
     )
@@ -313,7 +315,7 @@ describe('exceptionReplay', () => {
     if (await hasAsyncCallersOnAwaitLine()) {
       expect(indexes).toEqual([0, 1])
     } else {
-      expect([[0], [0, 1]]).toContain(indexes)
+      expect([[0], [0, 1]]).toContainEqual(indexes)
     }
   })
 
@@ -404,7 +406,7 @@ describe('exceptionReplay', () => {
     const dropped = catchError(() => throwingFunction(1))
     expect(collectExceptionReplay(dropped)).toBeDefined()
     expect(reportError(catchError(() => throwingFunction(2)))).toBeDefined()
-    mockBatchAdd.calls.reset()
+    mockBatchAdd.mockClear()
 
     expect(reportError(dropped)).toBeUndefined()
     expect(mockBatchAdd).not.toHaveBeenCalled()
@@ -491,10 +493,10 @@ describe('exceptionReplay', () => {
     const error = catchError(() => callingFunction(1, 2))
 
     const attributes = reportError(error)
-    const callCount = mockBatchAdd.calls.count()
+    const callCount = mockBatchAdd.mock.calls.length
 
     expect(reportError(error)).toBe(attributes)
-    expect(mockBatchAdd.calls.count()).toBe(callCount)
+    expect(mockBatchAdd.mock.calls.length).toBe(callCount)
   })
 
   it('should stop capturing frames once the exception is reported', () => {
@@ -601,7 +603,7 @@ describe('exceptionReplay', () => {
     const error = catchError(() => callingFunction(1, 2))
 
     expect(reportError(error)!.frames.length).toBe(2)
-    expect(checkGlobalSnapshotBudget(performance.now(), true)).toBeTrue()
+    expect(checkGlobalSnapshotBudget(performance.now(), true)).toBe(true)
   })
 
   it('should not capture an exception with the same fingerprint for an hour after reporting it', () => {
