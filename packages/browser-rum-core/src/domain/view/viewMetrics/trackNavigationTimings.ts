@@ -2,7 +2,7 @@ import type { TimeoutId } from '@datadog/js-core/util'
 import type { Duration } from '@datadog/js-core/time'
 import { runOnReadyState } from '@datadog/browser-core'
 import { mockable, setTimeout, clearTimeout } from '@datadog/js-core/util'
-import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
+import type { RumNotRestoredReasons, RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import { getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'
 
 export interface NavigationTimings {
@@ -11,13 +11,21 @@ export interface NavigationTimings {
   domInteractive: Duration
   loadEvent: Duration
   firstByte: Duration | undefined
+  navigationType?: RumPerformanceNavigationTiming['type']
+  notRestoredReasons?: string[]
 }
 
 // This is a subset of "RumPerformanceNavigationTiming" that only contains the relevant fields for
 // computing navigation timings. This is useful to mock the navigation entry in tests.
 export type RelevantNavigationTiming = Pick<
   RumPerformanceNavigationTiming,
-  'domComplete' | 'domContentLoadedEventEnd' | 'domInteractive' | 'loadEventEnd' | 'responseStart'
+  | 'domComplete'
+  | 'domContentLoadedEventEnd'
+  | 'domInteractive'
+  | 'loadEventEnd'
+  | 'responseStart'
+  | 'type'
+  | 'notRestoredReasons'
 >
 
 export function trackNavigationTimings(callback: (timings: NavigationTimings) => void) {
@@ -37,7 +45,20 @@ function processNavigationEntry(entry: RelevantNavigationTiming): NavigationTimi
     domInteractive: entry.domInteractive,
     loadEvent: entry.loadEventEnd,
     firstByte: sanitizeFirstByte(entry),
+    navigationType: entry.type,
+    notRestoredReasons: entry.notRestoredReasons ? collectNotRestoredReasons(entry.notRestoredReasons) : undefined,
   }
+}
+
+// Embedded frames can block the back/forward cache too, so their reasons are reported along with the page's.
+function collectNotRestoredReasons(node: RumNotRestoredReasons, reasons = new Set<string>()): string[] {
+  for (const { reason } of node.reasons || []) {
+    reasons.add(reason)
+  }
+  for (const child of node.children || []) {
+    collectNotRestoredReasons(child, reasons)
+  }
+  return Array.from(reasons)
 }
 
 function isIncompleteNavigation(entry: RelevantNavigationTiming) {
