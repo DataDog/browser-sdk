@@ -151,6 +151,8 @@ describe('viewCollection', () => {
         load_event: (10 * 1e6) as ServerDuration,
         loading_time: (20 * 1e6) as ServerDuration,
         loading_type: ViewLoadingType.INITIAL_LOAD,
+        memory_average: undefined,
+        memory_max: undefined,
         long_task: {
           count: 10,
         },
@@ -215,6 +217,18 @@ describe('viewCollection', () => {
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
 
     expect(rawRumViewEvent.display?.scroll).toBeUndefined()
+  })
+
+  it('should include memory metrics', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...VIEW,
+      commonViewMetrics: { memory: { average: 100, max: 300 } },
+    })
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+
+    expect(rawRumViewEvent.view.memory_average).toBe(100)
+    expect(rawRumViewEvent.view.memory_max).toBe(300)
   })
 
   describe('with configuration.start_session_replay_recording_manually set', () => {
