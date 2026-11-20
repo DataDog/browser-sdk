@@ -30,6 +30,13 @@ export function getGithubReleaseToken() {
   return new OctoStsToken('release')
 }
 
+/**
+ * This token is scoped to tags only, and can dispatch GitHub Actions workflows.
+ */
+export function getGithubPublishToken() {
+  return new OctoStsToken('publish')
+}
+
 export function getGithubReadToken() {
   return new OctoStsToken('read')
 }

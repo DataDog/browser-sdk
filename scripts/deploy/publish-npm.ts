@@ -27,19 +27,28 @@ export function main(args = process.argv.slice(2)): void {
   command`yarn build`.withEnvironment({ BUILD_MODE: 'release' }).run()
 
   printLog(dryRun ? 'Publishing (dry run)' : 'Publishing')
-  const npmToken = dryRun ? '' : getNpmToken()
+  // On GitHub Actions, no token is set: yarn authenticates with npm trusted publishing (OIDC) and
+  // publishes with provenance. Elsewhere (GitLab), fall back to the stored npm token.
+  const useOidc = !!process.env.GITHUB_ACTIONS
+  const npmToken = dryRun || useOidc ? '' : getNpmToken()
+  const extraArgs = [...(dryRun ? ['--dry-run'] : []), ...(useOidc && !dryRun ? ['--provenance'] : [])]
 
   try {
-    command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --tolerate-republish --access public ${dryRun ? ['--dry-run'] : []}`
+    command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --tolerate-republish --access public ${extraArgs}`
       .withEnvironment({
-        YARN_NPM_AUTH_TOKEN: npmToken,
+        ...(npmToken ? { YARN_NPM_AUTH_TOKEN: npmToken } : {}),
         BUILD_MODE: 'release',
       })
       .withLogs()
       .run()
   } catch (error) {
-    throw new Error('NPM publish failed. Run `node ./scripts/release/renew-token.ts` and retry the job.', {
-      cause: error as Error,
-    })
+    throw new Error(
+      useOidc
+        ? 'NPM publish failed. Check the npm trusted publishing configuration of the packages and retry the job.'
+        : 'NPM publish failed. Run `node ./scripts/release/renew-token.ts` and retry the job.',
+      {
+        cause: error as Error,
+      }
+    )
   }
 }
