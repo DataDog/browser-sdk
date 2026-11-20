@@ -1921,6 +1921,15 @@ export interface ProfilingInternalContextSchema {
    */
   readonly quota_reason?:
     'quota_ok' | 'quota_exceeded' | 'org_disabled' | 'backend_unavailable' | 'undefined' | 'timeout' | 'api-error'
+  /**
+   * Whether the current Profiler instance was started by the early collection package.
+   *
+   * This attribute is only present when the current Profiler instance was started by the early collection
+   * package: a standalone snippet evaluated as the first script of the page, before the SDK bundle. Its
+   * first collected profile covers the early collection period, from snippet evaluation to SDK takeover.
+   * The attribute is absent when the SDK started the Profiler instance itself.
+   */
+  readonly collection_type?: 'early'
   [k: string]: unknown
 }
 /**
