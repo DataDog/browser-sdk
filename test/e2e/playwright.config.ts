@@ -71,12 +71,12 @@ const baseWebServers = [
     },
   },
   {
-    name: 'nextjs v15 app',
+    name: 'nextjs v13 app',
     stdout: 'pipe' as const,
-    cwd: path.join(__dirname, '../apps/nextjs-v15-app'),
+    cwd: path.join(__dirname, '../apps/nextjs-v13-app'),
     command: 'yarn start',
     wait: {
-      stdout: /- Local:\s+http:\/\/localhost:(?<nextjs_v15_app_port>\d+)/,
+      stdout: /- Local:\s+http:\/\/localhost:(?<nextjs_v13_app_port>\d+)/,
     },
   },
   {

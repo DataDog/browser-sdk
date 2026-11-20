@@ -45,8 +45,10 @@
   "devDependencies": {
     "@types/react": "19.3.0",
     "next": "16.4.5",
-    "next-15": "npm:next@15.3.9",
+    "next-13": "npm:next@13.5.11",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-18": "npm:react@18.3.1",
+    "react-dom": "19.3.1",
+    "react-dom-18": "npm:react-dom@18.3.1"
   }
 }

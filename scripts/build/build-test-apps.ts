@@ -33,7 +33,7 @@ const APPS: AppConfig[] = [
   { name: 'react-shopist-like' },
   { name: 'microfrontend' },
   { name: 'nextjs' },
-  { name: 'nextjs-v15-app', builderFn: buildNextjsV15App, deps: ['nextjs'] },
+  { name: 'nextjs-v13-app', builderFn: buildNextjsV13App, deps: ['nextjs'] },
   { name: 'angular-app' },
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
@@ -309,16 +309,69 @@ async function buildNuxtVueRouterV4App() {
   })
 }
 
-async function buildNextjsV15App() {
-  await buildGeneratedApp('nextjs', 'nextjs-v15-app', async (appPath) => {
+async function buildNextjsV13App() {
+  await buildGeneratedApp('nextjs', 'nextjs-v13-app', async (appPath) => {
     // Drop the base app build output: it holds symlinks to node_modules packages, which `next build` empties when
     // cleaning it.
     fs.rmSync(path.join(appPath, '.next'), { recursive: true, force: true })
+
+    // The `turbopack` option doesn't exist in Next.js 13
+    fs.writeFileSync(path.join(appPath, 'next.config.js'), 'module.exports = {}\n')
+
     await modifyPackageJson(appPath, (packageJson) => {
-      packageJson.name = 'nextjs-v15-app'
-      packageJson.dependencies.next = rumNextjsPackageJson.devDependencies['next-15'].replace(/^npm:.*@/, '')
+      packageJson.name = 'nextjs-v13-app'
+      packageJson.dependencies.next = aliasVersion(rumNextjsPackageJson.devDependencies['next-13'])
+      packageJson.dependencies.react = aliasVersion(rumNextjsPackageJson.devDependencies['react-18'])
+      packageJson.dependencies['react-dom'] = aliasVersion(rumNextjsPackageJson.devDependencies['react-dom-18'])
     })
+
+    // Next.js < 15.3 doesn't support `instrumentation-client.js` (nor `onRouterTransitionStart`): init RUM from a
+    // module imported by the root layout (App Router) and by `_app` (Pages Router) instead.
+    fs.rmSync(path.join(appPath, 'instrumentation-client.js'))
+    fs.writeFileSync(
+      path.join(appPath, 'datadog-init.js'),
+      `import { datadogRum } from '@datadog/browser-rum'
+import { nextjsPlugin } from '@datadog/browser-rum-nextjs'
+
+if (typeof window !== 'undefined') {
+  const params = new URLSearchParams(window.location.search)
+  const config = params.get('rum-config')
+  const context = params.get('rum-context')
+
+  if (config && !datadogRum.getInitConfiguration()) {
+    datadogRum.init({ ...JSON.parse(config), plugins: [nextjsPlugin()] })
+    if (context) {
+      datadogRum.setGlobalContext(JSON.parse(context))
+    }
+  }
+}
+`
+    )
+    // Render DatadogAppRouter from the client module that inits RUM, so RUM is initialized before it renders.
+    fs.writeFileSync(
+      path.join(appPath, 'app/datadog-app-router.tsx'),
+      `'use client'
+
+import '../datadog-init'
+import { DatadogAppRouter as BaseDatadogAppRouter } from '@datadog/browser-rum-nextjs'
+
+export function DatadogAppRouter() {
+  return <BaseDatadogAppRouter />
+}
+`
+    )
+    await modifyFile(path.join(appPath, 'app/layout.tsx'), (content: string) =>
+      content.replace("from '@datadog/browser-rum-nextjs'", "from './datadog-app-router'")
+    )
+    await modifyFile(path.join(appPath, 'pages/_app.tsx'), (content: string) => `import '../datadog-init'\n${content}`)
   })
+}
+
+/**
+ * Extract the version from a package alias, e.g. `npm:next@13.5.11` -> `13.5.11`
+ */
+function aliasVersion(alias: string) {
+  return alias.replace(/^npm:.*@/, '')
 }
 
 async function buildGeneratedApp(baseAppName: string, appName: string, modifyApp: (appPath: string) => Promise<void>) {

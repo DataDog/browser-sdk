@@ -19,10 +19,12 @@ interface RouterPluginTestConfig {
     integrations?: string[]
   }
   router: RouterConfig
+  // Set when the app can't report the URL of route change views (the reason is used to skip the related tests)
+  viewUrlLimitation?: string
 }
 
 export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
-  for (const { name, loadApp, viewPrefix, plugin, router } of configs) {
+  for (const { name, loadApp, viewPrefix, plugin, router, viewUrlLimitation } of configs) {
     const { homeViewName, homeUrlPattern, userRouteName, guidesRouteName } = router
 
     test.describe(`base plugin: ${name}`, () => {
@@ -55,6 +57,7 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
 
         loadApp(createTest('should normalize dynamic routes and preserve real URLs and referrers').withRum()).run(
           async ({ page, flushEvents, intakeRegistry, baseUrl }) => {
+            test.skip(!!viewUrlLimitation, viewUrlLimitation)
             const baseOrigin = new URL(baseUrl).origin
 
             // Home → Guides → Home → User → Home
@@ -115,6 +118,7 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
 
         loadApp(createTest('should not create a new view when query params change').withRum()).run(
           async ({ page, flushEvents, intakeRegistry }) => {
+            test.skip(!!viewUrlLimitation, viewUrlLimitation)
             await page.click('text=Go to User 42')
             await page.waitForURL('**/user/42?admin=true')
 
@@ -137,6 +141,7 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
         loadApp(
           createTest('should track navigations between different concrete URLs of the same dynamic route').withRum()
         ).run(async ({ page, flushEvents, intakeRegistry }) => {
+          test.skip(!!viewUrlLimitation, viewUrlLimitation)
           await page.click('text=Go to User 42')
           await page.waitForURL('**/user/42?admin=true')
 

@@ -53,10 +53,10 @@
       "enabled": false
     },
     {
-      "description": "next-15 is an alias kept on the oldest supported Next.js version (15.3, the first with instrumentation-client) to test it",
+      "description": "next-13, react-18 and react-dom-18 are aliases kept on their major to test the oldest supported Next.js version",
       "matchFileNames": ["packages/browser-rum-nextjs/package.json"],
-      "matchDepNames": ["next-15"],
-      "matchUpdateTypes": ["major", "minor"],
+      "matchDepNames": ["next-13", "react-18", "react-dom-18"],
+      "matchUpdateTypes": ["major"],
       "enabled": false
     },
     {

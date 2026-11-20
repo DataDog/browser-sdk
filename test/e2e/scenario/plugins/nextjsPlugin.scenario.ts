@@ -3,8 +3,8 @@ import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
 
-// v15 is the oldest supported Next.js version (15.3, the first with instrumentation-client)
-const nextjsVersions = ['v16', 'v15'] as const
+// v13 is the oldest Next.js version supported by the peer dependency range
+const nextjsVersions = ['v16', 'v13'] as const
 
 const nextjsVariants = nextjsVersions.flatMap((nextjsVersion) => [
   {
@@ -15,6 +15,9 @@ const nextjsVariants = nextjsVersions.flatMap((nextjsVersion) => [
     viewPrefix: '',
     homeUrlPattern: /\/(\?|$)/,
     clientErrorMessage: 'Client error from error-test',
+    // Next.js < 15.3 has no `onRouterTransitionStart`, so App Router views are started before the URL changes
+    viewUrlLimitation:
+      nextjsVersion === 'v13' ? 'App Router views report the previous URL without onRouterTransitionStart' : undefined,
   },
   {
     name: `nextjs ${nextjsVersion} pages router`,
@@ -24,22 +27,26 @@ const nextjsVariants = nextjsVersions.flatMap((nextjsVersion) => [
     viewPrefix: '/pages-router',
     homeUrlPattern: /\/pages-router(\?|$)/,
     clientErrorMessage: 'Pages Router error from NextjsErrorBoundary',
+    viewUrlLimitation: undefined,
   },
 ])
 
 runBasePluginRouterTests(
-  nextjsVariants.map(({ name, nextjsVersion, routerType, integrations, viewPrefix, homeUrlPattern }) => ({
-    name,
-    loadApp: (b: ReturnType<typeof createTest>) => b.withNextjsApp(routerType, nextjsVersion),
-    viewPrefix,
-    plugin: { name: 'nextjs', integrations },
-    router: {
-      homeViewName: viewPrefix || '/',
-      homeUrlPattern,
-      userRouteName: '/user/[id]',
-      guidesRouteName: '/guides/[...slug]',
-    },
-  }))
+  nextjsVariants.map(
+    ({ name, nextjsVersion, routerType, integrations, viewPrefix, homeUrlPattern, viewUrlLimitation }) => ({
+      name,
+      viewUrlLimitation,
+      loadApp: (b: ReturnType<typeof createTest>) => b.withNextjsApp(routerType, nextjsVersion),
+      viewPrefix,
+      plugin: { name: 'nextjs', integrations },
+      router: {
+        homeViewName: viewPrefix || '/',
+        homeUrlPattern,
+        userRouteName: '/user/[id]',
+        guidesRouteName: '/guides/[...slug]',
+      },
+    })
+  )
 )
 
 runBasePluginErrorTests(
