@@ -33,7 +33,7 @@ const WEBGL_2_DRAWING_METHODS = [
   'drawRangeElements',
 ] as const
 
-interface WebGLTrackingState {
+interface CanvasTrackingState {
   nextSnapshotTime: number
   preservesDrawingBuffer: boolean
   snapshotScheduled: boolean
@@ -46,8 +46,10 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
   }
 
   const instrumentationStoppers: Tracker[] = []
-  const webGLSnapshotInterval = ONE_SECOND / configuration.maxFramesPerSecond
-  const webGLTrackingStates = new WeakMap<HTMLCanvasElement, WebGLTrackingState>()
+  const snapshotInterval = ONE_SECOND / configuration.maxFramesPerSecond
+  const canvasTrackingStates = new WeakMap<HTMLCanvasElement, CanvasTrackingState>()
+  // WebGPU canvases whose current texture was requested, snapshotted after the next queue submit
+  const drawnWebGPUCanvases = new Set<HTMLCanvasElement>()
   let stopped = false
 
   const markCanvasDirty = (canvas: HTMLCanvasElement | OffscreenCanvas) => {
@@ -56,35 +58,28 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
     }
   }
 
-  const trackWebGLDraw = (context: WebGLRenderingContext | WebGL2RenderingContext) => {
-    const canvas = context.canvas
-    if (scope.nodeIds.get(canvas as HTMLCanvasElement) === undefined) {
-      return
-    }
-
-    const htmlCanvas = canvas as HTMLCanvasElement
-
-    let trackingState = webGLTrackingStates.get(htmlCanvas)
+  const getTrackingState = (canvas: HTMLCanvasElement, preservesDrawingBuffer: () => boolean) => {
+    let trackingState = canvasTrackingStates.get(canvas)
     if (!trackingState) {
       trackingState = {
         nextSnapshotTime: -Infinity,
-        preservesDrawingBuffer: context.getContextAttributes()?.preserveDrawingBuffer === true,
+        preservesDrawingBuffer: preservesDrawingBuffer(),
         snapshotScheduled: false,
       }
-      webGLTrackingStates.set(htmlCanvas, trackingState)
+      canvasTrackingStates.set(canvas, trackingState)
     }
+    return trackingState
+  }
 
-    if (trackingState.preservesDrawingBuffer) {
-      markCanvasDirty(canvas)
-      return
-    }
+  // Snapshots the canvas in a microtask, while its drawing buffer is still available
+  const scheduleSnapshot = (htmlCanvas: HTMLCanvasElement, trackingState: CanvasTrackingState) => {
     const now = performance.now()
     if (trackingState.snapshotScheduled || now < trackingState.nextSnapshotTime) {
       return
     }
 
     trackingState.snapshotScheduled = true
-    trackingState.nextSnapshotTime = now + webGLSnapshotInterval
+    trackingState.nextSnapshotTime = now + snapshotInterval
     void Promise.resolve().then(() => {
       trackingState.snapshotScheduled = false
       if (stopped) {
@@ -108,6 +103,36 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
         )
       }
     })
+  }
+
+  const trackWebGLDraw = (context: WebGLRenderingContext | WebGL2RenderingContext) => {
+    const canvas = context.canvas
+    if (scope.nodeIds.get(canvas as HTMLCanvasElement) === undefined) {
+      return
+    }
+
+    const htmlCanvas = canvas as HTMLCanvasElement
+    const trackingState = getTrackingState(
+      htmlCanvas,
+      () => context.getContextAttributes()?.preserveDrawingBuffer === true
+    )
+
+    if (trackingState.preservesDrawingBuffer) {
+      markCanvasDirty(canvas)
+      return
+    }
+    scheduleSnapshot(htmlCanvas, trackingState)
+  }
+
+  const trackWebGPUSubmit = () => {
+    // WebGPU has no preserveDrawingBuffer: the canvas texture is discarded once presented
+    drawnWebGPUCanvases.forEach((canvas) =>
+      scheduleSnapshot(
+        canvas,
+        getTrackingState(canvas, () => false)
+      )
+    )
+    drawnWebGPUCanvases.clear()
   }
 
   if (typeof CanvasRenderingContext2D !== 'undefined') {
@@ -140,6 +165,23 @@ export function trackCanvasContent(scope: RecordingScope): Tracker {
   if (typeof WebGL2RenderingContext !== 'undefined') {
     instrumentWebGLDrawingMethods(WebGL2RenderingContext.prototype, WEBGL_DRAWING_METHODS)
     instrumentWebGLDrawingMethods(WebGL2RenderingContext.prototype, WEBGL_2_DRAWING_METHODS)
+  }
+
+  // WebGPU draws through the device queue, which is not tied to a canvas: the canvas is known when
+  // its texture is requested, and drawn once the commands are submitted.
+  if (typeof GPUCanvasContext !== 'undefined' && typeof GPUQueue !== 'undefined') {
+    instrumentationStoppers.push(
+      instrumentMethod(GPUCanvasContext.prototype, 'getCurrentTexture', ({ target: context, onPostCall }) => {
+        onPostCall(() => {
+          if (scope.nodeIds.get(context.canvas as HTMLCanvasElement) !== undefined) {
+            drawnWebGPUCanvases.add(context.canvas as HTMLCanvasElement)
+          }
+        })
+      }),
+      instrumentMethod(GPUQueue.prototype, 'submit', ({ onPostCall }) => {
+        onPostCall(trackWebGPUSubmit)
+      })
+    )
   }
 
   return {
