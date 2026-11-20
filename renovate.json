@@ -53,6 +53,13 @@
       "enabled": false
     },
     {
+      "description": "vue-router-4 and nuxt-3 are aliases kept on their major to test the Vue Router v4 and Nuxt 3 integrations",
+      "matchFileNames": ["packages/browser-rum-vue/package.json", "packages/browser-rum-nuxt/package.json"],
+      "matchDepNames": ["vue-router-4", "nuxt-3"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "The Node 20 Dockerfile stage installs the browsers of the Playwright version pinned for old-browser e2e jobs",
       "matchFileNames": ["Dockerfile"],
       "matchDepNames": ["node"],
