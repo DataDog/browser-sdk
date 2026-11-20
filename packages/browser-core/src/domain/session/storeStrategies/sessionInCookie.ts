@@ -1,6 +1,5 @@
 import { monitorError } from '@datadog/js-core/monitor'
-import { mockable, Observable } from '@datadog/js-core/util'
-import { isEmptyObject } from '../../../tools/utils/objectUtils'
+import { isEmptyObject, mockable, Observable } from '@datadog/js-core/util'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCookies } from '../../../browser/cookie'
 import type { Configuration } from '../../configuration'
