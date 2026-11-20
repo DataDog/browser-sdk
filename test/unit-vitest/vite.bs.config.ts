@@ -173,6 +173,9 @@ const config = mergeConfig(
       testTimeout: 30_000,
       hookTimeout: 30_000,
       coverage: { enabled: false },
+      // Runs after Vitest has loaded: removes the WeakRef polyfill, which the SDK feature-detects
+      setupFiles: [resolve(import.meta.dirname, 'vitestBsSetup.js')],
+      api: { host: configurations.some(({ name }) => name === 'Safari') ? 'bs-local.com' : 'localhost' },
       browser: {
         headless: false,
         // BrowserStack queues sessions when all parallel sessions are busy, which can take minutes.
@@ -182,7 +185,6 @@ const config = mergeConfig(
         // BrowserStack rewrites localhost to bs-local.com for Safari: serve from that host directly
         // (it resolves to 127.0.0.1) so the page is reachable and cookies match the page host. Other
         // browsers keep `localhost`, which is a secure context (needed e.g. for `secure` cookies).
-        api: { host: configurations.some(({ name }) => name === 'Safari') ? 'bs-local.com' : 'localhost' },
         orchestratorScripts: [
           { content: ERROR_REPORTER, type: 'text/javascript' },
           { src: POLYFILLS_PATH, type: 'text/javascript' },
