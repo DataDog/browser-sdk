@@ -9,7 +9,30 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { EventTracker } from '../eventTracker'
 import { sanitizeIfLongDataUrl } from './resourceUtils'
 
-export interface ResourceOptions {
+interface ResourceOptionsBase {
+  /**
+   * Resource context
+   */
+  context?: Context
+
+  /**
+   * Resource key
+   */
+  resourceKey?: string
+
+  /**
+   * [Internal option] APM trace info of the resource
+   *
+   * @internal
+   */
+  tracing?: {
+    traceId: string
+    spanId: string
+    rulePsr?: number
+  }
+}
+
+export interface ResourceOptions extends ResourceOptionsBase {
   /**
    * Resource type
    *
@@ -21,19 +44,9 @@ export interface ResourceOptions {
    * HTTP method
    */
   method?: string
-
-  /**
-   * Resource context
-   */
-  context?: Context
-
-  /**
-   * Resource key
-   */
-  resourceKey?: string
 }
 
-export interface ResourceStopOptions {
+export interface ResourceStopOptions extends ResourceOptionsBase {
   /**
    * Resource type
    */
@@ -48,23 +61,12 @@ export interface ResourceStopOptions {
    * Resource size in bytes
    */
   size?: number
-
-  /**
-   * Resource context
-   */
-  context?: Context
-
-  /**
-   * Resource key
-   */
-  resourceKey?: string
 }
 
-export interface ManualResourceData {
+export interface ManualResourceData extends ResourceOptionsBase {
   url: string
   type?: ResourceType
   method?: string
-  context?: Context
 }
 
 export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: EventTracker<ManualResourceData>) {
@@ -82,6 +84,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     const stopped = resourceTracker.stop(lookupKey, stopClocks, {
       context: options.context,
+      tracing: options.tracing,
       type: options.type,
     })
 
@@ -90,6 +93,8 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
     }
 
     const duration = elapsed(stopped.startClocks.relative, stopClocks.relative)
+
+    const { tracing } = stopped
 
     const rawRumEvent: RawRumResourceEvent = {
       date: stopped.startClocks.timeStamp,
@@ -103,7 +108,11 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
         status_code: options.statusCode,
         size: options.size,
       },
-      _dd: {},
+      _dd: {
+        trace_id: tracing?.traceId,
+        span_id: tracing?.spanId,
+        rule_psr: tracing?.rulePsr,
+      },
       context: stopped.context,
     }
 
