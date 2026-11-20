@@ -18,8 +18,14 @@
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Node.js and Playwright need a CI image rebuild: keep them out of the all-minor-patch batch",
+      "matchDepNames": ["node", "@playwright/test"],
       "matchUpdateTypes": ["minor", "patch"],
-      "matchPackageNames": ["!@playwright/test"]
+      "groupName": "Node.js and Playwright",
+      "groupSlug": "ci-image"
     },
     {
       "matchFileNames": ["test/apps/vanilla/**"],
