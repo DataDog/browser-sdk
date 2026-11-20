@@ -1,6 +1,6 @@
 ---
 name: running-tests
-description: Use when running tests or checks in browser-sdk, including unit (Vitest Browser Mode, Jasmine API shim), E2E (Playwright), script tests, TypeScript/SSR compatibility, performance benchmarks, or BrowserStack. Use when choosing a yarn test command, reproducing a flaky seed, or targeting a spec, a browser, or a pinned old browser.
+description: Use when running tests or checks in browser-sdk, including unit (Vitest Browser Mode), E2E (Playwright), script tests, TypeScript/SSR compatibility, performance benchmarks, or BrowserStack. Use when choosing a yarn test command, reproducing a flaky seed, or targeting a spec, a browser, or a pinned old browser.
 ---
 
 # Running Tests in browser-sdk
@@ -48,5 +48,5 @@ One-time setup: `yarn test:e2e:setup` for E2E, plus `yarn test:e2e:setup:pinned`
 | E2E passes locally, fails in CI on `<test> > npm`                             | Locally only `bundle` runs. `yarn build:apps`, then `CI=1 yarn test:e2e --project=<browser> -g "<test>"` runs `async`, `npm` and `bundle` like CI. `<browser>` comes from the job name, e.g. `e2e: [firefox]` |
 | Expecting `yarn test:e2e` to cover all browsers                               | Locally only chromium runs unless you pass `--project`                                                                                                                                                        |
 | `*-pinned` projects fail on missing browsers                                  | `yarn test:e2e:setup:pinned` once                                                                                                                                                                             |
-| Leaving `fit`/`fdescribe` in a spec                                           | `yarn lint` fails (`jasmine/no-focused-tests`). `test.only` fails E2E in CI (`forbidOnly`)                                                                                                                    |
+| Leaving `it.only`/`describe.only` in a spec                                   | `yarn lint` fails (`no-restricted-properties`), and Vitest fails in CI (`allowOnly` is off). `test.only` fails E2E in CI (`forbidOnly`)                                                                       |
 | Passing a path to `yarn test:script`                                          | Run `node --test` on the file directly                                                                                                                                                                        |

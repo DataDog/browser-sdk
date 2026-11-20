@@ -79,7 +79,7 @@ test/
 ├── e2e/             # Playwright E2E test scenarios
 ├── performance/     # Performance benchmarking tests
 ├── unit/            # Karma configuration for BrowserStack unit tests
-└── unit-vitest/     # Vitest unit test configuration (Jasmine compatibility shim)
+└── unit-vitest/     # Vitest unit test configuration
 
 scripts/             # Build, deploy, release automation
 ```

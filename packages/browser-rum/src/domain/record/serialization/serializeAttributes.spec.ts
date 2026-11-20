@@ -18,7 +18,7 @@ import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind } from './serializationTransaction'
 import type { VirtualAttributes } from './serialization.types'
 
-const CSS_FILE_URL = '/base/packages/browser-rum/test/record/toto.css'
+const CSS_FILE_URL = '/packages/browser-rum/test/record/toto.css'
 
 const PRIVACY_LEVELS = Object.keys({
   [NodePrivacyLevel.ALLOW]: true,
@@ -393,9 +393,9 @@ describe('serializeVirtualAttributes', () => {
 
     it('handles link element stylesheets with a relative href after the base URL changed', async () => {
       // A base URL whose directory is '/client/', and a relative href that climbs one level out
-      // of it to reach the stylesheet served at '/base/packages/...'.
+      // of it to reach the stylesheet served at '/packages/...'.
       const baseUrl = `${location.origin}/client/new-quote`
-      const relativeHref = '../base/packages/browser-rum/test/record/relativeStylesheet.css'
+      const relativeHref = '../packages/browser-rum/test/record/relativeStylesheet.css'
 
       // Load the stylesheet for real, in an isolated iframe so that changing the base URL can't
       // affect the rest of the test run.

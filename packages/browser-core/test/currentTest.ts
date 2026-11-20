@@ -1,9 +1,9 @@
 import { beforeEach, onTestFinished } from 'vitest'
 
-let currentSpec: { fullName: string } | null = null
+let currentTest: { fullName: string } | null = null
 
-export function getCurrentJasmineSpec() {
-  return currentSpec
+export function getCurrentTest() {
+  return currentTest
 }
 
 /**
@@ -11,7 +11,7 @@ export function getCurrentJasmineSpec() {
  * evaluated would only apply to the first test file when files share the same page (`isolate:
  * false`).
  */
-export function trackCurrentJasmineSpec() {
+export function trackCurrentTest() {
   beforeEach((context) => {
     const parts: string[] = []
     let current: any = context.task
@@ -21,10 +21,10 @@ export function trackCurrentJasmineSpec() {
       }
       current = current.suite
     }
-    currentSpec = { fullName: parts.join(' ') }
+    currentTest = { fullName: parts.join(' ') }
 
     onTestFinished(() => {
-      currentSpec = null
+      currentTest = null
     })
   })
 }

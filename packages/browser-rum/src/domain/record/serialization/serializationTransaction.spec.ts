@@ -10,7 +10,7 @@ import { SerializationKind, serializeInTransaction, type SerializationTransactio
 describe('SerializationTransaction', () => {
   // The checks below are assertions about the types SerializationTransaction accepts rather than
   // about behavior at runtime, so they are enforced by `yarn typecheck` and there is nothing for
-  // Jasmine to run. Each expected-error directive is the guard: if the call it covers starts
+  // the test runner to run. Each expected-error directive is the guard: if the call it covers starts
   // compiling, tsc reports the directive as unused and the build fails.
   //
   // They matter because both kinds of regression are silent. A string that reaches the encoder
