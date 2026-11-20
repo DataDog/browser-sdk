@@ -1,5 +1,6 @@
-import type { Profiler, TimeoutId } from '@datadog/js-core/util'
+import type { TimeoutId } from '@datadog/js-core/util'
 import type { ClocksState } from '@datadog/js-core/time'
+import type { BrowserProfiler } from '../../browser/browserProfiler'
 import type { BrowserProfileEvent, BrowserProfilerTrace } from '../../types'
 
 /**
@@ -24,7 +25,7 @@ export interface RumProfilerPausedInstance {
 export interface RumProfilerRunningInstance {
   readonly state: 'running'
   /** Current profiler instance */
-  readonly profiler: Profiler
+  readonly browserProfiler: BrowserProfiler
   /** High resolution time when profiler session started */
   readonly startClocks: ClocksState
   /** Timeout id to stop current session */

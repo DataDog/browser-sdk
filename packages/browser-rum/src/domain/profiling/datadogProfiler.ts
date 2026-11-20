@@ -1,13 +1,13 @@
-import { globalObject, mockable, clearTimeout, setTimeout } from '@datadog/js-core/util'
+import { mockable, clearTimeout, setTimeout } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
-import type { Profiler } from '@datadog/js-core/util'
 import { clocksNow } from '@datadog/js-core/time'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
-import { canUseEventBridge, display, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
+import { canUseEventBridge, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
 
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { createBrowserProfiler } from '../../browser/browserProfiler'
 import type {
   RumProfilerInstance,
   RumProfilerRunningInstance,
@@ -48,50 +48,40 @@ export function createRumProfiler(
     emitPayload
   )
 
-  // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
-
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
   let quotaCheckGeneration = 0
 
-  // Stops the profiler when session expires
   lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
     stopProfiling('session-expired')
   })
 
-  // Start the profiler again when session is renewed
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    const newSession = session.findTrackedSession()
+
     if (
       instance.state === 'stopped' &&
-      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
+      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko') &&
+      newSession &&
+      isSampled(
+        newSession.id,
+        correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+      )
     ) {
-      const newSession = session.findTrackedSession()
-      if (
-        !newSession ||
-        !isSampled(
-          newSession.id,
-          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-        )
-      ) {
-        return
-      }
       start()
     }
   })
 
-  // Public API to start the profiler.
   function start(): void {
     if (instance.state === 'running') {
       return
     }
 
-    // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
     globalCleanupTasks.push(
       addEventListener(window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
       addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
-    // Start profiler instance
     startNextProfilerInstance()
     triggerQuotaCheck()
   }
@@ -109,13 +99,11 @@ export function createRumProfiler(
     if (sessionId) {
       mockable(checkProfilingQuota)(configuration, sessionId)
         .then((result) => {
-          if (checkGeneration !== quotaCheckGeneration) {
-            return
-          }
-          if (instance.state !== 'running' && instance.state !== 'paused') {
-            return
-          }
-          if (result.decision === 'quota_ko') {
+          if (
+            checkGeneration === quotaCheckGeneration &&
+            (instance.state === 'running' || instance.state === 'paused') &&
+            result.decision === 'quota_ko'
+          ) {
             stopProfiling('quota_ko', result.reason)
           }
         })
@@ -130,7 +118,7 @@ export function createRumProfiler(
 
   function stopProfiling(reason: RumProfilerStoppedInstance['stateReason'], quotaReason?: QuotaReason) {
     // Stop current profiler instance (data collection happens async in background)
-    stopProfilerInstance(reason)
+    stopAndCollectProfilerInstance(reason)
 
     // Cleanup global listeners and reset the array to prevent accumulation across start/stop cycles
     globalCleanupTasks.forEach((task) => task())
@@ -141,41 +129,14 @@ export function createRumProfiler(
   }
 
   function startNextProfilerInstance(): void {
-    // These APIs might be unavailable in some browsers
-    const profilerConstructor = globalObject.Profiler
-
-    if (!profilerConstructor) {
-      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
-      throw new Error('RUM Profiler is not supported in this browser.')
-    }
-
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
-      collectProfilerInstance(instance)
+      stopRunningProfiler(instance)
     }
 
-    let profiler: Profiler
-    try {
-      // We have to create new Profiler each time we start a new instance
-      profiler = new profilerConstructor({
-        sampleInterval: profilerConfiguration.sampleIntervalMs,
-        // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-        maxBufferSize: Math.round(
-          (profilerConfiguration.collectIntervalMs * 1.5) / profilerConfiguration.sampleIntervalMs
-        ),
-      })
-    } catch (e) {
-      if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
-        // Missing Response Header (`js-profiling`) that is required to enable the profiler.
-        // We should suggest the user to enable the Response Header in their server configuration.
-        display.warn(
-          '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
-          e
-        )
-        profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
-      } else {
-        profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
-      }
+    const result = createBrowserProfiler(profilerConfiguration, startNextProfilerInstance)
+    if (result.status === 'error') {
+      profilingContextManager.set({ status: 'error', error_reason: result.reason })
       return
     }
 
@@ -185,62 +146,39 @@ export function createRumProfiler(
     instance = {
       state: 'running',
       startClocks: clocksNow(),
-      profiler,
+      browserProfiler: result.profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       sessionId: session.findTrackedSession()?.id,
     }
-
-    // Add event handler case we overflow the buffer
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
-    profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  function collectProfilerInstance(runningInstance: RumProfilerRunningInstance) {
-    // Cleanup instance
-    clearTimeout(runningInstance.timeoutId)
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
-    runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
-
-    const { startClocks, sessionId } = runningInstance
+  function stopRunningProfiler(
+    { timeoutId, startClocks, sessionId, browserProfiler }: RumProfilerRunningInstance,
+    { discard = false } = {}
+  ) {
+    clearTimeout(timeoutId)
     const endClocks = clocksNow()
-    runningInstance.profiler
+    browserProfiler
       .stop()
       .then((trace) => {
-        profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
+        if (!discard) {
+          profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
+        }
       })
       .catch(monitorError)
   }
 
-  function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
-    if (instance.state !== 'running') {
-      if (
-        // If paused, profiler data was already collected during pause, just update state
-        instance.state === 'paused' ||
-        // Update stateReason when already stopped and the user explicitly stops the profiler,
-        // so that SESSION_RENEWED does not override the user's intent.
-        (instance.state === 'stopped' && stateReason === 'stopped-by-user')
-      ) {
-        instance = { state: 'stopped', stateReason }
-      }
-
+  function stopAndCollectProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
+    // Preserve the stop reason unless the user explicitly stops the profiler.
+    if (instance.state === 'stopped' && stateReason !== 'stopped-by-user') {
       return
     }
 
-    // Capture the running instance before changing state
-    const runningInstance = instance
-
-    // Update state synchronously so SESSION_RENEWED check works immediately
+    const previousInstance = instance
     instance = { state: 'stopped', stateReason }
 
-    if (stateReason === 'quota_ko') {
-      // Discard data — quota denied means we should not send anything
-      clearTimeout(runningInstance.timeoutId)
-      // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
-      runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
-      void runningInstance.profiler.stop().catch(monitorError)
-    } else {
-      // Collect and send profile data in background - doesn't block state transitions
-      collectProfilerInstance(runningInstance)
+    if (previousInstance.state === 'running') {
+      stopRunningProfiler(previousInstance, { discard: stateReason === 'quota_ko' })
     }
   }
 
@@ -248,19 +186,9 @@ export function createRumProfiler(
     if (instance.state !== 'running') {
       return
     }
-
-    // Capture the running instance before changing state
     const runningInstance = instance
-
-    // Update state synchronously
     instance = { state: 'paused' }
-
-    // Collect and send profile data in background
-    collectProfilerInstance(runningInstance)
-  }
-
-  function handleSampleBufferFull(): void {
-    startNextProfilerInstance()
+    stopRunningProfiler(runningInstance)
   }
 
   function handleVisibilityChange(): void {
