@@ -484,6 +484,10 @@ export function createPreStartStrategy(
     userContext,
     accountContext,
 
+    attachElementStack(elementRef, stack) {
+      bufferApiCalls.notify((startRumResult) => startRumResult.attachElementStack(elementRef, stack))
+    },
+
     addAction(action) {
       bufferApiCalls.notify((startRumResult) => startRumResult.addAction(action))
     },

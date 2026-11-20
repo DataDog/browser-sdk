@@ -1,5 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
+import { createRawRumEvent } from '../../../test'
 import { mockSourceCodeContext } from '../../../../browser-core/test'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
 import type { RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
@@ -66,6 +67,18 @@ describe('sourceCodeContext', () => {
       service: 'my-service',
       version: '1.0.0',
     })
+  })
+
+  it('should add source code context matching the element_stack first frame URL', () => {
+    mockSourceCodeContext({ [TEST_STACK]: { service: 'my-service', version: '1.0.0' } })
+    startSourceCodeMfeContext(hook)
+    const result = hook.trigger({
+      eventType: 'action',
+      startTime: 0 as RelativeTime,
+      rawRumEvent: createRawRumEvent('action'),
+      domainContext: { events: [], elementStack: MATCHING_TEST_STACK },
+    } as AssembleHookParams)
+    expect(result).toEqual({ type: 'action', service: 'my-service', version: '1.0.0' })
   })
 
   it('should add source code context matching the LoAF first script source URL', () => {

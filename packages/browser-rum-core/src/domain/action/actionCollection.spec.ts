@@ -1,7 +1,8 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
-import { addDuration } from '@datadog/js-core/time'
+import { addDuration, ONE_SECOND } from '@datadog/js-core/time'
 import { Observable } from '@datadog/js-core/util'
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import type { WeakRefConstructor } from '@datadog/browser-core'
+import { createNewEvent, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
@@ -14,9 +15,12 @@ import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './action
 import { ActionNameSource } from './actionNameConstants'
 import type { ActionContexts } from './actionCollection'
 
+declare const WeakRef: WeakRefConstructor
+
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
   let hooks: Hooks
+  let attachElementStack: ReturnType<typeof startActionCollection>['attachElementStack']
   let addAction: ReturnType<typeof startActionCollection>['addAction']
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
   let actionContexts: ActionContexts
@@ -34,10 +38,63 @@ describe('actionCollection', () => {
       mockRumConfiguration()
     )
     registerCleanupTask(actionCollection.stop)
+    attachElementStack = actionCollection.attachElementStack
     addAction = actionCollection.addAction
     actionContexts = actionCollection.actionContexts
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+  })
+
+  describe('attachElementStack', () => {
+    let button: HTMLButtonElement
+    let clock: ReturnType<typeof mockClock>
+
+    beforeEach(() => {
+      if (typeof WeakRef === 'undefined') {
+        pending('No WeakRef support')
+      }
+      clock = mockClock()
+      button = document.createElement('button')
+      button.textContent = 'Click me'
+      document.body.appendChild(button)
+      registerCleanupTask(() => button.remove())
+    })
+
+    function clickButton() {
+      const properties = { target: button, isPrimary: true, clientX: 0, clientY: 0 }
+      button.dispatchEvent(createNewEvent('pointerdown', properties))
+      button.dispatchEvent(createNewEvent('pointerup', properties))
+      clock.tick(ONE_SECOND)
+    }
+
+    it('attributes clicks to a registered element', () => {
+      attachElementStack(new WeakRef(button), 'mfe-stack')
+      clickButton()
+
+      expect(rawRumEvents.length).toBe(1)
+      expect(rawRumEvents[0].domainContext).toEqual(jasmine.objectContaining({ elementStack: 'mfe-stack' }))
+    })
+
+    it('replaces the registered stack for subsequent clicks', () => {
+      attachElementStack(new WeakRef(button), 'first-stack')
+      clickButton()
+      attachElementStack(new WeakRef(button), 'second-stack')
+      clickButton()
+
+      expect(rawRumEvents.length).toBe(2)
+      expect(rawRumEvents[0].domainContext).toEqual(jasmine.objectContaining({ elementStack: 'first-stack' }))
+      expect(rawRumEvents[1].domainContext).toEqual(jasmine.objectContaining({ elementStack: 'second-stack' }))
+    })
+
+    it('ignores elements collected before registration', () => {
+      const elementRef = new WeakRef(button)
+      spyOn(elementRef, 'deref').and.returnValue(undefined)
+      attachElementStack(elementRef, 'mfe-stack')
+      clickButton()
+
+      expect(rawRumEvents.length).toBe(1)
+      expect(rawRumEvents[0].domainContext).not.toEqual(jasmine.objectContaining({ elementStack: jasmine.anything() }))
+    })
   })
 
   it('should create action from auto action with name source', () => {
@@ -52,6 +109,7 @@ describe('actionCollection', () => {
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
+      elementStack: 'mfe-stack',
       nameSource: ActionNameSource.TEXT_CONTENT,
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
@@ -107,6 +165,7 @@ describe('actionCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       events: [event],
+      elementStack: 'mfe-stack',
     })
   })
 

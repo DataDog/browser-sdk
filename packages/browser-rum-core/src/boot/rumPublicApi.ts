@@ -16,6 +16,7 @@ import type {
   Encoder,
   ResourceType,
   SessionManager,
+  WeakRefConstructor,
 } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
@@ -57,6 +58,8 @@ import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/tr
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRumResult } from './startRum'
 import { startRum } from './startRum'
+
+declare const WeakRef: WeakRefConstructor
 
 export interface StartRecordingOptions {
   force: boolean
@@ -205,6 +208,25 @@ export interface RumPublicApi extends PublicApi {
    * @param context - Context of the action
    */
   addAction: (name: string, context?: object) => void
+
+  /**
+   * Capture the caller's stack to attribute clicks on this element and its descendants.
+   * Call from the microfrontend's browser bundle after its container mounts or hydrates.
+   * Can be called before init(). Repeated calls replace the element's registration.
+   * Clicks use the closest registered ancestor, including across shadow roots,
+   * and retain the stack captured at pointerdown through action completion.
+   *
+   * @category Context - Action
+   * @param element - Element to associate with the caller's stack
+   * @example
+   * ```ts
+   * const container = document.getElementById('checkout')
+   * if (container) {
+   *   datadogRum.attachElementStack(container)
+   * }
+   * ```
+   */
+  attachElementStack: (element: Element) => void
 
   /**
    * Start tracking a custom action.
@@ -692,6 +714,7 @@ export interface Strategy {
   userContext: ContextManager
   accountContext: ContextManager
 
+  attachElementStack: StartRumResult['attachElementStack']
   addAction: StartRumResult['addAction']
   startAction: StartRumResult['startAction']
   stopAction: StartRumResult['stopAction']
@@ -838,6 +861,23 @@ export function makeRumPublicApi(
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
     addPlugin: monitor((plugin: RumPlugin) => strategy.addPlugin(plugin)),
+
+    attachElementStack: (element) => {
+      if (typeof WeakRef === 'undefined') {
+        return
+      }
+      const stack = createHandlingStack('element')
+      callMonitored(() => {
+        addTelemetryUsage({ feature: 'attach-element-stack' })
+        if (!(element instanceof Element)) {
+          display.warn(`Invalid element provided (expected an Element, got ${typeof element}). Ignoring.`)
+          return
+        }
+        if (stack?.includes('\n')) {
+          strategy.attachElementStack(new WeakRef(element), stack)
+        }
+      })
+    },
 
     addAction: (name, context) => {
       const handlingStack = createHandlingStack('action')

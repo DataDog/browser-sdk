@@ -1,3 +1,4 @@
+import type { WeakRef } from '@datadog/browser-core'
 import type { RelativeTime, Duration } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/js-core/util'
 import type { MutationRecord } from '@datadog/js-core/dom'
@@ -30,6 +31,7 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
+  const elementStacks = new WeakMap<Element, string>()
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
     (action) => {
@@ -41,7 +43,13 @@ export function startActionCollection(
   let clickActions: ReturnType<typeof trackClickActions> | undefined
 
   if (configuration.trackUserInteractions) {
-    clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration)
+    clickActions = trackClickActions(
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      configuration,
+      elementStacks
+    )
   }
 
   const manualActions = trackManualActions(lifeCycle, (action) => {
@@ -91,6 +99,12 @@ export function startActionCollection(
   }))
 
   return {
+    attachElementStack: (elementRef: WeakRef<Element>, stack: string) => {
+      const element = elementRef.deref()
+      if (element) {
+        elementStacks.set(element, stack)
+      }
+    },
     addAction: manualActions.addAction,
     startAction: manualActions.startAction,
     stopAction: manualActions.stopAction,
@@ -143,7 +157,9 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
     },
     duration: action.duration,
     startClocks: action.startClocks,
-    domainContext: isAuto ? { events: action.events } : { handlingStack: action.handlingStack },
+    domainContext: isAuto
+      ? { events: action.events, elementStack: action.elementStack }
+      : { handlingStack: action.handlingStack },
   }
 }
 

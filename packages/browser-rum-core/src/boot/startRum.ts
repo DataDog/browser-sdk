@@ -229,6 +229,7 @@ export function startRumEventCollection(
   )
 
   return {
+    attachElementStack: actionCollection.attachElementStack,
     addAction: actionCollection.addAction,
     startAction: actionCollection.startAction,
     stopAction: actionCollection.stopAction,
