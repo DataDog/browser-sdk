@@ -1,8 +1,8 @@
 import { relativeNow, timeStampNow } from '@datadog/js-core/time'
-import { createIdentityEncoder } from '@datadog/browser-core'
 import { interceptRequests, DEFAULT_FETCH_MOCK, readFormDataRequest } from '@datadog/browser-core/test'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
+import { createIdentityEncoder } from '@datadog/js-core/transport'
 import { mockedTrace } from '../test-utils/mockedTrace'
 import { createFormDataEmitter } from './formDataEmitter'
 

@@ -1,5 +1,6 @@
-import { createIdentityEncoder, DeflateEncoderStreamId as CoreDeflateEncoderStreamId } from '@datadog/browser-core'
+import { DeflateEncoderStreamId as CoreDeflateEncoderStreamId } from '@datadog/browser-core'
 import { interceptRequests, readFormDataRequest } from '@datadog/browser-core/test'
+import { createIdentityEncoder } from '@datadog/js-core/transport'
 import { LifeCycle } from '../domain/lifeCycle'
 import { mockRumConfiguration } from '../../test'
 import { createFormDataTransport } from './formDataTransport'
