@@ -290,39 +290,58 @@ export function addTelemetryError(e: unknown, context?: Context) {
 }
 
 /**
- * Debug telemetry sent by a cross-platform SDK (Flutter, Unity) through the plugin API.
+ * Telemetry event sent through the plugin API.
+ *
+ * New event kinds can be added to this union without changing the plugin API signature: the
+ * browser SDK drops kinds it doesn't know about, so SDKs relying on newer kinds keep working with
+ * older browser SDK versions.
  */
-export function addCrossPlatformTelemetryDebug(message: string, context?: Context) {
-  getTelemetryObservable().notify({
-    rawEvent: {
-      type: TelemetryType.LOG,
-      message,
-      status: StatusType.debug,
-      ...context,
-    },
-    isCrossPlatform: true,
-  })
+export type PluginTelemetryEvent =
+  | { type: 'debug'; message: string; context?: Context }
+  | { type: 'error'; message: string; stack?: string; kind?: string; context?: Context }
+
+export interface AddPluginTelemetryOptions {
+  /**
+   * The event is sent on behalf of a cross-platform SDK (Flutter, Unity) running the browser SDK:
+   * it is attributed to the `source` and `sdkVersion` init options instead of the browser SDK.
+   */
+  crossPlatformSdk?: boolean
 }
 
 /**
- * Error telemetry sent by a cross-platform SDK (Flutter, Unity) through the plugin API.
- * The stack comes from the cross-platform SDK and is sent as is, like on mobile platforms:
- * scrubCustomerFrames would drop all of its frames, as none are served from the Datadog CDN.
+ * Send a telemetry event through the plugin API. The error stack is sent as is (no frame
+ * scrubbing), like on mobile platforms: scrubCustomerFrames would drop all of the frames of a
+ * cross-platform SDK stack, as none are served from the Datadog CDN.
  */
-export function addCrossPlatformTelemetryError(
-  { message, stack, kind }: { message: string; stack?: string; kind?: string },
-  context?: Context
-) {
-  getTelemetryObservable().notify({
-    rawEvent: {
-      type: TelemetryType.LOG,
-      status: StatusType.error,
-      message,
-      error: { stack, kind },
-      ...context,
-    },
-    isCrossPlatform: true,
-  })
+export function addPluginTelemetry(event: PluginTelemetryEvent, options?: AddPluginTelemetryOptions) {
+  const rawEvent = toPluginRawEvent(event)
+  if (!rawEvent) {
+    return
+  }
+  getTelemetryObservable().notify({ rawEvent, isCrossPlatform: options?.crossPlatformSdk })
+}
+
+function toPluginRawEvent(event: PluginTelemetryEvent): RawTelemetryEvent | undefined {
+  switch (event.type) {
+    case 'debug':
+      return {
+        type: TelemetryType.LOG,
+        message: event.message,
+        status: StatusType.debug,
+        ...event.context,
+      }
+    case 'error':
+      return {
+        type: TelemetryType.LOG,
+        status: StatusType.error,
+        message: event.message,
+        error: { stack: event.stack, kind: event.kind },
+        ...event.context,
+      }
+  }
+  // The union is closed at compile time, so this is only reachable with an event kind unknown to
+  // this SDK version, sent by an SDK built against a newer browser SDK.
+  return undefined
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
