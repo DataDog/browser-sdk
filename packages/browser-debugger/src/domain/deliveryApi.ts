@@ -27,7 +27,7 @@ export interface DeliveryApiConfiguration {
   site?: Site
   proxy?: string
   env?: string
-  version?: string
+  version: string
   debugId?: string
   pollInterval?: number
   maxUnreachableDuration?: number

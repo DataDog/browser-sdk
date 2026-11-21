@@ -33,15 +33,15 @@ import { datadogDebugger } from '@datadog/browser-debugger'
 datadogDebugger.init({
   clientToken: '<DATADOG_CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',
+  version: '<DEPLOYED_BUILD_VERSION>',
   //  service: 'my-web-application',
   //  env: 'production',
-  //  version: 'my-deployed-build-version',
 })
 ```
 
-The SDK's `init().service` and `init().version` default to the build plugin's `metadata.service` and `metadata.version` values injected into the bundle. Because the build plugin already needs `metadata.service` to upload the build's function list, which Live Debugger uses to create probes, you don't need to set `service` in `init()` as well. If you pass a value in both places and they differ, the SDK keeps the `init()` value and logs a warning. If neither `init()` nor the build plugin provides a service, the SDK logs an error and doesn't start.
+`version` is required: set it to an immutable identifier of the deployed build, the same value as the build plugin's `metadata.version` option. The build plugin uploads the build's function list under that version, and Live Debugger uses it to create probes, so if the two don't match, you can't add logpoints to the build. The build plugin doesn't add the version to the bundle, because it changes on every build and would make browsers download unchanged files again after each deploy. Without a version, the SDK logs an error and doesn't start.
 
-If you set `version` for version-specific probe targeting, use an immutable deployed build identifier.
+The SDK's `init().service` defaults to the build plugin's `metadata.service` value injected into the bundle. Because the build plugin already needs `metadata.service` to upload the build's function list, you don't need to set `service` in `init()` as well. If you pass a value in both places and they differ, the SDK keeps the `init()` value and logs a warning. If neither `init()` nor the build plugin provides a service, the SDK logs an error and doesn't start.
 
 ## RUM actions
 
