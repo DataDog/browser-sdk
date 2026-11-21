@@ -1,5 +1,5 @@
 import type { Subscription } from '@datadog/js-core/util'
-import { disableJasmineUncaughtExceptionTracking, registerCleanupTask, wait } from '../../../test'
+import { disableJasmineUncaughtExceptionTracking, registerCleanupTask, startMockTelemetry, wait } from '../../../test'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
@@ -322,6 +322,16 @@ describe('instrumentUnhandledRejection', () => {
     const [originalError, stack] = spy.calls.mostRecent().args
     expect(originalError).toBe(reason)
     expect(stack).toBeUndefined()
+  })
+
+  it('should ignore direct calls without an event', async () => {
+    const telemetry = startMockTelemetry()
+    const spy = await spyViaInstrumentOnUnhandledRejection(() => {
+      ;(window.onunhandledrejection as () => void)()
+    })
+
+    expect(spy).not.toHaveBeenCalled()
+    expect(await telemetry.hasEvents()).toBeFalse()
   })
 })
 
