@@ -20,7 +20,6 @@ import { getProbes } from '../domain/probes'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 
 export interface DebuggerBuildMetadata {
-  version?: string
   service?: string
   /**
    * Sourcemap debug ID of the instrumented build
@@ -64,11 +63,13 @@ export interface DebuggerInitConfiguration {
   env?: string
 
   /**
-   * The application's version
+   * The application's version: an immutable identifier of the deployed build. It must be the version
+   * the Datadog build plugin uploads the build's symbols under (its `metadata.version` option), which
+   * Live Debugger needs to add logpoints. The build plugin doesn't add the version to the bundle.
    *
    * @category Data Collection
    */
-  version?: string
+  version: string
 
   /**
    * Polling interval in milliseconds for fetching probe updates
@@ -170,7 +171,7 @@ export interface DatadogDebugger extends PublicApi {
    *   clientToken: '<DATADOG_CLIENT_TOKEN>',
    *   service: 'my-app',
    *   site: 'datadoghq.com',
-   *   env: 'production'
+   *   env: 'production',
    *   version: 'my-deployed-build-version',
    * })
    * ```
@@ -194,7 +195,7 @@ function getBuildMetadataString(key: keyof DebuggerBuildMetadata): string | unde
   return typeof value === 'string' && value ? value : undefined
 }
 
-function resolveWithBuildMetadata(key: 'service' | 'version', initValue: string | undefined): string | undefined {
+function resolveWithBuildMetadata(key: 'service', initValue: string | undefined): string | undefined {
   const buildValue = getBuildMetadataString(key)
 
   if (initValue !== undefined && buildValue !== undefined && initValue !== buildValue) {
@@ -220,10 +221,21 @@ function makeDebuggerPublicApi(): DatadogDebugger {
         return
       }
 
+      // Live Debugger finds the build's symbols by its version, and the build plugin doesn't add the
+      // version to the bundle, so only init() can provide it.
+      // JavaScript callers can pass anything, so check the type as well
+      const version: unknown = initConfiguration.version
+      if (typeof version !== 'string' || !version) {
+        display.error(
+          '"version" is required. Set it in init() to the version the Datadog build plugin uploads symbols under (its `metadata.version` option).'
+        )
+        return
+      }
+
       const resolvedConfiguration = {
         ...initConfiguration,
         service,
-        version: resolveWithBuildMetadata('version', initConfiguration.version),
+        version,
       }
 
       // Initialize debugger's own transport
