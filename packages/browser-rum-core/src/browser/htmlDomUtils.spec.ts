@@ -192,6 +192,17 @@ describe('forEachChildNodes', () => {
     expect(spy.calls.argsFor(0)[0]).toBe(container.childNodes[0])
     expect(spy.calls.argsFor(1)[0]).toBe(shadowRoot)
   })
+
+  it('should iterate over the direct children when `firstChild` and `nextSibling` are overridden', () => {
+    const container = appendElement('<div><span></span><b></b></div>')
+    const [span, b] = Array.from(container.childNodes)
+    Object.defineProperty(container, 'firstChild', { get: () => null })
+    Object.defineProperty(span, 'nextSibling', { get: () => null })
+
+    const spy = jasmine.createSpy()
+    forEachChildNodes(container, spy)
+    expect(spy.calls.allArgs()).toEqual([[span], [b]])
+  })
 })
 
 describe('getParentNode', () => {
@@ -212,6 +223,15 @@ describe('getParentNode', () => {
     it(`should ${label}`, () => {
       expect(getParentNode(element)).toBe(result)
     })
+  })
+
+  it('should return the parent for a child that overrides `parentNode`', () => {
+    const parent = document.createElement('div')
+    const overriddenChild = document.createElement('span')
+    parent.appendChild(overriddenChild)
+    Object.defineProperty(overriddenChild, 'parentNode', { get: () => null })
+
+    expect(getParentNode(overriddenChild)).toBe(parent)
   })
 })
 

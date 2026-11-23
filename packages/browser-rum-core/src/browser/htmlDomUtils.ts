@@ -27,13 +27,23 @@ export function hasChildNodes(node: Node) {
   return node.childNodes.length > 0 || isNodeShadowHost(node)
 }
 
+/**
+ * Return the value of a node property from the getter defined on `Node.prototype`.
+ * It ignores overrides defined on the node itself or on prototypes between the node and `Node.prototype`.
+ * Some frameworks override these getters on their elements to hide the nodes they render
+ * (ex: Stencil scoped components with slots, used by Ionic).
+ */
+export function getFromNodePrototype(node: Node, name: 'firstChild' | 'nextSibling' | 'parentNode'): Node | null {
+  return Reflect.get(Node.prototype, name, node)
+}
+
 export function forEachChildNodes(node: Node, callback: (child: Node) => void) {
-  let child = node.firstChild
+  let child = getFromNodePrototype(node, 'firstChild')
 
   while (child) {
     callback(child)
 
-    child = child.nextSibling
+    child = getFromNodePrototype(child, 'nextSibling')
   }
 
   if (isNodeShadowHost(node)) {
@@ -45,7 +55,7 @@ export function forEachChildNodes(node: Node, callback: (child: Node) => void) {
  * Return `host` in case if the current node is a shadow root otherwise will return the `parentNode`
  */
 export function getParentNode(node: Node): Node | null {
-  return isNodeShadowRoot(node) ? node.host : node.parentNode
+  return isNodeShadowRoot(node) ? node.host : getFromNodePrototype(node, 'parentNode')
 }
 
 /**

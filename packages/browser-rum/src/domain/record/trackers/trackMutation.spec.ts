@@ -365,6 +365,27 @@ describe('trackMutation', () => {
       expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'A'], [2, 'B'], [3, 'C']]])
     })
 
+    it('serializes the nodes hidden by overridden `firstChild`, `nextSibling` and `parentNode` getters', async () => {
+      const { fullSnapshot, mutation } = await recordMutationOf(
+        '<div><p></p><b></b></div>',
+        (sandbox: HTMLElement): void => {
+          const document = sandbox.ownerDocument
+          const [b] = document.getElementsByTagName('b')
+          const i = document.createElement('i')
+          Object.defineProperty(i, 'parentNode', { get: () => null })
+          Object.defineProperty(i, 'nextSibling', { get: () => null })
+          sandbox.insertBefore(i, b)
+        },
+        {
+          beforeFullSnapshot: (sandbox: HTMLElement): void => {
+            Object.defineProperty(sandbox, 'firstChild', { get: () => null })
+          },
+        }
+      )
+      expect(fullSnapshot.data).toEqual([[ChangeType.AddNode, [null, 'DIV'], [1, 'P'], [0, 'B']]])
+      expect(mutation?.data).toEqual([[ChangeType.AddNode, [-1, 'I']]])
+    })
+
     it('respects the default privacy level setting', async () => {
       const { mutation } = await recordMutationOf(
         '<div></div>',
