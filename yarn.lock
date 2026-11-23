@@ -72,6 +72,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@angular/core-15@npm:@angular/core@15.2.10":
+  version: 15.2.10
+  resolution: "@angular/core@npm:15.2.10"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    rxjs: ^6.5.3 || ^7.4.0
+    zone.js: ~0.11.4 || ~0.12.0 || ~0.13.0
+  checksum: 10c0/d0c3c4e97ac56867b4459f9299571442a4a928c2b7a2bec6018ed242dee323b7f470abf9272edb16b6e60dd3c8de11ee2596662bcd08cd87e852ecb0abbee52e
+  languageName: node
+  linkType: hard
+
 "@angular/core@npm:22.2.6":
   version: 22.2.6
   resolution: "@angular/core@npm:22.2.6"
@@ -391,6 +403,7 @@ __metadata:
     "@angular/common": "npm:22.2.6"
     "@angular/compiler": "npm:22.2.6"
     "@angular/core": "npm:22.2.6"
+    "@angular/core-15": "npm:@angular/core@15.2.10"
     "@angular/platform-browser": "npm:22.2.6"
     "@angular/router": "npm:22.2.6"
     "@datadog/browser-core": "workspace:*"
