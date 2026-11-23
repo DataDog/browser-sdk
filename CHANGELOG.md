@@ -3,7 +3,7 @@
 # Changelog
 
 Entries are generated from the pull request titles ([Conventional Commits](https://www.conventionalcommits.org/)).
-Releases up to v7.17.1 used [gitmoji](https://gitmoji.dev/) prefixes instead: 💥 breaking change, ✨ new feature,
+Releases up to v7.19.0 used [gitmoji](https://gitmoji.dev/) prefixes instead: 💥 breaking change, ✨ new feature,
 🐛 bug fix, ⚡️ performance, 📝 documentation, ⚗️ experimental.
 
 ---
