@@ -27,12 +27,7 @@ describe('readBytesFromStream', () => {
       },
     })
 
-    try {
-      await readBytesFromStream(stream)
-      expect.unreachable('Should have thrown an error')
-    } catch (error) {
-      expect(error).toEqual(expect.any(Error))
-    }
+    await expect(readBytesFromStream(stream)).rejects.toThrow('foo')
   })
 
   it('should handle rejection error on cancel', async () => {

@@ -31,20 +31,26 @@ describe('LocalStorage SessionStoreStrategy', () => {
       expect(localStorage.getItem(SESSION_STORE_KEY)).toContain('id=test-id')
     })
 
-    it('should start with empty state when nothing stored', () => {
-      void strategy.setSessionState((state) => {
-        expect(state).toEqual({})
+    it('should start with empty state when nothing stored', async () => {
+      let readState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        readState = state
         return { ...state, id: 'new-id' }
       }, 'updateState')
+
+      expect(readState).toEqual({})
     })
 
-    it('should read existing state from localStorage', () => {
+    it('should read existing state from localStorage', async () => {
       localStorage.setItem(SESSION_STORE_KEY, toSessionString({ id: 'existing' }))
 
-      void strategy.setSessionState((state) => {
-        expect(state.id).toBe('existing')
+      let readState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        readState = state
         return { ...state, expire: '999' }
       }, 'updateState')
+
+      expect(readState?.id).toBe('existing')
     })
 
     it('should notify sessionObservable after write', async () => {

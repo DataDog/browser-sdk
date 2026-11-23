@@ -25,11 +25,14 @@ describe('Memory SessionStoreStrategy', () => {
       expect(globalObjectWithSession[MEMORY_SESSION_STORE_KEY]?.state?.id).toBe('test-id')
     })
 
-    it('should start with empty state when no session exists', () => {
-      void strategy.setSessionState((state) => {
-        expect(state).toEqual({})
+    it('should start with empty state when no session exists', async () => {
+      let readState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        readState = state
         return { ...state, id: 'new-id' }
       }, 'updateState')
+
+      expect(readState).toEqual({})
     })
 
     it('should notify sessionObservable after write', async () => {
@@ -55,21 +58,24 @@ describe('Memory SessionStoreStrategy', () => {
   })
 
   describe('isolation', () => {
-    it('should shallow clone on read to prevent external mutation', () => {
-      void strategy.setSessionState(() => ({ id: 'original' }), 'updateState')
+    it('should shallow clone on read to prevent external mutation', async () => {
+      await strategy.setSessionState(() => ({ id: 'original' }), 'updateState')
 
       let capturedState: SessionState | undefined
-      void strategy.setSessionState((state) => {
+      await strategy.setSessionState((state) => {
         capturedState = state
         return state
       }, 'updateState')
 
       capturedState!.id = 'mutated'
 
-      void strategy.setSessionState((state) => {
-        expect(state.id).toBe('original')
+      let readState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        readState = state
         return state
       }, 'updateState')
+
+      expect(readState?.id).toBe('original')
     })
   })
 })

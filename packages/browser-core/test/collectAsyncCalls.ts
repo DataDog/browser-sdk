@@ -1,5 +1,5 @@
-import { expect } from 'vitest'
 import { getCurrentTest } from './currentTest'
+import { registerCleanupTask } from './registerCleanupTask'
 
 interface Spy<Args extends unknown[]> {
   mock: { calls: Args[] }
@@ -13,13 +13,21 @@ export function collectAsyncCalls<Args extends unknown[]>(spy: Spy<Args>, expect
       return
     }
 
+    let extraCallError: Error | undefined
+    registerCleanupTask(() => {
+      if (extraCallError) {
+        throw extraCallError
+      }
+    })
+
     const checkCalls = () => {
       if (spy.mock.calls.length === expectedCallsCount) {
         resolve(spy.mock.calls)
       } else if (spy.mock.calls.length > expectedCallsCount) {
-        const message = `Unexpected extra call for spec '${currentSpec.fullName}'`
-        expect.unreachable(message)
-        reject(new Error(message))
+        // The spy is usually called by the code under test, which could catch an error thrown here:
+        // fail the test once it ends instead
+        extraCallError ??= new Error(`Unexpected extra call for spec '${currentSpec.fullName}'`)
+        reject(extraCallError)
       }
     }
 
