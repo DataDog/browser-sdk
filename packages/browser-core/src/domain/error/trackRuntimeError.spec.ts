@@ -324,13 +324,14 @@ describe('instrumentUnhandledRejection', () => {
     expect(stack).toBeUndefined()
   })
 
-  it('should ignore direct calls without an event', async () => {
+  it('should handle direct calls without an event', async () => {
     const telemetry = startMockTelemetry()
     const spy = await spyViaInstrumentOnUnhandledRejection(() => {
       ;(window.onunhandledrejection as () => void)()
     })
 
-    expect(spy).not.toHaveBeenCalled()
+    const [originalError] = spy.calls.mostRecent().args
+    expect(originalError).toBe('Empty reason')
     expect(await telemetry.hasEvents()).toBeFalse()
   })
 })

@@ -51,10 +51,7 @@ export function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
 
   return instrumentMethod(globalObject, 'onunhandledrejection', ({ parameters: [e] }) => {
     // Some tools (e.g. security scanners) call `window.onunhandledrejection()` directly, without
-    // any event. There is no rejection to report in this case.
-    if (!e) {
-      return
-    }
-    callback(e.reason || 'Empty reason')
+    // any event.
+    callback(e?.reason || 'Empty reason')
   })
 }
