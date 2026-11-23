@@ -44,8 +44,10 @@
     }
   },
   "devDependencies": {
+    "nuxt-3": "npm:nuxt@3.21.6",
     "vue": "3.5.45",
-    "vue-router": "5.5.1"
+    "vue-router": "5.5.1",
+    "vue-router-4": "npm:vue-router@4.6.4"
   },
   "repository": {
     "type": "git",
