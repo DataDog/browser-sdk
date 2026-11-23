@@ -18,6 +18,7 @@ export function getTestAppBundlePath(appName: string, originalUrl: string) {
     'react-router-app': 'apps/react-router-app',
     'react-router-v7-app': 'apps/react-router-v7-app',
     'angular-app': 'apps/angular-app',
+    'angular-v15-app': 'apps/angular-v15-app',
     'tanstack-router-app': 'apps/tanstack-router-app',
     microfrontend: 'apps/microfrontend',
   }
