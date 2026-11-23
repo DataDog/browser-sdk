@@ -36,7 +36,9 @@ export interface RumPluginOnInitOptions {
    * has started, right after the API calls made before start. Calls notified after that run right
    * away. Registering the same queue again does nothing. The plugin creates and bounds the queue.
    * RUM subscribes to the queue and then unbuffers it, so the plugin shouldn't rely on its buffered
-   * calls afterwards.
+   * calls afterwards. For a plugin added with `addPlugin()`, the queue drains even if `onInit` returns
+   * `false` or throws. If it is added after `init()`, an asynchronous `onInit` can let queued calls
+   * run before `onRumStart`.
    *
    * @internal
    */
