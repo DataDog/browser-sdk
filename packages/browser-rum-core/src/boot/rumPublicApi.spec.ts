@@ -245,6 +245,21 @@ describe('rum public api', () => {
       expect(plugin.onInit).toHaveBeenCalledTimes(1)
       await collectAsyncCalls(plugin.onRumStart, 1)
     })
+
+    it('should run the call queue of a plugin added after RUM has started', async () => {
+      const queue = new BufferedObservable<() => void>(500)
+      const pluginCallSpy = jasmine.createSpy()
+      const plugin: RumPlugin = { name: 'a', onInit: ({ registerCallQueue }) => registerCallQueue(queue) }
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      queue.notify(pluginCallSpy)
+      rumPublicApi.addPlugin(plugin)
+      await collectAsyncCalls(pluginCallSpy, 1)
+
+      expect(pluginCallSpy).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('addAction', () => {
