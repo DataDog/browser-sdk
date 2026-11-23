@@ -345,6 +345,17 @@ describe('telemetry', () => {
       expect(crossPlatformEvent.version).toBe('3.0.0')
     })
 
+    it('deduplicates browser-attributed plugin events regardless of how the flag is passed', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
+
+      addPluginTelemetry({ type: 'debug', message: 'message' })
+      addPluginTelemetry({ type: 'debug', message: 'message' }, { crossPlatformSdk: false })
+
+      const events = await getTelemetryEvents()
+      expect(events.length).toBe(1)
+      expect(events[0].source).toBe('browser')
+    })
+
     it('attributes events to the browser SDK by default', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
       addPluginTelemetry({ type: 'debug', message: 'message' })
