@@ -71,7 +71,7 @@ function forceWorkerConfiguration(initConfiguration: RumInitConfiguration) {
   initConfiguration.trackUserInteractions = false // The worker has no DOM to interact with
   initConfiguration.trackResources = false // The worker only sees its own requests
   initConfiguration.trackLongTasks = false // The worker does not run on the checkout main thread
-  initConfiguration.trackAutomaticViewMetrics = false // The worker has no page to measure
+  initConfiguration.trackViewMetricsManually = true // The worker has no page to measure
   initConfiguration.sessionReplaySampleRate = 0 // Session Replay needs a DOM
   initConfiguration.profilingSampleRate = 0 // Profiling does not see the checkout main thread
   // The session cookie is accessed through Shopify `browser.cookie`. Falls back to a new session if

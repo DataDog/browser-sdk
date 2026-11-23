@@ -50,6 +50,8 @@ export function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
   }
 
   return instrumentMethod(globalObject, 'onunhandledrejection', ({ parameters: [e] }) => {
-    callback(e.reason || 'Empty reason')
+    // Some tools (e.g. security scanners) call `window.onunhandledrejection()` directly, without
+    // any event.
+    callback(e?.reason || 'Empty reason')
   })
 }

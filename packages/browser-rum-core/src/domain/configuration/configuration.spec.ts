@@ -557,6 +557,19 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('betaTrackSoftNavigations', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaTrackSoftNavigations).toBeFalse()
+    })
+
+    it('is true when the option is enabled', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaTrackSoftNavigations: true })!
+          .betaTrackSoftNavigations
+      ).toBeTrue()
+    })
+  })
+
   describe('betaEnableViewUpdates', () => {
     it('defaults to true without a proxy', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaEnableViewUpdates).toBeTrue()
@@ -1168,7 +1181,8 @@ describe('serializeRumConfiguration', () => {
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
       betaTrackWebSockets: false,
-      trackAutomaticViewMetrics: true,
+      betaTrackSoftNavigations: true,
+      trackViewMetricsManually: true,
       sessionReplayCanvasRecording: { enable: true, quality: CanvasRecordingQuality.HIGH },
     }
 
@@ -1187,8 +1201,8 @@ describe('serializeRumConfiguration', () => {
             // The `remoteConfiguration` init option is covered by the legacy `remote_configuration_id`
             // field. The `remote_configuration` telemetry field is unrelated: it carries the sync
             // metadata of the applied version, which does not come from the init configuration.
-            // `trackAutomaticViewMetrics` is an internal option set by the Shopify plugin, already reported.
-            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'trackAutomaticViewMetrics'
+            // `trackViewMetricsManually` is an internal option, not serialized as configuration telemetry.
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'trackViewMetricsManually'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
@@ -1233,6 +1247,7 @@ describe('serializeRumConfiguration', () => {
       track_resource_headers: 'default_headers',
       beta_enable_view_updates: true,
       beta_track_web_sockets: false,
+      beta_track_soft_navigations: true,
       session_replay_canvas_recording: true,
       session_replay_canvas_recording_quality: 'high',
     })

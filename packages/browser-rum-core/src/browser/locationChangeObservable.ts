@@ -75,5 +75,9 @@ function trackHash(onHashChange: () => void) {
 function getHistoryInstrumentationTarget(methodName: 'pushState' | 'replaceState') {
   // Ideally we should always instument the method on the prototype, however some frameworks (e.g [Next.js](https://github.com/vercel/next.js/blob/d3f5532065f3e3bb84fb54bd2dfd1a16d0f03a21/packages/next/src/client/components/app-router.tsx#L429))
   // are wrapping the instance method. In that case we should also wrap the instance method.
-  return Object.prototype.hasOwnProperty.call(history, methodName) ? history : History.prototype
+  // Use the prototype of the `history` instance rather than `History.prototype`: some libraries (e.g. History.js)
+  // replace the global `History` with an object that has no `prototype`.
+  return Object.prototype.hasOwnProperty.call(history, methodName)
+    ? history
+    : (Object.getPrototypeOf(history) as History)
 }

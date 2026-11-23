@@ -1,4 +1,5 @@
-import { disableJasmineUncaughtExceptionTracking, wait } from '../../../test'
+import type { Subscription } from '@datadog/js-core/util'
+import { disableJasmineUncaughtExceptionTracking, registerCleanupTask, startMockTelemetry, wait } from '../../../test'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
@@ -10,15 +11,16 @@ describe('trackRuntimeError', () => {
     disableJasmineUncaughtExceptionTracking()
 
     const errorObservable = trackRuntimeError()
+    let subscription: Subscription | undefined
     const errorNotification = new Promise<RawError>((resolve) => {
-      errorObservable.subscribe((e: RawError) => resolve(e))
+      subscription = errorObservable.subscribe((e: RawError) => resolve(e))
     })
 
     try {
       await invokeAndWaitForErrorHandlers(callback)
       return await errorNotification
     } finally {
-      stop()
+      subscription?.unsubscribe()
     }
   }
 
@@ -50,7 +52,15 @@ describe('instrumentOnError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnError = async (callback: () => void) => {
-    const onErrorSpy = spyOn(window as any, 'onerror')
+    // Replace the handler instead of spying on it: with Karma, `disableJasmineUncaughtExceptionTracking`
+    // restores Jasmine's handler in a cleanup task, which runs before Jasmine restores its spies (it
+    // would then put back the disabled handler)
+    const onErrorSpy = jasmine.createSpy('onerror')
+    const originalOnError = window.onerror
+    window.onerror = onErrorSpy
+    registerCleanupTask(() => {
+      window.onerror = originalOnError
+    })
     const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
     const { stop } = instrumentOnError(callbackSpy)
 
@@ -62,6 +72,8 @@ describe('instrumentOnError', () => {
       stop()
     }
   }
+
+  beforeEach(disableJasmineUncaughtExceptionTracking)
 
   it('should call original error handler', async () => {
     // withInstrumentOnError() asserts that the original error handler has been called for
@@ -288,6 +300,8 @@ describe('instrumentUnhandledRejection', () => {
     }
   }
 
+  beforeEach(disableJasmineUncaughtExceptionTracking)
+
   it('should call original unhandled rejection handler', async () => {
     // withInstrumentOnUnhandledRejection() asserts that the original unhandled
     // rejection handler has been called for every test, so we don't need an
@@ -308,6 +322,17 @@ describe('instrumentUnhandledRejection', () => {
     const [originalError, stack] = spy.calls.mostRecent().args
     expect(originalError).toBe(reason)
     expect(stack).toBeUndefined()
+  })
+
+  it('should handle direct calls without an event', async () => {
+    const telemetry = startMockTelemetry()
+    const spy = await spyViaInstrumentOnUnhandledRejection(() => {
+      ;(window.onunhandledrejection as () => void)()
+    })
+
+    const [originalError] = spy.calls.mostRecent().args
+    expect(originalError).toBe('Empty reason')
+    expect(await telemetry.hasEvents()).toBeFalse()
   })
 })
 

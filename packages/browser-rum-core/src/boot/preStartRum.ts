@@ -1,7 +1,7 @@
 import { isWorkerEnvironment, mockable, BufferedObservable, noop } from '@datadog/js-core/util'
 import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
-import { monitorError } from '@datadog/js-core/monitor'
+import { callMonitored, monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type {
   TrackingConsentState,
@@ -20,6 +20,7 @@ import {
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,
+  serializeInitContext,
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
@@ -33,6 +34,7 @@ import {
   startTelemetrySessionContext,
   addTelemetryDebug,
   isAllowedTrackingOrigins,
+  isThenable,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -47,7 +49,8 @@ import {
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { OperationOptions, FailureReason } from '../domain/vital/vitalCollection'
-import { callPluginsOnInit } from '../domain/plugins'
+import type { RumPlugin, RumPluginOnInitOptions } from '../domain/plugins'
+import { callPluginsOnInit, callPluginsOnRumStart } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -93,6 +96,19 @@ export function createPreStartStrategy(
   let sessionCookieAccess: CookieAccessFactory | undefined
   const hooks = createHooks()
 
+  // Set once init() has accepted the configuration. Plugins added before that wait for it.
+  let pluginOnInitOptions: RumPluginOnInitOptions | undefined
+  const pluginsAddedBeforeInit: RumPlugin[] = []
+  // A plugin can't be added twice, e.g. by an SDK that adds itself while it's also passed to init()
+  const addedPluginNames = new Set<string>()
+  // Like for the init() plugins, RUM waits for the onInit of the plugins added before init() accepted
+  // the configuration, so their hooks are registered before any event is assembled
+  let waitingForAddedPluginInits = false
+  // Added plugins waiting for RUM to start. They're kept out of bufferApiCalls, which drops its
+  // oldest entries when it's full.
+  const addedPluginsAwaitingRumStart: RumPlugin[] = []
+  let startedRum: StartRumResult | undefined
+
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
   const emptyContext: Context = {}
@@ -100,7 +116,14 @@ export function createPreStartStrategy(
   let started = false
 
   function tryStartRum() {
-    if (started || !cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
+    if (
+      started ||
+      waitingForAddedPluginInits ||
+      !cachedInitConfiguration ||
+      !cachedConfiguration ||
+      !sessionManager ||
+      !telemetry
+    ) {
       return
     }
 
@@ -134,6 +157,11 @@ export function createPreStartStrategy(
 
     started = true
 
+    startedRum = startRumResult
+    for (const plugin of addedPluginsAwaitingRumStart.splice(0)) {
+      callAddedPluginOnRumStart(plugin, startRumResult)
+    }
+
     bufferApiCalls.subscribe((callback) => {
       if (callback !== callbackToSkip) {
         callback(startRumResult)
@@ -145,6 +173,7 @@ export function createPreStartStrategy(
   function doInit(
     initConfiguration: RumInitConfiguration,
     initContext: InitContext | undefined,
+    pluginOnInitOptionsOfInit: RumPluginOnInitOptions,
     errorStack?: string,
     remoteConfigurationMetadata?: RemoteConfigurationMetadata
   ) {
@@ -183,6 +212,9 @@ export function createPreStartStrategy(
 
     cachedConfiguration = configuration
 
+    // Only now, so the added plugins wait for a later init() when this one is aborted or rejected
+    startPluginsAddedBeforeInit(pluginOnInitOptionsOfInit)
+
     if (initContext?.user) {
       userContext.setContext(initContext.user)
     }
@@ -208,7 +240,10 @@ export function createPreStartStrategy(
         startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
           application: { id: configuration.applicationId },
         })
-        addTelemetryConfiguration(serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata))
+        addTelemetryConfiguration({
+          ...serializeRumConfiguration(initConfiguration, sdkName, remoteConfigurationMetadata),
+          init_context: serializeInitContext(initContext),
+        })
 
         tryStartRum()
       }
@@ -230,6 +265,74 @@ export function createPreStartStrategy(
           .catch(monitorError)
       }
     })
+  }
+
+  function startPluginsAddedBeforeInit(onInitOptions: RumPluginOnInitOptions) {
+    pluginOnInitOptions = onInitOptions
+
+    const addedPluginInits: Array<PromiseLike<void>> = []
+    for (const plugin of pluginsAddedBeforeInit.splice(0)) {
+      const addedPluginInit = startAddedPlugin(plugin, onInitOptions)
+      if (addedPluginInit) {
+        addedPluginInits.push(addedPluginInit)
+      }
+    }
+
+    if (addedPluginInits.length) {
+      waitingForAddedPluginInits = true
+      Promise.all(addedPluginInits)
+        .then(() => {
+          waitingForAddedPluginInits = false
+          tryStartRum()
+        })
+        .catch(monitorError)
+    }
+  }
+
+  /**
+   * Returns a promise that settles once an asynchronous onInit has, so init() can wait for it.
+   */
+  function startAddedPlugin(plugin: RumPlugin, onInitOptions: RumPluginOnInitOptions): PromiseLike<void> | undefined {
+    if (onInitOptions.initConfiguration.plugins?.some(({ name }) => name === plugin.name)) {
+      warnPluginAlreadyAdded(plugin)
+      return
+    }
+
+    // The init() plugins have already let init() continue, so this one can't abort it. If its onInit
+    // returns false or fails, skip its onRumStart, as RUM doesn't start when the onInit of an init()
+    // plugin does, and report the error, which can't stop init() or the other plugins.
+    let onInitResult: ReturnType<NonNullable<RumPlugin['onInit']>> | undefined
+    try {
+      onInitResult = plugin.onInit?.(onInitOptions)
+    } catch (error) {
+      monitorError(error)
+      return
+    }
+
+    if (isThenable(onInitResult)) {
+      return onInitResult.then((result) => {
+        if (result !== false) {
+          callAddedPluginOnRumStartOnceStarted(plugin)
+        }
+      }, monitorError)
+    }
+    if (onInitResult !== false) {
+      callAddedPluginOnRumStartOnceStarted(plugin)
+    }
+  }
+
+  function callAddedPluginOnRumStartOnceStarted(plugin: RumPlugin) {
+    if (startedRum) {
+      callAddedPluginOnRumStart(plugin, startedRum)
+    } else {
+      addedPluginsAwaitingRumStart.push(plugin)
+    }
+  }
+
+  function callAddedPluginOnRumStart(plugin: RumPlugin, startRumResult: StartRumResult) {
+    callMonitored(() =>
+      callPluginsOnRumStart([plugin], { addEvent: startRumResult.addEvent, addError: startRumResult.addError })
+    )
   }
 
   const addOperationStepVital = (
@@ -269,14 +372,17 @@ export function createPreStartStrategy(
         return
       }
 
-      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, {
+      const onInitOptions: RumPluginOnInitOptions = {
         initConfiguration,
         publicApi,
         registerAssembleEventHook: hooks.assembleEvent.register,
+        registerEventCollectedHook: hooks.eventCollected.register,
+        isTrackingConsentGranted: trackingConsentState.isGranted,
         setSessionCookieAccess: (cookieAccessFactory) => {
           sessionCookieAccess = cookieAccessFactory
         },
-      })
+      }
+      const shouldContinue = callPluginsOnInit(initConfiguration.plugins, onInitOptions)
 
       if (typeof shouldContinue === 'boolean') {
         if (shouldContinue) {
@@ -304,7 +410,7 @@ export function createPreStartStrategy(
             fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
               .then((resolvedInitConfiguration) => {
                 if (resolvedInitConfiguration) {
-                  doInit(resolvedInitConfiguration, initContext, errorStack)
+                  doInit(resolvedInitConfiguration, initContext, onInitOptions, errorStack)
                 }
               })
               .catch(monitorError)
@@ -315,19 +421,34 @@ export function createPreStartStrategy(
               doInit(
                 resolvedRemoteConfiguration.initConfiguration,
                 initContext,
+                onInitOptions,
                 errorStack,
                 resolvedRemoteConfiguration.metadata
               )
             }
           }
         } else {
-          doInit(initConfiguration, initContext, errorStack)
+          doInit(initConfiguration, initContext, onInitOptions, errorStack)
         }
       }
     },
 
     get initConfiguration() {
       return cachedInitConfiguration
+    },
+
+    addPlugin(plugin) {
+      if (addedPluginNames.has(plugin.name)) {
+        warnPluginAlreadyAdded(plugin)
+        return
+      }
+      addedPluginNames.add(plugin.name)
+
+      if (pluginOnInitOptions) {
+        startAddedPlugin(plugin, pluginOnInitOptions)
+      } else {
+        pluginsAddedBeforeInit.push(plugin)
+      }
     },
 
     getInternalContext: noop as () => undefined,
@@ -436,4 +557,8 @@ function overrideInitConfigurationForBridge(initConfiguration: RumInitConfigurat
     sessionSampleRate: 100,
     defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
   }
+}
+
+function warnPluginAlreadyAdded(plugin: RumPlugin) {
+  display.warn(`The "${plugin.name}" plugin is already added, so it's ignored.`)
 }

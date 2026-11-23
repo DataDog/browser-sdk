@@ -176,9 +176,25 @@ function rebuildStringTemplate(template: TemplateStringsArray, ...values: any[])
   return normalizedString
 }
 
+function sortCloudfrontPaths(commandDetail: CommandDetail): CommandDetail {
+  return {
+    ...commandDetail,
+    command: commandDetail.command.replace(
+      /(--paths )(.+)$/,
+      (_, flag: string, paths: string) => flag + paths.split(',').sort().join(',')
+    ),
+  }
+}
 export function replaceChunkHashes(commandDetail: CommandDetail): CommandDetail {
   return {
     ...commandDetail,
     command: commandDetail.command.replace(/-[a-f0-9]+-datadog-rum/g, `-${FAKE_CHUNK_HASH}-datadog-rum`),
   }
+}
+
+export function normalizeCommands(commands: CommandDetail[]): CommandDetail[] {
+  return commands
+    .map(replaceChunkHashes)
+    .map(sortCloudfrontPaths)
+    .sort((a, b) => a.command.localeCompare(b.command))
 }

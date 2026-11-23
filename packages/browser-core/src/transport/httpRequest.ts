@@ -187,6 +187,11 @@ export function fetchStrategy(
   const fetchUrl = endpointBuilder.build('fetch', payload)
 
   fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
-    .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
+    .then(
+      monitor((response: Response | undefined) =>
+        // `fetch` can be overridden by a third party that resolves without a Response
+        onResponse?.(response ? { status: response.status, type: response.type } : { status: 0 })
+      )
+    )
     .catch(monitor(() => onResponse?.({ status: 0 })))
 }

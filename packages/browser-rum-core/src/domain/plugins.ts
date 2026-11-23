@@ -3,7 +3,7 @@ import type { CookieAccessFactory } from '@datadog/browser-core'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
-import type { AssembleHook } from './hooks'
+import type { AssembleHook, EventCollectedHook } from './hooks'
 
 /**
  * onInit plugin API options.
@@ -25,6 +25,17 @@ export interface RumPluginOnInitOptions {
    * Pixels `browser.cookie`). Only used with the `cookie` session persistence.
    */
   setSessionCookieAccess: (cookieAccessFactory: CookieAccessFactory) => void
+  /**
+   * Register a callback invoked when a RUM event is collected, once `beforeSend` and the event rate
+   * limits have let it through, right before it is sent. Plugins can use it to send data related to
+   * an event only if the event itself is sent.
+   */
+  registerEventCollectedHook: EventCollectedHook['register']
+  /**
+   * Whether tracking consent is granted, whether it was set with the `trackingConsent` init option
+   * or with `setTrackingConsent()`, including before init(). RUM doesn't start until it is.
+   */
+  isTrackingConsentGranted: () => boolean
 }
 
 /**

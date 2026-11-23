@@ -9,9 +9,9 @@ function createErrorHandler(): ErrorHandler {
 }
 
 describe('provideDatadogErrorHandler', () => {
-  it('provides an ErrorHandler that reports errors to Datadog', () => {
+  it('provides an ErrorHandler that reports errors to Datadog', async () => {
     const addErrorSpy = jasmine.createSpy()
-    initializeAngularPlugin({ addError: addErrorSpy })
+    await initializeAngularPlugin({ addError: addErrorSpy })
 
     spyOn(console, 'error') // Mute console.errors
     const handler = createErrorHandler()
@@ -20,8 +20,8 @@ describe('provideDatadogErrorHandler', () => {
     expect(addErrorSpy).toHaveBeenCalled()
   })
 
-  it('still logs the error to the console via default ErrorHandler', () => {
-    initializeAngularPlugin()
+  it('still logs the error to the console via default ErrorHandler', async () => {
+    await initializeAngularPlugin()
 
     const consoleErrorSpy = spyOn(console, 'error')
     const handler = createErrorHandler()

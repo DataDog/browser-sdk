@@ -5,6 +5,7 @@ import type { RawTelemetryConfiguration } from '../telemetry'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { CookieAccessFactory } from '../../browser/cookieAccess'
+import type { InitContext } from '../../boot/init'
 
 /**
  * Default privacy level for the browser SDK.
@@ -366,4 +367,15 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,
   } satisfies RawTelemetryConfiguration
+}
+
+/**
+ * Only report whether the init context properties are provided, as their values contain customer
+ * data.
+ */
+export function serializeInitContext(initContext: InitContext | undefined) {
+  return {
+    has_user: !!initContext?.user,
+    has_account: !!initContext?.account,
+  } satisfies RawTelemetryConfiguration['init_context']
 }

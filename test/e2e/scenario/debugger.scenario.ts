@@ -1,15 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call, camelcase */
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { createTest, microfrontendSetup } from '../lib/framework'
+import { createTest, html, microfrontendSetup } from '../lib/framework'
 
 const DEBUGGER_POLL_INTERVAL = 1_000
 const PROBE_WAIT_TIMEOUT = 30_000
 const DEBUG_ID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i
 const DEBUG_ID_URL_PATH_PATTERN = /^\/microfrontend\/(?:chunks\/)?[^/]+\.m?js$/
+// Must be a UUID: the intake proxy forwards these snapshots to Datadog, whose
+// backend only accepts UUID probe IDs.
+const TEST_PROBE_ID = '691a8396-9575-41e8-8821-1d16f3c1afcf'
 
 function makeProbe({
-  id = 'test-probe-1',
+  id = TEST_PROBE_ID,
   version = 1,
   typeName = 'TestModule',
   methodName = 'testFunction',
@@ -18,6 +21,7 @@ function makeProbe({
   evaluateAt = 'EXIT' as const,
   condition,
   segments,
+  captureExpressions,
 }: {
   id?: string
   version?: number
@@ -28,6 +32,7 @@ function makeProbe({
   evaluateAt?: 'ENTRY' | 'EXIT'
   condition?: { dsl: string; json: unknown }
   segments?: Array<{ str?: string; dsl?: string; json?: unknown }>
+  captureExpressions?: Array<{ name: string; expr: { dsl: string; json: unknown } }>
 } = {}) {
   return {
     id,
@@ -38,6 +43,7 @@ function makeProbe({
     segments: segments ?? [{ str: template }],
     captureSnapshot,
     capture: {},
+    captureExpressions,
     sampling: { snapshotsPerSecond: 5000 },
     evaluateAt,
     when: condition,
@@ -165,6 +171,30 @@ async function injectThrowingFunction(page: Page) {
   await waitForProbe(page, 'TestModule;throwingFunction')
 }
 
+// Instrumented code is loaded from a script, so its stack frames have a URL. Code evaluated by
+// Playwright has none, so Exception Replay can't locate its frames.
+const EXCEPTION_REPLAY_BODY = html`
+  <script>
+    // Hand-written equivalent of what the build plugin generates with \`exceptionReplay: true\`
+    function throwingFunction(token, count) {
+      try {
+        throw new Error('boom ' + count)
+      } catch (e) {
+        window.$dd_catch('src/throwing.ts;throwingFunction', e, undefined, { token, count })
+        throw e
+      }
+    }
+    function callingFunction(count) {
+      try {
+        return throwingFunction('secret-token', count + 1)
+      } catch (e) {
+        window.$dd_catch('src/calling.ts;callingFunction', e, undefined, { count })
+        throw e
+      }
+    }
+  </script>
+`
+
 test.describe('debugger', () => {
   createTest('send debugger snapshot when instrumented function is called')
     .withDebugger()
@@ -188,7 +218,7 @@ test.describe('debugger', () => {
       expect(event.service).toBe('browser-sdk-e2e-test')
 
       const snapshot = (event.debugger as any).snapshot
-      expect(snapshot.probe.id).toBe('test-probe-1')
+      expect(snapshot.probe.id).toBe(TEST_PROBE_ID)
       expect(snapshot.language).toBe('javascript')
       expect(snapshot.duration).toBeGreaterThanOrEqual(0)
       expect(snapshot.captures.entry.arguments.this).toBeUndefined()
@@ -529,6 +559,42 @@ test.describe('debugger', () => {
       expect(intakeRegistry.debuggerEvents[0].message).toBe('Probe hit')
     })
 
+  createTest('evaluate probe expressions on a page whose CSP does not allow unsafe-eval')
+    .withDebugger()
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      const probe = makeProbe({
+        captureSnapshot: false,
+        condition: { dsl: 'a == "foo"', json: { eq: [{ ref: 'a' }, 'foo'] } },
+        template: 'Result is: {@return}',
+        segments: [{ str: 'Result is: ' }, { dsl: '@return', json: { ref: '@return' } }],
+        captureExpressions: [{ name: 'b', expr: { dsl: 'b', json: { ref: 'b' } } }],
+      })
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await injectInstrumentedFunction(page)
+
+      // Call the function from a page task: Chromium doesn't enforce the page CSP on code that page.evaluate() runs
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            setTimeout(() => {
+              ;(window as any).testFunction('foo', 'bar')
+              resolve()
+            })
+          })
+      )
+
+      await flushEvents()
+
+      expect(intakeRegistry.debuggerEvents).toHaveLength(1)
+      const event = intakeRegistry.debuggerEvents[0]
+      const snapshot = (event.debugger as any).snapshot
+      expect(event.message).toBe('Result is: foobar')
+      expect(snapshot.evaluationErrors).toBeUndefined()
+      expect(snapshot.captures.return.captureExpressions.b.value).toBe('bar')
+    })
+
   createTest('omit trace correlation data when no active span is available')
     .withRum()
     .withDebugger()
@@ -574,7 +640,7 @@ test.describe('debugger', () => {
       expect(probeActions).toHaveLength(1)
       expect(probeActions[0].action.target!.name).toBe('probe: testFunction (TestModule)')
       expect(probeActions[0].context!.debugger).toEqual({
-        probe: { id: 'test-probe-1', version: 1, location: { method: 'testFunction', type: 'TestModule' } },
+        probe: { id: TEST_PROBE_ID, version: 1, location: { method: 'testFunction', type: 'TestModule' } },
         snapshot: { id: (intakeRegistry.debuggerEvents[0].debugger as any).snapshot.id },
         outcome: 'return',
       })
@@ -604,9 +670,80 @@ test.describe('debugger', () => {
       expect(probeActions[0].action.target!.name).toBe('probe: testFunction (TestModule)')
       expect(probeActions[0].action.loading_time).toBeUndefined()
       expect(probeActions[0].context!.debugger).toEqual({
-        probe: { id: 'test-probe-1', version: 1, location: { method: 'testFunction', type: 'TestModule' } },
+        probe: { id: TEST_PROBE_ID, version: 1, location: { method: 'testFunction', type: 'TestModule' } },
         snapshot: { id: (intakeRegistry.debuggerEvents[0].debugger as any).snapshot.id },
         outcome: 'return',
       })
+    })
+
+  createTest('link Exception Replay snapshots to the RUM error event')
+    .withRum()
+    .withDebugger()
+    .withBody(EXCEPTION_REPLAY_BODY)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        try {
+          ;(window as any).callingFunction(1)
+        } catch (error) {
+          window.DD_RUM!.addError(error)
+        }
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      const errorEvent = intakeRegistry.rumErrorEvents[0]
+      expect((errorEvent.error as any).debug_info_captured).toBe('true')
+      const exceptionReplay = (errorEvent._dd as any).exception_replay
+      const stackFrames = errorEvent.error.stack!.split('\n').slice(1)
+      expect(
+        exceptionReplay.frames.map(({ index }: { index: number }) => stackFrames[index].trim().split(' ')[1])
+      ).toEqual(['throwingFunction', 'callingFunction'])
+
+      const snapshots = intakeRegistry.debuggerEvents.map(
+        (event) =>
+          (event.debugger as any).snapshot as {
+            id: string
+            exceptionId: string
+            probe: { location: unknown }
+            captures: { return: { arguments: Record<string, unknown> } }
+          }
+      )
+      expect(snapshots.map(({ id }) => id)).toEqual(
+        exceptionReplay.frames.map(({ snapshot_id }: { snapshot_id: string }) => snapshot_id)
+      )
+      expect(snapshots.map(({ exceptionId }) => exceptionId)).toEqual([
+        exceptionReplay.exception_id,
+        exceptionReplay.exception_id,
+      ])
+      expect(snapshots[0].probe.location).toEqual({ type: 'src/throwing.ts', method: 'throwingFunction' })
+      expect(snapshots[0].captures.return.arguments.count).toEqual({ type: 'number', value: '2' })
+      expect(snapshots[0].captures.return.arguments.token).toEqual({
+        type: 'string',
+        notCapturedReason: 'redactedIdent',
+      })
+      expect(snapshots[1].captures.return.arguments.count).toEqual({ type: 'number', value: '1' })
+    })
+
+  createTest('do not send Exception Replay snapshots for errors dismissed by beforeSend')
+    .withRum()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init({ ...configuration, beforeSend: (event) => event.type !== 'error' })
+    })
+    .withDebugger()
+    .withBody(EXCEPTION_REPLAY_BODY)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        try {
+          ;(window as any).callingFunction(1)
+        } catch (error) {
+          window.DD_RUM!.addError(error)
+        }
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(0)
+      expect(intakeRegistry.debuggerEvents).toHaveLength(0)
     })
 })

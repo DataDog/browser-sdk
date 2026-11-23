@@ -96,6 +96,15 @@ describe('httpRequest', () => {
         done()
       })
     })
+
+    it('should be called with status 0 when fetch resolves without a Response', (done) => {
+      interceptor.withFetch(() => Promise.resolve(undefined))
+
+      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
+        expect(response).toEqual({ status: 0 })
+        done()
+      })
+    })
   })
 
   describe('sendOnExit', () => {

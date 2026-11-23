@@ -196,6 +196,11 @@ export function shouldMaskAttribute(
   if ((tagName === 'IMG' || tagName === 'SOURCE') && (attributeName === 'src' || attributeName === 'srcset')) {
     return true
   }
+  // `<video poster>` is an image (often a data URL) rendered in place of the video before
+  // playback, so it can leak user data just like `<img src>`. Mask it under MASK levels.
+  if (tagName === 'VIDEO' && attributeName === 'poster') {
+    return true
+  }
 
   return false
 }

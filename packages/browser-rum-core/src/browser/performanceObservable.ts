@@ -288,7 +288,9 @@ function supportPerformanceObject() {
 }
 
 export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
-  return globalObject.PerformanceObserver.supportedEntryTypes.includes(entryType)
+  // `supportedEntryTypes` is missing in older browsers and in some PerformanceObserver polyfills
+  const supportedEntryTypes = globalObject.PerformanceObserver.supportedEntryTypes as readonly string[] | undefined
+  return !!supportedEntryTypes && supportedEntryTypes.includes(entryType)
 }
 
 function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(entries: Array<EntryTypeToReturnType[T]>) {

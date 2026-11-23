@@ -37,7 +37,8 @@ export function getEventBridge<T, E>() {
       return JSON.parse(eventBridgeGlobal.getIsTraceSampled?.() || 'null') as boolean | null
     },
     getAllowedWebViewHosts() {
-      return JSON.parse(eventBridgeGlobal.getAllowedWebViewHosts()) as string[]
+      // The native SDK can provide `null` when no allowed hosts are configured
+      return (JSON.parse(eventBridgeGlobal.getAllowedWebViewHosts() || 'null') as string[] | null) ?? []
     },
     send(eventType: T, event: E, viewId?: string) {
       const view = viewId ? { id: viewId } : undefined
