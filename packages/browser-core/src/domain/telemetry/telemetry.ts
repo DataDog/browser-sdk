@@ -150,7 +150,9 @@ export function startTelemetryCollection(
       return
     }
 
-    const stringifiedEvent = jsonStringify(rawEvent)!
+    // Include the cross-platform attribution in the key: a cross-platform SDK event and a browser
+    // event carrying the same message are distinct telemetry events and should both be sent.
+    const stringifiedEvent = jsonStringify({ rawEvent, isCrossPlatform })!
     if (alreadySentEvents.has(stringifiedEvent)) {
       return
     }

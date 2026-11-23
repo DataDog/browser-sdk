@@ -333,6 +333,18 @@ describe('telemetry', () => {
       expect(event.version).not.toBe('3.0.0')
     })
 
+    it('sends a cross-platform event even when a browser event with the same message was already sent', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
+
+      addTelemetryDebug('message')
+      addPluginTelemetry({ type: 'debug', message: 'message' }, { crossPlatformSdk: true })
+
+      const [browserEvent, crossPlatformEvent] = await getTelemetryEvents()
+      expect(browserEvent.source).toBe('browser')
+      expect(crossPlatformEvent.source).toBe('flutter')
+      expect(crossPlatformEvent.version).toBe('3.0.0')
+    })
+
     it('attributes events to the browser SDK by default', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
       addPluginTelemetry({ type: 'debug', message: 'message' })
