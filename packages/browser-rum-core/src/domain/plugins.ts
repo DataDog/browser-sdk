@@ -35,6 +35,8 @@ export interface RumPluginOnInitOptions {
    * Register a queue of calls the plugin made before RUM started. RUM runs the queued calls once it
    * has started, right after the API calls made before start. Calls notified after that run right
    * away. Registering the same queue again does nothing. The plugin creates and bounds the queue.
+   * RUM subscribes to the queue and then unbuffers it, so the plugin shouldn't rely on its buffered
+   * calls afterwards.
    *
    * @internal
    */
