@@ -246,6 +246,20 @@ describe('rum public api', () => {
       await collectAsyncCalls(plugin.onRumStart, 1)
     })
 
+    it('should run the call queue of a plugin added before init()', async () => {
+      const queue = new BufferedObservable<() => void>(500)
+      const pluginCallSpy = jasmine.createSpy()
+      const plugin: RumPlugin = { name: 'a', onInit: ({ registerCallQueue }) => registerCallQueue(queue) }
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+
+      queue.notify(pluginCallSpy)
+      rumPublicApi.addPlugin(plugin)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(pluginCallSpy, 1)
+
+      expect(pluginCallSpy).toHaveBeenCalledTimes(1)
+    })
+
     it('should run the call queue of a plugin added after RUM has started', async () => {
       const queue = new BufferedObservable<() => void>(500)
       const pluginCallSpy = jasmine.createSpy()
@@ -1422,16 +1436,16 @@ describe('rum public api', () => {
     it('runs plugin calls after the user and account set before start', async () => {
       const calls: string[] = []
       const { plugin, queue } = createPluginWithQueue()
-      const pluginCallSpy = jasmine.createSpy().and.callFake(() => {
-        calls.push('plugin')
-        return { user: rumPublicApi.getUser(), account: rumPublicApi.getAccount() }
-      })
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addAction: () => calls.push('rum:addAction'),
           userContext: buildUserContextManager(),
           accountContext: buildAccountContextManager(),
         },
+      })
+      const pluginCallSpy = jasmine.createSpy().and.callFake(() => {
+        calls.push('plugin')
+        return { user: rumPublicApi.getUser(), account: rumPublicApi.getAccount() }
       })
       rumPublicApi.setUser({ id: 'u1' })
       rumPublicApi.setAccount({ id: 'a1' })
