@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-layer-gaussian-blur-modifier-schema.json",
+  "title": "CompositionLayerGaussianBlurModifier",
+  "type": "object",
+  "description": "Gaussian blur applied to the composed layer output.",
+  "required": ["type", "radius"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "gaussianBlur",
+      "description": "The type of the modifier.",
+      "readOnly": true
+    },
+    "radius": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Gaussian blur radius.",
+      "readOnly": true
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/node-references/append-child-insertion-point-schema.json",
+  "title": "AppendChildInsertionPoint",
+  "description": "A positive integer insertion point. Inserting a node at positive integer N indicates that the new node's parent is the node with an id N lower than the new node, and that we should insert the new node at the end of its parent's child list, as if the DOM method appendChild() was being used.",
+  "type": "integer",
+  "minimum": 1
+}

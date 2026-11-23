@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/serialized-node-schema.json",
+  "title": "SerializedNode",
+  "type": "object",
+  "description": "Serialized node contained by this Record.",
+  "anyOf": [
+    { "$ref": "document-node-schema.json" },
+    { "$ref": "document-fragment-node-schema.json" },
+    { "$ref": "document-type-node-schema.json" },
+    { "$ref": "element-node-schema.json" },
+    { "$ref": "text-node-schema.json" },
+    { "$ref": "cdata-node-schema.json" }
+  ]
+}

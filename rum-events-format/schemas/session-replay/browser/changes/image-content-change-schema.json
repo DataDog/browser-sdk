@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/image-content-change-schema.json",
+  "title": "ImageContentChange",
+  "description": "Browser-specific. Schema representing a change in an element's image content, identified by a resource ID.",
+  "type": "array",
+  "minItems": 2,
+  "items": [
+    { "$ref": "node-references/node-id-schema.json" },
+    { "$ref": "string-references/string-or-string-reference-schema.json" }
+  ],
+  "additionalItems": false
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "profiling-browser-schema.json",
+  "title": "BrowserProfiling",
+  "description": "Schema of Browser SDK Profiling types.",
+  "anyOf": [
+    {
+      "$ref": "profiling/browser/profile-event-schema.json"
+    },
+    {
+      "$ref": "profiling/browser/profiler-trace-schema.json"
+    }
+  ]
+}

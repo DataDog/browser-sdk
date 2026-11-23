@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/node-references/root-insertion-point-schema.json",
+  "title": "RootInsertionPoint",
+  "description": "A null insertion point, indicating that the node should be inserted at the root of the document.",
+  "const": null
+}

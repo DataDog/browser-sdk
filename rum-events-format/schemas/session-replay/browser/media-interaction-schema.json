@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/media-interaction-schema.json",
+  "title": "MediaInteraction",
+  "type": "object",
+  "description": "Browser-specific. Schema of a MediaInteraction.",
+  "required": ["id", "type"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Id for the target node for this MediaInteraction."
+    },
+    "type": {
+      "type": "integer",
+      "enum": [0, 1],
+      "description": "The type of MediaInteraction.",
+      "readOnly": true
+    }
+  }
+}

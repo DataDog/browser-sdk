@@ -1,25 +1,34 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
 
 import type jsonSchemaToTypescriptModule from 'json-schema-to-typescript'
 import { format, resolveConfig } from 'prettier'
 
-import { printLog, printWarning, runMain, fetchHandlingError } from './lib/executionUtils.ts'
+import { printLog, runMain } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
-import { modifyFile } from './lib/filesUtils.ts'
-import { SCHEMAS } from './lib/generatedSchemaTypes.ts'
+import { RUM_EVENTS_FORMAT_DIR, RUM_EVENTS_FORMAT_SCHEMAS_DIR, SCHEMAS } from './lib/generatedSchemaTypes.ts'
 
-const PACKAGE_JSON_PATH = path.join(import.meta.dirname, '../package.json')
-const JSON2TYPE_PATH = path.join(import.meta.dirname, '../node_modules/json-schema-to-typescript')
+const RUM_EVENTS_FORMAT_README_PATH = path.join(RUM_EVENTS_FORMAT_DIR, 'README.md')
+
+// The packages needed to sync the schemas and generate types are installed from GitHub in this
+// separate Yarn project, so installing the main project never fetches anything from GitHub.
+const TOOLS_DIR = path.join(import.meta.dirname, '../node_modules/.cache/json-schemas')
+const RUM_EVENTS_FORMAT_REPOSITORY = 'DataDog/rum-events-format'
+// Fork of json-schema-to-typescript adding `readonly` support
+// TODO use the npm package once a released version supports the `readOnly` keyword
+const JSON2TYPE_REPOSITORY = 'bcaudan/json-schema-to-typescript'
+const JSON2TYPE_DEPENDENCY = `${JSON2TYPE_REPOSITORY}#commit=406ce54242635f4a0181bd573a3cbc896707e4cc`
 const prettierConfigPath = path.join(import.meta.dirname, '../.prettierrc.yml')
 
 runMain(async () => {
   const {
-    values: { update: branch, build: shouldBuild, help },
+    values: { update: branch, check: shouldCheck, build: shouldBuild, help },
   } = parseArgs({
     options: {
       update: { type: 'string' },
+      check: { type: 'boolean' },
       build: { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
     },
@@ -30,13 +39,15 @@ runMain(async () => {
     return
   }
 
-  if (!branch && !shouldBuild) {
+  if (!branch && !shouldCheck && !shouldBuild) {
     printHelp()
     process.exit(1)
   }
 
   if (branch !== undefined) {
-    await update(branch)
+    update(branch)
+  } else if (shouldCheck) {
+    update(getCurrentCommit())
   }
 
   if (shouldBuild) {
@@ -49,8 +60,9 @@ function printHelp() {
 Usage: node scripts/json-schemas.ts [options]
 
 Options:
-  --update <branch|commit>  Update @datadog/rum-events-format to the latest commit on <branch> (or a specific full commit hash) and run yarn install
-  --build            Build json-schema-to-typescript and regenerate TypeScript types from JSON schemas
+  --update <branch|commit>  Copy the rum-events-format schemas from the latest commit on <branch> (or a specific full commit hash) to rum-events-format/schemas
+  --check            Copy the rum-events-format schemas again from the commit they were copied from, to restore any local change
+  --build            Install json-schema-to-typescript and regenerate TypeScript types from JSON schemas
   --help, -h         Show this help message
 
 Examples:
@@ -60,56 +72,103 @@ Examples:
 `)
 }
 
-async function update(branchOrCommit: string) {
-  let commitHash: string
-  if (/^[0-9a-f]{40}$/.test(branchOrCommit)) {
-    commitHash = branchOrCommit
-    printLog(`Using provided commit hash: ${commitHash}`)
-  } else {
-    printLog(`Resolving latest commit on ${branchOrCommit}...`)
-    // Unauthenticated GitHub API requests are limited to 60/hour per IP, which is easily exhausted
-    // behind a shared NAT. Authenticate with the user's `gh` CLI token to get the 5000/hour limit.
-    let token = ''
-    try {
-      token = command`gh auth token`.run().trim()
-    } catch {
-      printWarning(
-        'Could not get a token from `gh auth token`; issuing unauthenticated GitHub requests (limited to 60/hour per IP).'
-      )
-    }
-    const response = await fetchHandlingError(
-      `https://api.github.com/repos/DataDog/rum-events-format/branches/${branchOrCommit}`,
-      {
-        headers: {
-          ...(token ? { Authorization: `token ${token}` } : {}),
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-      }
-    )
-    const {
-      commit: { sha },
-    } = (await response.json()) as { commit: { sha: string } }
-    if (!sha) {
-      throw new Error(`Could not resolve branch ${branchOrCommit}`)
-    }
-    commitHash = sha
-    printLog(`Latest commit: ${commitHash}`)
-  }
-
-  await modifyFile(PACKAGE_JSON_PATH, (content) =>
-    content.replace(
-      /"@datadog\/rum-events-format": "DataDog\/rum-events-format#[^"]+"/,
-      `"@datadog/rum-events-format": "DataDog/rum-events-format#commit=${commitHash}"`
-    )
+function getCurrentCommit(): string {
+  const match = /DataDog\/rum-events-format\/tree\/([0-9a-f]{40})/.exec(
+    fs.readFileSync(RUM_EVENTS_FORMAT_README_PATH, 'utf8')
   )
-  printLog('Updated @datadog/rum-events-format in package.json')
+  if (!match) {
+    throw new Error(`Could not find the rum-events-format commit in ${RUM_EVENTS_FORMAT_README_PATH}`)
+  }
+  return match[1]
+}
 
-  printLog('Running yarn install...')
-  command`yarn install`.run()
+function update(branchOrCommit: string) {
+  printLog(`Installing rum-events-format at ${branchOrCommit}...`)
+  const commitHash = installTools(branchOrCommit)
+  printLog(`Copying rum-events-format schemas from ${commitHash}...`)
+  fs.rmSync(RUM_EVENTS_FORMAT_SCHEMAS_DIR, { recursive: true, force: true })
+  fs.cpSync(path.join(TOOLS_DIR, 'node_modules/@datadog/rum-events-format/schemas'), RUM_EVENTS_FORMAT_SCHEMAS_DIR, {
+    recursive: true,
+  })
+  fs.writeFileSync(
+    RUM_EVENTS_FORMAT_README_PATH,
+    `# RUM events format
+
+This directory contains a copy of the JSON schemas of rum-events-format, so installing, building and
+testing the SDK don't fetch anything from GitHub.
+
+Source: <https://github.com/DataDog/rum-events-format/tree/${commitHash}>
+
+Do not modify it by hand. Run \`yarn json-schemas:sync\` instead.
+`
+  )
+  printLog('Updated rum-events-format/schemas')
+}
+
+/**
+ * Install rum-events-format at the given branch or commit, and the json-schema-to-typescript fork, in
+ * a Yarn project separate from the main one. Return the installed rum-events-format commit.
+ */
+function installTools(branchOrCommit: string): string {
+  const ref = /^[0-9a-f]{40}$/.test(branchOrCommit) ? `commit=${branchOrCommit}` : `head=${branchOrCommit}`
+  fs.mkdirSync(TOOLS_DIR, { recursive: true })
+  fs.writeFileSync(
+    path.join(TOOLS_DIR, 'package.json'),
+    `${JSON.stringify(
+      {
+        name: 'json-schemas-tools',
+        private: true,
+        dependencies: {
+          '@datadog/rum-events-format': `${RUM_EVENTS_FORMAT_REPOSITORY}#${ref}`,
+          'json-schema-to-typescript': JSON2TYPE_DEPENDENCY,
+          // Needed to build the fork
+          typescript: '5.9.3',
+        },
+      },
+      null,
+      2
+    )}\n`
+  )
+  fs.writeFileSync(
+    path.join(TOOLS_DIR, '.yarnrc.yml'),
+    `approvedGitRepositories:
+  - 'https://github.com/${RUM_EVENTS_FORMAT_REPOSITORY}.git'
+  - 'https://github.com/${JSON2TYPE_REPOSITORY}.git'
+`
+  )
+  // A yarn.lock makes this directory a project of its own. Start from an empty one so a branch is
+  // resolved to its latest commit. Pinned commits are still taken from the Yarn cache.
+  fs.writeFileSync(path.join(TOOLS_DIR, 'yarn.lock'), '')
+  command`yarn install --no-immutable`.withCurrentWorkingDirectory(TOOLS_DIR).run()
+
+  const match = /rum-events-format\.git#commit=([0-9a-f]{40})/.exec(
+    fs.readFileSync(path.join(TOOLS_DIR, 'yarn.lock'), 'utf8')
+  )
+  if (!match) {
+    throw new Error(`Could not find the installed rum-events-format commit in ${TOOLS_DIR}/yarn.lock`)
+  }
+  return match[1]
+}
+
+/**
+ * The fork is installed from its sources: build it the first time it is used.
+ */
+function importJsonSchemaToTypescript() {
+  const packageDir = path.join(TOOLS_DIR, 'node_modules/json-schema-to-typescript')
+  const entryPoint = path.join(packageDir, 'dist/src/index.js')
+  if (!fs.existsSync(entryPoint)) {
+    printLog('Building json-schema-to-typescript...')
+    const tscPath = path.join(TOOLS_DIR, 'node_modules/typescript/bin/tsc')
+    // Its type checking needs its dev dependencies, which are not installed. Its output doesn't.
+    command`node ${tscPath} --declaration --noCheck --rootDir .`.withCurrentWorkingDirectory(packageDir).run()
+  }
+  return import(pathToFileURL(entryPoint).href) as Promise<typeof jsonSchemaToTypescriptModule>
 }
 
 async function build() {
-  const { compileFromFile } = await getJsonSchemaToTypescript()
+  printLog('Installing json-schema-to-typescript...')
+  installTools(getCurrentCommit())
+  const { compileFromFile } = await importJsonSchemaToTypescript()
 
   printLog('Generating schema types...')
   const prettierConfig = await resolveConfig(prettierConfigPath)
@@ -132,36 +191,4 @@ async function build() {
   }
 
   printLog('Done.')
-}
-
-let jsonSchemaToTypescriptCache: Promise<typeof jsonSchemaToTypescriptModule> | undefined
-
-function getJsonSchemaToTypescript() {
-  if (!jsonSchemaToTypescriptCache) {
-    jsonSchemaToTypescriptCache = import('json-schema-to-typescript').catch((error: NodeJS.ErrnoException) => {
-      if (error.code !== 'ERR_MODULE_NOT_FOUND') {
-        throw error
-      }
-      buildJsonSchemaToTypescript()
-      return import('json-schema-to-typescript')
-    })
-  }
-  return jsonSchemaToTypescriptCache
-
-  // needed because using fork instead of the npm package
-  // TODO remove me when json-schema-to-typescript natively supports readOnly
-  function buildJsonSchemaToTypescript() {
-    printLog('Building json-schema-to-typescript...')
-    // due to installation on node_modules, some of these steps can fail
-    // built version still behaves correctly though
-    try {
-      command`npm i`.withCurrentWorkingDirectory(JSON2TYPE_PATH).run()
-      command`npm run clean`.withCurrentWorkingDirectory(JSON2TYPE_PATH).run()
-      // With yarn 3+, the 'test/' folder is not present, so all built files are put directly in the
-      // 'dist/' folder instead of 'dist/src/'. Using an explicit '--rootDir' fixes this issue.
-      command`npm exec -- tsc --declaration --rootDir .`.withCurrentWorkingDirectory(JSON2TYPE_PATH).run()
-    } catch {
-      // ignore
-    }
-  }
 }

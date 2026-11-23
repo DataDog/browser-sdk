@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/webview-wireframe-update-schema.json",
+  "title": "WebviewWireframeUpdate",
+  "type": "object",
+  "description": "Schema of all properties of a WebviewWireframeUpdate.",
+  "allOf": [
+    {
+      "$ref": "_common-shape-wireframe-update-schema.json"
+    },
+    {
+      "required": ["type", "slotId"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of the wireframe.",
+          "const": "webview",
+          "readOnly": true
+        },
+        "slotId": {
+          "type": "string",
+          "description": "Unique Id of the slot containing this webview.",
+          "readOnly": true
+        },
+        "isVisible": {
+          "type": "boolean",
+          "description": "Whether this webview is visible or not.",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

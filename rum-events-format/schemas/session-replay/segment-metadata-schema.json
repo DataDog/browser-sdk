@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/segment-metadata-schema.json",
+  "title": "SegmentMetadata",
+  "description": "Schema of a Session Replay SegmentMetadata.",
+  "oneOf": [
+    {
+      "$ref": "browser/segment-metadata-schema.json"
+    },
+    {
+      "$ref": "mobile/segment-metadata-schema.json"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/stylesheet-rule-add-schema.json",
+  "title": "StyleSheetAddRule",
+  "type": "object",
+  "description": "Browser-specific. Schema of a StyleSheetAddRule.",
+  "required": ["rule"],
+  "properties": {
+    "rule": {
+      "type": "string",
+      "description": "Text content for this StyleSheetAddRule."
+    },
+    "index": {
+      "description": "Index of this StyleSheetAddRule in its StyleSheet.",
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      ]
+    }
+  }
+}

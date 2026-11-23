@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/common/visual-viewport-record-schema.json",
+  "title": "VisualViewportRecord",
+  "type": "object",
+  "description": "Schema of a Record which signifies that the viewport properties have changed.",
+  "allOf": [
+    {
+      "$ref": "_slot-supported-common-record-schema.json"
+    },
+    {
+      "required": ["data", "type"],
+      "properties": {
+        "data": {
+          "required": ["height", "offsetLeft", "offsetTop", "pageLeft", "pageTop", "scale", "width"],
+          "properties": {
+            "height": {
+              "type": "number"
+            },
+            "offsetLeft": {
+              "type": "number"
+            },
+            "offsetTop": {
+              "type": "number"
+            },
+            "pageLeft": {
+              "type": "number"
+            },
+            "pageTop": {
+              "type": "number"
+            },
+            "scale": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "type": "integer",
+          "description": "The type of this Record.",
+          "const": 8,
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

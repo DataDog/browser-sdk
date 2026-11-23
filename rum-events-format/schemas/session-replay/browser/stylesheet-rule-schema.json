@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/stylesheet-rule-schema.json",
+  "title": "StyleSheetRule",
+  "type": "object",
+  "description": "Browser-specific. Schema of a StyleSheetRule.",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Id of the owner node for this StyleSheetRule.",
+      "readOnly": true
+    },
+    "adds": {
+      "type": "array",
+      "description": "Rules added to this StyleSheetRule.",
+      "items": {
+        "$ref": "stylesheet-rule-add-schema.json"
+      }
+    },
+    "removes": {
+      "type": "array",
+      "description": "Rules deleted from this StyleSheetRule.",
+      "items": {
+        "$ref": "stylesheet-rule-delete-schema.json"
+      }
+    }
+  }
+}

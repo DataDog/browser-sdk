@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import type { RumEvent } from '@datadog/browser-rum'
 import ajv from 'ajv'
 
-const schemasDir = path.join(path.dirname(require.resolve('@datadog/rum-events-format/package.json')), 'schemas')
+const schemasDir = path.join(__dirname, '../../../../rum-events-format/schemas')
 
 export function validateRumFormat(events: RumEvent[]) {
   const instance = new ajv({

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/segment-schema.json",
+  "title": "BrowserSegment",
+  "type": "object",
+  "description": "Browser-specific. Schema of a Session Replay data Segment.",
+  "allOf": [
+    {
+      "$ref": "segment-metadata-schema.json"
+    },
+    {
+      "required": ["records"],
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "record-schema.json"
+          },
+          "description": "The records contained by this Segment.",
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

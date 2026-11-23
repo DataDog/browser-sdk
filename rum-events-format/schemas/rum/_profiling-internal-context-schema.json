@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/_profiling-internal-context-schema.json",
+  "title": "ProfilingInternalContextSchema",
+  "type": "object",
+  "description": "RUM Profiler Internal Context schema",
+  "properties": {
+    "status": {
+      "type": "string",
+      "description": "Used to track the status of the RUM Profiler.\n\nThey are defined in order of when they can happen, from the moment the SDK is initialized to the moment the Profiler is actually running.\n\n- `starting`: The Profiler is starting (i.e., when the SDK just started). This is the initial status.\n- `running`: The Profiler is running.\n- `stopped`: The Profiler is stopped.\n- `error`: The Profiler encountered an error. See `error_reason` for more details.",
+      "enum": ["starting", "running", "stopped", "error"],
+      "readOnly": true
+    },
+    "error_reason": {
+      "type": "string",
+      "description": "The reason the Profiler encountered an error. This attribute is only present if the status is `error`.\n\nPossible values:\n- `not-supported-by-browser`: The browser does not support the Profiler (i.e., `window.Profiler` is not available).\n- `failed-to-lazy-load`: The Profiler script failed to be loaded by the browser (may be a connection issue or the chunk was not found).\n- `missing-document-policy-header`: The Profiler failed to start because its missing `Document-Policy: js-profiling` HTTP response header.\n- `unexpected-exception`: An exception occurred when starting the Profiler.",
+      "enum": [
+        "not-supported-by-browser",
+        "failed-to-lazy-load",
+        "missing-document-policy-header",
+        "unexpected-exception"
+      ],
+      "readOnly": true
+    },
+    "quota_reason": {
+      "type": "string",
+      "description": "The reason provided by the profiling quota admission API. This attribute is only present if the status is `stopped` due to quota.\n\nPossible values:\n- `quota_ok`: Quota check passed.\n- `quota_exceeded`: The organization has exceeded its profiling quota.\n- `org_disabled`: The organization has profiling disabled.\n- `backend_unavailable`: The quota admission API is unavailable or not initialized.\n- `undefined`: The quota reason is undefined.\n- `timeout`: The quota check timed out on the client side.\n- `api-error`: An API error occurred on the client side.",
+      "enum": [
+        "quota_ok",
+        "quota_exceeded",
+        "org_disabled",
+        "backend_unavailable",
+        "undefined",
+        "timeout",
+        "api-error"
+      ],
+      "readOnly": true
+    }
+  }
+}

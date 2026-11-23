@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/node-removed-mutation-schema.json",
+  "title": "RemovedNodeMutation",
+  "type": "object",
+  "description": "Schema of a RemovedNodeMutation.",
+  "required": ["id", "parentId"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Id of the mutated node."
+    },
+    "parentId": {
+      "type": "integer",
+      "description": "Id for the parent node for this RemovedNodeMutation"
+    }
+  }
+}

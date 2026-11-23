@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-tree-schema.json",
+  "title": "CompositionTree",
+  "type": "object",
+  "description": "Optional composition tree describing the rendering hierarchy for a full snapshot. When present, the player uses this tree for rendering order and group operations instead of rendering the wireframes as a flat array.",
+  "required": ["root"],
+  "properties": {
+    "root": {
+      "$ref": "composition-layer-schema.json"
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "$ref": "composition-layer-schema.json"
+      },
+      "description": "Non-root composition layers referenced by the tree.",
+      "readOnly": true
+    }
+  }
+}

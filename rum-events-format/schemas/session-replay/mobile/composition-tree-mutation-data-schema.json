@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/composition-tree-mutation-data-schema.json",
+  "title": "CompositionTreeMutationData",
+  "type": "object",
+  "description": "Mobile-specific. Incremental data carrying composition tree layer mutations.",
+  "required": ["source"],
+  "properties": {
+    "source": {
+      "type": "integer",
+      "const": 10,
+      "description": "The source of this type of incremental data.",
+      "readOnly": true
+    },
+    "root": {
+      "$ref": "composition-layer-schema.json"
+    },
+    "adds": {
+      "type": "array",
+      "items": {
+        "$ref": "composition-layer-schema.json"
+      },
+      "description": "Full layer definitions for newly added layers.",
+      "readOnly": true
+    },
+    "removes": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "description": "Ids of layer definitions to remove. Removing a referenced layer also requires updating the parent or root child list.",
+      "readOnly": true
+    },
+    "updates": {
+      "type": "array",
+      "items": {
+        "$ref": "composition-layer-update-schema.json"
+      },
+      "description": "Sparse updates for existing layers.",
+      "readOnly": true
+    }
+  }
+}

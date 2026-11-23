@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/mobile/shape-gradient-schema.json",
+  "title": "ShapeGradient",
+  "description": "A background gradient for a shape wireframe. When backgroundColor is also present, the background color is painted first and the gradient is painted over it. The gradient is clipped to the wireframe shape, the border is painted afterward, and shape opacity applies to the combined result.",
+  "oneOf": [
+    {
+      "$ref": "shape-linear-gradient-schema.json"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/cdata-node-schema.json",
+  "title": "CDataNode",
+  "type": "object",
+  "description": "Schema of a CData Node.",
+  "required": ["type", "textContent"],
+  "properties": {
+    "type": {
+      "type": "integer",
+      "description": "The type of this Node.",
+      "const": 4,
+      "readOnly": true
+    },
+    "textContent": {
+      "const": ""
+    }
+  }
+}

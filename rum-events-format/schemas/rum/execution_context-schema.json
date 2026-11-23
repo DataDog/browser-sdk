@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "rum/execution_context-schema.json",
+  "title": "RumExecutionContextEvent",
+  "type": "object",
+  "description": "Schema of all properties of an Execution Context event",
+  "allOf": [
+    {
+      "$ref": "_common-schema.json"
+    },
+    {
+      "required": ["type", "execution_context", "_dd"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "RUM event type",
+          "const": "execution_context",
+          "readOnly": true
+        },
+        "execution_context": {
+          "type": "object",
+          "description": "Execution context properties",
+          "required": ["id", "type", "instance_id"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "UUID of the execution context",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "readOnly": true
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of the execution context",
+              "enum": ["main-process", "renderer-process", "utility-process"],
+              "readOnly": true
+            },
+            "instance_id": {
+              "type": "string",
+              "description": "Platform-specific identifier stable for the full lifetime of the execution context, survives session rollovers (e.g. OS PID, thread ID, tab ID)",
+              "readOnly": true
+            },
+            "parent_instance_id": {
+              "type": "string",
+              "description": "Platform-specific identifier of the parent execution context (e.g. parent OS PID)",
+              "readOnly": true
+            },
+            "name": {
+              "type": "string",
+              "description": "Execution context name",
+              "readOnly": false
+            },
+            "duration": {
+              "type": "integer",
+              "description": "Execution context lifetime in nanoseconds",
+              "minimum": 0,
+              "readOnly": true
+            },
+            "exit_reason": {
+              "type": "string",
+              "description": "Reason for execution context exit",
+              "enum": [
+                "clean-exit",
+                "abnormal-exit",
+                "killed",
+                "crashed",
+                "oom",
+                "launch-failed",
+                "integrity-failure",
+                "memory-eviction"
+              ],
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        },
+        "_dd": {
+          "type": "object",
+          "description": "Internal properties",
+          "required": ["document_version"],
+          "properties": {
+            "document_version": {
+              "type": "integer",
+              "description": "Version of the update of the execution context event",
+              "minimum": 0,
+              "readOnly": true
+            }
+          },
+          "readOnly": true
+        }
+      }
+    }
+  ]
+}

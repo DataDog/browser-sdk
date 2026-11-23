@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "session-replay/browser/changes/add-stylesheet-change-schema.json",
+  "title": "AddStyleSheetChange",
+  "description": "Browser-specific. Schema representing the addition of a new stylesheet to the document.",
+  "allOf": [{ "$ref": "stylesheets/stylesheet-snapshot-schema.json" }]
+}
