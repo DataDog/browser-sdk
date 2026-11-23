@@ -61,6 +61,13 @@
       "enabled": false
     },
     {
+      "description": "next-15-3 is an alias kept on Next.js 15.3 (the first version with instrumentation-client) to test it",
+      "matchFileNames": ["packages/browser-rum-nextjs/package.json"],
+      "matchDepNames": ["next-15-3"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    },
+    {
       "description": "The Node 20 Dockerfile stage installs the browsers of the Playwright version pinned for old-browser e2e jobs",
       "matchFileNames": ["Dockerfile"],
       "matchDepNames": ["node"],
