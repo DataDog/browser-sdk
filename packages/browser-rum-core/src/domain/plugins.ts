@@ -36,10 +36,13 @@ export interface OnRumStartOptions {
    */
   addError?: StartRumResult['addError']
   /**
-   * Send a telemetry event from a plugin. Pass `crossPlatformSdk` to attribute the event to a
-   * cross-platform SDK (Flutter, Unity) via the `source` and `sdkVersion` init options; otherwise
-   * it is attributed to the browser SDK. Event kinds unknown to this SDK version are silently
-   * dropped, so plugins can rely on newer kinds than the browser SDK they run on.
+   * Send a telemetry event from a plugin. Pass `crossPlatformSdk` to attribute
+   * the event to a cross-platform SDK (Flutter, Unity) via the `source` and `sdkVersion` init
+   * options; otherwise it is attributed to the browser SDK. Event kinds unknown to this SDK
+   * version are silently dropped, so plugins can rely on newer kinds than the browser SDK they
+   * run on.
+   *
+   * @internal
    */
   addTelemetry?: typeof addPluginTelemetry
 }
