@@ -1,4 +1,4 @@
-import type { SessionManager, TrackingConsentState } from '@datadog/browser-core'
+import type { SessionManager } from '@datadog/browser-core'
 import { isThenable } from '@datadog/browser-core'
 import type { BufferedObservable } from '@datadog/js-core/util'
 import type { RumPublicApi } from '../boot/rumPublicApi'
@@ -55,12 +55,6 @@ export interface OnRumStartOptions {
    * Add a custom error to the RUM browser SDK.
    */
   addError?: StartRumResult['addError']
-  /**
-   * RUM's own tracking consent state, so plugins can check consent themselves.
-   *
-   * @internal
-   */
-  trackingConsentState: TrackingConsentState
   /**
    * RUM's own session manager, so plugins can look up sessions with their own sample rate.
    *

@@ -153,17 +153,14 @@ describe('rum public api', () => {
       })
     })
 
-    it('passes the tracking consent state and the session manager to plugins on rum start', async () => {
+    it('passes the session manager to plugins on rum start', async () => {
       const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy<NonNullable<RumPlugin['onRumStart']>>() }
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
 
       rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] })
       await collectAsyncCalls(plugin.onRumStart, 1)
-      const { trackingConsentState, sessionManager } = plugin.onRumStart.calls.mostRecent().args[0]
-      rumPublicApi.setTrackingConsent(TrackingConsent.NOT_GRANTED)
 
-      expect(sessionManager).toBe(startRumSpy.calls.mostRecent().args[1])
-      expect(trackingConsentState.isGranted()).toBeFalse()
+      expect(plugin.onRumStart.calls.mostRecent().args[0].sessionManager).toBe(startRumSpy.calls.mostRecent().args[1])
     })
 
     it('sets the user and account provided as init context', () => {
