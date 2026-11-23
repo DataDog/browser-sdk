@@ -1430,6 +1430,41 @@ describe('preStartRum', () => {
       expect(pluginCallSpy).toHaveBeenCalledTimes(1)
     })
 
+    it('should run the calls of a queue registered by an added plugin whose onInit returns false or throws', async () => {
+      const falseCallSpy = jasmine.createSpy()
+      const throwCallSpy = jasmine.createSpy()
+      const falseQueue = new BufferedObservable<() => void>(500)
+      const throwQueue = new BufferedObservable<() => void>(500)
+      const falsePlugin = {
+        name: 'a',
+        onInit: ({ registerCallQueue }: RumPluginOnInitOptions) => {
+          registerCallQueue(falseQueue)
+          return false as const
+        },
+        onRumStart: jasmine.createSpy(),
+      }
+      const throwPlugin = {
+        name: 'b',
+        onInit: ({ registerCallQueue }: RumPluginOnInitOptions) => {
+          registerCallQueue(throwQueue)
+          throw new Error('boom')
+        },
+        onRumStart: jasmine.createSpy(),
+      }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      falseQueue.notify(falseCallSpy)
+      throwQueue.notify(throwCallSpy)
+      strategy.addPlugin(falsePlugin)
+      strategy.addPlugin(throwPlugin)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(falseCallSpy, 1)
+      await collectAsyncCalls(throwCallSpy, 1)
+
+      expect(falsePlugin.onRumStart).not.toHaveBeenCalled()
+      expect(throwPlugin.onRumStart).not.toHaveBeenCalled()
+    })
+
     it('keeps running plugin calls after one throws', async () => {
       const queuedCallSpy = jasmine.createSpy()
       const laterCallSpy = jasmine.createSpy()
