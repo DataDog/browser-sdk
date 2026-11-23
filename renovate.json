@@ -65,6 +65,12 @@
       "matchFileNames": ["test/apps/microfrontend/**"],
       "matchDepNames": ["webpack"],
       "allowedVersions": "<5.112.0 || >5.112.2"
+    },
+    {
+      "description": "The root rolldown resolution must stay in the range vite requires (vite 8.3 depends on rolldown ~1.2): a mismatch corrupts the developer extension build. Widen it when vite moves to a newer rolldown",
+      "matchFileNames": ["package.json"],
+      "matchDepNames": ["rolldown"],
+      "allowedVersions": "~1.2.0"
     }
   ],
   "toolSettings": {
