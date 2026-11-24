@@ -21,9 +21,15 @@ interface GitHubPR {
   }
 }
 
-interface GitHubMergedPR extends GitHubPR {
+interface GitHubIssue {
+  // eslint-disable-next-line id-denylist
+  number: number
+  pull_request?: { merged_at: string | null }
+}
+
+export interface GitHubMergedPR extends GitHubPR {
   merge_commit_sha: string
-  labels: Array<{ name: string }>
+  merged_at: string | null
 }
 
 export interface GitHubRelease {
@@ -48,14 +54,23 @@ export async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
 }
 
 /**
- * Find the merged pull requests whose merge produced the given commit.
+ * Find the merged pull requests that have the given label.
  *
- * @param sha - The commit sha on the target branch.
+ * @param label - The label name.
  */
-export async function fetchMergedPullRequests(sha: string): Promise<GitHubMergedPR[]> {
+export async function fetchMergedPullRequestsWithLabel(label: string): Promise<GitHubMergedPR[]> {
   using readToken = getGithubReadToken()
-  const pullRequests = await callGitHubApi<GitHubMergedPR[]>('GET', `commits/${sha}/pulls`, readToken)
-  return pullRequests.filter((pullRequest) => pullRequest.merge_commit_sha === sha)
+  const issues = await callGitHubApi<GitHubIssue[]>(
+    'GET',
+    `issues?state=closed&labels=${encodeURIComponent(label)}&per_page=100`,
+    readToken
+  )
+  const mergedNumbers = issues.filter((issue) => issue.pull_request?.merged_at).map((issue) => issue.number)
+  return Promise.all(
+    mergedNumbers.map((pullRequestNumber) =>
+      callGitHubApi<GitHubMergedPR>('GET', `pulls/${pullRequestNumber}`, readToken)
+    )
+  )
 }
 
 /**

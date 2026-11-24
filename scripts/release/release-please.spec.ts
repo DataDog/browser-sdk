@@ -21,11 +21,14 @@ describe('release-please Browser SDK release type', () => {
   })
 
   it('treats a breaking change in js-core alone as a regular commit', async () => {
-    const release = await buildBrowserSdkRelease('feat(js-core)!: Drop the legacy transport')
+    // The PR title lint trims scopes, release-please doesn't.
+    for (const title of ['feat(js-core)!: Drop the legacy transport', 'feat( js-core )!: Drop the legacy transport']) {
+      const release = await buildBrowserSdkRelease(title)
 
-    assert.equal(release.version, '7.20.0')
-    assert.doesNotMatch(release.notes, /BREAKING/)
-    assert.match(release.notes, /### Features\n\n\* \*\*js-core:\*\* Drop the legacy transport/)
+      assert.equal(release.version, '7.20.0', title)
+      assert.doesNotMatch(release.notes, /BREAKING/, title)
+      assert.match(release.notes, /### Features\n\n\* \*\* ?js-core ?:\*\* Drop the legacy transport/, title)
+    }
   })
 
   it('keeps breaking changes on Browser SDK packages', async () => {

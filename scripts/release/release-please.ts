@@ -31,7 +31,7 @@ export class BrowserSdkStrategy extends Node {
 }
 
 export function ignoreJsCoreBreakingChange(commit: ConventionalCommit): ConventionalCommit {
-  if (!commit.breaking || commit.scope !== JS_CORE_SCOPE) {
+  if (!commit.breaking || commit.scope?.trim() !== JS_CORE_SCOPE) {
     return commit
   }
   return {
@@ -65,8 +65,8 @@ async function main({ dryRun, targetBranch }: { dryRun: boolean; targetBranch: s
     return
   }
 
-  // Fail before tagging if the release pull request was merged without listing every change.
-  await checkReleaseNotes(process.env.CI_COMMIT_SHA ?? command`git rev-parse HEAD`.run().trim())
+  // Fail before tagging if a pending release pull request was merged without listing every change.
+  await checkReleaseNotes(targetBranch)
 
   using token = getGithubReleasePleaseToken()
   await runReleasePlease('github-release', token.value, targetBranch)
