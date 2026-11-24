@@ -27,27 +27,35 @@ describe('endpointBuilder', () => {
     })
 
     it('should add batch_time for rum endpoint', () => {
-      expect(createEndpointBuilder(initConfiguration, 'rum', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)).toContain('&batch_time=')
+      expect(createEndpointBuilder(initConfiguration, 'rum', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)).toContain(
+        '&batch_time='
+      )
     })
 
     it('should not add batch_time for logs and replay endpoints', () => {
-      expect(createEndpointBuilder(initConfiguration, 'logs', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)).not.toContain(
-        '&batch_time='
-      )
-      expect(createEndpointBuilder(initConfiguration, 'replay', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)).not.toContain(
-        '&batch_time='
-      )
+      expect(
+        createEndpointBuilder(initConfiguration, 'logs', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)
+      ).not.toContain('&batch_time=')
+      expect(
+        createEndpointBuilder(initConfiguration, 'replay', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)
+      ).not.toContain('&batch_time=')
     })
 
     it('should add the provided encoding', () => {
       expect(
-        createEndpointBuilder(initConfiguration, 'rum', SDK_VERSION).build('fetch', { ...DEFAULT_PAYLOAD, encoding: 'deflate' })
+        createEndpointBuilder(initConfiguration, 'rum', SDK_VERSION).build('fetch', {
+          ...DEFAULT_PAYLOAD,
+          encoding: 'deflate',
+        })
       ).toContain('&dd-evp-encoding=deflate')
     })
 
     it('accepts extra parameters', () => {
       const extraParameters = ['application.id=1234', 'application.version=1.0.0']
-      const url = createEndpointBuilder(initConfiguration, 'rum', SDK_VERSION, extraParameters).build('fetch', DEFAULT_PAYLOAD)
+      const url = createEndpointBuilder(initConfiguration, 'rum', SDK_VERSION, extraParameters).build(
+        'fetch',
+        DEFAULT_PAYLOAD
+      )
       expect(url).toContain('application.id=1234')
       expect(url).toContain('application.version=1.0.0')
     })
@@ -80,7 +88,10 @@ describe('endpointBuilder', () => {
       const proxyFn = (options: { path: string; parameters: string }) =>
         `https://proxy.io/prefix${options.path}/suffix?${options.parameters}`
       expect(
-        createEndpointBuilder({ ...initConfiguration, proxy: proxyFn }, 'rum', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)
+        createEndpointBuilder({ ...initConfiguration, proxy: proxyFn }, 'rum', SDK_VERSION).build(
+          'fetch',
+          DEFAULT_PAYLOAD
+        )
       ).toMatch(
         `https://proxy.io/prefix/api/v2/rum/suffix\\?ddsource=(.*)&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`
       )
@@ -89,7 +100,9 @@ describe('endpointBuilder', () => {
 
   describe('_dd attributes', () => {
     it('should contain api', () => {
-      expect(createEndpointBuilder(initConfiguration, 'rum', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)).toContain('_dd.api=fetch')
+      expect(createEndpointBuilder(initConfiguration, 'rum', SDK_VERSION).build('fetch', DEFAULT_PAYLOAD)).toContain(
+        '_dd.api=fetch'
+      )
     })
 
     it('should contain retry infos', () => {
@@ -146,51 +159,51 @@ describe('endpointBuilder', () => {
 
     it('uses the replica client token', () => {
       const configuration = { clientToken, replica } as Configuration
-      expect(createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)).toContain(
-        `dd-api-key=${replica.clientToken}`
-      )
+      expect(
+        createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)
+      ).toContain(`dd-api-key=${replica.clientToken}`)
     })
 
     it('always targets the US1 site, even when the main site differs', () => {
       const configuration = { clientToken, site: 'datadoghq.eu', replica } as Configuration
-      expect(createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)).toContain(
-        'https://browser-intake-datadoghq.com'
-      )
+      expect(
+        createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)
+      ).toContain('https://browser-intake-datadoghq.com')
     })
 
     it('keeps the proxy of the main configuration', () => {
       const configuration = { clientToken, proxy: 'https://proxy.io/path', replica } as Configuration
-      expect(createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)).toContain(
-        'https://proxy.io/path?ddforward'
-      )
+      expect(
+        createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)
+      ).toContain('https://proxy.io/path?ddforward')
     })
 
     it('keeps the source of the main configuration', () => {
       const configuration = { clientToken, source: 'flutter', replica } as Configuration
-      expect(createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)).toContain(
-        'ddsource=flutter'
-      )
+      expect(
+        createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)
+      ).toContain('ddsource=flutter')
     })
 
     it('reports the given SDK version', () => {
       const configuration = { clientToken, replica } as Configuration
-      expect(createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)).toContain(
-        `dd-evp-origin-version=${SDK_VERSION}&`
-      )
+      expect(
+        createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)
+      ).toContain(`dd-evp-origin-version=${SDK_VERSION}&`)
     })
 
     it('adds the replica application id to the rum endpoint', () => {
       const configuration = { clientToken, replica } as Configuration
-      expect(createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)).toContain(
-        `application.id=${replica.applicationId}`
-      )
+      expect(
+        createReplicaEndpointBuilder(configuration, 'rum', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)
+      ).toContain(`application.id=${replica.applicationId}`)
     })
 
     it('does not add the application id to non-rum endpoints', () => {
       const configuration = { clientToken, replica } as Configuration
-      expect(createReplicaEndpointBuilder(configuration, 'logs', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)).not.toContain(
-        'application.id'
-      )
+      expect(
+        createReplicaEndpointBuilder(configuration, 'logs', SDK_VERSION)!.build('fetch', DEFAULT_PAYLOAD)
+      ).not.toContain('application.id')
     })
   })
 

@@ -38,7 +38,10 @@ export function createFormDataTransport<T extends TransportPayload>(
     addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
-  const httpRequest = createHttpRequest([createEndpointBuilder(configuration, 'profile', __BUILD_ENV__SDK_VERSION__)], reportError)
+  const httpRequest = createHttpRequest(
+    [createEndpointBuilder(configuration, 'profile', __BUILD_ENV__SDK_VERSION__)],
+    reportError
+  )
 
   const encoder = createEncoder(streamId)
 

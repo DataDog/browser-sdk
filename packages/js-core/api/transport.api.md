@@ -17,10 +17,10 @@ export interface BuildEndpointUrlOptions {
 }
 
 // @public
-export function createEndpointBuilder(configuration: EndpointBuilderConfiguration, trackType: TrackType, extraParameters?: string[]): EndpointBuilder;
+export function createEndpointBuilder(configuration: EndpointBuilderConfiguration, trackType: TrackType, sdkVersion: string, extraParameters?: string[]): EndpointBuilder;
 
 // @public
-export function createReplicaEndpointBuilder(input: ConfigurationWithReplica, trackType: TrackType): EndpointBuilder | undefined;
+export function createReplicaEndpointBuilder(input: ConfigurationWithReplica, trackType: TrackType, sdkVersion: string): EndpointBuilder | undefined;
 
 // @public
 export interface EndpointBuilder {

@@ -49,11 +49,19 @@ export function startRecording(
 
   const replayRequest =
     segmentHttpRequest ||
-    createHttpRequest([createEndpointBuilder(configuration, 'replay', __BUILD_ENV__SDK_VERSION__)], reportError, SEGMENT_BYTES_LIMIT)
+    createHttpRequest(
+      [createEndpointBuilder(configuration, 'replay', __BUILD_ENV__SDK_VERSION__)],
+      reportError,
+      SEGMENT_BYTES_LIMIT
+    )
 
   const resourceRequest =
     resourceHttpRequest ||
-    createHttpRequest<ResourcePayload>([createEndpointBuilder(configuration, 'replay', __BUILD_ENV__SDK_VERSION__)], reportError, 0)
+    createHttpRequest<ResourcePayload>(
+      [createEndpointBuilder(configuration, 'replay', __BUILD_ENV__SDK_VERSION__)],
+      reportError,
+      0
+    )
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
