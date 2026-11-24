@@ -166,10 +166,6 @@ export function createPreStartStrategy(
     started = true
 
     startedRum = startRumResult
-    for (const plugin of addedPluginsAwaitingRumStart.splice(0)) {
-      callAddedPluginOnRumStart(plugin, startRumResult)
-    }
-
     bufferApiCalls.subscribe((callback) => {
       if (callback !== callbackToSkip) {
         callback(startRumResult)
@@ -178,6 +174,10 @@ export function createPreStartStrategy(
     bufferApiCalls.unbuffer()
     // Subscribed after bufferApiCalls, so the plugin calls replay after RUM's early API calls
     pluginCallQueues.forEach(drainPluginCallQueue)
+
+    for (const plugin of addedPluginsAwaitingRumStart.splice(0)) {
+      callAddedPluginOnRumStart(plugin, startRumResult)
+    }
   }
 
   function doInit(
