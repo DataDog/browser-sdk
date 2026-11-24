@@ -96,7 +96,10 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
   const vitalTracker = startEventTracker<DurationVitalData>(lifeCycle)
 
   function isValid(vital: DurationVital) {
-    return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
+    return (
+      vital.duration >= 0 &&
+      !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
+    )
   }
 
   function addDurationVital(vital: DurationVital) {

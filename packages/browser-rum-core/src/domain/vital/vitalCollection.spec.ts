@@ -1,4 +1,4 @@
-import type { Duration } from '@datadog/js-core/time'
+import type { Duration, TimeStamp } from '@datadog/js-core/time'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/js-core/time'
 import { generateUUID } from '@datadog/js-core/util'
@@ -155,6 +155,26 @@ describe('vitalCollection', () => {
         startClocks: clocksNow(),
         duration: 100 as Duration,
       })
+
+      expect(rawRumEvents.length).toBe(0)
+    })
+
+    it('should discard a vital with a negative duration', () => {
+      vitalCollection.addDurationVital({
+        id: generateUUID(),
+        name: 'foo',
+        type: VitalType.DURATION,
+        startClocks: clocksNow(),
+        duration: -100 as Duration,
+      })
+
+      expect(rawRumEvents.length).toBe(0)
+    })
+
+    it('should discard a vital stopped before its start time', () => {
+      const startClocks = clocksNow()
+      vitalCollection.startDurationVital('foo', {}, startClocks)
+      vitalCollection.stopDurationVital('foo', {}, { ...startClocks, timeStamp: (startClocks.timeStamp - 100) as TimeStamp })
 
       expect(rawRumEvents.length).toBe(0)
     })
