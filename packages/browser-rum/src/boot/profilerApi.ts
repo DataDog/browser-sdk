@@ -1,5 +1,5 @@
 import type { Hooks, LifeCycle, ProfilerApi, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import type { DeflateEncoderStreamId, Encoder, SessionContext, SessionManager } from '@datadog/browser-core'
+import type { DeflateEncoderStreamId, SessionContext, SessionManager } from '@datadog/browser-core'
 import {
   BridgeCapability,
   bridgeSupports,
@@ -9,6 +9,7 @@ import {
 } from '@datadog/browser-core'
 import { mockable } from '@datadog/js-core/util'
 import { monitorError } from '@datadog/js-core/monitor'
+import type { Encoder } from '@datadog/js-core/transport'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'

@@ -1,6 +1,7 @@
-import type { EndpointBuilder } from '@datadog/js-core/transport'
-import { noop } from '@datadog/js-core/util'
-import { createEndpointBuilder } from '@datadog/js-core/transport'
+import type { EndpointBuilder, HttpRequestEvent, HttpRequest } from '@datadog/js-core/transport'
+import { ONE_SECOND } from '@datadog/js-core/time'
+import { noop, ONE_KIBI_BYTE } from '@datadog/js-core/util'
+import { createEndpointBuilder, RECOMMENDED_REQUEST_BYTES_LIMIT } from '@datadog/js-core/transport'
 import type { Clock, Request } from '../../test'
 import {
   collectAsyncCalls,
@@ -12,9 +13,7 @@ import {
   NETWORK_ERROR_FETCH_MOCK,
   wait,
 } from '../../test'
-import type { HttpRequest, HttpRequestEvent } from './httpRequest'
-import { createHttpRequest, fetchStrategy, RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
-import { INITIAL_BACKOFF_TIME, MAX_ONGOING_BYTES_COUNT } from './sendWithRetryStrategy'
+import { createHttpRequest, fetchStrategy } from './httpRequest'
 
 describe('httpRequest', () => {
   const ENDPOINT_URL = 'http://my.website'
@@ -306,6 +305,10 @@ describe('httpRequest', () => {
     })
   })
 })
+
+// Mirror the (internal) retry strategy constants from @datadog/js-core/transport
+const INITIAL_BACKOFF_TIME = ONE_SECOND
+const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 
 describe('httpRequest with several endpoints', () => {
   interface FetchCall {

@@ -1,7 +1,7 @@
 import { ONE_SECOND, toServerDuration, relativeNow, relativeToClocks } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
 import type { BufferedData, SessionManager } from '@datadog/browser-core'
-import { findLast, createIdentityEncoder } from '@datadog/browser-core'
+import { findLast } from '@datadog/browser-core'
 import { Observable, BufferedObservable, noop } from '@datadog/js-core/util'
 import type { Clock, SessionManagerMock } from '@datadog/browser-core/test'
 import {
@@ -13,6 +13,7 @@ import {
   createFakeTelemetryObject,
   createSessionManagerMock,
 } from '@datadog/browser-core/test'
+import { createIdentityEncoder } from '@datadog/js-core/transport'
 import { mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'

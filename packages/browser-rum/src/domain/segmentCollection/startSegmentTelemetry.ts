@@ -1,7 +1,8 @@
-import type { BandwidthStats, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import type { Telemetry } from '@datadog/browser-core'
 import type { Observable, Context } from '@datadog/js-core/util'
 import { noop } from '@datadog/js-core/util'
 import { TelemetryMetrics, addTelemetryMetrics } from '@datadog/browser-core'
+import type { BandwidthStats, HttpRequestEvent } from '@datadog/js-core/transport'
 import type { ReplayPayload } from './buildReplayPayload'
 
 interface SegmentMetrics extends Context {
