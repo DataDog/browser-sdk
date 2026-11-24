@@ -175,6 +175,43 @@ describe('trackManualResources', () => {
     })
   })
 
+  describe('trace info', () => {
+    const URL = 'https://api.example.com/data'
+    const getEvent = () => rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+
+    it('should use tracing from start options', () => {
+      startResource(URL, { tracing: { traceId: '123', spanId: '456' }, context: { foo: 'bar' } })
+      stopResource(URL)
+      expect(getEvent()._dd).toEqual({ trace_id: '123', span_id: '456', rule_psr: undefined })
+      expect(getEvent().context).toEqual({ foo: 'bar' })
+    })
+
+    it('should use tracing from stop options', () => {
+      startResource(URL)
+      stopResource(URL, { tracing: { traceId: '123', spanId: '456' } })
+      expect(getEvent()._dd).toEqual({ trace_id: '123', span_id: '456', rule_psr: undefined })
+    })
+
+    it('should let stop tracing override start tracing', () => {
+      startResource(URL, { tracing: { traceId: '1', spanId: '2' } })
+      stopResource(URL, { tracing: { traceId: '3', spanId: '4' } })
+      expect(getEvent()._dd).toEqual({ trace_id: '3', span_id: '4', rule_psr: undefined })
+    })
+
+    it('should use rule_psr', () => {
+      startResource(URL, { tracing: { traceId: '1', spanId: '2', rulePsr: 0.5 } })
+      stopResource(URL)
+      expect(getEvent()._dd).toEqual({ trace_id: '1', span_id: '2', rule_psr: 0.5 })
+    })
+
+    it('should leave _dd ids undefined without tracing', () => {
+      startResource(URL, { context: { foo: 'bar' } })
+      stopResource(URL)
+      expect(getEvent()._dd).toEqual({ trace_id: undefined, span_id: undefined, rule_psr: undefined })
+      expect(getEvent().context).toEqual({ foo: 'bar' })
+    })
+  })
+
   describe('invalid URL handling', () => {
     it('should handle stopping with undefined URL but valid resourceKey', () => {
       startResource('https://api.example.com/data', { resourceKey: 'key1' })

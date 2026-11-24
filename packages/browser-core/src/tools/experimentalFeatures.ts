@@ -17,8 +17,6 @@ export enum ExperimentalFeature {
   SESSION_REPLAY_RECORD_CANVAS = 'session_replay_record_canvas',
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   TRACK_WEBSOCKETS = 'track_websockets',
-  SOFT_NAVIGATION = 'soft_navigation',
-  COMPOSED_PATH_SELECTOR_ATTRIBUTES = 'composed_path_selector_attributes',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

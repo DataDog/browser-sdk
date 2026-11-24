@@ -205,6 +205,32 @@ describe('rum public api', () => {
     })
   })
 
+  describe('addPlugin', () => {
+    it('starts a plugin added after init()', async () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const { rumPublicApi } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.addPlugin(plugin)
+
+      expect(plugin.onInit).toHaveBeenCalledOnceWith(jasmine.objectContaining({ publicApi: rumPublicApi }))
+      await collectAsyncCalls(plugin.onRumStart, 1)
+      expect(plugin.onRumStart).toHaveBeenCalledOnceWith(jasmine.objectContaining({ addError: jasmine.any(Function) }))
+    })
+
+    it('starts a plugin added after RUM has started', async () => {
+      const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      rumPublicApi.addPlugin(plugin)
+
+      expect(plugin.onInit).toHaveBeenCalledTimes(1)
+      await collectAsyncCalls(plugin.onRumStart, 1)
+    })
+  })
+
   describe('addAction', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let rumPublicApi: RumPublicApi
@@ -1038,12 +1064,14 @@ describe('rum public api', () => {
         type: ResourceType.FETCH,
         method: 'POST',
         context: { requestId: 'abc' },
+        tracing: { traceId: '123', spanId: '456', rulePsr: 1 },
       })
       rumPublicApi.stopResource('https://api.example.com/data', {
         type: ResourceType.XHR,
         statusCode: 200,
         size: 1024,
         context: { requestId: 'abc' },
+        tracing: { traceId: '789', spanId: '012', rulePsr: 0.5 },
       })
       await collectAsyncCalls(stopResourceSpy, 1)
 
@@ -1054,6 +1082,7 @@ describe('rum public api', () => {
           method: 'POST',
           context: { requestId: 'abc' },
           resourceKey: undefined,
+          tracing: { traceId: '123', spanId: '456', rulePsr: 1 },
         }),
         { relative: clock.relative(0), timeStamp: clock.timeStamp(0) }
       )
@@ -1065,6 +1094,7 @@ describe('rum public api', () => {
           size: 1024,
           context: { requestId: 'abc' },
           resourceKey: undefined,
+          tracing: { traceId: '789', spanId: '012', rulePsr: 0.5 },
         }),
         { relative: clock.relative(0), timeStamp: clock.timeStamp(0) }
       )

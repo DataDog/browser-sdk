@@ -2,21 +2,29 @@ import { noop } from '@datadog/js-core/util'
 import { registerCleanupTask } from './registerCleanupTask'
 
 /**
- * Disable Jasmine's uncaught error handling. This is useful for test cases throwing exceptions or
- * unhandled rejections that are expected to be caught somehow, but Jasmine also catch them and
- * fails the test.
+ * Disable the test runner's uncaught error handling. This is useful for test cases throwing
+ * exceptions or unhandled rejections that are expected to be caught somehow, but the runner also
+ * catches them and fails the test.
  *
- * Replace the handler instead of spying on it, so tests can still replace `window.onerror`. Tests
- * must not spy on it after calling this: Jasmine restores spies after the cleanup tasks run, so it
- * would put back the disabled handler.
- *
- * This is the Karma implementation. When running with Vitest, this module is aliased to
- * `test/unit-vitest/disableJasmineUncaughtExceptionTracking.ts` (see `test/unit-vitest/vite.config.ts`).
+ * Vitest catches them with `error` / `unhandledrejection` listeners in `@vitest/browser`'s
+ * `error-catcher.js`. That catcher ignores an error if the test code added its own listener for the
+ * event (it then only logs it with `console.error`), see
+ * https://vitest.dev/guide/features.html#unhandled-errors
+ * So we add no-op listeners and silence those `console.error` calls.
  */
 export function disableJasmineUncaughtExceptionTracking() {
-  const originalOnError = window.onerror
-  window.onerror = noop
+  window.addEventListener('error', noop)
+  window.addEventListener('unhandledrejection', noop)
+  const originalConsoleError = console.error
+  console.error = (...args) => {
+    if (new Error().stack!.includes('error-catcher.js')) {
+      return
+    }
+    originalConsoleError(...args)
+  }
   registerCleanupTask(() => {
-    window.onerror = originalOnError
+    console.error = originalConsoleError
+    window.removeEventListener('error', noop)
+    window.removeEventListener('unhandledrejection', noop)
   })
 }

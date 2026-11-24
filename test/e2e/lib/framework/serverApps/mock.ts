@@ -72,7 +72,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
       workerSetup(
         {
           ...setupOptions!,
-          worker: { ...worker, importScripts: Boolean(_req.query.importScripts) },
+          worker: { ...worker!, importScripts: Boolean(_req.query.importScripts) },
         },
         servers
       )

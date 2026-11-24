@@ -10,6 +10,7 @@ const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 declare global {
   interface Window {
     myServiceWorker: ServiceWorkerRegistration
+    myWorker?: Worker
     DD_WASM_PLUGIN?: () => { name: string }
   }
 }

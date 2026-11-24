@@ -520,6 +520,27 @@ test.describe('manual resources with startResource/stopResource', () => {
       expect(resourceEvents[0].resource.id).toBeDefined()
     })
 
+  createTest('track a manual resource with trace and span ids')
+    .withRum()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startResource('https://api.example.com/traced', {
+          tracing: { traceId: '1234567890', spanId: '987654321' },
+          context: { foo: 'bar' },
+        })
+        window.DD_RUM!.stopResource('https://api.example.com/traced')
+      })
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter((r) =>
+        r.resource.url.includes('api.example.com/traced')
+      )
+      expect(resourceEvents).toHaveLength(1)
+      expect(resourceEvents[0]._dd.trace_id).toBe('1234567890')
+      expect(resourceEvents[0]._dd.span_id).toBe('987654321')
+      expect(resourceEvents[0].context).toEqual(expect.objectContaining({ foo: 'bar' }))
+    })
+
   createTest('track a manual resource with type and method')
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {

@@ -122,6 +122,8 @@ describe('serializeDOMAttributes', () => {
       { html: '<source srcset="data:image/gif;base64,R0lGODlhAQABAAAAACw= 1x">', expectedBehavior: 'maskable-image' },
       { html: '<div src="value">', expectedBehavior: 'always-unmasked' },
       { html: '<div srcset="value">', expectedBehavior: 'always-unmasked' },
+      { html: '<video poster="data:image/gif;base64,R0lGODlhAQABAAAAACw=">', expectedBehavior: 'maskable-image' },
+      { html: '<div poster="value">', expectedBehavior: 'always-unmasked' },
 
       // The value attributes of button-like form elements should always be unmasked.
       { html: '<input type="button" value="value">', expectedBehavior: 'always-unmasked' },

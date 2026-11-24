@@ -19,7 +19,7 @@
     "prepack": "yarn build"
   },
   "devDependencies": {
-    "acorn": "8.19.0"
+    "@datadog/browser-rum-core": "workspace:*"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",

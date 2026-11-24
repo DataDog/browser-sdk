@@ -1,13 +1,10 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
 import { display } from './display'
 import { compile } from './expression'
-import { compileCondition } from './condition'
-import type { CompiledCondition } from './condition'
-import { browserInspect, templateRequiresEvaluation, compileSegments } from './template'
+import type { CompiledExpression, ExpressionNode } from './expression'
+import { templateRequiresEvaluation, compileSegments } from './template'
 import type { TemplateSegment } from './template'
-import { formatUnknownError } from './error'
 import type { CaptureOptions } from './capture'
-import type { ExpressionNode } from './expression'
 
 // Sampling rate limits
 const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_GLOBALLY = 25
@@ -56,13 +53,8 @@ export interface ProbeCaptureExpression {
 
 export interface CompiledCaptureExpression {
   name: string
-  expression: string
+  evaluate: CompiledExpression
   capture: CaptureOptions
-}
-
-export interface CompiledCaptureExpressions {
-  expressions: CompiledCaptureExpression[]
-  evaluateExpression: (expression: string, context: Record<string, any>) => unknown
 }
 
 export interface Probe {
@@ -87,9 +79,9 @@ export interface Probe {
 
 export interface InitializedProbe extends Probe {
   functionId: string
-  condition?: CompiledCondition
+  condition?: CompiledExpression
   evaluateTemplate?: (context: Record<string, any>) => unknown[]
-  compiledCaptureExpressions?: CompiledCaptureExpressions
+  compiledCaptureExpressions?: CompiledCaptureExpression[]
   msBetweenSampling: number
   lastCaptureMs: number
   lastConditionErrorMs: number
@@ -359,7 +351,7 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
   // Compile condition if present
   try {
     if (probe.when?.json) {
-      ;(probe as InitializedProbe).condition = compileCondition(String(compile(probe.when.json)))
+      ;(probe as InitializedProbe).condition = compile(probe.when.json)
     }
   } catch (err) {
     // TODO: Report to the debugger intake as a diagnostics message with state ERROR.
@@ -370,29 +362,8 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
     throw conditionError
   }
 
-  // Optimize for fast calculations when probe is hit
   if (templateRequiresEvaluation(probe.segments)) {
-    const segmentsCode = compileSegments(probe.segments!)
-
-    // Pre-build the function body so we avoid rebuilding this string on every probe hit.
-    // The actual Function is created at runtime because the parameter names (context keys)
-    // aren't known until call time. For ENTRY probes there is exactly one set of keys; for
-    // EXIT probes there can be two (normal-return vs exception path).
-    const fnBodyTemplate = `return ${segmentsCode};`
-
-    const getFunction = createCachedFunctionFactory(
-      (contextKeys: string[]) => contextKeys.join(','),
-      (contextKeys: string[]) =>
-        // TODO: Avoid helper parameter shadowing if contextKeys contain reserved
-        // helper names like $dd_inspect or $dd_format_error.
-        // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-        new Function('$dd_inspect', '$dd_format_error', ...contextKeys, fnBodyTemplate) as (...args: any[]) => unknown[]
-    )
-
-    ;(probe as InitializedProbe).evaluateTemplate = (context: Record<string, any>): unknown[] =>
-      callWithContext(context, (thisValue, contextKeys, contextValues) =>
-        getFunction(contextKeys).call(thisValue, browserInspect, formatUnknownError, ...contextValues)
-      )
+    ;(probe as InitializedProbe).evaluateTemplate = compileSegments(probe.segments!)
   }
   delete probe.segments
 
@@ -433,26 +404,23 @@ function getMaxProbeLifetimeEvents(probe: InitializedProbe): number {
 function isSnapshotProducingProbe(probe: Probe): boolean {
   return (
     probe.captureSnapshot ||
-    (probe.captureExpressions?.length ??
-      (probe as InitializedProbe).compiledCaptureExpressions?.expressions.length ??
-      0) > 0
+    (probe.captureExpressions?.length ?? (probe as InitializedProbe).compiledCaptureExpressions?.length ?? 0) > 0
   )
 }
 
-function compileCaptureExpressions(probe: Probe): CompiledCaptureExpressions {
-  const expressions: CompiledCaptureExpression[] = []
-  for (const captureExpression of probe.captureExpressions!) {
+function compileCaptureExpressions(probe: Probe): CompiledCaptureExpression[] {
+  return probe.captureExpressions!.map((captureExpression) => {
     try {
-      expressions.push({
+      return {
         name: captureExpression.name,
-        expression: String(compile(captureExpression.expr.json)),
+        evaluate: compile(captureExpression.expr.json),
         capture: {
           maxReferenceDepth: captureExpression.capture?.maxReferenceDepth ?? probe.capture?.maxReferenceDepth,
           maxCollectionSize: captureExpression.capture?.maxCollectionSize ?? probe.capture?.maxCollectionSize,
           maxFieldCount: captureExpression.capture?.maxFieldCount ?? probe.capture?.maxFieldCount,
           maxLength: captureExpression.capture?.maxLength ?? probe.capture?.maxLength,
         },
-      })
+      }
     } catch (err) {
       const captureExpressionError = new Error(
         `Cannot compile capture expression: ${captureExpression.name} (probe: ${probe.id}, version: ${probe.version})`
@@ -460,46 +428,5 @@ function compileCaptureExpressions(probe: Probe): CompiledCaptureExpressions {
       ;(captureExpressionError as ErrorWithCause).cause = err
       throw captureExpressionError
     }
-  }
-
-  const getFunction = createCachedFunctionFactory(
-    (contextKeys: string[], expression: string) => `${contextKeys.join(',')}:${expression}`,
-    (contextKeys: string[], expression: string) =>
-      // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-      new Function(...contextKeys, `return ${expression}`) as (...args: any[]) => unknown
-  )
-
-  return {
-    expressions,
-    evaluateExpression: (expression: string, context: Record<string, any>) =>
-      callWithContext(context, (thisValue, contextKeys, contextValues) =>
-        getFunction(contextKeys, expression).call(thisValue, ...contextValues)
-      ),
-  }
-}
-
-function callWithContext<T>(
-  context: Record<string, any>,
-  call: (thisValue: any, contextKeys: string[], contextValues: any[]) => T
-): T {
-  const { this: thisValue, ...otherContext } = context
-  const contextKeys = Object.keys(otherContext)
-  const contextValues = Object.values(otherContext)
-  return call(thisValue, contextKeys, contextValues)
-}
-
-function createCachedFunctionFactory<TFunction extends (...args: any[]) => any, TKeyParts extends unknown[]>(
-  getCacheKey: (...keyParts: TKeyParts) => string,
-  createFunction: (...keyParts: TKeyParts) => TFunction
-): (...keyParts: TKeyParts) => TFunction {
-  const functionCache = new Map<string, TFunction>()
-  return (...keyParts: TKeyParts) => {
-    const cacheKey = getCacheKey(...keyParts)
-    let fn = functionCache.get(cacheKey)
-    if (!fn) {
-      fn = createFunction(...keyParts)
-      functionCache.set(cacheKey, fn)
-    }
-    return fn
-  }
+  })
 }
