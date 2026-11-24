@@ -2,6 +2,7 @@ import { globalObject, mockable, clearTimeout, setTimeout } from '@datadog/js-co
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
 import type { Profiler } from '@datadog/js-core/util'
 import { clocksNow } from '@datadog/js-core/time'
+import type { ClocksState } from '@datadog/js-core/time'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import { canUseEventBridge, display, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
@@ -16,6 +17,8 @@ import type {
   RumProfilerStoppedInstance,
 } from './types'
 import type { ProfilingContextManager } from './profilingContext'
+import { takeEarlyCollectionProfiler } from './earlyCollectionProfiler'
+import type { EarlyCollectionProfiler } from './earlyCollectionProfiler'
 import { checkProfilingQuota } from './quotaCheck'
 import type { QuotaReason } from './quotaCheck'
 import { createProfileAssembly } from './profileAssembly'
@@ -91,8 +94,11 @@ export function createRumProfiler(
       addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
-    // Start profiler instance
-    startNextProfilerInstance()
+    // Start profiler instance. When collection was started by the early
+    // collection package (a standalone snippet evaluated before the SDK
+    // bundle), adopt its running Profiler instance as the first instance, so
+    // the first collected profile covers the early collection period.
+    startNextProfilerInstance(takeEarlyCollectionProfiler())
     triggerQuotaCheck()
   }
 
@@ -140,8 +146,10 @@ export function createRumProfiler(
     profilingContextManager.set({ status: 'stopped', error_reason: undefined, quota_reason: quotaReason })
   }
 
-  function startNextProfilerInstance(): void {
-    // These APIs might be unavailable in some browsers
+  function startNextProfilerInstance(earlyProfiler?: EarlyCollectionProfiler): void {
+    // These APIs might be unavailable in some browsers. When adopting an
+    // early collection Profiler instance, the constructor was necessarily
+    // available (the early collection package used it), so the check holds.
     const profilerConstructor = globalObject.Profiler
 
     if (!profilerConstructor) {
@@ -155,36 +163,62 @@ export function createRumProfiler(
     }
 
     let profiler: Profiler
-    try {
-      // We have to create new Profiler each time we start a new instance
-      profiler = new profilerConstructor({
-        sampleInterval: profilerConfiguration.sampleIntervalMs,
-        // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-        maxBufferSize: Math.round(
-          (profilerConfiguration.collectIntervalMs * 1.5) / profilerConfiguration.sampleIntervalMs
-        ),
-      })
-    } catch (e) {
-      if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
-        // Missing Response Header (`js-profiling`) that is required to enable the profiler.
-        // We should suggest the user to enable the Response Header in their server configuration.
-        display.warn(
-          '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
-          e
-        )
-        profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
-      } else {
-        profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
+    let startClocks: ClocksState
+    if (earlyProfiler) {
+      // Adopt the Profiler instance started by the early collection package,
+      // so the first collected profile covers the early collection period.
+      profiler = earlyProfiler.profiler
+      startClocks = earlyProfiler.startClocks
+    } else {
+      try {
+        // We have to create new Profiler each time we start a new instance
+        profiler = new profilerConstructor({
+          sampleInterval: profilerConfiguration.sampleIntervalMs,
+          // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
+          maxBufferSize: Math.round(
+            (profilerConfiguration.collectIntervalMs * 1.5) / profilerConfiguration.sampleIntervalMs
+          ),
+        })
+      } catch (e) {
+        if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
+          // Missing Response Header (`js-profiling`) that is required to enable the profiler.
+          // We should suggest the user to enable the Response Header in their server configuration.
+          display.warn(
+            '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
+            e
+          )
+          profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
+        } else {
+          profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
+        }
+        return
       }
-      return
+      startClocks = clocksNow()
     }
 
-    profilingContextManager.set({ status: 'running', error_reason: undefined })
+    profilingContextManager.set({
+      status: 'running',
+      error_reason: undefined,
+      // `early` when adopting the Profiler instance started by the early
+      // collection package: the first profile covers the early collection
+      // period. The field is absent for instances the SDK starts itself, so
+      // only early collection is reported in `_dd.profiling`.
+      ...(earlyProfiler ? { collection_type: 'early' as const } : {}),
+    })
 
-    // Kick-off the new instance
+    // Kick-off the new instance. Caveat for the early collection adoption: the
+    // early Profiler's buffer (~9,000 samples, ~90 s at the 10 ms interval,
+    // ~144 s if the browser clamps to a coarser one) can fill before the SDK
+    // takes over. An exhausted instance is undetectable at adoption: it keeps
+    // `stopped: false` and nothing in its API surface reveals it. We do not
+    // track buffer exhaustion in the early collection contract; the instance
+    // is adopted as running and the normal collection interval does the
+    // rollover. In that rare case (the SDK evaluated more than ~90 s after
+    // page load), the buffered samples are preserved and emitted, but no new
+    // sample is taken until adoption + collectIntervalMs (~60 s later).
     instance = {
       state: 'running',
-      startClocks: clocksNow(),
+      startClocks,
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       sessionId: session.findTrackedSession()?.id,
