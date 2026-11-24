@@ -4,13 +4,13 @@
 // Local dry run: `node scripts/release/release-please.ts --dry-run --target-branch <branch>`
 // (uses the `gh` token instead of dd-octo-sts).
 //
-// Not part of release-please's public API: the CLI and the Node strategy are deep imports. The
-// package entry point must be loaded first (circular imports between strategies).
+// Not part of release-please's public API: the Node strategy is a deep import (no public way to
+// extend a built-in release type). The package entry point must be loaded first (circular imports
+// between strategies).
 import { parseArgs } from 'node:util'
-import { registerReleaseType } from 'release-please'
-import type { ConventionalCommit } from 'release-please/build/src/commit.js'
+import { GitHub, Manifest, registerReleaseType } from 'release-please'
+import type { ConventionalCommit } from 'release-please'
 import { Node } from 'release-please/build/src/strategies/node.js'
-import { parser } from 'release-please/build/src/bin/release-please.js'
 import { command } from '../lib/command.ts'
 import { runMain } from '../lib/executionUtils.ts'
 import { getGithubReleasePleaseToken } from '../lib/secrets.ts'
@@ -60,8 +60,12 @@ async function main({ dryRun, targetBranch }: { dryRun: boolean; targetBranch: s
   registerBrowserSdkReleaseType()
 
   if (dryRun) {
-    const token = command`gh auth token`.run().trim()
-    await runReleasePlease('release-pr', token, targetBranch, ['--dry-run'])
+    const manifest = await loadManifest(command`gh auth token`.run().trim(), targetBranch)
+    for (const pullRequest of await manifest.buildPullRequests()) {
+      console.log(`Would open: ${pullRequest.title.toString()} (${pullRequest.headRefName})`)
+      console.log(pullRequest.updates.map((update) => `  ${update.path}`).join('\n'))
+      console.log(pullRequest.body.toString())
+    }
     return
   }
 
@@ -69,36 +73,15 @@ async function main({ dryRun, targetBranch }: { dryRun: boolean; targetBranch: s
   await checkReleaseNotes(targetBranch)
 
   using token = getGithubReleasePleaseToken()
-  await runReleasePlease('github-release', token.value, targetBranch)
-  await runReleasePlease('release-pr', token.value, targetBranch)
+  // Same steps as `release-please github-release` then `release-please release-pr`. The manifest is
+  // loaded again after tagging, so the next release pull request starts from the new release.
+  const releases = await (await loadManifest(token.value, targetBranch)).createReleases()
+  console.log('Created releases:', releases)
+  const pullRequests = await (await loadManifest(token.value, targetBranch)).createPullRequests()
+  console.log('Updated release pull requests:', pullRequests)
 }
 
-interface YargsParser {
-  exitProcess: (enabled: boolean) => YargsParser
-  fail: (enabled: false) => YargsParser
-  parseAsync: (args: string[]) => Promise<unknown>
-}
-
-async function runReleasePlease(
-  releasePleaseCommand: 'github-release' | 'release-pr',
-  token: string,
-  targetBranch: string,
-  extraArgs: string[] = []
-) {
-  // Typed with yargs, whose types are not installed.
-  const cli = parser as unknown as YargsParser
-  // Reject instead of exiting the process on errors, so the token is still revoked.
-  await cli
-    .exitProcess(false)
-    .fail(false)
-    .parseAsync([
-      releasePleaseCommand,
-      '--token',
-      token,
-      '--repo-url',
-      'DataDog/browser-sdk',
-      '--target-branch',
-      targetBranch,
-      ...extraArgs,
-    ])
+async function loadManifest(token: string, targetBranch: string) {
+  const github = await GitHub.create({ owner: 'DataDog', repo: 'browser-sdk', token })
+  return Manifest.fromManifest(github, targetBranch, 'release-please-config.json', '.release-please-manifest.json')
 }
