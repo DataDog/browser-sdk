@@ -66,7 +66,7 @@ export async function fetchMergedPullRequestsWithLabel(label: string): Promise<G
     readToken
   )
   const mergedNumbers = issues.filter((issue) => issue.pull_request?.merged_at).map((issue) => issue.number)
-  return Promise.all(
+  return await Promise.all(
     mergedNumbers.map((pullRequestNumber) =>
       callGitHubApi<GitHubMergedPR>('GET', `pulls/${pullRequestNumber}`, readToken)
     )
