@@ -52,17 +52,15 @@ export function startLogs(
   const userContext = startUserContext(assembleHook, configuration, sessionManager, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(assembleHook, configuration, LOGS_STORAGE_KEY, false)
   startRUMInternalContext(hooks)
-  startTabContext(assembleHook)
-  startSourceCodeMfeContext(assembleHook)
 
-  startNetworkErrorCollection(configuration, lifeCycle, bufferedDataObservable)
-  startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
-  startConsoleCollection(configuration, lifeCycle, bufferedDataObservable)
-  bufferedDataObservable.unbuffer()
-  startReportCollection(configuration, lifeCycle)
-  const { handleLog } = startLoggerCollection(lifeCycle)
-
-  startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
+  const { handleLog } = startLogsEventCollection(
+    lifeCycle,
+    hooks,
+    configuration,
+    getCommonContext,
+    bufferedDataObservable,
+    reportError
+  )
 
   if (!canUseEventBridge()) {
     const { stop: stopLogsBatch } = startLogsBatch(configuration, lifeCycle, reportError, sessionManager)
@@ -83,4 +81,27 @@ export function startLogs(
       cleanupTasks.forEach((task) => task())
     },
   }
+}
+
+export function startLogsEventCollection(
+  lifeCycle: LifeCycle,
+  hooks: Hooks,
+  configuration: LogsConfiguration,
+  getCommonContext: () => CommonContext,
+  bufferedDataObservable: BufferedObservable<BufferedData>,
+  reportError: (message: string) => void
+) {
+  startTabContext(hooks.assembleEventDefaults)
+  startSourceCodeMfeContext(hooks.assembleEventDefaults)
+
+  startNetworkErrorCollection(configuration, lifeCycle, bufferedDataObservable)
+  startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
+  startConsoleCollection(configuration, lifeCycle, bufferedDataObservable)
+  bufferedDataObservable.unbuffer()
+  startReportCollection(configuration, lifeCycle)
+  const { handleLog } = startLoggerCollection(lifeCycle)
+
+  startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
+
+  return { handleLog }
 }
