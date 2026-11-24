@@ -174,7 +174,11 @@ describe('vitalCollection', () => {
     it('should discard a vital stopped before its start time', () => {
       const startClocks = clocksNow()
       vitalCollection.startDurationVital('foo', {}, startClocks)
-      vitalCollection.stopDurationVital('foo', {}, { ...startClocks, timeStamp: (startClocks.timeStamp - 100) as TimeStamp })
+      vitalCollection.stopDurationVital(
+        'foo',
+        {},
+        { ...startClocks, timeStamp: (startClocks.timeStamp - 100) as TimeStamp }
+      )
 
       expect(rawRumEvents.length).toBe(0)
     })
