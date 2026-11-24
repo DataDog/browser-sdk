@@ -153,6 +153,10 @@ const serverConfig: ApplicationConfig = {
 export const config = mergeApplicationConfig(appConfig, serverConfig)
 ```
 
+This example uses Angular v20+. On earlier versions, import `provideServerRendering` from `@angular/platform-server`.
+
+The no-op providers must come after the real ones to override them. `mergeApplicationConfig` takes care of this as long as the server config is passed last.
+
 With NgModule, add them to the `providers` of your server module (`AppServerModule`).
 
 `provideNoopDatadogErrorHandler()` keeps Angular's default behavior of logging errors to the console. If you report errors from your own `ErrorHandler` with `addAngularError`, skip that call on the server.
