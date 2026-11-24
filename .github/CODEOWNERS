@@ -1,9 +1,47 @@
 # Order is important, the last matching pattern takes the most precedence.
+#
+# Each rule lists @DataDog/rum-browser and the team that owns the code: an approval from either is enough.
+# Rule: code specific to RUM goes to Capture & Explore or Ecosystems, code for the whole SDK goes to CO-OP.
 
-# Default
-*    @Datadog/rum-browser
+# SDK foundation — CO-OP (default: browser-core, js-core, browser-logs, worker, tooling, CI, e2e infra, dev extension, remote config)
+*    @Datadog/rum-browser @DataDog/rum-browser-co-op
 
-# Global
+# RUM product — Capture & Explore (views, actions, errors, resources, vitals/operations, long tasks, websockets, RUM boot/config/assembly)
+packages/browser-rum-core/**                   @Datadog/rum-browser @DataDog/rum-browser-capture-explore
+packages/browser-rum/**                        @Datadog/rum-browser @DataDog/rum-browser-capture-explore
+packages/browser-rum-slim/**                   @Datadog/rum-browser @DataDog/rum-browser-capture-explore
+test/e2e/scenario/rum/**                       @Datadog/rum-browser @DataDog/rum-browser-capture-explore
+
+# Platform-owned part of RUM — CO-OP (session definition)
+packages/browser-rum-core/src/domain/session/**                  @Datadog/rum-browser @DataDog/rum-browser-co-op
+packages/browser-rum-core/src/domain/contexts/sessionContext*    @Datadog/rum-browser @DataDog/rum-browser-co-op
+
+# Ecosystems — correlation with APM / Profiling
+packages/browser-rum-core/src/domain/tracing/**           @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+packages/browser-rum/src/domain/profiling/**              @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/e2e/scenario/profiling.scenario.ts                   @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+
+# Ecosystems — frameworks and platforms
+packages/browser-rum-react/**                  @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+packages/browser-rum-angular/**                @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+packages/browser-rum-vue/**                    @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+packages/browser-rum-nextjs/**                 @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+packages/browser-rum-nuxt/**                   @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+packages/browser-rum-shopify/**                @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+packages/browser-rum/src/salesforce/**         @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+packages/browser-plugin-wasm/**                @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/apps/angular-app/**                       @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/apps/nextjs/**                            @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/apps/nuxt-app/**                          @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/apps/react-*/**                           @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/apps/tanstack-router-app/**               @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/apps/vue-router-app/**                    @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/apps/sf-*/**                              @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/e2e/scenario/plugins/**                   @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/e2e/scenario/salesforce.scenario.ts       @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+test/e2e/scenario/shopify.scenario.ts          @Datadog/rum-browser @DataDog/rum-browser-ecosystems
+
+# Session Replay
 packages/browser-rum/src/domain/record/**               @Datadog/rum-browser @Datadog/session-replay-sdk
 packages/browser-rum/src/domain/segmentCollection/**    @Datadog/rum-browser @Datadog/session-replay-sdk
 packages/browser-rum/src/domain/*.ts                    @Datadog/rum-browser @Datadog/session-replay-sdk
