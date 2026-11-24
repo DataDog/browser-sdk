@@ -7,7 +7,7 @@ description: Use when writing a commit message or PR title in browser-sdk, choos
 
 ## Overview
 
-PRs are squash-merged, so **the PR title becomes the commit on `main` and the changelog line**. release-please reads these commits: the type picks the changelog section and the version bump (`feat` → minor, `!` → major, anything else → patch). `!` on a Browser SDK package bumps the whole SDK a major version: align with the team first. `!` on `js-core` alone only bumps js-core. Picking the type is a release-notes decision.
+PRs are squash-merged, so **the PR title becomes the commit on `main` and the changelog line**. release-please reads these commits: the type picks the changelog section and the version bump (`feat` → minor, `!` → major, anything else → patch). Picking the type is a release-notes decision.
 
 ## Format
 

@@ -49,13 +49,8 @@ A change to an E2E test is `test(e2e): …`, not `fix(e2e): …`.
 
 ### Breaking changes
 
-Add `!` after the scope (e.g. `feat(react)!: Require React 18`). It is only allowed with package
-scopes. Removing a public API, even deprecated, is a breaking change.
-
-- On Browser SDK packages, it bumps the major version of the whole Browser SDK. This should be extremely
-  rare: align with the team first.
-- On `js-core` alone (e.g. `feat(js-core)!: Drop the legacy transport`), it only bumps `@datadog/js-core`
-  (a minor version while it is pre-1.0). For the Browser SDK, it is a regular commit.
+Add `!` after the scope (e.g. `feat(react)!: Require React 18`). Removing a public API, even
+deprecated, is a breaking change.
 
 ### Jira tickets
 

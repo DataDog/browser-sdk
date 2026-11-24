@@ -12,7 +12,7 @@ const TYPE_NAMES = new Set([...PUBLIC_TYPE_NAMES, ...INTERNAL_TYPES.map(({ type 
 const PACKAGE_SCOPE_NAMES = new Set(PACKAGE_SCOPES.map(({ scope }) => scope))
 const SCOPE_NAMES = new Set([...PACKAGE_SCOPE_NAMES, ...INTERNAL_SCOPES.map(({ scope }) => scope)])
 
-const TITLE_REGEX = /^(?<type>[a-z]+)\((?<scopes>[^()]*)\)(?<breaking>!)?: (?<description>.*)$/
+const TITLE_REGEX = /^(?<type>[a-z]+)\((?<scopes>[^()]*)\)!?: (?<description>.*)$/
 const JIRA_KEY_REGEX = /\[[A-Z][A-Z0-9]*-\d+\]/
 
 /**
@@ -39,7 +39,7 @@ export function validatePrTitle(title: string): string[] {
     return errors
   }
 
-  const { type, breaking, description } = match.groups!
+  const { type, description } = match.groups!
   const scopes = match.groups!.scopes.split(',').map((scope) => scope.trim())
 
   if (!TYPE_NAMES.has(type)) {
@@ -61,10 +61,6 @@ export function validatePrTitle(title: string): string[] {
     errors.push(
       `\`${type}\` is a public type and needs package scopes; internal scopes (${nonPackageScopes.join(', ')}) need an internal type.`
     )
-  }
-
-  if (breaking && nonPackageScopes.length > 0) {
-    errors.push('`!` (breaking change) is only allowed with package scopes.')
   }
 
   if (description.trim() === '') {
