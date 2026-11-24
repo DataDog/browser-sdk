@@ -699,6 +699,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-early-collection@workspace:packages/browser-early-collection":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-early-collection@workspace:packages/browser-early-collection"
+  dependencies:
+    "@datadog/browser-core": "workspace:*"
+    "@datadog/js-core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/browser-logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/browser-logs"
@@ -964,10 +973,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/rum-events-format@DataDog/rum-events-format#commit=79c264a627e2ebba7182e5d088aad84124de23c8":
+"@datadog/rum-events-format@DataDog/rum-events-format#commit=3714d412ac7b4e890add3c94df2d32ea4e51eda1":
   version: 0.0.0
-  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=79c264a627e2ebba7182e5d088aad84124de23c8"
-  checksum: 10c0/8e8ff2092f23e5389a403c3ff9b61f5ff3a348e9bd366ce62709421b53906b5b5292fac00798a743ed29e43301d9e528a63d87edebd139ca0fe12547bd1581ee
+  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=3714d412ac7b4e890add3c94df2d32ea4e51eda1"
+  checksum: 10c0/f3fa725b5a9c572edf8a0209d37f41bc70ad13ba845cf838ddaeb9331bed137e61b850e1339b8ba3e40407f17b770277375add3b28c3bb31d34cd4be8d2c7a32
   languageName: node
   linkType: hard
 
@@ -8164,7 +8173,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "browser-sdk@workspace:."
   dependencies:
-    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=79c264a627e2ebba7182e5d088aad84124de23c8"
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=3714d412ac7b4e890add3c94df2d32ea4e51eda1"
     "@eslint/js": "npm:10.0.1"
     "@microsoft/api-extractor": "npm:7.60.1"
     "@oxc-project/runtime": "npm:0.158.0"
