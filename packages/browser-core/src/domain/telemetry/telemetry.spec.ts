@@ -16,6 +16,8 @@ import {
   createNewEvent,
 } from '../../../test'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
+import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
+import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import {
   addTelemetryConfiguration,
   addTelemetryUsage,
@@ -314,10 +316,12 @@ describe('telemetry', () => {
 
     it('formats cross-platform Error instances without scrubbing their frames', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addTelemetryError(new Error('message'), undefined, { crossPlatformSdk: true })
+      const error = new Error('message')
+      const unscrubbedStack = toStackTraceString(computeStackTrace(error))
+      addTelemetryError(error, undefined, { crossPlatformSdk: true })
 
       const [event] = await getTelemetryEvents()
-      expect((event.telemetry as { error: { stack: string } }).error.stack).toContain('telemetry.spec.ts')
+      expect((event.telemetry as { error: { stack: string } }).error.stack).toBe(unscrubbedStack)
     })
 
     it('falls back to the browser SDK version when no sdkVersion is configured', async () => {
