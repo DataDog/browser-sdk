@@ -91,6 +91,7 @@ export function startLogsEventCollection(
   bufferedDataObservable: BufferedObservable<BufferedData>,
   reportError: (message: string) => void
 ) {
+  // Later hooks win, so callers must register their own contexts before calling this for tab and MFE to override them
   startTabContext(hooks.assembleEventDefaults)
   startSourceCodeMfeContext(hooks.assembleEventDefaults)
 
