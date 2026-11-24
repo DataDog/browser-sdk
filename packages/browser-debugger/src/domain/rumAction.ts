@@ -115,8 +115,10 @@ export function addExitProbeRumAction(
 }
 
 function createProbeRumAction(probe: InitializedProbe): ProbeRumAction {
+  const { functionId, methodName, typeName } = probe.where
   return {
-    name: `probe: ${probe.where.methodName} (${probe.where.typeName})`,
+    // Probes from the Delivery API can come with only the function ID, which names the function too
+    name: methodName && typeName ? `probe: ${methodName} (${typeName})` : `probe: ${functionId}`,
     snapshotId: generateUUID(),
   }
 }

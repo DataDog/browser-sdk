@@ -1731,6 +1731,14 @@ describe('api', () => {
       expect(addActionSpy).not.toHaveBeenCalled()
     })
 
+    it('should name the action after the function ID when the probe has no method or type name', () => {
+      addProbe(createEntryProbe({ where: { functionId: DEFAULT_PROBE_FUNCTION_ID } }))
+
+      onEntry(getProbes(DEFAULT_PROBE_FUNCTION_ID)!, thisArg)
+
+      expect(startActionSpy).toHaveBeenCalledOnceWith(`probe: ${DEFAULT_PROBE_FUNCTION_ID}`, jasmine.any(Object))
+    })
+
     it('should link the action to the snapshot sent for the same hit', () => {
       addProbe(createEntryProbe())
 
