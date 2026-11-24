@@ -233,8 +233,9 @@ function isTransientFailureStatus(status: number): boolean {
 function isSupportedProbe(probe: Probe): boolean {
   return (
     probe.type === 'LOG_PROBE' &&
-    probe.where?.typeName !== undefined &&
-    probe.where.methodName !== undefined &&
+    // Probes are registered and removed by their function ID, so an empty or null one can't be
+    typeof probe.where?.functionId === 'string' &&
+    probe.where.functionId.length > 0 &&
     !(probe.captureSnapshot && probe.captureExpressions?.length)
   )
 }
