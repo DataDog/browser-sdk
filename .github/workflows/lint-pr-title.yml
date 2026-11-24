@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Check PR title follows gitmoji convention
+      - name: Check PR title follows the Conventional Commits convention
         env:
           # Passing via env (not inline ${{ }}) avoids shell injection via PR titles.
           PR_TITLE: ${{ github.event.pull_request.title }}

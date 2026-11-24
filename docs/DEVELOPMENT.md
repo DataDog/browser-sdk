@@ -2,31 +2,63 @@
 
 ## Commit messages and Pull Request titles
 
-Messages should be concise but explanatory. We are using a convention inspired by [gitmoji][1], to
-label our Commit messages and Pull Request titles:
+PRs are squash-merged, so the PR title becomes the commit on `main`. [release-please][1] reads these
+commits to compute the next version and the changelog, so PR titles follow [Conventional Commits][2]
+with a **mandatory scope**:
 
-### User-facing changes
+```
+type(scope[,scope])[!]: Description
+```
 
-- 💥 **Breaking change** - Breaking API changes
-- ✨ **New feature** - New public API, behavior, event, property
-- 🐛 **Bug fix** - Fix bugs, regressions, crashes
-- ⚡️ **Performance** - Improve performance, reduce bundle size
-- 📝 **Documentation** - User-facing documentation
-- ⚗️ **Experimental** - New public feature behind a feature flag
+Examples: `feat(rum): Add view name API` · `fix(rum,logs): Drop empty context` ·
+`ci(e2e): Quarantine flaky test` · `chore(deps): Update vite to v8.4`
 
-### Internal changes
+The "Lint PR title" check (`scripts/check-pr-title.ts`) enforces it. Types and scopes are defined in
+`scripts/lib/conventionalCommits.ts`.
 
-- 👷 **Build/CI** - Dependencies, tooling, deployment, CI config
-- ♻️ **Refactor** - Code restructuring, architectural changes
-- 🎨 **Code structure** - Improve code structure, formatting
-- ✅ **Tests** - Add/fix/improve tests
-- 🔧 **Configuration** - Config files, project setup
-- 🔥 **Removal** - Remove internal code or features. Removing a public API, even deprecated, is 💥. Making an experimental feature always on is ✨
-- 👌 **Code review** - Address code review feedback
-- 🚨 **Linting** - Add/fix linter rules
-- 🧹 **Cleanup** - Minor cleanup, housekeeping
-- 🔊 **Logging** - Add/modify debug logs, telemetry
-- 🔇 **Remove logs** - Remove debug logs or telemetry
+### Public types
+
+They appear in the public changelog sections, and require package scopes.
+
+- `feat` - New public API, behavior, event or property (minor version). Making an experimental feature always on is `feat`
+- `fix` - Bug, regression or crash fix
+- `perf` - Performance or bundle size improvement
+- `docs` - User-facing documentation
+- `exp` - Experimental public feature behind a feature flag
+
+### Internal types
+
+They appear under "Internal Changes", and accept any scope.
+
+- `build` - Build system, bundling, packaging
+- `chore` - Dependencies, configuration, housekeeping
+- `ci` - CI config, deployment, release tooling
+- `refactor` - Code restructuring without behavior change
+- `test` - Add, fix or improve tests
+- `style` - Formatting, linting
+- `revert` - Revert a previous change (listed under "Reverts"). Retitle GitHub's default `Revert "…"` title
+
+### Scopes
+
+- Package scopes: `core`, `rum` (rum, rum-core, rum-slim), `logs`, `worker`, `react`, `angular`,
+  `vue`, `nextjs`, `nuxt`, `shopify`, `debugger`, `wasm`, `js-core`, `extension`
+- Internal scopes, only with internal types: `ci`, `deps`, `e2e`, `benchmark`, `test`, `sandbox`,
+  `scripts`, `release`, `repo`
+
+A change to an E2E test is `test(e2e): …`, not `fix(e2e): …`.
+
+### Breaking changes
+
+Add `!` after the scope (e.g. `feat(react)!: Require React 18`). It bumps the major version of the
+whole Browser SDK, so it is only allowed with package scopes, and not with `js-core` alone. Removing a
+public API, even deprecated, is a breaking change.
+
+### Jira tickets
+
+Keep Jira keys out of the title: it becomes the public changelog entry. Instead:
+
+- add a `Refs: RUM-123` line to the PR description;
+- put the key in the branch name: `<username>/<JIRA-KEY>-<feature>` (e.g. `john.doe/RUM-123-fix-session-bug`), which links the PR in Jira.
 
 ## Dependency Management
 
@@ -103,4 +135,5 @@ export type { ProfilingContextManager } from './domain/contexts/profilingContext
 export { createProfilingContextManager } from './domain/contexts/profilingContext'
 ```
 
-[1]: https://gitmoji.carloscuesta.me/
+[1]: https://github.com/googleapis/release-please
+[2]: https://www.conventionalcommits.org/
