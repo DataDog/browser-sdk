@@ -30,6 +30,20 @@
       "groupSlug": "ci-image"
     },
     {
+      "description": "GitHub Actions updates change .github/**, which is not auto-approved: keep them out of the all-minor-patch batch",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "GitHub Actions",
+      "groupSlug": "github-actions"
+    },
+    {
+      "description": "Yarn self-updates change .yarn/** and .yarnrc.yml, which are not auto-approved: keep them out of the all-minor-patch batch",
+      "matchDepNames": ["yarn"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Yarn",
+      "groupSlug": "yarn"
+    },
+    {
       "description": "Test apps resolve SDK packages to local package.tgz builds, and some (e.g. browser-debugger) are not published on npm",
       "matchFileNames": ["test/apps/**"],
       "matchPackageNames": ["@datadog/browser-*"],
