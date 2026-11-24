@@ -117,7 +117,8 @@ export function addExitProbeRumAction(
 function createProbeRumAction(probe: InitializedProbe): ProbeRumAction {
   const { functionId, methodName, typeName } = probe.where
   return {
-    // Probes from the Delivery API can come with only the function ID, which names the function too
+    // The backend requires typeName and methodName on method probes today, but only the function ID
+    // matches the probe, so it names the action if they're ever dropped
     name: methodName && typeName ? `probe: ${methodName} (${typeName})` : `probe: ${functionId}`,
     snapshotId: generateUUID(),
   }
