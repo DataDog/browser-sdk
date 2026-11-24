@@ -225,6 +225,26 @@ describe('deliveryApi', () => {
       expect(getProbes('src/utils.js;<anonymous>@1:11:0')).toEqual([jasmine.objectContaining({ id: 'test-probe' })])
     })
 
+    const invalidFunctionIdCases = [
+      { description: 'an empty', functionId: '' },
+      { description: 'a null', functionId: null },
+    ]
+    invalidFunctionIdCases.forEach(({ description, functionId }) => {
+      it(`should ignore log probes with ${description} where.functionId`, async () => {
+        respondWith({
+          nextCursor: 'cursor-1',
+          updates: [{ ...createProbe(), where: { functionId, typeName: 'test.js', methodName: 'testMethod' } }],
+          deletions: [],
+        })
+
+        startDeliveryApiPolling(makeConfig())
+        await flushPromises()
+
+        expect(getAllProbes()).toEqual([])
+        expect(errorSpy).not.toHaveBeenCalled()
+      })
+    })
+
     it('should ignore log probes without where.functionId', async () => {
       respondWith({
         nextCursor: 'cursor-1',
