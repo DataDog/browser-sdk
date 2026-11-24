@@ -1,10 +1,9 @@
-export type { Telemetry, PluginTelemetryEvent, AddPluginTelemetryOptions } from './telemetry'
+export type { Telemetry, AddTelemetryOptions } from './telemetry'
 export {
   TelemetryService,
   TelemetryMetrics,
   addTelemetryDebug,
   addTelemetryError,
-  addPluginTelemetry,
   resetTelemetry,
   startTelemetry,
   addTelemetryConfiguration,

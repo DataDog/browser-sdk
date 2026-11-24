@@ -1,5 +1,5 @@
 import { isThenable } from '@datadog/browser-core'
-import type { addPluginTelemetry } from '@datadog/browser-core'
+import type { addTelemetryDebug, addTelemetryError } from '@datadog/browser-core'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
@@ -36,15 +36,22 @@ export interface OnRumStartOptions {
    */
   addError?: StartRumResult['addError']
   /**
-   * Send a telemetry event from a plugin. Pass `crossPlatformSdk` to attribute
-   * the event to a cross-platform SDK (Flutter, Unity) via the `source` and `sdkVersion` init
-   * options; otherwise it is attributed to the browser SDK. Event kinds unknown to this SDK
-   * version are silently dropped, so plugins can rely on newer kinds than the browser SDK they
-   * run on.
+   * Send a debug telemetry event. Pass `crossPlatformSdk` to attribute the event to a
+   * cross-platform SDK (Flutter, Unity) via the `source` and `sdkVersion` init options;
+   * otherwise it is attributed to the browser SDK.
    *
    * @internal
    */
-  addTelemetry?: typeof addPluginTelemetry
+  addTelemetryDebug?: typeof addTelemetryDebug
+  /**
+   * Send an error telemetry event. Cross-platform SDKs (Flutter, Unity) pass a raw error object
+   * `{ message, stack, kind }` — the stack is sent as is — and `crossPlatformSdk` to attribute the
+   * event to the cross-platform SDK via the `source` and `sdkVersion` init options; otherwise it
+   * is attributed to the browser SDK.
+   *
+   * @internal
+   */
+  addTelemetryError?: typeof addTelemetryError
 }
 
 /**

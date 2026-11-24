@@ -8,7 +8,8 @@ import {
   ResourceType,
   startTelemetry,
   startSessionManager,
-  addPluginTelemetry,
+  addTelemetryDebug,
+  addTelemetryError,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -122,7 +123,7 @@ describe('rum public api', () => {
         }))
       })
 
-      it('passes the telemetry function to plugins on rum start', async () => {
+      it('passes the telemetry functions to plugins on rum start', async () => {
         const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy() }
 
         rumPublicApi.init({
@@ -133,7 +134,8 @@ describe('rum public api', () => {
         await collectAsyncCalls(plugin.onRumStart, 1)
         expect(plugin.onRumStart).toHaveBeenCalledWith(
           jasmine.objectContaining({
-            addTelemetry: addPluginTelemetry,
+            addTelemetryDebug,
+            addTelemetryError,
           })
         )
       })

@@ -267,7 +267,7 @@ function isTelemetryReplicationAllowed(configuration: Configuration) {
   return configuration.site === INTAKE_SITE_STAGING
 }
 
-export function addTelemetryDebug(message: string, context?: Context) {
+export function addTelemetryDebug(message: string, context?: Context, options?: AddTelemetryOptions) {
   if (getDebugMode()) {
     display.debug('[Telemetry]', message, context)
   }
@@ -278,32 +278,23 @@ export function addTelemetryDebug(message: string, context?: Context) {
       status: StatusType.debug,
       ...context,
     },
+    isCrossPlatform: options?.crossPlatformSdk,
   })
 }
 
-export function addTelemetryError(e: unknown, context?: Context) {
+export function addTelemetryError(e: unknown, context?: Context, options?: AddTelemetryOptions) {
   getTelemetryObservable().notify({
     rawEvent: {
       type: TelemetryType.LOG,
       status: StatusType.error,
-      ...formatError(e),
+      ...(options?.crossPlatformSdk ? formatCrossPlatformError(e as Error | RawCrossPlatformError) : formatError(e)),
       ...context,
     },
+    isCrossPlatform: options?.crossPlatformSdk,
   })
 }
 
-/**
- * Telemetry event sent through the plugin API.
- *
- * New event kinds can be added to this union without changing the plugin API signature: the
- * browser SDK drops kinds it doesn't know about, so SDKs relying on newer kinds keep working with
- * older browser SDK versions.
- */
-export type PluginTelemetryEvent =
-  | { type: 'debug'; message: string; context?: Context }
-  | { type: 'error'; message: string; stack?: string; kind?: string; context?: Context }
-
-export interface AddPluginTelemetryOptions {
+export interface AddTelemetryOptions {
   /**
    * The event is sent on behalf of a cross-platform SDK (Flutter, Unity) running the browser SDK:
    * it is attributed to the `source` and `sdkVersion` init options instead of the browser SDK.
@@ -312,39 +303,38 @@ export interface AddPluginTelemetryOptions {
 }
 
 /**
- * Send a telemetry event through the plugin API. The error stack is sent as is (no frame
- * scrubbing), like on mobile platforms: scrubCustomerFrames would drop all of the frames of a
- * cross-platform SDK stack, as none are served from the Datadog CDN.
+ * Raw error shape sent by cross-platform SDKs (Flutter, Unity), matching their native API
+ * (e.g. Unity's `SendErrorTelemetry(string message, string stack, string kind)`).
  */
-export function addPluginTelemetry(event: PluginTelemetryEvent, options?: AddPluginTelemetryOptions) {
-  const rawEvent = toPluginRawEvent(event)
-  if (!rawEvent) {
-    return
-  }
-  getTelemetryObservable().notify({ rawEvent, isCrossPlatform: options?.crossPlatformSdk })
+interface RawCrossPlatformError {
+  message: string
+  stack?: string
+  kind?: string
 }
 
-function toPluginRawEvent(event: PluginTelemetryEvent): RawTelemetryEvent | undefined {
-  switch (event.type) {
-    case 'debug':
-      return {
-        type: TelemetryType.LOG,
-        message: event.message,
-        status: StatusType.debug,
-        ...event.context,
-      }
-    case 'error':
-      return {
-        type: TelemetryType.LOG,
-        status: StatusType.error,
-        message: event.message,
-        error: { stack: event.stack, kind: event.kind },
-        ...event.context,
-      }
+/**
+ * Format an error sent on behalf of a cross-platform SDK (Flutter, Unity). The stack is sent as is
+ * (no frame scrubbing), like on mobile platforms: scrubCustomerFrames would drop all of the
+ * frames of a cross-platform SDK stack, as none are served from the Datadog CDN.
+ */
+function formatCrossPlatformError(e: Error | RawCrossPlatformError) {
+  if (isError(e)) {
+    const stackTrace = computeStackTrace(e)
+    return {
+      error: {
+        kind: stackTrace.name,
+        stack: toStackTraceString(stackTrace),
+      },
+      message: stackTrace.message!,
+    }
   }
-  // The union is closed at compile time, so this is only reachable with an event kind unknown to
-  // this SDK version, sent by an SDK built against a newer browser SDK.
-  return undefined
+  return {
+    error: {
+      stack: e.stack,
+      kind: e.kind,
+    },
+    message: e.message,
+  }
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {

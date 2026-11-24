@@ -17,16 +17,15 @@ import {
 } from '../../../test'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import {
-  addTelemetryError,
-  scrubCustomerFrames,
-  formatError,
   addTelemetryConfiguration,
   addTelemetryUsage,
+  scrubCustomerFrames,
+  formatError,
   TelemetryService,
   startTelemetryCollection,
   addTelemetryMetrics,
   addTelemetryDebug,
-  addPluginTelemetry,
+  addTelemetryError,
   TelemetryMetrics,
   startTelemetryTransport,
 } from './telemetry'
@@ -277,7 +276,7 @@ describe('telemetry', () => {
 
     it('attributes debug events to the cross-platform SDK', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addPluginTelemetry({ type: 'debug', message: 'message', context: { foo: 'bar' } }, { crossPlatformSdk: true })
+      addTelemetryDebug('message', { foo: 'bar' }, { crossPlatformSdk: true })
 
       expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
@@ -295,10 +294,9 @@ describe('telemetry', () => {
 
     it('attributes error events to the cross-platform SDK and keeps the stack as is', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addPluginTelemetry(
-        { type: 'error', message: 'message', stack: 'at main.dart:1', kind: 'StateError' },
-        { crossPlatformSdk: true }
-      )
+      addTelemetryError({ message: 'message', stack: 'at main.dart:1', kind: 'StateError' }, undefined, {
+        crossPlatformSdk: true,
+      })
 
       expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
@@ -314,10 +312,18 @@ describe('telemetry', () => {
       ])
     })
 
+    it('formats cross-platform Error instances without scrubbing their frames', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
+      addTelemetryError(new Error('message'), undefined, { crossPlatformSdk: true })
+
+      const [event] = await getTelemetryEvents()
+      expect((event.telemetry as { error: { stack: string } }).error.stack).toContain('telemetry.spec.ts')
+    })
+
     it('falls back to the browser SDK version when no sdkVersion is configured', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry({ source: 'unity' })
       addTelemetryDebug('browser message')
-      addPluginTelemetry({ type: 'debug', message: 'unity message' }, { crossPlatformSdk: true })
+      addTelemetryDebug('unity message', undefined, { crossPlatformSdk: true })
 
       const [browserEvent, crossPlatformEvent] = await getTelemetryEvents()
       expect(crossPlatformEvent.source).toBe('unity')
@@ -337,7 +343,7 @@ describe('telemetry', () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
 
       addTelemetryDebug('message')
-      addPluginTelemetry({ type: 'debug', message: 'message' }, { crossPlatformSdk: true })
+      addTelemetryDebug('message', undefined, { crossPlatformSdk: true })
 
       const [browserEvent, crossPlatformEvent] = await getTelemetryEvents()
       expect(browserEvent.source).toBe('browser')
@@ -348,8 +354,8 @@ describe('telemetry', () => {
     it('deduplicates browser-attributed plugin events regardless of how the flag is passed', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
 
-      addPluginTelemetry({ type: 'debug', message: 'message' })
-      addPluginTelemetry({ type: 'debug', message: 'message' }, { crossPlatformSdk: false })
+      addTelemetryDebug('message')
+      addTelemetryDebug('message', undefined, { crossPlatformSdk: false })
 
       const events = await getTelemetryEvents()
       expect(events.length).toBe(1)
@@ -358,21 +364,11 @@ describe('telemetry', () => {
 
     it('attributes events to the browser SDK by default', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addPluginTelemetry({ type: 'debug', message: 'message' })
+      addTelemetryDebug('message')
 
       const [event] = await getTelemetryEvents()
       expect(event.source).toBe('browser')
       expect(event.version).not.toBe('3.0.0')
-    })
-
-    it('drops event kinds unknown to this SDK version', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      // An SDK built against a newer browser SDK may send event kinds this version doesn't know
-      // about yet.
-      const addFutureEventKind = addPluginTelemetry as (event: { type: string }) => void
-      addFutureEventKind({ type: 'configuration' })
-
-      expect(await getTelemetryEvents()).toEqual([])
     })
   })
 
