@@ -115,8 +115,11 @@ export function addExitProbeRumAction(
 }
 
 function createProbeRumAction(probe: InitializedProbe): ProbeRumAction {
+  const { functionId, methodName, typeName } = probe.where
   return {
-    name: `probe: ${probe.where.methodName} (${probe.where.typeName})`,
+    // The backend requires typeName and methodName on method probes today, but only the function ID
+    // matches the probe, so it names the action if they're ever dropped
+    name: methodName && typeName ? `probe: ${methodName} (${typeName})` : `probe: ${functionId}`,
     snapshotId: generateUUID(),
   }
 }

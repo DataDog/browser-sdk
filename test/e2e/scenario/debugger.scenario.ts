@@ -38,7 +38,7 @@ function makeProbe({
     id,
     version,
     type: 'LOG_PROBE',
-    where: { typeName, methodName },
+    where: { functionId: `${typeName};${methodName}`, typeName, methodName },
     template,
     segments: segments ?? [{ str: template }],
     captureSnapshot,
