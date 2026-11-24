@@ -3,9 +3,6 @@ import { generateUUID, normalizeUrl } from '../entries/util'
 import type { Site } from './intakeSites'
 import { INTAKE_SITE_US1 } from './intakeSites'
 
-// replaced at build time
-declare const __BUILD_ENV__SDK_VERSION__: string
-
 /** The Datadog backend track a request is being sent to. */
 export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation' | 'debugger'
 
@@ -71,10 +68,17 @@ export interface EndpointBuilder {
   trackType: TrackType
 }
 
-/** Creates an {@link EndpointBuilder} for the given track type. */
+/**
+ * Creates an {@link EndpointBuilder} for the given track type.
+ *
+ * `sdkVersion` is the version of the SDK package sending the requests, reported as
+ * `dd-evp-origin-version`. It is passed by each caller because js-core is released independently
+ * from the SDK packages, so it can't embed the SDK version itself.
+ */
 export function createEndpointBuilder(
   configuration: EndpointBuilderConfiguration,
   trackType: TrackType,
+  sdkVersion: string,
   extraParameters?: string[]
 ): EndpointBuilder {
   return {
@@ -83,7 +87,7 @@ export function createEndpointBuilder(
         proxy: configuration.proxy,
         site: configuration.site,
         path: `/api/v2/${trackType}`,
-        parameters: buildEndpointParameters(configuration, trackType, api, payload, extraParameters),
+        parameters: buildEndpointParameters(configuration, trackType, sdkVersion, api, payload, extraParameters),
       })
     },
     trackType,
@@ -98,7 +102,8 @@ export function createEndpointBuilder(
  */
 export function createReplicaEndpointBuilder(
   { replica, proxy, source }: ConfigurationWithReplica,
-  trackType: TrackType
+  trackType: TrackType,
+  sdkVersion: string
 ): EndpointBuilder | undefined {
   if (!replica) {
     return
@@ -111,6 +116,7 @@ export function createReplicaEndpointBuilder(
       site: INTAKE_SITE_US1,
     },
     trackType,
+    sdkVersion,
     trackType === 'rum' ? [`application.id=${replica.applicationId}`] : undefined
   )
 }
@@ -171,6 +177,7 @@ export function buildEndpointUrl({
 function buildEndpointParameters(
   { clientToken, source = 'browser' }: EndpointBuilderConfiguration,
   trackType: TrackType,
+  sdkVersion: string,
   api: TransportApiType,
   { retry, encoding }: EndpointPayload,
   extraParameters: string[] = []
@@ -178,7 +185,7 @@ function buildEndpointParameters(
   const parameters = [
     `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
-    `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
+    `dd-evp-origin-version=${encodeURIComponent(sdkVersion)}`,
     'dd-evp-origin=browser',
     `dd-request-id=${generateUUID()}`,
   ].concat(extraParameters)

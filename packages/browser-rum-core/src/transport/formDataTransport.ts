@@ -8,6 +8,9 @@ import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 /**
  * transport payload consist of an event and one or more attachments
  */
@@ -35,7 +38,7 @@ export function createFormDataTransport<T extends TransportPayload>(
     addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
-  const httpRequest = createHttpRequest([createEndpointBuilder(configuration, 'profile')], reportError)
+  const httpRequest = createHttpRequest([createEndpointBuilder(configuration, 'profile', __BUILD_ENV__SDK_VERSION__)], reportError)
 
   const encoder = createEncoder(streamId)
 

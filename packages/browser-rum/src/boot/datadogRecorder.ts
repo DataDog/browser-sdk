@@ -24,6 +24,9 @@ import {
 import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 export function startRecording(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
@@ -46,11 +49,11 @@ export function startRecording(
 
   const replayRequest =
     segmentHttpRequest ||
-    createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
+    createHttpRequest([createEndpointBuilder(configuration, 'replay', __BUILD_ENV__SDK_VERSION__)], reportError, SEGMENT_BYTES_LIMIT)
 
   const resourceRequest =
     resourceHttpRequest ||
-    createHttpRequest<ResourcePayload>([createEndpointBuilder(configuration, 'replay')], reportError, 0)
+    createHttpRequest<ResourcePayload>([createEndpointBuilder(configuration, 'replay', __BUILD_ENV__SDK_VERSION__)], reportError, 0)
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
