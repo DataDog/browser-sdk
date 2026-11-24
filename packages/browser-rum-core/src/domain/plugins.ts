@@ -60,11 +60,11 @@ export interface OnRumStartOptions {
    */
   addError?: StartRumResult['addError']
   /**
-   * RUM's own session manager, so plugins can look up sessions with their own sample rate.
+   * The read-only methods of RUM's own session manager, so plugins can look up sessions with their own sample rate.
    *
    * @internal
    */
-  sessionManager: SessionManager
+  sessionManager: Pick<SessionManager, 'findSession' | 'findTrackedSession'>
 }
 
 /**
@@ -110,10 +110,21 @@ export function callPluginsOnInit(
 }
 
 /**
- * Calls each plugin's `onRumStart` method in order.
+ * Calls each plugin's `onRumStart` method in order. Plugins only get the read-only methods of the
+ * session manager.
  */
-export function callPluginsOnRumStart(plugins: RumPlugin[] | undefined, options: OnRumStartOptions): void {
+export function callPluginsOnRumStart(
+  plugins: RumPlugin[] | undefined,
+  { addEvent, addError, sessionManager }: Pick<StartRumResult, 'addEvent' | 'addError' | 'sessionManager'>
+): void {
   for (const plugin of plugins ?? []) {
-    plugin.onRumStart?.(options)
+    plugin.onRumStart?.({
+      addEvent,
+      addError,
+      sessionManager: {
+        findSession: sessionManager.findSession,
+        findTrackedSession: sessionManager.findTrackedSession,
+      },
+    })
   }
 }

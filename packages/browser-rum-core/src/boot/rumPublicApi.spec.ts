@@ -153,14 +153,18 @@ describe('rum public api', () => {
       })
     })
 
-    it('passes the session manager to plugins on rum start', async () => {
+    it('passes the read-only methods of the session manager to plugins on rum start', async () => {
       const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy<NonNullable<RumPlugin['onRumStart']>>() }
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults()
 
       rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] })
       await collectAsyncCalls(plugin.onRumStart, 1)
 
-      expect(plugin.onRumStart.calls.mostRecent().args[0].sessionManager).toBe(startRumSpy.calls.mostRecent().args[1])
+      const sessionManager = startRumSpy.calls.mostRecent().args[1]
+      expect(plugin.onRumStart.calls.mostRecent().args[0].sessionManager).toEqual({
+        findSession: sessionManager.findSession,
+        findTrackedSession: sessionManager.findTrackedSession,
+      })
     })
 
     it('sets the user and account provided as init context', () => {

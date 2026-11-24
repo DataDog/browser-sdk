@@ -1,5 +1,6 @@
+import { createSessionManagerMock } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
-import type { RumPluginOnInitOptions, RumPlugin, OnRumStartOptions } from './plugins'
+import type { RumPluginOnInitOptions, RumPlugin } from './plugins'
 import { callPluginsOnInit, callPluginsOnRumStart } from './plugins'
 
 describe('callPluginsOnInit', () => {
@@ -93,32 +94,49 @@ describe('callPluginsOnInit', () => {
 })
 
 describe('callPluginsOnRumStart', () => {
+  function createStartRumResult() {
+    return { addEvent: jasmine.createSpy(), addError: jasmine.createSpy(), sessionManager: createSessionManagerMock() }
+  }
+
   it('calls onRumStart on each plugin', () => {
     const plugin1 = { name: 'a', onRumStart: jasmine.createSpy() } satisfies RumPlugin
     const plugin2 = { name: 'b', onRumStart: jasmine.createSpy() } satisfies RumPlugin
-    const options = { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() } as unknown as OnRumStartOptions
+    const startRumResult = createStartRumResult()
 
-    callPluginsOnRumStart([plugin1, plugin2], options)
+    callPluginsOnRumStart([plugin1, plugin2], startRumResult)
 
-    expect(plugin1.onRumStart).toHaveBeenCalledWith(options)
-    expect(plugin2.onRumStart).toHaveBeenCalledWith(options)
+    const expectedOptions = jasmine.objectContaining({
+      addEvent: startRumResult.addEvent,
+      addError: startRumResult.addError,
+    })
+    expect(plugin1.onRumStart).toHaveBeenCalledWith(expectedOptions)
+    expect(plugin2.onRumStart).toHaveBeenCalledWith(expectedOptions)
+  })
+
+  it('gives plugins only the read-only methods of the session manager', () => {
+    const plugin = { name: 'a', onRumStart: jasmine.createSpy() } satisfies RumPlugin
+    const startRumResult = createStartRumResult()
+
+    callPluginsOnRumStart([plugin], startRumResult)
+
+    expect(plugin.onRumStart.calls.mostRecent().args[0].sessionManager).toEqual({
+      findSession: startRumResult.sessionManager.findSession,
+      findTrackedSession: startRumResult.sessionManager.findTrackedSession,
+    })
   })
 
   it('does not call onRumStart if the plugin does not have it', () => {
     const plugin1 = { name: 'a', onRumStart: jasmine.createSpy() } satisfies RumPlugin
     const plugin2 = { name: 'b' } satisfies RumPlugin
-    const options = { addEvent: jasmine.createSpy(), addError: jasmine.createSpy() } as unknown as OnRumStartOptions
+    const startRumResult = createStartRumResult()
 
-    expect(() => callPluginsOnRumStart([plugin1, plugin2], options)).not.toThrow()
-    expect(plugin1.onRumStart).toHaveBeenCalledWith(options)
+    expect(() => callPluginsOnRumStart([plugin1, plugin2], startRumResult)).not.toThrow()
+    expect(plugin1.onRumStart).toHaveBeenCalledWith(
+      jasmine.objectContaining({ addEvent: startRumResult.addEvent, addError: startRumResult.addError })
+    )
   })
 
   it('does nothing when there are no plugins', () => {
-    expect(() =>
-      callPluginsOnRumStart(undefined, {
-        addEvent: jasmine.createSpy(),
-        addError: jasmine.createSpy(),
-      } as unknown as OnRumStartOptions)
-    ).not.toThrow()
+    expect(() => callPluginsOnRumStart(undefined, createStartRumResult())).not.toThrow()
   })
 })

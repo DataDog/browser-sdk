@@ -867,7 +867,7 @@ describe('preStartRum', () => {
         onRumStart: jasmine.createSpy(),
       }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.and.returnValue({ sessionManager: createSessionManagerMock() } as unknown as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       strategy.addPlugin(plugin)
@@ -882,7 +882,10 @@ describe('preStartRum', () => {
     it('calls onRumStart even when the API calls made before RUM starts overflow their buffer', async () => {
       const plugin = { name: 'a', onRumStart: jasmine.createSpy() }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({ addTiming: noop } as unknown as StartRumResult)
+      doStartRumSpy.and.returnValue({
+        addTiming: noop,
+        sessionManager: createSessionManagerMock(),
+      } as unknown as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       strategy.addPlugin(plugin)
@@ -909,13 +912,17 @@ describe('preStartRum', () => {
       expect(plugin.onRumStart).toHaveBeenCalledOnceWith({
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
+        sessionManager: {
+          findSession: startRumResult.sessionManager.findSession,
+          findTrackedSession: startRumResult.sessionManager.findTrackedSession,
+        },
       })
     })
 
     it('starts the plugin when RUM has already started', async () => {
       const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.and.returnValue({ sessionManager: createSessionManagerMock() } as unknown as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(doStartRumSpy, 1)
