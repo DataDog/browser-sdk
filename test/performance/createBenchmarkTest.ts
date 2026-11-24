@@ -177,6 +177,7 @@ async function injectDebugger(page: Page, scenarioConfiguration: ScenarioConfigu
     // The mock probe-delivery handler keys off `service` to decide which probes to return,
     // so we use the configuration name to keep parallel benchmark workers isolated.
     service: scenarioConfiguration,
+    version: 'benchmark',
     // Effectively disable polling after the initial fetch — re-polling during the
     // measurement loop would add network noise the benchmark doesn't intend to capture.
     pollInterval: 24 * 60 * 60 * 1000, // One day

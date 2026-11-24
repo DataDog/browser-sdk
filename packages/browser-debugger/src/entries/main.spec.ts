@@ -12,6 +12,7 @@ import { datadogDebugger } from './main'
 const INIT_CONFIGURATION_WITHOUT_SERVICE: DebuggerInitConfiguration = {
   clientToken: 'client-token',
   env: 'staging',
+  version: 'runtime-version',
 }
 const INIT_CONFIGURATION: DebuggerInitConfiguration = {
   ...INIT_CONFIGURATION_WITHOUT_SERVICE,
@@ -75,69 +76,57 @@ describe('datadogDebugger', () => {
     expect(browserWindow.$dd_catch).toBeUndefined()
   })
 
-  it('should default the init version from build-plugin metadata', async () => {
-    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version' }
+  it('should pass the init version to the transport and the Delivery API polling', () => {
     const { initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
 
     datadogDebugger.init(INIT_CONFIGURATION)
 
-    await flushPromises()
-
     expect(initTransportSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({ version: 'build-version' }),
+      jasmine.objectContaining({ version: 'runtime-version' }),
       jasmine.anything()
     )
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'build-version' }))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'runtime-version' }))
     expect(browserWindow.$dd_entry).toBeDefined()
     expect(browserWindow.$dd_return).toBeDefined()
     expect(browserWindow.$dd_throw).toBeDefined()
     expect(browserWindow.$dd_probes).toBeDefined()
   })
 
-  it('should warn when the explicit init version mismatches build-plugin metadata', async () => {
-    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version' }
-    const { startDeliveryApiPollingSpy } = mockInitDependencies()
-    const warnSpy = spyOn(display, 'warn')
-
-    datadogDebugger.init({ ...INIT_CONFIGURATION, version: 'runtime-version' })
-
-    await flushPromises()
-
-    expect(warnSpy).toHaveBeenCalledWith(jasmine.stringMatching(/does not match the build-plugin version/))
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'runtime-version' }))
-  })
-
-  it('should leave the version unset when neither init nor build-plugin metadata define it', () => {
-    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { debugId: DEBUG_ID }
-    const { initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
-    const warnSpy = spyOn(display, 'warn')
-
-    datadogDebugger.init(INIT_CONFIGURATION)
-
-    expect(initTransportSpy.calls.mostRecent().args[0].version).toBeUndefined()
-    expect(startDeliveryApiPollingSpy.calls.mostRecent().args[0].version).toBeUndefined()
-    expect(warnSpy).not.toHaveBeenCalled()
-  })
-
-  it('should use the init version without warning when build-plugin metadata has no version', () => {
-    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { debugId: DEBUG_ID }
-    const { startDeliveryApiPollingSpy } = mockInitDependencies()
-    const warnSpy = spyOn(display, 'warn')
-
-    datadogDebugger.init({ ...INIT_CONFIGURATION, version: 'runtime-version' })
-
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'runtime-version' }))
-    expect(warnSpy).not.toHaveBeenCalled()
-  })
-
-  it('should ignore a build-plugin version that is not a string', () => {
-    const metadata: unknown = { version: 123 }
+  it('should ignore a version in the build-plugin metadata of older builds', () => {
+    const metadata: unknown = { version: 'build-version' }
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = metadata as DebuggerBuildMetadata
     const { startDeliveryApiPollingSpy } = mockInitDependencies()
+    const warnSpy = spyOn(display, 'warn')
 
     datadogDebugger.init(INIT_CONFIGURATION)
 
-    expect(startDeliveryApiPollingSpy.calls.mostRecent().args[0].version).toBeUndefined()
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'runtime-version' }))
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  const missingVersionCases: Array<{ description: string; version: unknown }> = [
+    { description: 'init has no version', version: undefined },
+    { description: 'the init version is an empty string', version: '' },
+    { description: 'the init version is not a string', version: 123 },
+  ]
+  missingVersionCases.forEach(({ description, version }) => {
+    it(`should report a missing version and not start when ${description}`, () => {
+      const metadata: unknown = { version: 'build-version' }
+      browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = metadata as DebuggerBuildMetadata
+      const { startDebuggerBatchSpy, initTransportSpy, startDeliveryApiPollingSpy } = mockInitDependencies()
+      const errorSpy = spyOn(display, 'error')
+      const configuration: unknown = { ...INIT_CONFIGURATION, version }
+
+      datadogDebugger.init(configuration as DebuggerInitConfiguration)
+
+      expect(errorSpy).toHaveBeenCalledOnceWith(
+        '"version" is required. Set it in init() to the version the Datadog build plugin uploads symbols under (its `metadata.version` option).'
+      )
+      expect(startDebuggerBatchSpy).not.toHaveBeenCalled()
+      expect(initTransportSpy).not.toHaveBeenCalled()
+      expect(startDeliveryApiPollingSpy).not.toHaveBeenCalled()
+      expect(browserWindow.$dd_entry).toBeUndefined()
+    })
   })
 
   it('should default the init service from build-plugin metadata', () => {
@@ -209,7 +198,7 @@ describe('datadogDebugger', () => {
   })
 
   it('should pass the build-plugin debug ID to the Delivery API polling', () => {
-    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version', debugId: DEBUG_ID }
+    browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { debugId: DEBUG_ID }
     const { startDeliveryApiPollingSpy } = mockInitDependencies()
 
     datadogDebugger.init(INIT_CONFIGURATION)
@@ -250,10 +239,4 @@ function mockInitDependencies() {
   const initTransportSpy = replaceMockableWithSpy(initDebuggerTransport)
   const startDeliveryApiPollingSpy = replaceMockableWithSpy(startDeliveryApiPolling)
   return { startDebuggerBatchSpy, initTransportSpy, startDeliveryApiPollingSpy }
-}
-
-async function flushPromises() {
-  for (let i = 0; i < 10; i++) {
-    await Promise.resolve()
-  }
 }
