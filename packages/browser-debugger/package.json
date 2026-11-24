@@ -18,6 +18,9 @@
     "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-debugger.js",
     "prepack": "yarn build"
   },
+  "devDependencies": {
+    "@datadog/browser-rum-core": "workspace:*"
+  },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/js-core": "workspace:*"

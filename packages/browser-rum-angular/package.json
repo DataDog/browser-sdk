@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-angular",
-  "version": "7.18.0",
+  "version": "7.19.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -38,11 +38,12 @@
     "access": "public"
   },
   "devDependencies": {
-    "@angular/common": "22.2.4",
-    "@angular/compiler": "22.2.4",
-    "@angular/core": "22.2.4",
-    "@angular/platform-browser": "22.2.4",
-    "@angular/router": "22.2.4",
+    "@angular/common": "22.2.6",
+    "@angular/compiler": "22.2.6",
+    "@angular/core": "22.2.6",
+    "@angular/core-15": "npm:@angular/core@15.2.10",
+    "@angular/platform-browser": "22.2.6",
+    "@angular/router": "22.2.6",
     "rxjs": "7.8.2"
   }
 }

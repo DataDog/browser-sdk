@@ -47,7 +47,14 @@ function mapStackFrame(frame: StackTrace['stack'][number]): StackFrame | undefin
   }
 }
 
-function mapStackFrames(stack: StackTrace['stack'], skipFrames = 0): StackFrame[] {
+/**
+ * Map frames parsed by `computeStackTrace` to snapshot stack frames, dropping frames without a location
+ *
+ * @param stack - Frames parsed by `computeStackTrace`
+ * @param skipFrames - Number of frames to skip from the top of the stack (default: 0)
+ * @returns Array of stack frames
+ */
+export function mapStackFrames(stack: StackTrace['stack'], skipFrames = 0): StackFrame[] {
   return stack.reduce<StackFrame[]>((result, frame, index) => {
     if (index < skipFrames) {
       return result

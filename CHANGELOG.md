@@ -20,6 +20,41 @@
 
 ---
 
+## v7.19.0
+
+**Public Changes:**
+
+- ✨ [RUM-20014] attach trace/span ids to manual resources via internal options ([#5279](https://github.com/DataDog/browser-sdk/pull/5279))
+- ✨ [DEBUG-6444] Capture Exception Replay snapshots for RUM errors ([#5196](https://github.com/DataDog/browser-sdk/pull/5196))
+- ✨ [DEBUG-6444] Let SDKs add RUM plugins after init with addPlugin() ([#5220](https://github.com/DataDog/browser-sdk/pull/5220))
+- ✨ [DEBUG-6504] Run the Live Debugger without 'unsafe-eval' in the page CSP ([#5226](https://github.com/DataDog/browser-sdk/pull/5226))
+- ✨ [RUM-17885] Enable Soft Navigation tracking behind the `betaTrackSoftNavigations` option ([#5283](https://github.com/DataDog/browser-sdk/pull/5283))
+- 🐛 [RUM-20348] Handle direct onunhandledrejection calls without an event ([#5312](https://github.com/DataDog/browser-sdk/pull/5312))
+- 🐛 [RUM-SR] Mask <video poster> under MASK privacy levels ([#5297](https://github.com/DataDog/browser-sdk/pull/5297))
+- 🐛 [RUM-19914] Stop retaining Vue views and errors queued before RUM starts ([#5280](https://github.com/DataDog/browser-sdk/pull/5280))
+- 📝 Document the WebSocket resource event generated from WebSocket vitals ([#5294](https://github.com/DataDog/browser-sdk/pull/5294))
+- ⚗️ Remove the composed_path_selector_attributes experimental flag ([#5231](https://github.com/DataDog/browser-sdk/pull/5231))
+
+**Internal Changes:**
+
+- 👷 [RUM-20309] Derive the Vue Router v4 and Nuxt 3 test app versions from package aliases ([#5305](https://github.com/DataDog/browser-sdk/pull/5305))
+- 👷 Update all non-major dependencies ([#5310](https://github.com/DataDog/browser-sdk/pull/5310))
+- 👷 Update dependency @playwright/test to v1.65.1 ([#5311](https://github.com/DataDog/browser-sdk/pull/5311))
+- 👷 Update vitest monorepo to v5 ([#5290](https://github.com/DataDog/browser-sdk/pull/5290))
+- 👷 [RUM-19879] Prepare release-please infrastructure ([#5252](https://github.com/DataDog/browser-sdk/pull/5252))
+- 👷 Update all non-major dependencies ([#5284](https://github.com/DataDog/browser-sdk/pull/5284))
+- 👷 Group Node.js and Playwright updates in their own Renovate PR ([#5304](https://github.com/DataDog/browser-sdk/pull/5304))
+- 👷 [RUM-19777] Run BrowserStack unit tests with Vitest (webdriverio provider) ([#5136](https://github.com/DataDog/browser-sdk/pull/5136))
+- 👷 Update dependency next to v16.4.5 [SECURITY] ([#5293](https://github.com/DataDog/browser-sdk/pull/5293))
+- 👷 Update dependency nuxt to v4.6.4 [SECURITY] ([#5292](https://github.com/DataDog/browser-sdk/pull/5292))
+- ♻️ Guard RUM collection when browser globals are unavailable ([#5140](https://github.com/DataDog/browser-sdk/pull/5140))
+- ♻️ [RUM-20021] Isolate profile assembly from profiler orchestration ([#5281](https://github.com/DataDog/browser-sdk/pull/5281))
+- ✅ [RUM-16778] Migrate angular-app to Angular 22 and add a pinned Angular 15 copy ([#5306](https://github.com/DataDog/browser-sdk/pull/5306))
+- ✅ Use a UUID probe ID in debugger e2e tests ([#5309](https://github.com/DataDog/browser-sdk/pull/5309))
+- 🔧 Add writing-tests skill ([#5278](https://github.com/DataDog/browser-sdk/pull/5278))
+- 🔥 [RUM-19778] Remove Karma (configuration, dependencies and Karma-only test helpers) ([#5142](https://github.com/DataDog/browser-sdk/pull/5142))
+- 🔊 [RUM-18974] Report init context usage in telemetry configuration ([#5277](https://github.com/DataDog/browser-sdk/pull/5277))
+
 ## v7.18.0
 
 **Public Changes:**

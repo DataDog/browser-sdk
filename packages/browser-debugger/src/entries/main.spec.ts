@@ -3,6 +3,8 @@ import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-co
 import { initDebuggerTransport } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'
+import { registerExceptionReplayPlugin, resetExceptionReplay, startExceptionReplay } from '../domain/exceptionReplay'
+import { addExceptionReplayPluginToRum } from '../domain/exceptionReplayPlugin'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 import type { BrowserWindow, DebuggerBuildMetadata, DebuggerInitConfiguration } from './main'
 import { datadogDebugger } from './main'
@@ -33,6 +35,7 @@ describe('datadogDebugger', () => {
       delete browserWindow.$dd_return
       delete browserWindow.$dd_throw
       delete browserWindow.$dd_probes
+      resetExceptionReplay()
     })
   })
 
@@ -42,6 +45,34 @@ describe('datadogDebugger', () => {
       version: jasmine.any(String),
       onReady: jasmine.any(Function),
     })
+  })
+
+  it('should start Exception Replay and add its plugin to RUM on init', () => {
+    mockInitDependencies()
+    const startExceptionReplaySpy = replaceMockableWithSpy(startExceptionReplay)
+    const addExceptionReplayPluginToRumSpy = replaceMockableWithSpy(addExceptionReplayPluginToRum)
+
+    datadogDebugger.init(INIT_CONFIGURATION)
+
+    expect(startExceptionReplaySpy).toHaveBeenCalled()
+    expect(addExceptionReplayPluginToRumSpy).toHaveBeenCalled()
+  })
+
+  it('should install the Exception Replay catch hook on init once the plugin is registered', () => {
+    mockInitDependencies()
+    registerExceptionReplayPlugin(() => true)
+
+    datadogDebugger.init(INIT_CONFIGURATION)
+
+    expect(browserWindow.$dd_catch).toBeDefined()
+  })
+
+  it('should not install the Exception Replay catch hook on init without the plugin', () => {
+    mockInitDependencies()
+
+    datadogDebugger.init(INIT_CONFIGURATION)
+
+    expect(browserWindow.$dd_catch).toBeUndefined()
   })
 
   it('should default the init version from build-plugin metadata', async () => {

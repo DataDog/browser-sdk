@@ -5,12 +5,12 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@angular/common": "15.2.10",
-    "@angular/compiler": "15.2.10",
-    "@angular/compiler-cli": "15.2.10",
-    "@angular/core": "15.2.10",
-    "@angular/platform-browser": "15.2.10",
-    "@angular/router": "15.2.10",
+    "@angular/common": "22.2.6",
+    "@angular/compiler": "22.2.6",
+    "@angular/compiler-cli": "22.2.6",
+    "@angular/core": "22.2.6",
+    "@angular/platform-browser": "22.2.6",
+    "@angular/router": "22.2.6",
     "rxjs": "7.8.2",
     "zone.js": "0.16.3"
   },
@@ -36,9 +36,9 @@
     "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz"
   },
   "devDependencies": {
-    "@ngtools/webpack": "15.2.11",
+    "@ngtools/webpack": "22.2.7",
     "babel-loader": "10.1.1",
-    "typescript": "4.9.5",
+    "typescript": "6.0.3",
     "webpack": "5.112.2",
     "webpack-cli": "7.3.1"
   },
