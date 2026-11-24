@@ -11,7 +11,7 @@ The PRs come from two bots:
 
 | Author             | Branch                           | Changes                                                                                                                                                              |
 | ------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `renovate[bot]`    | `renovate/*`                     | npm deps and the `Dockerfile` Node image. Non-major updates are grouped in `renovate/all-minor-patch`; `@playwright/test` has its own `renovate/playwright-monorepo` |
+| `renovate[bot]`    | `renovate/*`                     | npm deps and the `Dockerfile` Node image. Non-major updates are grouped in `renovate/all-minor-patch`, except Node.js, `@playwright/test`, GitHub Actions and Yarn, which are grouped in `renovate/manual-review` |
 | `dd-octo-sts[bot]` | `bump-chrome-version-to-<major>` | `CHROME_PACKAGE_VERSION` **and** `CURRENT_CI_IMAGE` in `.gitlab-ci.yml` (scheduled `scripts/test/bump-chrome-version.ts`)                                            |
 
 ## Tools
