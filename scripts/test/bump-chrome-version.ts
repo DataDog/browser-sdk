@@ -35,7 +35,7 @@ runMain(async () => {
   }
 
   const chromeVersionBranch = `bump-chrome-version-to-${majorPackageVersion}`
-  const commitMessage = `👷 Bump chrome to ${packageVersion}`
+  const commitMessage = `chore(deps): Bump Chrome to ${packageVersion}`
 
   const isBranchAlreadyCreated = command`git ls-remote --heads ${REPOSITORY} ${chromeVersionBranch}`.run()
   if (isBranchAlreadyCreated) {

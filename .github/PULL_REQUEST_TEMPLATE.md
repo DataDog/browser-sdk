@@ -2,6 +2,10 @@
 
 <!-- Why are you making this change, what problem does it solve? Include links to relevant tickets. -->
 
+<!-- Jira ticket, if any (keep it out of the PR title, which becomes the public changelog entry): -->
+
+Refs: <!-- RUM-123 -->
+
 ## Changes
 
 <!-- What does this change exactly? Who will be affected? Include relevant screenshots, videos, links. Please highlight all the changes that you are not sure about (ex: AI agent generated) -->
