@@ -1,7 +1,7 @@
 import releasePleaseConfig from '../../release-please-config.json' with { type: 'json' }
-import { command } from '../lib/command.ts'
-import { printLog, runMain } from '../lib/executionUtils.ts'
-import { fetchMergedPullRequests } from '../lib/gitUtils.ts'
+import { command } from './command.ts'
+import { printLog } from './executionUtils.ts'
+import { fetchMergedPullRequests } from './gitUtils.ts'
 
 // Passed as an argument: `command` doesn't use a shell, so the glob reaches `git describe --match` as is.
 const RELEASE_TAG_PATTERN = 'v[0-9]*'
@@ -14,16 +14,12 @@ export interface GitCommit {
   subject: string
 }
 
-if (!process.env.NODE_TEST_CONTEXT) {
-  runMain(() => main(process.env.CI_COMMIT_SHA ?? command`git rev-parse HEAD`.run().trim()))
-}
-
 /**
- * Run before `release-please github-release`. The release pull request is refreshed on every push
+ * Run before `release-please github-release` (see release-please.ts). The release pull request is refreshed on every push
  * to main. If it is merged right after another pull request, before it was refreshed, that other
  * change would be released without a changelog entry. Fail in that case, so no tag is created.
  */
-export async function main(sha: string): Promise<void> {
+export async function checkReleaseNotes(sha: string): Promise<void> {
   const releasePullRequest = (await fetchMergedPullRequests(sha)).find(({ labels }) =>
     labels.some(({ name }) => name === PENDING_RELEASE_LABEL)
   )

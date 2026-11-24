@@ -3,8 +3,8 @@ import { describe, it } from 'node:test'
 // Not part of release-please's public API: used to check the notes format the pre-tag check relies on.
 import { DefaultChangelogNotes } from 'release-please/build/src/changelog-notes/default.js'
 import type { ConventionalCommit } from 'release-please'
-import { findMissingCommits, getVisibleTypes } from './check-release-notes.ts'
-import type { GitCommit } from './check-release-notes.ts'
+import { findMissingCommits, getVisibleTypes } from './checkReleaseNotes.ts'
+import type { GitCommit } from './checkReleaseNotes.ts'
 
 const VISIBLE_TYPES = getVisibleTypes()
 const FEAT_COMMIT: GitCommit = { sha: 'a'.repeat(40), subject: 'feat(rum): Add view name API (#5300)' }

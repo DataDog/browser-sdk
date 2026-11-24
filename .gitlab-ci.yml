@@ -622,13 +622,7 @@ release-please:
     GIT_DEPTH: 0
   script:
     - yarn
-    - node scripts/release/check-release-notes.ts
-    - |
-      RELEASE_PLEASE_TOKEN="$(dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.release-please)"
-      trap 'dd-octo-sts revoke --token "$RELEASE_PLEASE_TOKEN"' EXIT
-      # Tag and draft-release a merged release pull request, then open or update the next one.
-      node scripts/release/release-please.ts github-release --token "$RELEASE_PLEASE_TOKEN" --repo-url DataDog/browser-sdk --target-branch main
-      node scripts/release/release-please.ts release-pr --token "$RELEASE_PLEASE_TOKEN" --repo-url DataDog/browser-sdk --target-branch main
+    - node scripts/release/release-please.ts
 
 ########################################################################################################################
 # Bump e2e chrome version

@@ -30,6 +30,13 @@ export function getGithubReleaseToken() {
   return new OctoStsToken('release')
 }
 
+/**
+ * This token is scoped to main branch pipelines (release pull requests, tags and draft releases).
+ */
+export function getGithubReleasePleaseToken() {
+  return new OctoStsToken('release-please')
+}
+
 export function getGithubReadToken() {
   return new OctoStsToken('read')
 }
