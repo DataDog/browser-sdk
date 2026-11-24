@@ -63,12 +63,8 @@ export function validatePrTitle(title: string): string[] {
     )
   }
 
-  if (breaking) {
-    if (nonPackageScopes.length > 0) {
-      errors.push('`!` (breaking change) is only allowed with package scopes.')
-    } else if (scopes.every((scope) => scope === 'js-core')) {
-      errors.push('`!` is not allowed with `js-core` alone: it would bump the whole Browser SDK a major version.')
-    }
+  if (breaking && nonPackageScopes.length > 0) {
+    errors.push('`!` (breaking change) is only allowed with package scopes.')
   }
 
   if (description.trim() === '') {

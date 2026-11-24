@@ -7,7 +7,7 @@ description: Use when writing a commit message or PR title in browser-sdk, choos
 
 ## Overview
 
-PRs are squash-merged, so **the PR title becomes the commit on `main` and the changelog line**. release-please reads these commits: the type picks the changelog section and the version bump (`feat` → minor, `!` → major, anything else → patch). Picking the type is a release-notes decision.
+PRs are squash-merged, so **the PR title becomes the commit on `main` and the changelog line**. release-please reads these commits: the type picks the changelog section and the version bump (`feat` → minor, `!` → major, anything else → patch). `!` on a Browser SDK package bumps the whole SDK a major version: align with the team first. `!` on `js-core` alone only bumps js-core. Picking the type is a release-notes decision.
 
 ## Format
 
@@ -41,12 +41,11 @@ Every commit must be signed. `main` has a `required_signatures` ruleset, so a si
 
 ## Common Mistakes
 
-| Mistake                                        | Fix                                                                     |
-| ---------------------------------------------- | ----------------------------------------------------------------------- |
-| `refactor(rum): Remove deprecated API`         | `feat(rum)!: Remove deprecated API`, otherwise the break is hidden      |
-| `fix(e2e): Fix flaky test`                     | `test(e2e): …`: `fix` is public and needs a package scope               |
-| `feat(rum): [RUM-123] Add view name API`       | Drop the key from the title, add `Refs: RUM-123` to the description     |
-| `feat: Add view name API` (no scope)           | Add the package scope: `feat(rum): …`                                   |
-| Keeping GitHub's `Revert "feat(rum): …"` title | Retitle `revert(rum): …`                                                |
-| `feat(js-core)!: …` for a js-core-only break   | `feat(js-core): …` and describe the break: `!` would bump the SDK major |
-| Adding a `CHANGELOG.md` entry                  | Remove it, the release process generates it from PR titles              |
+| Mistake                                        | Fix                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------- |
+| `refactor(rum): Remove deprecated API`         | `feat(rum)!: Remove deprecated API`, otherwise the break is hidden  |
+| `fix(e2e): Fix flaky test`                     | `test(e2e): …`: `fix` is public and needs a package scope           |
+| `feat(rum): [RUM-123] Add view name API`       | Drop the key from the title, add `Refs: RUM-123` to the description |
+| `feat: Add view name API` (no scope)           | Add the package scope: `feat(rum): …`                               |
+| Keeping GitHub's `Revert "feat(rum): …"` title | Retitle `revert(rum): …`                                            |
+| Adding a `CHANGELOG.md` entry                  | Remove it, the release process generates it from PR titles          |

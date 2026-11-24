@@ -39,6 +39,7 @@ describe('validatePrTitle', () => {
   it('accepts breaking changes on package scopes', () => {
     assertValid('feat(react)!: Require React 18')
     assertValid('feat(core,js-core)!: Rename the context API')
+    assertValid('feat(js-core)!: Drop the legacy transport')
   })
 
   it('rejects titles that are not Conventional Commits', () => {
@@ -65,9 +66,8 @@ describe('validatePrTitle', () => {
     assertInvalid('feat(rum,ci): Add view name API', /public type and needs package scopes/)
   })
 
-  it('rejects breaking changes on internal scopes or on js-core alone', () => {
+  it('rejects breaking changes on internal scopes', () => {
     assertInvalid('ci(release)!: Change the release process', /only allowed with package scopes/)
-    assertInvalid('refactor(js-core)!: Rename exports', /not allowed with `js-core` alone/)
   })
 
   it('rejects Jira keys in the title', () => {

@@ -62,7 +62,7 @@
   ],
   "packages": {
     ".": {
-      "release-type": "node",
+      "release-type": "browser-sdk",
       "package-name": "",
       "include-component-in-tag": false,
       "extra-files": [

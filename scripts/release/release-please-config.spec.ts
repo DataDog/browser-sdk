@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import type { GitHub } from 'release-please'
-// Not part of release-please's public API: used to check how it handles our config. The package
-// entry point must be loaded first (circular imports between strategies).
-import 'release-please'
-import { Node } from 'release-please/build/src/strategies/node.js'
+// Not part of release-please's public API: used to check how it handles our config.
 import { PullRequestBody } from 'release-please/build/src/util/pull-request-body.js'
 import { Version } from 'release-please/build/src/version.js'
 import releasePleaseConfig from '../../release-please-config.json' with { type: 'json' }
@@ -14,6 +11,7 @@ import jsCorePackageJson from '../../packages/js-core/package.json' with { type:
 import { INTERNAL_TYPES, PUBLIC_TYPES, REVERT_TYPE } from '../lib/conventionalCommits.ts'
 import { findPackageJsonFiles, isIndependentlyVersionedPackage } from '../lib/filesUtils.ts'
 import { validatePrTitle } from '../check-pr-title.ts'
+import { BrowserSdkStrategy } from './release-please.ts'
 
 const rootPackage = releasePleaseConfig.packages['.']
 const jsCorePackage = releasePleaseConfig.packages['packages/js-core']
@@ -45,7 +43,7 @@ describe('release-please config', () => {
       [{ component: '', version: Version.parse('7.18.0'), notes: '### Features\n\n* **rum:** Add X' }],
       { useComponents: true }
     ).toString()
-    const strategy = new Node({
+    const strategy = new BrowserSdkStrategy({
       github: { repository: { owner: 'DataDog', repo: 'browser-sdk', defaultBranch: 'main' } } as GitHub,
       targetBranch: 'main',
       path: '.',
