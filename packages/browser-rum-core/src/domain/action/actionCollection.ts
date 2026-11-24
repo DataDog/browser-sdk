@@ -158,7 +158,10 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
     duration: action.duration,
     startClocks: action.startClocks,
     domainContext: isAuto
-      ? { events: action.events, elementStack: action.elementStack }
+      ? {
+          events: action.events,
+          ...(action.elementStack !== undefined && { elementStack: action.elementStack }),
+        }
       : { handlingStack: action.handlingStack },
   }
 }

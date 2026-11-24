@@ -93,7 +93,7 @@ describe('actionCollection', () => {
       clickButton()
 
       expect(rawRumEvents.length).toBe(1)
-      expect(rawRumEvents[0].domainContext).not.toEqual(jasmine.objectContaining({ elementStack: jasmine.anything() }))
+      expect('elementStack' in rawRumEvents[0].domainContext).toBe(false)
     })
   })
 
