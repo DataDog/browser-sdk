@@ -40,6 +40,14 @@ import {
   isSessionInExpiredState,
 } from './sessionState'
 import { getSessionStoreStrategy, selectSessionStoreStrategyType } from './sessionStore'
+import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
+
+/**
+ * Creates the store the session manager persists the session with, so it can be provided by
+ * another SDK package when the standard strategies (cookie, local storage, memory) can't access
+ * the session storage. Returning `undefined` means no data can be sent.
+ */
+export type SessionStoreFactory = (configuration: Configuration) => Promise<SessionStoreStrategy | undefined>
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
@@ -82,19 +90,28 @@ let stopCallbacks: Array<() => void> = []
 
 export async function startSessionManager(
   configuration: Configuration,
-  trackingConsentState: TrackingConsentState
+  trackingConsentState: TrackingConsentState,
+  createSessionStore?: SessionStoreFactory
 ): Promise<SessionManager | undefined> {
   const startTime = relativeNow()
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  const sessionStoreStrategyType = await mockable(selectSessionStoreStrategyType)(configuration)
-  if (!sessionStoreStrategyType) {
+  let sessionStore: SessionStoreStrategy | undefined
+  if (createSessionStore) {
+    sessionStore = await createSessionStore(configuration)
+  } else {
+    const type = await mockable(selectSessionStoreStrategyType)(configuration)
+    if (type) {
+      sessionStore = mockable(getSessionStoreStrategy)(type, configuration)
+    }
+  }
+  if (!sessionStore) {
     display.warn('No storage available for session. We will not send any data.')
     return
   }
 
-  const strategy = mockable(getSessionStoreStrategy)(sessionStoreStrategyType, configuration)
+  const strategy = sessionStore
 
   const sessionContextHistory = createValueHistory<SessionContext>({
     maxEntries: MAX_SESSION_CONTEXT_HISTORY_ENTRIES,
