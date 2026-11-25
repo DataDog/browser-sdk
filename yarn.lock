@@ -696,6 +696,7 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   languageName: unknown
   linkType: soft
 
@@ -714,6 +715,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@datadog/browser-rum": "workspace:*"
   peerDependenciesMeta:
@@ -730,6 +732,7 @@ __metadata:
     "@datadog/browser-logs": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-logs": "workspace:*"
@@ -757,6 +760,7 @@ __metadata:
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
     rxjs: "npm:7.8.2"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@angular/core": ">=15 <=22"
     "@angular/router": ">=15 <=22"
@@ -771,6 +775,7 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
     ajv: "npm:8.20.0"
+    vitest: "npm:5.1.1"
   languageName: unknown
   linkType: soft
 
@@ -786,6 +791,7 @@ __metadata:
     next: "npm:16.4.6"
     react: "npm:19.3.1"
     react-dom: "npm:19.3.1"
+    vitest: "npm:5.1.1"
   peerDependencies:
     next: ">=13.0.0"
     react: ">=18.0.0"
@@ -805,6 +811,7 @@ __metadata:
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
     nuxt-3: "npm:nuxt@3.21.6"
+    vitest: "npm:5.1.1"
     vue: "npm:3.5.45"
     vue-router: "npm:5.5.1"
     vue-router-4: "npm:vue-router@4.6.4"
@@ -841,6 +848,7 @@ __metadata:
     react-router: "npm:8.5.1"
     react-router-dom: "npm:7.18.5"
     react-router-dom-6: "npm:react-router-dom@6.30.6"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@tanstack/react-router": ">=1.64.0 <2"
     react: 18 || 19
@@ -870,6 +878,7 @@ __metadata:
     "@datadog/browser-rum": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   languageName: unknown
   linkType: soft
 
@@ -880,6 +889,7 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@datadog/browser-logs": "workspace:*"
   peerDependenciesMeta:
@@ -897,6 +907,7 @@ __metadata:
     "@datadog/js-core": "workspace:*"
     "@vue/compiler-dom": "npm:3.5.45"
     "@vue/test-utils": "npm:2.6.0"
+    vitest: "npm:5.1.1"
     vue: "npm:3.5.45"
     vue-router: "npm:5.5.1"
     vue-router-4: "npm:vue-router@4.6.4"
@@ -924,6 +935,7 @@ __metadata:
     "@datadog/browser-worker": "workspace:*"
     "@datadog/js-core": "workspace:*"
     pako: "npm:3.0.3"
+    vitest: "npm:5.1.1"
   peerDependencies:
     "@datadog/browser-logs": "workspace:*"
   peerDependenciesMeta:
@@ -953,6 +965,7 @@ __metadata:
     react-dom: "npm:19.3.1"
     typescript: "npm:6.0.3"
     vite: "npm:8.3.8"
+    vitest: "npm:5.1.1"
     wxt: "npm:0.21.5"
   languageName: unknown
   linkType: soft
@@ -963,6 +976,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    vitest: "npm:5.1.1"
     webpack: "npm:5.112.2"
   languageName: unknown
   linkType: soft
@@ -970,6 +984,8 @@ __metadata:
 "@datadog/js-core@workspace:*, @datadog/js-core@workspace:packages/js-core":
   version: 0.0.0-use.local
   resolution: "@datadog/js-core@workspace:packages/js-core"
+  dependencies:
+    vitest: "npm:5.1.1"
   languageName: unknown
   linkType: soft
 
