@@ -276,7 +276,7 @@ describe('telemetry', () => {
 
     it('attributes debug events to the cross-platform SDK', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addTelemetryDebug('message', { foo: 'bar' }, { crossPlatformSdk: true })
+      addTelemetryDebug('message', { foo: 'bar' })
 
       expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
@@ -294,18 +294,14 @@ describe('telemetry', () => {
 
     it('attributes error events to the cross-platform SDK and scrubs customer frames', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addTelemetryError(
-        {
-          message: 'message',
-          stack: [
-            '    at Aq.a61 (https://customer.com/main.dart.js:40798:9)',
-            '    at foo (https://www.datadoghq-browser-agent.com/datadog-rum.js:1:2)',
-          ].join('\n'),
-          kind: 'StateError',
-        },
-        undefined,
-        { crossPlatformSdk: true }
-      )
+      addTelemetryError({
+        message: 'message',
+        stack: [
+          '    at Aq.a61 (https://customer.com/main.dart.js:40798:9)',
+          '    at foo (https://www.datadoghq-browser-agent.com/datadog-rum.js:1:2)',
+        ].join('\n'),
+        kind: 'StateError',
+      })
 
       expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
@@ -328,56 +324,40 @@ describe('telemetry', () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
       const error = new Error('message')
       error.stack = 'Error: message\n    at Aq.a61 (https://customer.com/main.dart.js:40798:9)'
-      addTelemetryError(error, undefined, { crossPlatformSdk: true })
+      addTelemetryError(error)
 
       const [event] = await getTelemetryEvents()
       expect((event.telemetry as { error: { stack: string } }).error.stack).toBe('Error: message')
     })
 
     it('falls back to the browser SDK version when no sdkVersion is configured', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ source: 'unity' })
+      const crossPlatform = startAndSpyTelemetry({ source: 'unity' })
+      const defaultSdk = startAndSpyTelemetry()
+      // let both collectors register their observer before sending
+      await waitNextMicrotask()
+      addTelemetryDebug('cross-platform message')
       addTelemetryDebug('browser message')
-      addTelemetryDebug('unity message', undefined, { crossPlatformSdk: true })
 
-      const [browserEvent, crossPlatformEvent] = await getTelemetryEvents()
+      const [crossPlatformEvent] = await crossPlatform.getTelemetryEvents()
+      const [defaultEvent] = await defaultSdk.getTelemetryEvents()
       expect(crossPlatformEvent.source).toBe('unity')
-      expect(crossPlatformEvent.version).toBe(browserEvent.version)
+      expect(crossPlatformEvent.version).toBe(defaultEvent.version)
+      expect(defaultEvent.source).toBe('browser')
     })
 
-    it('keeps the browser SDK telemetry attributed to the browser SDK', async () => {
+    it('attributes all telemetry to the cross-platform SDK, like the mobile SDKs', async () => {
+      // Under mobile-like attribution, browser-internal telemetry is attributed to the cross-platform
+      // source set at init, not kept as `browser`.
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
       addTelemetryDebug('message')
 
       const [event] = await getTelemetryEvents()
-      expect(event.source).toBe('browser')
-      expect(event.version).not.toBe('3.0.0')
-    })
-
-    it('sends a cross-platform event even when a browser event with the same message was already sent', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-
-      addTelemetryDebug('message')
-      addTelemetryDebug('message', undefined, { crossPlatformSdk: true })
-
-      const [browserEvent, crossPlatformEvent] = await getTelemetryEvents()
-      expect(browserEvent.source).toBe('browser')
-      expect(crossPlatformEvent.source).toBe('flutter')
-      expect(crossPlatformEvent.version).toBe('3.0.0')
-    })
-
-    it('deduplicates browser-attributed plugin events regardless of how the flag is passed', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-
-      addTelemetryDebug('message')
-      addTelemetryDebug('message', undefined, { crossPlatformSdk: false })
-
-      const events = await getTelemetryEvents()
-      expect(events.length).toBe(1)
-      expect(events[0].source).toBe('browser')
+      expect(event.source).toBe('flutter')
+      expect(event.version).toBe('3.0.0')
     })
 
     it('attributes events to the browser SDK by default', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
+      const { getTelemetryEvents } = startAndSpyTelemetry()
       addTelemetryDebug('message')
 
       const [event] = await getTelemetryEvents()

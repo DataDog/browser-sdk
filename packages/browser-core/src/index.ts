@@ -27,7 +27,6 @@ export type { RawReportError } from './domain/report/reportObservable'
 export type { Report } from './domain/report/browser.types'
 export type {
   Telemetry,
-  AddTelemetryOptions,
   RawTelemetryEvent,
   RawTelemetryConfiguration,
   TelemetryEvent,

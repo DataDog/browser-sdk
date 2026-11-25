@@ -36,18 +36,14 @@ export interface OnRumStartOptions {
    */
   addError?: StartRumResult['addError']
   /**
-   * Send a debug telemetry event. Pass `crossPlatformSdk` to attribute the event to a
-   * cross-platform SDK (Flutter, Unity) via the `source` and `sdkVersion` init options;
-   * otherwise it is attributed to the browser SDK.
+   * Send a debug telemetry event.
    *
    * @internal
    */
   addTelemetryDebug?: typeof addTelemetryDebug
   /**
-   * Send an error telemetry event. Cross-platform SDKs (Flutter, Unity) pass a raw error object
-   * `{ message, stack, kind }` — customer frames are scrubbed from the stack — and `crossPlatformSdk` to attribute the
-   * event to the cross-platform SDK via the `source` and `sdkVersion` init options; otherwise it
-   * is attributed to the browser SDK.
+   * Send an error telemetry event. Cross-platform SDKs can pass a raw error
+   * object `{ message, stack, kind }`.
    *
    * @internal
    */

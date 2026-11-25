@@ -1,4 +1,4 @@
-export type { Telemetry, AddTelemetryOptions } from './telemetry'
+export type { Telemetry } from './telemetry'
 export {
   TelemetryService,
   TelemetryMetrics,

@@ -79,8 +79,7 @@ const METRIC_SAMPLE_RATE = 1
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED]
 const MAX_TELEMETRY_EVENTS_PER_PAGE = 15
 
-let telemetryObservable:
-  BufferedObservable<{ rawEvent: RawTelemetryEvent; metricName?: string; isCrossPlatform?: boolean }> | undefined
+let telemetryObservable: BufferedObservable<{ rawEvent: RawTelemetryEvent; metricName?: string }> | undefined
 
 export function getTelemetryObservable() {
   if (!telemetryObservable) {
@@ -135,7 +134,7 @@ export function startTelemetryCollection(
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   const telemetryObservable = getTelemetryObservable()
-  telemetryObservable.subscribe(({ rawEvent, metricName, isCrossPlatform }) => {
+  telemetryObservable.subscribe(({ rawEvent, metricName }) => {
     if ((metricName && !telemetryEnabledPerType['metric']) || !telemetryEnabledPerType[rawEvent.type!]) {
       return
     }
@@ -150,10 +149,7 @@ export function startTelemetryCollection(
       return
     }
 
-    // Include the cross-platform attribution in the key: a cross-platform SDK event and a browser
-    // event carrying the same message are distinct telemetry events and should both be sent.
-    // Normalize the flag so omitted and explicitly-false options produce the same key.
-    const stringifiedEvent = jsonStringify({ rawEvent, isCrossPlatform: !!isCrossPlatform })!
+    const stringifiedEvent = jsonStringify(rawEvent)!
     if (alreadySentEvents.has(stringifiedEvent)) {
       return
     }
@@ -169,8 +165,7 @@ export function startTelemetryCollection(
       defaultTelemetryEventAttributes as RecursivePartial<TelemetryEvent>,
       telemetryService,
       rawEvent,
-      runtimeEnvInfo,
-      isCrossPlatform
+      runtimeEnvInfo
     )
     observable.notify(event)
     sendToExtension('telemetry', event)
@@ -189,8 +184,7 @@ export function startTelemetryCollection(
     defaultTelemetryEventAttributes: RecursivePartial<TelemetryEvent>,
     telemetryService: TelemetryService,
     rawEvent: RawTelemetryEvent,
-    runtimeEnvInfo: RuntimeEnvInfo,
-    isCrossPlatform?: boolean
+    runtimeEnvInfo: RuntimeEnvInfo
   ): TelemetryEvent & Context {
     const clockNow = clocksNow()
 
@@ -198,9 +192,8 @@ export function startTelemetryCollection(
       type: 'telemetry' as const,
       date: clockNow.timeStamp,
       service: telemetryService,
-      // Telemetry sent by a cross-platform SDK (Flutter, Unity) is attributed to that SDK
-      version: (isCrossPlatform && configuration.sdkVersion) || __BUILD_ENV__SDK_VERSION__,
-      source: isCrossPlatform ? configuration.source : ('browser' as const),
+      version: configuration.sdkVersion || __BUILD_ENV__SDK_VERSION__,
+      source: configuration.source || ('browser' as const),
       _dd: {
         format_version: 2 as const,
       },
@@ -267,7 +260,7 @@ function isTelemetryReplicationAllowed(configuration: Configuration) {
   return configuration.site === INTAKE_SITE_STAGING
 }
 
-export function addTelemetryDebug(message: string, context?: Context, options?: AddTelemetryOptions) {
+export function addTelemetryDebug(message: string, context?: Context) {
   if (getDebugMode()) {
     display.debug('[Telemetry]', message, context)
   }
@@ -278,28 +271,22 @@ export function addTelemetryDebug(message: string, context?: Context, options?: 
       status: StatusType.debug,
       ...context,
     },
-    isCrossPlatform: options?.crossPlatformSdk,
   })
 }
 
-export function addTelemetryError(e: unknown, context?: Context, options?: AddTelemetryOptions) {
+export function addTelemetryError(e: unknown, context?: Context) {
   getTelemetryObservable().notify({
     rawEvent: {
       type: TelemetryType.LOG,
       status: StatusType.error,
-      ...formatError(options?.crossPlatformSdk ? toError(e as Error | RawCrossPlatformError) : e),
+      ...formatError(isRawCrossPlatformError(e) ? toError(e) : e),
       ...context,
     },
-    isCrossPlatform: options?.crossPlatformSdk,
   })
 }
 
-export interface AddTelemetryOptions {
-  /**
-   * The event is sent on behalf of a cross-platform SDK (Flutter, Unity) running the browser SDK:
-   * it is attributed to the `source` and `sdkVersion` init options instead of the browser SDK.
-   */
-  crossPlatformSdk?: boolean
+function isRawCrossPlatformError(e: unknown): e is RawCrossPlatformError {
+  return typeof e === 'object' && e !== null && typeof (e as Partial<RawCrossPlatformError>).message === 'string'
 }
 
 /**
