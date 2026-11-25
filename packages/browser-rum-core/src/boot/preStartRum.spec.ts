@@ -24,6 +24,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  createSessionManagerMock,
 } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -899,7 +900,11 @@ describe('preStartRum', () => {
 
     it('calls onRumStart once RUM starts', async () => {
       const plugin = { name: 'a', onRumStart: jasmine.createSpy() }
-      const startRumResult = { addEvent: noop, addError: noop } as unknown as StartRumResult
+      const startRumResult = {
+        addEvent: noop,
+        addError: noop,
+        sessionManager: createSessionManagerMock(),
+      } as unknown as StartRumResult
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
       doStartRumSpy.and.returnValue(startRumResult)
 
