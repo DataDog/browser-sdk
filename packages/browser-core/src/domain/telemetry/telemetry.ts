@@ -287,7 +287,7 @@ export function addTelemetryError(e: unknown, context?: Context, options?: AddTe
     rawEvent: {
       type: TelemetryType.LOG,
       status: StatusType.error,
-      ...(options?.crossPlatformSdk ? formatCrossPlatformError(e as Error | RawCrossPlatformError) : formatError(e)),
+      ...formatError(options?.crossPlatformSdk ? toError(e as Error | RawCrossPlatformError) : e),
       ...context,
     },
     isCrossPlatform: options?.crossPlatformSdk,
@@ -313,28 +313,11 @@ interface RawCrossPlatformError {
 }
 
 /**
- * Format an error sent on behalf of a cross-platform SDK (Flutter, Unity). The stack is sent as is
- * (no frame scrubbing), like on mobile platforms: scrubCustomerFrames would drop all of the
- * frames of a cross-platform SDK stack, as none are served from the Datadog CDN.
+ * Turn a cross-platform raw error into an Error, so it is formatted (and its customer frames
+ * scrubbed) like any other telemetry error.
  */
-function formatCrossPlatformError(e: Error | RawCrossPlatformError) {
-  if (isError(e)) {
-    const stackTrace = computeStackTrace(e)
-    return {
-      error: {
-        kind: stackTrace.name,
-        stack: toStackTraceString(stackTrace),
-      },
-      message: stackTrace.message!,
-    }
-  }
-  return {
-    error: {
-      stack: e.stack,
-      kind: e.kind,
-    },
-    message: e.message,
-  }
+function toError(e: Error | RawCrossPlatformError): Error {
+  return isError(e) ? e : Object.assign(new Error(e.message), { name: e.kind, stack: e.stack })
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {

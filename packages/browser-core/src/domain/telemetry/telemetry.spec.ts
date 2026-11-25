@@ -16,8 +16,6 @@ import {
   createNewEvent,
 } from '../../../test'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import {
   addTelemetryConfiguration,
   addTelemetryUsage,
@@ -294,11 +292,20 @@ describe('telemetry', () => {
       ])
     })
 
-    it('attributes error events to the cross-platform SDK and keeps the stack as is', async () => {
+    it('attributes error events to the cross-platform SDK and scrubs customer frames', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addTelemetryError({ message: 'message', stack: 'at main.dart:1', kind: 'StateError' }, undefined, {
-        crossPlatformSdk: true,
-      })
+      addTelemetryError(
+        {
+          message: 'message',
+          stack: [
+            '    at Aq.a61 (https://customer.com/main.dart.js:40798:9)',
+            '    at foo (https://www.datadoghq-browser-agent.com/datadog-rum.js:1:2)',
+          ].join('\n'),
+          kind: 'StateError',
+        },
+        undefined,
+        { crossPlatformSdk: true }
+      )
 
       expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
@@ -308,20 +315,23 @@ describe('telemetry', () => {
             type: TelemetryType.LOG,
             status: StatusType.error,
             message: 'message',
-            error: { stack: 'at main.dart:1', kind: 'StateError' },
+            error: {
+              kind: 'StateError',
+              stack: 'StateError: message\n  at foo @ https://www.datadoghq-browser-agent.com/datadog-rum.js:1:2',
+            },
           }),
         }),
       ])
     })
 
-    it('formats cross-platform Error instances without scrubbing their frames', async () => {
+    it('scrubs customer frames from cross-platform Error instances', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
       const error = new Error('message')
-      const unscrubbedStack = toStackTraceString(computeStackTrace(error))
+      error.stack = 'Error: message\n    at Aq.a61 (https://customer.com/main.dart.js:40798:9)'
       addTelemetryError(error, undefined, { crossPlatformSdk: true })
 
       const [event] = await getTelemetryEvents()
-      expect((event.telemetry as { error: { stack: string } }).error.stack).toBe(unscrubbedStack)
+      expect((event.telemetry as { error: { stack: string } }).error.stack).toBe('Error: message')
     })
 
     it('falls back to the browser SDK version when no sdkVersion is configured', async () => {
