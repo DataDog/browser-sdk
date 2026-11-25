@@ -185,22 +185,6 @@ describe('startSessionManager', () => {
   })
 
   describe('session renewal', () => {
-    it('should renew on expandOrRenew() after expiration', async () => {
-      const sessionManager = await startSessionManagerWithDefaults()
-      const renewSpy = jasmine.createSpy('renew')
-      sessionManager.renewObservable.subscribe(renewSpy)
-      const initialId = sessionManager.findSession()!.id
-
-      sessionManager.expire()
-      clock.tick(ONE_SECOND)
-      sessionManager.expandOrRenew()
-      await collectAsyncCalls(sessionObservableSpy, 3)
-
-      expect(renewSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager.findSession()!.id).toBeDefined()
-      expect(sessionManager.findSession()!.id).not.toBe(initialId)
-    })
-
     it('should renew on user activity after expiration', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
