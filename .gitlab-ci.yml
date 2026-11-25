@@ -410,7 +410,7 @@ deploy-prod-canary:
     - export BUILD_MODE=canary
     - yarn
     # Set OVERRIDE_CORDON=<incident or exception link> to deploy during an approved freeze exception
-    - node ./scripts/deploy/check-cordons.ts --environment prod
+    - node ./scripts/deploy/check-cordons.ts --datacenter us1.prod.dog
     - yarn build:bundle
     - node ./scripts/deploy/deploy.ts prod canary root
     - node ./scripts/deploy/upload-source-maps.ts canary root
@@ -424,7 +424,7 @@ deploy-next-major-canary:
     - export BUILD_MODE=canary
     - yarn
     # Set OVERRIDE_CORDON=<incident or exception link> to deploy during an approved freeze exception
-    - node ./scripts/deploy/check-cordons.ts --environment prod
+    - node ./scripts/deploy/check-cordons.ts --datacenter us1.prod.dog
     - yarn build:bundle
     - node ./scripts/deploy/deploy.ts prod ${NEXT_MAJOR_BRANCH}-canary root
     - node ./scripts/deploy/upload-source-maps.ts ${NEXT_MAJOR_BRANCH}-canary root
