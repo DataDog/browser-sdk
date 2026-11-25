@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import {
   literals,
   references,
@@ -35,7 +36,7 @@ describe('Expression language', () => {
     const testNameCounts = new Map<string, number>()
 
     for (const testCase of testCases) {
-      let before: (() => void) | undefined
+      let skip = false
       let ast: any
       let vars: Record<string, unknown> = {}
       let expected: any
@@ -45,20 +46,16 @@ describe('Expression language', () => {
         ;[ast, vars, expected] = testCase
       } else {
         // Allow for more expressive test cases in situations where the default tuple is not enough
-        ;({ before, ast, vars = {}, expected, execute = true } = testCase)
+        ;({ skip = false, ast, vars = {}, expected, execute = true } = testCase)
       }
 
       const baseName = generateTestCaseName(ast, vars, expected, execute)
       const uniqueName = makeUniqueName(baseName, testNameCounts)
 
-      it(uniqueName, () => {
-        if (before) {
-          before()
-        }
-
+      it.skipIf(skip)(uniqueName, () => {
         if (execute === false) {
           if (expected instanceof Error) {
-            expect(() => compile(ast)).toThrowError(expected.constructor as new (...args: any[]) => Error)
+            expect(() => compile(ast)).toThrowError(expected.constructor)
           } else {
             expect(() => compile(ast)).not.toThrow()
           }
@@ -68,7 +65,7 @@ describe('Expression language', () => {
         const evaluate = compile(ast)
 
         if (expected instanceof Error) {
-          expect(() => evaluate(vars)).toThrowError(expected.constructor as new (...args: any[]) => Error)
+          expect(() => evaluate(vars)).toThrowError(expected.constructor)
         } else {
           const result = evaluate(vars)
           if (expected !== null && typeof expected === 'object') {
@@ -95,7 +92,8 @@ describe('Expression language', () => {
     })
 
     it('should name the variable in the error thrown for an undefined reference', () => {
-      expect(() => compile({ ref: 'foo' })({})).toThrowError(ReferenceError, 'foo is not defined')
+      expect(() => compile({ ref: 'foo' })({})).toThrow(ReferenceError)
+      expect(() => compile({ ref: 'foo' })({})).toThrow('foo is not defined')
     })
 
     it('should evaluate the same compiled expression against contexts with different keys', () => {

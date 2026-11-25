@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CanvasCaptureResponse } from '@datadog/browser-core'
 import { replaceMockable } from '@datadog/browser-core/test'
 import { globalObject } from '@datadog/js-core/util'
@@ -5,16 +6,16 @@ import { captureCanvas } from './canvas'
 import { createAction } from './canvas.specHelper'
 
 describe('captureCanvas', () => {
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (typeof OffscreenCanvas === 'undefined') {
-      pending('OffscreenCanvas not supported')
+      ctx.skip('OffscreenCanvas not supported')
     }
   })
 
   it('returns the hash and the encoded image', async () => {
     const response = await captureCanvas(createAction('red'))
 
-    expect(response).toEqual({ type: 'canvasCaptured', id: 1, hash: jasmine.any(String), image: jasmine.any(Blob) })
+    expect(response).toEqual({ type: 'canvasCaptured', id: 1, hash: expect.any(String), image: expect.any(Blob) })
     expectRed(await readFirstPixel((response as CapturedResponse).image))
   })
 
@@ -73,13 +74,13 @@ describe('captureCanvas', () => {
 
   it('fails when no 2d context is available', async () => {
     const action = createAction('red')
-    spyOn(OffscreenCanvas.prototype, 'getContext').and.returnValue(null)
+    vi.spyOn(OffscreenCanvas.prototype, 'getContext').mockReturnValue(null)
 
     expect(await captureCanvas(action)).toEqual({ type: 'canvasCaptureFailed', id: 1, errorName: 'Error' })
   })
 
   it('fails with the error name when encoding throws', async () => {
-    spyOn(OffscreenCanvas.prototype, 'convertToBlob').and.callFake(() =>
+    vi.spyOn(OffscreenCanvas.prototype, 'convertToBlob').mockImplementation(() =>
       Promise.reject(new DOMException('encoding failed', 'EncodingError'))
     )
 
@@ -92,7 +93,7 @@ describe('captureCanvas', () => {
 
   it('closes the bitmap', async () => {
     const action = createAction('red')
-    const closeSpy = spyOn(action.bitmap, 'close').and.callThrough()
+    const closeSpy = vi.spyOn(action.bitmap, 'close')
 
     await captureCanvas(action)
 
@@ -101,8 +102,8 @@ describe('captureCanvas', () => {
 
   it('closes the bitmap when the capture fails', async () => {
     const action = createAction('red')
-    const closeSpy = spyOn(action.bitmap, 'close').and.callThrough()
-    spyOn(OffscreenCanvas.prototype, 'getContext').and.returnValue(null)
+    const closeSpy = vi.spyOn(action.bitmap, 'close')
+    vi.spyOn(OffscreenCanvas.prototype, 'getContext').mockReturnValue(null)
 
     await captureCanvas(action)
 

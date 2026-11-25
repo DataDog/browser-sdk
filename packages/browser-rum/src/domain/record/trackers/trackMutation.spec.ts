@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { noop } from '@datadog/js-core/util'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
@@ -141,7 +143,7 @@ describe('trackMutation', () => {
       ])
       expect(stats).toEqual({
         cssText: { count: 1, max: 21, sum: 21 },
-        serializationDuration: jasmine.anything(),
+        serializationDuration: expect.anything(),
       })
     })
 
@@ -299,9 +301,9 @@ describe('trackMutation', () => {
       ])
     })
 
-    it('reuses the stylesheet id of a <link> moved with moveBefore()', async () => {
+    it('reuses the stylesheet id of a <link> moved with moveBefore()', async (ctx) => {
       if (!('moveBefore' in Element.prototype)) {
-        pending('No moveBefore support.')
+        ctx.skip('No moveBefore support.')
       }
 
       const cssText = 'div { color: green; }'
@@ -320,7 +322,7 @@ describe('trackMutation', () => {
       )
       if (!keptStyleSheet) {
         // Firefox and older Chromium versions can reload the stylesheet instead.
-        pending('The browser reloaded the stylesheet of the moved <link>.')
+        ctx.skip('The browser reloaded the stylesheet of the moved <link>.')
       }
       expect(fullSnapshot.data).toEqual([
         [ChangeType.AddNode, [null, 'DIV'], [1, 'LINK', ['rel', 'stylesheet'], ['href', href]], [0, 'A']],
@@ -334,7 +336,7 @@ describe('trackMutation', () => {
       ])
       expect(stats).toEqual({
         cssText: { count: 1, max: 21, sum: 21 },
-        serializationDuration: jasmine.anything(),
+        serializationDuration: expect.anything(),
       })
     })
 
@@ -377,13 +379,13 @@ describe('trackMutation', () => {
     })
 
     describe('for shadow DOM', () => {
-      let addShadowRootSpy: jasmine.Spy<AddShadowRootCallBack>
-      let removeShadowRootSpy: jasmine.Spy<RemoveShadowRootCallBack>
+      let addShadowRootSpy: Mock<AddShadowRootCallBack>
+      let removeShadowRootSpy: Mock<RemoveShadowRootCallBack>
       let scope: RecordingScope
 
       beforeEach(() => {
-        addShadowRootSpy = jasmine.createSpy()
-        removeShadowRootSpy = jasmine.createSpy()
+        addShadowRootSpy = vi.fn()
+        removeShadowRootSpy = vi.fn()
         scope = createRecordingScopeForTesting({
           addShadowRoot: addShadowRootSpy,
           removeShadowRoot: removeShadowRootSpy,
@@ -405,13 +407,13 @@ describe('trackMutation', () => {
         )
 
         expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'DIV'], [1, '#shadow-root'], [1, 'SPAN']]])
-        expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot, jasmine.anything())
+        expect(addShadowRootSpy).toHaveBeenCalledExactlyOnceWith(shadowRoot, expect.anything())
         expect(removeShadowRootSpy).not.toHaveBeenCalled()
       })
 
-      it('reuses the id of an adopted stylesheet that has already been serialized', async () => {
+      it('reuses the id of an adopted stylesheet that has already been serialized', async (ctx) => {
         if (!isAdoptedStyleSheetsSupported()) {
-          pending('No adoptedStyleSheets support.')
+          ctx.skip('No adoptedStyleSheets support.')
         }
 
         const cssText = 'div { color: green; }'
@@ -464,7 +466,7 @@ describe('trackMutation', () => {
 
         expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
-        expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
+        expect(removeShadowRootSpy).toHaveBeenCalledExactlyOnceWith(shadowRoot)
       })
 
       it('should call removeShadowRoot when parent of host is removed', async () => {
@@ -486,7 +488,7 @@ describe('trackMutation', () => {
 
         expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
-        expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
+        expect(removeShadowRootSpy).toHaveBeenCalledExactlyOnceWith(shadowRoot)
       })
 
       it('should call removeShadowRoot when removing a host containing other hosts in its children', async () => {
@@ -513,14 +515,14 @@ describe('trackMutation', () => {
         expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(2)
         expect(removeShadowRootSpy).toHaveBeenCalledTimes(2)
-        expect(removeShadowRootSpy.calls.argsFor(0)[0]).toBe(parentShadowRoot)
-        expect(removeShadowRootSpy.calls.argsFor(1)[0]).toBe(childShadowRoot)
+        expect(removeShadowRootSpy.mock.calls[0][0]).toBe(parentShadowRoot)
+        expect(removeShadowRootSpy.mock.calls[1][0]).toBe(childShadowRoot)
       })
     })
 
     it('removes a canvas from dirty canvases when it is removed', async () => {
       const canvasManager = createCanvasManager()
-      const forgetCanvasSpy = spyOn(canvasManager, 'forgetCanvas').and.callThrough()
+      const forgetCanvasSpy = vi.spyOn(canvasManager, 'forgetCanvas')
       const scope = createRecordingScopeForTesting({ canvasManager })
       let canvas!: HTMLCanvasElement
 
@@ -535,7 +537,7 @@ describe('trackMutation', () => {
         { scope }
       )
 
-      expect(forgetCanvasSpy).toHaveBeenCalledOnceWith(canvas)
+      expect(forgetCanvasSpy).toHaveBeenCalledExactlyOnceWith(canvas)
       expect(canvasManager.takeCapturableCanvases()).toEqual([])
     })
   })

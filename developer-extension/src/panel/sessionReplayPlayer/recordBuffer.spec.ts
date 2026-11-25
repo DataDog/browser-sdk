@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
 import type { BrowserRecord } from '@datadog/browser-rum/src/types'
 import type { RecordListener } from './recordBuffer'
@@ -41,13 +42,13 @@ describe('createRecordBuffer', () => {
 
   it('notifies its listeners only of the records that it keeps', () => {
     const buffer = createRecordBuffer()
-    const listener = jasmine.createSpy<RecordListener>()
+    const listener = vi.fn<RecordListener>()
     buffer.addListener(listener)
 
     buffer.add(SCROLL_RECORD)
     buffer.add(META_RECORD)
 
-    expect(listener.calls.allArgs()).toEqual([[META_RECORD]])
+    expect(listener.mock.calls).toEqual([[META_RECORD]])
   })
 
   it('notifies each new listener of the records that it already holds', () => {
@@ -55,11 +56,11 @@ describe('createRecordBuffer', () => {
     buffer.add(META_RECORD)
     buffer.add(SCROLL_RECORD)
 
-    const listener = jasmine.createSpy<RecordListener>()
+    const listener = vi.fn<RecordListener>()
     buffer.addListener(listener)
-    expect(listener.calls.allArgs()).toEqual([[META_RECORD], [SCROLL_RECORD]])
+    expect(listener.mock.calls).toEqual([[META_RECORD], [SCROLL_RECORD]])
 
     buffer.add(SCROLL_RECORD)
-    expect(listener.calls.allArgs()).toEqual([[META_RECORD], [SCROLL_RECORD], [SCROLL_RECORD]])
+    expect(listener.mock.calls).toEqual([[META_RECORD], [SCROLL_RECORD], [SCROLL_RECORD]])
   })
 })

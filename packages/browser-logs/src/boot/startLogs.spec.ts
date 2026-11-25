@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BufferedData } from '@datadog/browser-core'
 import { ErrorSource, display, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
 import { BufferedObservable } from '@datadog/js-core/util'
@@ -83,7 +84,7 @@ describe('logs', () => {
       mockSourceCodeContext({
         'Error\n    at deprecatedApi (http://foo.bar/index.js:20:10)': { service: 'checkout', version: '1.2.3' },
       })
-      const beforeSend = jasmine.createSpy('beforeSend')
+      const beforeSend = vi.fn()
       startLogsWithDefaults({
         configuration: { beforeSend, forwardReports: ['deprecation'], version: 'shell-version' },
       })
@@ -92,8 +93,8 @@ describe('logs', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
       await interceptor.waitForAllFetchCalls()
 
-      expect(beforeSend).toHaveBeenCalledOnceWith(
-        jasmine.objectContaining({
+      expect(beforeSend).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
           status: StatusType.warn,
           service: 'checkout',
           version: '1.2.3',
@@ -103,7 +104,7 @@ describe('logs', () => {
       )
       const log = getLoggedMessage(requests, 0)
       expect(log).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           message: 'deprecation: foo bar Found in http://foo.bar/index.js:20:10',
           status: StatusType.warn,
           origin: ErrorSource.REPORT,
@@ -120,7 +121,7 @@ describe('logs', () => {
     it('sends source code service and version as attributes and tags for errors passed to a logger', async () => {
       const stack = 'Error: checkout failed\n    at checkout (https://example.com/checkout.js:42:10)'
       mockSourceCodeContext({ [stack]: { service: 'checkout', version: '1.2.3', ddDebugId: 'debug-id' } })
-      const beforeSend = jasmine.createSpy('beforeSend')
+      const beforeSend = vi.fn()
       const { logger } = startLogsWithDefaults({ configuration: { beforeSend, version: 'global-version' } })
       const error = new Error('checkout failed')
       error.stack = stack
@@ -130,16 +131,16 @@ describe('logs', () => {
       await interceptor.waitForAllFetchCalls()
 
       expect(beforeSend).toHaveBeenCalledWith(
-        jasmine.objectContaining({
+        expect.objectContaining({
           service: 'checkout',
           version: '1.2.3',
           ddtags: 'sdk_version:test,service:checkout,version:1.2.3',
         }),
-        jasmine.anything()
+        expect.anything()
       )
       const log = getLoggedMessage(requests, 0)
       expect(log).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           service: 'checkout',
           version: '1.2.3',
           ddtags: 'sdk_version:test,service:checkout,version:1.2.3',
@@ -156,7 +157,7 @@ describe('logs', () => {
       it(`preserves other context and configuration values when source code context contains only ${Object.keys(context)[0]}`, () => {
         const stack = 'Error\n    at checkout (https://example.com/checkout.js:42:10)'
         mockSourceCodeContext({ [stack]: context })
-        const beforeSend = jasmine.createSpy('beforeSend')
+        const beforeSend = vi.fn()
         const { handleLog, logger, globalContext } = startLogsWithDefaults({
           configuration: { beforeSend, version: 'global-version' },
         })
@@ -165,7 +166,7 @@ describe('logs', () => {
         handleLog(DEFAULT_MESSAGE, logger, stack)
 
         expect(beforeSend).toHaveBeenCalledWith(
-          jasmine.objectContaining({
+          expect.objectContaining({
             service,
             version,
             ddtags: `sdk_version:test,service:${service},version:${version}`,
@@ -181,7 +182,7 @@ describe('logs', () => {
           it(`preserves customer tags from ${setter}: ${JSON.stringify(tags)}`, async () => {
             const stack = 'Error\n    at checkout (https://example.com/checkout.js:42:10)'
             mockSourceCodeContext({ [stack]: { service: 'checkout' } })
-            const beforeSend = jasmine.createSpy('beforeSend')
+            const beforeSend = vi.fn()
             const { handleLog, logger, globalContext } = startLogsWithDefaults({
               configuration: { beforeSend, version: 'global-version' },
             })
@@ -193,12 +194,12 @@ describe('logs', () => {
 
             handleLog(DEFAULT_MESSAGE, logger)
             expect(beforeSend).toHaveBeenCalledWith(
-              jasmine.objectContaining({ tags, ddtags: 'sdk_version:test,service:service,version:global-version' }),
+              expect.objectContaining({ tags, ddtags: 'sdk_version:test,service:service,version:global-version' }),
               undefined
             )
             handleLog(DEFAULT_MESSAGE, logger, stack)
             expect(beforeSend).toHaveBeenCalledWith(
-              jasmine.objectContaining({ tags, ddtags: 'sdk_version:test,service:checkout,version:global-version' }),
+              expect.objectContaining({ tags, ddtags: 'sdk_version:test,service:checkout,version:global-version' }),
               { handlingStack: stack }
             )
 
@@ -206,8 +207,8 @@ describe('logs', () => {
             await interceptor.waitForAllFetchCalls()
             const logs = requests[0].body.split('\n').map((log) => JSON.parse(log) as LogsEvent)
             expect(logs).toEqual([
-              jasmine.objectContaining({ tags, ddtags: 'sdk_version:test,service:service,version:global-version' }),
-              jasmine.objectContaining({ tags, ddtags: 'sdk_version:test,service:checkout,version:global-version' }),
+              expect.objectContaining({ tags, ddtags: 'sdk_version:test,service:service,version:global-version' }),
+              expect.objectContaining({ tags, ddtags: 'sdk_version:test,service:checkout,version:global-version' }),
             ])
           })
         })
@@ -235,7 +236,7 @@ describe('logs', () => {
       await interceptor.waitForAllFetchCalls()
 
       expect(getLoggedMessage(requests, 0)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           service: 'before-send-service',
           ddtags: 'sdk_version:test,service:before-send-service,version:before-send-version',
         })
@@ -260,14 +261,14 @@ describe('logs', () => {
         /^https:\/\/browser-intake-datadoghq\.com\/api\/v2\/logs\?ddsource=browser&dd-api-key=xxx&dd-evp-origin-version=test&dd-evp-origin=browser&dd-request-id=/
       )
       expect(getLoggedMessage(requests, 0)).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         foo: 'bar',
         message: 'message',
         service: 'service',
         ddtags: 'sdk_version:test,service:service',
-        session_id: jasmine.any(String),
+        session_id: expect.any(String),
         session: {
-          id: jasmine.any(String),
+          id: expect.any(String),
         },
         status: StatusType.warn,
         view: {
@@ -276,10 +277,10 @@ describe('logs', () => {
         },
         origin: ErrorSource.LOGGER,
         usr: {
-          anonymous_id: jasmine.any(String),
+          anonymous_id: expect.any(String),
         },
         tab: {
-          id: jasmine.any(String),
+          id: expect.any(String),
         },
         _dd: {},
       })
@@ -299,7 +300,7 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
+      const sendSpy = vi.spyOn(mockEventBridge(), 'send').mockReturnValue(undefined)
       const { handleLog, logger } = startLogsWithDefaults()
 
       handleLog(DEFAULT_MESSAGE, logger)
@@ -307,18 +308,18 @@ describe('logs', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
 
       expect(requests.length).toEqual(0)
-      const [message] = sendSpy.calls.mostRecent().args
+      const [message] = sendSpy.mock.lastCall!
       const parsedMessage = JSON.parse(message)
       expect(parsedMessage).toEqual({
         eventType: 'log',
-        event: jasmine.objectContaining({ message: 'message' }),
+        event: expect.objectContaining({ message: 'message' }),
       })
     })
   })
 
   it('should not print the log twice when console handler is enabled', () => {
-    const consoleLogSpy = spyOn(console, 'log')
-    const displayLogSpy = spyOn(display, 'log')
+    const consoleLogSpy = vi.spyOn(console, 'log').mockReturnValue(undefined)
+    const displayLogSpy = vi.spyOn(display, 'log').mockReturnValue(undefined)
     startLogsWithDefaults({
       configuration: { forwardConsoleLogs: ['log'] },
     })
@@ -393,7 +394,7 @@ describe('logs', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
 
       const firstRequest = getLoggedMessage(requests, 0)
-      expect(firstRequest.usr).toEqual(jasmine.objectContaining({ id: 'from-global-context' }))
+      expect(firstRequest.usr).toEqual(expect.objectContaining({ id: 'from-global-context' }))
     })
 
     it('RUM context should take precedence over global context', () => {

@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
 
 describe('stacktrace', () => {
@@ -170,11 +171,11 @@ anotherFunction@http://example.com/app.js:100:5`,
 
       expect(result.length).toBeGreaterThan(0)
       expect(result[0]).toEqual(
-        jasmine.objectContaining({
-          fileName: jasmine.any(String),
-          function: jasmine.any(String),
-          lineNumber: jasmine.any(Number),
-          columnNumber: jasmine.any(Number),
+        expect.objectContaining({
+          fileName: expect.any(String),
+          function: expect.any(String),
+          lineNumber: expect.any(Number),
+          columnNumber: expect.any(Number),
         })
       )
     })

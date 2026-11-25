@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { isIntakeUrl } from '@datadog/js-core/transport'
 
 describe('intakeSites', () => {

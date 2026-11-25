@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Subscription } from '@datadog/js-core/util'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, createNewEvent, registerCleanupTask, waitAfterNextPaint } from '@datadog/browser-core/test'
@@ -24,7 +25,7 @@ describe('viewportObservable', () => {
     window.dispatchEvent(createNewEvent('resize'))
     clock.tick(200)
 
-    expect(viewportDimension).toEqual({ width: jasmine.any(Number), height: jasmine.any(Number) })
+    expect(viewportDimension).toEqual({ width: expect.any(Number), height: expect.any(Number) })
   })
 
   describe('get layout width and height has similar native behaviour', () => {
@@ -47,7 +48,7 @@ describe('viewportObservable', () => {
         // Some devices don't follow specification of including scrollbars
         { width: window.innerWidth, height: window.innerHeight },
         { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight },
-      ]).toContain(getViewportDimension())
+      ]).toContainEqual(getViewportDimension())
     })
   })
 })

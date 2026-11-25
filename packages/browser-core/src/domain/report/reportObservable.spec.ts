@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { Subscription } from '@datadog/js-core/util'
 import type { MockCspEventListener, MockReportingObserver } from '../../../test'
 import {
@@ -14,15 +16,15 @@ describe('report observable', () => {
   let reportingObserver: MockReportingObserver
   let cspEventListener: MockCspEventListener
   let consoleSubscription: Subscription
-  let notifyReport: jasmine.Spy<(reportError: RawReportError) => void>
+  let notifyReport: Mock<(reportError: RawReportError) => void>
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!window.ReportingObserver) {
-      pending('ReportingObserver not supported')
+      ctx.skip('ReportingObserver not supported')
     }
     reportingObserver = mockReportingObserver()
     cspEventListener = mockCspEventListener()
-    notifyReport = jasmine.createSpy('notifyReport')
+    notifyReport = vi.fn()
   })
 
   afterEach(() => {
@@ -33,10 +35,10 @@ describe('report observable', () => {
       consoleSubscription = initReportObservable([type]).subscribe(notifyReport)
       reportingObserver.raiseReport(type)
 
-      const [report] = notifyReport.calls.mostRecent().args
+      const [report] = notifyReport.mock.lastCall!
 
       expect(report).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           message: `${type}: foo bar`,
           type: 'NavigatorVibrate',
         })
@@ -48,7 +50,7 @@ describe('report observable', () => {
     consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
     reportingObserver.raiseReport(RawReportType.intervention)
 
-    const [report] = notifyReport.calls.mostRecent().args
+    const [report] = notifyReport.mock.lastCall!
 
     expect(report.stack).toEqual(`NavigatorVibrate: foo bar
   at <anonymous> @ http://foo.bar/index.js:20:10`)
@@ -58,8 +60,8 @@ describe('report observable', () => {
     consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()
 
-    expect(notifyReport).toHaveBeenCalledOnceWith({
-      startClocks: jasmine.any(Object),
+    expect(notifyReport).toHaveBeenCalledExactlyOnceWith({
+      startClocks: expect.any(Object),
       source: ErrorSource.REPORT,
       message: "csp_violation: 'blob' blocked by 'worker-src' directive",
       type: 'worker-src',
@@ -79,7 +81,7 @@ describe('report observable', () => {
     consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
     reportingObserver.raiseReport(RawReportType.intervention)
 
-    const [report] = notifyReport.calls.mostRecent().args
+    const [report] = notifyReport.mock.lastCall!
 
     expect(report.debugIds).toEqual([{ url: 'http://foo.bar/index.js', id: debugId }])
   })
@@ -90,13 +92,15 @@ describe('report observable', () => {
     consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
     reportingObserver.raiseReport(RawReportType.intervention)
 
-    const [report] = notifyReport.calls.mostRecent().args
+    const [report] = notifyReport.mock.lastCall!
 
     expect(report.debugIds).toBeUndefined()
   })
 
   it(`should not notify ${RawReportType.cspViolation} when the event is not supported`, () => {
-    ;(EventTarget.prototype.addEventListener as jasmine.Spy).and.throwError('unsupported')
+    ;(EventTarget.prototype.addEventListener as Mock).mockImplementation(() => {
+      throw new Error('unsupported')
+    })
 
     consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()

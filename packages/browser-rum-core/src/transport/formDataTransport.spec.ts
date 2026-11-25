@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { createIdentityEncoder, DeflateEncoderStreamId as CoreDeflateEncoderStreamId } from '@datadog/browser-core'
 import { interceptRequests, readFormDataRequest } from '@datadog/browser-core/test'
 import { LifeCycle } from '../domain/lifeCycle'
@@ -28,7 +29,7 @@ describe('createFormDataTransport', () => {
 
     await transport.send(payload)
 
-    expect(interceptor.requests).toHaveSize(1)
+    expect(interceptor.requests).toHaveLength(1)
     expect(interceptor.requests[0].body).toBeInstanceOf(FormData)
     expect(await readFormDataRequest(interceptor.requests[0])).toEqual(payload)
   })

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { isSafari } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -245,7 +246,7 @@ describe('serializeDOMAttributes', () => {
         const attributes = serializeDOMAttributes(element, privacyLevel, transaction)
         const actual = valueOfAttribute(attributes, attribute.name) as boolean | string | undefined
         const expected = expectedValueForPrivacyLevel(testCase, element, attribute, privacyLevel)
-        expect(actual).withContext(`${testCase.html} for ${privacyLevel}`).toEqual(expected)
+        expect(actual, `${testCase.html} for ${privacyLevel}`).toEqual(expected)
       }
     }
 
@@ -353,7 +354,7 @@ describe('serializeVirtualAttributes', () => {
     for (const privacyLevel of PRIVACY_LEVELS) {
       const actual = serializeVirtualAttributes(element, privacyLevel, transaction)
       const expected = privacyLevel === NodePrivacyLevel.HIDDEN ? {} : expectedWhenNotHidden
-      expect(actual).withContext(`${element.tagName} ${privacyLevel}`).toEqual(expected)
+      expect(actual, `${element.tagName} ${privacyLevel}`).toEqual(expected)
       after?.(privacyLevel)
     }
   }
@@ -413,7 +414,7 @@ describe('serializeVirtualAttributes', () => {
 
       const iframeDocument = iframe.contentDocument!
       const link = iframeDocument.querySelector('link')!
-      expect(link.sheet).withContext('the stylesheet should have loaded').not.toBeNull()
+      expect(link.sheet, 'the stylesheet should have loaded').not.toBeNull()
 
       // Emulate a client-side navigation into a deeper directory. Only the document base URL
       // changes; the stylesheet stays loaded and applied, as it does in the browser. `<base>` is
@@ -571,7 +572,7 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an accessible external stylesheet
-    spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
+    vi.spyOn(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet', 'get').mockReturnValue({
       cssRules: [{ cssText: 'p { margin: 0; }' } as CSSRule] as unknown as CSSRuleList,
     } as CSSStyleSheet)
 
@@ -582,7 +583,7 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an inaccessible external stylesheet
-    spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
+    vi.spyOn(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet', 'get').mockReturnValue({
       get cssRules(): CSSRuleList {
         throw new Error('Cannot access rules')
       },

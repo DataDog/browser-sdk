@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { RumInitConfiguration, RumPluginOnInitOptions } from '@datadog/browser-rum-core'
 import { shopifyAppPixelPlugin } from './shopifyAppPixelPlugin'
 
@@ -11,7 +12,7 @@ describe('shopifyAppPixelPlugin', () => {
     void shopifyAppPixelPlugin().onInit!({ initConfiguration } as RumPluginOnInitOptions)
 
     expect(initConfiguration).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         trackViewsManually: true,
         trackUserInteractions: false,
         trackResources: false,

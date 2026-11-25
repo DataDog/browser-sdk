@@ -1,3 +1,4 @@
+import { afterEach, beforeEach } from 'vitest'
 import { stopMonitorErrorCollection } from '@datadog/js-core/monitor'
 import { setDebugMode } from '@datadog/js-core/util'
 import { resetAllowUntrustedEvents } from '@datadog/js-core/dom'

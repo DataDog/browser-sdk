@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { deepClone } from '@datadog/js-core/util'
 import { clocksNow, clocksOrigin } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
@@ -10,7 +11,7 @@ import type { ProfilingPayload } from './types'
 
 describe('createProfileAssembly', () => {
   function setupAssembly() {
-    const emitPayload = jasmine.createSpy<(payload: ProfilingPayload) => void>('emitPayload')
+    const emitPayload = vi.fn<(payload: ProfilingPayload) => void>()
     const lifeCycle = new LifeCycle()
     const assembly = createProfileAssembly(
       mockRumConfiguration({ applicationId: 'application-id' }),
@@ -44,10 +45,10 @@ describe('createProfileAssembly', () => {
 
     assembly.assemble(trace, startClocks, clocksNow(), 'session-id')
 
-    expect(emitPayload.calls.count()).toBe(1)
-    const payload = emitPayload.calls.mostRecent().args[0]
+    expect(emitPayload.mock.calls.length).toBe(1)
+    const payload = emitPayload.mock.lastCall![0]
     expect(payload.trace).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         startClocks,
         endClocks: clocksNow(),
         clocksOrigin: clocksOrigin(),
@@ -60,7 +61,7 @@ describe('createProfileAssembly', () => {
     )
     expect(payload.trace.samples).toEqual(trace.samples)
     expect(payload.profile).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         application: { id: 'application-id' },
         session: { id: 'session-id' },
         view: { id: ['view-id'], name: ['Home'] },

@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { globalObject, noop } from '@datadog/js-core/util'
 import { registerCleanupTask } from '@datadog/browser-core/test'

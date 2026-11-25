@@ -1,13 +1,15 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { waitNextMicrotask } from '../../../browser-core/test'
 import { BufferedObservable, mergeObservables, Observable } from './observable'
 
 describe('observable', () => {
   let observable: Observable<void>
-  let subscriber: jasmine.Spy<jasmine.Func>
+  let subscriber: Mock<(...args: any[]) => any>
 
   beforeEach(() => {
     observable = new Observable()
-    subscriber = jasmine.createSpy('sub')
+    subscriber = vi.fn()
   })
 
   it('should allow to subscribe and be notified', () => {
@@ -22,7 +24,7 @@ describe('observable', () => {
   })
 
   it('should notify multiple clients', () => {
-    const otherSubscriber = jasmine.createSpy('sub2')
+    const otherSubscriber = vi.fn()
     observable.subscribe(subscriber)
     observable.subscribe(otherSubscriber)
 
@@ -42,8 +44,8 @@ describe('observable', () => {
   })
 
   it('should execute onFirstSubscribe callback', () => {
-    const onFirstSubscribe = jasmine.createSpy('callback')
-    const otherSubscriber = jasmine.createSpy('sub2')
+    const onFirstSubscribe = vi.fn()
+    const otherSubscriber = vi.fn()
     observable = new Observable(onFirstSubscribe)
     expect(onFirstSubscribe).not.toHaveBeenCalled()
 
@@ -55,7 +57,7 @@ describe('observable', () => {
   })
 
   it('should notify the first subscriber if the onFirstSubscribe callback notifies synchronously ', () => {
-    const onFirstSubscribe = jasmine.createSpy('callback').and.callFake((observable: Observable<void>) => {
+    const onFirstSubscribe = vi.fn().mockImplementation((observable: Observable<void>) => {
       observable.notify()
     })
     observable = new Observable(onFirstSubscribe)
@@ -66,7 +68,7 @@ describe('observable', () => {
   })
 
   it('should pass the observable instance to the onFirstSubscribe callback', () => {
-    const onFirstSubscribe = jasmine.createSpy('callback')
+    const onFirstSubscribe = vi.fn()
     observable = new Observable(onFirstSubscribe)
     observable.subscribe(subscriber)
 
@@ -74,8 +76,8 @@ describe('observable', () => {
   })
 
   it('should execute onLastUnsubscribe callback', () => {
-    const onLastUnsubscribe = jasmine.createSpy('callback')
-    const otherSubscriber = jasmine.createSpy('sub2')
+    const onLastUnsubscribe = vi.fn()
+    const otherSubscriber = vi.fn()
     observable = new Observable(() => onLastUnsubscribe)
     const subscription = observable.subscribe(subscriber)
     const otherSubscription = observable.subscribe(otherSubscriber)
@@ -93,13 +95,13 @@ describe('mergeObservables', () => {
   let observableOne: Observable<void>
   let observableTwo: Observable<void>
   let mergedObservable: Observable<void>
-  let subscriber: jasmine.Spy<jasmine.Func>
+  let subscriber: Mock<(...args: any[]) => any>
 
   beforeEach(() => {
     observableOne = new Observable<void>()
     observableTwo = new Observable<void>()
     mergedObservable = mergeObservables(observableOne, observableTwo)
-    subscriber = jasmine.createSpy('subscriber')
+    subscriber = vi.fn()
   })
 
   it('should notify when one of the merged observable notifies', () => {
@@ -127,7 +129,7 @@ describe('BufferedObservable', () => {
     observable.notify('first')
     observable.notify('second')
 
-    const observer = jasmine.createSpy('observer')
+    const observer = vi.fn()
     observable.subscribe(observer)
 
     await waitNextMicrotask()
@@ -139,7 +141,7 @@ describe('BufferedObservable', () => {
     const observable = new BufferedObservable<string>(100)
     observable.notify('first')
 
-    const observer = jasmine.createSpy('observer')
+    const observer = vi.fn()
     observable.subscribe(observer)
 
     expect(observer).not.toHaveBeenCalled()
@@ -152,7 +154,7 @@ describe('BufferedObservable', () => {
   it('invokes the observer when new data is notified after subscription', async () => {
     const observable = new BufferedObservable<string>(100)
 
-    const observer = jasmine.createSpy('observer')
+    const observer = vi.fn()
     observable.subscribe(observer)
 
     observable.notify('first')
@@ -172,7 +174,7 @@ describe('BufferedObservable', () => {
     observable.notify('second')
     observable.notify('third')
 
-    const observer = jasmine.createSpy('observer')
+    const observer = vi.fn()
     observable.subscribe(observer)
 
     await waitNextMicrotask()
@@ -187,7 +189,7 @@ describe('BufferedObservable', () => {
     observable.notify('first')
     observable.notify('second')
 
-    const observer = jasmine.createSpy('observer').and.callFake(() => {
+    const observer = vi.fn().mockImplementation(() => {
       subscription.unsubscribe()
     })
     const subscription = observable.subscribe(observer)
@@ -201,7 +203,7 @@ describe('BufferedObservable', () => {
     const observable = new BufferedObservable<string>(100)
     observable.notify('first')
 
-    const observer = jasmine.createSpy('observer')
+    const observer = vi.fn()
     const subscription = observable.subscribe(observer)
 
     subscription.unsubscribe()
@@ -214,7 +216,7 @@ describe('BufferedObservable', () => {
   it('allows to unsubscribe after the buffered data', async () => {
     const observable = new BufferedObservable<string>(100)
 
-    const observer = jasmine.createSpy('observer')
+    const observer = vi.fn()
     const subscription = observable.subscribe(observer)
 
     await waitNextMicrotask()
@@ -234,7 +236,7 @@ describe('BufferedObservable', () => {
     observable.unbuffer()
     await waitNextMicrotask()
 
-    const observer = jasmine.createSpy('observer')
+    const observer = vi.fn()
     observable.subscribe(observer)
     await waitNextMicrotask()
 
@@ -246,7 +248,7 @@ describe('BufferedObservable', () => {
     observable.notify('first')
     observable.notify('second')
 
-    const observer = jasmine.createSpy('observer')
+    const observer = vi.fn()
     observable.subscribe(observer)
 
     observable.unbuffer()
@@ -258,7 +260,7 @@ describe('BufferedObservable', () => {
   })
 
   it('calls onDrop with the number of dropped items when unbuffering', async () => {
-    const onDrop = jasmine.createSpy('onDrop')
+    const onDrop = vi.fn()
     const observable = new BufferedObservable<string>(2, onDrop)
     observable.notify('first') // dropped
     observable.notify('second') // dropped
@@ -268,11 +270,11 @@ describe('BufferedObservable', () => {
     observable.unbuffer()
     await waitNextMicrotask()
 
-    expect(onDrop).toHaveBeenCalledOnceWith(2)
+    expect(onDrop).toHaveBeenCalledExactlyOnceWith(2)
   })
 
   it('does not call onDrop when no data was dropped', async () => {
-    const onDrop = jasmine.createSpy('onDrop')
+    const onDrop = vi.fn()
     const observable = new BufferedObservable<string>(2, onDrop)
     observable.notify('first')
     observable.notify('second')

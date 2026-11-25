@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { RelativeTime, Duration, ClocksState } from '@datadog/js-core/time'
 import { timeStampNow, relativeToClocks, relativeNow } from '@datadog/js-core/time'
 import { PageExitReason, display } from '@datadog/browser-core'
@@ -84,7 +86,7 @@ describe('track views automatically', () => {
 
     function mockGetElementById() {
       const fakeGetElementById = (elementId: string) => (elementId === 'testHashValue') as any as HTMLElement
-      return spyOn(document, 'getElementById').and.callFake(fakeGetElementById)
+      return vi.spyOn(document, 'getElementById').mockImplementation(fakeGetElementById)
     }
 
     it('should not create a new view when it is an Anchor navigation', () => {
@@ -155,13 +157,13 @@ describe('view lifecycle', () => {
   let lifeCycle: LifeCycle
   let viewTest: ViewTest
   let clock: Clock
-  let notifySpy: jasmine.Spy
+  let notifySpy: Mock
   let changeLocation: (to: string) => void
 
   beforeEach(() => {
     clock = mockClock()
     lifeCycle = new LifeCycle()
-    notifySpy = spyOn(lifeCycle, 'notify').and.callThrough()
+    notifySpy = vi.spyOn(lifeCycle, 'notify')
 
     viewTest = setupViewTest(
       { lifeCycle, initialLocation: '/foo' },
@@ -276,56 +278,56 @@ describe('view lifecycle', () => {
       expect(getViewCreateCount()).toBe(8)
 
       expect(getViewCreate(0)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: 'initial view name',
           service: 'initial service',
           version: 'initial version',
         })
       )
       expect(getViewCreate(1)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: 'initial view name',
           service: 'initial service',
           version: 'initial version',
         })
       )
       expect(getViewCreate(2)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: 'view 1',
           service: 'service 1',
           version: 'version 1',
         })
       )
       expect(getViewCreate(3)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: 'view 2',
           service: 'service 2',
           version: 'version 2',
         })
       )
       expect(getViewCreate(4)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: 'view 2',
           service: 'service 2',
           version: 'version 2',
         })
       )
       expect(getViewCreate(5)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: 'view 3',
           service: 'service 3',
           version: 'version 3',
         })
       )
       expect(getViewCreate(6)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: undefined,
           service: 'app-id',
           version: undefined,
         })
       )
       expect(getViewCreate(7)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           name: undefined,
           service: 'app-id',
           version: undefined,
@@ -407,17 +409,17 @@ describe('view lifecycle', () => {
   })
 
   it('should notify BEFORE_VIEW_CREATED before VIEW_CREATED', () => {
-    expect(notifySpy.calls.argsFor(0)[0]).toEqual(LifeCycleEventType.BEFORE_VIEW_CREATED)
-    expect(notifySpy.calls.argsFor(1)[0]).toEqual(LifeCycleEventType.VIEW_CREATED)
+    expect(notifySpy.mock.calls[0][0]).toEqual(LifeCycleEventType.BEFORE_VIEW_CREATED)
+    expect(notifySpy.mock.calls[1][0]).toEqual(LifeCycleEventType.VIEW_CREATED)
   })
 
   it('should notify AFTER_VIEW_ENDED after VIEW_ENDED', () => {
-    const callsCount = notifySpy.calls.count()
+    const callsCount = notifySpy.mock.calls.length
 
     viewTest.stop()
 
-    expect(notifySpy.calls.argsFor(callsCount)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
-    expect(notifySpy.calls.argsFor(callsCount + 1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
+    expect(notifySpy.mock.calls[callsCount][0]).toEqual(LifeCycleEventType.VIEW_ENDED)
+    expect(notifySpy.mock.calls[callsCount + 1][0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
   })
 })
 
@@ -468,9 +470,9 @@ describe('view metrics', () => {
   })
 
   describe('common view metrics', () => {
-    it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+    it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', (ctx) => {
       if (!isLayoutShiftSupported()) {
-        pending('CLS web vital not supported')
+        ctx.skip('CLS web vital not supported')
       }
       const { getViewUpdateCount, getViewUpdate } = viewTest
 
@@ -490,13 +492,13 @@ describe('view metrics', () => {
         time: clock.relative(0),
         previousRect: undefined,
         currentRect: undefined,
-        devicePixelRatio: jasmine.any(Number),
+        devicePixelRatio: expect.any(Number),
       })
     })
 
-    it('should not be updated after view end', () => {
+    it('should not be updated after view end', (ctx) => {
       if (!isLayoutShiftSupported()) {
-        pending('CLS web vital not supported')
+        ctx.skip('CLS web vital not supported')
       }
       const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
       startView()
@@ -527,7 +529,7 @@ describe('view metrics', () => {
       clock.tick(1)
 
       expect(getViewUpdateCount()).toEqual(2)
-      expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual(jasmine.any(Object))
+      expect(getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual(expect.any(Object))
     })
 
     it('should be updated for 5 min after view end', () => {
@@ -614,9 +616,9 @@ describe('view metrics', () => {
 
       it('should be added only on the initial view', () => {
         expect(initialView.last.initialViewMetrics).toEqual(
-          jasmine.objectContaining({
+          expect.objectContaining({
             firstContentfulPaint: 123 as Duration,
-            navigationTimings: jasmine.any(Object),
+            navigationTimings: expect.any(Object),
             largestContentfulPaint: {
               value: 789 as Duration,
               targetSelector: undefined,
@@ -637,7 +639,7 @@ describe('view metrics', () => {
       })
 
       it('should update the initial view loadingTime following the loadEventEnd value', () => {
-        expect(initialView.last.commonViewMetrics.loadingTime).toEqual(jasmine.any(Number))
+        expect(initialView.last.commonViewMetrics.loadingTime).toEqual(expect.any(Number))
       })
     })
   })
@@ -711,9 +713,9 @@ describe('view metrics when betaTrackSoftNavigations is true', () => {
     expect(routeChangeUpdate.initialViewMetrics.largestContentfulPaint?.value).toBe(200 as RelativeTime)
   })
 
-  it('only counts layout shifts and interactions from the soft navigation onward for route_change views', () => {
+  it('only counts layout shifts and interactions from the soft navigation onward for route_change views', (ctx) => {
     if (!isLayoutShiftSupported() || !isInteractionToNextPaintSupported()) {
-      pending('CLS or INP web vital not supported')
+      ctx.skip('CLS or INP web vital not supported')
     }
     const { getViewUpdate, getViewUpdateCount, getViewCreate, getViewCreateCount, startView } = viewTest
     startView()
@@ -790,7 +792,7 @@ describe('view metrics when betaTrackSoftNavigations is true', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(viewTest.getViewUpdate(1).loadingType).toBe(ViewLoadingType.INITIAL_LOAD)
-    expect(viewTest.getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual(jasmine.any(Object))
+    expect(viewTest.getViewUpdate(1).initialViewMetrics.navigationTimings).toEqual(expect.any(Object))
   })
 })
 
@@ -929,7 +931,7 @@ describe('view custom timings', () => {
   it('should sanitized timing name', () => {
     const { getViewUpdate, addTiming } = viewTest
 
-    const displaySpy = spyOn(display, 'warn')
+    const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
 
     clock.tick(1234)
     addTiming('foo bar-qux.@zip_21%$*€👋', timeStampNow())
@@ -994,7 +996,7 @@ describe('view metrics when trackViewMetricsManually is true', () => {
 
   it('does not collect paint metrics when restoring from the BFCache', () => {
     const { getViewUpdate, getViewUpdateCount } = viewTest
-    spyOn(window, 'requestAnimationFrame').and.callFake((callback: FrameRequestCallback) => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
       callback(performance.now())
       return 0
     })
@@ -1264,19 +1266,19 @@ describe('start view', () => {
     startView({ service: 'service 2', version: 'version 2' })
 
     expect(getViewUpdate(2)).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         service: 'app-id',
         version: undefined,
       })
     )
     expect(getViewUpdate(4)).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         service: 'service 1',
         version: 'version 1',
       })
     )
     expect(getViewUpdate(6)).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         service: 'service 2',
         version: 'version 2',
       })
@@ -1288,7 +1290,7 @@ describe('start view', () => {
 
     startView({ service: null, version: null })
     expect(getViewUpdate(2)).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         service: 'app-id',
         version: undefined,
       })

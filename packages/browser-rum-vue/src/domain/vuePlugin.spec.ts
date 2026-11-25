@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { version as vueVersion } from 'vue'
 import { display, toMajorVersionIntegration } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
@@ -7,7 +8,7 @@ import { vuePlugin, resetVuePlugin, startVueViewWhenReady, addVueErrorWhenReady 
 
 const PUBLIC_API = {} as RumPublicApi
 
-function initPlugin(configuration: VuePluginConfiguration, startView = jasmine.createSpy()) {
+function initPlugin(configuration: VuePluginConfiguration, startView = vi.fn()) {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises -- onInit never returns a promise for this plugin
   vuePlugin(configuration).onInit({
     publicApi: { startView } as unknown as RumPublicApi,
@@ -27,7 +28,7 @@ describe('vuePlugin', () => {
   })
 
   it('returns a plugin object with name "vue"', () => {
-    expect(vuePlugin()).toEqual(jasmine.objectContaining({ name: 'vue' }))
+    expect(vuePlugin()).toEqual(expect.objectContaining({ name: 'vue' }))
   })
 
   it('replays views notified before onInit, in order', async () => {
@@ -35,14 +36,14 @@ describe('vuePlugin', () => {
     startVueViewWhenReady('/b')
     const startView = initPlugin({ router: true })
     await waitNextMicrotask()
-    expect(startView.calls.allArgs()).toEqual([['/a'], ['/b']])
+    expect(startView.mock.calls).toEqual([['/a'], ['/b']])
   })
 
   it('starts views notified after onInit', async () => {
     const startView = initPlugin({ router: true })
     await waitNextMicrotask()
     startVueViewWhenReady('/a')
-    expect(startView).toHaveBeenCalledOnceWith('/a')
+    expect(startView).toHaveBeenCalledExactlyOnceWith('/a')
   })
 
   it('starts each view once when onInit is called several times', async () => {
@@ -51,16 +52,16 @@ describe('vuePlugin', () => {
     await waitNextMicrotask()
     startVueViewWhenReady('/a')
     expect(firstStartView).not.toHaveBeenCalled()
-    expect(startView).toHaveBeenCalledOnceWith('/a')
+    expect(startView).toHaveBeenCalledExactlyOnceWith('/a')
   })
 
   it('warns and does not start views when router is not enabled', async () => {
-    const warnSpy = spyOn(display, 'warn')
+    const warnSpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
     startVueViewWhenReady('/a')
     const startView = initPlugin({})
     await waitNextMicrotask()
     expect(startView).not.toHaveBeenCalled()
-    expect(warnSpy).toHaveBeenCalledOnceWith(
+    expect(warnSpy).toHaveBeenCalledExactlyOnceWith(
       '`router: true` is missing from the vue plugin configuration, the view will not be tracked.'
     )
   })
@@ -72,25 +73,25 @@ describe('vuePlugin', () => {
     const startView = initPlugin({ router: true })
     await waitNextMicrotask()
     expect(startView).toHaveBeenCalledTimes(500)
-    expect(startView.calls.first().args[0]).toBe('/1')
+    expect(startView.mock.calls[0][0]).toBe('/1')
   })
 
   it('replays errors notified before onRumStart, then reports new ones', async () => {
-    const addError = jasmine.createSpy()
+    const addError = vi.fn()
     const first = error('first')
     addVueErrorWhenReady(first)
     vuePlugin().onRumStart({ addError })
     await waitNextMicrotask()
     const second = error('second')
     addVueErrorWhenReady(second)
-    expect(addError.calls.allArgs()).toEqual([[first], [second]])
+    expect(addError.mock.calls).toEqual([[first], [second]])
   })
 
   it('keeps only the 500 most recent errors before onRumStart', async () => {
     for (let i = 0; i < 501; i++) {
       addVueErrorWhenReady(error(String(i)))
     }
-    const addError = jasmine.createSpy()
+    const addError = vi.fn()
     vuePlugin().onRumStart({ addError })
     await waitNextMicrotask()
     expect(addError).toHaveBeenCalledTimes(500)

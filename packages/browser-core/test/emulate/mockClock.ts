@@ -1,11 +1,12 @@
+import { vi } from 'vitest'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export type Clock = ReturnType<typeof mockClock>
 
 export function mockClock() {
-  jasmine.clock().install()
-  jasmine.clock().mockDate()
+  // Fake the same APIs as Jasmine's clock did; `performance.now()` is mocked below
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] })
 
   const timeOrigin = performance.timing.navigationStart // @see getTimeOrigin() in @datadog/js-core/time
   const timeStampStart = Date.now()
@@ -14,9 +15,15 @@ export function mockClock() {
   // how far the system clock was moved away from the monotonic clock by `jumpSystemClock()`
   let systemClockShift = 0
 
-  spyOn(performance, 'now').and.callFake(() => Date.now() - timeOrigin - systemClockShift)
+  // Vitest's fake `Date.now()` only advances by whole milliseconds, while `tick()` accepts fractional
+  // durations: keep the sub-millisecond part, so `performance.now()` stays precise like a real one.
+  let tickedDuration = 0
 
-  registerCleanupTask(() => jasmine.clock().uninstall())
+  vi.spyOn(performance, 'now').mockImplementation(
+    () => Date.now() - timeOrigin - systemClockShift + (tickedDuration % 1)
+  )
+
+  registerCleanupTask(() => vi.useRealTimers())
 
   return {
     /**
@@ -29,8 +36,11 @@ export function mockClock() {
      * invokation (the start of the test).
      */
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
-    tick: (ms: number) => jasmine.clock().tick(ms),
-    setDate: (date: Date) => jasmine.clock().mockDate(date),
+    tick: (ms: number) => {
+      tickedDuration += ms
+      vi.advanceTimersByTime(ms)
+    },
+    setDate: (date: Date) => vi.setSystemTime(date),
     /**
      * Moves the system clock (`Date.now()`) by X milliseconds, forward or back, while
      * `performance.now()` carries on unaffected — as an NTP step or a manual clock change would.
@@ -38,7 +48,7 @@ export function mockClock() {
      */
     jumpSystemClock: (ms: number) => {
       systemClockShift += ms
-      jasmine.clock().mockDate(new Date(Date.now() + ms))
+      vi.setSystemTime(Date.now() + ms)
     },
   }
 }

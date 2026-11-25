@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mockBaseConfiguration, mockCookies, mockUnreadableCookies, registerCleanupTask } from '../../test'
 import { buildCookieOptions, getCookie, getCookies, getCurrentSite, getInitCookie, resetInitCookies } from './cookie'
 
@@ -99,7 +100,7 @@ describe('buildCookieOptions', () => {
       secure: false,
       crossSite: false,
       partitioned: false,
-      domain: jasmine.any(String),
+      domain: expect.any(String),
     })
   })
 })

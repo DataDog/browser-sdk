@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { getConstructorName, tryJsonParse } from './objectUtils'
 
 describe('objectUtils', () => {
@@ -51,7 +52,7 @@ describe('objectUtils', () => {
 
     it('should strip __proto__ key', () => {
       const result = tryJsonParse('{"a":1,"__proto__":{"injected":true}}')
-      expect(Object.prototype.hasOwnProperty.call(result, '__proto__')).toBeFalse()
+      expect(Object.prototype.hasOwnProperty.call(result, '__proto__')).toBe(false)
       expect(({} as any).injected).toBeUndefined()
     })
 

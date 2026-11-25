@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import { getCookie, setCookie } from '../src/browser/cookie'
 import { toSessionState } from '../src/domain/session/sessionState'
@@ -30,12 +31,12 @@ interface Cookie {
 export function mockCookies({ filter }: { filter?: (cookie: Cookie) => boolean } = {}) {
   let cookies: Cookie[] = []
 
-  const getter = jasmine.createSpy('document.cookie getter').and.callFake(() => {
+  const getter = vi.fn().mockImplementation(() => {
     removeExpiredCookies()
     return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join(';')
   })
 
-  const setter = jasmine.createSpy('document.cookie setter').and.callFake((cookieString: string) => {
+  const setter = vi.fn().mockImplementation((cookieString: string) => {
     const cookie = parseSingleCookieString(cookieString)
 
     if (filter && !filter(cookie)) {

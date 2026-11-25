@@ -25,7 +25,8 @@
   },
   "devDependencies": {
     "@datadog/browser-core": "workspace:*",
-    "@datadog/js-core": "workspace:*"
+    "@datadog/js-core": "workspace:*",
+    "vitest": "5.1.1"
   },
   "volta": {
     "extends": "../../package.json"

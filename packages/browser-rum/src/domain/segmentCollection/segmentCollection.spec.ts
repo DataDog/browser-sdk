@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import type { ClocksState } from '@datadog/js-core/time'
 import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, PageExitReason } from '@datadog/browser-core'
@@ -42,8 +44,8 @@ describe('startSegmentCollection', () => {
   let worker: MockWorker
   let httpRequestSpy: {
     observable: Observable<HttpRequestEvent<ReplayPayload>>
-    sendOnExit: jasmine.Spy<HttpRequest<ReplayPayload>['sendOnExit']>
-    send: jasmine.Spy<HttpRequest<ReplayPayload>['send']>
+    sendOnExit: Mock<HttpRequest<ReplayPayload>['sendOnExit']>
+    send: Mock<HttpRequest<ReplayPayload>['send']>
   }
   let addRecord: (record: BrowserRecord) => void
   let context: SegmentContext | undefined
@@ -60,8 +62,8 @@ describe('startSegmentCollection', () => {
     lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
   }
 
-  function readMostRecentMetadata(spy: jasmine.Spy<HttpRequest['send']>) {
-    return readMetadataFromReplayPayload(spy.calls.mostRecent().args[0])
+  function readMostRecentMetadata(spy: Mock<HttpRequest<ReplayPayload>['send']>) {
+    return readMetadataFromReplayPayload(spy.mock.lastCall![0])
   }
 
   beforeEach(() => {
@@ -69,8 +71,8 @@ describe('startSegmentCollection', () => {
     worker = new MockWorker()
     httpRequestSpy = {
       observable: new Observable<HttpRequestEvent<ReplayPayload>>(),
-      sendOnExit: jasmine.createSpy(),
-      send: jasmine.createSpy(),
+      sendOnExit: vi.fn(),
+      send: vi.fn(),
     }
     context = CONTEXT
     ;({ stop: stopSegmentCollection, addRecord } = doStartSegmentCollection(
@@ -118,14 +120,14 @@ describe('startSegmentCollection', () => {
 
   it('includes metadata for segment telemetry in the segment payload', () => {
     addRecordAndFlushSegment()
-    expect(httpRequestSpy.sendOnExit.calls.mostRecent().args[0]).toEqual({
-      data: jasmine.anything(),
-      bytesCount: jasmine.anything(),
-      cssText: jasmine.anything(),
-      isFullSnapshot: jasmine.anything(),
-      rawSize: jasmine.anything(),
-      recordCount: jasmine.anything(),
-      serializationDuration: jasmine.anything(),
+    expect(httpRequestSpy.sendOnExit.mock.lastCall![0]).toEqual({
+      data: expect.anything(),
+      bytesCount: expect.anything(),
+      cssText: expect.anything(),
+      isFullSnapshot: expect.anything(),
+      rawSize: expect.anything(),
+      recordCount: expect.anything(),
+      serializationDuration: expect.anything(),
     })
   })
 

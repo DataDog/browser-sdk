@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { RumActionEvent, RumResourceEvent } from '@datadog/browser-rum'
 import { FacetRegistry } from '../../../hooks/useEvents'
 import type { FacetValuesFilter } from '../../../hooks/useEvents'

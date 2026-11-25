@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement, mockRumConfiguration } from '../../../test'
 import type { BrowserWindow } from '../privacy'

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { noop } from '@datadog/js-core/util'
 import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
@@ -23,11 +25,11 @@ import { createChangeDecoder } from './encoding'
 describe('record', () => {
   let recordApi: RecordAPI
   let lifeCycle: LifeCycle
-  let emitSpy: jasmine.Spy<EmitRecordCallback>
+  let emitSpy: Mock<EmitRecordCallback>
   const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
-    emitSpy = jasmine.createSpy()
+    emitSpy = vi.fn()
 
     registerCleanupTask(() => {
       recordApi?.stop()
@@ -64,12 +66,12 @@ describe('record', () => {
       .map((record) => record.data)
 
     expect(styleSheetRuleData).toEqual([
-      jasmine.objectContaining({ adds: [{ rule: 'body { background: #000; }', index: undefined }] }),
-      jasmine.objectContaining({ adds: [{ rule: 'body { background: #111; }', index: undefined }] }),
-      jasmine.objectContaining({ removes: [{ index: 0 }] }),
-      jasmine.objectContaining({ adds: [{ rule: 'body { color: #fff; }', index: undefined }] }),
-      jasmine.objectContaining({ removes: [{ index: 0 }] }),
-      jasmine.objectContaining({ adds: [{ rule: 'body { color: #ccc; }', index: undefined }] }),
+      expect.objectContaining({ adds: [{ rule: 'body { background: #000; }', index: undefined }] }),
+      expect.objectContaining({ adds: [{ rule: 'body { background: #111; }', index: undefined }] }),
+      expect.objectContaining({ removes: [{ index: 0 }] }),
+      expect.objectContaining({ adds: [{ rule: 'body { color: #fff; }', index: undefined }] }),
+      expect.objectContaining({ removes: [{ index: 0 }] }),
+      expect.objectContaining({ adds: [{ rule: 'body { color: #ccc; }', index: undefined }] }),
     ])
   })
 
@@ -183,7 +185,7 @@ describe('record', () => {
 
       expect(getLastChangeOfType(ChangeType.InputSelection, getEmittedRecords())).toEqual([
         ChangeType.InputSelection,
-        [InputSelectionState.Selected, jasmine.any(Number)],
+        [InputSelectionState.Selected, expect.any(Number)],
       ])
     })
 
@@ -235,7 +237,7 @@ describe('record', () => {
       const shadowRoot = createShadow()
       appendElement('<div class="toto"></div>', shadowRoot)
       startRecording()
-      spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
+      vi.spyOn(recordApi.shadowRootsController, 'removeShadowRoot').mockReturnValue(undefined)
 
       expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
       expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(0)
@@ -263,7 +265,7 @@ describe('record', () => {
       appendElement('<div></div>', host.shadowRoot!)
 
       startRecording()
-      spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
+      vi.spyOn(recordApi.shadowRootsController, 'removeShadowRoot').mockReturnValue(undefined)
       expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
       expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(0)
 
@@ -303,7 +305,7 @@ describe('record', () => {
       input = appendElement('<input target />') as HTMLInputElement
       audio = appendElement('<audio controls autoplay target></audio>') as HTMLAudioElement
       startRecording()
-      emitSpy.calls.reset()
+      emitSpy.mockClear()
     })
 
     it('move', () => {
@@ -339,7 +341,7 @@ describe('record', () => {
       input.value = 'newValue'
       input.dispatchEvent(createNewEvent('input', { target: input }))
 
-      const record = emitSpy.calls.mostRecent().args[0]
+      const record = emitSpy.mock.lastCall![0]
       expect(record.type).toBe(RecordType.Change)
       expect((record as BrowserChangeRecord).data.map((change) => change[0])).toContain(ChangeType.InputValue)
     })
@@ -359,9 +361,9 @@ describe('record', () => {
       expect(getEmittedRecords()[0].type).toBe(RecordType.Focus)
     })
 
-    it('visual viewport resize', () => {
+    it('visual viewport resize', (ctx) => {
       if (!window.visualViewport) {
-        pending('visualViewport not supported')
+        ctx.skip('visualViewport not supported')
       }
 
       visualViewport!.dispatchEvent(createNewEvent('resize'))
@@ -396,14 +398,14 @@ describe('record', () => {
   }
 
   function getEmittedRecordCount(): number {
-    return emitSpy.calls.allArgs().length
+    return emitSpy.mock.calls.length
   }
 
   function getEmittedRecords(): BrowserRecord[] {
     const changeDecoder = createChangeDecoder()
 
     const decodedRecords: BrowserRecord[] = []
-    for (const [record] of emitSpy.calls.allArgs()) {
+    for (const [record] of emitSpy.mock.calls) {
       if (
         record.type === RecordType.Change ||
         (record.type === RecordType.FullSnapshot && record.format === SnapshotFormat.Change)
@@ -427,7 +429,7 @@ export function getLastIncrementalSnapshotData<T extends BrowserIncrementalSnaps
     (record): record is BrowserIncrementalSnapshotRecord & { data: T } =>
       record.type === RecordType.IncrementalSnapshot && record.data.source === source
   )
-  expect(record).toBeTruthy(`Could not find IncrementalSnapshot/${source} in ${records.length} records`)
+  expect(record, `Could not find IncrementalSnapshot/${source} in ${records.length} records`).toBeTruthy()
   return record!.data
 }
 

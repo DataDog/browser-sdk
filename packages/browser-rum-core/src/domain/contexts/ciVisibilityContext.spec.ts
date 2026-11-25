@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { display } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
@@ -109,7 +110,7 @@ describe('startCiVisibilityContext', () => {
     })
 
     it('should not throw and emit a warning when Cypress.env throws', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
       mockCiVisibilityValues(undefined, 'globals-throws')
 
       expect(() => {
@@ -123,11 +124,11 @@ describe('startCiVisibilityContext', () => {
 
       expect(defaultRumEventAttributes).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledTimes(1)
-      expect(displaySpy.calls.mostRecent().args[0]).toContain('5.88.0')
+      expect(displaySpy.mock.lastCall![0]).toContain('5.88.0')
     })
 
     it('should not emit a warning when Cypress.env returns a value', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
       mockCiVisibilityValues('trace_id_value')
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hook, cookieObservable))
 
@@ -135,7 +136,7 @@ describe('startCiVisibilityContext', () => {
     })
 
     it('should not emit a warning when the cookie is set', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
       mockCiVisibilityValues('trace_id_value', 'cookies')
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hook, cookieObservable))
 
@@ -143,7 +144,7 @@ describe('startCiVisibilityContext', () => {
     })
 
     it('should not emit a warning when Cypress is not present', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn').mockReturnValue(undefined)
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hook, cookieObservable))
 
       expect(displaySpy).not.toHaveBeenCalled()

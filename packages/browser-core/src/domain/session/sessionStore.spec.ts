@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { globalObject } from '@datadog/js-core/util'
 import { mockBaseConfiguration, mockUnreadableCookies, replaceMockable } from '../../../test'
 import { display } from '../../tools/display'
@@ -9,7 +10,7 @@ describe('session store', () => {
     describe('sessionPersistence: cookie (default)', () => {
       it('returns cookie strategy when cookies are available', async () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(mockBaseConfiguration())
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.COOKIE }))
       })
 
       it('returns undefined when cookies are not available', async () => {
@@ -22,7 +23,7 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           mockBaseConfiguration({ sessionPersistence: [SessionPersistence.COOKIE] })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.COOKIE }))
       })
     })
 
@@ -31,7 +32,7 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           mockBaseConfiguration({ sessionPersistence: [SessionPersistence.LOCAL_STORAGE] })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
       it('returns undefined when local storage is not available', async () => {
@@ -48,18 +49,18 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           mockBaseConfiguration({ sessionPersistence: [SessionPersistence.MEMORY] })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.MEMORY }))
       })
     })
 
     it('returns undefined when sessionPersistence is invalid', async () => {
-      const displayErrorSpy = spyOn(display, 'error')
+      const displayErrorSpy = vi.spyOn(display, 'error').mockReturnValue(undefined)
 
       const sessionStoreStrategyType = await selectSessionStoreStrategyType(
         mockBaseConfiguration({ sessionPersistence: ['invalid'] as unknown as SessionPersistence[] })
       )
       expect(sessionStoreStrategyType).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
+      expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith("Invalid session persistence 'invalid'")
     })
 
     describe('sessionPersistence as array', () => {
@@ -69,7 +70,7 @@ describe('session store', () => {
             sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
           })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.COOKIE }))
       })
 
       it('falls back to next strategy when first is unavailable', async () => {
@@ -79,7 +80,7 @@ describe('session store', () => {
             sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
           })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
       it('falls back to memory when cookie and local storage are unavailable', async () => {
@@ -94,16 +95,16 @@ describe('session store', () => {
             ],
           })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.MEMORY }))
       })
 
       it('falls back to the next strategy when document.cookie is not accessible', async () => {
-        spyOn(display, 'error')
+        vi.spyOn(display, 'error').mockReturnValue(undefined)
         makeCookiesUnreadable()
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           mockBaseConfiguration({ sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.MEMORY] })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.MEMORY }))
       })
 
       it('falls back to the next strategy when document.cookie is not accessible and trackSessionAcrossSubdomains is enabled', async () => {
@@ -114,7 +115,7 @@ describe('session store', () => {
             trackSessionAcrossSubdomains: true,
           })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.MEMORY }))
       })
 
       it('returns undefined when no strategy in array is available', async () => {
@@ -139,7 +140,7 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           mockBaseConfiguration({ sessionPersistence: [SessionPersistence.LOCAL_STORAGE] })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
       it('stops at first available strategy and does not try subsequent ones', async () => {
@@ -149,23 +150,23 @@ describe('session store', () => {
           })
         )
         // Should return local storage (first available), not cookie
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
       it('returns undefined and logs error if array contains invalid persistence type', async () => {
-        const displayErrorSpy = spyOn(display, 'error')
+        const displayErrorSpy = vi.spyOn(display, 'error').mockReturnValue(undefined)
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           mockBaseConfiguration({
             sessionPersistence: ['invalid'] as unknown as SessionPersistence[],
           })
         )
         expect(sessionStoreStrategyType).toBeUndefined()
-        expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
+        expect(displayErrorSpy).toHaveBeenCalledExactlyOnceWith("Invalid session persistence 'invalid'")
       })
     })
 
     function disableCookies() {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
       replaceMockable(globalObject.cookieStore, undefined)
     }
     function makeCookiesUnreadable() {
@@ -173,7 +174,9 @@ describe('session store', () => {
       replaceMockable(globalObject.cookieStore, undefined)
     }
     function disableLocalStorage() {
-      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('unavailable')
+      })
     }
   })
 })
