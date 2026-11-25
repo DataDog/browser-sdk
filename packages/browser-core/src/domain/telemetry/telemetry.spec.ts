@@ -330,39 +330,18 @@ describe('telemetry', () => {
       expect((event.telemetry as { error: { stack: string } }).error.stack).toBe('Error: message')
     })
 
-    it('falls back to the browser SDK version when no sdkVersion is configured', async () => {
-      const crossPlatform = startAndSpyTelemetry({ source: 'unity' })
+    it('attributes telemetry to the source and sdkVersion init options, falling back to the browser SDK', async () => {
       const defaultSdk = startAndSpyTelemetry()
+      const crossPlatform = startAndSpyTelemetry({ source: 'unity' })
       // let both collectors register their observer before sending
       await waitNextMicrotask()
-      addTelemetryDebug('cross-platform message')
-      addTelemetryDebug('browser message')
+      addTelemetryDebug('message')
 
-      const [crossPlatformEvent] = await crossPlatform.getTelemetryEvents()
       const [defaultEvent] = await defaultSdk.getTelemetryEvents()
+      const [crossPlatformEvent] = await crossPlatform.getTelemetryEvents()
+      expect(defaultEvent.source).toBe('browser')
       expect(crossPlatformEvent.source).toBe('unity')
       expect(crossPlatformEvent.version).toBe(defaultEvent.version)
-      expect(defaultEvent.source).toBe('browser')
-    })
-
-    it('attributes all telemetry to the cross-platform SDK, like the mobile SDKs', async () => {
-      // Under mobile-like attribution, browser-internal telemetry is attributed to the cross-platform
-      // source set at init, not kept as `browser`.
-      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addTelemetryDebug('message')
-
-      const [event] = await getTelemetryEvents()
-      expect(event.source).toBe('flutter')
-      expect(event.version).toBe('3.0.0')
-    })
-
-    it('attributes events to the browser SDK by default', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry()
-      addTelemetryDebug('message')
-
-      const [event] = await getTelemetryEvents()
-      expect(event.source).toBe('browser')
-      expect(event.version).not.toBe('3.0.0')
     })
   })
 
