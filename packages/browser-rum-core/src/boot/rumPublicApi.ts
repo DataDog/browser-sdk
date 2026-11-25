@@ -16,6 +16,7 @@ import type {
   Encoder,
   ResourceType,
   SessionManager,
+  SessionStoreFactory,
 } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
@@ -666,6 +667,14 @@ export interface RumPublicApiOptions {
   ) => DeflateWorker | undefined
   createDeflateEncoder?: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
   sdkName?: SdkName
+  /**
+   * Provides the store the session is persisted with, so SDKs running where the standard
+   * strategies (cookie, local storage, memory) can't reach the session storage can share the
+   * session with the main context (e.g. the Shopify app pixel in its Web Worker, through the Web
+   * Pixel `browser.cookie` API). When the store is unavailable, no data is sent rather than
+   * falling back to an unrelated session.
+   */
+  createSessionStore?: SessionStoreFactory
 }
 
 export interface Strategy {

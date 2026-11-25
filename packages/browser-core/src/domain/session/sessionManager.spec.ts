@@ -110,6 +110,38 @@ describe('startSessionManager', () => {
       expect(sessionManager).toBeUndefined()
     })
 
+    it('uses the injected store without selecting browser storage', async () => {
+      currentStoreType = undefined
+      const injectedStrategy = createFakeSessionStoreStrategy()
+      const configuration = { sessionSampleRate: 100 } as Configuration
+      const createStore = jasmine.createSpy().and.returnValue(Promise.resolve(injectedStrategy))
+
+      const manager = await startSessionManager(
+        configuration,
+        createTrackingConsentState(TrackingConsent.GRANTED),
+        createStore
+      )
+
+      expect(createStore).toHaveBeenCalledOnceWith(configuration)
+      expect(manager!.findSession()!.id).toBe(injectedStrategy.getInternalState().id!)
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(fakeStrategy.setSessionState).not.toHaveBeenCalled()
+    })
+
+    it('does not fall back to browser storage when the injected store is unavailable', async () => {
+      spyOn(display, 'warn')
+
+      const manager = await startSessionManager(
+        {} as Configuration,
+        createTrackingConsentState(TrackingConsent.GRANTED),
+        () => Promise.resolve(undefined)
+      )
+
+      expect(manager).toBeUndefined()
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(fakeStrategy.setSessionState).not.toHaveBeenCalled()
+    })
+
     it('should call setSessionState to initialize the session', async () => {
       await startSessionManagerWithDefaults()
 
