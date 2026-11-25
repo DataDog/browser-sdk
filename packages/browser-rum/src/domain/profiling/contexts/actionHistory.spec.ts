@@ -47,6 +47,31 @@ describe('actionHistory', () => {
       ])
     })
 
+    it('should store a duration of 0 for instant actions that have no duration', () => {
+      const history = createActionHistory(lifeCycle)
+      const startClocks = relativeToClocks(10 as RelativeTime)
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
+          action: {
+            id: 'instant-action',
+          },
+        }),
+        startClocks,
+        duration: undefined,
+        domainContext: fakeDomainContext,
+      })
+
+      expect(history.findAll(5 as RelativeTime, 30 as RelativeTime)).toEqual([
+        {
+          id: 'instant-action',
+          label: '',
+          startClocks,
+          duration: 0 as Duration,
+        },
+      ])
+    })
+
     it('should not add events to history for non-action events', () => {
       const history = createActionHistory(lifeCycle)
 

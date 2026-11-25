@@ -53,7 +53,9 @@ export function createActionHistory(lifeCycle: LifeCycle) {
               // behavior, or remove the label field entirely.
               label: '',
               startClocks,
-              duration,
+              // Instant actions (e.g. addAction) have no duration. Store 0 rather than undefined,
+              // otherwise they would be read as actions still running when the profile is collected.
+              duration: durationForEntry,
             },
             startClocks.relative
           )
