@@ -5,17 +5,14 @@ import * as tseslint from 'typescript-eslint'
 import { importX } from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
-// @ts-expect-error -- eslint-plugin-jasmine is not typed
-import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
 import eslintLocalRules from './eslint-local-rules/index.ts'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
-// Spec files migrated from the Jasmine API to the Vitest API (see scripts/test/jasmine-to-vitest.ts):
-// all of them, so the Jasmine API doesn't come back.
-const VITEST_API_SPEC_FILES: string[] = [SPEC_FILES, '**/test/**/*.{ts,tsx}']
+// Files using the Vitest API, migrated from the Jasmine API with scripts/test/jasmine-to-vitest.ts
+const VITEST_API_FILES = [SPEC_FILES, '**/test/**/*.{ts,tsx}']
 const JASMINE_GLOBALS = [
   'jasmine',
   'spyOn',
@@ -28,12 +25,12 @@ const JASMINE_GLOBALS = [
   'xdescribe',
   'xit',
 ]
-// Provided as globals by the Jasmine compatibility shim: migrated files import them from 'vitest'
-const SHIM_TEST_GLOBALS = ['describe', 'it', 'expect', 'beforeEach', 'afterEach', 'beforeAll', 'afterAll']
+// Test functions are not globals, they are imported from 'vitest'
+const TEST_GLOBALS = ['describe', 'it', 'expect', 'beforeEach', 'afterEach', 'beforeAll', 'afterAll']
 const NO_JASMINE_GLOBALS_RULE: Linter.RuleEntry = [
   'error',
   ...JASMINE_GLOBALS.map((name) => ({ name, message: 'Use the Vitest API instead of the Jasmine API.' })),
-  ...SHIM_TEST_GLOBALS.map((name) => ({ name, message: `Import \`${name}\` from 'vitest'.` })),
+  ...TEST_GLOBALS.map((name) => ({ name, message: `Import \`${name}\` from 'vitest'.` })),
 ]
 const PUBLIC_PACKAGE_ENTRIES = 'packages/{browser-rum,browser-logs,browser-rum-slim}/src/entries/*.ts'
 const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
@@ -102,7 +99,6 @@ export default defineConfig(
       unicorn: unicornPlugin,
       'local-rules': { rules: eslintLocalRules as Record<string, any> },
       jsdoc: jsdocPlugin,
-      jasmine,
     },
 
     languageOptions: {
@@ -273,7 +269,6 @@ export default defineConfig(
         },
       ],
 
-      'jasmine/no-focused-tests': 'error',
       'jsdoc/check-alignment': 'error',
       'jsdoc/check-indentation': 'error',
       'jsdoc/no-blank-blocks': 'error',
@@ -550,14 +545,19 @@ export default defineConfig(
     },
   },
 
-  ...(VITEST_API_SPEC_FILES.length
-    ? [
-        {
-          files: VITEST_API_SPEC_FILES,
-          rules: {
-            'no-restricted-globals': NO_JASMINE_GLOBALS_RULE,
-          },
-        },
-      ]
-    : [])
+  {
+    files: VITEST_API_FILES,
+    rules: {
+      // Keep the Jasmine API from coming back
+      'no-restricted-globals': NO_JASMINE_GLOBALS_RULE,
+      'no-restricted-properties': [
+        'error',
+        ...['describe', 'it', 'test'].map((object) => ({
+          object,
+          property: 'only',
+          message: 'Focused tests must not be committed.',
+        })),
+      ],
+    },
+  }
 )

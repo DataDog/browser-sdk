@@ -1,5 +1,5 @@
-import { expect } from 'vitest'
-import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
+import { getCurrentTest } from './currentTest'
+import { registerCleanupTask } from './registerCleanupTask'
 
 interface Spy<Args extends unknown[]> {
   mock: { calls: Args[] }
@@ -7,19 +7,27 @@ interface Spy<Args extends unknown[]> {
 
 export function collectAsyncCalls<Args extends unknown[]>(spy: Spy<Args>, expectedCallsCount = 1): Promise<Args[]> {
   return new Promise((resolve, reject) => {
-    const currentSpec = getCurrentJasmineSpec()
+    const currentSpec = getCurrentTest()
     if (!currentSpec) {
       reject(new Error('collectAsyncCalls should be called within a test'))
       return
     }
 
+    let extraCallError: Error | undefined
+    registerCleanupTask(() => {
+      if (extraCallError) {
+        throw extraCallError
+      }
+    })
+
     const checkCalls = () => {
       if (spy.mock.calls.length === expectedCallsCount) {
         resolve(spy.mock.calls)
       } else if (spy.mock.calls.length > expectedCallsCount) {
-        const message = `Unexpected extra call for spec '${currentSpec.fullName}'`
-        expect.unreachable(message)
-        reject(new Error(message))
+        // The spy is usually called by the code under test, which could catch an error thrown here:
+        // fail the test once it ends instead
+        extraCallError ??= new Error(`Unexpected extra call for spec '${currentSpec.fullName}'`)
+        reject(extraCallError)
       }
     }
 

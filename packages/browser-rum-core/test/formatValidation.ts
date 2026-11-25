@@ -1,4 +1,3 @@
-import { expect } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { Context } from '@datadog/js-core/util'
 import { combine } from '@datadog/js-core/util'
@@ -13,10 +12,12 @@ export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
   const rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
     rawRumEvents.push(data)
-    validateRumEventFormat(data.rawRumEvent)
   })
+  // Validate the events once the test ends: the code under test could catch an error thrown when they
+  // are collected
   registerCleanupTask(() => {
     subscription.unsubscribe()
+    rawRumEvents.forEach((data) => validateRumEventFormat(data.rawRumEvent))
   })
 
   return rawRumEvents
@@ -89,7 +90,7 @@ function validateRumFormat(rumEvent: Context) {
         return `  event${error.instancePath || ''} ${message}`
       })
       .join('\n')
-    expect.unreachable(`Invalid RUM event format:\n${errors}`)
+    throw new Error(`Invalid RUM event format:\n${errors}`)
   }
 }
 

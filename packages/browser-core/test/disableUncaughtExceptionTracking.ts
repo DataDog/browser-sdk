@@ -12,7 +12,7 @@ import { registerCleanupTask } from './registerCleanupTask'
  * https://vitest.dev/guide/features.html#unhandled-errors
  * So we add no-op listeners and silence those `console.error` calls.
  */
-export function disableJasmineUncaughtExceptionTracking() {
+export function disableUncaughtExceptionTracking() {
   window.addEventListener('error', noop)
   window.addEventListener('unhandledrejection', noop)
   const originalConsoleError = console.error
