@@ -105,6 +105,8 @@ test.describe('profiling', () => {
           },
         })),
         actions: actionIds.map((actionId) => ({
+          // The only action of this scenario is an instant action (addAction): its duration is 0
+          duration: 0,
           id: actionId,
           label: expect.any(String),
           startClocks: {
