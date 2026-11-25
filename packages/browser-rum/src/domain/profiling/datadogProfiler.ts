@@ -8,6 +8,7 @@ import { monitorError } from '@datadog/js-core/monitor'
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createBrowserProfiler } from '../../browser/browserProfiler'
+import type { BrowserProfiler } from '../../browser/browserProfiler'
 import type {
   RumProfilerInstance,
   RumProfilerRunningInstance,
@@ -16,19 +17,12 @@ import type {
   RumProfilerStoppedInstance,
 } from './types'
 import type { ProfilingContextManager } from './profilingContext'
-import { takeEarlyCollectionProfiler } from './earlyCollectionProfiler'
-import type { EarlyCollectionProfiler } from './earlyCollectionProfiler'
 import { checkProfilingQuota } from './quotaCheck'
 import type { QuotaReason } from './quotaCheck'
 import { createProfileAssembly } from './profileAssembly'
 import { createBridgeEmitter } from './transport/profilingBridge'
 import { createFormDataEmitter } from './transport/formDataEmitter'
-
-export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
-  sampleIntervalMs: 10, // Sample stack trace every 10ms
-  collectIntervalMs: 60000, // Collect data every minute
-  minProfileDurationMs: 5000, // Require at least 5 seconds of profile data to reduce noise and cost
-}
+import { DEFAULT_RUM_PROFILER_CONFIGURATION } from './profilingConfiguration'
 
 export function createRumProfiler(
   configuration: RumConfiguration,
@@ -74,7 +68,7 @@ export function createRumProfiler(
     }
   })
 
-  function start(): void {
+  function start(browserProfiler?: BrowserProfiler): void {
     if (instance.state === 'running') {
       return
     }
@@ -84,8 +78,7 @@ export function createRumProfiler(
       addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
-    // Adopt the profiler started before the SDK loaded, including its collection period.
-    startNextProfilerInstance(takeEarlyCollectionProfiler())
+    startNextProfilerInstance(browserProfiler)
     triggerQuotaCheck()
   }
 
@@ -131,53 +124,38 @@ export function createRumProfiler(
     profilingContextManager.set({ status: 'stopped', error_reason: undefined, quota_reason: quotaReason })
   }
 
-  function startNextProfilerInstance(earlyProfiler?: EarlyCollectionProfiler): void {
+  function startNextProfilerInstance(browserProfiler?: BrowserProfiler): void {
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
       stopAndCollectProfilerInstance(instance)
     }
 
-    const result = createBrowserProfiler(
-      profilerConfiguration,
-      () => startNextProfilerInstance(),
-      earlyProfiler?.profiler
-    )
-    if (result.status === 'error') {
-      profilingContextManager.set({ status: 'error', error_reason: result.reason })
-      return
+    if (!browserProfiler) {
+      const result = createBrowserProfiler(profilerConfiguration)
+      if (result.status === 'error') {
+        profilingContextManager.set({ status: 'error', error_reason: result.reason })
+        return
+      }
+      browserProfiler = result.profiler
     }
+    browserProfiler.sampleBufferFullObservable.subscribe(() => startNextProfilerInstance())
 
     profilingContextManager.set({
       status: 'running',
       error_reason: undefined,
-      // `early` when adopting the Profiler instance started by the early
-      // collection package: the first profile covers the early collection
-      // period. The field is absent for instances the SDK starts itself, so
-      // only early collection is reported in `_dd.profiling`.
-      ...(earlyProfiler ? { collection_type: 'early' as const } : {}),
+      collection_type: browserProfiler.collectionType,
     })
 
-    // Kick-off the new instance. Caveat for the early collection adoption: the
-    // early Profiler's buffer (~9,000 samples, ~90 s at the 10 ms interval,
-    // ~144 s if the browser clamps to a coarser one) can fill before the SDK
-    // takes over. An exhausted instance is undetectable at adoption: it keeps
-    // `stopped: false` and nothing in its API surface reveals it. We do not
-    // track buffer exhaustion in the early collection contract; the instance
-    // is adopted as running and the normal collection interval does the
-    // rollover. In that rare case (the SDK evaluated more than ~90 s after
-    // page load), the buffered samples are preserved and emitted, but no new
-    // sample is taken until adoption + collectIntervalMs (~60 s later).
     instance = {
       state: 'running',
-      startClocks: earlyProfiler?.startClocks ?? clocksNow(),
-      browserProfiler: result.profiler,
+      browserProfiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       sessionId: session.findTrackedSession()?.id,
     }
   }
 
   function stopAndCollectProfilerInstance(
-    { timeoutId, startClocks, sessionId, browserProfiler }: RumProfilerRunningInstance,
+    { timeoutId, sessionId, browserProfiler }: RumProfilerRunningInstance,
     { discard = false } = {}
   ) {
     clearTimeout(timeoutId)
@@ -186,7 +164,7 @@ export function createRumProfiler(
       .stop()
       .then((trace) => {
         if (!discard) {
-          profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
+          profileAssembly.assemble(trace, browserProfiler.startClocks, endClocks, sessionId)
         }
       })
       .catch(monitorError)

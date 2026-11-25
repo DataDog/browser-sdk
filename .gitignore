@@ -37,6 +37,7 @@ test-results/
 playwright-report/
 test/e2e/.pinned-browsers/
 .vscode
+.codex/
 
 # Claude Code local files
 *.local.md
