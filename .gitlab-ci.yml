@@ -608,6 +608,8 @@ check-squash-into-staging:
 
 release-please:
   stage: task
+  # A failure (e.g. the pending-release check) must not block the canary deploy.
+  allow_failure: true
   extends:
     - .base-configuration
   # Must also run on release commits (to create the tag), so it doesn't use `.main`, which skips them.
