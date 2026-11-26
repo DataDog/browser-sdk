@@ -8,7 +8,7 @@ export function startSessionContext(
   configuration: LogsConfiguration,
   sessionManager: Pick<SessionManager, 'findTrackedSession'>
 ) {
-  // In the Logs plugin, the session manager is RUM's and defaults to RUM's rate, so pass Logs' own
+  // In the Logs plugin, the session manager is RUM's and defaults to RUM's rate, so pass Logs' own rate
   const sampleRate = configuration.sessionSampleRate
 
   hook.register(({ startTime }) => {
