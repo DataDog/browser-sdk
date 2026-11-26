@@ -67,6 +67,7 @@ export type {
 } from './transport'
 export {
   createHttpRequest,
+  RetryPolicy,
   canUseEventBridge,
   getEventBridge,
   bridgeSupports,

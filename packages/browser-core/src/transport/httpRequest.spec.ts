@@ -10,11 +10,13 @@ import {
   DEFAULT_FETCH_MOCK,
   TOO_MANY_REQUESTS_FETCH_MOCK,
   NETWORK_ERROR_FETCH_MOCK,
+  setNavigatorOnLine,
   wait,
 } from '../../test'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 import { createHttpRequest, fetchStrategy, RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 import { INITIAL_BACKOFF_TIME, MAX_ONGOING_BYTES_COUNT } from './sendWithRetryStrategy'
+import { RetryPolicy } from './retryPolicy'
 
 describe('httpRequest', () => {
   const ENDPOINT_URL = 'http://my.website'
@@ -57,6 +59,58 @@ describe('httpRequest', () => {
 
       await interceptor.waitForAllFetchCalls()
       await collectAsyncCalls(fetchSpy, 2)
+    })
+
+    it('should not retry network errors while online by default', async () => {
+      setNavigatorOnLine(true)
+      interceptor.withFetch(DEFAULT_FETCH_MOCK, NETWORK_ERROR_FETCH_MOCK)
+      const events: HttpRequestEvent[] = []
+      request.observable.subscribe((event) => events.push(event))
+
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+      await wait(0)
+      request.send({ data: '{"foo":"bar3"}\n{"foo":"bar4"}', bytesCount: 10 })
+
+      await interceptor.waitForAllFetchCalls()
+      await wait(0)
+      expect(events.map(({ type }) => type)).toEqual(['success', 'success'])
+    })
+
+    it('should not retry network errors while online when minimizing data loss before receiving a response from the endpoint', async () => {
+      setNavigatorOnLine(true)
+      interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK)
+      request = createHttpRequest(
+        [endpointBuilder],
+        noop,
+        RECOMMENDED_REQUEST_BYTES_LIMIT,
+        RetryPolicy.MINIMIZE_DATA_LOSS
+      )
+      const events: HttpRequestEvent[] = []
+      request.observable.subscribe((event) => events.push(event))
+
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+
+      await interceptor.waitForAllFetchCalls()
+      await wait(0)
+      expect(events.map(({ type }) => type)).toEqual(['success'])
+    })
+
+    it('should retry network errors while online when minimizing data loss after receiving a response from the endpoint', async () => {
+      setNavigatorOnLine(true)
+      const fetchSpy = interceptor.withFetch(DEFAULT_FETCH_MOCK, NETWORK_ERROR_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+      request = createHttpRequest(
+        [endpointBuilder],
+        noop,
+        RECOMMENDED_REQUEST_BYTES_LIMIT,
+        RetryPolicy.MINIMIZE_DATA_LOSS
+      )
+
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+      await wait(0)
+      request.send({ data: '{"foo":"bar3"}\n{"foo":"bar4"}', bytesCount: 10 })
+
+      await interceptor.waitForAllFetchCalls()
+      await collectAsyncCalls(fetchSpy, 3)
     })
 
     it('sends the payload to multiple endpoints', async () => {

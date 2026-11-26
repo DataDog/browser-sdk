@@ -10,6 +10,7 @@ import {
   MAX_QUEUE_BYTES_COUNT,
   INITIAL_BACKOFF_TIME,
 } from './sendWithRetryStrategy'
+import { RetryPolicy } from './retryPolicy'
 import type { Payload, HttpResponse, HttpRequestEvent } from './httpRequest'
 
 describe('sendWithRetryStrategy', () => {
@@ -44,7 +45,7 @@ describe('sendWithRetryStrategy', () => {
 
   beforeEach(() => {
     sendMock = mockSend()
-    state = newRetryState()
+    state = newRetryState(RetryPolicy.MINIMIZE_DUPLICATES)
     clock = mockClock()
     reportErrorSpy = jasmine.createSpy('reportError')
     const observable = new Observable<HttpRequestEvent>()
@@ -254,12 +255,53 @@ describe('sendWithRetryStrategy', () => {
     { expectRetry: true, description: 'when the intake returns too many request:', status: 429 },
     { expectRetry: true, description: 'when the intake returns request timeout:', status: 408 },
     { expectRetry: true, description: 'when network error while offline:', status: 0, offLine: true },
-    { expectRetry: false, description: 'when network error while online:', status: 0 },
-    { expectRetry: false, description: 'when the intake returns opaque response:', status: 0, type: 'opaque' as const },
-  ].forEach(({ expectRetry, description, status, type, offLine }) => {
+    {
+      expectRetry: false,
+      description: 'when a network error occurs while online, after receiving a response from the endpoint:',
+      status: 0,
+      endpointResponded: true,
+    },
+    {
+      expectRetry: false,
+      description:
+        'when a network error occurs while online in MINIMIZE_DATA_LOSS mode, before receiving a response from the endpoint:',
+      status: 0,
+      retryPolicy: RetryPolicy.MINIMIZE_DATA_LOSS,
+    },
+    {
+      expectRetry: true,
+      description:
+        'when a network error occurs while online in MINIMIZE_DATA_LOSS mode, after receiving a response from the endpoint:',
+      status: 0,
+      retryPolicy: RetryPolicy.MINIMIZE_DATA_LOSS,
+      endpointResponded: true,
+    },
+    {
+      expectRetry: false,
+      description: 'when the intake returns an opaque response:',
+      status: 0,
+      type: 'opaque' as const,
+    },
+    {
+      expectRetry: false,
+      description:
+        'when the intake returns an opaque response in MINIMIZE_DATA_LOSS mode, after receiving a response from the endpoint:',
+      status: 0,
+      type: 'opaque' as const,
+      retryPolicy: RetryPolicy.MINIMIZE_DATA_LOSS,
+      endpointResponded: true,
+    },
+  ].forEach(({ expectRetry, description, status, type, offLine, retryPolicy, endpointResponded }) => {
     describe(description, () => {
       beforeEach(() => {
         setNavigatorOnLine(!offLine)
+        state = newRetryState(retryPolicy ?? RetryPolicy.MINIMIZE_DUPLICATES)
+        if (endpointResponded) {
+          sendRequest()
+          sendMock.respondWith(0, { status: 200 })
+          sendMock = mockSend()
+          latestEvents()
+        }
       })
 
       if (expectRetry) {
