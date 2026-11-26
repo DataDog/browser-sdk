@@ -71,6 +71,30 @@ describe('startDeflateWorker', () => {
     expect(onInitializationFailureSpy).not.toHaveBeenCalled()
   })
 
+  for (const initialized of [false, true]) {
+    it(`terminates ${initialized ? 'initialized' : 'loading'} workers when resetting their state`, () => {
+      const canvasMockWorker = new MockWorker()
+      const terminateDeflateWorkerSpy = spyOn(mockWorker, 'terminate')
+      const terminateCanvasWorkerSpy = spyOn(canvasMockWorker, 'terminate')
+      createDeflateWorkerSpy.and.returnValues(mockWorker, canvasMockWorker)
+      startDeflateWorkerWithDefaults()
+      startDeflateWorkerWithDefaults({ name: 'canvas' })
+      if (initialized) {
+        mockWorker.processAllMessages()
+        canvasMockWorker.processAllMessages()
+      }
+
+      resetDeflateWorkerState()
+
+      expect(terminateDeflateWorkerSpy).toHaveBeenCalledTimes(1)
+      expect(terminateCanvasWorkerSpy).toHaveBeenCalledTimes(1)
+      expect(mockWorker.messageListenersCount).toBe(0)
+      expect(canvasMockWorker.messageListenersCount).toBe(0)
+      expect(getDeflateWorkerStatus()).toBe(DeflateWorkerStatus.Nil)
+      expect(getDeflateWorkerStatus('canvas')).toBe(DeflateWorkerStatus.Nil)
+    })
+  }
+
   describe('parallel workers', () => {
     it('creates one worker per name', () => {
       const canvasMockWorker = new MockWorker()
@@ -196,11 +220,8 @@ describe('startDeflateWorker', () => {
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      createDeflateWorkerSpy.and.callFake(
-        () =>
-          // Creates a worker that does nothing
-          new Worker(URL.createObjectURL(new Blob([''])))
-      )
+      // Leave the mock worker's init message pending to simulate an unresponsive worker.
+      createDeflateWorkerSpy.and.callFake(() => new MockWorker())
       clock = mockClock()
     })
 
