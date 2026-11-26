@@ -32,10 +32,11 @@ export const INTERNAL_TYPES: readonly CommitType[] = [
 
 export const REVERT_TYPE: CommitType = { type: 'revert', description: 'Revert a previous change' }
 
-/** Scopes naming a published package. */
+/** Scopes naming a published package or a product feature. */
 export const PACKAGE_SCOPES: readonly CommitScope[] = [
   { scope: 'core', description: '@datadog/browser-core' },
   { scope: 'rum', description: '@datadog/browser-rum, browser-rum-core, browser-rum-slim' },
+  { scope: 'replay', description: 'Browser session replay' },
   { scope: 'logs', description: '@datadog/browser-logs' },
   { scope: 'worker', description: '@datadog/browser-worker' },
   { scope: 'react', description: '@datadog/browser-rum-react' },
