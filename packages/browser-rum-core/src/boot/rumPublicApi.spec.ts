@@ -181,9 +181,15 @@ describe('rum public api', () => {
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: { attachElementStack: attachElementStackSpy },
       })
-      const descriptor = Object.getOwnPropertyDescriptor(window, 'WeakRef')!
-      registerCleanupTask(() => Object.defineProperty(window, 'WeakRef', descriptor))
-      Object.defineProperty(window, 'WeakRef', { value: undefined })
+      const descriptor = Object.getOwnPropertyDescriptor(window, 'WeakRef')
+      registerCleanupTask(() => {
+        if (descriptor) {
+          Object.defineProperty(window, 'WeakRef', descriptor)
+        } else {
+          Reflect.deleteProperty(window, 'WeakRef')
+        }
+      })
+      Object.defineProperty(window, 'WeakRef', { value: undefined, configurable: true })
       rumPublicApi.attachElementStack(document.createElement('section'))
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
@@ -214,9 +220,15 @@ describe('rum public api', () => {
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: { attachElementStack: attachElementStackSpy },
       })
-      const descriptor = Object.getOwnPropertyDescriptor(window, 'WeakRef')!
-      registerCleanupTask(() => Object.defineProperty(window, 'WeakRef', descriptor))
-      Object.defineProperty(window, 'WeakRef', { value: undefined })
+      const descriptor = Object.getOwnPropertyDescriptor(window, 'WeakRef')
+      registerCleanupTask(() => {
+        if (descriptor) {
+          Object.defineProperty(window, 'WeakRef', descriptor)
+        } else {
+          Reflect.deleteProperty(window, 'WeakRef')
+        }
+      })
+      Object.defineProperty(window, 'WeakRef', { value: undefined, configurable: true })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       await collectAsyncCalls(startRumSpy, 1)
