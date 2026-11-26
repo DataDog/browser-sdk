@@ -1,62 +1,71 @@
+import type { CandidateRelease } from 'release-please'
 import releasePleaseConfig from '../../release-please-config.json' with { type: 'json' }
 import { command } from './command.ts'
 import { printLog } from './executionUtils.ts'
-import { fetchMergedPullRequestsWithLabel } from './gitUtils.ts'
-import type { GitHubMergedPR } from './gitUtils.ts'
 
 // Passed as an argument: `command` doesn't use a shell, so the glob reaches `git describe --match` as is.
 const RELEASE_TAG_PATTERN = 'v[0-9]*'
 const CONVENTIONAL_COMMIT_REGEX = /^(?<type>[a-z]+)(\([^()]*\))?!?: /
-// Label release-please puts on its release pull request until the release is tagged.
-const PENDING_RELEASE_LABEL = 'autorelease: pending'
 
 export interface GitCommit {
   sha: string
   subject: string
 }
 
+interface PendingRelease {
+  pullRequestNumber: number
+  sha: string
+  notes: string
+}
+
 /**
- * Run before `release-please github-release` (see release-please.ts), which tags every merged
- * release pull request that is still pending. The release pull request is refreshed on every push
- * to main. If it is merged right after another pull request, before it was refreshed, that other
- * change would be released without a changelog entry. Fail in that case, so no tag is created.
+ * Run before `Manifest.createReleases()` (see release-please.ts), with the releases it is about to
+ * tag: one per component of every merged release pull request that is still pending. The release
+ * pull request is refreshed on every push to main. If it is merged right after another pull request,
+ * before it was refreshed, that other change would be released without a changelog entry. Fail in
+ * that case, so no tag is created.
  *
  * Every pending release is checked, not only the one merged by the current commit: a release that
  * failed this check stays pending, and the pipeline of the next merge would tag it otherwise.
  */
-export async function checkReleaseNotes(targetBranch: string): Promise<void> {
-  const pendingReleases = (await fetchMergedPullRequestsWithLabel(PENDING_RELEASE_LABEL)).filter(
-    (pullRequest) => pullRequest.base.ref === targetBranch
-  )
-  if (pendingReleases.length === 0) {
+export function checkReleaseNotes(candidateReleases: CandidateRelease[]): void {
+  const pendingReleases = new Map<number, PendingRelease>()
+  for (const { pullRequest, sha, notes } of candidateReleases) {
+    const pendingRelease = pendingReleases.get(pullRequest.number)
+    if (pendingRelease) {
+      pendingRelease.notes += `\n${notes}`
+    } else {
+      pendingReleases.set(pullRequest.number, { pullRequestNumber: pullRequest.number, sha, notes })
+    }
+  }
+  if (pendingReleases.size === 0) {
     printLog('No pending release: nothing to check')
     return
   }
 
-  const errors = pendingReleases.flatMap(checkPendingRelease)
+  const errors = [...pendingReleases.values()].flatMap(checkPendingRelease)
   if (errors.length > 0) {
     throw new Error(`${errors.join('\n\n')}\n\nNo tag was created.`)
   }
 }
 
-function checkPendingRelease(releasePullRequest: GitHubMergedPR): string[] {
-  const sha = releasePullRequest.merge_commit_sha
+function checkPendingRelease({ pullRequestNumber, sha, notes }: PendingRelease): string[] {
   // The release may have been merged after this pipeline fetched its sources.
   if (!commitExists(sha)) {
     command`git fetch origin ${sha}`.run()
   }
 
   const commits = getCommits(`${findPreviousReleaseSha(sha)}..${sha}^`)
-  const missingCommits = findMissingCommits(releasePullRequest.body ?? '', commits, getVisibleTypes())
+  const missingCommits = findMissingCommits(notes, commits, getVisibleTypes())
   if (missingCommits.length === 0) {
-    printLog(`Release pull request #${releasePullRequest.number} lists every commit`)
+    printLog(`Release pull request #${pullRequestNumber} lists every commit`)
     return []
   }
   return [
-    `Release pull request #${releasePullRequest.number} was merged before listing these commits:\n` +
+    `Release pull request #${pullRequestNumber} was merged before listing these commits:\n` +
       `${missingCommits.map((commit) => `  ${commit.sha.slice(0, 7)} ${commit.subject}`).join('\n')}\n` +
-      `Add the missing entries to the release notes in #${releasePullRequest.number}'s description and to ` +
-      'CHANGELOG.md (follow-up PR), then retry this job.',
+      `Cancel the release: revert the merge commit of #${pullRequestNumber}, remove its "autorelease: pending" label, ` +
+      'then merge the revert. release-please then opens a new release pull request (see the release runbook).',
   ]
 }
 

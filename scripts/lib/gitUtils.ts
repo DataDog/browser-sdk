@@ -21,17 +21,6 @@ interface GitHubPR {
   }
 }
 
-interface GitHubIssue {
-  // eslint-disable-next-line id-denylist
-  number: number
-  pull_request?: { merged_at: string | null }
-}
-
-export interface GitHubMergedPR extends GitHubPR {
-  merge_commit_sha: string
-  merged_at: string | null
-}
-
 export interface GitHubRelease {
   id: number
   html_url: string
@@ -51,26 +40,6 @@ export async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
     throw new Error('Multiple pull requests found for the branch')
   }
   return pr ? pr[0] : null
-}
-
-/**
- * Find the merged pull requests that have the given label.
- *
- * @param label - The label name.
- */
-export async function fetchMergedPullRequestsWithLabel(label: string): Promise<GitHubMergedPR[]> {
-  using readToken = getGithubReadToken()
-  const issues = await callGitHubApi<GitHubIssue[]>(
-    'GET',
-    `issues?state=closed&labels=${encodeURIComponent(label)}&per_page=100`,
-    readToken
-  )
-  const mergedNumbers = issues.filter((issue) => issue.pull_request?.merged_at).map((issue) => issue.number)
-  return await Promise.all(
-    mergedNumbers.map((pullRequestNumber) =>
-      callGitHubApi<GitHubMergedPR>('GET', `pulls/${pullRequestNumber}`, readToken)
-    )
-  )
 }
 
 /**
