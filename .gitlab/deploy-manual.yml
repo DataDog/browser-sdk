@@ -92,6 +92,7 @@ step-8_publish-github-release:
   script:
     - yarn
     - node scripts/release/publish-github-release.ts
+    - node ./scripts/deploy/send-dora-deployment.ts
 
 # This step is used to deploy the SDK to a new datacenter.
 # the `DATACENTER` variable needs to be provided as an argument when starting the manual job
