@@ -19,16 +19,21 @@ jobs:
     # each package on npmjs.com.
     environment: npm-publish
     runs-on: ubuntu-latest
+    # Shorter than the wait of publish-npm-on-github.ts, so that the GitLab job sees the conclusion
+    timeout-minutes: 30
 
     steps:
       - name: Check out code at tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: package.json
-          cache: 'yarn'
+          # No dependency cache in a publishing job: a poisoned cache could end up in the packages
+          package-manager-cache: false
 
       - name: Check version
         env:

@@ -5,7 +5,10 @@ import { getGithubPublishToken } from '../lib/secrets.ts'
 
 const WORKFLOW = 'publish-npm.yml'
 const POLL_INTERVAL = 15_000
-const MAX_DURATION = 30 * 60_000
+// Longer than the 30 min job timeout of the workflow (plus queueing behind another run), and
+// shorter than the one-hour lifetime of the GitHub token.
+const MAX_DURATION = 40 * 60_000
+const RETRY_HINT = 'Retrying the job is safe: versions already on npm are skipped.'
 
 /**
  * Publish npm packages by dispatching the `publish-npm.yml` GitHub workflow on the release tag and
@@ -28,14 +31,14 @@ export async function main(): Promise<void> {
   let run = await fetchWorkflowRun(runId, token)
   while (run.status !== 'completed') {
     if (Date.now() - startTime > MAX_DURATION) {
-      throw new Error(`Timed out waiting for ${WORKFLOW} to complete: ${runUrl}`)
+      throw new Error(`Timed out waiting for ${WORKFLOW} to complete, it may still finish: ${runUrl}\n${RETRY_HINT}`)
     }
     await timeout(POLL_INTERVAL)
     run = await fetchWorkflowRun(runId, token)
   }
 
   if (run.conclusion !== 'success') {
-    throw new Error(`${WORKFLOW} completed with conclusion "${run.conclusion}": ${runUrl}`)
+    throw new Error(`${WORKFLOW} completed with conclusion "${run.conclusion}": ${runUrl}\n${RETRY_HINT}`)
   }
   printLog(`${WORKFLOW} succeeded: ${runUrl}`)
 }
