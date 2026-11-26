@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/js-core/util'
-import type { RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
 import { test, expect } from '@playwright/test'
 import type { IntakeRegistry, BrowserLog } from '../../lib/framework'
 import { createTest, createWorker } from '../../lib/framework'
@@ -425,13 +425,36 @@ test.describe('Web workers Rum', () => {
       createWorker({ dedicated: true, importScripts: true })
         .withRum({}, { sdk: 'rum-shopify' })
         .withRumInit((configuration) => {
+          // Minimal Web Pixel sandbox: what `register` from @shopify/web-pixels-extension sets up,
+          // so the self-registering plugin can run in a plain worker
+          const pageViewedSubscribers: Array<(event: unknown) => void> = []
+          ;(self as unknown as { shopify?: unknown }).shopify = {
+            extend: (_target: string, callback: (api: unknown) => void) =>
+              callback({
+                settings: { rumConfig: JSON.stringify(configuration) },
+                browser: { cookie: { get: () => Promise.resolve(''), set: () => Promise.resolve('') } },
+                analytics: {
+                  subscribe: (eventName: string, subscriber: (event: unknown) => void) => {
+                    if (eventName === 'page_viewed') {
+                      pageViewedSubscribers.push(subscriber)
+                    }
+                  },
+                },
+              }),
+          }
+          ;(self as unknown as { emitPageViewed?: () => void }).emitPageViewed = () => {
+            for (const subscriber of pageViewedSubscribers) {
+              subscriber({ context: { document: { location: { href: 'https://shop.example/checkout' } } } })
+            }
+          }
           const datadogRum = self.DD_RUM as ShopifyRumPublicApi
-          datadogRum.init({ ...configuration, plugins: [datadogRum.shopifyAppPixelPlugin()] })
+          // The RUM configuration comes from the plugin, through the `rumConfig` pixel setting
+          datadogRum.init({ plugins: [datadogRum.shopifyAppPixelPlugin()] } as RumInitConfiguration)
         })
     )
     .run(async ({ flushEvents, intakeRegistry, evaluateInWorker }) => {
       await evaluateInWorker(() => {
-        self.DD_RUM!.startView()
+        ;(self as unknown as { emitPageViewed: () => void }).emitPageViewed()
       })
       await flushEvents()
 
