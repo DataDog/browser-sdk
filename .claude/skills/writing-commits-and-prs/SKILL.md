@@ -17,6 +17,7 @@ type(scope[,scope])[!]: Description
 
 - Conventional Commits with a **mandatory scope**. The "Lint PR title" CI check (`scripts/check-pr-title.ts`) rejects anything else.
 - Examples: `feat(rum): Add view name API`, `fix(rum,logs): Drop empty context`, `ci(e2e): Quarantine flaky test`, `chore(deps): Update vite to v8.4`.
+- `!` bumps the SDK packages to the next major version.
 - No Jira key in the title (CI rejects `[RUM-123]`): it would end up in the public changelog. Put `Refs: RUM-123` in the PR description and the key in the branch name.
 - Commits inside a PR are squashed away; use the same convention for consistency.
 

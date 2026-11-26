@@ -40,7 +40,6 @@ describe('validatePrTitle', () => {
     assertValid('feat(react)!: Require React 18')
     assertValid('feat(core,js-core)!: Rename the context API')
     assertValid('feat(js-core)!: Drop the legacy transport')
-    assertValid('ci(release)!: Change the release process')
   })
 
   it('rejects titles that are not Conventional Commits', () => {
@@ -53,6 +52,8 @@ describe('validatePrTitle', () => {
   it('requires a scope', () => {
     assertInvalid('feat: Add view name API', /scope is required/)
     assertInvalid('feat!: Add view name API', /scope is required/)
+    assertInvalid('ci(e2e)!: Quarantine flaky test', /can't mark a breaking change/)
+    assertInvalid('chore(rum,deps)!: Drop a dependency', /can't mark a breaking change/)
     assertInvalid('feat(): Add view name API', /scope is required/)
   })
 

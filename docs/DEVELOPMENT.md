@@ -52,6 +52,8 @@ A change to an E2E test is `test(e2e): …`, not `fix(e2e): …`.
 Add `!` after the scope (e.g. `feat(react)!: Require React 18`). Removing a public API, even
 deprecated, is a breaking change.
 
+`!` bumps the SDK packages to the next major version.
+
 ### Jira tickets
 
 Keep Jira keys out of the title: it becomes the public changelog entry. Instead:

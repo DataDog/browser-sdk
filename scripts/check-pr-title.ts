@@ -12,7 +12,7 @@ const TYPE_NAMES = new Set([...PUBLIC_TYPE_NAMES, ...INTERNAL_TYPES.map(({ type 
 const PACKAGE_SCOPE_NAMES = new Set(PACKAGE_SCOPES.map(({ scope }) => scope))
 const SCOPE_NAMES = new Set([...PACKAGE_SCOPE_NAMES, ...INTERNAL_SCOPES.map(({ scope }) => scope)])
 
-const TITLE_REGEX = /^(?<type>[a-z]+)\((?<scopes>[^()]*)\)!?: (?<description>.*)$/
+const TITLE_REGEX = /^(?<type>[a-z]+)\((?<scopes>[^()]*)\)(?<breaking>!)?: (?<description>.*)$/
 const JIRA_KEY_REGEX = /\[[A-Z][A-Z0-9]*-\d+\]/
 
 /**
@@ -60,6 +60,12 @@ export function validatePrTitle(title: string): string[] {
   if (PUBLIC_TYPE_NAMES.has(type) && nonPackageScopes.length > 0) {
     errors.push(
       `\`${type}\` is a public type and needs package scopes; internal scopes (${nonPackageScopes.join(', ')}) need an internal type.`
+    )
+  }
+
+  if (match.groups!.breaking && nonPackageScopes.length > 0) {
+    errors.push(
+      `Internal scopes (${nonPackageScopes.join(', ')}) can't mark a breaking change: \`!\` bumps the SDK to the next major version.`
     )
   }
 
