@@ -3,7 +3,14 @@ import { setAllowUntrustedEvents } from '@datadog/js-core/dom'
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import { callMonitored, monitorError } from '@datadog/js-core/monitor'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { TrackingConsentState, DeflateWorker, Telemetry, SessionManager, InitContext } from '@datadog/browser-core'
+import type {
+  TrackingConsentState,
+  DeflateWorker,
+  Telemetry,
+  SessionManager,
+  InitContext,
+  WeakRefConstructor,
+} from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
   display,
@@ -47,6 +54,8 @@ import { callPluginsOnInit, callPluginsOnRumStart } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
+
+declare const WeakRef: WeakRefConstructor
 
 export type DoStartRum = (
   configuration: RumConfiguration,
@@ -482,8 +491,17 @@ export function createPreStartStrategy(
     userContext,
     accountContext,
 
-    attachElementStack(elementRef, stack) {
-      bufferApiCalls.notify((startRumResult) => startRumResult.attachElementStack(elementRef, stack))
+    attachElementStack(element, stack) {
+      if (typeof WeakRef === 'undefined') {
+        return
+      }
+      const elementRef = new WeakRef(element)
+      bufferApiCalls.notify((startRumResult) => {
+        const element = elementRef.deref()
+        if (element) {
+          startRumResult.attachElementStack(element, stack)
+        }
+      })
     },
 
     addAction(action) {

@@ -111,12 +111,6 @@ describe('rum public api', () => {
   })
 
   describe('attachElementStack', () => {
-    beforeEach(() => {
-      if (typeof WeakRef === 'undefined') {
-        pending('No WeakRef support')
-      }
-    })
-
     it('warns when the element is null', () => {
       const { rumPublicApi } = makeRumPublicApiWithDefaults()
       const warnSpy = spyOn(display, 'warn')
@@ -136,6 +130,9 @@ describe('rum public api', () => {
     })
 
     it('buffers a weak reference before init and preserves the caller stack at startup', async () => {
+      if (typeof WeakRef === 'undefined') {
+        pending('No WeakRef support')
+      }
       const attachElementStackSpy = jasmine.createSpy<ReturnType<StartRum>['attachElementStack']>()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: { attachElementStack: attachElementStackSpy },
@@ -150,9 +147,8 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       await collectAsyncCalls(attachElementStackSpy, 1)
 
-      const [elementRef, stack] = attachElementStackSpy.calls.argsFor(0)
-      expect(elementRef instanceof WeakRef).toBeTrue()
-      expect(elementRef.deref()).toBe(element)
+      const [registeredElement, stack] = attachElementStackSpy.calls.argsFor(0)
+      expect(registeredElement).toBe(element)
       expect(computeStackTrace({ stack }).stack[0].func).toBe('registerFromMfe')
     })
 
@@ -162,8 +158,9 @@ describe('rum public api', () => {
         startRumResult: { attachElementStack: attachElementStackSpy },
       })
       const element = document.createElement('section')
-      rumPublicApi.attachElementStack(element)
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await waitNextMicrotask()
+      rumPublicApi.attachElementStack(element)
       await collectAsyncCalls(attachElementStackSpy, 1)
 
       function registerAgain() {
@@ -174,12 +171,12 @@ describe('rum public api', () => {
       await nextCalls
 
       expect(attachElementStackSpy).toHaveBeenCalledTimes(2)
-      const [elementRef, stack] = attachElementStackSpy.calls.argsFor(1)
-      expect(elementRef.deref()).toBe(element)
+      const [registeredElement, stack] = attachElementStackSpy.calls.argsFor(1)
+      expect(registeredElement).toBe(element)
       expect(computeStackTrace({ stack }).stack[0].func).toBe('registerAgain')
     })
 
-    it('skips stack capture and registration when WeakRef is unavailable', async () => {
+    it('should skip registration before startup when WeakRef is unavailable', async () => {
       const attachElementStackSpy = jasmine.createSpy<ReturnType<StartRum>['attachElementStack']>()
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: { attachElementStack: attachElementStackSpy },
@@ -187,10 +184,7 @@ describe('rum public api', () => {
       const descriptor = Object.getOwnPropertyDescriptor(window, 'WeakRef')!
       registerCleanupTask(() => Object.defineProperty(window, 'WeakRef', descriptor))
       Object.defineProperty(window, 'WeakRef', { value: undefined })
-      const errorSpy = spyOn(window, 'Error').and.callThrough()
-
       rumPublicApi.attachElementStack(document.createElement('section'))
-      expect(errorSpy).not.toHaveBeenCalled()
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       await collectAsyncCalls(startRumSpy, 1)
@@ -213,6 +207,30 @@ describe('rum public api', () => {
       await waitNextMicrotask()
 
       expect(attachElementStackSpy).not.toHaveBeenCalled()
+    })
+
+    it('should register an element after startup when WeakRef is unavailable', async () => {
+      const attachElementStackSpy = jasmine.createSpy<ReturnType<StartRum>['attachElementStack']>()
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+        startRumResult: { attachElementStack: attachElementStackSpy },
+      })
+      const descriptor = Object.getOwnPropertyDescriptor(window, 'WeakRef')!
+      registerCleanupTask(() => Object.defineProperty(window, 'WeakRef', descriptor))
+      Object.defineProperty(window, 'WeakRef', { value: undefined })
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      await waitNextMicrotask()
+
+      const element = document.createElement('section')
+      function registerFromMfe() {
+        rumPublicApi.attachElementStack(element)
+      }
+      registerFromMfe()
+
+      expect(attachElementStackSpy).toHaveBeenCalledOnceWith(element, jasmine.any(String))
+      const [, stack] = attachElementStackSpy.calls.argsFor(0)
+      expect(computeStackTrace({ stack }).stack[0].func).toBe('registerFromMfe')
     })
   })
 

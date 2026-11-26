@@ -16,7 +16,6 @@ import type {
   Encoder,
   ResourceType,
   SessionManager,
-  WeakRefConstructor,
 } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
@@ -58,8 +57,6 @@ import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/tr
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRumResult } from './startRum'
 import { startRum } from './startRum'
-
-declare const WeakRef: WeakRefConstructor
 
 export interface StartRecordingOptions {
   force: boolean
@@ -863,9 +860,6 @@ export function makeRumPublicApi(
     addPlugin: monitor((plugin: RumPlugin) => strategy.addPlugin(plugin)),
 
     attachElementStack: (element) => {
-      if (typeof WeakRef === 'undefined') {
-        return
-      }
       const stack = createHandlingStack('element')
       callMonitored(() => {
         addTelemetryUsage({ feature: 'attach-element-stack' })
@@ -874,7 +868,7 @@ export function makeRumPublicApi(
           return
         }
         if (stack?.includes('\n')) {
-          strategy.attachElementStack(new WeakRef(element), stack)
+          strategy.attachElementStack(element, stack)
         }
       })
     },
@@ -1146,6 +1140,7 @@ function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: Sta
       displayAlreadyInitializedError('DD_RUM', initConfiguration)
     },
     getInternalContext: startRumResult.getInternalContext,
+    attachElementStack: startRumResult.attachElementStack,
     stopSession: startRumResult.stopSession,
     getViewContext: startRumResult.getViewContext,
     globalContext: startRumResult.globalContext,

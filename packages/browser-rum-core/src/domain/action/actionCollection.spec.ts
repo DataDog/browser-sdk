@@ -1,7 +1,6 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import { addDuration, ONE_SECOND } from '@datadog/js-core/time'
 import { Observable } from '@datadog/js-core/util'
-import type { WeakRefConstructor } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import type { MutationRecord } from '@datadog/js-core/dom'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
@@ -14,8 +13,6 @@ import { createHooks } from '../hooks'
 import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
 import type { ActionContexts } from './actionCollection'
-
-declare const WeakRef: WeakRefConstructor
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -50,9 +47,6 @@ describe('actionCollection', () => {
     let clock: ReturnType<typeof mockClock>
 
     beforeEach(() => {
-      if (typeof WeakRef === 'undefined') {
-        pending('No WeakRef support')
-      }
       clock = mockClock()
       button = document.createElement('button')
       button.textContent = 'Click me'
@@ -68,7 +62,7 @@ describe('actionCollection', () => {
     }
 
     it('attributes clicks to a registered element', () => {
-      attachElementStack(new WeakRef(button), 'mfe-stack')
+      attachElementStack(button, 'mfe-stack')
       clickButton()
 
       expect(rawRumEvents.length).toBe(1)
@@ -76,24 +70,14 @@ describe('actionCollection', () => {
     })
 
     it('replaces the registered stack for subsequent clicks', () => {
-      attachElementStack(new WeakRef(button), 'first-stack')
+      attachElementStack(button, 'first-stack')
       clickButton()
-      attachElementStack(new WeakRef(button), 'second-stack')
+      attachElementStack(button, 'second-stack')
       clickButton()
 
       expect(rawRumEvents.length).toBe(2)
       expect(rawRumEvents[0].domainContext).toEqual(jasmine.objectContaining({ elementStack: 'first-stack' }))
       expect(rawRumEvents[1].domainContext).toEqual(jasmine.objectContaining({ elementStack: 'second-stack' }))
-    })
-
-    it('ignores elements collected before registration', () => {
-      const elementRef = new WeakRef(button)
-      spyOn(elementRef, 'deref').and.returnValue(undefined)
-      attachElementStack(elementRef, 'mfe-stack')
-      clickButton()
-
-      expect(rawRumEvents.length).toBe(1)
-      expect('elementStack' in rawRumEvents[0].domainContext).toBe(false)
     })
   })
 
