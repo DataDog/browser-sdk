@@ -71,6 +71,15 @@ const baseWebServers = [
     },
   },
   {
+    name: 'nextjs v15 app',
+    stdout: 'pipe' as const,
+    cwd: path.join(__dirname, '../apps/nextjs-v15-app'),
+    command: 'yarn start',
+    wait: {
+      stdout: /- Local:\s+http:\/\/localhost:(?<nextjs_v15_app_port>\d+)/,
+    },
+  },
+  {
     name: 'vue router app',
     stdout: 'pipe' as const,
     cwd: path.join(__dirname, '../apps/vue-router-app'),
