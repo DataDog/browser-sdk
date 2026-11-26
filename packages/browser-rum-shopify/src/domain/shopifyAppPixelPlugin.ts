@@ -4,18 +4,9 @@ import type { ExtensionApi, ShopifyGlobal } from '@shopify/web-pixels-extension'
 import { globalObject, mockable } from '@datadog/js-core/util'
 import { display } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPlugin } from '@datadog/browser-rum-core'
-import { setShopifyBrowserApi } from './shopifySessionStore'
+import { initShopifyBindings } from './shopifyBindings'
+import { setShopifyBrowserApi } from './session/shopifySessionStore'
 
-/**
- * Runs the RUM SDK in the Datadog Shopify app Web Pixel extension, which Shopify runs in a Web
- * Worker. Registers the pixel with Shopify, reads the RUM configuration from the `rumConfig` pixel
- * setting, shares the storefront session through the Web Pixel `browser.cookie` API and starts
- * views from Shopify `page_viewed` events. The other worker constraints (no DOM, no view
- * metrics…) are forced on the configuration.
- *
- * `init` must be called synchronously when the pixel script is evaluated, so the pixel is
- * registered in time.
- */
 export function shopifyAppPixelPlugin(): RumPlugin {
   return {
     name: 'shopify-app-pixel',
@@ -38,14 +29,7 @@ export function shopifyAppPixelPlugin(): RumPlugin {
           forceWorkerConfiguration(initConfiguration)
 
           mockable(setShopifyBrowserApi)(api.browser)
-
-          // In the worker, `location` is the pixel script URL: take the page URL from the event
-          api.analytics.subscribe('page_viewed', (event) => {
-            const url = event.context?.document?.location?.href
-            if (url) {
-              publicApi.startView({ url })
-            }
-          })
+          initShopifyBindings(publicApi, api.analytics)
 
           resolve(undefined)
         })

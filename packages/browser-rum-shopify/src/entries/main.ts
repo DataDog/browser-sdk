@@ -5,7 +5,7 @@ import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi, makeProfilerApi } from '@datadog/browser-rum/internal'
 import { shopifyPlugin } from '../domain/shopifyPlugin'
 import { shopifyAppPixelPlugin } from '../domain/shopifyAppPixelPlugin'
-import { createShopifySessionStore } from '../domain/shopifySessionStore'
+import { createShopifySessionStore } from '../domain/session/shopifySessionStore'
 
 type ShopifyRumPublicApi = RumPublicApi & {
   shopifyPlugin: typeof shopifyPlugin

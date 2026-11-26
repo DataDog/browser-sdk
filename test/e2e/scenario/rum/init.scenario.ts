@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/js-core/util'
-import type { RumInitConfiguration, RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
 import { test, expect } from '@playwright/test'
 import type { IntakeRegistry, BrowserLog } from '../../lib/framework'
 import { createTest, createWorker } from '../../lib/framework'
@@ -419,42 +419,21 @@ test.describe('Service workers Rum', () => {
 type ShopifyRumPublicApi = RumPublicApi & { shopifyAppPixelPlugin: () => RumPlugin }
 
 test.describe('Web workers Rum', () => {
-  // Keep "shopify" out of the title: CI runs those tests only on a schedule, against a live store
+  // This scenario only verifies that the SDK initializes without crashing in a dedicated web worker;
+  // it is about init setup, not behavior.
+  // Behavior (and Shopify-specific) e2e coverage belongs in its own scenario file.
   createTest('dedicated web worker with worker rum')
     .withWorker(
       createWorker({ dedicated: true, importScripts: true })
         .withRum({}, { sdk: 'rum-shopify' })
         .withRumInit((configuration) => {
-          // Minimal Web Pixel sandbox: what `register` from @shopify/web-pixels-extension sets up,
-          // so the self-registering plugin can run in a plain worker
-          const pageViewedSubscribers: Array<(event: unknown) => void> = []
-          ;(self as unknown as { shopify?: unknown }).shopify = {
-            extend: (_target: string, callback: (api: unknown) => void) =>
-              callback({
-                settings: { rumConfig: JSON.stringify(configuration) },
-                browser: { cookie: { get: () => Promise.resolve(''), set: () => Promise.resolve('') } },
-                analytics: {
-                  subscribe: (eventName: string, subscriber: (event: unknown) => void) => {
-                    if (eventName === 'page_viewed') {
-                      pageViewedSubscribers.push(subscriber)
-                    }
-                  },
-                },
-              }),
-          }
-          ;(self as unknown as { emitPageViewed?: () => void }).emitPageViewed = () => {
-            for (const subscriber of pageViewedSubscribers) {
-              subscriber({ context: { document: { location: { href: 'https://shop.example/checkout' } } } })
-            }
-          }
           const datadogRum = self.DD_RUM as ShopifyRumPublicApi
-          // The RUM configuration comes from the plugin, through the `rumConfig` pixel setting
-          datadogRum.init({ plugins: [datadogRum.shopifyAppPixelPlugin()] } as RumInitConfiguration)
+          datadogRum.init({ ...configuration, plugins: [datadogRum.shopifyAppPixelPlugin()] })
         })
     )
     .run(async ({ flushEvents, intakeRegistry, evaluateInWorker }) => {
       await evaluateInWorker(() => {
-        ;(self as unknown as { emitPageViewed: () => void }).emitPageViewed()
+        self.DD_RUM!.startView()
       })
       await flushEvents()
 

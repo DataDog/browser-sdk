@@ -7,7 +7,7 @@ import {
   TrackingConsent,
 } from '@datadog/browser-core'
 import { LOW_HASH_UUID, mockBaseConfiguration, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import { createFakeShopifyCookie } from '../../test/mockShopifyCookie'
+import { createFakeShopifyCookie } from '../../../test/mockShopifyCookie'
 import { createShopifySessionStore, setShopifyBrowserApi } from './shopifySessionStore'
 
 describe('Shopify session store', () => {

@@ -4,7 +4,7 @@ import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-co
 import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
 import { createFakeAnalytics, pageViewedEvent } from '../../test/mockShopifyAnalytics'
 import { shopifyAppPixelPlugin } from './shopifyAppPixelPlugin'
-import { setShopifyBrowserApi } from './shopifySessionStore'
+import { setShopifyBrowserApi } from './session/shopifySessionStore'
 
 function setupShopifyGlobal(settings: Record<string, unknown>) {
   const { analytics, emit } = createFakeAnalytics()
