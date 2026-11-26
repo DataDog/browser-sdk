@@ -1,10 +1,17 @@
 import assert from 'node:assert/strict'
-import { describe, it } from 'node:test'
+import path from 'node:path'
+import { beforeEach, describe, it, mock } from 'node:test'
 // Not part of release-please's public API: used to check the notes format the pre-tag check relies on.
 import { DefaultChangelogNotes } from 'release-please/build/src/changelog-notes/default.js'
-import type { ConventionalCommit } from 'release-please'
-import { findMissingCommits, getVisibleTypes } from './checkReleaseNotes.ts'
+import type { CandidateRelease, ConventionalCommit } from 'release-please'
+import releasePleaseConfig from '../../release-please-config.json' with { type: 'json' }
+import { mockCommandImplementation, mockModule } from '../deploy/lib/testHelpers.ts'
+import type { CommandDetail } from '../deploy/lib/testHelpers.ts'
 import type { GitCommit } from './checkReleaseNotes.ts'
+
+const commandMock = mock.fn()
+await mockModule(path.resolve(import.meta.dirname, 'command.ts'), { command: commandMock })
+const { checkReleaseNotes, findMissingCommits, getVisibleTypes } = await import('./checkReleaseNotes.ts')
 
 const VISIBLE_TYPES = getVisibleTypes()
 const FEAT_COMMIT: GitCommit = { sha: 'a'.repeat(40), subject: 'feat(rum): Add view name API (#5300)' }
@@ -55,5 +62,77 @@ describe('findMissingCommits', () => {
       { sha: 'e'.repeat(40), subject: 'v7.17.1 (#5256)' },
     ]
     assert.deepEqual(findMissingCommits('', commits, VISIBLE_TYPES), [])
+  })
+})
+
+describe('checkReleaseNotes', () => {
+  const LAST_RELEASE_SHA = releasePleaseConfig['last-release-sha']
+  const RELEASE_SHA = 'f'.repeat(40)
+  const TAG_SHA = '1'.repeat(40)
+  let commands: CommandDetail[]
+
+  function mockGit({ tag, tagAfterLastReleaseSha = false }: { tag?: string; tagAfterLastReleaseSha?: boolean }) {
+    commands = mockCommandImplementation(commandMock, (command) => {
+      if (command.startsWith('git describe')) {
+        if (!tag) {
+          throw new Error('fatal: No names found')
+        }
+        return tag
+      }
+      if (command.startsWith('git rev-list')) {
+        return TAG_SHA
+      }
+      if (command.startsWith('git merge-base --is-ancestor') && !tagAfterLastReleaseSha) {
+        throw new Error('not an ancestor')
+      }
+      if (command.startsWith('git log')) {
+        return [FEAT_COMMIT, FIX_COMMIT].map(({ sha, subject }) => `${sha}\t${subject}`).join('\n')
+      }
+      return ''
+    })
+  }
+
+  async function checkRelease(listedCommits = [FEAT_COMMIT, FIX_COMMIT]) {
+    // eslint-disable-next-line id-denylist
+    const release = { pullRequest: { number: 5400 }, sha: RELEASE_SHA, notes: await buildNotes(listedCommits) }
+    checkReleaseNotes([release as CandidateRelease])
+  }
+
+  function getLogRange() {
+    return commands
+      .find(({ command }) => command.startsWith('git log'))
+      ?.command.split(' ')
+      .pop()
+  }
+
+  beforeEach(() => mockGit({}))
+
+  it('does nothing without a pending release', () => {
+    checkReleaseNotes([])
+    assert.deepEqual(commands, [])
+  })
+
+  it('starts from last-release-sha when main has no release tag', async () => {
+    await checkRelease()
+    assert.equal(getLogRange(), `${LAST_RELEASE_SHA}..${RELEASE_SHA}^`)
+  })
+
+  it('starts from last-release-sha when the closest tag is older (legacy tags)', async () => {
+    mockGit({ tag: 'v1.12.2' })
+    await checkRelease()
+    assert.equal(getLogRange(), `${LAST_RELEASE_SHA}..${RELEASE_SHA}^`)
+  })
+
+  it('starts from the closest tag when it is newer than last-release-sha', async () => {
+    mockGit({ tag: 'v7.20.0', tagAfterLastReleaseSha: true })
+    await checkRelease()
+    assert.equal(getLogRange(), `${TAG_SHA}..${RELEASE_SHA}^`)
+  })
+
+  it('fails when the release notes miss a commit', async () => {
+    await assert.rejects(
+      () => checkRelease([FEAT_COMMIT]),
+      new RegExp(`#5400 was merged before listing these commits:\\n  ${FIX_COMMIT.sha.slice(0, 7)} `)
+    )
   })
 })
