@@ -22,6 +22,7 @@ dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
 dev,@oxc-project/runtime,MIT,Copyright (c) 2024-present VoidZero Inc. & Contributors
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@salesforce/cli,Apache-2.0,Copyright (c) 2026 Salesforce, Inc.
+dev,@shopify/web-pixels-extension,MIT,Copyright 2020-present, Shopify Inc.
 dev,@tanstack/react-router,MIT,Copyright (c) 2021-present Tanner Linsley
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/busboy,MIT,Copyright Microsoft Corporation
