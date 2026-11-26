@@ -61,7 +61,7 @@ async function main({ dryRun, targetBranch }: { dryRun: boolean; targetBranch: s
 
   if (dryRun) {
     const manifest = await loadManifest(command`gh auth token`.run().trim(), targetBranch)
-    checkReleaseNotes(await manifest.buildReleases())
+    await manifest.buildReleases() // Runs the pending-release check.
     for (const pullRequest of await manifest.buildPullRequests()) {
       console.log(`Would open: ${pullRequest.title.toString()} (${pullRequest.headRefName})`)
       console.log(pullRequest.updates.map((update) => `  ${update.path}`).join('\n'))
@@ -72,8 +72,6 @@ async function main({ dryRun, targetBranch }: { dryRun: boolean; targetBranch: s
 
   using token = getGithubReleasePleaseToken()
   const manifest = await loadManifest(token.value, targetBranch)
-  // Fail before tagging if a pending release pull request was merged without listing every change.
-  checkReleaseNotes(await manifest.buildReleases())
 
   // Same steps as `release-please github-release` then `release-please release-pr`. The manifest is
   // loaded again after tagging, so the next release pull request starts from the new release.
@@ -85,5 +83,19 @@ async function main({ dryRun, targetBranch }: { dryRun: boolean; targetBranch: s
 
 async function loadManifest(token: string, targetBranch: string) {
   const github = await GitHub.create({ owner: 'DataDog', repo: 'browser-sdk', token })
-  return Manifest.fromManifest(github, targetBranch, 'release-please-config.json', '.release-please-manifest.json')
+  const manifest = await Manifest.fromManifest(
+    github,
+    targetBranch,
+    'release-please-config.json',
+    '.release-please-manifest.json'
+  )
+  // Fail before tagging if a pending release pull request was merged without listing every change.
+  // `createReleases()` calls `buildReleases()` itself, so the check runs on the releases it tags.
+  const buildReleases = manifest.buildReleases.bind(manifest)
+  manifest.buildReleases = async () => {
+    const releases = await buildReleases()
+    checkReleaseNotes(releases)
+    return releases
+  }
+  return manifest
 }
