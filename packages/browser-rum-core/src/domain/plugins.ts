@@ -1,5 +1,6 @@
 import { isThenable } from '@datadog/browser-core'
-import type { addTelemetryDebug, addTelemetryError } from '@datadog/browser-core'
+import type { addTelemetryDebug } from '@datadog/browser-core'
+import type { Context } from '@datadog/js-core/util'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
@@ -44,10 +45,11 @@ export interface OnRumStartOptions {
   /**
    * Send an error telemetry event. Accepts an Error instance or an error-like
    * object with a string message and optional string name and stack.
+   * Stack frames are preserved without scrubbing.
    *
    * @internal
    */
-  addTelemetryError?: typeof addTelemetryError
+  addTelemetryError?: (error: unknown, context?: Context) => void
 }
 
 /**

@@ -86,6 +86,39 @@ describe('telemetry', () => {
     ])
   })
 
+  describe('addTelemetryError', () => {
+    ;[undefined, false, true].forEach((skipScrubbing) => {
+      it(`handles stack frame scrubbing with skipScrubbing=${skipScrubbing}`, async () => {
+        const { getTelemetryEvents } = startAndSpyTelemetry()
+
+        addTelemetryError(
+          {
+            message: 'message',
+            name: 'TypeError',
+            stack: '    at customer (https://customer.com/main.js:1:2)',
+          },
+          { foo: 'bar' },
+          skipScrubbing === undefined ? undefined : { skipScrubbing }
+        )
+
+        expect(await getTelemetryEvents()).toEqual([
+          jasmine.objectContaining({
+            telemetry: jasmine.objectContaining({
+              message: 'message',
+              foo: 'bar',
+              error: {
+                kind: 'TypeError',
+                stack: skipScrubbing
+                  ? 'TypeError: message\n  at customer @ https://customer.com/main.js:1:2'
+                  : 'TypeError: message',
+              },
+            }),
+          }),
+        ])
+      })
+    })
+  })
+
   describe('addTelemetryConfiguration', () => {
     it('should collects configuration when sampled', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry({

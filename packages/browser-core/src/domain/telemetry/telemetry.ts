@@ -274,12 +274,16 @@ export function addTelemetryDebug(message: string, context?: Context) {
   })
 }
 
-export function addTelemetryError(e: unknown, context?: Context) {
+export function addTelemetryError(
+  e: unknown,
+  context?: Context,
+  { skipScrubbing = false }: { skipScrubbing?: boolean } = {}
+) {
   getTelemetryObservable().notify({
     rawEvent: {
       type: TelemetryType.LOG,
       status: StatusType.error,
-      ...formatError(e),
+      ...formatError(e, skipScrubbing),
       ...context,
     },
   })
@@ -315,13 +319,13 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
   })
 }
 
-export function formatError(e: unknown) {
+export function formatError(e: unknown, skipScrubbing = false) {
   if (isErrorLike(e)) {
     const stackTrace = computeStackTrace(e)
     return {
       error: {
         kind: stackTrace.name,
-        stack: toStackTraceString(scrubCustomerFrames(stackTrace)),
+        stack: toStackTraceString(skipScrubbing ? stackTrace : scrubCustomerFrames(stackTrace)),
       },
       message: stackTrace.message!,
     }

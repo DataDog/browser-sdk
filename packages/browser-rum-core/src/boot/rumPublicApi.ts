@@ -730,7 +730,7 @@ export function makeRumPublicApi(
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
         addTelemetryDebug,
-        addTelemetryError,
+        addTelemetryError: (error, context) => addTelemetryError(error, context, { skipScrubbing: true }),
       })
 
       return startRumResult
