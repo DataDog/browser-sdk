@@ -318,7 +318,12 @@ describe('httpRequest', () => {
       await wait(0)
 
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
     })
 
@@ -334,8 +339,18 @@ describe('httpRequest', () => {
 
       const sentPayload = { ...payload, retry: { count: 1, lastFailureStatus: 429 } }
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
+        {
+          type: 'failure',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: sentPayload,
+        },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: sentPayload,
+        },
       ])
     })
 
@@ -353,9 +368,24 @@ describe('httpRequest', () => {
 
       const sentPayload = { ...payload, retry: { count: 2, lastFailureStatus: 429 } }
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: sentPayload },
+        {
+          type: 'failure',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: sentPayload,
+        },
+        {
+          type: 'failure',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: sentPayload,
+        },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: sentPayload,
+        },
       ])
     })
   })

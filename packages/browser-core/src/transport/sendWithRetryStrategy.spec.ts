@@ -75,7 +75,12 @@ describe('sendWithRetryStrategy', () => {
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(0)
       expect(state.queuedPayloads.size()).toBe(0)
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
     })
 
@@ -97,19 +102,34 @@ describe('sendWithRetryStrategy', () => {
       sendMock.respondWith(0, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(2)
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 2, ongoingRequestCount: 2 }, payload: payload0 },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 2, ongoingRequestCount: 2 },
+          endpointResponded: true,
+          payload: payload0,
+        },
       ])
 
       sendMock.respondWith(1, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 1, ongoingRequestCount: 1 }, payload: payload1 },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 1, ongoingRequestCount: 1 },
+          endpointResponded: true,
+          payload: payload1,
+        },
       ])
 
       sendMock.respondWith(2, { status: 200 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(0)
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: payload2 },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: payload2,
+        },
       ])
     })
   })
@@ -154,7 +174,12 @@ describe('sendWithRetryStrategy', () => {
       expect(state.queuedPayloads.size()).toBe(2)
       expect(state.queuedPayloads.bytesCount).toBe(MAX_QUEUE_BYTES_COUNT + 10)
       expect(latestEvents()).toEqual([
-        { type: 'queue-full', bandwidth: { ongoingByteCount: 81920, ongoingRequestCount: 1 }, payload },
+        {
+          type: 'queue-full',
+          bandwidth: { ongoingByteCount: 81920, ongoingRequestCount: 1 },
+          endpointResponded: false,
+          payload,
+        },
       ])
     })
 
@@ -170,7 +195,12 @@ describe('sendWithRetryStrategy', () => {
       )
       reportErrorSpy.calls.reset()
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: payload0 },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: payload0,
+        },
       ])
 
       sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
@@ -180,7 +210,12 @@ describe('sendWithRetryStrategy', () => {
       sendMock.respondWith(1, { status: 200 })
       expect(reportErrorSpy).not.toHaveBeenCalled()
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: payload1 },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: payload1,
+        },
       ])
     })
 
@@ -188,7 +223,12 @@ describe('sendWithRetryStrategy', () => {
       const payload = sendRequest()
       sendMock.respondWith(0, { status: 500 })
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'failure',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
 
       sendRequest({ bytesCount: MAX_QUEUE_BYTES_COUNT })
@@ -201,6 +241,7 @@ describe('sendWithRetryStrategy', () => {
         {
           type: 'success',
           bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
           payload: { ...payload, retry: { count: 1, lastFailureStatus: 500 } },
         },
       ])
@@ -223,7 +264,12 @@ describe('sendWithRetryStrategy', () => {
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(MAX_ONGOING_REQUESTS)
       expect(state.queuedPayloads.size()).toBe(0)
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
     })
 
@@ -240,13 +286,23 @@ describe('sendWithRetryStrategy', () => {
       expect(state.queuedPayloads.size()).toBe(2)
       expect(state.queuedPayloads.bytesCount).toBe(MAX_ONGOING_BYTES_COUNT - 15 + 10)
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: payload0 },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: payload0,
+        },
       ])
 
       sendMock.respondWith(1, { status: 200 })
       expect(state.queuedPayloads.size()).toBe(0)
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: payload1 },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload: payload1,
+        },
       ])
     })
   })
@@ -292,6 +348,9 @@ describe('sendWithRetryStrategy', () => {
       endpointResponded: true,
     },
   ].forEach(({ expectRetry, description, status, type, offLine, retryPolicy, endpointResponded }) => {
+    // A response with any status other than 0 is a response from the endpoint
+    const endpointRespondedAfterResponse = status !== 0 || !!endpointResponded
+
     describe(description, () => {
       beforeEach(() => {
         setNavigatorOnLine(!offLine)
@@ -310,7 +369,12 @@ describe('sendWithRetryStrategy', () => {
           sendMock.respondWith(0, { status, type })
           expect(state.queuedPayloads.size()).toBe(1)
           expect(latestEvents()).toEqual([
-            { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+            {
+              type: 'failure',
+              bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+              endpointResponded: endpointRespondedAfterResponse,
+              payload,
+            },
           ])
 
           sendRequest()
@@ -327,7 +391,12 @@ describe('sendWithRetryStrategy', () => {
           expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
           expect(state.queuedPayloads.size()).toBe(1)
           expect(latestEvents()).toEqual([
-            { type: 'failure', bandwidth: { ongoingByteCount: 1, ongoingRequestCount: 1 }, payload: payload0 },
+            {
+              type: 'failure',
+              bandwidth: { ongoingByteCount: 1, ongoingRequestCount: 1 },
+              endpointResponded: endpointRespondedAfterResponse,
+              payload: payload0,
+            },
           ])
 
           sendRequest()
@@ -339,7 +408,12 @@ describe('sendWithRetryStrategy', () => {
           expect(state.bandwidthMonitor.ongoingRequestCount).toBe(2)
           expect(state.queuedPayloads.size()).toBe(0)
           expect(latestEvents()).toEqual([
-            { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: payload1 },
+            {
+              type: 'success',
+              bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+              endpointResponded: true,
+              payload: payload1,
+            },
           ])
         })
 
@@ -349,7 +423,12 @@ describe('sendWithRetryStrategy', () => {
           sendMock.respondWith(0, { status, type })
           expect(state.queuedPayloads.first().retry).toEqual({ count: 1, lastFailureStatus: status })
           expect(latestEvents()).toEqual([
-            { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+            {
+              type: 'failure',
+              bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+              endpointResponded: endpointRespondedAfterResponse,
+              payload,
+            },
           ])
 
           clock.tick(INITIAL_BACKOFF_TIME)
@@ -357,7 +436,12 @@ describe('sendWithRetryStrategy', () => {
           sendMock.respondWith(1, { status, type })
           expect(state.queuedPayloads.first().retry).toEqual({ count: 2, lastFailureStatus: status })
           expect(latestEvents()).toEqual([
-            { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+            {
+              type: 'failure',
+              bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+              endpointResponded: endpointRespondedAfterResponse,
+              payload,
+            },
           ])
         })
       } else {
@@ -366,7 +450,12 @@ describe('sendWithRetryStrategy', () => {
           sendMock.respondWith(0, { status, type })
           expect(state.queuedPayloads.size()).toBe(0)
           expect(latestEvents()).toEqual([
-            { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+            {
+              type: 'success',
+              bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+              endpointResponded: endpointRespondedAfterResponse,
+              payload,
+            },
           ])
         })
       }
@@ -379,21 +468,36 @@ describe('sendWithRetryStrategy', () => {
       sendMock.respondWith(0, { status: 500 })
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(0)
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'failure',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
 
       clock.tick(INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       sendMock.respondWith(1, { status: 500 })
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'failure',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
 
       clock.tick(2 * INITIAL_BACKOFF_TIME)
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       sendMock.respondWith(2, { status: 500 })
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'failure',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
 
       clock.tick(4 * INITIAL_BACKOFF_TIME)
@@ -405,7 +509,12 @@ describe('sendWithRetryStrategy', () => {
       const payload = sendRequest()
       sendMock.respondWith(0, { status: 500 })
       expect(latestEvents()).toEqual([
-        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'failure',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
 
       sendRequest()
@@ -419,7 +528,12 @@ describe('sendWithRetryStrategy', () => {
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(1)
       sendMock.respondWith(1, { status: 200 })
       expect(latestEvents()).toEqual([
-        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        {
+          type: 'success',
+          bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+          endpointResponded: true,
+          payload,
+        },
       ])
 
       expect(state.bandwidthMonitor.ongoingRequestCount).toBe(3)

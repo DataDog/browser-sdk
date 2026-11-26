@@ -39,25 +39,29 @@ export interface BandwidthStats {
   ongoingRequestCount: number
 }
 
+interface HttpRequestMetadata<Body extends Payload = Payload> {
+  bandwidth: BandwidthStats
+  endpointResponded: boolean
+  payload: Body
+}
+
+/** A request to send the given payload failed. (We may retry.) */
+export interface HttpRequestFailureEvent<Body extends Payload = Payload> extends HttpRequestMetadata<Body> {
+  type: 'failure'
+}
+
+/** The given payload was discarded because the request queue is full. */
+export interface HttpRequestQueueFullEvent<Body extends Payload = Payload> extends HttpRequestMetadata<Body> {
+  type: 'queue-full'
+}
+
+/** A request to send the given payload succeeded. */
+export interface HttpRequestSuccessEvent<Body extends Payload = Payload> extends HttpRequestMetadata<Body> {
+  type: 'success'
+}
+
 export type HttpRequestEvent<Body extends Payload = Payload> =
-  | {
-      // A request to send the given payload failed. (We may retry.)
-      type: 'failure'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
-  | {
-      // The given payload was discarded because the request queue is full.
-      type: 'queue-full'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
-  | {
-      // A request to send the given payload succeeded.
-      type: 'success'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
+  HttpRequestFailureEvent<Body> | HttpRequestQueueFullEvent<Body> | HttpRequestSuccessEvent<Body>
 
 export interface Payload {
   data: string | FormData | Blob
