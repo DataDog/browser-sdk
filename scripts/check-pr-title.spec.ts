@@ -22,6 +22,7 @@ describe('validatePrTitle', () => {
     assertValid('perf(core): Reduce bundle size')
     assertValid('docs(react): Document the router integration')
     assertValid('exp(rum): Collect soft navigations')
+    assertValid('fix(replay): Retry uploads after network errors')
   })
 
   it('accepts internal types with any scope', () => {
