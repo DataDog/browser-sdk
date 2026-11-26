@@ -11,6 +11,9 @@ import type { RumViewEvent, RumViewUpdateEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { diffMerge } from '../domain/view/viewDiff'
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 100
 
 export type AssembledViewDiff = Omit<RumViewUpdateEvent, 'view' | '_dd'> & {
@@ -178,8 +181,8 @@ export function startRumBatch(
   sessionExpireObservable: Observable<void>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
-  const endpoints = [createEndpointBuilder(configuration, 'rum')]
-  const replicaEndpoint = createReplicaEndpointBuilder(configuration, 'rum')
+  const endpoints = [createEndpointBuilder(configuration, 'rum', __BUILD_ENV__SDK_VERSION__)]
+  const replicaEndpoint = createReplicaEndpointBuilder(configuration, 'rum', __BUILD_ENV__SDK_VERSION__)
   if (replicaEndpoint) {
     endpoints.push(replicaEndpoint)
   }

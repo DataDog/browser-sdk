@@ -66,7 +66,6 @@ export function escapeShellParameter(value: string) {
 
 export function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
   let builder: EndpointBuilder
-  let version: string
 
   switch (getEventSource(event)) {
     case EventSource.RUM:
@@ -74,8 +73,7 @@ export function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
       if (!sdkInfos.rum?.config || !sdkInfos.rum?.version) {
         return
       }
-      version = sdkInfos.rum.version
-      builder = createEndpointBuilder(sdkInfos.rum.config, 'rum')
+      builder = createEndpointBuilder(sdkInfos.rum.config, 'rum', sdkInfos.rum.version)
       break
     }
 
@@ -83,12 +81,9 @@ export function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
       if (!sdkInfos.logs?.config || !sdkInfos.logs?.version) {
         return
       }
-      version = sdkInfos.logs.version
-      builder = createEndpointBuilder(sdkInfos.logs.config, 'logs')
+      builder = createEndpointBuilder(sdkInfos.logs.config, 'logs', sdkInfos.logs.version)
       break
   }
 
-  return builder
-    .build('manual', {})
-    .replace(/dd-evp-origin-version=[^&]+/g, `dd-evp-origin-version=${encodeURIComponent(version)}`)
+  return builder.build('manual', {})
 }

@@ -221,8 +221,8 @@ export function startTelemetryTransport(
     const telemetrySubscription = telemetryObservable.subscribe((event) => bridge.send('internal_telemetry', event))
     cleanupTasks.push(telemetrySubscription.unsubscribe)
   } else {
-    const endpoints = [createEndpointBuilder(configuration, 'rum')]
-    const replicaEndpoint = createReplicaEndpointBuilder(configuration, 'rum')
+    const endpoints = [createEndpointBuilder(configuration, 'rum', __BUILD_ENV__SDK_VERSION__)]
+    const replicaEndpoint = createReplicaEndpointBuilder(configuration, 'rum', __BUILD_ENV__SDK_VERSION__)
     if (replicaEndpoint && isTelemetryReplicationAllowed(configuration)) {
       endpoints.push(replicaEndpoint)
     }

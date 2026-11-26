@@ -7,14 +7,17 @@ import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { LogsEvent } from '../logsEvent.types'
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 export function startLogsBatch(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   reportError: (message: string) => void,
   sessionManager: SessionManager
 ) {
-  const endpoints = [createEndpointBuilder(configuration, 'logs')]
-  const replicaEndpoint = createReplicaEndpointBuilder(configuration, 'logs')
+  const endpoints = [createEndpointBuilder(configuration, 'logs', __BUILD_ENV__SDK_VERSION__)]
+  const replicaEndpoint = createReplicaEndpointBuilder(configuration, 'logs', __BUILD_ENV__SDK_VERSION__)
   if (replicaEndpoint) {
     endpoints.push(replicaEndpoint)
   }

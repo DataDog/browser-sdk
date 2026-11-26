@@ -338,8 +338,8 @@ describe('httpRequest with several endpoints', () => {
       )
     request = createHttpRequest(
       [
-        createEndpointBuilder({ clientToken: 'token', site: 'datadoghq.eu' }, 'rum'),
-        createEndpointBuilder({ clientToken: 'token', site: 'datadoghq.com' }, 'rum'),
+        createEndpointBuilder({ clientToken: 'token', site: 'datadoghq.eu' }, 'rum', '1.0.0'),
+        createEndpointBuilder({ clientToken: 'token', site: 'datadoghq.com' }, 'rum', '1.0.0'),
       ],
       noop
     )
@@ -441,7 +441,7 @@ describe('httpRequest intake parameters', () => {
   beforeEach(() => {
     interceptor = interceptRequests()
     requests = interceptor.requests
-    endpointBuilder = createEndpointBuilder({ clientToken }, 'logs')
+    endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', '1.0.0')
     request = createHttpRequest([endpointBuilder], noop)
   })
 
