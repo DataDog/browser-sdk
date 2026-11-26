@@ -9,6 +9,10 @@ metadata:
   name: browser-rum-sdk
   displayName: RUM Browser SDK
   owner: rum-browser
+  contacts:
+    - name: '#rum-browser-sdk'
+      type: slack
+      contact: https://dd.enterprise.slack.com/archives/C01UQK8CX0F
   links:
     - name: Source
       type: repo
@@ -44,6 +48,10 @@ metadata:
   name: browser-logs-sdk
   displayName: Logs Browser SDK
   owner: rum-browser
+  contacts:
+    - name: '#rum-browser-sdk'
+      type: slack
+      contact: https://dd.enterprise.slack.com/archives/C01UQK8CX0F
   links:
     - name: Source
       type: repo
