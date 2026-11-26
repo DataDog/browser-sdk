@@ -1,5 +1,4 @@
 import type { Context } from '@datadog/js-core/util'
-import type { RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
 import { test, expect } from '@playwright/test'
 import type { IntakeRegistry, BrowserLog } from '../../lib/framework'
 import { createTest, createWorker } from '../../lib/framework'
@@ -415,20 +414,24 @@ test.describe('Service workers Rum', () => {
     })
 })
 
-// The `rum-shopify` bundle also exposes the Shopify plugins
-type ShopifyRumPublicApi = RumPublicApi & { shopifyAppPixelPlugin: () => RumPlugin }
-
 test.describe('Web workers Rum', () => {
-  // This scenario only verifies that the SDK initializes without crashing in a dedicated web worker;
-  // it is about init setup, not behavior.
-  // Behavior (and Shopify-specific) e2e coverage belongs in its own scenario file.
+  // This scenario only verifies that the SDK initializes and sends a view in a dedicated web worker,
   createTest('dedicated web worker with worker rum')
     .withWorker(
       createWorker({ dedicated: true, importScripts: true })
         .withRum({}, { sdk: 'rum-shopify' })
         .withRumInit((configuration) => {
-          const datadogRum = self.DD_RUM as ShopifyRumPublicApi
-          datadogRum.init({ ...configuration, plugins: [datadogRum.shopifyAppPixelPlugin()] })
+          self.DD_RUM!.init({
+            ...configuration,
+            plugins: [{ name: 'shopify-app-pixel' }],
+            trackViewsManually: true,
+            trackUserInteractions: false,
+            trackResources: false,
+            trackLongTasks: false,
+            trackViewMetricsManually: true,
+            sessionReplaySampleRate: 0,
+            profilingSampleRate: 0,
+          })
         })
     )
     .run(async ({ flushEvents, intakeRegistry, evaluateInWorker }) => {
