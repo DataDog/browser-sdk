@@ -386,8 +386,13 @@ function newClick(
     },
 
     discard: () => {
+      const wasFinalized = status === ClickStatus.FINALIZED
       stop()
       status = ClickStatus.FINALIZED
+      if (!wasFinalized) {
+        // This click was announced with ACTION_STARTED but will never be collected as an action
+        lifeCycle.notify(LifeCycleEventType.ACTION_DISCARDED, { id: startedClickAction.id })
+      }
     },
   }
 }

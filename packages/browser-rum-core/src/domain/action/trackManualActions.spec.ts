@@ -84,6 +84,33 @@ describe('trackManualActions', () => {
     })
   })
 
+  describe('discarded actions', () => {
+    it('notifies the previous action as discarded when an action is restarted with the same key', () => {
+      const discardedIds: string[] = []
+      lifeCycle.subscribe(LifeCycleEventType.ACTION_DISCARDED, ({ id }) => discardedIds.push(id))
+
+      startAction('checkout')
+      const [firstActionId] = actionContexts.findActionId()
+      startAction('checkout')
+      const [secondActionId] = actionContexts.findActionId()
+      stopAction('checkout')
+
+      expect(discardedIds).toEqual([firstActionId])
+      expect(rawRumEvents).toHaveSize(1)
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.id).toBe(secondActionId)
+    })
+
+    it('does not notify as discarded an action that is stopped', () => {
+      const onDiscarded = jasmine.createSpy('onDiscarded')
+      lifeCycle.subscribe(LifeCycleEventType.ACTION_DISCARDED, onDiscarded)
+
+      startAction('checkout')
+      stopAction('checkout')
+
+      expect(onDiscarded).not.toHaveBeenCalled()
+    })
+  })
+
   describe('action types', () => {
     ;[ActionType.SWIPE, ActionType.TAP, ActionType.SCROLL].forEach((actionType) => {
       it(`should support ${actionType} action type`, () => {

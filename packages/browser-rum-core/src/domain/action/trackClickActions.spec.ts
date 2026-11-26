@@ -267,6 +267,55 @@ describe('trackClickActions', () => {
     expect(findActionId()).toEqual([])
   })
 
+  describe('discarded actions', () => {
+    let startedIds: string[]
+    let discardedIds: string[]
+
+    beforeEach(() => {
+      startedIds = []
+      discardedIds = []
+      lifeCycle.subscribe(LifeCycleEventType.ACTION_STARTED, ({ id }) => startedIds.push(id))
+      lifeCycle.subscribe(LifeCycleEventType.ACTION_DISCARDED, ({ id }) => discardedIds.push(id))
+    })
+
+    it('notifies the unused rage click of a single click as discarded', () => {
+      startClickActionsTracking()
+      emulateClick({ activity: {} })
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      // A single click starts the click itself and the rage click that is used if the click turns out to be the beginning of a rage
+      expect(startedIds).toHaveSize(2)
+      expect(discardedIds).toHaveSize(1)
+      expect(discardedIds[0]).not.toBe(events[0].id)
+      expect(startedIds.filter((id) => !discardedIds.includes(id))).toEqual([events[0].id])
+    })
+
+    it('notifies the clicks aggregated into a rage click as discarded', () => {
+      startClickActionsTracking()
+      emulateClick({ activity: { delay: 5 } })
+      emulateClick({ activity: { delay: 5 } })
+      emulateClick({ activity: { delay: 5 } })
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toEqual([FrustrationType.RAGE_CLICK])
+      // 3 clicks + the rage click, only the rage click is collected
+      expect(startedIds).toHaveSize(4)
+      expect(discardedIds).toHaveSize(3)
+      expect(startedIds.filter((id) => !discardedIds.includes(id))).toEqual([events[0].id])
+    })
+
+    it('does not notify as discarded a click collected without page activity', () => {
+      startClickActionsTracking()
+      emulateClick()
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events.length).toBe(1)
+      expect(discardedIds).not.toContain(events[0].id)
+    })
+  })
+
   it('does not set a duration for dead clicks', () => {
     startClickActionsTracking()
     emulateClick()
