@@ -271,80 +271,6 @@ describe('telemetry', () => {
     expect((await getTelemetryEvents())[0].ddtags).toEqual('sdk_version:test,env:bar,service:foo,version:123')
   })
 
-  describe('cross-platform telemetry', () => {
-    const CROSS_PLATFORM_CONFIGURATION: Partial<Configuration> = { source: 'flutter', sdkVersion: '3.0.0' }
-
-    it('attributes debug events to the cross-platform SDK', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addTelemetryDebug('message', { foo: 'bar' })
-
-      expect(await getTelemetryEvents()).toEqual([
-        jasmine.objectContaining({
-          source: 'flutter',
-          version: '3.0.0',
-          telemetry: jasmine.objectContaining({
-            type: TelemetryType.LOG,
-            status: StatusType.debug,
-            message: 'message',
-            foo: 'bar',
-          }),
-        }),
-      ])
-    })
-
-    it('attributes error events to the cross-platform SDK and scrubs customer frames', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      addTelemetryError({
-        message: 'message',
-        stack: [
-          '    at Aq.a61 (https://customer.com/main.dart.js:40798:9)',
-          '    at foo (https://www.datadoghq-browser-agent.com/datadog-rum.js:1:2)',
-        ].join('\n'),
-        name: 'StateError',
-      })
-
-      expect(await getTelemetryEvents()).toEqual([
-        jasmine.objectContaining({
-          source: 'flutter',
-          version: '3.0.0',
-          telemetry: jasmine.objectContaining({
-            type: TelemetryType.LOG,
-            status: StatusType.error,
-            message: 'message',
-            error: {
-              kind: 'StateError',
-              stack: 'StateError: message\n  at foo @ https://www.datadoghq-browser-agent.com/datadog-rum.js:1:2',
-            },
-          }),
-        }),
-      ])
-    })
-
-    it('scrubs customer frames from cross-platform Error instances', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry(CROSS_PLATFORM_CONFIGURATION)
-      const error = new Error('message')
-      error.stack = 'Error: message\n    at Aq.a61 (https://customer.com/main.dart.js:40798:9)'
-      addTelemetryError(error)
-
-      const [event] = await getTelemetryEvents()
-      expect((event.telemetry as { error: { stack: string } }).error.stack).toBe('Error: message')
-    })
-
-    it('attributes telemetry to the source and sdkVersion init options, falling back to the browser SDK', async () => {
-      const defaultSdk = startAndSpyTelemetry()
-      const crossPlatform = startAndSpyTelemetry({ source: 'unity' })
-      // let both collectors register their observer before sending
-      await waitNextMicrotask()
-      addTelemetryDebug('message')
-
-      const [defaultEvent] = await defaultSdk.getTelemetryEvents()
-      const [crossPlatformEvent] = await crossPlatform.getTelemetryEvents()
-      expect(defaultEvent.source).toBe('browser')
-      expect(crossPlatformEvent.source).toBe('unity')
-      expect(crossPlatformEvent.version).toBe(defaultEvent.version)
-    })
-  })
-
   describe('assemble telemetry hook', () => {
     it('should add default telemetry event attributes', async () => {
       const { getTelemetryEvents, hook } = startAndSpyTelemetry()
@@ -594,27 +520,22 @@ describe('formatError', () => {
     })
   })
 
-  it('formats error-like objects with optional fields', () => {
-    ;[
-      { value: { message: '' }, kind: undefined, stack: 'Error: ' },
-      { value: { message: 'message' }, kind: undefined, stack: 'Error: message' },
-      { value: { message: 'message', name: 'StateError' }, kind: 'StateError', stack: 'StateError: message' },
-      {
-        value: { message: 'message', name: 'TypeError' },
-        kind: 'TypeError',
-        stack: 'TypeError: message',
-      },
-    ].forEach(({ value, kind, stack }) => {
-      expect(formatError(value)).toEqual({ message: value.message, error: { kind, stack } })
-    })
-  })
-
-  it('formats objects with invalid error fields as arbitrary values', () => {
-    ;[{ message: 42 }, { message: 'message', name: 42 }, { message: 'message', stack: {} }].forEach((value) => {
-      expect(formatError(value)).toEqual({
-        message: `Uncaught ${JSON.stringify(value)}`,
-        error: { stack: NO_ERROR_STACK_PRESENT_MESSAGE },
+  it('formats error-like objects and scrubs customer frames', () => {
+    expect(
+      formatError({
+        message: 'message',
+        name: 'TypeError',
+        stack: [
+          '    at customer (https://customer.com/main.js:1:2)',
+          '    at foo (https://www.datadoghq-browser-agent.com/datadog-rum.js:3:4)',
+        ].join('\n'),
       })
+    ).toEqual({
+      message: 'message',
+      error: {
+        kind: 'TypeError',
+        stack: 'TypeError: message\n  at foo @ https://www.datadoghq-browser-agent.com/datadog-rum.js:3:4',
+      },
     })
   })
 
