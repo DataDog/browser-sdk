@@ -21,16 +21,17 @@ export function main(): void {
   const startedAt = process.env.CI_PIPELINE_CREATED_AT
   const commitSha = process.env.CI_COMMIT_SHA
   if (!startedAt || !commitSha) {
-    throw new Error('CI_PIPELINE_CREATED_AT and CI_COMMIT_SHA environment variables are required')
+    printWarning('CI_PIPELINE_CREATED_AT and CI_COMMIT_SHA environment variables are required, skipping.')
+    return
   }
 
   const finishedAt = new Date().toISOString()
-  const apiKey = getOrg2ApiKey()
 
   for (const service of SERVICES) {
     printLog(`Sending the DORA deployment of ${service} ${browserSdkVersion}...`)
 
     try {
+      const apiKey = getOrg2ApiKey()
       command`
         datadog-ci dora deployment
           --service ${service}
@@ -49,7 +50,7 @@ export function main(): void {
         .withLogs()
         .run()
     } catch (error) {
-      // The release is already done: a DORA Metrics issue must not fail the job
+      // The release is already done: a DORA Metrics issue (API key lookup, intake error) must not fail the job
       printWarning(`Failed to send the DORA deployment of ${service}:`, error)
     }
   }

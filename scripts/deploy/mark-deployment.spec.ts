@@ -11,13 +11,14 @@ const PACKAGE_TAGS =
 
 describe('mark-deployment', () => {
   const commandMock = mock.fn()
+  const getOrg2ApiKeyMock = mock.fn(() => ORG2_API_KEY)
   let commands: CommandDetail[]
   let main: (...args: string[]) => void
 
   before(async () => {
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
     await mockModule(path.resolve(import.meta.dirname, '../lib/secrets.ts'), {
-      getOrg2ApiKey: () => ORG2_API_KEY,
+      getOrg2ApiKey: getOrg2ApiKeyMock,
     })
     await mockModule(path.resolve(import.meta.dirname, '../lib/buildEnv.ts'), {
       getBuildEnvSdkVersion: () => '7.0.0',
@@ -31,6 +32,7 @@ describe('mark-deployment', () => {
 
   afterEach(() => {
     commandMock.mock.resetCalls()
+    getOrg2ApiKeyMock.mock.restore()
   })
 
   it('should mark a canary deployment', () => {
@@ -51,6 +53,15 @@ describe('mark-deployment', () => {
       commands[0].command,
       `datadog-ci deployment mark --no-fail --service browser-rum-sdk --env prod --revision 7.0.0 --tags,team:rum-browser,--tags,datacenter:ap1,--tags,datacenter:us3,${PACKAGE_TAGS}`
     )
+  })
+
+  it('should not fail when the API key cannot be retrieved', () => {
+    getOrg2ApiKeyMock.mock.mockImplementation(() => {
+      throw new Error('ssm error')
+    })
+
+    assert.doesNotThrow(() => main('--env', 'canary'))
+    assert.deepEqual(commands, [])
   })
 
   it('should require an env', () => {

@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util'
-import { printLog, runMain } from '../lib/executionUtils.ts'
+import { printLog, printWarning, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvSdkVersion } from '../lib/buildEnv.ts'
 import { getOrg2ApiKey } from '../lib/secrets.ts'
@@ -44,19 +44,23 @@ export function main(...args: string[]): void {
 
   printLog(`Marking the job as a ${SERVICE} deployment to ${env} (revision ${revision})...`)
 
-  // --no-fail: a CD Visibility issue must not block a deployment
-  command`
+  // A CD Visibility issue (API key lookup, intake error) must not block a deployment
+  try {
+    command`
     datadog-ci deployment mark --no-fail
       --service ${SERVICE}
       --env ${env}
       --revision ${revision}
       ${tags.flatMap((tag) => ['--tags', tag])}
   `
-    .withEnvironment({
-      DD_API_KEY: getOrg2ApiKey(),
-      DD_SITE: 'datadoghq.com',
-      DD_BETA_COMMANDS_ENABLED: '1',
-    })
-    .withLogs()
-    .run()
+      .withEnvironment({
+        DD_API_KEY: getOrg2ApiKey(),
+        DD_SITE: 'datadoghq.com',
+        DD_BETA_COMMANDS_ENABLED: '1',
+      })
+      .withLogs()
+      .run()
+  } catch (error) {
+    printWarning('Failed to mark the deployment in CD Visibility:', error)
+  }
 }

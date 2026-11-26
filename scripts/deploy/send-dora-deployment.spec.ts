@@ -12,13 +12,14 @@ const FINISHED_AT = '2026-11-26T10:00:00.000Z'
 
 describe('send-dora-deployment', () => {
   const commandMock = mock.fn<(...args: any[]) => any>()
+  const getOrg2ApiKeyMock = mock.fn(() => ORG2_API_KEY)
   let commands: CommandDetail[]
   let main: () => void
 
   before(async () => {
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
     await mockModule(path.resolve(import.meta.dirname, '../lib/secrets.ts'), {
-      getOrg2ApiKey: () => ORG2_API_KEY,
+      getOrg2ApiKey: getOrg2ApiKeyMock,
     })
     await mockModule(path.resolve(import.meta.dirname, '../lib/browserSdkVersion.ts'), {
       browserSdkVersion: '7.0.0',
@@ -36,6 +37,7 @@ describe('send-dora-deployment', () => {
   afterEach(() => {
     mock.timers.reset()
     commandMock.mock.resetCalls()
+    getOrg2ApiKeyMock.mock.restore()
     delete process.env.CI_PIPELINE_CREATED_AT
     delete process.env.CI_COMMIT_SHA
   })
@@ -67,10 +69,19 @@ describe('send-dora-deployment', () => {
     assert.equal(commandMock.mock.callCount(), 2)
   })
 
-  it('should require the CI environment variables', () => {
+  it('should not fail when the API key cannot be retrieved', () => {
+    getOrg2ApiKeyMock.mock.mockImplementation(() => {
+      throw new Error('ssm error')
+    })
+
+    assert.doesNotThrow(() => main())
+    assert.deepEqual(commands, [])
+  })
+
+  it('should skip the deployments without the CI environment variables', () => {
     delete process.env.CI_PIPELINE_CREATED_AT
 
-    assert.throws(() => main(), /CI_PIPELINE_CREATED_AT and CI_COMMIT_SHA/)
+    assert.doesNotThrow(() => main())
     assert.deepEqual(commands, [])
   })
 })
