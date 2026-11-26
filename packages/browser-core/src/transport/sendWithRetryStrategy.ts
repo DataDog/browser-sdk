@@ -4,6 +4,7 @@ import { ONE_MEBI_BYTE, ONE_KIBI_BYTE, setTimeout } from '@datadog/js-core/util'
 import type { Observable } from '@datadog/js-core/util'
 import { isServerError } from '../tools/utils/responseUtils'
 import type { Payload, HttpRequestEvent, HttpResponse, BandwidthStats } from './httpRequest'
+import { RetryPolicy } from './retryPolicy'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 export const MAX_ONGOING_REQUESTS = 32
@@ -23,11 +24,13 @@ const enum RetryReason {
 }
 
 export interface RetryState<Body extends Payload> {
-  transportStatus: TransportStatus
   currentBackoffTime: number
   bandwidthMonitor: ReturnType<typeof newBandwidthMonitor>
+  endpointResponded: boolean
   queuedPayloads: ReturnType<typeof newPayloadQueue<Body>>
   queueFullReported: boolean
+  retryPolicy: RetryPolicy
+  transportStatus: TransportStatus
 }
 
 type SendStrategy<Body extends Payload> = (payload: Body, onResponse: (r: HttpResponse) => void) => void
@@ -98,7 +101,8 @@ function send<Body extends Payload>(
   state.bandwidthMonitor.add(payload)
   sendStrategy(payload, (response) => {
     state.bandwidthMonitor.remove(payload)
-    if (!shouldRetryRequest(response)) {
+    state.endpointResponded ||= response.status !== 0
+    if (!shouldRetryRequest(response, state.retryPolicy, state.endpointResponded)) {
       state.transportStatus = TransportStatus.UP
       requestObservable.notify({ type: 'success', bandwidth: state.bandwidthMonitor.stats(), payload })
       onSuccess()
@@ -135,23 +139,29 @@ function retryQueuedPayloads<Body extends Payload>(
   }
 }
 
-function shouldRetryRequest(response: HttpResponse) {
+function shouldRetryRequest(response: HttpResponse, retryPolicy: RetryPolicy, endpointResponded: boolean): boolean {
   return (
     response.type !== 'opaque' &&
-    ((response.status === 0 && !navigator.onLine) ||
+    ((response.status === 0 && shouldRetryForStatus0Response(retryPolicy, endpointResponded)) ||
       response.status === 408 ||
       response.status === 429 ||
       isServerError(response.status))
   )
 }
 
-export function newRetryState<Body extends Payload>(): RetryState<Body> {
+function shouldRetryForStatus0Response(retryPolicy: RetryPolicy, endpointResponded: boolean): boolean {
+  return !navigator.onLine || (retryPolicy === RetryPolicy.MINIMIZE_DATA_LOSS && endpointResponded)
+}
+
+export function newRetryState<Body extends Payload>(retryPolicy: RetryPolicy): RetryState<Body> {
   return {
-    transportStatus: TransportStatus.UP,
-    currentBackoffTime: INITIAL_BACKOFF_TIME,
     bandwidthMonitor: newBandwidthMonitor(),
+    currentBackoffTime: INITIAL_BACKOFF_TIME,
+    endpointResponded: false,
     queuedPayloads: newPayloadQueue(),
     queueFullReported: false,
+    retryPolicy,
+    transportStatus: TransportStatus.UP,
   }
 }
 

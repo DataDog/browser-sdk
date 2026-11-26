@@ -6,6 +6,7 @@ import {
   canUseEventBridge,
   ErrorSource,
   PageExitReason,
+  RetryPolicy,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
 import { createEndpointBuilder } from '@datadog/js-core/transport'
@@ -44,13 +45,25 @@ export function startRecording(
     addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
+  // Create the session replay HTTP clients. We enable the MINIMIZE_DATA_LOSS policy to bias
+  // both clients toward successful delivery; losing segments or resources can corrupt the
+  // replay, but duplicates are tolerated by the backend and do little harm.
   const replayRequest =
     segmentHttpRequest ||
-    createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
-
+    createHttpRequest(
+      [createEndpointBuilder(configuration, 'replay')],
+      reportError,
+      SEGMENT_BYTES_LIMIT,
+      RetryPolicy.MINIMIZE_DATA_LOSS
+    )
   const resourceRequest =
     resourceHttpRequest ||
-    createHttpRequest<ResourcePayload>([createEndpointBuilder(configuration, 'replay')], reportError, 0)
+    createHttpRequest<ResourcePayload>(
+      [createEndpointBuilder(configuration, 'replay')],
+      reportError,
+      0,
+      RetryPolicy.MINIMIZE_DATA_LOSS
+    )
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void
