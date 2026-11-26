@@ -50,7 +50,10 @@ export interface ActionEventData {
 }
 
 export function trackManualActions(lifeCycle: LifeCycle, onManualActionCompleted: (action: ManualAction) => void) {
-  const actionTracker = startEventTracker<ActionEventData>(lifeCycle)
+  const actionTracker = startEventTracker<ActionEventData>(lifeCycle, {
+    // A manual action is only discarded when it is restarted with the same key before being stopped
+    onDiscard: ({ id }) => lifeCycle.notify(LifeCycleEventType.ACTION_DISCARDED, { id }),
+  })
   function startManualAction(name: string, options: ActionOptions = {}, startClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
 

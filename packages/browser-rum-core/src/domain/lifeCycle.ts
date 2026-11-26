@@ -42,6 +42,9 @@ export const enum LifeCycleEventType {
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
   ACTION_STARTED,
+  // Notified when an action that was announced with ACTION_STARTED will never be collected as a RUM
+  // event (e.g. the unused rage click clone, or the clicks aggregated into a rage click)
+  ACTION_DISCARDED,
   DURATION_VITAL_STARTED,
 }
 
@@ -60,6 +63,7 @@ export const enum LifeCycleEventType {
 // * https://github.com/microsoft/TypeScript/issues/54152
 declare const LifeCycleEventTypeAsConst: {
   ACTION_STARTED: LifeCycleEventType.ACTION_STARTED
+  ACTION_DISCARDED: LifeCycleEventType.ACTION_DISCARDED
   AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
   BEFORE_VIEW_CREATED: LifeCycleEventType.BEFORE_VIEW_CREATED
   VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
@@ -82,6 +86,7 @@ declare const LifeCycleEventTypeAsConst: {
 // fails to build the rum-core package with error TS4058
 export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.ACTION_STARTED]: TrackedEventData<ActionEventData>
+  [LifeCycleEventTypeAsConst.ACTION_DISCARDED]: { id: string }
   [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
   [LifeCycleEventTypeAsConst.BEFORE_VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent

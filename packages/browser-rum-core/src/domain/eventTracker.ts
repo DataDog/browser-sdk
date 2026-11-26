@@ -29,6 +29,14 @@ export interface StartOptions {
   ) => (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean
 }
 
+export interface EventTrackerOptions<TData> {
+  /**
+   * Called when a tracked event is discarded, either explicitly or because a new event was started
+   * with the same key.
+   */
+  onDiscard?: (event: DiscardedEvent<TData>) => void
+}
+
 export interface EventTracker<TData> {
   start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions) => TrackedEventData<TData>
   stop: (key: string, stopClocks: ClocksState, data?: Partial<TData>) => StoppedEvent<TData> | undefined
@@ -47,7 +55,10 @@ export interface TrackedEventData<TData> {
   eventCounts?: ReturnType<typeof trackEventCounts>
 }
 
-export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TData> {
+export function startEventTracker<TData>(
+  lifeCycle: LifeCycle,
+  trackerOptions: EventTrackerOptions<TData> = {}
+): EventTracker<TData> {
   // Used by actions to associate events with actions.
   const history = createValueHistory<string>({ expireDelay: EVENT_CONTEXT_TIME_OUT_DELAY })
   // Used by manual actions and resources that use named keys to match the start and stop calls.
@@ -135,12 +146,14 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
     event.historyEntry.remove()
 
-    return {
+    const discardedEvent: DiscardedEvent<TData> = {
       ...event.data,
       id: event.id,
       startClocks: event.startClocks,
       counts,
     }
+    trackerOptions.onDiscard?.(discardedEvent)
+    return discardedEvent
   }
 
   function findId(startTime?: RelativeTime): string[] {

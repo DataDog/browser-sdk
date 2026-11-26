@@ -1,5 +1,5 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
-import { addDuration } from '@datadog/js-core/time'
+import { addDuration, elapsed, relativeNow } from '@datadog/js-core/time'
 import { createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -31,6 +31,28 @@ export function createActionHistory(lifeCycle: LifeCycle) {
       },
       actionStart.startClocks.relative
     )
+  })
+
+  // Actions announced with ACTION_STARTED that will never produce a RUM event (e.g. the unused rage
+  // click clone) would otherwise stay open forever: they would be attached to every following
+  // profile and, being the oldest open entry, they would also prevent expired entries from being
+  // cleaned up.
+  lifeCycle.subscribe(LifeCycleEventType.ACTION_DISCARDED, ({ id }) => {
+    history
+      .findAllEntries()
+      .find((entry) => entry.value.id === id)
+      ?.remove()
+  })
+
+  // Trackers discard all their in-flight actions when the session is renewed: none of the actions
+  // still open will produce a RUM event. Close them instead of removing them, so a profile that is
+  // still being assembled for the previous session keeps them.
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    const now = relativeNow()
+    history.findAllEntries().forEach((entry) => {
+      entry.value.duration = elapsed(entry.startTime, now)
+      entry.close(now)
+    })
   })
 
   lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, ({ rawRumEvent, startClocks, duration }) => {
