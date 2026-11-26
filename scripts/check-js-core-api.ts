@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { parseArgs } from 'node:util'
-import { Extractor, ExtractorConfig, type IConfigFile } from '@microsoft/api-extractor'
+import { CompilerState, Extractor, ExtractorConfig, type IConfigFile } from '@microsoft/api-extractor'
 import { printError, printLog, runMain } from './lib/executionUtils.ts'
 import { readPackageJson } from './lib/filesUtils.ts'
 
@@ -15,6 +15,7 @@ runMain(() => {
   const packageDir = path.resolve('packages/js-core')
   const packageJson = readPackageJson(path.join(packageDir, 'package.json'))
   const subpaths = Object.keys(packageJson.exports ?? {}).map((subpath) => subpath.replace('./', ''))
+  let compilerState: CompilerState | undefined
 
   for (const name of subpaths) {
     const entryPoint = path.join(packageDir, `cjs/entries/${name}.d.ts`)
@@ -40,7 +41,13 @@ runMain(() => {
       packageJsonFullPath: path.join(packageDir, 'package.json'),
     })
 
+    // All entry points share a tsconfig, so reuse the compiler analysis across their API checks.
+    compilerState ??= CompilerState.create(config, {
+      additionalEntryPoints: subpaths.map((subpath) => path.join(packageDir, `cjs/entries/${subpath}.d.ts`)),
+    })
+
     const result = Extractor.invoke(config, {
+      compilerState,
       localBuild: values.update,
       printApiReportDiff: true,
     })
