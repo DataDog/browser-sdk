@@ -20,6 +20,11 @@ export function createShopifyCookieAccess(
     return value ? [value] : []
   }
 
+  async function write(value: string, expireDelay: number) {
+    await cookieApi.set(buildCookieString(cookieName, value, expireDelay, cookieOptions))
+    notifyIfChanged(value ? [value] : [])
+  }
+
   function notifyIfChanged(values: string[]) {
     if (previousValues !== undefined && String(values) !== String(previousValues)) {
       observable.notify()
@@ -39,14 +44,10 @@ export function createShopifyCookieAccess(
 
     async getAllAndSet(cb) {
       const { value, expireDelay } = cb(await getAll())
-      await cookieApi.set(buildCookieString(cookieName, value, expireDelay, cookieOptions))
-      notifyIfChanged([value])
+      await write(value, expireDelay)
     },
 
-    async delete() {
-      await cookieApi.set(buildCookieString(cookieName, '', 0, cookieOptions))
-      notifyIfChanged([])
-    },
+    delete: () => write('', 0),
 
     observable,
   }
