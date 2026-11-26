@@ -1,0 +1,45 @@
+# CI image used by every job (`image: $CI_IMAGE`).
+#
+# The image tag is a hash of the image inputs: the Dockerfile, this file, CHROME_PACKAGE_VERSION and
+# the root @playwright/test version. The job builds and signs the image only when no image has this
+# tag yet, then gives CI_IMAGE to the jobs of the next stages through a dotenv report. A job that
+# uses `needs:` must list `ci-image` in it to get CI_IMAGE.
+#
+# To rebuild the image without changing its inputs (e.g. to get a newer commit-headless), change a
+# comment in the Dockerfile.
+.ci-image:
+  stage: ci-image
+  tags:
+    - 'arch:amd64'
+  image: $BUILD_STABLE_REGISTRY/images/docker:27.3.1
+  interruptible: true
+  id_tokens:
+    DDSIGN_ID_TOKEN:
+      aud: image-integrity
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+  script:
+    - PLAYWRIGHT_VERSION=$(jq -r '.devDependencies["@playwright/test"]' package.json)
+    - CI_IMAGE_TAG=$({ cat Dockerfile .gitlab/ci-image.yml; echo "$CHROME_PACKAGE_VERSION"; echo "$PLAYWRIGHT_VERSION"; } | sha256sum | cut -c1-16)
+    - CI_IMAGE="$BUILD_STABLE_REGISTRY/ci/$APP:$CI_IMAGE_TAG"
+    - |
+      if docker buildx imagetools inspect "$CI_IMAGE" > /dev/null 2>&1; then
+        echo "$CI_IMAGE already exists, skipping the build"
+      else
+        METADATA_FILE=$(mktemp)
+        docker buildx build \
+          --platform linux/amd64 \
+          --build-arg CHROME_PACKAGE_VERSION="$CHROME_PACKAGE_VERSION" \
+          --build-arg PLAYWRIGHT_VERSION="$PLAYWRIGHT_VERSION" \
+          --tag "$CI_IMAGE" \
+          --push \
+          --metadata-file "$METADATA_FILE" \
+          .
+        ddsign sign "$CI_IMAGE" --docker-metadata-file "$METADATA_FILE"
+      fi
+    - echo "CI_IMAGE=$CI_IMAGE" > ci-image.env
+  artifacts:
+    reports:
+      dotenv: ci-image.env

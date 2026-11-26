@@ -23,7 +23,7 @@
       "matchUpdateTypes": ["minor", "patch"]
     },
     {
-      "description": "Node.js and Playwright need a CI image rebuild, so they need a manual review: keep them out of the auto-approved all-minor-patch batch",
+      "description": "Node.js and Playwright change the CI image, so they need a manual review: keep them out of the auto-approved all-minor-patch batch",
       "matchDepNames": ["node", "@playwright/test"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "dependencies that need a manual review",

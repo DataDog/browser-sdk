@@ -1,7 +1,12 @@
 stages:
+  - ci-image
   - pre-notify
   - deploy
   - post-notify
+
+# Recomputes CI_IMAGE (the parent pipeline already built the image): see .gitlab/ci-image.yml
+ci-image:
+  extends: .ci-image
 
 .base-configuration:
   tags:
@@ -35,6 +40,7 @@ step-1_deploy-prod-minor-dcs:
 
 step-2_deploy-prod-private-regions:
   needs:
+    - ci-image
     - step-1_deploy-prod-minor-dcs
   extends:
     - .base-configuration
@@ -44,6 +50,7 @@ step-2_deploy-prod-private-regions:
 
 step-3_deploy-prod-eu1:
   needs:
+    - ci-image
     - step-2_deploy-prod-private-regions
   extends:
     - .base-configuration
@@ -53,6 +60,7 @@ step-3_deploy-prod-eu1:
 
 step-4_deploy-prod-us1:
   needs:
+    - ci-image
     - step-3_deploy-prod-eu1
   extends:
     - .base-configuration
@@ -62,6 +70,7 @@ step-4_deploy-prod-us1:
 
 step-5_deploy-prod-gov:
   needs:
+    - ci-image
     - step-4_deploy-prod-us1
   extends:
     - .base-configuration
@@ -71,6 +80,7 @@ step-5_deploy-prod-gov:
 
 step-6_publish-npm:
   needs:
+    - ci-image
     - step-5_deploy-prod-gov
   stage: deploy
   extends:
@@ -83,6 +93,7 @@ step-6_publish-npm:
 
 step-7_publish-developer-extension:
   needs:
+    - ci-image
     - step-6_publish-npm
   stage: deploy
   extends:
@@ -94,6 +105,7 @@ step-7_publish-developer-extension:
 
 step-8_publish-github-release:
   needs:
+    - ci-image
     - step-7_publish-developer-extension
   stage: deploy
   extends:
@@ -107,7 +119,9 @@ step-8_publish-github-release:
 # Notify
 ########################################################################################################################
 
-include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v3-sdm/template.yml'
+include:
+  - local: .gitlab/ci-image.yml
+  - 'https://gitlab-templates.ddbuild.io/slack-notifier/v3-sdm/template.yml'
 
 .prepare_notification:
   extends: .slack-notifier-base

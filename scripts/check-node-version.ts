@@ -20,7 +20,7 @@ runMain(async () => {
     printError('Different node versions detected!\n')
     printError('Ensure to:')
     printError(`- run \`volta pin node@${dockerVersion}\``)
-    printError('- bump `CURRENT_CI_IMAGE` and run `ci-image` gitlab job\n')
+    printError('- check that the `ci-image` gitlab job built the image of this commit\n')
     process.exit(1)
   }
 })

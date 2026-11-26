@@ -6,13 +6,12 @@ import { initGitConfig, createPullRequest, pushSignedCommit } from '../lib/gitUt
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
-const CURRENT_CI_IMAGE = process.env.CURRENT_CI_IMAGE
 const CURRENT_PACKAGE_VERSION = process.env.CHROME_PACKAGE_VERSION
 
 const CHROME_PACKAGE_URL = 'https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable'
 
 runMain(async () => {
-  if (!REPOSITORY || !MAIN_BRANCH || !CURRENT_CI_IMAGE || !CURRENT_PACKAGE_VERSION) {
+  if (!REPOSITORY || !MAIN_BRANCH || !CURRENT_PACKAGE_VERSION) {
     throw new Error('Missing required environment variables')
   }
 
@@ -45,9 +44,8 @@ runMain(async () => {
 
   command`git checkout -b ${chromeVersionBranch}`.run()
 
-  printLog('Update versions...')
+  printLog('Update version...')
   await replaceCiFileVariable('CHROME_PACKAGE_VERSION', packageVersion)
-  await replaceCiFileVariable('CURRENT_CI_IMAGE', String(Number(CURRENT_CI_IMAGE) + 1))
 
   command`git add ${CI_FILE}`.run()
   command`git commit -m ${commitMessage}`.run()

@@ -1,7 +1,12 @@
 stages:
+  - ci-image
   - pre-notify
   - deploy
   - post-notify
+
+# Recomputes CI_IMAGE (the parent pipeline already built the image): see .gitlab/ci-image.yml
+ci-image:
+  extends: .ci-image
 
 .base-configuration:
   tags:
@@ -103,7 +108,9 @@ optional_step-deploy-to-new-datacenter:
 # Notify
 ########################################################################################################################
 
-include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v3-sdm/template.yml'
+include:
+  - local: .gitlab/ci-image.yml
+  - 'https://gitlab-templates.ddbuild.io/slack-notifier/v3-sdm/template.yml'
 
 .prepare_notification:
   extends: .slack-notifier-base

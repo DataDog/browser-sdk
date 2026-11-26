@@ -1,9 +1,7 @@
 variables:
   CURRENT_STAGING: staging-48
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 137
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
-  CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
@@ -29,8 +27,8 @@ cache:
     - .yarn/cache
 
 stages:
-  - task
   - ci-image
+  - task
   - test
   - after-tests
   - browserstack
@@ -131,30 +129,9 @@ stages:
 # CI image
 ########################################################################################################################
 
+# Builds the image when its inputs change and gives CI_IMAGE to the other jobs: see .gitlab/ci-image.yml
 ci-image:
-  stage: ci-image
-  extends:
-    - .base-configuration
-    - .feature-branches
-  when: manual
-  tags: ['arch:amd64']
-  image: $BUILD_STABLE_REGISTRY/images/docker:27.3.1
-  id_tokens:
-    DDSIGN_ID_TOKEN:
-      aud: image-integrity
-  script:
-    - METADATA_FILE=$(mktemp)
-    - PLAYWRIGHT_VERSION=$(jq -r '.devDependencies["@playwright/test"]' package.json)
-    - >
-      docker buildx build
-      --platform linux/amd64
-      --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION
-      --build-arg PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION
-      --tag $CI_IMAGE
-      --push
-      --metadata-file $METADATA_FILE
-      .
-    - ddsign sign $CI_IMAGE --docker-metadata-file $METADATA_FILE
+  extends: .ci-image
 
 ########################################################################################################################
 # Tests
@@ -286,7 +263,7 @@ rum-fit-tests:
   allow_failure: true
   interruptible: true
   inherit:
-    # Keep SDK CI settings, especially CURRENT_CI_IMAGE, out of FIT.
+    # Keep SDK CI settings, especially CI_IMAGE, out of FIT.
     variables: false
   trigger:
     project: DataDog/rum-sdk-integration-test-framework
@@ -345,7 +322,7 @@ check-js-core-api:
 
 unit-bs:
   stage: browserstack
-  needs: ['unit']
+  needs: ['ci-image', 'unit']
   extends:
     - .base-configuration
     - .bs-allowed-branches
@@ -449,7 +426,9 @@ deploy-auto:
 # Notify
 ########################################################################################################################
 
-include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v3-sdm/template.yml'
+include:
+  - local: .gitlab/ci-image.yml
+  - 'https://gitlab-templates.ddbuild.io/slack-notifier/v3-sdm/template.yml'
 
 notify-feature-branch-failure:
   extends:
