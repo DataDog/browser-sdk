@@ -1,5 +1,6 @@
 export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload } from './httpRequest'
 export { createHttpRequest } from './httpRequest'
+export { RetryPolicy } from './retryPolicy'
 export type { BrowserWindowWithEventBridge, DatadogEventBridge } from './eventBridge'
 export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } from './eventBridge'
 export type { Batch } from './batch'

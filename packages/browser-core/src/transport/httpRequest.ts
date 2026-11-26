@@ -4,6 +4,7 @@ import { buildUrl, computeBytesCount, globalObject, ONE_KIBI_BYTE, Observable } 
 import { fetch } from '@datadog/js-core/dom'
 import type { Context } from '@datadog/js-core/util'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
+import { RetryPolicy } from './retryPolicy'
 
 /**
  * beacon payload max queue size implementation is 64kb
@@ -68,14 +69,15 @@ export interface Payload {
 export function createHttpRequest<Body extends Payload = Payload>(
   endpointBuilders: EndpointBuilder[],
   reportError: (message: string) => void,
-  bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT
+  bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT,
+  retryPolicy: RetryPolicy = RetryPolicy.MINIMIZE_DUPLICATES
 ): HttpRequest<Body> {
   const observable = new Observable<HttpRequestEvent<Body>>()
   // Each endpoint needs its own retry state: queued payloads don't remember their endpoint, so with
   // a shared state they would be retried to whichever endpoint drains the queue.
   const senders = endpointBuilders.map((endpointBuilder) => ({
     endpointBuilder,
-    retryState: newRetryState<Body>(),
+    retryState: newRetryState<Body>(retryPolicy),
   }))
 
   return {
