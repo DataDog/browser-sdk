@@ -15,10 +15,8 @@ import {
   registerCleanupTask,
   createNewEvent,
 } from '../../../test'
-import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import {
   addTelemetryError,
-  scrubCustomerFrames,
   formatError,
   addTelemetryConfiguration,
   addTelemetryUsage,
@@ -501,6 +499,33 @@ describe('startTelemetryTransport', () => {
 })
 
 describe('formatError', () => {
+  it('keeps all stack frames and sanitizes their URLs', () => {
+    const error = new Error('message')
+    error.stack = `Error: message
+    at sdk (https://www.datadoghq-browser-agent.com/datadog-rum.js?token=secret:1:2)
+    at customer (https://example.com/app.js?token=secret#fragment:3:4)
+    at flutter (https://example.com/main.dart.js#token=secret:5:6)
+    at local (http://localhost:8080/app.js:7:8)
+    at fallback (www.example.com/app.js?token=secret:9:10)
+    at anonymous (<anonymous>:11:12)
+    at native (native)`
+
+    expect(formatError(error)).toEqual({
+      message: 'message',
+      error: {
+        kind: 'Error',
+        stack: `Error: message
+  at sdk @ https://www.datadoghq-browser-agent.com/datadog-rum.js:1:2
+  at customer @ https://example.com/app.js:3:4
+  at flutter @ https://example.com/main.dart.js:5:6
+  at local @ http://localhost:8080/app.js:7:8
+  at fallback @ www.example.com/app.js:9:10
+  at anonymous @ <anonymous>:11:12
+  at native(native) @ undefined`,
+      },
+    })
+  })
+
   it('formats error instances', () => {
     expect(formatError(new Error('message'))).toEqual({
       message: 'message',
@@ -526,26 +551,6 @@ describe('formatError', () => {
       error: {
         stack: NO_ERROR_STACK_PRESENT_MESSAGE,
       },
-    })
-  })
-})
-
-describe('scrubCustomerFrames', () => {
-  it('should remove stack trace frames that are related to customer files', () => {
-    ;[
-      { scrub: false, url: 'https://www.datadoghq-browser-agent.com/datadog-rum-v4.js' },
-      { scrub: false, url: 'https://www.datad0g-browser-agent.com/datadog-rum-v5.js' },
-      { scrub: false, url: 'https://d3uc069fcn7uxw.cloudfront.net/datadog-logs-staging.js' },
-      { scrub: false, url: 'https://d20xtzwzcl0ceb.cloudfront.net/datadog-rum-canary.js' },
-      { scrub: false, url: 'http://localhost/index.html' },
-      { scrub: false, url: undefined },
-      { scrub: false, url: '<anonymous>' },
-      { scrub: true, url: 'https://foo.bar/path?qux=qix' },
-    ].forEach(({ url, scrub }) => {
-      const candidate: Partial<StackTrace> = {
-        stack: [{ url }],
-      }
-      expect(scrubCustomerFrames(candidate as StackTrace).stack.length).toBe(scrub ? 0 : 1, `for url: ${url!}`)
     })
   })
 })

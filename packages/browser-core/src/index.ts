@@ -80,6 +80,7 @@ export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'
 export { createIdentityEncoder } from './tools/encoder'
 export * from './tools/utils/arrayUtils'
+export { sanitizeUrl } from './tools/utils/sanitizeUrl'
 
 export * from './tools/serialisation/sanitize'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'

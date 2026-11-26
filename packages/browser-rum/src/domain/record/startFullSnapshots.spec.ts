@@ -1,3 +1,4 @@
+import { sanitizeUrl } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { noop } from '@datadog/js-core/util'
@@ -6,7 +7,6 @@ import type { MetaRecord } from '../../types'
 import { RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../browser-rum-core/test'
 import { startFullSnapshots } from './startFullSnapshots'
-import { sanitizeUrl } from './utils/sanitizeUrl'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
 
