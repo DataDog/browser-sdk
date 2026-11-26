@@ -1,7 +1,8 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager } from '@datadog/browser-core'
+import { isSampled } from '@datadog/browser-core'
 import { createHook, DISCARDED } from '@datadog/js-core/assembly'
-import { createSessionManagerMock } from '@datadog/browser-core/test'
+import { createSessionManagerMock, MOCK_SESSION_ID } from '@datadog/browser-core/test'
 import type { AssembleHook, AssembleHookParams, DefaultLogsEventAttributes } from '../hooks'
 import type { LogsConfiguration } from '../configuration'
 import { startSessionContext } from './sessionContext'
@@ -32,6 +33,35 @@ describe('session context', () => {
 
     it('should discard logs if session is not tracked', () => {
       startSessionContext(hook, configuration, createSessionManagerMock().setNotTracked())
+
+      const defaultLogAttributes = hook.trigger({
+        startTime: 0 as RelativeTime,
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
+
+      expect(defaultLogAttributes).toBe(DISCARDED)
+    })
+
+    it('should set the session id when only Logs samples the session', () => {
+      startSessionContext(hook, { ...configuration, sessionSampleRate: 100 }, createRumSessionManagerMock(0))
+
+      const defaultLogAttributes = hook.trigger({
+        startTime: 0 as RelativeTime,
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
+
+      expect(defaultLogAttributes).toEqual({
+        service: 'foo',
+        version: '1.0.0',
+        session_id: MOCK_SESSION_ID,
+        session: { id: MOCK_SESSION_ID },
+      })
+    })
+
+    it('should discard logs when only RUM samples the session', () => {
+      startSessionContext(hook, { ...configuration, sessionSampleRate: 0 }, createRumSessionManagerMock(100))
 
       const defaultLogAttributes = hook.trigger({
         startTime: 0 as RelativeTime,
@@ -79,3 +109,13 @@ describe('session context', () => {
     })
   })
 })
+
+function createRumSessionManagerMock(rumSessionSampleRate: number): Pick<SessionManager, 'findTrackedSession'> {
+  const sessionManagerMock = createSessionManagerMock()
+  return {
+    findTrackedSession: (startTime, options) =>
+      isSampled(MOCK_SESSION_ID, options?.sampleRate ?? rumSessionSampleRate)
+        ? sessionManagerMock.findTrackedSession(startTime, options)
+        : undefined,
+  }
+}
