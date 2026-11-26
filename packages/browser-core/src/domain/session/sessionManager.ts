@@ -42,11 +42,7 @@ import {
 import { getSessionStoreStrategy, selectSessionStoreStrategyType } from './sessionStore'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 
-/**
- * Creates the store the session manager persists the session with, so it can be provided by
- * another SDK package when the standard strategies (cookie, local storage, memory) can't access
- * the session storage. Returning `undefined` means no data can be sent.
- */
+/** Creates the store the session is persisted with, in place of the standard strategies. `undefined` means no data. */
 export type SessionStoreFactory = (configuration: Configuration) => Promise<SessionStoreStrategy | undefined>
 
 export interface SessionManager {
