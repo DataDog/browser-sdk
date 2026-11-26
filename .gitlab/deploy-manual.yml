@@ -70,6 +70,7 @@ step-6_publish-npm:
   script:
     - yarn
     - node ./scripts/deploy/check-cordons.ts --environment prod
+    - BUILD_MODE=release node ./scripts/deploy/mark-deployment.ts --env prod --datacenter npm
     - node ./scripts/deploy/publish-npm.ts
 
 step-7_publish-developer-extension:

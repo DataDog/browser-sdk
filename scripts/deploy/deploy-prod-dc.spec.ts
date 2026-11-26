@@ -70,6 +70,7 @@ describe('deploy-prod-dc', () => {
     assert.strictEqual(checkTelemetryErrorsCalls.length, 0)
 
     assert.deepEqual(commands, [
+      { command: 'node ./scripts/deploy/mark-deployment.ts --env prod --datacenter us1' },
       { command: 'node ./scripts/deploy/deploy.ts prod v6 us1' },
       { command: 'node ./scripts/deploy/upload-source-maps.ts v6 us1' },
     ])
@@ -87,6 +88,7 @@ describe('deploy-prod-dc', () => {
     assert.deepEqual(checkTelemetryErrorsCalls[30], { version: browserSdkVersion, datacenters: ['us1'] }) // Last gating check
 
     assert.deepEqual(commands, [
+      { command: 'node ./scripts/deploy/mark-deployment.ts --env prod --datacenter us1' },
       { command: 'node ./scripts/deploy/deploy.ts prod v6 us1' },
       { command: 'node ./scripts/deploy/upload-source-maps.ts v6 us1' },
     ])
@@ -99,6 +101,10 @@ describe('deploy-prod-dc', () => {
     assert.strictEqual(checkTelemetryErrorsCalls.length, 0)
 
     assert.deepEqual(commands, [
+      {
+        command:
+          'node ./scripts/deploy/mark-deployment.ts --env prod --datacenter ap1 --datacenter ap2 --datacenter us3 --datacenter us5',
+      },
       { command: 'node ./scripts/deploy/deploy.ts prod v6 ap1,ap2,us3,us5' },
       { command: 'node ./scripts/deploy/upload-source-maps.ts v6 ap1,ap2,us3,us5' },
     ])
@@ -111,6 +117,7 @@ describe('deploy-prod-dc', () => {
     assert.strictEqual(checkTelemetryErrorsCalls.length, 0)
 
     assert.deepEqual(commands, [
+      { command: 'node ./scripts/deploy/mark-deployment.ts --env prod --datacenter prtest00 --datacenter prtest01' },
       { command: 'node ./scripts/deploy/deploy.ts prod v6 prtest00,prtest01' },
       { command: 'node ./scripts/deploy/upload-source-maps.ts v6 prtest00,prtest01' },
     ])
@@ -131,6 +138,7 @@ describe('deploy-prod-dc', () => {
     assert.strictEqual(checkTelemetryErrorsCalls.length, 0)
 
     assert.deepEqual(commands, [
+      { command: 'node ./scripts/deploy/mark-deployment.ts --env prod --datacenter gov' },
       { command: 'node ./scripts/deploy/deploy.ts prod v6 root' },
       { command: 'node ./scripts/deploy/upload-source-maps.ts v6 root' },
     ])
