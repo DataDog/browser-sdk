@@ -40,8 +40,8 @@ They appear under "Internal Changes", and accept any scope.
 
 ### Scopes
 
-- Package scopes: `core`, `rum` (rum, rum-core, rum-slim), `logs`, `worker`, `react`, `angular`,
-  `vue`, `nextjs`, `nuxt`, `shopify`, `debugger`, `wasm`, `js-core`, `extension`
+- Package scopes: `core`, `rum` (rum, rum-core, rum-slim), `replay`, `logs`, `worker`, `react`,
+  `angular`, `vue`, `nextjs`, `nuxt`, `shopify`, `debugger`, `wasm`, `js-core`, `extension`
 - Internal scopes, only with internal types: `ci`, `deps`, `e2e`, `benchmark`, `test`, `sandbox`,
   `scripts`, `release`, `repo`
 
