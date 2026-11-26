@@ -171,11 +171,7 @@ export function mockFetchHandlingError(
 }
 
 function rebuildStringTemplate(template: TemplateStringsArray, ...values: any[]): string {
-  // Like `command`, render array values as separate arguments
-  const combinedString = template.reduce(
-    (acc, part, i) => acc + part + (Array.isArray(values[i]) ? values[i].join(' ') : values[i] || ''),
-    ''
-  )
+  const combinedString = template.reduce((acc, part, i) => acc + part + (values[i] || ''), '')
   const normalizedString = combinedString.replace(/\s+/g, ' ').trim()
   return normalizedString
 }

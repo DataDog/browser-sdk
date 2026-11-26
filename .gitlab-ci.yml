@@ -411,8 +411,8 @@ deploy-prod-canary:
     - yarn
     # Set OVERRIDE_CORDON=<incident or exception link> to deploy during an approved freeze exception
     - node ./scripts/deploy/check-cordons.ts --environment prod
-    - node ./scripts/deploy/mark-deployment.ts --env canary
     - yarn build:bundle
+    - node ./scripts/deploy/mark-deployment.ts --env canary
     - node ./scripts/deploy/deploy.ts prod canary root
     - node ./scripts/deploy/upload-source-maps.ts canary root
 

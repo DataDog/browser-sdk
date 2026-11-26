@@ -5,8 +5,9 @@ import type { CommandDetail } from './lib/testHelpers.ts'
 import { mockCommandImplementation, mockModule } from './lib/testHelpers.ts'
 
 const ORG2_API_KEY = 'ORG2_API_KEY'
+// The command mock renders array arguments joined with commas
 const PACKAGE_TAGS =
-  '--tags package:browser-logs --tags package:browser-rum --tags package:browser-rum-slim --tags package:browser-debugger --tags package:browser-rum-shopify --tags package:browser-early-collection'
+  '--tags,package:browser-logs,--tags,package:browser-rum,--tags,package:browser-rum-slim,--tags,package:browser-debugger,--tags,package:browser-rum-shopify,--tags,package:browser-early-collection'
 
 describe('mark-deployment', () => {
   const commandMock = mock.fn()
@@ -37,7 +38,7 @@ describe('mark-deployment', () => {
 
     assert.deepEqual(commands, [
       {
-        command: `datadog-ci deployment mark --no-fail --service browser-rum-sdk --env canary --revision 7.0.0 --tags team:rum-browser ${PACKAGE_TAGS}`,
+        command: `datadog-ci deployment mark --no-fail --service browser-rum-sdk --env canary --revision 7.0.0 --tags,team:rum-browser,${PACKAGE_TAGS}`,
         env: { DD_API_KEY: ORG2_API_KEY, DD_SITE: 'datadoghq.com', DD_BETA_COMMANDS_ENABLED: '1' },
       },
     ])
@@ -48,7 +49,7 @@ describe('mark-deployment', () => {
 
     assert.equal(
       commands[0].command,
-      `datadog-ci deployment mark --no-fail --service browser-rum-sdk --env prod --revision 7.0.0 --tags team:rum-browser --tags datacenter:ap1 --tags datacenter:us3 ${PACKAGE_TAGS}`
+      `datadog-ci deployment mark --no-fail --service browser-rum-sdk --env prod --revision 7.0.0 --tags,team:rum-browser,--tags,datacenter:ap1,--tags,datacenter:us3,${PACKAGE_TAGS}`
     )
   })
 
