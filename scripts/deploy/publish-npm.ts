@@ -1,7 +1,6 @@
 import { parseArgs } from 'node:util'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
-import { getNpmToken } from '../lib/secrets.ts'
 
 if (!process.env.NODE_TEST_CONTEXT) {
   runMain(() => main())
@@ -27,19 +26,19 @@ export function main(args = process.argv.slice(2)): void {
   command`yarn build`.withEnvironment({ BUILD_MODE: 'release' }).run()
 
   printLog(dryRun ? 'Publishing (dry run)' : 'Publishing')
-  const npmToken = dryRun ? '' : getNpmToken()
 
+  // No auth token is set: in GitHub Actions, yarn exchanges the workflow OIDC token for a short-lived
+  // npm token (npm trusted publishing). Set YARN_NPM_AUTH_TOKEN to publish with a token instead.
   try {
     command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --tolerate-republish --access public ${dryRun ? ['--dry-run'] : []}`
-      .withEnvironment({
-        YARN_NPM_AUTH_TOKEN: npmToken,
-        BUILD_MODE: 'release',
-      })
+      .withEnvironment({ BUILD_MODE: 'release' })
       .withLogs()
       .run()
   } catch (error) {
-    throw new Error('NPM publish failed. Run `node ./scripts/release/renew-token.ts` and retry the job.', {
-      cause: error as Error,
-    })
+    throw new Error(
+      'NPM publish failed. Check the trusted publisher settings of the failing package on npmjs.com ' +
+        '(repository DataDog/browser-sdk, workflow publish-npm.yml, environment npm-publish) and retry.',
+      { cause: error as Error }
+    )
   }
 }
