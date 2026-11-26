@@ -254,6 +254,85 @@ describe('trackCanvasContent', () => {
     expect(markCanvasDirtySpy).not.toHaveBeenCalled()
   })
 
+  describe('WebGPU', () => {
+    // Most test browsers have no WebGPU adapter, so the WebGPU classes are faked around a 2D canvas
+    class FakeGPUCanvasContext {
+      constructor(readonly canvas: HTMLCanvasElement) {}
+      getCurrentTexture() {
+        return {}
+      }
+    }
+    class FakeGPUQueue {
+      submit() {
+        // The snapshot reads the 2D canvas pixels, so there is nothing to submit
+      }
+    }
+
+    let webGPUCanvas: HTMLCanvasElement
+    let webGPUContext: FakeGPUCanvasContext
+    let queue: FakeGPUQueue
+
+    beforeEach(() => {
+      const globals = window as unknown as { GPUCanvasContext: unknown; GPUQueue: unknown }
+      const { GPUCanvasContext, GPUQueue } = globals
+      globals.GPUCanvasContext = FakeGPUCanvasContext
+      globals.GPUQueue = FakeGPUQueue
+      registerCleanupTask(() => Object.assign(globals, { GPUCanvasContext, GPUQueue }))
+
+      webGPUCanvas = document.createElement('canvas')
+      webGPUCanvas.width = 1
+      webGPUCanvas.height = 1
+      const pixelsContext = webGPUCanvas.getContext('2d')!
+      pixelsContext.fillStyle = 'red'
+      pixelsContext.fillRect(0, 0, 1, 1)
+      webGPUContext = new FakeGPUCanvasContext(webGPUCanvas)
+      queue = new FakeGPUQueue()
+    })
+
+    it('freezes WebGPU content after the frame is submitted', async () => {
+      const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+      startTracking(true, Infinity, 100, 1000, webGPUCanvas)
+      markCanvasDirtySpy.calls.reset()
+
+      webGPUContext.getCurrentTexture()
+      webGPUContext.getCurrentTexture()
+      queue.submit()
+      queue.submit()
+      expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+      await Promise.resolve()
+
+      expect(setCanvasSnapshotSpy).toHaveBeenCalledTimes(1)
+      expect(markCanvasDirtySpy).toHaveBeenCalledOnceWith(webGPUCanvas, CanvasStatus.Dirty)
+      expect(bitmapPixels(canvasManager.startCaptureAttempt(webGPUCanvas).snapshot!.bitmap)).toEqual([255, 0, 0, 255])
+    })
+
+    it('does not freeze WebGPU content when the canvas texture was not requested before the submit', async () => {
+      const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+      startTracking(true, Infinity, 100, 1000, webGPUCanvas)
+
+      webGPUContext.getCurrentTexture()
+      queue.submit()
+      await Promise.resolve()
+      setCanvasSnapshotSpy.calls.reset()
+
+      queue.submit()
+      await Promise.resolve()
+
+      expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not freeze WebGPU content before the canvas is serialized', async () => {
+      const setCanvasSnapshotSpy = spyOn(canvasManager, 'setCanvasSnapshot').and.callThrough()
+      startTracking(true, Infinity, 100, 1000, webGPUCanvas, false)
+
+      webGPUContext.getCurrentTexture()
+      queue.submit()
+      await Promise.resolve()
+
+      expect(setCanvasSnapshotSpy).not.toHaveBeenCalled()
+    })
+  })
+
   const maskingByPrivacyLevel: Record<NodePrivacyLevel, boolean> = {
     [NodePrivacyLevel.ALLOW]: false,
     [NodePrivacyLevel.MASK_USER_INPUT]: false,
