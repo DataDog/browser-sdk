@@ -23,11 +23,25 @@
       "matchUpdateTypes": ["minor", "patch"]
     },
     {
-      "description": "Node.js and Playwright need a CI image rebuild: keep them out of the all-minor-patch batch",
+      "description": "Node.js and Playwright need a CI image rebuild, so they need a manual review: keep them out of the auto-approved all-minor-patch batch",
       "matchDepNames": ["node", "@playwright/test"],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "Node.js and Playwright",
-      "groupSlug": "ci-image"
+      "groupName": "dependencies that need a manual review",
+      "groupSlug": "manual-review"
+    },
+    {
+      "description": "GitHub Actions updates change .github/**, which is not auto-approved: keep them out of the all-minor-patch batch",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "dependencies that need a manual review",
+      "groupSlug": "manual-review"
+    },
+    {
+      "description": "Yarn self-updates change .yarn/** and .yarnrc.yml, which are not auto-approved: keep them out of the all-minor-patch batch",
+      "matchDepNames": ["yarn"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dependencies that need a manual review",
+      "groupSlug": "manual-review"
     },
     {
       "description": "Test apps resolve SDK packages to local package.tgz builds, and some (e.g. browser-debugger) are not published on npm",
