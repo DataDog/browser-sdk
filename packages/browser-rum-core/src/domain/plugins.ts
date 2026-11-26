@@ -42,8 +42,8 @@ export interface OnRumStartOptions {
    */
   addTelemetryDebug?: typeof addTelemetryDebug
   /**
-   * Send an error telemetry event. Cross-platform SDKs can pass a raw error
-   * object `{ message, stack, kind }`.
+   * Send an error telemetry event. Accepts an Error instance or an error-like
+   * object with a string message and optional string name and stack.
    *
    * @internal
    */

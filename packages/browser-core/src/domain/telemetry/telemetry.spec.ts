@@ -300,7 +300,7 @@ describe('telemetry', () => {
           '    at Aq.a61 (https://customer.com/main.dart.js:40798:9)',
           '    at foo (https://www.datadoghq-browser-agent.com/datadog-rum.js:1:2)',
         ].join('\n'),
-        kind: 'StateError',
+        name: 'StateError',
       })
 
       expect(await getTelemetryEvents()).toEqual([
@@ -591,6 +591,30 @@ describe('formatError', () => {
       error: {
         stack: NO_ERROR_STACK_PRESENT_MESSAGE,
       },
+    })
+  })
+
+  it('formats error-like objects with optional fields', () => {
+    ;[
+      { value: { message: '' }, kind: undefined, stack: 'Error: ' },
+      { value: { message: 'message' }, kind: undefined, stack: 'Error: message' },
+      { value: { message: 'message', name: 'StateError' }, kind: 'StateError', stack: 'StateError: message' },
+      {
+        value: { message: 'message', name: 'TypeError' },
+        kind: 'TypeError',
+        stack: 'TypeError: message',
+      },
+    ].forEach(({ value, kind, stack }) => {
+      expect(formatError(value)).toEqual({ message: value.message, error: { kind, stack } })
+    })
+  })
+
+  it('formats objects with invalid error fields as arbitrary values', () => {
+    ;[{ message: 42 }, { message: 'message', name: 42 }, { message: 'message', stack: {} }].forEach((value) => {
+      expect(formatError(value)).toEqual({
+        message: `Uncaught ${JSON.stringify(value)}`,
+        error: { stack: NO_ERROR_STACK_PRESENT_MESSAGE },
+      })
     })
   })
 

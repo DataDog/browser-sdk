@@ -21,7 +21,7 @@ import {
   INTAKE_SITE_US2_FED,
 } from '@datadog/js-core/transport'
 import { startMonitorErrorCollection } from '@datadog/js-core/monitor'
-import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/isError'
+import { NO_ERROR_STACK_PRESENT_MESSAGE, isErrorLike } from '../error/isError'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
@@ -279,32 +279,10 @@ export function addTelemetryError(e: unknown, context?: Context) {
     rawEvent: {
       type: TelemetryType.LOG,
       status: StatusType.error,
-      ...formatError(isRawCrossPlatformError(e) ? toError(e) : e),
+      ...formatError(e),
       ...context,
     },
   })
-}
-
-function isRawCrossPlatformError(e: unknown): e is RawCrossPlatformError {
-  return typeof e === 'object' && e !== null && typeof (e as Partial<RawCrossPlatformError>).message === 'string'
-}
-
-/**
- * Raw error shape sent by cross-platform SDKs (Flutter, Unity), matching their native API
- * (e.g. Unity's `SendErrorTelemetry(string message, string stack, string kind)`).
- */
-interface RawCrossPlatformError {
-  message: string
-  stack?: string
-  kind?: string
-}
-
-/**
- * Turn a cross-platform raw error into an Error, so it is formatted (and its customer frames
- * scrubbed) like any other telemetry error.
- */
-function toError(e: Error | RawCrossPlatformError): Error {
-  return isError(e) ? e : Object.assign(new Error(e.message), { name: e.kind, stack: e.stack })
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
@@ -338,7 +316,7 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
 }
 
 export function formatError(e: unknown) {
-  if (isError(e)) {
+  if (isErrorLike(e)) {
     const stackTrace = computeStackTrace(e)
     return {
       error: {
