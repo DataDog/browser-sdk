@@ -4,6 +4,7 @@ import type { MutationRecord } from '@datadog/js-core/dom'
 import {
   isNodeShadowHost,
   getParentNode,
+  getFromNodePrototype,
   forEachChildNodes,
   getNodePrivacyLevel,
   getTextContent,
@@ -335,13 +336,13 @@ function processCanvasContentMutations(
 }
 
 function getNextSiblingId(node: Node, nodeIds: NodeIds): NodeId | undefined {
-  let nextSibling = node.nextSibling
+  let nextSibling = getFromNodePrototype(node, 'nextSibling')
   while (nextSibling) {
     const id = nodeIds.get(nextSibling)
     if (id !== undefined) {
       return id
     }
-    nextSibling = nextSibling.nextSibling
+    nextSibling = getFromNodePrototype(nextSibling, 'nextSibling')
   }
 
   return undefined
