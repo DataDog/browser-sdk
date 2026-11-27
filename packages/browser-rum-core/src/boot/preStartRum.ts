@@ -58,7 +58,7 @@ export type DoStartRum = (
 ) => StartRumResult
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, sdkName }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker, sdkName, createSessionStore }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   doStartRum: DoStartRum
 ): Strategy {
@@ -248,7 +248,7 @@ export function createPreStartStrategy(
         // untraced, and the sampling decision could not be propagated to the backend.
         onSessionManagerReady(startSessionManagerStub())
       } else {
-        void mockable(startSessionManager)(configuration, trackingConsentState)
+        void mockable(startSessionManager)(configuration, trackingConsentState, createSessionStore)
           .then((newSessionManager) => {
             if (newSessionManager) {
               onSessionManagerReady(newSessionManager)

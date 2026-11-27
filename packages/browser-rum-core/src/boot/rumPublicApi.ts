@@ -16,6 +16,7 @@ import type {
   Encoder,
   ResourceType,
   SessionManager,
+  SessionStoreFactory,
 } from '@datadog/browser-core'
 import type { Context } from '@datadog/js-core/util'
 import {
@@ -666,6 +667,7 @@ export interface RumPublicApiOptions {
   ) => DeflateWorker | undefined
   createDeflateEncoder?: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
   sdkName?: SdkName
+  createSessionStore?: SessionStoreFactory
 }
 
 export interface Strategy {

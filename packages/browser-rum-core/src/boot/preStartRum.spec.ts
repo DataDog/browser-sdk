@@ -1,5 +1,5 @@
 import type { Duration, TimeStamp } from '@datadog/js-core/time'
-import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
+import type { DeflateWorker, TrackingConsentState, SessionStoreFactory } from '@datadog/browser-core'
 import { noop } from '@datadog/js-core/util'
 import { toTimeStamp, relativeToClocks, clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import {
@@ -187,6 +187,20 @@ describe('preStartRum', () => {
     strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
     await collectAsyncCalls(doStartRumSpy, 0)
     expect(doStartRumSpy).not.toHaveBeenCalled()
+  })
+
+  it('forwards the createSessionStore option to the session manager', async () => {
+    const createSessionStore = jasmine.createSpy<SessionStoreFactory>().and.returnValue(Promise.resolve(undefined))
+    const startSessionManagerSpy = jasmine.createSpy().and.callFake(createStartSessionManagerMock())
+    const { strategy } = createPreStartStrategyWithDefaults({
+      rumPublicApiOptions: { createSessionStore },
+      startSessionManagerMock: startSessionManagerSpy as unknown as typeof startSessionManager,
+    })
+
+    strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+    await collectAsyncCalls(startSessionManagerSpy, 1)
+
+    expect(startSessionManagerSpy).toHaveBeenCalledOnceWith(jasmine.anything(), jasmine.anything(), createSessionStore)
   })
 
   describe('init', () => {

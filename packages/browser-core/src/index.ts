@@ -47,7 +47,7 @@ export {
   addTelemetryUsage,
   addTelemetryMetrics,
 } from './domain/telemetry'
-export type { SessionManager, SessionContext } from './domain/session/sessionManager'
+export type { SessionManager, SessionContext, SessionStoreFactory } from './domain/session/sessionManager'
 export { startSessionManager, startSessionManagerStub, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
