@@ -3,10 +3,10 @@ import { runMain } from '../lib/executionUtils.ts'
 import { checkCordons, type CordonTarget } from './lib/checkCordons.ts'
 
 /**
- * Fail if a cordon is active on the given environment(s) or datacenter(s).
+ * Fail if a cordon is active on the given environment(s) or datacenter(s). Used by the canary deploys.
  * Set OVERRIDE_CORDON=<incident or exception link> to bypass the check for an approved freeze exception.
  * Usage:
- * node check-cordons.ts --environment prod [--datacenter us1.prod.dog]
+ * node check-cordons.ts --datacenter us1.prod.dog [--environment prod]
  */
 if (!process.env.NODE_TEST_CONTEXT) {
   runMain(() => main(...process.argv.slice(2)))

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { afterEach, before, beforeEach, describe, it, mock, type Mock } from 'node:test'
 import { mockModule } from './testHelpers.ts'
-import type { CordonTarget } from './checkCordons.ts'
+import type { Cordon, CordonTarget } from './checkCordons.ts'
 
 const US1_DATACENTER_CORDON = {
   name: 'cordon-us1',
@@ -27,6 +27,7 @@ describe('checkCordons', () => {
   const printWarningMock = mock.fn()
   let checkCordons: (targets: CordonTarget[]) => Promise<void>
   let datacenterToCordonTargets: (datacenter: string) => CordonTarget[]
+  let findCordonedDatacenters: (datacenters: string[]) => Promise<Map<string, Cordon[]>>
 
   function mockCordonResponses(responses: Record<string, unknown>): void {
     fetchRuntimeMetadataServiceMock.mock.mockImplementation((requestPath: string) => {
@@ -53,7 +54,7 @@ describe('checkCordons', () => {
       printLog: mock.fn(),
       printWarning: printWarningMock,
     })
-    ;({ checkCordons, datacenterToCordonTargets } = await import('./checkCordons.ts'))
+    ;({ checkCordons, datacenterToCordonTargets, findCordonedDatacenters } = await import('./checkCordons.ts'))
   })
 
   beforeEach(() => {
@@ -175,5 +176,94 @@ describe('checkCordons', () => {
 
     assert.match(warnings(), /Failed to check cordons/)
     assert.match(warnings(), /Reason: https:\/\/example\.com\/incident-123/)
+  })
+
+  describe('findCordonedDatacenters', () => {
+    it('should return an empty map when no cordon is active', async () => {
+      const cordoned = await findCordonedDatacenters(['us1', 'eu1'])
+
+      assert.equal(cordoned.size, 0)
+      assert.deepEqual(requestedPaths(), [
+        '/v2/datacenters/us1.prod.dog/cordons',
+        '/v2/datacenters/eu1.prod.dog/cordons',
+      ])
+    })
+
+    it('should return only the cordoned datacenters', async () => {
+      mockCordonResponses({ '/v2/datacenters/us1.prod.dog/cordons': { cordons: [US1_DATACENTER_CORDON] } })
+
+      const cordoned = await findCordonedDatacenters(['eu1', 'us1', 'ap1'])
+
+      assert.deepEqual([...cordoned.entries()], [['us1', [US1_DATACENTER_CORDON]]])
+    })
+
+    it('should return every datacenter covered by an environment cordon', async () => {
+      mockCordonResponses({
+        '/v2/datacenters/us1.prod.dog/cordons': { cordons: [PROD_ENVIRONMENT_CORDON] },
+        '/v2/datacenters/eu1.prod.dog/cordons': { cordons: [PROD_ENVIRONMENT_CORDON] },
+      })
+
+      const cordoned = await findCordonedDatacenters(['us1', 'eu1'])
+
+      assert.deepEqual([...cordoned.keys()], ['us1', 'eu1'])
+    })
+
+    it('should return gov when one of the gov datacenters is cordoned', async () => {
+      const govCordon = { ...US1_DATACENTER_CORDON, name: 'cordon-gov', resourceId: 'us2.fed.dog' }
+      mockCordonResponses({ '/v2/datacenters/us2.fed.dog/cordons': { cordons: [govCordon] } })
+
+      const cordoned = await findCordonedDatacenters(['gov'])
+
+      assert.deepEqual([...cordoned.entries()], [['gov', [govCordon]]])
+    })
+
+    it('should return an empty map and log the bypass when OVERRIDE_CORDON is set', async () => {
+      process.env.OVERRIDE_CORDON = 'https://example.com/incident-123'
+      mockCordonResponses({ '/v2/datacenters/us1.prod.dog/cordons': { cordons: [US1_DATACENTER_CORDON] } })
+
+      const cordoned = await findCordonedDatacenters(['us1'])
+
+      assert.equal(cordoned.size, 0)
+      assert.match(warnings(), /Bypassing active cordons for us1\.prod\.dog/)
+      assert.match(warnings(), /Reason: https:\/\/example\.com\/incident-123/)
+    })
+
+    it('should fail closed when the cordons cannot be fetched', async () => {
+      fetchRuntimeMetadataServiceMock.mock.mockImplementation(() => Promise.reject(new Error('RMS unavailable')))
+
+      await assert.rejects(
+        findCordonedDatacenters(['us1', 'eu1']),
+        /Failed to check cordons for us1\.prod\.dog, eu1\.prod\.dog/
+      )
+    })
+
+    it('should return an empty map when the cordons cannot be fetched and OVERRIDE_CORDON is set', async () => {
+      process.env.OVERRIDE_CORDON = 'https://example.com/incident-123'
+      fetchRuntimeMetadataServiceMock.mock.mockImplementation(() => Promise.reject(new Error('RMS unavailable')))
+
+      const cordoned = await findCordonedDatacenters(['us1'])
+
+      assert.equal(cordoned.size, 0)
+      assert.match(warnings(), /Failed to check cordons/)
+    })
+  })
+
+  describe('formatSkippedDatacenters', () => {
+    it('should list the skipped datacenters, their cordons once, and how to catch up', async () => {
+      const { formatSkippedDatacenters } = await import('./checkCordons.ts')
+
+      const message = formatSkippedDatacenters(
+        new Map([
+          ['us1', [US1_DATACENTER_CORDON, PROD_ENVIRONMENT_CORDON]],
+          ['eu1', [PROD_ENVIRONMENT_CORDON]],
+        ])
+      )
+
+      assert.match(message, /Skipped cordoned datacenters: us1, eu1/)
+      assert.match(message, /cordon-us1: datacenter us1\.prod\.dog/)
+      assert.equal(message.match(/cordon-prod/g)?.length, 1)
+      assert.match(message, /deploy-manual pipeline/)
+      assert.match(message, /OVERRIDE_CORDON=/)
+    })
   })
 })

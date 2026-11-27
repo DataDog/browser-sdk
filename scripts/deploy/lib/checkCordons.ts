@@ -10,7 +10,7 @@ export interface CordonTarget {
   name: string
 }
 
-interface Cordon {
+export interface Cordon {
   name: string
   resourceType: string
   resourceId: string
@@ -39,6 +39,13 @@ export function datacenterToCordonTargets(datacenter: string): CordonTarget[] {
 }
 
 /**
+ * Exit code of a deploy step that skipped cordoned datacenters. The CDN deploy jobs allow this exit
+ * code only (`allow_failure: exit_codes` in .gitlab/deploy-{auto,manual}.yml), so the release goes
+ * on while any other failure still stops it.
+ */
+export const CORDON_SKIP_EXIT_CODE = 75
+
+/**
  * Fail if a cordon is active on any of the given targets. Datacenter targets also report cordons
  * on their environment (e.g. `prod`).
  *
@@ -46,35 +53,36 @@ export function datacenterToCordonTargets(datacenter: string): CordonTarget[] {
  * the incident or exception link when running the job.
  */
 export async function checkCordons(targets: CordonTarget[]): Promise<void> {
-  const overrideReason = process.env.OVERRIDE_CORDON?.trim()
-  const targetNames = targets.map((target) => target.name).join(', ')
+  const cordons = await getBlockingCordons(new Map([['targets', targets]]))
 
-  let cordons: Cordon[]
-  try {
-    cordons = await fetchActiveCordons(targets)
-  } catch (error) {
-    if (overrideReason) {
-      printWarning(`Failed to check cordons for ${targetNames}, continuing because OVERRIDE_CORDON is set.`, error)
-      logOverride(overrideReason)
-      return
-    }
-    throw new Error(`Failed to check cordons for ${targetNames}.\n\n${HOW_TO_OVERRIDE}`, { cause: error })
+  if (cordons.size > 0) {
+    throw new Error(
+      `Active cordons for ${formatTargetNames(targets)}:\n${formatCordons(cordons)}\n\n${HOW_TO_OVERRIDE}`
+    )
   }
+}
 
-  if (cordons.length === 0) {
-    printLog(`✓ No active cordon for ${targetNames}`)
-    return
-  }
+/**
+ * Return the active cordons of each cordoned browser-sdk datacenter (e.g. `us1`, `gov`). Open
+ * datacenters are not in the returned map.
+ *
+ * Like `checkCordons`, `OVERRIDE_CORDON` bypasses the cordons (the returned map is empty), and an
+ * error while fetching the cordons is thrown unless `OVERRIDE_CORDON` is set.
+ */
+export function findCordonedDatacenters(datacenters: string[]): Promise<Map<string, Cordon[]>> {
+  return getBlockingCordons(
+    new Map(datacenters.map((datacenter) => [datacenter, datacenterToCordonTargets(datacenter)]))
+  )
+}
 
-  const cordonList = cordons.map(formatCordon).join('\n')
+export function formatSkippedDatacenters(cordonedDatacenters: Map<string, Cordon[]>): string {
+  return `Skipped cordoned datacenters: ${[...cordonedDatacenters.keys()].join(', ')}
+${formatCordons(cordonedDatacenters)}
 
-  if (overrideReason) {
-    printWarning(`Bypassing active cordons for ${targetNames}:\n${cordonList}`)
-    logOverride(overrideReason)
-    return
-  }
+The skipped datacenters keep their previous version. After the freeze, run the same step from the
+deploy-manual pipeline of this release tag, unless a newer release was already deployed there.
 
-  throw new Error(`Active cordons for ${targetNames}:\n${cordonList}\n\n${HOW_TO_OVERRIDE}`)
+${HOW_TO_OVERRIDE}`
 }
 
 const HOW_TO_OVERRIDE = `To deploy anyway:
@@ -83,6 +91,45 @@ const HOW_TO_OVERRIDE = `To deploy anyway:
      - manual job: set the variable when starting the job
      - deploy-auto step (retries can't set variables): run the same step from the deploy-manual pipeline
      - canary job: run a new pipeline with the variable`
+
+/**
+ * Fetch the active cordons of each group of targets, and keep only the groups with active cordons.
+ * Return an empty map when `OVERRIDE_CORDON` bypasses the cordons.
+ */
+async function getBlockingCordons(targetsByGroup: Map<string, CordonTarget[]>): Promise<Map<string, Cordon[]>> {
+  const overrideReason = process.env.OVERRIDE_CORDON?.trim()
+  const targetNames = formatTargetNames([...targetsByGroup.values()].flat())
+
+  const cordonsByGroup = new Map<string, Cordon[]>()
+  try {
+    for (const [group, targets] of targetsByGroup) {
+      const cordons = await fetchActiveCordons(targets)
+      if (cordons.length > 0) {
+        cordonsByGroup.set(group, cordons)
+      }
+    }
+  } catch (error) {
+    if (overrideReason) {
+      printWarning(`Failed to check cordons for ${targetNames}, continuing because OVERRIDE_CORDON is set.`, error)
+      logOverride(overrideReason)
+      return new Map()
+    }
+    throw new Error(`Failed to check cordons for ${targetNames}.\n\n${HOW_TO_OVERRIDE}`, { cause: error })
+  }
+
+  if (cordonsByGroup.size === 0) {
+    printLog(`✓ No active cordon for ${targetNames}`)
+    return cordonsByGroup
+  }
+
+  if (overrideReason) {
+    printWarning(`Bypassing active cordons for ${targetNames}:\n${formatCordons(cordonsByGroup)}`)
+    logOverride(overrideReason)
+    return new Map()
+  }
+
+  return cordonsByGroup
+}
 
 async function fetchActiveCordons(targets: CordonTarget[]): Promise<Cordon[]> {
   const cordonsByName = new Map<string, Cordon>()
@@ -104,6 +151,19 @@ async function fetchActiveCordons(targets: CordonTarget[]): Promise<Cordon[]> {
   }
 
   return [...cordonsByName.values()]
+}
+
+function formatTargetNames(targets: CordonTarget[]): string {
+  return targets.map((target) => target.name).join(', ')
+}
+
+/**
+ * Format the cordons of all groups, listing a cordon shared by several groups (e.g. an environment
+ * cordon) only once.
+ */
+function formatCordons(cordonsByGroup: Map<string, Cordon[]>): string {
+  const cordonsByName = new Map([...cordonsByGroup.values()].flat().map((cordon) => [cordon.name, cordon]))
+  return [...cordonsByName.values()].map(formatCordon).join('\n')
 }
 
 function formatCordon(cordon: Cordon): string {

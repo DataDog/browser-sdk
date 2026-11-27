@@ -5,7 +5,7 @@ import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 import { mockDatacenters, resetDatacenterCache } from '../lib/datacenter.ts'
 import type { CommandDetail } from './lib/testHelpers.ts'
 import { mockModule, mockCommandImplementation, mockFetchHandlingError, MOCK_DATACENTERS } from './lib/testHelpers.ts'
-import type { CordonTarget } from './lib/checkCordons.ts'
+import type { Cordon } from './lib/checkCordons.ts'
 
 const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
 
@@ -13,7 +13,8 @@ describe('deploy-prod-dc', () => {
   const commandMock = mock.fn()
   const checkTelemetryErrorsMock: Mock<(datacenters: string[], version: string) => Promise<void>> = mock.fn()
   const fetchHandlingErrorMock = mock.fn()
-  const checkCordonsMock: Mock<(targets: CordonTarget[]) => Promise<void>> = mock.fn()
+  const findCordonedDatacentersMock: Mock<(datacenters: string[]) => Promise<Map<string, Cordon[]>>> = mock.fn()
+  const printWarningMock = mock.fn()
 
   let commands: CommandDetail[]
   let checkTelemetryErrorsCalls: Array<{ version: string; datacenters: string[] }>
@@ -25,6 +26,7 @@ describe('deploy-prod-dc', () => {
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
     await mockModule(path.resolve(import.meta.dirname, '../lib/executionUtils.ts'), {
       fetchHandlingError: fetchHandlingErrorMock,
+      printWarning: printWarningMock,
       timeout: (ms: number) => {
         mockTime += ms
         return Promise.resolve()
@@ -34,20 +36,23 @@ describe('deploy-prod-dc', () => {
       checkTelemetryErrors: checkTelemetryErrorsMock,
     })
     await mockModule(path.resolve(import.meta.dirname, './lib/checkCordons.ts'), {
-      checkCordons: checkCordonsMock,
+      findCordonedDatacenters: findCordonedDatacentersMock,
     })
   })
 
-  function checkedCordonTargets(): string[][] {
-    return checkCordonsMock.mock.calls.map((call) => call.arguments[0].map((target) => target.name))
+  function mockCordonedDatacenters(...datacenters: string[]): void {
+    findCordonedDatacentersMock.mock.mockImplementation(() =>
+      Promise.resolve(new Map(datacenters.map((datacenter) => [datacenter, [cordonOf(datacenter)]])))
+    )
   }
 
   beforeEach(() => {
     mockDatacenters(MOCK_DATACENTERS)
     commands = mockCommandImplementation(commandMock)
     checkTelemetryErrorsCalls = []
-    checkCordonsMock.mock.resetCalls()
-    checkCordonsMock.mock.mockImplementation(() => Promise.resolve())
+    findCordonedDatacentersMock.mock.resetCalls()
+    printWarningMock.mock.resetCalls()
+    mockCordonedDatacenters()
     checkTelemetryErrorsMock.mock.mockImplementation((datacenters: string[], version: string) => {
       checkTelemetryErrorsCalls.push({ version, datacenters })
       return Promise.resolve()
@@ -136,24 +141,48 @@ describe('deploy-prod-dc', () => {
     ])
   })
 
-  it('should check cordons on the target datacenters before deploying', async () => {
-    await runScript('./deploy-prod-dc.ts', 'v6', 'minor-dcs')
+  it('should check cordons on the target datacenters', async () => {
+    const result = await runScript('./deploy-prod-dc.ts', 'v6', 'minor-dcs')
 
-    assert.deepEqual(checkedCordonTargets(), [['ap1.prod.dog', 'ap2.prod.dog', 'us3.prod.dog', 'us5.prod.dog']])
+    assert.deepEqual(findCordonedDatacentersMock.mock.calls[0].arguments[0], ['ap1', 'ap2', 'us3', 'us5'])
+    assert.deepEqual(result, { skippedDatacenters: [] })
   })
 
-  it('should check cordons on the gov datacenters', async () => {
-    await runScript('./deploy-prod-dc.ts', 'v6', 'gov')
+  it('should deploy the open datacenters and skip the cordoned ones', async () => {
+    mockCordonedDatacenters('ap2')
 
-    assert.deepEqual(checkedCordonTargets(), [['us1.fed.dog', 'us2.fed.dog']])
+    const result = await runScript('./deploy-prod-dc.ts', 'v6', 'minor-dcs', '--check-telemetry-errors')
+
+    assert.deepEqual(result, { skippedDatacenters: ['ap2'] })
+    assert.deepEqual(commands, [
+      { command: 'node ./scripts/deploy/deploy.ts prod v6 ap1,us3,us5' },
+      { command: 'node ./scripts/deploy/upload-source-maps.ts v6 ap1,us3,us5' },
+    ])
+    assert.ok(checkTelemetryErrorsCalls.length > 0)
+    for (const call of checkTelemetryErrorsCalls) {
+      assert.deepEqual(call.datacenters, ['ap1', 'us3', 'us5'])
+    }
+    assert.match(String(printWarningMock.mock.calls[0].arguments[0]), /Skipped cordoned datacenters: ap2/)
   })
 
-  it('should not deploy when a target datacenter is cordoned', async () => {
-    checkCordonsMock.mock.mockImplementation(() => Promise.reject(new Error('Active cordons for us1.prod.dog')))
+  it('should not deploy when all target datacenters are cordoned', async () => {
+    mockCordonedDatacenters('us1')
+
+    const result = await runScript('./deploy-prod-dc.ts', 'v6', 'us1', '--check-telemetry-errors')
+
+    assert.deepEqual(result, { skippedDatacenters: ['us1'] })
+    assert.strictEqual(checkTelemetryErrorsCalls.length, 0)
+    assert.deepEqual(commands, [])
+  })
+
+  it('should not deploy when the cordons cannot be checked', async () => {
+    findCordonedDatacentersMock.mock.mockImplementation(() =>
+      Promise.reject(new Error('Failed to check cordons for us1.prod.dog'))
+    )
 
     await assert.rejects(
       runScript('./deploy-prod-dc.ts', 'v6', 'us1', '--check-telemetry-errors'),
-      /Active cordons for us1\.prod\.dog/
+      /Failed to check cordons for us1\.prod\.dog/
     )
 
     assert.strictEqual(checkTelemetryErrorsCalls.length, 0)
@@ -165,12 +194,18 @@ describe('deploy-prod-dc', () => {
 
     await runScript('./deploy-prod-dc.ts', 'v6', 'private-regions')
 
-    assert.strictEqual(checkCordonsMock.mock.callCount(), 0)
+    assert.strictEqual(findCordonedDatacentersMock.mock.callCount(), 0)
   })
 })
 
-async function runScript(scriptPath: string, ...args: string[]): Promise<void> {
-  const { main } = (await import(scriptPath)) as { main: (...args: string[]) => Promise<void> }
+function cordonOf(datacenter: string): Cordon {
+  return { name: `cordon-${datacenter}`, resourceType: 'datacenter', resourceId: `${datacenter}.prod.dog` }
+}
+
+async function runScript(scriptPath: string, ...args: string[]): Promise<{ skippedDatacenters: string[] }> {
+  const { main } = (await import(scriptPath)) as {
+    main: (...args: string[]) => Promise<{ skippedDatacenters: string[] }>
+  }
 
   return main(...args)
 }
