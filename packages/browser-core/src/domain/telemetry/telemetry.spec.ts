@@ -17,15 +17,15 @@ import {
 } from '../../../test'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import {
-  addTelemetryError,
-  scrubCustomerFrames,
-  formatError,
   addTelemetryConfiguration,
   addTelemetryUsage,
+  scrubCustomerFrames,
+  formatError,
   TelemetryService,
   startTelemetryCollection,
   addTelemetryMetrics,
   addTelemetryDebug,
+  addTelemetryError,
   TelemetryMetrics,
   startTelemetryTransport,
 } from './telemetry'
@@ -84,6 +84,39 @@ describe('telemetry', () => {
         }),
       }),
     ])
+  })
+
+  describe('addTelemetryError', () => {
+    ;[undefined, false, true].forEach((skipScrubbing) => {
+      it(`handles stack frame scrubbing with skipScrubbing=${skipScrubbing}`, async () => {
+        const { getTelemetryEvents } = startAndSpyTelemetry()
+
+        addTelemetryError(
+          {
+            message: 'message',
+            name: 'TypeError',
+            stack: '    at customer (https://customer.com/main.js:1:2)',
+          },
+          { foo: 'bar' },
+          skipScrubbing === undefined ? undefined : { skipScrubbing }
+        )
+
+        expect(await getTelemetryEvents()).toEqual([
+          jasmine.objectContaining({
+            telemetry: jasmine.objectContaining({
+              message: 'message',
+              foo: 'bar',
+              error: {
+                kind: 'TypeError',
+                stack: skipScrubbing
+                  ? 'TypeError: message\n  at customer @ https://customer.com/main.js:1:2'
+                  : 'TypeError: message',
+              },
+            }),
+          }),
+        ])
+      })
+    })
   })
 
   describe('addTelemetryConfiguration', () => {
@@ -516,6 +549,25 @@ describe('formatError', () => {
       message: 'Uncaught "message"',
       error: {
         stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+      },
+    })
+  })
+
+  it('formats error-like objects and scrubs customer frames', () => {
+    expect(
+      formatError({
+        message: 'message',
+        name: 'TypeError',
+        stack: [
+          '    at customer (https://customer.com/main.js:1:2)',
+          '    at foo (https://www.datadoghq-browser-agent.com/datadog-rum.js:3:4)',
+        ].join('\n'),
+      })
+    ).toEqual({
+      message: 'message',
+      error: {
+        kind: 'TypeError',
+        stack: 'TypeError: message\n  at foo @ https://www.datadoghq-browser-agent.com/datadog-rum.js:3:4',
       },
     })
   })

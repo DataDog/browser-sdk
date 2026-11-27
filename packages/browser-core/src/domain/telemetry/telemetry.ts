@@ -21,7 +21,7 @@ import {
   INTAKE_SITE_US2_FED,
 } from '@datadog/js-core/transport'
 import { startMonitorErrorCollection } from '@datadog/js-core/monitor'
-import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/isError'
+import { NO_ERROR_STACK_PRESENT_MESSAGE, isErrorLike } from '../error/isError'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
@@ -192,8 +192,8 @@ export function startTelemetryCollection(
       type: 'telemetry' as const,
       date: clockNow.timeStamp,
       service: telemetryService,
-      version: __BUILD_ENV__SDK_VERSION__,
-      source: 'browser' as const,
+      version: configuration.sdkVersion || __BUILD_ENV__SDK_VERSION__,
+      source: configuration.source || ('browser' as const),
       _dd: {
         format_version: 2 as const,
       },
@@ -274,12 +274,16 @@ export function addTelemetryDebug(message: string, context?: Context) {
   })
 }
 
-export function addTelemetryError(e: unknown, context?: Context) {
+export function addTelemetryError(
+  e: unknown,
+  context?: Context,
+  { skipScrubbing = false }: { skipScrubbing?: boolean } = {}
+) {
   getTelemetryObservable().notify({
     rawEvent: {
       type: TelemetryType.LOG,
       status: StatusType.error,
-      ...formatError(e),
+      ...formatError(e, skipScrubbing),
       ...context,
     },
   })
@@ -315,13 +319,13 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
   })
 }
 
-export function formatError(e: unknown) {
-  if (isError(e)) {
+export function formatError(e: unknown, skipScrubbing = false) {
+  if (isErrorLike(e)) {
     const stackTrace = computeStackTrace(e)
     return {
       error: {
         kind: stackTrace.name,
-        stack: toStackTraceString(scrubCustomerFrames(stackTrace)),
+        stack: toStackTraceString(skipScrubbing ? stackTrace : scrubCustomerFrames(stackTrace)),
       },
       message: stackTrace.message!,
     }

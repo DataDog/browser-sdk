@@ -21,6 +21,8 @@ import type { Context } from '@datadog/js-core/util'
 import {
   ContextManagerMethod,
   addTelemetryUsage,
+  addTelemetryDebug,
+  addTelemetryError,
   makePublicApi,
   createHandlingStack,
   sanitize,
@@ -759,6 +761,8 @@ export function makeRumPublicApi(
       callPluginsOnRumStart(configuration.plugins, {
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
+        addTelemetryDebug,
+        addTelemetryError: (error, context) => addTelemetryError(error, context, { skipScrubbing: true }),
       })
 
       return startRumResult

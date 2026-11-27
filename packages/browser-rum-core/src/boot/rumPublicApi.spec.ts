@@ -8,6 +8,7 @@ import {
   ResourceType,
   startTelemetry,
   startSessionManager,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -19,9 +20,11 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  startMockTelemetry,
 } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
+import type { OnRumStartOptions } from '../domain/plugins'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
@@ -119,6 +122,53 @@ describe('rum public api', () => {
             startDeflateWorker: () => FAKE_WORKER,
           },
         }))
+      })
+
+      it('passes the telemetry functions to plugins on rum start', async () => {
+        const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy() }
+
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          plugins: [plugin],
+        })
+
+        await collectAsyncCalls(plugin.onRumStart, 1)
+        expect(plugin.onRumStart).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            addTelemetryDebug,
+            addTelemetryError: jasmine.any(Function),
+          })
+        )
+      })
+
+      it('skips scrubbing plugin telemetry errors', async () => {
+        const plugin = {
+          name: 'test-plugin',
+          onRumStart: jasmine.createSpy<(options: OnRumStartOptions) => void>(),
+        }
+        rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] })
+        await collectAsyncCalls(plugin.onRumStart, 1)
+
+        const telemetry = startMockTelemetry()
+        const { addTelemetryError } = plugin.onRumStart.calls.mostRecent().args[0]
+        const error = {
+          message: 'message',
+          name: 'TypeError',
+          stack: '    at customer (https://customer.com/main.js:1:2)',
+        }
+
+        addTelemetryError!(error, { foo: 'bar' })
+
+        expect(await telemetry.getEvents()).toEqual([
+          jasmine.objectContaining({
+            message: 'message',
+            foo: 'bar',
+            error: {
+              kind: 'TypeError',
+              stack: 'TypeError: message\n  at customer @ https://customer.com/main.js:1:2',
+            },
+          }),
+        ])
       })
 
       it('passes addError to plugins on rum start', async () => {
