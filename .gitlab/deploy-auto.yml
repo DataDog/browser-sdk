@@ -11,12 +11,18 @@ stages:
     DDOCTOSTS_ID_TOKEN:
       aud: dd-octo-sts
 
-# Deploys are blocked when a cordon (infra freeze) is active on the target datacenters or the prod
-# environment. For an approved freeze exception, start the job manually with the variable
+# CDN deploys skip the datacenters that have an active cordon (infra freeze) and deploy the others.
+# A step that skipped a datacenter exits with code 75 (CORDON_SKIP_EXIT_CODE in
+# scripts/deploy/lib/checkCordons.ts): the job is allowed to fail with this code only, so it shows
+# orange and the release goes on. Any other failure (e.g. the telemetry errors gate) stops the release.
+# After the freeze, run the skipped step from the deploy-manual pipeline of the release tag.
+# For an approved freeze exception, start the job manually with the variable
 # OVERRIDE_CORDON=<incident or exception link>. Retries can't set variables, so for a deploy-auto
 # step, run the same step from the deploy-manual pipeline instead.
 .deploy-prod:
   stage: deploy
+  allow_failure:
+    exit_codes: 75
   script:
     - export BUILD_MODE=release
     - VERSION=$(node -p -e "require('./package.json').version")
@@ -26,7 +32,6 @@ stages:
 
 step-1_deploy-prod-minor-dcs:
   when: manual
-  allow_failure: false
   extends:
     - .base-configuration
     - .deploy-prod
@@ -78,7 +83,6 @@ step-6_publish-npm:
   allow_failure: false
   script:
     - yarn
-    - node ./scripts/deploy/check-cordons.ts --environment prod
     - node ./scripts/deploy/publish-npm.ts
 
 step-7_publish-developer-extension:
