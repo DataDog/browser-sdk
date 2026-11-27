@@ -60,8 +60,6 @@ stages:
   except:
     refs:
       - /^release\//
-      # release-please's release pull request only bumps versions and updates the changelog
-      - /^release-please--/
       - schedules
 
 .bs-allowed-branches:
@@ -71,7 +69,6 @@ stages:
       - /^mq-working-branch-staging-[0-9]+-[a-z0-9]+$/
       - /^staging-[0-9]+$/
       - /^release\//
-      - /^release-please--/
       - schedules
     variables:
       - $CI_COMMIT_REF_NAME == $NEXT_MAJOR_BRANCH
