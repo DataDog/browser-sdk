@@ -64,26 +64,22 @@ export function createRumProfiler(
 
   // Start the profiler again when session is renewed
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    const newSession = session.findTrackedSession()
+
     if (
       instance.state === 'stopped' &&
-      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
+      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko') &&
+      newSession &&
+      isSampled(
+        newSession.id,
+        correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+      )
     ) {
-      const newSession = session.findTrackedSession()
-      if (
-        !newSession ||
-        !isSampled(
-          newSession.id,
-          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-        )
-      ) {
-        return
-      }
-      start()
+      startProfiling()
     }
   })
 
-  // Public API to start the profiler.
-  function start(): void {
+  function startProfiling(): void {
     if (instance.state === 'running') {
       return
     }
@@ -115,13 +111,11 @@ export function createRumProfiler(
     if (sessionId) {
       mockable(checkProfilingQuota)(configuration, sessionId)
         .then((result) => {
-          if (checkGeneration !== quotaCheckGeneration) {
-            return
-          }
-          if (instance.state !== 'running' && instance.state !== 'paused') {
-            return
-          }
-          if (result.decision === 'quota_ko') {
+          if (
+            checkGeneration === quotaCheckGeneration &&
+            (instance.state === 'running' || instance.state === 'paused') &&
+            result.decision === 'quota_ko'
+          ) {
             stopProfiling('quota_ko', result.reason)
           }
         })
@@ -129,14 +123,18 @@ export function createRumProfiler(
     }
   }
 
-  // Public API to manually stop the profiler.
-  function stop() {
-    stopProfiling('stopped-by-user')
-  }
-
   function stopProfiling(reason: RumProfilerStoppedInstance['stateReason'], quotaReason?: QuotaReason) {
-    // Stop current profiler instance (data collection happens async in background)
-    stopProfilerInstance(reason)
+    // Preserve the stop reason unless the user explicitly stops the profiler.
+    if (instance.state !== 'stopped' || reason === 'stopped-by-user') {
+      const previousInstance = instance
+
+      // Update state synchronously so SESSION_RENEWED check works immediately
+      instance = { state: 'stopped', stateReason: reason }
+
+      if (previousInstance.state === 'running') {
+        stopRunningProfiler(previousInstance, { discard: reason === 'quota_ko' })
+      }
+    }
 
     // Cleanup global listeners and reset the array to prevent accumulation across start/stop cycles
     globalCleanupTasks.forEach((task) => task())
@@ -159,7 +157,7 @@ export function createRumProfiler(
 
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
-      collectProfilerInstance(instance)
+      stopRunningProfiler(instance)
     }
 
     let profiler: Profiler
@@ -229,7 +227,7 @@ export function createRumProfiler(
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  function collectProfilerInstance(runningInstance: RumProfilerRunningInstance) {
+  function stopRunningProfiler(runningInstance: RumProfilerRunningInstance, { discard = false } = {}) {
     // Cleanup instance
     clearTimeout(runningInstance.timeoutId)
     // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
@@ -240,42 +238,11 @@ export function createRumProfiler(
     runningInstance.profiler
       .stop()
       .then((trace) => {
-        profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
+        if (!discard) {
+          profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
+        }
       })
       .catch(monitorError)
-  }
-
-  function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
-    if (instance.state !== 'running') {
-      if (
-        // If paused, profiler data was already collected during pause, just update state
-        instance.state === 'paused' ||
-        // Update stateReason when already stopped and the user explicitly stops the profiler,
-        // so that SESSION_RENEWED does not override the user's intent.
-        (instance.state === 'stopped' && stateReason === 'stopped-by-user')
-      ) {
-        instance = { state: 'stopped', stateReason }
-      }
-
-      return
-    }
-
-    // Capture the running instance before changing state
-    const runningInstance = instance
-
-    // Update state synchronously so SESSION_RENEWED check works immediately
-    instance = { state: 'stopped', stateReason }
-
-    if (stateReason === 'quota_ko') {
-      // Discard data — quota denied means we should not send anything
-      clearTimeout(runningInstance.timeoutId)
-      // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
-      runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
-      void runningInstance.profiler.stop().catch(monitorError)
-    } else {
-      // Collect and send profile data in background - doesn't block state transitions
-      collectProfilerInstance(runningInstance)
-    }
   }
 
   function pauseProfilerInstance() {
@@ -290,7 +257,7 @@ export function createRumProfiler(
     instance = { state: 'paused' }
 
     // Collect and send profile data in background
-    collectProfilerInstance(runningInstance)
+    stopRunningProfiler(runningInstance)
   }
 
   function handleSampleBufferFull(): void {
@@ -329,5 +296,5 @@ export function createRumProfiler(
     return instance.state === 'paused'
   }
 
-  return { start, stop, isStopped, isRunning, isPaused }
+  return { start: startProfiling, stop: () => stopProfiling('stopped-by-user'), isStopped, isRunning, isPaused }
 }

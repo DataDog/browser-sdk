@@ -33,6 +33,7 @@ import {
   LOW_HASH_UUID,
   mockSourceCodeContext,
   registerCleanupTask,
+  collectAsyncCalls,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
@@ -1338,12 +1339,18 @@ describe('profiler', () => {
 
   describe('quota check', () => {
     it('should stop profiler and set quota_exceeded context when quota check returns quota_exceeded', async () => {
+      const clock = mockClock()
       checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'quota_exceeded' }))
-      const { profiler, profilingContextManager } = setupProfiler()
+      const { profiler, profilingContextManager } = setupProfiler(undefined, { minProfileDurationMs: 5000 })
 
       profiler.start()
-      await waitForBoolean(() => profiler.isStopped())
+      clock.tick(6000)
+      expect(profiler.isRunning()).toBe(true)
 
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(profiler.isStopped()).toBe(true)
       expect(profilingContextManager.get()).toEqual({
         status: 'stopped',
         error_reason: undefined,
@@ -1353,12 +1360,18 @@ describe('profiler', () => {
     })
 
     it('should stop profiler and set org_disabled context when quota check returns org_disabled', async () => {
+      const clock = mockClock()
       checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'org_disabled' }))
-      const { profiler, profilingContextManager } = setupProfiler()
+      const { profiler, profilingContextManager } = setupProfiler(undefined, { minProfileDurationMs: 5000 })
 
       profiler.start()
-      await waitForBoolean(() => profiler.isStopped())
+      clock.tick(6000)
+      expect(profiler.isRunning()).toBe(true)
 
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(profiler.isStopped()).toBe(true)
       expect(profilingContextManager.get()).toEqual({
         status: 'stopped',
         error_reason: undefined,
@@ -1368,12 +1381,18 @@ describe('profiler', () => {
     })
 
     it('should stop profiler and set unknown_reason context when quota check returns unknown_reason', async () => {
+      const clock = mockClock()
       checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'unknown_reason' }))
-      const { profiler, profilingContextManager } = setupProfiler()
+      const { profiler, profilingContextManager } = setupProfiler(undefined, { minProfileDurationMs: 5000 })
 
       profiler.start()
-      await waitForBoolean(() => profiler.isStopped())
+      clock.tick(6000)
+      expect(profiler.isRunning()).toBe(true)
 
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(profiler.isStopped()).toBe(true)
       expect(profilingContextManager.get()).toEqual({
         status: 'stopped',
         error_reason: undefined,
@@ -1479,18 +1498,28 @@ describe('profiler', () => {
             resolveQuota = resolve
           })
       )
-      const { profiler, profilingContextManager } = setupProfiler()
+      const { profiler, profilingContextManager, instances } = setupProfiler()
 
       profiler.start()
       await waitForBoolean(() => profiler.isRunning())
 
+      const [runningInstance] = instances
+      const stopSpy = spyOn(runningInstance, 'stop').and.callThrough()
+
       setVisibilityState('hidden')
       await waitForBoolean(() => profiler.isPaused())
 
+      await collectAsyncCalls(emitPayloadSpy)
+      const pausePayload: ProfilingPayload = emitPayloadSpy.calls.argsFor(0)[0]
+      expect(stopSpy).toHaveBeenCalledOnceWith()
+
       resolveQuota({ decision: 'quota_ko', reason: 'quota_exceeded' })
+      await waitNextMicrotask()
       await waitNextMicrotask()
 
       expect(profiler.isStopped()).toBe(true)
+      expect(stopSpy).toHaveBeenCalledOnceWith()
+      expect(emitPayloadSpy).toHaveBeenCalledOnceWith(pausePayload)
       expect(profilingContextManager.get()).toEqual({
         status: 'stopped',
         error_reason: undefined,
@@ -1501,6 +1530,8 @@ describe('profiler', () => {
       await waitNextMicrotask()
 
       expect(profiler.isStopped()).toBe(true)
+      expect(stopSpy).toHaveBeenCalledOnceWith()
+      expect(emitPayloadSpy).toHaveBeenCalledOnceWith(pausePayload)
     })
 
     it('should discard stale quota result when SESSION_RENEWED restarts the profiler', async () => {
