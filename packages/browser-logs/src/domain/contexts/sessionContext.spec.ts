@@ -1,8 +1,11 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager } from '@datadog/browser-core'
-import { isSampled } from '@datadog/browser-core'
 import { createHook, DISCARDED } from '@datadog/js-core/assembly'
-import { createSessionManagerMock, MOCK_SESSION_ID } from '@datadog/browser-core/test'
+import {
+  createSessionManagerMock,
+  createSessionManagerMockWithSampleRate,
+  MOCK_SESSION_ID,
+} from '@datadog/browser-core/test'
 import type { AssembleHook, AssembleHookParams, DefaultLogsEventAttributes } from '../hooks'
 import type { LogsConfiguration } from '../configuration'
 import { startSessionContext } from './sessionContext'
@@ -44,7 +47,7 @@ describe('session context', () => {
     })
 
     it('should set the session id when only Logs samples the session', () => {
-      startSessionContext(hook, { ...configuration, sessionSampleRate: 100 }, createRumSessionManagerMock(0))
+      startSessionContext(hook, { ...configuration, sessionSampleRate: 100 }, createSessionManagerMockWithSampleRate(0))
 
       const defaultLogAttributes = hook.trigger({
         startTime: 0 as RelativeTime,
@@ -61,7 +64,7 @@ describe('session context', () => {
     })
 
     it('should discard logs when only RUM samples the session', () => {
-      startSessionContext(hook, { ...configuration, sessionSampleRate: 0 }, createRumSessionManagerMock(100))
+      startSessionContext(hook, { ...configuration, sessionSampleRate: 0 }, createSessionManagerMockWithSampleRate(100))
 
       const defaultLogAttributes = hook.trigger({
         startTime: 0 as RelativeTime,
@@ -109,13 +112,3 @@ describe('session context', () => {
     })
   })
 })
-
-function createRumSessionManagerMock(rumSessionSampleRate: number): Pick<SessionManager, 'findTrackedSession'> {
-  const sessionManagerMock = createSessionManagerMock()
-  return {
-    findTrackedSession: (startTime, options) =>
-      isSampled(MOCK_SESSION_ID, options?.sampleRate ?? rumSessionSampleRate)
-        ? sessionManagerMock.findTrackedSession(startTime, options)
-        : undefined,
-  }
-}
