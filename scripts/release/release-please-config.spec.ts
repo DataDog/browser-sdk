@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import path from 'node:path'
 import { describe, it } from 'node:test'
 import type { GitHub } from 'release-please'
 // Not part of release-please's public API: used to check how it handles our config.
@@ -7,14 +8,15 @@ import { Version } from 'release-please/build/src/version.js'
 import releasePleaseConfig from '../../release-please-config.json' with { type: 'json' }
 import releasePleaseManifest from '../../.release-please-manifest.json' with { type: 'json' }
 import rootPackageJson from '../../package.json' with { type: 'json' }
-import jsCorePackageJson from '../../packages/js-core/package.json' with { type: 'json' }
 import { INTERNAL_TYPES, PUBLIC_TYPES, REVERT_TYPE } from '../lib/conventionalCommits.ts'
 import { findPackageJsonFiles, isIndependentlyVersionedPackage } from '../lib/filesUtils.ts'
 import { validatePrTitle } from '../check-pr-title.ts'
 import { BrowserSdkStrategy } from './release-please.ts'
 
 const rootPackage = releasePleaseConfig.packages['.']
-const jsCorePackage = releasePleaseConfig.packages['packages/js-core']
+const independentPackages = findPackageJsonFiles()
+  .filter(({ content }) => isIndependentlyVersionedPackage(content.name))
+  .map(({ relativePath, content }) => ({ directory: path.dirname(relativePath), content }))
 
 describe('release-please config', () => {
   it('bumps every package.json on the Browser SDK version', () => {
@@ -30,9 +32,13 @@ describe('release-please config', () => {
     }
   })
 
-  it('releases @datadog/js-core as its own component', () => {
-    assert.equal(isIndependentlyVersionedPackage(jsCorePackageJson.name), true)
-    assert.equal(jsCorePackage.component, 'js-core')
+  it('releases each independently versioned package as its own component', () => {
+    assert.equal(releasePleaseConfig.packages['packages/js-core'].component, 'js-core')
+    const packages: Record<string, object | undefined> = releasePleaseConfig.packages
+    for (const { directory } of independentPackages) {
+      const config = packages[directory]
+      assert.ok(config && 'component' in config, `${directory} has no component in release-please-config.json`)
+    }
   })
 
   it('releases a grouped release pull request that only contains the Browser SDK', async () => {
@@ -72,7 +78,7 @@ describe('release-please config', () => {
   it('has a manifest matching the package versions', () => {
     assert.deepEqual(releasePleaseManifest, {
       '.': rootPackageJson.version,
-      'packages/js-core': jsCorePackageJson.version,
+      ...Object.fromEntries(independentPackages.map(({ directory, content }) => [directory, content.version])),
     })
   })
 

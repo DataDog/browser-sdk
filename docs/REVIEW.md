@@ -42,8 +42,12 @@ When a PR adds a new package that produces a `bundle/` output (e.g. a new `brows
 bundle), flag it if the package is missing from that list. Otherwise its size won't be tracked.
 New entry points or chunks inside an already listed package are picked up automatically.
 
-A new package that uses the Browser SDK version must also be listed in `extra-files` in
+A new package that uses the Browser SDK version must be listed in `extra-files` in
 `release-please-config.json`. Otherwise the release PR does not bump its version.
+
+A package that has its own version (like `@datadog/js-core`) must be in
+`INDEPENDENTLY_VERSIONED_PACKAGES` (`scripts/lib/filesUtils.ts`), and must have its own component in
+`release-please-config.json` and an entry in `.release-please-manifest.json`.
 
 ### Backward compatibility
 

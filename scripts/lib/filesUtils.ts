@@ -72,8 +72,8 @@ export function readPackageJson(filePath: string): PackageJson {
 
 /**
  * Packages under `packages/` that are versioned independently from the synced Browser SDK release
- * version. They are still built and published as part of the same release process, but their
- * version is managed manually and is not bumped to the release version.
+ * version. They are still built and published as part of the same release process, but
+ * release-please bumps each of them as its own component (see `release-please-config.json`).
  */
 const INDEPENDENTLY_VERSIONED_PACKAGES = new Set<string>(['@datadog/js-core'])
 
