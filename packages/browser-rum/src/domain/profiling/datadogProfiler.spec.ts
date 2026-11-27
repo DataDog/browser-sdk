@@ -37,10 +37,10 @@ import {
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
+import { createBrowserProfiler, EARLY_COLLECTION_GLOBAL_NAME } from '../../browser/browserProfiler'
 import { checkProfilingQuota } from './quotaCheck'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
-import { EARLY_COLLECTION_GLOBAL_NAME, takeEarlyCollectionProfiler } from './earlyCollectionProfiler'
 import { createFormDataEmitter } from './transport/formDataEmitter'
 import { createBridgeEmitter } from './transport/profilingBridge'
 import type { ProfilingPayload, RUMProfilerConfiguration } from './types'
@@ -120,19 +120,17 @@ describe('profiler', () => {
 
     registerCleanupTask(() => {
       delete (globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME]
-      takeEarlyCollectionProfiler() // clear any claim left by a test
     })
 
     // Emulate the early collection package: a Profiler instance started before
     // the profiler chunk is loaded, published on its global.
-    let earlyProfiler: Profiler | undefined
     if (earlyCollection) {
       const startClocks = earlyCollection.startClocks ?? clocksNow()
       const ProfilerConstructor = globalObject.Profiler as new (options: {
         sampleInterval: number
         maxBufferSize: number
       }) => Profiler
-      earlyProfiler = new ProfilerConstructor({ sampleInterval: 10, maxBufferSize: 9000 })
+      const earlyProfiler = new ProfilerConstructor({ sampleInterval: 10, maxBufferSize: 9000 })
       ;(globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME] = {
         version: 1,
         startClocks,
@@ -176,7 +174,6 @@ describe('profiler', () => {
     )
     return {
       profiler,
-      earlyProfiler,
       profilingContextManager,
       sessionManager,
       mockedRumProfilerTrace,
@@ -204,6 +201,48 @@ describe('profiler', () => {
       },
     }
   }
+
+  it('reports unsupported browsers without throwing', () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+    registerCleanupTask(() => profiler.stop())
+    globalObject.Profiler = undefined
+
+    expect(() => profiler.start()).not.toThrow()
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()).toEqual({
+      status: 'error',
+      error_reason: 'not-supported-by-browser',
+    })
+  })
+
+  it('uses the browser profiler passed at startup and rotates it when the buffer fills', async () => {
+    const clock = mockClock()
+    const { profiler, instances } = setupProfiler()
+    registerCleanupTask(() => profiler.stop())
+    const result = createBrowserProfiler({ sampleIntervalMs: 10, collectIntervalMs: 60000 })
+    if (result.status !== 'success') {
+      fail('Expected profiler creation to succeed')
+      return
+    }
+    const startClocks = result.profiler.startClocks
+    clock.tick(1000)
+
+    profiler.start(result.profiler)
+
+    expect(instances.size).toBe(1)
+    const firstInstance = Array.from(instances)[0]
+    firstInstance.triggerSampleBufferFull()
+    await waitNextMicrotask()
+
+    expect(firstInstance.stopped).toBeTrue()
+    expect(instances.size).toBe(2)
+    const payload: ProfilingPayload = emitPayloadSpy.calls.mostRecent().args[0]
+    expect(payload.trace.startClocks).toEqual(startClocks)
+
+    clock.tick(60000)
+    expect(instances.size).toBe(3)
+  })
 
   it('should start profiling collection and collect data on stop', async () => {
     const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler()
@@ -1193,49 +1232,6 @@ describe('profiler', () => {
       await waitNextMicrotask()
 
       expect(emitPayloadSpy.calls.count()).toBe(1)
-      expect(instances.size).toBe(2)
-
-      profiler.stop()
-    })
-
-    it('removes the consumed profiler field from the early collection global when adopting the instance, so it cannot be adopted twice', () => {
-      const { profiler, instances } = setupProfiler(undefined, undefined, undefined, {})
-
-      profiler.start()
-
-      // Only the consumed profiler field is removed on adoption: the global
-      // remains with its other fields, and a profiler restart (e.g. session
-      // renewal) starts its own instance instead of re-adopting it.
-      expect(takeEarlyCollectionProfiler()).toBeUndefined()
-      expect(
-        (
-          (globalObject as unknown as Record<string, unknown>)[EARLY_COLLECTION_GLOBAL_NAME] as {
-            profiler?: unknown
-          }
-        ).profiler
-      ).toBeUndefined()
-      expect(instances.size).toBe(1)
-
-      profiler.stop()
-    })
-
-    it('starts a new Profiler instance when the early one is already stopped', async () => {
-      const { profiler, earlyProfiler, instances, profilingContextManager } = setupProfiler(
-        undefined,
-        undefined,
-        undefined,
-        {}
-      )
-      if (!earlyProfiler) {
-        throw new Error('the early Profiler instance was not started')
-      }
-      await earlyProfiler.stop()
-
-      profiler.start()
-
-      // The stopped early instance is skipped: the chunk started its own,
-      // with no `collection_type`.
-      expect(profilingContextManager.get()?.collection_type).toBeUndefined()
       expect(instances.size).toBe(2)
 
       profiler.stop()

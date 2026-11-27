@@ -1,14 +1,14 @@
-import { globalObject, mockable, clearTimeout, setTimeout } from '@datadog/js-core/util'
+import { mockable, clearTimeout, setTimeout } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT } from '@datadog/js-core/dom'
-import type { Profiler } from '@datadog/js-core/util'
 import { clocksNow } from '@datadog/js-core/time'
-import type { ClocksState } from '@datadog/js-core/time'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
-import { canUseEventBridge, display, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
+import { canUseEventBridge, isSampled, correctedChildSampleRate } from '@datadog/browser-core'
 import { monitorError } from '@datadog/js-core/monitor'
 
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { createBrowserProfiler } from '../../browser/browserProfiler'
+import type { BrowserProfiler } from '../../browser/browserProfiler'
 import type {
   RumProfilerInstance,
   RumProfilerRunningInstance,
@@ -17,19 +17,12 @@ import type {
   RumProfilerStoppedInstance,
 } from './types'
 import type { ProfilingContextManager } from './profilingContext'
-import { takeEarlyCollectionProfiler } from './earlyCollectionProfiler'
-import type { EarlyCollectionProfiler } from './earlyCollectionProfiler'
 import { checkProfilingQuota } from './quotaCheck'
 import type { QuotaReason } from './quotaCheck'
 import { createProfileAssembly } from './profileAssembly'
 import { createBridgeEmitter } from './transport/profilingBridge'
 import { createFormDataEmitter } from './transport/formDataEmitter'
-
-export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
-  sampleIntervalMs: 10, // Sample stack trace every 10ms
-  collectIntervalMs: 60000, // Collect data every minute
-  minProfileDurationMs: 5000, // Require at least 5 seconds of profile data to reduce noise and cost
-}
+import { DEFAULT_RUM_PROFILER_CONFIGURATION } from './profilingConfiguration'
 
 export function createRumProfiler(
   configuration: RumConfiguration,
@@ -51,54 +44,41 @@ export function createRumProfiler(
     emitPayload
   )
 
-  // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
-
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
   let quotaCheckGeneration = 0
 
-  // Stops the profiler when session expires
   lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
     stopProfiling('session-expired')
   })
 
-  // Start the profiler again when session is renewed
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    const newSession = session.findTrackedSession()
+
     if (
       instance.state === 'stopped' &&
-      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
+      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko') &&
+      newSession &&
+      isSampled(
+        newSession.id,
+        correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+      )
     ) {
-      const newSession = session.findTrackedSession()
-      if (
-        !newSession ||
-        !isSampled(
-          newSession.id,
-          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-        )
-      ) {
-        return
-      }
       start()
     }
   })
 
-  // Public API to start the profiler.
-  function start(): void {
+  function start(browserProfiler?: BrowserProfiler): void {
     if (instance.state === 'running') {
       return
     }
 
-    // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
     globalCleanupTasks.push(
       addEventListener(window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
       addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
-    // Start profiler instance. When collection was started by the early
-    // collection package (a standalone snippet evaluated before the SDK
-    // bundle), adopt its running Profiler instance as the first instance, so
-    // the first collected profile covers the early collection period.
-    startNextProfilerInstance(takeEarlyCollectionProfiler())
+    startNextProfilerInstance(browserProfiler)
     triggerQuotaCheck()
   }
 
@@ -115,13 +95,11 @@ export function createRumProfiler(
     if (sessionId) {
       mockable(checkProfilingQuota)(configuration, sessionId)
         .then((result) => {
-          if (checkGeneration !== quotaCheckGeneration) {
-            return
-          }
-          if (instance.state !== 'running' && instance.state !== 'paused') {
-            return
-          }
-          if (result.decision === 'quota_ko') {
+          if (
+            checkGeneration === quotaCheckGeneration &&
+            (instance.state === 'running' || instance.state === 'paused') &&
+            result.decision === 'quota_ko'
+          ) {
             stopProfiling('quota_ko', result.reason)
           }
         })
@@ -146,135 +124,63 @@ export function createRumProfiler(
     profilingContextManager.set({ status: 'stopped', error_reason: undefined, quota_reason: quotaReason })
   }
 
-  function startNextProfilerInstance(earlyProfiler?: EarlyCollectionProfiler): void {
-    // These APIs might be unavailable in some browsers. When adopting an
-    // early collection Profiler instance, the constructor was necessarily
-    // available (the early collection package used it), so the check holds.
-    const profilerConstructor = globalObject.Profiler
-
-    if (!profilerConstructor) {
-      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
-      throw new Error('RUM Profiler is not supported in this browser.')
-    }
-
+  function startNextProfilerInstance(browserProfiler?: BrowserProfiler): void {
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
-      collectProfilerInstance(instance)
+      stopAndCollectProfilerInstance(instance)
     }
 
-    let profiler: Profiler
-    let startClocks: ClocksState
-    if (earlyProfiler) {
-      // Adopt the Profiler instance started by the early collection package,
-      // so the first collected profile covers the early collection period.
-      profiler = earlyProfiler.profiler
-      startClocks = earlyProfiler.startClocks
-    } else {
-      try {
-        // We have to create new Profiler each time we start a new instance
-        profiler = new profilerConstructor({
-          sampleInterval: profilerConfiguration.sampleIntervalMs,
-          // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
-          maxBufferSize: Math.round(
-            (profilerConfiguration.collectIntervalMs * 1.5) / profilerConfiguration.sampleIntervalMs
-          ),
-        })
-      } catch (e) {
-        if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
-          // Missing Response Header (`js-profiling`) that is required to enable the profiler.
-          // We should suggest the user to enable the Response Header in their server configuration.
-          display.warn(
-            '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
-            e
-          )
-          profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
-        } else {
-          profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
-        }
+    if (!browserProfiler) {
+      const result = createBrowserProfiler(profilerConfiguration)
+      if (result.status === 'error') {
+        profilingContextManager.set({ status: 'error', error_reason: result.reason })
         return
       }
-      startClocks = clocksNow()
+      browserProfiler = result.profiler
     }
+    browserProfiler.sampleBufferFullObservable.subscribe(() => startNextProfilerInstance())
 
     profilingContextManager.set({
       status: 'running',
       error_reason: undefined,
-      // `early` when adopting the Profiler instance started by the early
-      // collection package: the first profile covers the early collection
-      // period. The field is absent for instances the SDK starts itself, so
-      // only early collection is reported in `_dd.profiling`.
-      ...(earlyProfiler ? { collection_type: 'early' as const } : {}),
+      collection_type: browserProfiler.collectionType,
     })
 
-    // Kick-off the new instance. Caveat for the early collection adoption: the
-    // early Profiler's buffer (~9,000 samples, ~90 s at the 10 ms interval,
-    // ~144 s if the browser clamps to a coarser one) can fill before the SDK
-    // takes over. An exhausted instance is undetectable at adoption: it keeps
-    // `stopped: false` and nothing in its API surface reveals it. We do not
-    // track buffer exhaustion in the early collection contract; the instance
-    // is adopted as running and the normal collection interval does the
-    // rollover. In that rare case (the SDK evaluated more than ~90 s after
-    // page load), the buffered samples are preserved and emitted, but no new
-    // sample is taken until adoption + collectIntervalMs (~60 s later).
     instance = {
       state: 'running',
-      startClocks,
-      profiler,
+      browserProfiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
       sessionId: session.findTrackedSession()?.id,
     }
-
-    // Add event handler case we overflow the buffer
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
-    profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  function collectProfilerInstance(runningInstance: RumProfilerRunningInstance) {
-    // Cleanup instance
-    clearTimeout(runningInstance.timeoutId)
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
-    runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
-
-    const { startClocks, sessionId } = runningInstance
+  function stopAndCollectProfilerInstance(
+    { timeoutId, sessionId, browserProfiler }: RumProfilerRunningInstance,
+    { discard = false } = {}
+  ) {
+    clearTimeout(timeoutId)
     const endClocks = clocksNow()
-    runningInstance.profiler
+    browserProfiler
       .stop()
       .then((trace) => {
-        profileAssembly.assemble(trace, startClocks, endClocks, sessionId)
+        if (!discard) {
+          profileAssembly.assemble(trace, browserProfiler.startClocks, endClocks, sessionId)
+        }
       })
       .catch(monitorError)
   }
 
   function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
-    if (instance.state !== 'running') {
-      if (
-        // If paused, profiler data was already collected during pause, just update state
-        instance.state === 'paused' ||
-        // Update stateReason when already stopped and the user explicitly stops the profiler,
-        // so that SESSION_RENEWED does not override the user's intent.
-        (instance.state === 'stopped' && stateReason === 'stopped-by-user')
-      ) {
-        instance = { state: 'stopped', stateReason }
-      }
-
+    // Preserve the stop reason unless the user explicitly stops the profiler.
+    if (instance.state === 'stopped' && stateReason !== 'stopped-by-user') {
       return
     }
 
-    // Capture the running instance before changing state
-    const runningInstance = instance
-
-    // Update state synchronously so SESSION_RENEWED check works immediately
+    const previousInstance = instance
     instance = { state: 'stopped', stateReason }
 
-    if (stateReason === 'quota_ko') {
-      // Discard data — quota denied means we should not send anything
-      clearTimeout(runningInstance.timeoutId)
-      // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
-      runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
-      void runningInstance.profiler.stop().catch(monitorError)
-    } else {
-      // Collect and send profile data in background - doesn't block state transitions
-      collectProfilerInstance(runningInstance)
+    if (previousInstance.state === 'running') {
+      stopAndCollectProfilerInstance(previousInstance, { discard: stateReason === 'quota_ko' })
     }
   }
 
@@ -282,19 +188,9 @@ export function createRumProfiler(
     if (instance.state !== 'running') {
       return
     }
-
-    // Capture the running instance before changing state
     const runningInstance = instance
-
-    // Update state synchronously
     instance = { state: 'paused' }
-
-    // Collect and send profile data in background
-    collectProfilerInstance(runningInstance)
-  }
-
-  function handleSampleBufferFull(): void {
-    startNextProfilerInstance()
+    stopAndCollectProfilerInstance(runningInstance)
   }
 
   function handleVisibilityChange(): void {
