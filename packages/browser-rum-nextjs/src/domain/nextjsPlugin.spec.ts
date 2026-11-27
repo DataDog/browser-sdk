@@ -1,5 +1,10 @@
 import { globalObject } from '@datadog/js-core/util'
-import type { RumInitConfiguration, RumPublicApi, RumPluginOnInitOptions } from '@datadog/browser-rum-core'
+import type {
+  OnRumStartOptions,
+  RumInitConfiguration,
+  RumPublicApi,
+  RumPluginOnInitOptions,
+} from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { appendElement } from '../../../browser-rum-core/test'
 import {
@@ -207,7 +212,7 @@ describe('nextjsPlugin', () => {
       onRumStart(callbackSpy)
 
       const { plugin } = initPlugin()
-      plugin.onRumStart({ addError: mockAddError })
+      plugin.onRumStart({ addError: mockAddError } as unknown as OnRumStartOptions)
 
       expect(callbackSpy).toHaveBeenCalledWith(mockAddError)
     })
@@ -215,7 +220,7 @@ describe('nextjsPlugin', () => {
     it('calls onRumStart subscriber immediately if already started', () => {
       const mockAddError = jasmine.createSpy()
       const { plugin } = initPlugin()
-      plugin.onRumStart({ addError: mockAddError })
+      plugin.onRumStart({ addError: mockAddError } as unknown as OnRumStartOptions)
 
       const callbackSpy = jasmine.createSpy()
       onRumStart(callbackSpy)

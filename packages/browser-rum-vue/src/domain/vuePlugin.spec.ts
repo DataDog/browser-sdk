@@ -1,6 +1,11 @@
 import { version as vueVersion } from 'vue'
 import { display, toMajorVersionIntegration } from '@datadog/browser-core'
-import type { RumInitConfiguration, RumPluginOnInitOptions, RumPublicApi } from '@datadog/browser-rum-core'
+import type {
+  OnRumStartOptions,
+  RumInitConfiguration,
+  RumPluginOnInitOptions,
+  RumPublicApi,
+} from '@datadog/browser-rum-core'
 import { registerCleanupTask, waitNextMicrotask } from '../../../browser-core/test'
 import type { VuePluginConfiguration, VueErrorPayload } from './vuePlugin'
 import { vuePlugin, resetVuePlugin, startVueViewWhenReady, addVueErrorWhenReady } from './vuePlugin'
@@ -79,7 +84,7 @@ describe('vuePlugin', () => {
     const addError = jasmine.createSpy()
     const first = error('first')
     addVueErrorWhenReady(first)
-    vuePlugin().onRumStart({ addError })
+    vuePlugin().onRumStart({ addError } as unknown as OnRumStartOptions)
     await waitNextMicrotask()
     const second = error('second')
     addVueErrorWhenReady(second)
@@ -91,7 +96,7 @@ describe('vuePlugin', () => {
       addVueErrorWhenReady(error(String(i)))
     }
     const addError = jasmine.createSpy()
-    vuePlugin().onRumStart({ addError })
+    vuePlugin().onRumStart({ addError } as unknown as OnRumStartOptions)
     await waitNextMicrotask()
     expect(addError).toHaveBeenCalledTimes(500)
   })

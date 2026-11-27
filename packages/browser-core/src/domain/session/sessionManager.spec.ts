@@ -812,6 +812,12 @@ describe('startSessionManager', () => {
       expect(sessionManager.findTrackedSession(undefined, { returnInactive: true, maxAge: Infinity })).toBeDefined()
     })
 
+    it('should not track the session when the provided sampleRate is 0', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      expect(sessionManager.findTrackedSession(undefined, { sampleRate: 0 })).toBeUndefined()
+    })
+
     describe('deterministic sampling', () => {
       it('should track a session whose ID has a low hash, even with a low sessionSampleRate', async () => {
         setupFakeStrategy({
@@ -843,6 +849,36 @@ describe('startSessionManager', () => {
         })
 
         expect(sessionManager.findTrackedSession()).toBeUndefined()
+      })
+
+      it('should track a session whose ID has a low hash with the provided sampleRate, even if the configured one is 0', async () => {
+        setupFakeStrategy({
+          initialSession: {
+            id: LOW_HASH_UUID,
+            expire: String(Date.now() + SESSION_EXPIRATION_DELAY),
+            created: String(Date.now()),
+          },
+        })
+
+        const sessionManager = await startSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
+
+        expect(sessionManager.findTrackedSession(undefined, { sampleRate: 1 })).toBeDefined()
+        expect(sessionManager.findTrackedSession()).toBeUndefined()
+      })
+
+      it('should not track a session whose ID has a high hash with the provided sampleRate, even if the configured one is 100', async () => {
+        setupFakeStrategy({
+          initialSession: {
+            id: HIGH_HASH_UUID,
+            expire: String(Date.now() + SESSION_EXPIRATION_DELAY),
+            created: String(Date.now()),
+          },
+        })
+
+        const sessionManager = await startSessionManagerWithDefaults()
+
+        expect(sessionManager.findTrackedSession(undefined, { sampleRate: 99 })).toBeUndefined()
+        expect(sessionManager.findTrackedSession()).toBeDefined()
       })
     })
   })

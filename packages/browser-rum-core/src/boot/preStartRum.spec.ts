@@ -1,6 +1,6 @@
 import type { Duration, TimeStamp } from '@datadog/js-core/time'
 import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
-import { noop } from '@datadog/js-core/util'
+import { BufferedObservable, noop } from '@datadog/js-core/util'
 import { toTimeStamp, relativeToClocks, clocksNow, ONE_MINUTE } from '@datadog/js-core/time'
 import {
   display,
@@ -24,6 +24,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  createSessionManagerMock,
 } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -867,7 +868,7 @@ describe('preStartRum', () => {
         onRumStart: jasmine.createSpy(),
       }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.and.returnValue({ sessionManager: createSessionManagerMock() } as unknown as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       strategy.addPlugin(plugin)
@@ -882,7 +883,10 @@ describe('preStartRum', () => {
     it('calls onRumStart even when the API calls made before RUM starts overflow their buffer', async () => {
       const plugin = { name: 'a', onRumStart: jasmine.createSpy() }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({ addTiming: noop } as unknown as StartRumResult)
+      doStartRumSpy.and.returnValue({
+        addTiming: noop,
+        sessionManager: createSessionManagerMock(),
+      } as unknown as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       strategy.addPlugin(plugin)
@@ -896,7 +900,11 @@ describe('preStartRum', () => {
 
     it('calls onRumStart once RUM starts', async () => {
       const plugin = { name: 'a', onRumStart: jasmine.createSpy() }
-      const startRumResult = { addEvent: noop, addError: noop } as unknown as StartRumResult
+      const startRumResult = {
+        addEvent: noop,
+        addError: noop,
+        sessionManager: createSessionManagerMock(),
+      } as unknown as StartRumResult
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
       doStartRumSpy.and.returnValue(startRumResult)
 
@@ -909,13 +917,17 @@ describe('preStartRum', () => {
       expect(plugin.onRumStart).toHaveBeenCalledOnceWith({
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
+        sessionManager: {
+          findSession: startRumResult.sessionManager.findSession,
+          findTrackedSession: startRumResult.sessionManager.findTrackedSession,
+        },
       })
     })
 
     it('starts the plugin when RUM has already started', async () => {
       const plugin = { name: 'a', onInit: jasmine.createSpy(), onRumStart: jasmine.createSpy() }
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.returnValue({} as StartRumResult)
+      doStartRumSpy.and.returnValue({ sessionManager: createSessionManagerMock() } as unknown as StartRumResult)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(doStartRumSpy, 1)
@@ -1312,6 +1324,203 @@ describe('preStartRum', () => {
           timeStamp: jasmine.any(Number),
         })
       )
+    })
+  })
+
+  describe('plugin call queues', () => {
+    const MANUAL_ACTION: Omit<ManualAction, 'id' | 'duration' | 'counts' | 'frustrationTypes'> = {
+      name: 'foo',
+      type: ActionType.CUSTOM,
+      startClocks: clocksNow(),
+    }
+    let queue: BufferedObservable<() => void>
+    let plugin: RumPlugin
+
+    beforeEach(() => {
+      queue = new BufferedObservable<() => void>(500)
+      plugin = { name: 'a', onInit: ({ registerCallQueue }) => registerCallQueue(queue) }
+    })
+
+    it('runs plugin calls after the API calls made before start', async () => {
+      const addActionSpy = jasmine.createSpy()
+      const pluginCallSpy = jasmine.createSpy()
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
+
+      queue.notify(pluginCallSpy)
+      strategy.addAction(MANUAL_ACTION)
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+      await collectAsyncCalls(pluginCallSpy, 1)
+
+      expect(addActionSpy).toHaveBeenCalledBefore(pluginCallSpy)
+    })
+
+    it('does not run plugin calls before RUM starts', async () => {
+      const pluginCallSpy = jasmine.createSpy()
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      queue.notify(pluginCallSpy)
+      strategy.init(
+        { ...DEFAULT_INIT_CONFIGURATION, trackingConsent: TrackingConsent.NOT_GRANTED, plugins: [plugin] },
+        PUBLIC_API
+      )
+      await new Promise((resolve) => setTimeout(resolve))
+
+      expect(pluginCallSpy).not.toHaveBeenCalled()
+    })
+
+    it('runs plugin calls made after RUM has started right away', async () => {
+      const pluginCallSpy = jasmine.createSpy()
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+      await new Promise((resolve) => setTimeout(resolve))
+      queue.notify(pluginCallSpy)
+
+      expect(pluginCallSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('runs a plugin call made while RUM starts after the calls queued before it', async () => {
+      const queuedCallSpy = jasmine.createSpy()
+      const startCallSpy = jasmine.createSpy()
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.callFake(() => {
+        queue.notify(startCallSpy)
+        return {} as StartRumResult
+      })
+
+      queue.notify(queuedCallSpy)
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+      await collectAsyncCalls(startCallSpy, 1)
+
+      expect(queuedCallSpy).toHaveBeenCalledBefore(startCallSpy)
+      expect(queuedCallSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not drop RUM API calls when a plugin queue is full', async () => {
+      const addActionSpy = jasmine.createSpy()
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
+
+      strategy.addAction(MANUAL_ACTION)
+      for (let i = 0; i < 501; i += 1) {
+        queue.notify(noop)
+      }
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+      await collectAsyncCalls(addActionSpy, 1)
+
+      expect(addActionSpy).toHaveBeenCalledOnceWith(MANUAL_ACTION)
+    })
+
+    it('runs the calls of a queue registered again by a later init() once', async () => {
+      const pluginCallSpy = jasmine.createSpy()
+      const { strategy } = createPreStartStrategyWithDefaults()
+      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, silentMultipleInit: true, plugins: [plugin] }
+
+      queue.notify(pluginCallSpy)
+      strategy.init(initConfiguration, PUBLIC_API)
+      strategy.init(initConfiguration, PUBLIC_API)
+      await collectAsyncCalls(pluginCallSpy, 1)
+      await new Promise((resolve) => setTimeout(resolve))
+
+      expect(pluginCallSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('runs the calls of a queue registered after RUM has started', async () => {
+      const pluginCallSpy = jasmine.createSpy()
+      const latePlugin = { name: 'a', onInit: jasmine.createSpy<NonNullable<RumPlugin['onInit']>>() }
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [latePlugin] }, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+      queue.notify(pluginCallSpy)
+      latePlugin.onInit.calls.mostRecent().args[0].registerCallQueue(queue)
+
+      await collectAsyncCalls(pluginCallSpy, 1)
+
+      expect(pluginCallSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should run the calls of a queue registered by an added plugin whose onInit returns false or throws', async () => {
+      const falseCallSpy = jasmine.createSpy()
+      const throwCallSpy = jasmine.createSpy()
+      const falseQueue = new BufferedObservable<() => void>(500)
+      const throwQueue = new BufferedObservable<() => void>(500)
+      const falsePlugin = {
+        name: 'a',
+        onInit: ({ registerCallQueue }: RumPluginOnInitOptions) => {
+          registerCallQueue(falseQueue)
+          return false as const
+        },
+        onRumStart: jasmine.createSpy(),
+      }
+      const throwPlugin = {
+        name: 'b',
+        onInit: ({ registerCallQueue }: RumPluginOnInitOptions) => {
+          registerCallQueue(throwQueue)
+          throw new Error('boom')
+        },
+        onRumStart: jasmine.createSpy(),
+      }
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      falseQueue.notify(falseCallSpy)
+      throwQueue.notify(throwCallSpy)
+      strategy.addPlugin(falsePlugin)
+      strategy.addPlugin(throwPlugin)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(falseCallSpy, 1)
+      await collectAsyncCalls(throwCallSpy, 1)
+
+      expect(falsePlugin.onRumStart).not.toHaveBeenCalled()
+      expect(throwPlugin.onRumStart).not.toHaveBeenCalled()
+    })
+
+    it('should run the calls of a queue registered at onRumStart by an added plugin once', async () => {
+      const addActionSpy = jasmine.createSpy()
+      const pluginCallSpy = jasmine.createSpy()
+      const laterCallSpy = jasmine.createSpy()
+      const trackingConsentState = createTrackingConsentState()
+      let registerCallQueue: RumPluginOnInitOptions['registerCallQueue'] | undefined
+      const addedPlugin: RumPlugin = {
+        name: 'b',
+        onInit: (options) => {
+          registerCallQueue = options.registerCallQueue
+        },
+        onRumStart: () => registerCallQueue?.(queue),
+      }
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({ trackingConsentState })
+      doStartRumSpy.and.returnValue({ addAction: addActionSpy, sessionManager: {} } as unknown as StartRumResult)
+
+      strategy.addPlugin(addedPlugin)
+      strategy.addAction(MANUAL_ACTION)
+      queue.notify(pluginCallSpy)
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, trackingConsent: TrackingConsent.NOT_GRANTED }, PUBLIC_API)
+      trackingConsentState.update(TrackingConsent.GRANTED)
+      await collectAsyncCalls(pluginCallSpy, 1)
+      await new Promise((resolve) => setTimeout(resolve))
+      queue.notify(laterCallSpy)
+
+      expect(laterCallSpy).toHaveBeenCalledTimes(1)
+      expect(addActionSpy).toHaveBeenCalledBefore(pluginCallSpy)
+    })
+
+    it('keeps running plugin calls after one throws', async () => {
+      const queuedCallSpy = jasmine.createSpy()
+      const laterCallSpy = jasmine.createSpy()
+      const { strategy } = createPreStartStrategyWithDefaults()
+
+      queue.notify(() => {
+        throw new Error('boom')
+      })
+      queue.notify(queuedCallSpy)
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }, PUBLIC_API)
+      await collectAsyncCalls(queuedCallSpy, 1)
+      await new Promise((resolve) => setTimeout(resolve))
+      queue.notify(laterCallSpy)
+
+      expect(laterCallSpy).toHaveBeenCalledTimes(1)
     })
   })
 

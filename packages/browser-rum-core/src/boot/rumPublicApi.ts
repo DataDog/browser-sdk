@@ -759,6 +759,7 @@ export function makeRumPublicApi(
       callPluginsOnRumStart(configuration.plugins, {
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
+        sessionManager,
       })
 
       return startRumResult

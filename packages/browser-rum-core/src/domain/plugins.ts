@@ -1,4 +1,6 @@
+import type { SessionManager } from '@datadog/browser-core'
 import { isThenable } from '@datadog/browser-core'
+import type { BufferedObservable } from '@datadog/js-core/util'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
@@ -29,6 +31,18 @@ export interface RumPluginOnInitOptions {
    * or with `setTrackingConsent()`, including before init(). RUM doesn't start until it is.
    */
   isTrackingConsentGranted: () => boolean
+  /**
+   * Register a queue of calls the plugin made before RUM started. RUM runs the queued calls once it
+   * has started, in a microtask right after the API calls made before start. Calls notified after
+   * that run synchronously. Registering the same queue again does nothing. The plugin creates and
+   * bounds the queue. RUM subscribes to the queue and then unbuffers it, so the plugin shouldn't rely
+   * on its buffered calls afterwards. For a plugin added with `addPlugin()`, the queue drains even if
+   * `onInit` returns `false` or throws. If it is added after `init()`, an asynchronous `onInit` can
+   * let queued calls run before `onRumStart`.
+   *
+   * @internal
+   */
+  registerCallQueue: (queue: BufferedObservable<() => void>) => void
 }
 
 /**
@@ -45,6 +59,12 @@ export interface OnRumStartOptions {
    * Add a custom error to the RUM browser SDK.
    */
   addError?: StartRumResult['addError']
+  /**
+   * The read-only methods of RUM's own session manager, so plugins can look up sessions with their own sample rate.
+   *
+   * @internal
+   */
+  sessionManager: Pick<SessionManager, 'findSession' | 'findTrackedSession'>
 }
 
 /**
@@ -90,10 +110,21 @@ export function callPluginsOnInit(
 }
 
 /**
- * Calls each plugin's `onRumStart` method in order.
+ * Calls each plugin's `onRumStart` method in order. Plugins only get the read-only methods of the
+ * session manager.
  */
-export function callPluginsOnRumStart(plugins: RumPlugin[] | undefined, options: OnRumStartOptions): void {
+export function callPluginsOnRumStart(
+  plugins: RumPlugin[] | undefined,
+  { addEvent, addError, sessionManager }: Pick<StartRumResult, 'addEvent' | 'addError' | 'sessionManager'>
+): void {
   for (const plugin of plugins ?? []) {
-    plugin.onRumStart?.(options)
+    plugin.onRumStart?.({
+      addEvent,
+      addError,
+      sessionManager: {
+        findSession: sessionManager.findSession,
+        findTrackedSession: sessionManager.findTrackedSession,
+      },
+    })
   }
 }
