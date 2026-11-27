@@ -7,6 +7,7 @@
     "src/entries/assembly.ts",
     "src/entries/sample.ts",
     "src/entries/configuration.ts",
-    "src/entries/dom.ts"
+    "src/entries/dom.ts",
+    "src/entries/runtime.ts"
   ]
 }
