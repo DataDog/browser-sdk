@@ -78,6 +78,11 @@
         },
         {
           "type": "json",
+          "path": "packages/browser-early-collection/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
           "path": "packages/browser-logs/package.json",
           "jsonpath": "$.version"
         },

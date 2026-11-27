@@ -63,16 +63,18 @@ function setVersionInPackageJsonFiles(version: string) {
   // For now they get a simple patch bump on each release. Compute their new versions up front so we
   // can also update the packages that depend on them.
   const independentVersions = new Map<string, string>()
-  for (const { content } of packageJsonFiles) {
-    if (content.name && isIndependentlyVersionedPackage(content.name) && isSemanticVersion(content.version)) {
+  for (const packageJsonFile of packageJsonFiles) {
+    const { content } = packageJsonFile
+    if (content.name && isIndependentlyVersionedPackage(packageJsonFile) && isSemanticVersion(content.version)) {
       independentVersions.set(content.name, incrementPatch(content.version!))
     }
   }
 
-  for (const { path: absolutePath, content } of packageJsonFiles) {
+  for (const packageJsonFile of packageJsonFiles) {
+    const { path: absolutePath, content } = packageJsonFile
     if (content.name && independentVersions.has(content.name)) {
       content.version = independentVersions.get(content.name)
-    } else if (!isIndependentlyVersionedPackage(content.name) && isSemanticVersion(content.version)) {
+    } else if (!isIndependentlyVersionedPackage(packageJsonFile) && isSemanticVersion(content.version)) {
       content.version = version
     }
 
