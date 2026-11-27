@@ -74,7 +74,7 @@ function checkPackageJsonEntryPoints(packageJson: PackageJson, packageFiles: str
 }
 
 // Files always included by yarn/npm regardless of the `files` field
-const ALWAYS_INCLUDED_FILES = new Set(['package.json', 'README.md', 'LICENSE'])
+const ALWAYS_INCLUDED_FILES = new Set(['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE'])
 
 function checkFilesField(packageJson: PackageJson, packageFiles: string[]) {
   if (!packageJson.files) {
