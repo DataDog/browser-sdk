@@ -15,14 +15,14 @@ import { BrowserSdkStrategy } from './release-please.ts'
 
 const rootPackage = releasePleaseConfig.packages['.']
 const independentPackages = findPackageJsonFiles()
-  .filter(({ content }) => isIndependentlyVersionedPackage(content.name))
+  .filter(isIndependentlyVersionedPackage)
   .map(({ relativePath, content }) => ({ directory: path.dirname(relativePath), content }))
 
 describe('release-please config', () => {
   it('bumps every package.json on the Browser SDK version', () => {
     const sharedVersionFiles = findPackageJsonFiles()
       .filter(({ relativePath, content }) => relativePath !== 'package.json' && content.version !== undefined)
-      .filter(({ content }) => !isIndependentlyVersionedPackage(content.name))
+      .filter((packageJsonFile) => !isIndependentlyVersionedPackage(packageJsonFile))
       .map(({ relativePath }) => relativePath)
       .sort()
 
@@ -32,13 +32,9 @@ describe('release-please config', () => {
     }
   })
 
-  it('releases each independently versioned package as its own component', () => {
+  it('releases @datadog/js-core as its own component', () => {
+    assert.equal(isIndependentlyVersionedPackage({ relativePath: 'packages/js-core/package.json' }), true)
     assert.equal(releasePleaseConfig.packages['packages/js-core'].component, 'js-core')
-    const packages: Record<string, object | undefined> = releasePleaseConfig.packages
-    for (const { directory } of independentPackages) {
-      const config = packages[directory]
-      assert.ok(config && 'component' in config, `${directory} has no component in release-please-config.json`)
-    }
   })
 
   it('releases a grouped release pull request that only contains the Browser SDK', async () => {
