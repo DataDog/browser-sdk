@@ -117,10 +117,14 @@ export type { ContextManager } from './domain/context/contextManager'
 export { createContextManager } from './domain/context/contextManager'
 export { defineContextMethod, bufferContextCalls } from './domain/context/defineContextMethod'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
-export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
+export {
+  startAccountContext,
+  startAccountContextHook,
+  buildAccountContextManager,
+} from './domain/contexts/accountContext'
 export { startTabContext } from './domain/contexts/tabContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
-export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
+export { startUserContext, startUserContextHook, buildUserContextManager } from './domain/contexts/userContext'
 export type { User } from './domain/contexts/userContext'
 export type { Account } from './domain/contexts/accountContext'
 export type { RumInternalContext } from './domain/contexts/rumInternalContext.type'

@@ -6,7 +6,7 @@ import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
 import { display } from '../../tools/display'
 import { removeStorageListeners } from '../context/storeContextManager'
-import { startAccountContext } from './accountContext'
+import { startAccountContext, startAccountContextHook } from './accountContext'
 
 describe('account context', () => {
   let accountContext: ContextManager
@@ -58,6 +58,22 @@ describe('account context', () => {
 
       expect(defaultRumEventAttributes).toBeUndefined()
     })
+  })
+})
+
+describe('account context hook', () => {
+  it('should set the account from the given getter', () => {
+    const hook: Hook<any, any> = createHook()
+    startAccountContextHook(hook, () => ({ id: '123', foo: 'bar' }))
+
+    expect(hook.trigger({ startTime: 0 as RelativeTime })).toEqual({ account: { id: '123', foo: 'bar' } })
+  })
+
+  it('should not set the account from the given getter when account.id is undefined', () => {
+    const hook: Hook<any, any> = createHook()
+    startAccountContextHook(hook, () => ({ foo: 'bar' }))
+
+    expect(hook.trigger({ startTime: 0 as RelativeTime })).toBeUndefined()
   })
 })
 

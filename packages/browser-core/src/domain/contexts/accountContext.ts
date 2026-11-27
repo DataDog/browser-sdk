@@ -1,4 +1,5 @@
 import type { Hook } from '@datadog/js-core/assembly'
+import type { Context } from '@datadog/js-core/util'
 import { SKIPPED } from '@datadog/js-core/assembly'
 import type { Configuration } from '../configuration'
 import { CustomerDataType } from '../context/contextConstants'
@@ -22,8 +23,14 @@ export function startAccountContext(assembleHook: Hook<any, any>, configuration:
     storeContextManager(accountContextManager, productKey, CustomerDataType.Account)
   }
 
+  startAccountContextHook(assembleHook, accountContextManager.getContext)
+
+  return accountContextManager
+}
+
+export function startAccountContextHook(assembleHook: Hook<any, any>, getAccount: () => Context) {
   assembleHook.register(() => {
-    const account = accountContextManager.getContext() as Account
+    const account = getAccount() as Account
 
     if (isEmptyObject(account) || !account.id) {
       return SKIPPED
@@ -33,8 +40,6 @@ export function startAccountContext(assembleHook: Hook<any, any>, configuration:
       account,
     }
   })
-
-  return accountContextManager
 }
 
 export function buildAccountContextManager() {

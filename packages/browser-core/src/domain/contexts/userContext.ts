@@ -1,4 +1,5 @@
 import type { RelativeTime } from '@datadog/js-core/time'
+import type { Context } from '@datadog/js-core/util'
 import type { Hook } from '@datadog/js-core/assembly'
 import { SKIPPED } from '@datadog/js-core/assembly'
 import { CustomerDataType } from '../context/contextConstants'
@@ -28,9 +29,26 @@ export function startUserContext(
     storeContextManager(userContextManager, productKey, CustomerDataType.User)
   }
 
+  startUserContextHook(hook, configuration, sessionManager, userContextManager.getContext)
+
+  return userContextManager
+}
+
+export function startUserContextHook(
+  hook: Hook<{ eventType?: string; startTime: RelativeTime }, { usr?: User }>,
+  configuration: Configuration,
+  sessionManager: {
+    findTrackedSession: (
+      startTime?: RelativeTime,
+      options?: { sampleRate?: number }
+    ) => { anonymousId?: string } | undefined
+  },
+  getUser: () => Context
+) {
   hook.register(({ eventType, startTime }) => {
-    const user = userContextManager.getContext()
-    const session = sessionManager.findTrackedSession(startTime)
+    const user = getUser()
+    // In the Logs plugin, the session manager is RUM's and defaults to RUM's rate, so pass the configured one
+    const session = sessionManager.findTrackedSession(startTime, { sampleRate: configuration.sessionSampleRate })
 
     if (session?.anonymousId && !user.anonymous_id && !!configuration.trackAnonymousUser) {
       user.anonymous_id = session.anonymousId
@@ -45,8 +63,6 @@ export function startUserContext(
       usr: user,
     }
   })
-
-  return userContextManager
 }
 
 export function buildUserContextManager() {
