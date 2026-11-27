@@ -79,7 +79,6 @@ export function createRumProfiler(
     }
   })
 
-  // Public API to start the profiler.
   function start(): void {
     if (instance.state === 'running') {
       return
@@ -124,14 +123,20 @@ export function createRumProfiler(
     }
   }
 
-  // Public API to manually stop the profiler.
-  function stop() {
-    stopProfiling('stopped-by-user')
-  }
-
   function stopProfiling(reason: RumProfilerStoppedInstance['stateReason'], quotaReason?: QuotaReason) {
-    // Stop current profiler instance (data collection happens async in background)
-    stopProfilerInstance(reason)
+    // Preserve the stop reason unless the user explicitly stops the profiler.
+    if (instance.state === 'stopped' && reason !== 'stopped-by-user') {
+      return
+    }
+
+    const previousInstance = instance
+
+    // Update state synchronously so SESSION_RENEWED check works immediately
+    instance = { state: 'stopped', stateReason: reason }
+
+    if (previousInstance.state === 'running') {
+      stopRunningProfiler(previousInstance, { discard: reason === 'quota_ko' })
+    }
 
     // Cleanup global listeners and reset the array to prevent accumulation across start/stop cycles
     globalCleanupTasks.forEach((task) => task())
@@ -154,7 +159,7 @@ export function createRumProfiler(
 
     // Collect data from previous running instance (fire-and-forget)
     if (instance.state === 'running') {
-      stopAndCollectProfilerInstance(instance)
+      stopRunningProfiler(instance)
     }
 
     let profiler: Profiler
@@ -224,7 +229,7 @@ export function createRumProfiler(
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  function stopAndCollectProfilerInstance(runningInstance: RumProfilerRunningInstance, { discard = false } = {}) {
+  function stopRunningProfiler(runningInstance: RumProfilerRunningInstance, { discard = false } = {}) {
     // Cleanup instance
     clearTimeout(runningInstance.timeoutId)
     // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
@@ -242,22 +247,6 @@ export function createRumProfiler(
       .catch(monitorError)
   }
 
-  function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
-    // Preserve the stop reason unless the user explicitly stops the profiler.
-    if (instance.state === 'stopped' && stateReason !== 'stopped-by-user') {
-      return
-    }
-
-    const previousInstance = instance
-
-    // Update state synchronously so SESSION_RENEWED check works immediately
-    instance = { state: 'stopped', stateReason }
-
-    if (previousInstance.state === 'running') {
-      stopAndCollectProfilerInstance(previousInstance, { discard: stateReason === 'quota_ko' })
-    }
-  }
-
   function pauseProfilerInstance() {
     if (instance.state !== 'running') {
       return
@@ -270,7 +259,7 @@ export function createRumProfiler(
     instance = { state: 'paused' }
 
     // Collect and send profile data in background
-    stopAndCollectProfilerInstance(runningInstance)
+    stopRunningProfiler(runningInstance)
   }
 
   function handleSampleBufferFull(): void {
@@ -309,5 +298,5 @@ export function createRumProfiler(
     return instance.state === 'paused'
   }
 
-  return { start, stop, isStopped, isRunning, isPaused }
+  return { start, stop: () => stopProfiling('stopped-by-user'), isStopped, isRunning, isPaused }
 }
