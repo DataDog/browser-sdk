@@ -207,6 +207,12 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.end()
   })
 
+  app.get('/trusted-worker-csp', (_req, res) => {
+    res.header('Content-Security-Policy', "require-trusted-types-for 'script'; trusted-types dd-test-worker")
+    res.send(setup)
+    res.end()
+  })
+
   app.get('/no-blob-worker-csp', (_req, res) => {
     res.header(
       'Content-Security-Policy',

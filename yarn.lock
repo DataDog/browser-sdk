@@ -784,6 +784,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "workspace:*"
     "@datadog/js-core": "workspace:*"
+    "@types/trusted-types": "npm:2.0.7"
     ajv: "npm:8.20.0"
     vitest: "npm:5.1.1"
   languageName: unknown
@@ -6203,6 +6204,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/92326872b1f6f2e5a0808682a3f0630efb98bed51b1e40e2133e740f664bbde7a21af54e2a1f1a1f6eac218a70d7a9bae22d3e6d614950c06ddab391b7a1dfca
+  languageName: node
+  linkType: hard
+
+"@types/trusted-types@npm:2.0.7":
+  version: 2.0.7
+  resolution: "@types/trusted-types@npm:2.0.7"
+  checksum: 10c0/4c4855f10de7c6c135e0d32ce462419d8abbbc33713b31d294596c0cc34ae1fa6112a2f9da729c8f7a20707782b0d69da3b1f8df6645b0366d08825ca1522e0c
   languageName: node
   linkType: hard
 
