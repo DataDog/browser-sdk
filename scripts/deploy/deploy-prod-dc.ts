@@ -64,6 +64,10 @@ export async function main(...args: string[]): Promise<void> {
 
   const uploadPathTypes = toDatacenterUploadPathType(datacenters).join(',')
 
+  // Mark the job before deploying, so a failed deployment or telemetry gate is a failed deployment in CD Visibility
+  command`node ./scripts/deploy/mark-deployment.ts --env prod ${datacenters.flatMap((datacenter) => ['--datacenter', datacenter])}`
+    .withLogs()
+    .run()
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPathTypes}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`.withLogs().run()
 

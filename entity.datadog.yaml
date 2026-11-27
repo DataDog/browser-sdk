@@ -1,0 +1,64 @@
+# Software Catalog entity definitions for this repository.
+# The service names match the `service` attribute of the SDK telemetry events
+# (see TelemetryService in packages/browser-core/src/domain/telemetry/telemetry.ts).
+# Each path belongs to one service only: the Logs SDK owns packages/browser-logs,
+# the RUM SDK owns the rest of the repository.
+apiVersion: v3
+kind: service
+metadata:
+  name: browser-rum-sdk
+  displayName: RUM Browser SDK
+  owner: rum-browser
+  contacts:
+    - name: '#rum-browser-sdk'
+      type: slack
+      contact: https://dd.enterprise.slack.com/archives/C01UQK8CX0F
+  links:
+    - name: Source
+      type: repo
+      provider: github
+      url: https://github.com/DataDog/browser-sdk
+datadog:
+  codeLocations:
+    - repositoryURL: https://github.com/DataDog/browser-sdk.git
+      paths:
+        # Root files (package.json, yarn.lock, configs)
+        - '*'
+        - '.github/**'
+        - '.gitlab/**'
+        - '.yarn/**'
+        - 'developer-extension/**'
+        - 'docs/**'
+        - 'eslint-local-rules/**'
+        - 'packages/browser-core/**'
+        - 'packages/browser-debugger/**'
+        - 'packages/browser-early-collection/**'
+        - 'packages/browser-plugin-wasm/**'
+        - 'packages/browser-rum*/**'
+        - 'packages/browser-worker/**'
+        - 'packages/js-core/**'
+        - 'remote-configuration/**'
+        - 'sandbox/**'
+        - 'scripts/**'
+        - 'test/**'
+---
+apiVersion: v3
+kind: service
+metadata:
+  name: browser-logs-sdk
+  displayName: Logs Browser SDK
+  owner: rum-browser
+  contacts:
+    - name: '#rum-browser-sdk'
+      type: slack
+      contact: https://dd.enterprise.slack.com/archives/C01UQK8CX0F
+  links:
+    - name: Source
+      type: repo
+      provider: github
+      url: https://github.com/DataDog/browser-sdk/tree/main/packages/browser-logs
+datadog:
+  codeLocations:
+    - repositoryURL: https://github.com/DataDog/browser-sdk.git
+      paths:
+        - 'packages/browser-logs/**'

@@ -70,6 +70,7 @@ step-6_publish-npm:
   script:
     - yarn
     - node ./scripts/deploy/check-cordons.ts --environment prod
+    - BUILD_MODE=release node ./scripts/deploy/mark-deployment.ts --env prod --datacenter npm
     - node ./scripts/deploy/publish-npm.ts
 
 step-7_publish-developer-extension:
@@ -91,6 +92,7 @@ step-8_publish-github-release:
   script:
     - yarn
     - node scripts/release/publish-github-release.ts
+    - node ./scripts/deploy/send-dora-deployment.ts
 
 # This step is used to deploy the SDK to a new datacenter.
 # the `DATACENTER` variable needs to be provided as an argument when starting the manual job
