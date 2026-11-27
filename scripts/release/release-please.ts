@@ -4,29 +4,89 @@
 // Local dry run: `node scripts/release/release-please.ts --dry-run --target-branch <branch>`
 // (uses the `gh` token instead of dd-octo-sts).
 //
-// Not part of release-please's public API: the Node strategy is a deep import (no public way to
-// extend a built-in release type). The package entry point must be loaded first (circular imports
-// between strategies).
+// Not part of release-please's public API: the Node strategy, the plugin base class and the
+// changelog updater are deep imports (no public way to extend a built-in release type or to write a
+// plugin). The package entry point must be loaded first (circular imports between strategies).
 import { parseArgs } from 'node:util'
-import { GitHub, Manifest, registerReleaseType } from 'release-please'
+import { GitHub, Manifest, registerPlugin, registerReleaseType } from 'release-please'
 import type { ConventionalCommit } from 'release-please'
+import type { CandidateReleasePullRequest } from 'release-please/build/src/manifest.js'
 import { Node } from 'release-please/build/src/strategies/node.js'
+import { ManifestPlugin } from 'release-please/build/src/plugin.js'
+import { Changelog } from 'release-please/build/src/updaters/changelog.js'
 import { command } from '../lib/command.ts'
 import { runMain } from '../lib/executionUtils.ts'
 import { getGithubReleasePleaseToken } from '../lib/secrets.ts'
 import { checkReleaseNotes } from '../lib/checkReleaseNotes.ts'
 
 export const BROWSER_SDK_RELEASE_TYPE = 'browser-sdk'
+export const JS_CORE_DEPENDENCY_NOTES_PLUGIN = 'browser-sdk-js-core-dependency-notes'
 const JS_CORE_SCOPE = 'js-core'
+const JS_CORE_PATH = 'packages/js-core'
 
 /**
  * Release type of the Browser SDK (root component). The root receives every commit, including the
- * ones only changing @datadog/js-core. A breaking change in js-core alone (`feat(js-core)!: …`) must
- * only bump js-core (pre-1.0, so a minor): for the Browser SDK, it is a regular commit.
+ * ones only changing @datadog/js-core: the SDK packages depend on js-core, and only the SDK release
+ * pipeline publishes js-core.
+ *
+ * A breaking change in js-core alone (`feat(js-core)!: …`) must only bump js-core (pre-1.0, so a
+ * minor): for the Browser SDK, it is a regular commit.
+ *
+ * The js-core changelog lists the commits that only change js-core. The Browser SDK changelog does
+ * not repeat them: {@link JsCoreDependencyNotes} adds one "Update @datadog/js-core" entry instead.
  */
 export class BrowserSdkStrategy extends Node {
+  private hasJsCoreOnlyNotes = false
+
   async postProcessCommits(commits: ConventionalCommit[]): Promise<ConventionalCommit[]> {
     return (await super.postProcessCommits(commits)).map(ignoreJsCoreBreakingChange)
+  }
+
+  protected async buildReleaseNotes(
+    ...[conventionalCommits, ...options]: Parameters<Node['buildReleaseNotes']>
+  ): Promise<string> {
+    const jsCoreOnlyCommits = conventionalCommits.filter(isJsCoreOnlyCommit)
+    this.hasJsCoreOnlyNotes =
+      jsCoreOnlyCommits.length > 0 &&
+      !super.changelogEmpty(await super.buildReleaseNotes(jsCoreOnlyCommits, ...options))
+    return super.buildReleaseNotes(
+      conventionalCommits.filter((commit) => !isJsCoreOnlyCommit(commit)),
+      ...options
+    )
+  }
+
+  // A release with only js-core changes still releases the Browser SDK.
+  protected changelogEmpty(changelogEntry: string): boolean {
+    return super.changelogEmpty(changelogEntry) && !this.hasJsCoreOnlyNotes
+  }
+}
+
+export function isJsCoreOnlyCommit({ files }: ConventionalCommit): boolean {
+  return files !== undefined && files.length > 0 && files.every((file) => file.startsWith(`${JS_CORE_PATH}/`))
+}
+
+/**
+ * Adds "Update @datadog/js-core to x.y.z" to the Browser SDK release notes and changelog when the
+ * release pull request also releases js-core. Runs before release-please merges the components in
+ * one release pull request.
+ */
+export class JsCoreDependencyNotes extends ManifestPlugin {
+  run(candidates: CandidateReleasePullRequest[]): Promise<CandidateReleasePullRequest[]> {
+    const jsCoreVersion = candidates.find(({ path }) => path === JS_CORE_PATH)?.pullRequest.version
+    const root = candidates.find(({ path }) => path === '.')
+    if (jsCoreVersion && root) {
+      const addEntry = (notes: string) =>
+        `${notes.trimEnd()}\n\n\n### Dependencies\n\n* Update @datadog/js-core to ${jsCoreVersion.toString()}\n`
+      for (const update of root.pullRequest.updates) {
+        if (update.updater instanceof Changelog) {
+          update.updater.changelogEntry = addEntry(update.updater.changelogEntry)
+        }
+      }
+      for (const releaseData of root.pullRequest.body.releaseData) {
+        releaseData.notes = addEntry(releaseData.notes)
+      }
+    }
+    return Promise.resolve(candidates)
   }
 }
 
@@ -45,6 +105,11 @@ export function ignoreJsCoreBreakingChange(commit: ConventionalCommit): Conventi
 
 export function registerBrowserSdkReleaseType() {
   registerReleaseType(BROWSER_SDK_RELEASE_TYPE, (options) => new BrowserSdkStrategy(options))
+  registerPlugin(
+    JS_CORE_DEPENDENCY_NOTES_PLUGIN,
+    ({ github, targetBranch, repositoryConfig, logger }) =>
+      new JsCoreDependencyNotes(github, targetBranch, repositoryConfig, logger)
+  )
 }
 
 if (!process.env.NODE_TEST_CONTEXT) {

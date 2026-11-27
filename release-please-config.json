@@ -2,6 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/v17.11.2/schemas/config.json",
   "last-release-sha": "790fe909e5eaba05c991c23be63f1912069b8ab7",
   "separate-pull-requests": false,
+  "plugins": ["browser-sdk-js-core-dependency-notes"],
   "group-pull-request-title-pattern": "chore(release): v${version}",
   "draft": true,
   "force-tag-creation": true,
