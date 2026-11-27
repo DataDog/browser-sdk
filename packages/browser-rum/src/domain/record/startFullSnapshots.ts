@@ -1,3 +1,4 @@
+import { sanitizeUrl } from '@datadog/browser-core'
 import { LifeCycleEventType, getViewportDimension } from '@datadog/browser-rum-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
@@ -7,7 +8,6 @@ import { SerializationKind, serializeFullSnapshot } from './serialization'
 import { getVisualViewport } from './viewports'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
-import { sanitizeUrl } from './utils/sanitizeUrl'
 
 export function startFullSnapshots(
   lifeCycle: LifeCycle,

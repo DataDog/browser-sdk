@@ -1,8 +1,8 @@
+import { sanitizeUrl } from '@datadog/browser-core'
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../types'
 import { ChangeType, RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../browser-rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
-import { sanitizeUrl } from './utils/sanitizeUrl'
 import { createChangeDecoder } from './encoding'
 
 describe('takeFullSnapshot', () => {

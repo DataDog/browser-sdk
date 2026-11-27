@@ -28,8 +28,8 @@ import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
 import { display } from '../../tools/display'
 import { sendToExtension } from '../../tools/sendToExtension'
+import { sanitizeUrl } from '../../tools/utils/sanitizeUrl'
 import { NonErrorPrefix } from '../error/error.types'
-import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
@@ -45,15 +45,6 @@ import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 declare const __BUILD_ENV__SDK_SETUP__: string
-
-const ALLOWED_FRAME_URLS = [
-  'https://www.datadoghq-browser-agent.com',
-  'https://www.datad0g-browser-agent.com',
-  'https://d3uc069fcn7uxw.cloudfront.net',
-  'https://d20xtzwzcl0ceb.cloudfront.net',
-  'http://localhost',
-  '<anonymous>',
-]
 
 export const enum TelemetryService {
   LOGS = 'browser-logs-sdk',
@@ -318,10 +309,15 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
 export function formatError(e: unknown) {
   if (isError(e)) {
     const stackTrace = computeStackTrace(e)
+    stackTrace.stack.forEach((frame) => {
+      if (frame.url) {
+        frame.url = sanitizeUrl(frame.url)
+      }
+    })
     return {
       error: {
         kind: stackTrace.name,
-        stack: toStackTraceString(scrubCustomerFrames(stackTrace)),
+        stack: toStackTraceString(stackTrace),
       },
       message: stackTrace.message!,
     }
@@ -332,11 +328,4 @@ export function formatError(e: unknown) {
     },
     message: `${NonErrorPrefix.UNCAUGHT} ${jsonStringify(e)!}`,
   }
-}
-
-export function scrubCustomerFrames(stackTrace: StackTrace) {
-  stackTrace.stack = stackTrace.stack.filter(
-    (frame) => !frame.url || ALLOWED_FRAME_URLS.some((allowedFrameUrl) => frame.url!.startsWith(allowedFrameUrl))
-  )
-  return stackTrace
 }
