@@ -17,7 +17,7 @@ import { startLoggerCollection } from './logger/loggerCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { Hooks } from './hooks'
 import { createHooks } from './hooks'
-import { startRUMInternalContext } from './contexts/rumInternalContext'
+import { getRUMInternalContextFromGlobal, startRUMInternalContext } from './contexts/rumInternalContext'
 
 const initConfiguration = { clientToken: 'xxx', service: 'service', env: 'test', version: '1.0.0' }
 const DEFAULT_MESSAGE = {
@@ -52,7 +52,7 @@ describe('startLogsAssembly', () => {
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
     hooks.assembleEventDefaults.register(() => ({ service: configuration.service, version: configuration.version }))
-    startRUMInternalContext(hooks)
+    startRUMInternalContext(hooks, getRUMInternalContextFromGlobal)
     startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,

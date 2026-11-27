@@ -22,7 +22,7 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { Hooks } from '../domain/hooks'
-import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
+import { getRUMInternalContextFromGlobal, startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startSourceCodeMfeContext } from '../domain/contexts/sourceCodeMfeContext'
 
@@ -51,7 +51,7 @@ export function startLogs(
   const accountContext = startAccountContext(assembleHook, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(assembleHook, configuration, sessionManager, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(assembleHook, configuration, LOGS_STORAGE_KEY, false)
-  startRUMInternalContext(hooks)
+  startRUMInternalContext(hooks, getRUMInternalContextFromGlobal)
 
   const { handleLog } = startLogsEventCollection(
     lifeCycle,

@@ -14,11 +14,12 @@ interface BrowserWindow {
   DD_RUM_SYNTHETICS?: Rum
 }
 
-export function startRUMInternalContext(hooks: Hooks) {
-  const browserWindow = globalObject as BrowserWindow
-
+export function startRUMInternalContext(
+  hooks: Hooks,
+  getInternalContext: (startTime?: RelativeTime) => RumInternalContext | undefined
+) {
   hooks.assembleEventDefaults.register(({ startTime }) => {
-    const internalContext = getRUMInternalContext(startTime)
+    const internalContext = getInternalContext(startTime)
     if (!internalContext) {
       return SKIPPED
     }
@@ -27,7 +28,7 @@ export function startRUMInternalContext(hooks: Hooks) {
   })
 
   hooks.assembleTelemetry.register(({ startTime }) => {
-    const internalContext = getRUMInternalContext(startTime)
+    const internalContext = getInternalContext(startTime)
 
     if (!internalContext) {
       return SKIPPED
@@ -39,20 +40,17 @@ export function startRUMInternalContext(hooks: Hooks) {
       action: { id: internalContext.user_action?.id as string },
     }
   })
+}
 
-  function getRUMInternalContext(startTime?: RelativeTime) {
-    const willSyntheticsInjectRumResult = willSyntheticsInjectRum()
-    const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
-    const rumContext = getInternalContextFromRumGlobal(startTime, rumSource)
+export function getRUMInternalContextFromGlobal(startTime?: RelativeTime): RumInternalContext | undefined {
+  const browserWindow = globalObject as BrowserWindow
+  const willSyntheticsInjectRumResult = willSyntheticsInjectRum()
+  const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
+  return getInternalContextFromRumGlobal(startTime, rumSource)
+}
 
-    if (rumContext) {
-      return rumContext
-    }
-  }
-
-  function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): RumInternalContext | undefined {
-    if (rumGlobal?.getInternalContext) {
-      return rumGlobal.getInternalContext(startTime)
-    }
+function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): RumInternalContext | undefined {
+  if (rumGlobal?.getInternalContext) {
+    return rumGlobal.getInternalContext(startTime)
   }
 }
