@@ -75,11 +75,11 @@ export function createRumProfiler(
         correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
       )
     ) {
-      start()
+      startProfiling()
     }
   })
 
-  function start(): void {
+  function startProfiling(): void {
     if (instance.state === 'running') {
       return
     }
@@ -125,17 +125,15 @@ export function createRumProfiler(
 
   function stopProfiling(reason: RumProfilerStoppedInstance['stateReason'], quotaReason?: QuotaReason) {
     // Preserve the stop reason unless the user explicitly stops the profiler.
-    if (instance.state === 'stopped' && reason !== 'stopped-by-user') {
-      return
-    }
+    if (instance.state !== 'stopped' || reason === 'stopped-by-user') {
+      const previousInstance = instance
 
-    const previousInstance = instance
+      // Update state synchronously so SESSION_RENEWED check works immediately
+      instance = { state: 'stopped', stateReason: reason }
 
-    // Update state synchronously so SESSION_RENEWED check works immediately
-    instance = { state: 'stopped', stateReason: reason }
-
-    if (previousInstance.state === 'running') {
-      stopRunningProfiler(previousInstance, { discard: reason === 'quota_ko' })
+      if (previousInstance.state === 'running') {
+        stopRunningProfiler(previousInstance, { discard: reason === 'quota_ko' })
+      }
     }
 
     // Cleanup global listeners and reset the array to prevent accumulation across start/stop cycles
@@ -298,5 +296,5 @@ export function createRumProfiler(
     return instance.state === 'paused'
   }
 
-  return { start, stop: () => stopProfiling('stopped-by-user'), isStopped, isRunning, isPaused }
+  return { start: startProfiling, stop: () => stopProfiling('stopped-by-user'), isStopped, isRunning, isPaused }
 }
