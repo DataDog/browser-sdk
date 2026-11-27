@@ -82,10 +82,12 @@ export function startDeflateWorker(
   }
 }
 
+/** Resets workers between tests, including any pending work. */
 export function resetDeflateWorkerState() {
   states.forEach((state) => {
     if (state.status === DeflateWorkerStatus.Initialized || state.status === DeflateWorkerStatus.Loading) {
       state.stop()
+      state.worker.terminate()
     }
   })
   states.clear()
