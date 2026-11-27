@@ -285,6 +285,50 @@ describe('logs', () => {
       })
     })
 
+    it('sends every context source in the log', async () => {
+      const { handleLog, logger, globalContext, accountContext, userContext } = startLogsWithDefaults()
+      window.DD_RUM = {
+        getInternalContext: () => ({
+          application_id: 'rum-application-id',
+          session_id: 'rum-session-id',
+          view: { id: 'rum-view-id', url: 'rum-view-url', referrer: 'rum-view-referrer' },
+          user_action: { id: 'rum-action-id' },
+        }),
+      }
+      userContext.setContext({ id: 'user-id' })
+      accountContext.setContext({ id: 'account-id' })
+      globalContext.setContext({ global: 'value' })
+
+      handleLog(
+        { message: 'message', status: StatusType.warn, context: { foo: 'bar' } },
+        logger,
+        'fake-handling-stack',
+        COMMON_CONTEXT
+      )
+      clock.tick(FLUSH_DURATION_LIMIT)
+      await interceptor.waitForAllFetchCalls()
+
+      expect(getLoggedMessage(requests, 0)).toEqual({
+        date: jasmine.any(Number),
+        foo: 'bar',
+        message: 'message',
+        service: 'service',
+        ddtags: 'sdk_version:test,service:service',
+        application_id: 'rum-application-id',
+        session_id: 'rum-session-id',
+        session: { id: MOCK_SESSION_ID },
+        status: StatusType.warn,
+        view: { id: 'rum-view-id', url: 'rum-view-url', referrer: 'rum-view-referrer' },
+        user_action: { id: 'rum-action-id' },
+        origin: ErrorSource.LOGGER,
+        usr: { id: 'user-id', anonymous_id: 'device-123' },
+        account: { id: 'account-id' },
+        global: 'value',
+        tab: { id: jasmine.any(String) },
+        _dd: {},
+      })
+    })
+
     it('should all use the same batch', async () => {
       const { handleLog, logger } = startLogsWithDefaults()
 
