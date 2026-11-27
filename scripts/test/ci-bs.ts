@@ -15,10 +15,18 @@ const RELEVANT_FILE_PATTERNS = [
   'webpack.base.ts',
 ]
 
+// release-please's release pull requests only bump versions and update the changelogs
+const RELEASE_PR_BRANCH_PREFIX = 'release-please--'
+
 runMain(async () => {
   const testCommand = process.argv[2]
   if (!testCommand) {
     throw new Error('Usage: ci-bs.ts <test:unit>')
+  }
+
+  if (LOCAL_BRANCH?.startsWith(RELEASE_PR_BRANCH_PREFIX)) {
+    printLog('Release pull request detected. Skipping BrowserStack tests.')
+    return
   }
 
   const pr = await fetchPR(LOCAL_BRANCH!)
