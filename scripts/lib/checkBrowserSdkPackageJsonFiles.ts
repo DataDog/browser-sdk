@@ -32,7 +32,7 @@ function checkPackageJsonVersion(packageJsonInfo: PackageJsonInfo): void {
     ) {
       throw new Error(`Private package ${packageJsonInfo.relativePath} should not have a version`)
     }
-  } else if (isIndependentlyVersionedPackage(packageJsonInfo.content.name)) {
+  } else if (isIndependentlyVersionedPackage(packageJsonInfo)) {
     // Independently-versioned packages are published as part of the same release but keep their
     // own version, so we only require a valid semver, not a match with the synced release version.
     if (!isSemanticVersion(packageJsonInfo.content.version)) {

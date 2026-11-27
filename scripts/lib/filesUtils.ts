@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import fsPromises from 'node:fs/promises'
+import releasePleaseConfig from '../../release-please-config.json' with { type: 'json' }
 import { command } from './command.ts'
 
 export const CI_FILE = '.gitlab-ci.yml'
@@ -71,18 +72,20 @@ export function readPackageJson(filePath: string): PackageJson {
 }
 
 /**
- * Packages under `packages/` that are versioned independently from the synced Browser SDK release
- * version. They are still built and published as part of the same release process, but their
- * version is managed manually and is not bumped to the release version.
+ * Directories of the packages that release-please releases as their own component, with their own
+ * version (e.g. `packages/js-core`). They are still built and published as part of the same release
+ * process. All the other packages use the Browser SDK version (the root component).
  */
-const INDEPENDENTLY_VERSIONED_PACKAGES = new Set<string>(['@datadog/js-core'])
+const INDEPENDENTLY_VERSIONED_PACKAGE_DIRECTORIES = new Set(
+  Object.keys(releasePleaseConfig.packages).filter((directory) => directory !== '.')
+)
 
 /**
  * Returns whether the given package is versioned independently from the synced Browser SDK release
- * version. See {@link INDEPENDENTLY_VERSIONED_PACKAGES}.
+ * version. See {@link INDEPENDENTLY_VERSIONED_PACKAGE_DIRECTORIES}.
  */
-export function isIndependentlyVersionedPackage(name: string | undefined): boolean {
-  return name !== undefined && INDEPENDENTLY_VERSIONED_PACKAGES.has(name)
+export function isIndependentlyVersionedPackage({ relativePath }: Pick<PackageJsonInfo, 'relativePath'>): boolean {
+  return INDEPENDENTLY_VERSIONED_PACKAGE_DIRECTORIES.has(path.dirname(relativePath))
 }
 
 /**

@@ -39,7 +39,7 @@ export function validatePrTitle(title: string): string[] {
     return errors
   }
 
-  const { type, breaking, description } = match.groups!
+  const { type, description } = match.groups!
   const scopes = match.groups!.scopes.split(',').map((scope) => scope.trim())
 
   if (!TYPE_NAMES.has(type)) {
@@ -63,12 +63,10 @@ export function validatePrTitle(title: string): string[] {
     )
   }
 
-  if (breaking) {
-    if (nonPackageScopes.length > 0) {
-      errors.push('`!` (breaking change) is only allowed with package scopes.')
-    } else if (scopes.every((scope) => scope === 'js-core')) {
-      errors.push('`!` is not allowed with `js-core` alone: it would bump the whole Browser SDK a major version.')
-    }
+  if (match.groups!.breaking && nonPackageScopes.length > 0) {
+    errors.push(
+      `Internal scopes (${nonPackageScopes.join(', ')}) can't mark a breaking change: \`!\` bumps the SDK to the next major version.`
+    )
   }
 
   if (description.trim() === '') {
