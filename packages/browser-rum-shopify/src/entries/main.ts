@@ -1,10 +1,11 @@
-import { globalObject } from '@datadog/js-core/util'
+import { globalObject, isWorkerEnvironment } from '@datadog/js-core/util'
 import { defineGlobal } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi, makeProfilerApi } from '@datadog/browser-rum/internal'
 import { shopifyPlugin } from '../domain/shopifyPlugin'
 import { shopifyAppPixelPlugin } from '../domain/shopifyAppPixelPlugin'
+import { createShopifySessionStore } from '../domain/session/shopifySessionStore'
 
 type ShopifyRumPublicApi = RumPublicApi & {
   shopifyPlugin: typeof shopifyPlugin
@@ -19,6 +20,8 @@ const global = globalObject as BrowserWindow
 
 const datadogRum = makeRumPublicApi(makeRecorderApi(), makeProfilerApi(), {
   sdkName: 'rum-shopify',
+  // Shares the storefront session through the Web Pixel `browser.cookie` API (app pixel worker)
+  createSessionStore: isWorkerEnvironment ? createShopifySessionStore : undefined,
 }) as ShopifyRumPublicApi
 
 datadogRum.shopifyPlugin = shopifyPlugin

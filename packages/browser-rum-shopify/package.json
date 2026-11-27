@@ -24,6 +24,10 @@
     "@datadog/browser-rum-core": "workspace:*",
     "@datadog/js-core": "workspace:*"
   },
+  "devDependencies": {
+    "@shopify/web-pixels-extension": "2.18.0",
+    "vitest": "5.1.1"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
@@ -34,8 +38,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "devDependencies": {
-    "vitest": "5.1.1"
   }
 }
