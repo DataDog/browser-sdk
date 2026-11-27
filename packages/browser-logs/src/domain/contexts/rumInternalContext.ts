@@ -46,11 +46,5 @@ export function getRUMInternalContextFromGlobal(startTime?: RelativeTime): RumIn
   const browserWindow = globalObject as BrowserWindow
   const willSyntheticsInjectRumResult = willSyntheticsInjectRum()
   const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
-  return getInternalContextFromRumGlobal(startTime, rumSource)
-}
-
-function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): RumInternalContext | undefined {
-  if (rumGlobal?.getInternalContext) {
-    return rumGlobal.getInternalContext(startTime)
-  }
+  return rumSource?.getInternalContext?.(startTime)
 }
