@@ -1,11 +1,11 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { Hook } from '@datadog/js-core/assembly'
 import { SKIPPED } from '@datadog/js-core/assembly'
+import { isEmptyObject } from '@datadog/js-core/util'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
 import { createContextManager } from '../context/contextManager'
 import type { Configuration } from '../configuration'
-import { isEmptyObject } from '../../tools/utils/objectUtils'
 
 export interface User {
   id?: string | undefined

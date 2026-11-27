@@ -1,6 +1,5 @@
 import { timeStampNow } from '@datadog/js-core/time'
-import { tryJsonParse } from '@datadog/browser-core'
-import { isIndexableObject, generateUUID } from '@datadog/js-core/util'
+import { isIndexableObject, generateUUID, tryJsonParse } from '@datadog/js-core/util'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { RemoteConfiguration } from './remoteConfiguration'
 

@@ -136,6 +136,9 @@ export interface CookieStoreItem {
 export function createDisplay(prefix: string): Display;
 
 // @public
+export function createSanitize(display: Display): Sanitize;
+
+// @public
 export function deepClone<T>(value: T): T;
 
 // @public
@@ -185,6 +188,9 @@ export interface GlobalObject extends Omit<typeof globalThis, 'navigator' | 'que
 
 // @public
 export const globalObject: GlobalObject;
+
+// @public
+export function isEmptyObject(object: object): boolean;
 
 // @public
 export function isIndexableObject(value: unknown): value is Record<any, unknown>;
@@ -244,6 +250,11 @@ export function noop(): void;
 
 // @public
 export function normalizeUrl(url: string): string;
+
+// @public
+export function objectEntries<T = unknown>(object: {
+    [key: string]: T;
+}): Array<[string, T]>;
 
 // @public
 export interface ObjectWithToJsonMethod {
@@ -337,6 +348,16 @@ export interface SampleBufferFullEvent extends Event {
 }
 
 // @public
+export interface Sanitize {
+    (source: string, maxCharacterCount?: number): string | undefined;
+    (source: Context, maxCharacterCount?: number): Context;
+    (source: unknown, maxCharacterCount?: number): ContextValue;
+}
+
+// @public
+export const SANITIZE_DEFAULT_MAX_CHARACTER_COUNT: number;
+
+// @public
 export function setDebugMode(newDebugMode: boolean): void;
 
 // @public
@@ -363,6 +384,9 @@ export function throttle<T extends (...args: any[]) => void>(fn: T, wait: number
 
 // @public
 export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
+
+// @public
+export function tryJsonParse<T = unknown>(text: string): T | undefined;
 
 // @public
 export interface Uint8ArrayBuffer extends Uint8Array {
