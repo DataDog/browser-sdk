@@ -53,14 +53,24 @@ export function sendWithRetryStrategy<Body extends Payload>(
         retryQueuedPayloads(RetryReason.AFTER_SUCCESS, state, sendStrategy, trackType, reportError, requestObservable),
       onFailure: () => {
         if (!state.queuedPayloads.enqueue(payload)) {
-          requestObservable.notify({ type: 'queue-full', bandwidth: state.bandwidthMonitor.stats(), payload })
+          requestObservable.notify({
+            type: 'queue-full',
+            bandwidth: state.bandwidthMonitor.stats(),
+            endpointResponded: state.endpointResponded,
+            payload,
+          })
         }
         scheduleRetry(state, sendStrategy, trackType, reportError, requestObservable)
       },
     })
   } else {
     if (!state.queuedPayloads.enqueue(payload)) {
-      requestObservable.notify({ type: 'queue-full', bandwidth: state.bandwidthMonitor.stats(), payload })
+      requestObservable.notify({
+        type: 'queue-full',
+        bandwidth: state.bandwidthMonitor.stats(),
+        endpointResponded: state.endpointResponded,
+        payload,
+      })
     }
   }
 }
@@ -104,7 +114,12 @@ function send<Body extends Payload>(
     state.endpointResponded ||= response.status !== 0
     if (!shouldRetryRequest(response, state.retryPolicy, state.endpointResponded)) {
       state.transportStatus = TransportStatus.UP
-      requestObservable.notify({ type: 'success', bandwidth: state.bandwidthMonitor.stats(), payload })
+      requestObservable.notify({
+        type: 'success',
+        bandwidth: state.bandwidthMonitor.stats(),
+        endpointResponded: state.endpointResponded,
+        payload,
+      })
       onSuccess()
     } else {
       // do not consider transport down if another ongoing request could succeed
@@ -114,7 +129,12 @@ function send<Body extends Payload>(
         count: payload.retry ? payload.retry.count + 1 : 1,
         lastFailureStatus: response.status,
       }
-      requestObservable.notify({ type: 'failure', bandwidth: state.bandwidthMonitor.stats(), payload })
+      requestObservable.notify({
+        type: 'failure',
+        bandwidth: state.bandwidthMonitor.stats(),
+        endpointResponded: state.endpointResponded,
+        payload,
+      })
       onFailure()
     }
   })

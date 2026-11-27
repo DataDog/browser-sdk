@@ -94,7 +94,7 @@ export function startRecording(
     addStats = segmentCollection.addStats
     cleanupTasks.push(segmentCollection.stop)
 
-    const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
+    const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable, !!configuration.proxy)
     cleanupTasks.push(segmentTelemetry.stop)
 
     const replayResourceCollection = startReplayResourceCollection(

@@ -13,9 +13,13 @@ describe('segmentTelemetry', () => {
   function generateReplayRequest({
     result,
     isFullSnapshot,
+    retry,
+    endpointResponded = true,
   }: {
     result: 'failure' | 'queue-full' | 'success'
     isFullSnapshot: boolean
+    retry?: ReplayPayload['retry']
+    endpointResponded?: boolean
   }) {
     const bandwidth: BandwidthStats = {
       ongoingByteCount: 3000,
@@ -37,14 +41,22 @@ describe('segmentTelemetry', () => {
         max: 65,
         sum: 105,
       },
+      retry,
     }
-    requestObservable.notify({ type: result, bandwidth, payload })
+    requestObservable.notify({ type: result, bandwidth, endpointResponded, payload })
   }
 
-  function setupSegmentTelemetryCollection(metricsEnabled: boolean = true) {
+  function setupSegmentTelemetryCollection({
+    metricsEnabled = true,
+    useProxy = false,
+  }: { metricsEnabled?: boolean; useProxy?: boolean } = {}) {
     requestObservable = new Observable()
     telemetry = startMockTelemetry()
-    ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry({ metricsEnabled } as Telemetry, requestObservable))
+    ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry(
+      { metricsEnabled } as Telemetry,
+      requestObservable,
+      useProxy
+    ))
     registerCleanupTask(stopSegmentTelemetry)
   }
 
@@ -69,6 +81,7 @@ describe('segmentTelemetry', () => {
               fullSnapshot: 'change',
               incrementalSnapshot: 'change',
             },
+            endpointResponded: true,
             isFullSnapshot: true,
             ongoingRequests: {
               count: 2,
@@ -85,6 +98,7 @@ describe('segmentTelemetry', () => {
               max: 65,
               sum: 105,
             },
+            useProxy: false,
           },
         }),
       ])
@@ -114,6 +128,7 @@ describe('segmentTelemetry', () => {
               fullSnapshot: 'change',
               incrementalSnapshot: 'change',
             },
+            endpointResponded: true,
             isFullSnapshot: false,
             ongoingRequests: {
               count: 2,
@@ -130,6 +145,7 @@ describe('segmentTelemetry', () => {
               max: 65,
               sum: 105,
             },
+            useProxy: false,
           },
         }),
       ])
@@ -138,14 +154,58 @@ describe('segmentTelemetry', () => {
     }
   })
 
-  it('should not collect segment telemetry for successful incremental mutation requests', async () => {
+  it('should collect retry info when the request was retried', async () => {
+    setupSegmentTelemetryCollection()
+    generateReplayRequest({ result: 'failure', isFullSnapshot: false, retry: { count: 2, lastFailureStatus: 0 } })
+
+    expect(await telemetry.getEvents()).toEqual([
+      jasmine.objectContaining({
+        metrics: jasmine.objectContaining({ retry: { count: 2, lastFailureStatus: 0 } }),
+      }),
+    ])
+  })
+
+  it('should collect whether the endpoint has responded', async () => {
+    setupSegmentTelemetryCollection()
+    generateReplayRequest({ result: 'success', isFullSnapshot: true, endpointResponded: false })
+
+    expect(await telemetry.getEvents()).toEqual([
+      jasmine.objectContaining({
+        metrics: jasmine.objectContaining({ endpointResponded: false }),
+      }),
+    ])
+  })
+
+  it('should collect whether the SDK uses a proxy', async () => {
+    setupSegmentTelemetryCollection({ useProxy: true })
+    generateReplayRequest({ result: 'success', isFullSnapshot: true })
+
+    expect(await telemetry.getEvents()).toEqual([
+      jasmine.objectContaining({
+        metrics: jasmine.objectContaining({ useProxy: true }),
+      }),
+    ])
+  })
+
+  it('should collect segment telemetry for successful incremental mutation requests that were retried', async () => {
+    setupSegmentTelemetryCollection()
+    generateReplayRequest({ result: 'success', isFullSnapshot: false, retry: { count: 3, lastFailureStatus: 0 } })
+
+    expect(await telemetry.getEvents()).toEqual([
+      jasmine.objectContaining({
+        metrics: jasmine.objectContaining({ result: 'success', retry: { count: 3, lastFailureStatus: 0 } }),
+      }),
+    ])
+  })
+
+  it('should not collect segment telemetry for successful incremental mutation requests that were not retried', async () => {
     setupSegmentTelemetryCollection()
     generateReplayRequest({ result: 'success', isFullSnapshot: false })
     expect(await telemetry.hasEvents()).toBe(false)
   })
 
   it('should not collect segment when telemetry disabled', async () => {
-    setupSegmentTelemetryCollection(false)
+    setupSegmentTelemetryCollection({ metricsEnabled: false })
     generateReplayRequest({ result: 'success', isFullSnapshot: true })
     expect(await telemetry.hasEvents()).toBe(false)
   })

@@ -41,7 +41,12 @@ describe('replayResourceCollection', () => {
     emitResource('hash1', CONTENT, onDiscard)
     emitResource('hash1', CONTENT, secondOnDiscard)
     const [payload] = send.calls.argsFor(0) as [ResourcePayload]
-    observable.notify({ type: 'queue-full', payload, bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 } })
+    observable.notify({
+      type: 'queue-full',
+      payload,
+      bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+      endpointResponded: true,
+    })
 
     emitResource('hash1', CONTENT)
 
@@ -76,7 +81,12 @@ describe('replayResourceCollection', () => {
 
     emitResource('hash1', CONTENT)
     const [payload] = send.calls.argsFor(0) as [ResourcePayload]
-    observable.notify({ type: 'success', payload, bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 } })
+    observable.notify({
+      type: 'success',
+      payload,
+      bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 },
+      endpointResponded: true,
+    })
     lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 
     expect(sendOnExit).not.toHaveBeenCalled()
