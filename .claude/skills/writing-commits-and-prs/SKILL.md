@@ -17,6 +17,7 @@ type(scope[,scope])[!]: Description
 
 - Conventional Commits with a **mandatory scope**. The "Lint PR title" CI check (`scripts/check-pr-title.ts`) rejects anything else.
 - Examples: `feat(rum): Add view name API`, `fix(rum,logs): Drop empty context`, `ci(e2e): Quarantine flaky test`, `chore(deps): Update vite to v8.4`.
+- `!` bumps the SDK packages to the next major version.
 - No Jira key in the title (CI rejects `[RUM-123]`): it would end up in the public changelog. Put `Refs: RUM-123` in the PR description and the key in the branch name.
 - Commits inside a PR are squashed away; use the same convention for consistency.
 
@@ -41,12 +42,11 @@ Every commit must be signed. `main` has a `required_signatures` ruleset, so a si
 
 ## Common Mistakes
 
-| Mistake                                        | Fix                                                                     |
-| ---------------------------------------------- | ----------------------------------------------------------------------- |
-| `refactor(rum): Remove deprecated API`         | `feat(rum)!: Remove deprecated API`, otherwise the break is hidden      |
-| `fix(e2e): Fix flaky test`                     | `test(e2e): …`: `fix` is public and needs a package scope               |
-| `feat(rum): [RUM-123] Add view name API`       | Drop the key from the title, add `Refs: RUM-123` to the description     |
-| `feat: Add view name API` (no scope)           | Add the package scope: `feat(rum): …`                                   |
-| Keeping GitHub's `Revert "feat(rum): …"` title | Retitle `revert(rum): …`                                                |
-| `feat(js-core)!: …` for a js-core-only break   | `feat(js-core): …` and describe the break: `!` would bump the SDK major |
-| Adding a `CHANGELOG.md` entry                  | Remove it, the release process generates it from PR titles              |
+| Mistake                                        | Fix                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------- |
+| `refactor(rum): Remove deprecated API`         | `feat(rum)!: Remove deprecated API`, otherwise the break is hidden  |
+| `fix(e2e): Fix flaky test`                     | `test(e2e): …`: `fix` is public and needs a package scope           |
+| `feat(rum): [RUM-123] Add view name API`       | Drop the key from the title, add `Refs: RUM-123` to the description |
+| `feat: Add view name API` (no scope)           | Add the package scope: `feat(rum): …`                               |
+| Keeping GitHub's `Revert "feat(rum): …"` title | Retitle `revert(rum): …`                                            |
+| Adding a `CHANGELOG.md` entry                  | Remove it, the release process generates it from PR titles          |

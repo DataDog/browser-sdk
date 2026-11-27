@@ -48,7 +48,17 @@ interface CommandChain {
   run: () => string | undefined
 }
 
-export function mockCommandImplementation(mockFn: Mock<(...args: any[]) => void>): CommandDetail[] {
+/**
+ * Make a `command` mock record each command line instead of running it.
+ *
+ * @param mockFn - The `command` mock to configure.
+ * @param runCommand - Optional output of each command (the normalized command line). Throw to
+ * simulate a failing command.
+ */
+export function mockCommandImplementation(
+  mockFn: Mock<(...args: any[]) => void>,
+  runCommand?: (command: string) => string | undefined
+): CommandDetail[] {
   const commands: CommandDetail[] = []
 
   mockFn.mock.mockImplementation((template: TemplateStringsArray, ...values: any[]): CommandChain => {
@@ -76,6 +86,7 @@ export function mockCommandImplementation(mockFn: Mock<(...args: any[]) => void>
 
         // don't push command details for the above mock commands
         commands.push(commandDetail)
+        return runCommand?.(command)
       },
     }
     return result

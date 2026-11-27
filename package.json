@@ -87,6 +87,7 @@
     "node-forge": "1.4.3",
     "prettier": "3.10.1",
     "puppeteer": "25.17.0",
+    "release-please": "17.11.2",
     "terser-webpack-plugin": "5.6.1",
     "ts-loader": "9.6.2",
     "tsconfig-paths-webpack-plugin": "4.2.0",
