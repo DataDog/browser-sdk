@@ -2,14 +2,14 @@ import type { RelativeTime } from '@datadog/js-core/time'
 import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startRUMInternalContext } from './rumInternalContext'
+import { getRUMInternalContextFromGlobal, startRUMInternalContext } from './rumInternalContext'
 
 describe('startRUMInternalContext', () => {
   let hooks: Hooks
 
   beforeEach(() => {
     hooks = createHooks()
-    startRUMInternalContext(hooks)
+    startRUMInternalContext(hooks, getRUMInternalContextFromGlobal)
   })
 
   afterEach(() => {
@@ -48,6 +48,24 @@ describe('startRUMInternalContext', () => {
         domainContext: undefined,
       } as AssembleHookParams)
       expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
+    })
+
+    it('returns the internal context from the given `getInternalContext` instead of the global variable', () => {
+      window.DD_RUM = {
+        getInternalContext: () => ({ from: 'global' }),
+      }
+      const getInternalContext = jasmine.createSpy().and.returnValue({ application_id: 'rum-application-id' })
+      const pluginHooks = createHooks()
+      startRUMInternalContext(pluginHooks, getInternalContext)
+
+      const defaultLogsEventAttributes = pluginHooks.assembleEventDefaults.trigger({
+        startTime: 123 as RelativeTime,
+        rawLogsEvent: {},
+        domainContext: undefined,
+      } as AssembleHookParams)
+
+      expect(defaultLogsEventAttributes).toEqual({ application_id: 'rum-application-id' })
+      expect(getInternalContext).toHaveBeenCalledWith(123)
     })
 
     describe('when RUM is injected by Synthetics', () => {

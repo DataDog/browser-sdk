@@ -1,6 +1,7 @@
 import { timeStampNow } from '@datadog/js-core/time'
 import { Observable, noop } from '@datadog/js-core/util'
 import type { SessionManager, startSessionManager } from '@datadog/browser-core'
+import { isSampled } from '../src/domain/sampler'
 import { LOW_HASH_UUID } from './sampling'
 
 export interface SessionManagerMock extends SessionManager {
@@ -57,6 +58,18 @@ export function createSessionManagerMock(): SessionManagerMock {
       forcedReplay = true
       return this
     },
+  }
+}
+
+export function createSessionManagerMockWithSampleRate(
+  defaultSampleRate: number
+): Pick<SessionManager, 'findTrackedSession'> {
+  const sessionManagerMock = createSessionManagerMock()
+  return {
+    findTrackedSession: (startTime, options) =>
+      isSampled(MOCK_SESSION_ID, options?.sampleRate ?? defaultSampleRate)
+        ? sessionManagerMock.findTrackedSession(startTime, options)
+        : undefined,
   }
 }
 

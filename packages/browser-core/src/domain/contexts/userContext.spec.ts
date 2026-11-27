@@ -1,12 +1,12 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook, type Hook } from '@datadog/js-core/assembly'
-import { registerCleanupTask } from '../../../test'
+import { createSessionManagerMockWithSampleRate, registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
 import { removeStorageListeners } from '../context/storeContextManager'
 import type { Configuration } from '../configuration'
 import type { SessionContext } from '../session/sessionManager'
-import { startUserContext } from './userContext'
+import { startUserContext, startUserContextHook } from './userContext'
 
 describe('user context', () => {
   let userContext: ContextManager
@@ -97,6 +97,38 @@ describe('user context', () => {
           anonymous_id: 'foo',
         },
       })
+    })
+  })
+})
+
+describe('user context hook', () => {
+  it('should set the user from the given getter', () => {
+    const hook: Hook<any, any> = createHook()
+    startUserContextHook(
+      hook,
+      { trackAnonymousUser: false } as Configuration,
+      { findTrackedSession: () => undefined },
+      () => ({ id: '123', foo: 'bar' })
+    )
+
+    expect(hook.trigger({ eventType: 'view', startTime: 0 as RelativeTime })).toEqual({
+      type: 'view',
+      usr: { id: '123', foo: 'bar' },
+    })
+  })
+
+  it('should set anonymous_id when only the configured rate samples the session', () => {
+    const hook: Hook<any, any> = createHook()
+    startUserContextHook(
+      hook,
+      { trackAnonymousUser: true, sessionSampleRate: 100 } as Configuration,
+      createSessionManagerMockWithSampleRate(0),
+      () => ({ id: '123' })
+    )
+
+    expect(hook.trigger({ eventType: 'view', startTime: 0 as RelativeTime })).toEqual({
+      type: 'view',
+      usr: { id: '123', anonymous_id: 'device-123' },
     })
   })
 })
