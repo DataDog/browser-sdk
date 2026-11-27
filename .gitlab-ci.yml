@@ -401,11 +401,10 @@ deploy-staging:
     - node ./scripts/deploy/deploy.ts staging staging root
     - node ./scripts/deploy/upload-source-maps.ts staging root
 
-deploy-prod-canary:
+.deploy-prod-canary:
   stage: deploy:canary
   extends:
     - .base-configuration
-    - .main
   script:
     - export BUILD_MODE=canary
     - yarn
@@ -414,6 +413,23 @@ deploy-prod-canary:
     - yarn build:bundle
     - node ./scripts/deploy/deploy.ts prod canary root
     - node ./scripts/deploy/upload-source-maps.ts canary root
+
+deploy-prod-canary:
+  extends:
+    - .deploy-prod-canary
+    - .main
+
+# Deploys a fix to canary without the other changes on main, for example during a freeze:
+# create a `canary-hotfix/*` branch from the commit deployed on canary (the SHA in the canary
+# version), add the fix, push, then start this job once the tests pass. The next canary deploy
+# from main replaces it, so the fix must also land on main.
+deploy-prod-canary-hotfix:
+  extends:
+    - .deploy-prod-canary
+  only:
+    refs:
+      - /^canary-hotfix\//
+  when: manual
 
 deploy-next-major-canary:
   stage: deploy
