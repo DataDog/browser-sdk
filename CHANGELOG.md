@@ -8,6 +8,42 @@ Releases up to v7.19.0 used [gitmoji](https://gitmoji.dev/) prefixes instead: ðŸ
 
 ---
 
+## [7.20.0](https://github.com/DataDog/browser-sdk/compare/v7.19.0...v7.20.0) (2026-11-27)
+
+
+### Features
+
+* **debugger:** Match Live Debugger probes on where.functionId ([#5146](https://github.com/DataDog/browser-sdk/issues/5146)) ([20b7d49](https://github.com/DataDog/browser-sdk/commit/20b7d49e72ac58f37970eaec977f7e68fec48845))
+* **debugger:** Require a version in the Live Debugger init() ([#5313](https://github.com/DataDog/browser-sdk/issues/5313)) ([5fc0f0e](https://github.com/DataDog/browser-sdk/commit/5fc0f0ebe5735cf2314436c43426a900a5fb0729))
+* **rum:** Start profiling before the SDK is loaded ([#5192](https://github.com/DataDog/browser-sdk/issues/5192)) ([fd5c6a8](https://github.com/DataDog/browser-sdk/commit/fd5c6a80070c643384873cb50059aaba0a977736))
+
+
+### Bug Fixes
+
+* **angular:** Avoid buffering RUM data on the server during SSR ([#5259](https://github.com/DataDog/browser-sdk/issues/5259)) ([af5fad8](https://github.com/DataDog/browser-sdk/commit/af5fad8139c6b90675f7ad063dcc8e48b138cb3b))
+* **replay:** Retry session replay uploads after network errors ([#5334](https://github.com/DataDog/browser-sdk/issues/5334)) ([d88503d](https://github.com/DataDog/browser-sdk/commit/d88503de0884614c41a29f8135d8e0e9edbd88f2))
+* **rum:** Drop duration vitals with a negative duration ([#5317](https://github.com/DataDog/browser-sdk/issues/5317)) ([74e8819](https://github.com/DataDog/browser-sdk/commit/74e8819f3c44030eda3ee0ffa8ec244715d6b7a6))
+
+
+### Reverts
+
+* **core:** Remove unused expandOrRenew from the session manager ([#5323](https://github.com/DataDog/browser-sdk/issues/5323)) ([014c5e8](https://github.com/DataDog/browser-sdk/commit/014c5e8c95335a1dcbfaf34b4edfd06c085b6d63))
+
+
+### Internal Changes
+
+* **ci:** Gate the canary deploys on us1 cordons ([#5321](https://github.com/DataDog/browser-sdk/issues/5321)) ([a1e1c56](https://github.com/DataDog/browser-sdk/commit/a1e1c563ceebba19fd517f92637dcefb09f206c2))
+* **deps:** Group Renovate updates that need a manual review in one PR ([#5319](https://github.com/DataDog/browser-sdk/issues/5319)) ([e55fa6d](https://github.com/DataDog/browser-sdk/commit/e55fa6d024cc803bc8d4905f837e7a77fe87be65))
+* **release:** Adopt release-please ([#5263](https://github.com/DataDog/browser-sdk/issues/5263)) ([136ae77](https://github.com/DataDog/browser-sdk/commit/136ae7753e4e74d75ada6fee5c5a93bf7d8d2166))
+* **release:** Bump browser-early-collection with the SDK version ([#5344](https://github.com/DataDog/browser-sdk/issues/5344)) ([342bbf8](https://github.com/DataDog/browser-sdk/commit/342bbf80d2a34e861813b5432699e8779fa6f50d))
+* **release:** Run the required CI jobs on release pull requests ([#5345](https://github.com/DataDog/browser-sdk/issues/5345)) ([00abfb9](https://github.com/DataDog/browser-sdk/commit/00abfb985aea0e769cb3084a972ac89cfe19bd4f))
+* **release:** Switch PR titles to Conventional Commits ([#5260](https://github.com/DataDog/browser-sdk/issues/5260)) ([73a407e](https://github.com/DataDog/browser-sdk/commit/73a407ef9c5c8c5dbd76e5f73541092318ec399b))
+* **rum:** Simplify profiler state transitions ([#5322](https://github.com/DataDog/browser-sdk/issues/5322)) ([03a57a5](https://github.com/DataDog/browser-sdk/commit/03a57a5a176d9255cfe1883ab7c932fd07069ef8))
+* **scripts:** Add replay as a commit scope ([#5335](https://github.com/DataDog/browser-sdk/issues/5335)) ([038d21f](https://github.com/DataDog/browser-sdk/commit/038d21fbffd09a5907500f612b08f3961c2f1fc0))
+* **scripts:** Allow the CHANGELOG.md that Yarn always packs ([#5348](https://github.com/DataDog/browser-sdk/issues/5348)) ([bc06843](https://github.com/DataDog/browser-sdk/commit/bc06843a5dc46ec567ff091fd4ec74d82f9bac7e))
+* **scripts:** Stop uploading source maps to the telemetry orgs ([#5179](https://github.com/DataDog/browser-sdk/issues/5179)) ([fd4f41d](https://github.com/DataDog/browser-sdk/commit/fd4f41d4b8f7592a1a94f6ce2b30730a7439bc96))
+* **test:** Add a Jasmine to Vitest codemod and migration guard ([#5144](https://github.com/DataDog/browser-sdk/issues/5144)) ([6b0a092](https://github.com/DataDog/browser-sdk/commit/6b0a092143bc9b808b6a60b2c247b4d48b493732))
+
 ## v7.19.0
 
 **Public Changes:**
