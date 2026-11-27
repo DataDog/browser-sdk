@@ -6,12 +6,15 @@ import type { AssembleHook } from '../hooks'
 export function startSessionContext(
   hook: AssembleHook,
   configuration: LogsConfiguration,
-  sessionManager: SessionManager
+  sessionManager: Pick<SessionManager, 'findTrackedSession'>
 ) {
+  // In the Logs plugin, the session manager is RUM's and defaults to RUM's rate, so pass Logs' own rate
+  const sampleRate = configuration.sessionSampleRate
+
   hook.register(({ startTime }) => {
     // Used to attach a (fresh, safe-to-reference) session id: subject to the default
     // TRACKED_SESSION_MAX_AGE, so it becomes undefined once the session is too old to reference.
-    const session = sessionManager.findTrackedSession(startTime)
+    const session = sessionManager.findTrackedSession(startTime, { sampleRate })
 
     // Used for the discard decision: unlike `session` above, this ignores session age (logs
     // should keep being sent indefinitely, with or without a session, once a session was
@@ -19,6 +22,7 @@ export function startSessionContext(
     const isSessionTracked = sessionManager.findTrackedSession(startTime, {
       returnInactive: true,
       maxAge: Infinity,
+      sampleRate,
     })
 
     if (!isSessionTracked) {
