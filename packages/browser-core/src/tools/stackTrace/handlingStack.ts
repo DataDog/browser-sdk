@@ -5,6 +5,7 @@ import { computeStackTrace } from './computeStackTrace'
 export type HandlingStackType =
   | 'console error'
   | 'action'
+  | 'element'
   | 'error'
   | 'instrumented method'
   | 'instrumented constructor'
