@@ -128,6 +128,8 @@ export interface RawRumViewEvent {
   type: typeof RumEventType.VIEW
   view: {
     loading_type: ViewLoadingType
+    navigation_type?: 'navigate' | 'reload' | 'back_forward' | 'prerender'
+    not_restored_reasons?: string[]
     first_byte?: ServerDuration
     first_contentful_paint?: ServerDuration
     interaction_to_next_paint?: ServerDuration
