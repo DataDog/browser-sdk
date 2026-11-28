@@ -9,6 +9,8 @@ import { trackCumulativeLayoutShift } from './trackCumulativeLayoutShift'
 import type { InteractionToNextPaint } from './trackInteractionToNextPaint'
 import { trackInteractionToNextPaint } from './trackInteractionToNextPaint'
 import { trackLoadingTime } from './trackLoadingTime'
+import type { MemoryMetrics } from './trackMemory'
+import { trackMemory } from './trackMemory'
 import type { ScrollMetrics } from './trackScrollMetrics'
 import { trackScrollMetrics } from './trackScrollMetrics'
 
@@ -17,6 +19,7 @@ export interface CommonViewMetrics {
   cumulativeLayoutShift?: CumulativeLayoutShift
   interactionToNextPaint?: InteractionToNextPaint
   scroll?: ScrollMetrics
+  memory?: MemoryMetrics
 }
 
 export function trackCommonViewMetrics(
@@ -49,6 +52,9 @@ export function trackCommonViewMetrics(
   const { stop: stopScrollMetricsTracking } = trackScrollMetrics(viewStart, (newScrollMetrics) => {
     commonViewMetrics.scroll = newScrollMetrics
   })
+  const { stop: stopMemoryTracking } = trackMemory((memory) => {
+    commonViewMetrics.memory = memory
+  })
   const { stop: stopCLSTracking, setNavigationId: setCLSNavigationId } = trackCumulativeLayoutShift(
     configuration,
     viewStart.relative,
@@ -70,6 +76,7 @@ export function trackCommonViewMetrics(
       stopLoadingTimeTracking()
       stopCLSTracking()
       stopScrollMetricsTracking()
+      stopMemoryTracking()
     },
     cancelLoadingTimeTracking: () => {
       isLoadingTimeCanceled = true

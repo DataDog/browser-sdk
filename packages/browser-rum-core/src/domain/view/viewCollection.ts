@@ -120,6 +120,8 @@ function processViewUpdate(
       load_event: toServerDuration(view.initialViewMetrics.navigationTimings?.loadEvent),
       loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
       loading_type: view.loadingType,
+      memory_average: view.commonViewMetrics.memory?.average,
+      memory_max: view.commonViewMetrics.memory?.max,
       long_task: {
         count: view.eventCounts.longTaskCount,
       },

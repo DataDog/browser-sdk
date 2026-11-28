@@ -128,6 +128,8 @@ export interface RawRumViewEvent {
   type: typeof RumEventType.VIEW
   view: {
     loading_type: ViewLoadingType
+    memory_average?: number
+    memory_max?: number
     first_byte?: ServerDuration
     first_contentful_paint?: ServerDuration
     interaction_to_next_paint?: ServerDuration
